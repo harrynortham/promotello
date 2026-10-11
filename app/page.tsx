@@ -2,16 +2,42 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OfferCard } from "@/components/offer-card";
+import { createClient } from "@/utils/supabase/client";
+import type { Offer } from "@/lib/offers";
 
-const categories = ["All deals", "Food & drink", "Things to do", "Shopping"];
-
-import { offers } from "@/lib/offers";
+const categories = [
+  "All deals",
+  "Food & drink",
+  "Things to do",
+  "Shopping",
+];
 
 export default function Home() {
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All deals");
+
+  useEffect(() => {
+    async function loadOffers() {
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("offers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading offers:", error);
+        return;
+      }
+
+      setOffers(data ?? []);
+    }
+
+    loadOffers();
+  }, []);
 
   const filteredOffers =
     selectedCategory === "All deals"
@@ -49,7 +75,11 @@ export default function Home() {
             Discover local deals and enjoy more for less.
           </p>
 
-          <Button render={<Link href="#offers" />} nativeButton={false} size="lg">
+          <Button
+            render={<Link href="#offers" />}
+            nativeButton={false}
+            size="lg"
+          >
             Explore deals
           </Button>
         </div>
@@ -66,7 +96,9 @@ export default function Home() {
               <Button
                 key={category}
                 size="sm"
-                variant={selectedCategory === category ? "default" : "outline"}
+                variant={
+                  selectedCategory === category ? "default" : "outline"
+                }
                 onClick={() => setSelectedCategory(category)}
                 className={
                   selectedCategory === category
@@ -83,13 +115,14 @@ export default function Home() {
         <div className="grid gap-6 md:grid-cols-2">
           {filteredOffers.length > 0 ? (
             filteredOffers.map((offer) => (
-              <OfferCard key={offer.title} {...offer} />
+              <OfferCard key={offer.slug} {...offer} />
             ))
           ) : (
             <div className="rounded-2xl border border-dashed border-[#17233B]/20 p-8 text-center md:col-span-2">
               <p className="font-medium text-[#17233B]">
                 No offers in this category yet.
               </p>
+
               <p className="mt-2 text-sm text-[#17233B]/60">
                 Check back soon for new local deals.
               </p>
@@ -105,6 +138,7 @@ export default function Home() {
           <a href="#" className="hover:text-[#17233B]">
             Privacy
           </a>
+
           <a href="#" className="hover:text-[#17233B]">
             Terms
           </a>

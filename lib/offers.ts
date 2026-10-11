@@ -5,6 +5,10 @@ export type Offer = {
   title: string;
   description: string;
   availability: string;
+  business: string;
+  businessId: string;
+  expiresAt: string;
+  terms: string;
 };
 
 export const offers: Offer[] = [
@@ -15,6 +19,10 @@ export const offers: Offer[] = [
     title: "Your local coffee spot",
     description: "Enjoy 20% off your next visit.",
     availability: "Available nearby",
+    business: "Harbor Coffee",
+    businessId: "1",
+    expiresAt: "2026-12-31",
+    terms: "Valid once per customer. Cannot be combined with other offers.",
   },
   {
     slug: "weekend-dining",
@@ -23,5 +31,9 @@ export const offers: Offer[] = [
     title: "Weekend dining",
     description: "Save on your next local dining experience.",
     availability: "Available this weekend",
+    business: "The Corner Table",
+    businessId: "2",
+    expiresAt: "2026-12-31",
+    terms: "Valid once per customer. Cannot be combined with other offers.",
   },
 ];
