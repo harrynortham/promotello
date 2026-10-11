@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type OfferCardProps = {
+    slug: string;
     discount: string;
     title: string;
     description: string;
@@ -12,6 +14,7 @@ export function OfferCard({
     title,
     description,
     availability,
+    slug
 }: OfferCardProps) {
     return (
         <article className="rounded-2xl border border-[#17233B]/10 bg-white p-6 text-left shadow-sm">
@@ -30,7 +33,9 @@ export function OfferCard({
 
                 <Button
                     size="sm"
-
+                    render={<Link href={`/offers/${slug}`} />}
+                    nativeButton={false}
+                    className="rounded-full bg-[#FF593F] text-[#17233B] hover:bg-[#e94d36]"
                 >
                     View deal
                 </Button>
