@@ -46,11 +46,12 @@ async function TeamContent({ params }: PageProps) {
         notFound();
     }
 
-    const { data: members } = await supabase
-        .from("business_members")
-        .select("user_id, role, created_at")
-        .eq("business_id", businessId)
-        .order("created_at", { ascending: true });
+    const { data: members } = await supabase.rpc(
+        "get_business_team_members",
+        {
+            requested_business_id: businessId,
+        },
+    );
 
     const { data: invitations } = await supabase
         .from("business_invitations")

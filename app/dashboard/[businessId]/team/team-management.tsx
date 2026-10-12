@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 
 type Member = {
     user_id: string;
+    email: string | null;
     role: "owner" | "admin" | "member";
     created_at: string;
 };
@@ -61,7 +62,7 @@ export default function TeamManagement({
             return;
         }
 
-        const { data, error } = await supabase.functions.invoke(
+        const { error } = await supabase.functions.invoke(
             "send-business-invitation",
             {
                 body: {
@@ -79,17 +80,8 @@ export default function TeamManagement({
             return;
         }
 
-        if (data?.error) {
-            setErrorMessage(data.error);
-            return;
-        }
-
-        setSuccessMessage(
-            "Invitation email sent successfully.",
-        );
-
+        setSuccessMessage("Invitation email sent successfully.");
         form.reset();
-
         window.location.reload();
     }
 
@@ -274,8 +266,8 @@ export default function TeamManagement({
                                 className="flex flex-col gap-4 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div>
-                                    <p className="font-mono text-sm text-[#17233B]/65">
-                                        {member.user_id}
+                                    <p className="text-sm font-medium">
+                                        {member.email ?? "Email unavailable"}
                                     </p>
 
                                     <span className="mt-2 inline-flex rounded-full bg-[#17233B]/5 px-3 py-1 text-xs font-semibold capitalize">
