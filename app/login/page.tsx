@@ -1,80 +1,117 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
+    const router = useRouter();
+
     const [email, setEmail] = useState("");
-    const [message, setMessage] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [password, setPassword] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        setIsLoading(true);
-        setMessage("");
+
+        setIsSubmitting(true);
+        setErrorMessage("");
 
         const supabase = createClient();
 
-        const { error } = await supabase.auth.signInWithOtp({
+        const { error } = await supabase.auth.signInWithPassword({
             email,
-            options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-            },
+            password,
         });
 
-        setIsLoading(false);
+        setIsSubmitting(false);
 
         if (error) {
-            setMessage(error.message);
+            setErrorMessage(error.message);
             return;
         }
 
-        setMessage("Check your email for a sign-in link.");
+        router.replace("/dashboard");
+        router.refresh();
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6">
-            <section className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm">
+        <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
+            <section className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm sm:p-10">
                 <Link
                     href="/"
-                    className="text-sm font-medium text-[#17233B]/60 hover:text-[#17233B]"
+                    className="text-sm font-semibold text-[#FF593F]"
                 >
-                    ← Back to deals
+                    ← Back to Promotello
                 </Link>
 
-                <h1 className="mt-8 text-3xl font-semibold tracking-tight text-[#17233B]">
-                    Sign in to Promotello
+                <h1 className="mt-8 text-3xl font-semibold tracking-tight">
+                    Welcome back
                 </h1>
 
                 <p className="mt-3 text-[#17233B]/65">
-                    Enter your email and we’ll send you a secure sign-in link.
+                    Sign in to manage your businesses and promotions.
                 </p>
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                    <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        placeholder="you@example.com"
-                        className="h-12 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 text-[#17233B] outline-none focus:border-[#FF593F]"
-                    />
+                    <label className="block text-sm font-medium">
+                        Email address
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
+                            placeholder="you@example.com"
+                        />
+                    </label>
 
-                    <Button
+                    <label className="block text-sm font-medium">
+                        Password
+                        <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
+                            placeholder="Your password"
+                        />
+                    </label>
+                    <div className="text-right">
+                        <Link
+                            href="/forgot-password"
+                            className="text-sm font-semibold text-[#FF593F]"
+                        >
+                            Forgot password?
+                        </Link>
+                    </div>
+
+                    {errorMessage && (
+                        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                            {errorMessage}
+                        </p>
+                    )}
+
+                    <button
                         type="submit"
-                        disabled={isLoading}
-                        size="lg"
-                        className="w-full rounded-full bg-[#FF593F] text-[#17233B] hover:bg-[#e94d36]"
+                        disabled={isSubmitting}
+                        className="w-full rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36] disabled:opacity-60"
                     >
-                        {isLoading ? "Sending link..." : "Send sign-in link"}
-                    </Button>
+                        {isSubmitting ? "Signing in…" : "Sign in"}
+                    </button>
                 </form>
 
-                {message && (
-                    <p className="mt-5 text-sm text-[#17233B]/70">{message}</p>
-                )}
+                <p className="mt-6 text-center text-sm text-[#17233B]/65">
+                    Don’t have an account?{" "}
+                    <Link
+                        href="/signup"
+                        className="font-semibold text-[#FF593F]"
+                    >
+                        Create one
+                    </Link>
+                </p>
             </section>
         </main>
     );

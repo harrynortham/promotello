@@ -49,6 +49,13 @@ export function AdminNav({ email }: AdminNavProps) {
                         Business dashboard
                     </Link>
 
+                    <Link
+                        href="/admin/audit-logs"
+                        className="text-white/75 hover:text-white"
+                    >
+                        Audit log
+                    </Link>
+
                     {email && (
                         <span className="hidden text-white/50 md:inline">{email}</span>
                     )}

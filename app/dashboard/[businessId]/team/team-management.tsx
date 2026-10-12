@@ -6,14 +6,14 @@ import { createClient } from "@/utils/supabase/client";
 
 type Member = {
     user_id: string;
-    role: string;
+    role: "owner" | "admin" | "member";
     created_at: string;
 };
 
 type Invitation = {
     id: string;
     email: string;
-    role: string;
+    role: "admin" | "member";
     expires_at: string;
     accepted_at: string | null;
     created_at: string;
@@ -32,11 +32,12 @@ export default function TeamManagement({
     initialMembers,
     initialInvitations,
 }: TeamManagementProps) {
-    const [members] = useState(initialMembers);
+    const [members, setMembers] = useState(initialMembers);
     const [invitations, setInvitations] = useState(initialInvitations);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeId, setActiveId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
-    const [invitationLink, setInvitationLink] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     async function handleInvite(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -46,16 +47,28 @@ export default function TeamManagement({
 
         setIsSubmitting(true);
         setErrorMessage("");
-        setInvitationLink("");
+        setSuccessMessage("");
 
         const supabase = createClient();
 
-        const { data, error } = await supabase.rpc(
-            "create_business_invitation",
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            setErrorMessage("Please sign in before creating an invitation.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        const { data, error } = await supabase.functions.invoke(
+            "send-business-invitation",
             {
-                requested_business_id: businessId,
-                invited_email: formData.get("email"),
-                invited_role: formData.get("role"),
+                body: {
+                    business_id: businessId,
+                    email: formData.get("email"),
+                    role: formData.get("role"),
+                },
             },
         );
 
@@ -66,12 +79,112 @@ export default function TeamManagement({
             return;
         }
 
-        setInvitations((current) => [data, ...current]);
+        if (data?.error) {
+            setErrorMessage(data.error);
+            return;
+        }
 
-        const link = `${window.location.origin}/invite/${data.invitation_token}`;
-        setInvitationLink(link);
+        setSuccessMessage(
+            "Invitation email sent successfully.",
+        );
 
         form.reset();
+
+        window.location.reload();
+    }
+
+    async function changeRole(
+        userId: string,
+        newRole: "admin" | "member",
+    ) {
+        setActiveId(userId);
+        setErrorMessage("");
+
+        const supabase = createClient();
+
+        const { data, error } = await supabase.rpc(
+            "update_business_member_role",
+            {
+                requested_business_id: businessId,
+                requested_user_id: userId,
+                new_role: newRole,
+            },
+        );
+
+        if (error) {
+            setErrorMessage(error.message);
+            setActiveId("");
+            return;
+        }
+
+        setMembers((current) =>
+            current.map((member) =>
+                member.user_id === userId
+                    ? { ...member, role: data.role }
+                    : member,
+            ),
+        );
+
+        setActiveId("");
+    }
+
+    async function removeMember(userId: string) {
+        if (!window.confirm("Remove this team member?")) {
+            return;
+        }
+
+        setActiveId(userId);
+        setErrorMessage("");
+
+        const supabase = createClient();
+
+        const { error } = await supabase.rpc("remove_business_member", {
+            requested_business_id: businessId,
+            requested_user_id: userId,
+        });
+
+        if (error) {
+            setErrorMessage(error.message);
+            setActiveId("");
+            return;
+        }
+
+        setMembers((current) =>
+            current.filter((member) => member.user_id !== userId),
+        );
+
+        setActiveId("");
+    }
+
+    async function revokeInvitation(invitationId: string) {
+        if (!window.confirm("Revoke this invitation?")) {
+            return;
+        }
+
+        setActiveId(invitationId);
+        setErrorMessage("");
+
+        const supabase = createClient();
+
+        const { error } = await supabase.rpc(
+            "revoke_business_invitation",
+            {
+                requested_business_id: businessId,
+                requested_invitation_id: invitationId,
+            },
+        );
+
+        if (error) {
+            setErrorMessage(error.message);
+            setActiveId("");
+            return;
+        }
+
+        setInvitations((current) =>
+            current.filter((invitation) => invitation.id !== invitationId),
+        );
+
+        setActiveId("");
     }
 
     return (
@@ -94,12 +207,26 @@ export default function TeamManagement({
                     </h1>
 
                     <p className="mt-3 text-[#17233B]/65">
-                        Invite people to help manage your business.
+                        Invite and manage people who help run your business.
                     </p>
                 </header>
 
+                {errorMessage && (
+                    <p className="mt-8 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {errorMessage}
+                    </p>
+                )}
+
+                {successMessage && (
+                    <p className="mt-8 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {successMessage}
+                    </p>
+                )}
+
                 <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                    <h2 className="text-2xl font-semibold">Invite a team member</h2>
+                    <h2 className="text-2xl font-semibold">
+                        Invite a team member
+                    </h2>
 
                     <form onSubmit={handleInvite} className="mt-6 space-y-5">
                         <label className="block text-sm font-medium">
@@ -125,36 +252,16 @@ export default function TeamManagement({
                             </select>
                         </label>
 
-                        {errorMessage && (
-                            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                                {errorMessage}
-                            </p>
-                        )}
-
                         <button
                             type="submit"
                             disabled={isSubmitting}
                             className="rounded-xl bg-[#FF593F] px-5 py-3 font-semibold transition hover:bg-[#E94D36] disabled:opacity-60"
                         >
-                            {isSubmitting ? "Creating invitation…" : "Create invitation"}
+                            {isSubmitting
+                                ? "Sending invitation…"
+                                : "Send invitation"}
                         </button>
                     </form>
-
-                    {invitationLink && (
-                        <div className="mt-6 rounded-2xl bg-emerald-50 p-5">
-                            <p className="font-semibold text-emerald-800">
-                                Invitation created
-                            </p>
-
-                            <p className="mt-2 break-all text-sm text-emerald-700">
-                                {invitationLink}
-                            </p>
-
-                            <p className="mt-2 text-xs text-emerald-700">
-                                Copy this link and send it to the invited person.
-                            </p>
-                        </div>
-                    )}
                 </section>
 
                 <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
@@ -164,46 +271,92 @@ export default function TeamManagement({
                         {members.map((member) => (
                             <div
                                 key={member.user_id}
-                                className="flex flex-col gap-2 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-4 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
                             >
-                                <p className="font-mono text-sm text-[#17233B]/65">
-                                    {member.user_id}
-                                </p>
+                                <div>
+                                    <p className="font-mono text-sm text-[#17233B]/65">
+                                        {member.user_id}
+                                    </p>
 
-                                <span className="w-fit rounded-full bg-[#17233B]/5 px-3 py-1 text-xs font-semibold capitalize">
-                                    {member.role}
-                                </span>
+                                    <span className="mt-2 inline-flex rounded-full bg-[#17233B]/5 px-3 py-1 text-xs font-semibold capitalize">
+                                        {member.role}
+                                    </span>
+                                </div>
+
+                                {member.role !== "owner" && (
+                                    <div className="flex flex-wrap gap-2">
+                                        <select
+                                            value={member.role}
+                                            disabled={activeId === member.user_id}
+                                            onChange={(event) =>
+                                                changeRole(
+                                                    member.user_id,
+                                                    event.target.value as "admin" | "member",
+                                                )
+                                            }
+                                            className="rounded-xl border border-[#17233B]/15 bg-white px-3 py-2 text-sm"
+                                        >
+                                            <option value="member">Member</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+
+                                        <button
+                                            type="button"
+                                            disabled={activeId === member.user_id}
+                                            onClick={() => removeMember(member.user_id)}
+                                            className="rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
                 </section>
 
                 <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                    <h2 className="text-2xl font-semibold">Invitations</h2>
+                    <h2 className="text-2xl font-semibold">
+                        Pending invitations
+                    </h2>
 
                     <div className="mt-6 space-y-3">
-                        {invitations.length === 0 ? (
+                        {invitations.filter(
+                            (invitation) => !invitation.accepted_at,
+                        ).length === 0 ? (
                             <p className="text-sm text-[#17233B]/60">
-                                No invitations have been created.
+                                No pending invitations.
                             </p>
                         ) : (
-                            invitations.map((invitation) => (
-                                <div
-                                    key={invitation.id}
-                                    className="flex flex-col gap-2 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-                                >
-                                    <div>
-                                        <p className="font-medium">{invitation.email}</p>
-                                        <p className="text-sm text-[#17233B]/55">
-                                            Role: {invitation.role}
-                                        </p>
-                                    </div>
+                            invitations
+                                .filter((invitation) => !invitation.accepted_at)
+                                .map((invitation) => (
+                                    <div
+                                        key={invitation.id}
+                                        className="flex flex-col gap-4 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <div>
+                                            <p className="font-medium">
+                                                {invitation.email}
+                                            </p>
 
-                                    <span className="text-sm text-[#17233B]/55">
-                                        {invitation.accepted_at ? "Accepted" : "Pending"}
-                                    </span>
-                                </div>
-                            ))
+                                            <p className="text-sm capitalize text-[#17233B]/55">
+                                                Role: {invitation.role}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            disabled={activeId === invitation.id}
+                                            onClick={() =>
+                                                revokeInvitation(invitation.id)
+                                            }
+                                            className="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                                        >
+                                            Revoke
+                                        </button>
+                                    </div>
+                                ))
                         )}
                     </div>
                 </section>

@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 
 type Business = {
     id: string;
+    role: "owner" | "admin" | "member";
     name: string;
     category: string;
     description: string | null;
@@ -60,7 +61,17 @@ async function DashboardContent() {
         .order("created_at", { ascending: true });
 
     const businesses = (memberships ?? [])
-        .map((membership) => membership.businesses as unknown as Business)
+        .map((membership) => {
+            const business = membership.businesses as unknown as Omit<
+                Business,
+                "role"
+            >;
+
+            return {
+                ...business,
+                role: membership.role as Business["role"],
+            };
+        })
         .filter(Boolean);
 
     return (
@@ -128,6 +139,10 @@ async function DashboardContent() {
                                             <h2 className="mt-1 text-2xl font-semibold">
                                                 {business.name}
                                             </h2>
+
+                                            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#17233B]/45">
+                                                Your role: {business.role}
+                                            </p>
                                         </div>
 
                                         <span
@@ -161,19 +176,32 @@ async function DashboardContent() {
                                     )}
 
                                     <div className="mt-7 flex flex-wrap gap-3">
-                                        <Link
-                                            href={`/dashboard/${business.id}/offers/new`}
-                                            className="rounded-xl bg-[#FF593F] px-4 py-2 text-sm font-semibold transition hover:bg-[#E94D36]"
-                                        >
-                                            Create promotion
-                                        </Link>
+                                        {(business.role === "owner" || business.role === "admin") && (
+                                            <>
+                                                <Link
+                                                    href={`/dashboard/${business.id}/offers/new`}
+                                                    className="rounded-xl bg-[#FF593F] px-4 py-2 text-sm font-semibold transition hover:bg-[#E94D36]"
+                                                >
+                                                    Create promotion
+                                                </Link>
 
-                                        <Link
-                                            href={`/dashboard/${business.id}/offers`}
-                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
-                                        >
-                                            Promotions
-                                        </Link>
+                                                <Link
+                                                    href={`/dashboard/${business.id}/offers`}
+                                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                                >
+                                                    Promotions
+                                                </Link>
+                                            </>
+                                        )}
+
+                                        {business.role === "member" && (
+                                            <Link
+                                                href={`/dashboard/${business.id}/offers`}
+                                                className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                            >
+                                                View promotions
+                                            </Link>
+                                        )}
 
                                         <Link
                                             href={`/dashboard/${business.id}/redemptions`}
@@ -182,19 +210,23 @@ async function DashboardContent() {
                                             Redemptions
                                         </Link>
 
-                                        <Link
-                                            href={`/dashboard/${business.id}/team`}
-                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
-                                        >
-                                            Manage team
-                                        </Link>
+                                        {business.role === "owner" && (
+                                            <Link
+                                                href={`/dashboard/${business.id}/team`}
+                                                className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                            >
+                                                Manage team
+                                            </Link>
+                                        )}
 
-                                        <Link
-                                            href={`/dashboard/${business.id}/edit`}
-                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
-                                        >
-                                            Edit business
-                                        </Link>
+                                        {(business.role === "owner" || business.role === "admin") && (
+                                            <Link
+                                                href={`/dashboard/${business.id}/edit`}
+                                                className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                            >
+                                                Edit business
+                                            </Link>
+                                        )}
                                     </div>
                                 </article>
                             );
