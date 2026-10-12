@@ -1,4 +1,8 @@
+import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
+import { createClient } from "@/utils/supabase/server";
 import NewOfferForm from "./new-offer-form";
 
 type PageProps = {
@@ -7,27 +11,53 @@ type PageProps = {
     }>;
 };
 
-function LoadingState() {
-    return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
-            <div className="mx-auto max-w-2xl">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-[700px] animate-pulse rounded-3xl bg-white" />
-            </div>
-        </main>
-    );
-}
+async function NewOfferPageContent({ params }: PageProps) {
+    await connection();
 
-async function NewOfferContent({ params }: PageProps) {
     const { businessId } = await params;
+    const supabase = await createClient();
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect("/login");
+    }
+
+    const { data: membership, error } = await supabase
+        .from("business_members")
+        .select("role")
+        .eq("business_id", businessId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (error || !membership) {
+        redirect("/dashboard");
+    }
+
+    const allowedRoles = ["owner", "admin"];
+
+    if (!allowedRoles.includes(membership.role)) {
+        redirect(`/dashboard/${businessId}/offers`);
+    }
 
     return <NewOfferForm businessId={businessId} />;
 }
 
-export default function NewOfferPage({ params }: PageProps) {
+function LoadingState() {
+    return (
+        <main className="mx-auto max-w-3xl px-6 py-12">
+            <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
+            <div className="mt-6 h-96 animate-pulse rounded-2xl bg-slate-100" />
+        </main>
+    );
+}
+
+export default function NewOfferPage(props: PageProps) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <NewOfferContent params={params} />
+            <NewOfferPageContent {...props} />
         </Suspense>
     );
 }
