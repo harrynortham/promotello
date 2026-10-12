@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
@@ -25,18 +25,31 @@ type Offer = {
     | null;
 };
 
+const pageSize = 25;
+
 export default function AdminOffersPage() {
     const router = useRouter();
 
     const [offers, setOffers] = useState<Offer[]>([]);
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [activeOfferId, setActiveOfferId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    async function loadOffers() {
+    async function loadOffers(
+        requestedSearch = "",
+        requestedPage = 1,
+    ) {
+        setIsLoading(true);
+
         const supabase = createClient();
 
-        const { data, error } = await supabase
+        const from = (requestedPage - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        let query = supabase
             .from("offers")
             .select(
                 `
@@ -53,14 +66,27 @@ export default function AdminOffersPage() {
             name
           )
         `,
+                { count: "exact" },
             )
             .eq("approval_status", "pending")
-            .order("created_at", { ascending: true });
+            .order("created_at", { ascending: true })
+            .range(from, to);
+
+        if (requestedSearch.trim()) {
+            const searchValue = requestedSearch.trim();
+
+            query = query.or(
+                `title.ilike.%${searchValue}%,category.ilike.%${searchValue}%`,
+            );
+        }
+
+        const { data, error, count } = await query;
 
         if (error) {
             setErrorMessage(error.message);
         } else {
             setOffers((data ?? []) as Offer[]);
+            setTotalPages(Math.max(1, Math.ceil((count ?? 0) / pageSize)));
         }
 
         setIsLoading(false);
@@ -88,7 +114,7 @@ export default function AdminOffersPage() {
                 return;
             }
 
-            await loadOffers();
+            await loadOffers("", 1);
         }
 
         checkAccess();
@@ -114,10 +140,7 @@ export default function AdminOffersPage() {
             return;
         }
 
-        setOffers((currentOffers) =>
-            currentOffers.filter((offer) => offer.id !== offerId),
-        );
-
+        await loadOffers(search, page);
         setActiveOfferId("");
     }
 
@@ -133,10 +156,10 @@ export default function AdminOffersPage() {
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-5xl">
                 <Link
-                    href="/dashboard"
+                    href="/admin"
                     className="text-sm font-semibold text-[#FF593F]"
                 >
-                    ← Back to dashboard
+                    ← Back to admin
                 </Link>
 
                 <header className="mt-8">
@@ -153,6 +176,29 @@ export default function AdminOffersPage() {
                     </p>
                 </header>
 
+                <form
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        setPage(1);
+                        loadOffers(search, 1);
+                    }}
+                    className="mt-8 flex flex-col gap-3 sm:flex-row"
+                >
+                    <input
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Search by title or category"
+                        className="flex-1 rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#FF593F]"
+                    />
+
+                    <button
+                        type="submit"
+                        className="rounded-xl bg-[#FF593F] px-5 py-3 text-sm font-semibold transition hover:bg-[#E94D36]"
+                    >
+                        Search
+                    </button>
+                </form>
+
                 {errorMessage && (
                     <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
                         {errorMessage}
@@ -168,77 +214,121 @@ export default function AdminOffersPage() {
                         </h2>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            New pending promotions will appear here.
+                            No pending promotions matched your search.
                         </p>
                     </section>
                 ) : (
-                    <section className="mt-10 space-y-6">
-                        {offers.map((offer) => (
-                            <article
-                                key={offer.id}
-                                className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
-                            >
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-[#FF593F]">
-                                            {getBusinessName(offer)}
-                                        </p>
+                    <>
+                        <section className="mt-10 space-y-6">
+                            {offers.map((offer) => (
+                                <article
+                                    key={offer.id}
+                                    className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
+                                >
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-[#FF593F]">
+                                                {getBusinessName(offer)}
+                                            </p>
 
-                                        <h2 className="mt-1 text-2xl font-semibold">
-                                            {offer.title}
-                                        </h2>
+                                            <h2 className="mt-1 text-2xl font-semibold">
+                                                {offer.title}
+                                            </h2>
 
-                                        <p className="mt-2 text-sm text-[#17233B]/55">
-                                            {offer.category} · {offer.discount}
-                                        </p>
+                                            <p className="mt-2 text-sm text-[#17233B]/55">
+                                                {offer.category} · {offer.discount}
+                                            </p>
+                                        </div>
+
+                                        <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                                            Pending
+                                        </span>
                                     </div>
 
-                                    <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                                        Pending
-                                    </span>
-                                </div>
-
-                                <p className="mt-5 leading-7 text-[#17233B]/65">
-                                    {offer.description}
-                                </p>
-
-                                <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
-                                    <p>{offer.availability}</p>
-
-                                    <p>
-                                        Expires{" "}
-                                        {new Intl.DateTimeFormat("en-GB", {
-                                            day: "numeric",
-                                            month: "long",
-                                            year: "numeric",
-                                        }).format(new Date(offer.expires_at))}
+                                    <p className="mt-5 leading-7 text-[#17233B]/65">
+                                        {offer.description}
                                     </p>
 
-                                    <p>{offer.terms}</p>
-                                </div>
+                                    <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
+                                        <p>{offer.availability}</p>
 
-                                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                                    <button
-                                        type="button"
-                                        disabled={activeOfferId === offer.id}
-                                        onClick={() => reviewOffer(offer.id, "approved")}
-                                        className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        Approve
-                                    </button>
+                                        <p>
+                                            Expires{" "}
+                                            {new Intl.DateTimeFormat("en-GB", {
+                                                day: "numeric",
+                                                month: "long",
+                                                year: "numeric",
+                                            }).format(new Date(offer.expires_at))}
+                                        </p>
 
-                                    <button
-                                        type="button"
-                                        disabled={activeOfferId === offer.id}
-                                        onClick={() => reviewOffer(offer.id, "rejected")}
-                                        className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        Reject
-                                    </button>
-                                </div>
-                            </article>
-                        ))}
-                    </section>
+                                        <p>{offer.terms}</p>
+                                    </div>
+
+                                    <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                                        <button
+                                            type="button"
+                                            disabled={activeOfferId === offer.id}
+                                            onClick={() =>
+                                                reviewOffer(offer.id, "approved")
+                                            }
+                                            className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            Approve
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            disabled={activeOfferId === offer.id}
+                                            onClick={() =>
+                                                reviewOffer(offer.id, "rejected")
+                                            }
+                                            className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                        </section>
+
+                        <nav className="mt-8 flex items-center justify-between">
+                            {page > 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const nextPage = page - 1;
+                                        setPage(nextPage);
+                                        loadOffers(search, nextPage);
+                                    }}
+                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
+                                >
+                                    Previous
+                                </button>
+                            ) : (
+                                <span />
+                            )}
+
+                            <span className="text-sm text-[#17233B]/55">
+                                Page {page} of {totalPages}
+                            </span>
+
+                            {page < totalPages ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const nextPage = page + 1;
+                                        setPage(nextPage);
+                                        loadOffers(search, nextPage);
+                                    }}
+                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
+                                >
+                                    Next
+                                </button>
+                            ) : (
+                                <span />
+                            )}
+                        </nav>
+                    </>
                 )}
             </div>
         </main>

@@ -26,7 +26,7 @@ export function AdminNav({ email }: AdminNavProps) {
     return (
         <nav className="rounded-2xl border border-[#17233B]/10 bg-[#17233B] px-5 py-4 text-white">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <Link href="/admin/businesses" className="font-semibold">
+                <Link href="/admin" className="font-semibold">
                     Promotello Admin
                 </Link>
 
@@ -45,9 +45,6 @@ export function AdminNav({ email }: AdminNavProps) {
                         Promotion approvals
                     </Link>
 
-                    <Link href="/dashboard" className="text-white/75 hover:text-white">
-                        Business dashboard
-                    </Link>
 
                     <Link
                         href="/admin/audit-logs"
