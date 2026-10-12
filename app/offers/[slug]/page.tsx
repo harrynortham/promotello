@@ -1,9 +1,9 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
-
-export const instant = false;
+import RedeemButton from "./redeem-button";
 
 type OfferPageProps = {
     params: Promise<{
@@ -11,7 +11,17 @@ type OfferPageProps = {
     }>;
 };
 
-export default async function OfferPage({ params }: OfferPageProps) {
+function LoadingState() {
+    return (
+        <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6">
+            <div className="h-96 w-full max-w-xl animate-pulse rounded-3xl bg-white" />
+        </main>
+    );
+}
+
+async function OfferContent({ params }: OfferPageProps) {
+    await connection();
+
     const { slug } = await params;
     const supabase = await createClient();
 
@@ -28,12 +38,15 @@ export default async function OfferPage({ params }: OfferPageProps) {
         availability,
         expires_at,
         terms,
-        businesses (
-          name
+        businesses!inner (
+          name,
+          approval_status
         )
       `,
         )
         .eq("slug", slug)
+        .eq("approval_status", "approved")
+        .eq("businesses.approval_status", "approved")
         .single();
 
     if (!offer) {
@@ -85,13 +98,16 @@ export default async function OfferPage({ params }: OfferPageProps) {
                     <p>{offer.terms}</p>
                 </div>
 
-                <Button
-                    size="lg"
-                    className="mt-8 w-full rounded-full bg-[#FF593F] text-[#17233B] hover:bg-[#e94d36]"
-                >
-                    Get this deal
-                </Button>
+                <RedeemButton offerId={offer.id} />
             </section>
         </main>
+    );
+}
+
+export default function OfferPage({ params }: OfferPageProps) {
+    return (
+        <Suspense fallback={<LoadingState />}>
+            <OfferContent params={params} />
+        </Suspense>
     );
 }

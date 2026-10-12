@@ -176,6 +176,13 @@ async function OffersContent({ params }: PageProps) {
                                             }).format(new Date(offer.expires_at))}
                                         </p>
                                     </div>
+
+                                    <Link
+                                        href={`/dashboard/${businessId}/offers/${offer.id}/edit`}
+                                        className="mt-5 inline-flex rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                    >
+                                        Edit promotion
+                                    </Link>
                                 </article>
                             );
                         })}
