@@ -25,7 +25,23 @@ export default function Home() {
 
       const { data, error } = await supabase
         .from("offers")
-        .select("*")
+        .select(
+          `
+        id,
+        slug,
+        category,
+        discount,
+        title,
+        description,
+        availability,
+        expires_at,
+        terms,
+        business_id,
+        businesses (
+          name
+        )
+      `,
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -33,9 +49,28 @@ export default function Home() {
         return;
       }
 
-      setOffers(data ?? []);
-    }
+      const formattedOffers: Offer[] = (data ?? []).map((offer) => {
+        const business = Array.isArray(offer.businesses)
+          ? offer.businesses[0]
+          : offer.businesses;
 
+        return {
+          id: offer.id,
+          slug: offer.slug,
+          category: offer.category,
+          discount: offer.discount,
+          title: offer.title,
+          description: offer.description,
+          availability: offer.availability,
+          business: business?.name ?? "Local business",
+          businessId: offer.business_id,
+          expiresAt: offer.expires_at,
+          terms: offer.terms,
+        };
+      });
+
+      setOffers(formattedOffers);
+    }
     loadOffers();
   }, []);
 

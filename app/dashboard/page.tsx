@@ -160,9 +160,21 @@ async function DashboardContent() {
                                         </div>
                                     )}
 
-                                    <p className="mt-7 text-sm font-medium text-[#17233B]/50">
-                                        Promotion tools are coming next.
-                                    </p>
+                                    <div className="mt-7 flex flex-wrap gap-3">
+                                        <Link
+                                            href={`/dashboard/${business.id}/offers/new`}
+                                            className="rounded-xl bg-[#FF593F] px-4 py-2 text-sm font-semibold transition hover:bg-[#E94D36]"
+                                        >
+                                            Create promotion
+                                        </Link>
+
+                                        <Link
+                                            href={`/dashboard/${business.id}/offers`}
+                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                        >
+                                            View promotions
+                                        </Link>
+                                    </div>
                                 </article>
                             );
                         })}

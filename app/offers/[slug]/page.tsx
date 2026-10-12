@@ -6,7 +6,9 @@ import { createClient } from "@/utils/supabase/server";
 export const instant = false;
 
 type OfferPageProps = {
-    params: Promise<{ slug: string }>;
+    params: Promise<{
+        slug: string;
+    }>;
 };
 
 export default async function OfferPage({ params }: OfferPageProps) {
@@ -15,13 +17,32 @@ export default async function OfferPage({ params }: OfferPageProps) {
 
     const { data: offer } = await supabase
         .from("offers")
-        .select("*")
+        .select(
+            `
+        id,
+        slug,
+        category,
+        discount,
+        title,
+        description,
+        availability,
+        expires_at,
+        terms,
+        businesses (
+          name
+        )
+      `,
+        )
         .eq("slug", slug)
         .single();
 
     if (!offer) {
         notFound();
     }
+
+    const business = Array.isArray(offer.businesses)
+        ? offer.businesses[0]
+        : offer.businesses;
 
     const formattedExpiry = new Intl.DateTimeFormat("en-US", {
         month: "long",
@@ -44,7 +65,7 @@ export default async function OfferPage({ params }: OfferPageProps) {
                 </p>
 
                 <p className="mt-2 text-sm font-medium text-[#17233B]/60">
-                    {offer.business}
+                    {business?.name ?? "Local business"}
                 </p>
 
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
