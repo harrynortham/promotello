@@ -13,7 +13,7 @@ type OfferPageProps = {
 
 function LoadingState() {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6">
+        <main className="flex items-center justify-center bg-[#FFF8F0] px-6">
             <div className="h-96 w-full max-w-xl animate-pulse rounded-3xl bg-white" />
         </main>
     );
@@ -64,7 +64,7 @@ async function OfferContent({ params }: OfferPageProps) {
     }).format(new Date(offer.expires_at));
 
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#FFF8F0] px-6">
+        <main className="flex flex-col items-center justify-center gap-3 bg-[#FFF8F0] px-6">
             <Link
                 href="/#offers"
                 className="text-sm font-medium text-[#17233B]/60 hover:text-[#17233B]"
