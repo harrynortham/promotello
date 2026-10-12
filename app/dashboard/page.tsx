@@ -172,7 +172,28 @@ async function DashboardContent() {
                                             href={`/dashboard/${business.id}/offers`}
                                             className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
                                         >
-                                            View promotions
+                                            Promotions
+                                        </Link>
+
+                                        <Link
+                                            href={`/dashboard/${business.id}/redemptions`}
+                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                        >
+                                            Redemptions
+                                        </Link>
+
+                                        <Link
+                                            href={`/dashboard/${business.id}/team`}
+                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                        >
+                                            Manage team
+                                        </Link>
+
+                                        <Link
+                                            href={`/dashboard/${business.id}/edit`}
+                                            className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold transition hover:bg-[#17233B]/5"
+                                        >
+                                            Edit business
                                         </Link>
                                     </div>
                                 </article>

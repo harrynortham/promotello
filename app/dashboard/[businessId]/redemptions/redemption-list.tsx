@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import RedemptionLookup from "./redemption-lookup";
 
 type Redemption = {
     id: string;
@@ -96,6 +97,8 @@ export default function RedemptionList({
                     </p>
                 </header>
 
+                <RedemptionLookup businessId={businessId} />
+
                 {errorMessage && (
                     <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
                         {errorMessage}
@@ -130,8 +133,8 @@ export default function RedemptionList({
 
                                     <span
                                         className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${redemption.redeemed_at
-                                                ? "bg-slate-100 text-slate-700"
-                                                : "bg-emerald-100 text-emerald-800"
+                                            ? "bg-slate-100 text-slate-700"
+                                            : "bg-emerald-100 text-emerald-800"
                                             }`}
                                     >
                                         {redemption.redeemed_at ? "Used" : "Available"}
