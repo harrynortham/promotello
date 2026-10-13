@@ -1,78 +1,116 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
+import { FiMenu, FiX } from "react-icons/fi"
+import { Button } from "@/components/ui/button"
 
 export default function Header() {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     return (
-        <header className="sticky top-0 z-50 backdrop-blur-md">
-            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
-                <Link href="/" aria-label="Home">
-                    <Image
-                        src="/brand/promotello-horizontal-primary.svg"
-                        alt="Promotello Logo"
-                        width={180}
-                        height={48}
+        <>
+            <header className="sticky top-0 z-50 backdrop-blur-md bg-background">
+                <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
+                    <Link href="/" aria-label="Home">
+                        <Image
+                            src="/brand/promotello-horizontal-primary.svg"
+                            alt="Promotello Logo"
+                            width={180}
+                            height={48}
 
-                        priority
-                    />
-                </Link>
+                            priority
+                        />
+                    </Link>
 
-                <nav className="hidden items-center gap-8 md:flex" aria-label="Primary navigation">
-                    <a href="#about" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                        About
-                    </a>
+                    <nav className="hidden items-center gap-8 md:flex" aria-label="Primary navigation">
+                        <Link href="/product" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            How it works
+                        </Link>
 
-                    <a href="#services" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                        Services
-                    </a>
+                        <Link href="/about" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            About us
+                        </Link>
 
-                    <a href="#work" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                        Work
-                    </a>
+                        <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            Log in
+                        </Link>
 
-                    <a
-                        href="#contact"
-                        className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700"
+                        <Button
+                            size="lg"
+                            render={<Link href="/signup" />}
+                            nativeButton={false}
+                        >
+                            Sign up
+                        </Button>
+                    </nav>
+
+                    <button
+                        type="button"
+                        className="rounded-md p-2 text-slate-900 hover:bg-white md:hidden cursor-pointer"
+                        aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                        aria-controls="mobile-menu"
+                        aria-expanded={isMobileMenuOpen}
+                        onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
                     >
-                        Let’s talk
-                    </a>
-                </nav>
+                        {isMobileMenuOpen ? (
+                            <FiX className="size-6" aria-hidden="true" />
+                        ) : (
+                            <FiMenu className="size-6" aria-hidden="true" />
+                        )}
+                    </button>
+                </div>
 
+                <nav
+                    id="mobile-menu"
+                    className={`${isMobileMenuOpen ? "block" : "hidden"} relative z-50 bg-background px-5 pb-5 pt-3 md:hidden`}
+                    aria-label="Mobile navigation"
+                >
+                    <Link
+                        href="/product"
+                        className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        How it works
+                    </Link>
+
+                    <Link
+                        href="/about"
+                        className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        About us
+                    </Link>
+
+                    <Link
+                        href="/login"
+                        className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        Log in
+                    </Link>
+
+                    <Button
+                        size="lg"
+                        render={<Link href="/signup" />}
+                        nativeButton={false}
+                        className="mt-2 w-full"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                        Sign up
+                    </Button>
+                </nav>
+            </header>
+
+            {isMobileMenuOpen && (
                 <button
                     type="button"
-                    className="rounded-md p-2 text-slate-900 hover:bg-slate-100 md:hidden"
-                    aria-label="Open menu"
-                    aria-controls="mobile-menu"
-                    aria-expanded="false"
-                >
-                    menu
-                </button>
-            </div>
-
-            <nav
-                id="mobile-menu"
-                className="hidden border-t border-slate-200 bg-white px-5 pb-5 pt-3 md:hidden"
-                aria-label="Mobile navigation"
-            >
-                <a href="#about" className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                    About
-                </a>
-
-                <a href="#services" className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                    Services
-                </a>
-
-                <a href="#work" className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                    Work
-                </a>
-
-                <a
-                    href="#contact"
-                    className="mt-2 block rounded-full bg-slate-900 px-5 py-3 text-center text-sm font-semibold text-white"
-                >
-                    Let’s talk
-                </a>
-            </nav>
-        </header>
+                    className="fixed inset-x-0 bottom-0 top-20 z-40 bg-slate-950/5 backdrop-blur-xs md:hidden"
+                    aria-label="Close menu"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+        </>
     )
 }
