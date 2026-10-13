@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 type EditBusinessFormProps = {
@@ -28,8 +30,39 @@ type Location = {
     country_code: string;
 };
 
+type BusinessHour = {
+    day_of_week: number;
+    is_closed: boolean;
+    opens_at: string | null;
+    closes_at: string | null;
+};
+
+type DayHours = {
+    isClosed: boolean;
+    opensAt: string;
+    closesAt: string;
+};
+
+const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+];
+
 const inputClassName =
     "mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B] outline-none transition placeholder:text-[#17233B]/40 focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20";
+
+function createDefaultHours(): DayHours[] {
+    return days.map(() => ({
+        isClosed: false,
+        opensAt: "09:00",
+        closesAt: "17:00",
+    }));
+}
 
 export default function EditBusinessForm({
     businessId,
@@ -38,6 +71,7 @@ export default function EditBusinessForm({
 
     const [business, setBusiness] = useState<Business | null>(null);
     const [location, setLocation] = useState<Location | null>(null);
+    const [hours, setHours] = useState<DayHours[]>(createDefaultHours());
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -63,11 +97,31 @@ export default function EditBusinessForm({
                 .limit(1)
                 .maybeSingle();
 
-            if (businessError || locationError || !businessData) {
+            const { data: hoursData, error: hoursError } = await supabase
+                .from("business_hours")
+                .select("day_of_week, is_closed, opens_at, closes_at")
+                .eq("business_id", businessId)
+                .order("day_of_week", { ascending: true });
+
+            if (businessError || locationError || hoursError || !businessData) {
                 setErrorMessage("We couldn't load this business.");
             } else {
                 setBusiness(businessData);
                 setLocation(locationData);
+
+                const loadedHours = createDefaultHours();
+
+                for (const item of (hoursData ?? []) as BusinessHour[]) {
+                    if (item.day_of_week >= 0 && item.day_of_week <= 6) {
+                        loadedHours[item.day_of_week] = {
+                            isClosed: item.is_closed,
+                            opensAt: item.opens_at?.slice(0, 5) ?? "09:00",
+                            closesAt: item.closes_at?.slice(0, 5) ?? "17:00",
+                        };
+                    }
+                }
+
+                setHours(loadedHours);
             }
 
             setIsLoading(false);
@@ -75,6 +129,23 @@ export default function EditBusinessForm({
 
         loadBusiness();
     }, [businessId]);
+
+    function updateHours(
+        dayIndex: number,
+        field: keyof DayHours,
+        value: boolean | string,
+    ) {
+        setHours((current) =>
+            current.map((day, index) =>
+                index === dayIndex
+                    ? {
+                        ...day,
+                        [field]: value,
+                    }
+                    : day,
+            ),
+        );
+    }
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -129,6 +200,26 @@ export default function EditBusinessForm({
             }
         }
 
+        const hoursRows = hours.map((day, dayOfWeek) => ({
+            business_id: businessId,
+            day_of_week: dayOfWeek,
+            is_closed: day.isClosed,
+            opens_at: day.isClosed ? null : day.opensAt,
+            closes_at: day.isClosed ? null : day.closesAt,
+        }));
+
+        const { error: hoursError } = await supabase
+            .from("business_hours")
+            .upsert(hoursRows, {
+                onConflict: "business_id,day_of_week",
+            });
+
+        if (hoursError) {
+            setErrorMessage(hoursError.message);
+            setIsSaving(false);
+            return;
+        }
+
         setIsSaving(false);
         setSaved(true);
         router.refresh();
@@ -159,12 +250,14 @@ export default function EditBusinessForm({
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">
-                <Link
-                    href="/dashboard"
-                    className="text-sm font-semibold text-[#FF593F]"
+                <Button
+                    render={<Link href="/dashboard" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
                 >
                     ← Back to dashboard
-                </Link>
+                </Button>
 
                 <h1 className="mt-8 text-4xl font-semibold tracking-tight">
                     Edit business
@@ -313,6 +406,81 @@ export default function EditBusinessForm({
                         </fieldset>
                     )}
 
+                    <fieldset className="space-y-5 border-t border-[#17233B]/10 pt-8">
+                        <legend className="text-xl font-semibold">
+                            Opening hours
+                        </legend>
+
+                        <p className="text-sm leading-6 text-[#17233B]/65">
+                            Set the hours customers can visit your business.
+                        </p>
+
+                        <div className="space-y-4">
+                            {days.map((day, index) => (
+                                <div
+                                    key={day}
+                                    className="rounded-2xl border border-[#17233B]/10 p-4"
+                                >
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <label className="flex items-center gap-3 text-sm font-semibold">
+                                            <input
+                                                type="checkbox"
+                                                checked={!hours[index].isClosed}
+                                                onChange={(event) =>
+                                                    updateHours(
+                                                        index,
+                                                        "isClosed",
+                                                        !event.target.checked,
+                                                    )
+                                                }
+                                                className="h-4 w-4 rounded border-[#17233B]/30 accent-[#FF593F]"
+                                            />
+                                            {day}
+                                        </label>
+
+                                        {hours[index].isClosed ? (
+                                            <span className="text-sm text-[#17233B]/55">
+                                                Closed
+                                            </span>
+                                        ) : (
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="time"
+                                                    value={hours[index].opensAt}
+                                                    onChange={(event) =>
+                                                        updateHours(
+                                                            index,
+                                                            "opensAt",
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    className="rounded-lg border border-[#17233B]/15 px-3 py-2 text-sm"
+                                                />
+
+                                                <span className="text-sm text-[#17233B]/50">
+                                                    to
+                                                </span>
+
+                                                <input
+                                                    type="time"
+                                                    value={hours[index].closesAt}
+                                                    onChange={(event) =>
+                                                        updateHours(
+                                                            index,
+                                                            "closesAt",
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    className="rounded-lg border border-[#17233B]/15 px-3 py-2 text-sm"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </fieldset>
+
                     {errorMessage && (
                         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                             {errorMessage}
@@ -325,13 +493,15 @@ export default function EditBusinessForm({
                         </p>
                     )}
 
-                    <button
+                    <Button
                         type="submit"
                         disabled={isSaving}
-                        className="w-full rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36] disabled:cursor-not-allowed disabled:opacity-60"
+                        variant="default"
+                        size="lg"
+                        className="w-full"
                     >
                         {isSaving ? "Saving changes…" : "Save changes"}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </main>
