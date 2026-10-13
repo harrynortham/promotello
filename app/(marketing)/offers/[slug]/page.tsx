@@ -80,18 +80,11 @@ async function OfferContent({ params }: OfferPageProps) {
     }).format(new Date(offer.expires_at));
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 md:py-16">
+        <main className="min-h-screen bg-[#FFF8F0] p-6 ">
             <div className="mx-auto w-full max-w-2xl">
-                <Button
-                    render={<Link href="/#offers" />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to all deals
-                </Button>
 
-                <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm md:p-10">
+
+                <section className="rounded-3xl bg-white p-6 shadow-sm md:p-10">
                     {business.logo_url && (
                         <img
                             src={business.logo_url}
@@ -195,6 +188,15 @@ async function OfferContent({ params }: OfferPageProps) {
                         />
                     </div>
                 </section>
+                <Button
+                    render={<Link href="/#offers" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
+                    className="mt-10 mb-6"
+                >
+                    ← Back to all deals
+                </Button>
             </div>
         </main>
     );
