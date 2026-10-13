@@ -16,7 +16,7 @@ type OfferPageProps = {
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
-            <div className="mx-auto h-[550px] w-full max-w-2xl animate-pulse rounded-3xl bg-white" />
+            <div className="mx-auto h-[600px] w-full max-w-2xl animate-pulse rounded-3xl bg-white" />
         </main>
     );
 }
@@ -43,6 +43,7 @@ async function OfferContent({ params }: OfferPageProps) {
         businesses!inner (
           id,
           name,
+          logo_url,
           approval_status
         )
       `,
@@ -79,6 +80,14 @@ async function OfferContent({ params }: OfferPageProps) {
                 </Button>
 
                 <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm md:p-10">
+                    {business.logo_url && (
+                        <img
+                            src={business.logo_url}
+                            alt={`${business.name} logo`}
+                            className="mb-6 h-20 w-20 rounded-2xl object-cover"
+                        />
+                    )}
+
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                             <p className="text-sm font-semibold uppercase tracking-wide text-[#FF593F]">

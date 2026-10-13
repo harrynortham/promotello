@@ -60,6 +60,7 @@ async function BusinessContent({ params }: BusinessPageProps) {
             `
         id,
         name,
+        logo_url,
         category,
         description,
         website_url,
@@ -154,6 +155,14 @@ async function BusinessContent({ params }: BusinessPageProps) {
                 </Button>
 
                 <section className="mt-6 rounded-3xl bg-white p-7 shadow-sm md:p-10">
+                    {business.logo_url && (
+                        <img
+                            src={business.logo_url}
+                            alt={`${business.name} logo`}
+                            className="mb-6 h-24 w-24 rounded-2xl object-cover"
+                        />
+                    )}
+
                     <p className="text-sm font-semibold uppercase tracking-wide text-[#FF593F]">
                         {business.category}
                     </p>

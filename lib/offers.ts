@@ -10,4 +10,5 @@ export type Offer = {
   businessId: string;
   expiresAt: string;
   terms: string;
+  businessLogoUrl?: string | null;
 };

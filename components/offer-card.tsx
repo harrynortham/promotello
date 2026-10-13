@@ -10,6 +10,7 @@ type OfferCardProps = {
     availability: string;
     business?: string;
     businessId?: string;
+    businessLogoUrl?: string | null;
     expiresAt?: string;
 };
 
@@ -21,6 +22,7 @@ export function OfferCard({
     availability,
     business,
     businessId,
+    businessLogoUrl,
     expiresAt,
 }: OfferCardProps) {
     const formattedExpiry = expiresAt
@@ -34,24 +36,38 @@ export function OfferCard({
     return (
         <article className="flex h-full flex-col rounded-2xl border border-[#17233B]/10 bg-white p-6 text-left shadow-sm transition-shadow hover:shadow-md">
             <div className="flex items-start justify-between gap-4">
-                <div>
-                    {business &&
-                        (businessId ? (
-                            <Link
-                                href={`/businesses/${businessId}`}
-                                className="text-sm font-medium text-[#17233B]/60 hover:text-[#FF593F] hover:underline"
-                            >
-                                {business}
-                            </Link>
-                        ) : (
-                            <p className="text-sm font-medium text-[#17233B]/60">
-                                {business}
-                            </p>
-                        ))}
+                <div className="flex items-center gap-3">
+                    {businessLogoUrl ? (
+                        <img
+                            src={businessLogoUrl}
+                            alt={`${business ?? "Business"} logo`}
+                            className="h-12 w-12 rounded-xl object-cover"
+                        />
+                    ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#FF593F]">
+                            {business?.charAt(0).toUpperCase() ?? "B"}
+                        </div>
+                    )}
 
-                    <p className="mt-2 text-sm font-semibold text-[#FF593F]">
-                        {discount}
-                    </p>
+                    <div>
+                        {business &&
+                            (businessId ? (
+                                <Link
+                                    href={`/businesses/${businessId}`}
+                                    className="text-sm font-medium text-[#17233B]/60 hover:text-[#FF593F] hover:underline"
+                                >
+                                    {business}
+                                </Link>
+                            ) : (
+                                <p className="text-sm font-medium text-[#17233B]/60">
+                                    {business}
+                                </p>
+                            ))}
+
+                        <p className="mt-1 text-sm font-semibold text-[#FF593F]">
+                            {discount}
+                        </p>
+                    </div>
                 </div>
 
                 {formattedExpiry && (
@@ -61,7 +77,7 @@ export function OfferCard({
                 )}
             </div>
 
-            <h3 className="mt-4 text-xl font-semibold text-[#17233B]">
+            <h3 className="mt-5 text-xl font-semibold text-[#17233B]">
                 {title}
             </h3>
 

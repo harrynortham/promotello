@@ -17,6 +17,7 @@ type Business = {
     description: string | null;
     website_url: string | null;
     contact_email: string | null;
+    logo_url: string | null;
 };
 
 type Location = {
@@ -72,6 +73,7 @@ export default function EditBusinessForm({
     const [business, setBusiness] = useState<Business | null>(null);
     const [location, setLocation] = useState<Location | null>(null);
     const [hours, setHours] = useState<DayHours[]>(createDefaultHours());
+    const [logoFile, setLogoFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -83,7 +85,9 @@ export default function EditBusinessForm({
 
             const { data: businessData, error: businessError } = await supabase
                 .from("businesses")
-                .select("name, category, description, website_url, contact_email")
+                .select(
+                    "name, category, description, website_url, contact_email, logo_url",
+                )
                 .eq("id", businessId)
                 .single();
 
@@ -159,6 +163,32 @@ export default function EditBusinessForm({
 
         const supabase = createClient();
 
+        let logoUrl = business?.logo_url ?? null;
+
+        if (logoFile) {
+            const fileExtension = logoFile.name.split(".").pop() ?? "jpg";
+            const filePath = `${businessId}/logo-${Date.now()}.${fileExtension}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from("business-logos")
+                .upload(filePath, logoFile, {
+                    upsert: true,
+                    contentType: logoFile.type,
+                });
+
+            if (uploadError) {
+                setErrorMessage(uploadError.message);
+                setIsSaving(false);
+                return;
+            }
+
+            const { data: publicUrlData } = supabase.storage
+                .from("business-logos")
+                .getPublicUrl(filePath);
+
+            logoUrl = publicUrlData.publicUrl;
+        }
+
         const { error: businessError } = await supabase
             .from("businesses")
             .update({
@@ -167,6 +197,7 @@ export default function EditBusinessForm({
                 description: formData.get("description") || null,
                 website_url: formData.get("website") || null,
                 contact_email: formData.get("contactEmail") || null,
+                logo_url: logoUrl,
             })
             .eq("id", businessId);
 
@@ -220,6 +251,16 @@ export default function EditBusinessForm({
             return;
         }
 
+        setBusiness((current) =>
+            current
+                ? {
+                    ...current,
+                    logo_url: logoUrl,
+                }
+                : current,
+        );
+
+        setLogoFile(null);
         setIsSaving(false);
         setSaved(true);
         router.refresh();
@@ -275,6 +316,30 @@ export default function EditBusinessForm({
                         <legend className="text-xl font-semibold">
                             Business details
                         </legend>
+
+                        {business.logo_url && (
+                            <img
+                                src={business.logo_url}
+                                alt={`${business.name} logo`}
+                                className="h-24 w-24 rounded-2xl object-cover"
+                            />
+                        )}
+
+                        <label className="block text-sm font-medium">
+                            Business logo
+                            <input
+                                name="logo"
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(event) =>
+                                    setLogoFile(event.target.files?.[0] ?? null)
+                                }
+                                className="mt-2 block w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm"
+                            />
+                            <span className="mt-2 block text-xs text-[#17233B]/50">
+                                Use a PNG, JPG, or WebP image.
+                            </span>
+                        </label>
 
                         <label className="block text-sm font-medium">
                             Business name

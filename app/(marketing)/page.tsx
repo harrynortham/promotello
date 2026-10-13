@@ -41,6 +41,7 @@ export default function Home() {
             business_id,
             businesses!inner (
               name,
+              logo_url,
               approval_status
             )
           `,
@@ -70,6 +71,7 @@ export default function Home() {
           availability: offer.availability,
           business: business?.name ?? "Local business",
           businessId: offer.business_id,
+          businessLogoUrl: business?.logo_url ?? null,
           expiresAt: offer.expires_at,
           terms: offer.terms,
         };
@@ -201,6 +203,7 @@ export default function Home() {
                 availability={offer.availability}
                 business={offer.business}
                 businessId={offer.businessId}
+                businessLogoUrl={offer.businessLogoUrl}
                 expiresAt={offer.expiresAt}
               />
             ))}
