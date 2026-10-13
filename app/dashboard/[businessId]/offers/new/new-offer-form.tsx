@@ -26,6 +26,7 @@ function createSlug(title: string) {
 export default function NewOfferForm({
     businessId,
 }: NewOfferFormProps) {
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [createdOffer, setCreatedOffer] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -53,6 +54,7 @@ export default function NewOfferForm({
         }
 
         const title = String(formData.get("title") ?? "");
+
         const maxRedemptionsValue = String(
             formData.get("maxRedemptions") ?? "",
         ).trim();
@@ -72,6 +74,50 @@ export default function NewOfferForm({
             return;
         }
 
+        let imageUrl: string | null = null;
+
+        if (imageFile) {
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+            ];
+
+            if (!allowedTypes.includes(imageFile.type)) {
+                setIsSubmitting(false);
+                setErrorMessage("Please upload a JPG, PNG, or WebP image.");
+                return;
+            }
+
+            if (imageFile.size > 5 * 1024 * 1024) {
+                setIsSubmitting(false);
+                setErrorMessage("The image must be smaller than 5MB.");
+                return;
+            }
+
+            const fileExtension = imageFile.name.split(".").pop() ?? "jpg";
+            const filePath = `${businessId}/offer-${crypto.randomUUID()}.${fileExtension}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from("offer-images")
+                .upload(filePath, imageFile, {
+                    upsert: false,
+                    contentType: imageFile.type,
+                });
+
+            if (uploadError) {
+                setIsSubmitting(false);
+                setErrorMessage(uploadError.message);
+                return;
+            }
+
+            const { data: publicUrlData } = supabase.storage
+                .from("offer-images")
+                .getPublicUrl(filePath);
+
+            imageUrl = publicUrlData.publicUrl;
+        }
+
         const { error } = await supabase.from("offers").insert({
             business_id: businessId,
             created_by: user.id,
@@ -85,6 +131,7 @@ export default function NewOfferForm({
             terms: formData.get("terms"),
             max_redemptions: maxRedemptions,
             redemption_count: 0,
+            image_url: imageUrl,
             approval_status: "pending",
         });
 
@@ -96,6 +143,7 @@ export default function NewOfferForm({
         }
 
         form.reset();
+        setImageFile(null);
         setCreatedOffer(true);
     }
 
@@ -172,6 +220,23 @@ export default function NewOfferForm({
                     onSubmit={handleSubmit}
                     className="mt-10 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
                 >
+                    <label className="block text-sm font-medium">
+                        Promotion image
+                        <input
+                            name="image"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(event) =>
+                                setImageFile(event.target.files?.[0] ?? null)
+                            }
+                            className="mt-2 block w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm"
+                        />
+
+                        <span className="mt-2 block text-xs text-[#17233B]/50">
+                            Optional. Use a JPG, PNG, or WebP image under 5MB.
+                        </span>
+                    </label>
+
                     <label className="block text-sm font-medium">
                         Promotion title <span className="text-[#FF593F]">*</span>
                         <input

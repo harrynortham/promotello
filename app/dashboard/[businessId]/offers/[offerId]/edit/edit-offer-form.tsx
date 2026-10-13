@@ -23,6 +23,7 @@ type Offer = {
     approval_status: string;
     max_redemptions: number | null;
     redemption_count: number;
+    image_url: string | null;
 };
 
 const inputClassName =
@@ -35,6 +36,8 @@ export default function EditOfferForm({
     const router = useRouter();
 
     const [offer, setOffer] = useState<Offer | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -57,7 +60,8 @@ export default function EditOfferForm({
             terms,
             approval_status,
             max_redemptions,
-            redemption_count
+            redemption_count,
+            image_url
           `,
                 )
                 .eq("id", offerId)
@@ -117,6 +121,50 @@ export default function EditOfferForm({
 
         const supabase = createClient();
 
+        let imageUrl = removeImage ? null : offer.image_url;
+
+        if (imageFile) {
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+            ];
+
+            if (!allowedTypes.includes(imageFile.type)) {
+                setErrorMessage("Please upload a JPG, PNG, or WebP image.");
+                setIsSaving(false);
+                return;
+            }
+
+            if (imageFile.size > 5 * 1024 * 1024) {
+                setErrorMessage("The image must be smaller than 5MB.");
+                setIsSaving(false);
+                return;
+            }
+
+            const fileExtension = imageFile.name.split(".").pop() ?? "jpg";
+            const filePath = `${businessId}/offer-${crypto.randomUUID()}.${fileExtension}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from("offer-images")
+                .upload(filePath, imageFile, {
+                    upsert: false,
+                    contentType: imageFile.type,
+                });
+
+            if (uploadError) {
+                setErrorMessage(uploadError.message);
+                setIsSaving(false);
+                return;
+            }
+
+            const { data: publicUrlData } = supabase.storage
+                .from("offer-images")
+                .getPublicUrl(filePath);
+
+            imageUrl = publicUrlData.publicUrl;
+        }
+
         const { error } = await supabase
             .from("offers")
             .update({
@@ -128,6 +176,7 @@ export default function EditOfferForm({
                 expires_at: formData.get("expiresAt"),
                 terms: formData.get("terms"),
                 max_redemptions: maxRedemptions,
+                image_url: imageUrl,
             })
             .eq("id", offerId)
             .eq("business_id", businessId);
@@ -240,6 +289,56 @@ export default function EditOfferForm({
                     onSubmit={handleSubmit}
                     className="mt-6 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
                 >
+                    {offer.image_url && !removeImage && (
+                        <div>
+                            <p className="text-sm font-medium">
+                                Current promotion image
+                            </p>
+
+                            <img
+                                src={offer.image_url}
+                                alt={offer.title}
+                                className="mt-3 h-52 w-full rounded-2xl object-cover"
+                            />
+                        </div>
+                    )}
+
+                    <label className="block text-sm font-medium">
+                        Replace promotion image
+                        <input
+                            name="image"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(event) => {
+                                setImageFile(event.target.files?.[0] ?? null);
+                                setRemoveImage(false);
+                            }}
+                            className="mt-2 block w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm"
+                        />
+
+                        <span className="mt-2 block text-xs text-[#17233B]/50">
+                            Use a JPG, PNG, or WebP image under 5MB.
+                        </span>
+                    </label>
+
+                    {offer.image_url && (
+                        <label className="flex items-center gap-3 text-sm font-medium">
+                            <input
+                                type="checkbox"
+                                checked={removeImage}
+                                onChange={(event) => {
+                                    setRemoveImage(event.target.checked);
+
+                                    if (event.target.checked) {
+                                        setImageFile(null);
+                                    }
+                                }}
+                                className="h-4 w-4 accent-[#FF593F]"
+                            />
+                            Remove current image
+                        </label>
+                    )}
+
                     <label className="block text-sm font-medium">
                         Promotion title
                         <input

@@ -102,6 +102,7 @@ async function BusinessContent({ params }: BusinessPageProps) {
         availability,
         expires_at,
         terms,
+        image_url,
         business_id
       `,
         )
@@ -305,6 +306,8 @@ async function BusinessContent({ params }: BusinessPageProps) {
                                     availability={offer.availability}
                                     business={business.name}
                                     businessId={business.id}
+                                    businessLogoUrl={business.logo_url}
+                                    imageUrl={offer.image_url}
                                     expiresAt={offer.expires_at}
                                 />
                             ))}

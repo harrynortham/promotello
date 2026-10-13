@@ -11,3 +11,5 @@ In production change the supabase edge function for emails to use www.promotello
 - login and signup should not be accessible when logged in - take user to dashboard
 - add styling to redeem email in edge function. Do we change email from auth.promotello.com?
 - register domain name to show icon in mail app
+- SEO for Nextjs across all page
+- Blog locally or contentful for integrations and automation

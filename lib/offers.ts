@@ -11,4 +11,5 @@ export type Offer = {
   expiresAt: string;
   terms: string;
   businessLogoUrl?: string | null;
+  imageUrl?: string | null;
 };
