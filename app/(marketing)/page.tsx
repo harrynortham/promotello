@@ -103,7 +103,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#FFFDF9] text-[#17233B]">
-      <section className=" bg-[#FFF4E8]">
+      <section className="bg-[#FFF4E8]">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 py-20 text-center md:py-28">
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#FF593F]">
             Local deals, made easy
@@ -192,7 +192,17 @@ export default function Home() {
         ) : filteredOffers.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2">
             {filteredOffers.map((offer) => (
-              <OfferCard key={offer.slug} {...offer} />
+              <OfferCard
+                key={offer.slug}
+                slug={offer.slug}
+                discount={offer.discount}
+                title={offer.title}
+                description={offer.description}
+                availability={offer.availability}
+                business={offer.business}
+                businessId={offer.businessId}
+                expiresAt={offer.expiresAt}
+              />
             ))}
           </div>
         ) : (

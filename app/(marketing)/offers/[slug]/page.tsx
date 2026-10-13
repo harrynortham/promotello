@@ -41,6 +41,7 @@ async function OfferContent({ params }: OfferPageProps) {
         expires_at,
         terms,
         businesses!inner (
+          id,
           name,
           approval_status
         )
@@ -84,9 +85,21 @@ async function OfferContent({ params }: OfferPageProps) {
                                 {offer.category}
                             </p>
 
-                            <p className="mt-3 text-sm font-medium text-[#17233B]/60">
-                                {business?.name ?? "Local business"}
+                            <p className="mt-3 text-sm text-[#17233B]/60">
+                                Offered by
                             </p>
+
+                            <Button
+                                render={
+                                    <Link href={`/businesses/${business.id}`} />
+                                }
+                                nativeButton={false}
+                                variant="link"
+                                size="sm"
+                                className="mt-1 h-auto p-0"
+                            >
+                                {business.name}
+                            </Button>
                         </div>
 
                         <span className="rounded-full bg-[#FFF4E8] px-4 py-2 text-sm font-semibold text-[#FF593F]">

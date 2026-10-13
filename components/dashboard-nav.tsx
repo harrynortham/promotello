@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 type DashboardNavProps = {
@@ -10,7 +11,6 @@ type DashboardNavProps = {
 };
 
 export function DashboardNav({ email }: DashboardNavProps) {
-    const router = useRouter();
     const [isSigningOut, setIsSigningOut] = useState(false);
 
     async function handleSignOut() {
@@ -19,8 +19,7 @@ export function DashboardNav({ email }: DashboardNavProps) {
         const supabase = createClient();
         await supabase.auth.signOut();
 
-        router.replace("/login");
-        router.refresh();
+        window.location.assign("/login");
     }
 
     return (
@@ -32,12 +31,19 @@ export function DashboardNav({ email }: DashboardNavProps) {
                 Promotello
             </Link>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
                 <Link
                     href="/dashboard"
                     className="font-medium text-[#17233B]/70 hover:text-[#17233B]"
                 >
                     Dashboard
+                </Link>
+
+                <Link
+                    href="/dashboard/redemptions"
+                    className="font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                >
+                    My redemptions
                 </Link>
 
                 <Link
@@ -53,14 +59,15 @@ export function DashboardNav({ email }: DashboardNavProps) {
                     </span>
                 )}
 
-                <button
+                <Button
                     type="button"
+                    size="sm"
+                    variant="outline"
                     onClick={handleSignOut}
                     disabled={isSigningOut}
-                    className="font-semibold text-[#FF593F] hover:text-[#E94D36] disabled:opacity-60"
                 >
                     {isSigningOut ? "Signing out…" : "Sign out"}
-                </button>
+                </Button>
             </div>
         </nav>
     );

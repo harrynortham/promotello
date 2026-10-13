@@ -129,6 +129,14 @@ async function DashboardContent() {
                             >
                                 Explore deals
                             </Button>
+                            <Button
+                                render={<Link href="/dashboard/redemptions" />}
+                                nativeButton={false}
+                                variant="outline"
+                                size="sm"
+                            >
+                                My redemptions
+                            </Button>
 
                             <Button
                                 render={<Link href="/onboarding" />}
