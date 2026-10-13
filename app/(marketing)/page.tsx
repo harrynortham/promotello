@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { OfferCard } from "@/components/offer-card";
 import { createClient } from "@/utils/supabase/client";
@@ -18,6 +18,8 @@ const categories = [
 export default function Home() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All deals");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadOffers() {
@@ -27,25 +29,29 @@ export default function Home() {
         .from("offers")
         .select(
           `
-        id,
-        slug,
-        category,
-        discount,
-        title,
-        description,
-        availability,
-        expires_at,
-        terms,
-        business_id,
-        businesses (
-          name
+            id,
+            slug,
+            category,
+            discount,
+            title,
+            description,
+            availability,
+            expires_at,
+            terms,
+            business_id,
+            businesses!inner (
+              name,
+              approval_status
+            )
+          `,
         )
-      `,
-        )
+        .eq("approval_status", "approved")
+        .eq("businesses.approval_status", "approved")
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error loading offers:", error);
+        setIsLoading(false);
         return;
       }
 
@@ -70,44 +76,93 @@ export default function Home() {
       });
 
       setOffers(formattedOffers);
+      setIsLoading(false);
     }
+
     loadOffers();
   }, []);
 
-  const filteredOffers =
-    selectedCategory === "All deals"
-      ? offers
-      : offers.filter((offer) => offer.category === selectedCategory);
+  const filteredOffers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return offers.filter((offer) => {
+      const matchesCategory =
+        selectedCategory === "All deals" ||
+        offer.category?.toLowerCase() === selectedCategory.toLowerCase();
+
+      const matchesSearch =
+        !query ||
+        offer.title.toLowerCase().includes(query) ||
+        offer.description?.toLowerCase().includes(query) ||
+        offer.business.toLowerCase().includes(query) ||
+        offer.category?.toLowerCase().includes(query);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [offers, selectedCategory, searchQuery]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start ">
+    <main className="min-h-screen bg-[#FFFDF9] text-[#17233B]">
+      <section className=" bg-[#FFF4E8]">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 py-20 text-center md:py-28">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#FF593F]">
+            Local deals, made easy
+          </p>
 
-
-      <section className="flex w-full max-w-md flex-col items-center gap-8 py-20 text-center">
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-[#17233B]">
+          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
             Save on the places you love.
           </h1>
 
-          <p className="text-base leading-7 text-[#17233B]/70">
-            Discover local deals and enjoy more for less.
+          <p className="mt-5 max-w-xl text-base leading-7 text-[#17233B]/70 md:text-lg">
+            Discover great local offers, support independent businesses, and
+            enjoy more for less.
           </p>
 
           <Button
             render={<Link href="#offers" />}
             nativeButton={false}
             size="lg"
+            variant="default"
+            className="mt-8"
           >
             Explore deals
           </Button>
         </div>
       </section>
 
-      <section id="offers" className="w-full max-w-5xl px-6 py-16">
+      <section id="offers" className="mx-auto w-full max-w-6xl px-6 py-16">
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold tracking-tight text-[#17233B]">
-            Explore local deals
-          </h2>
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-medium text-[#FF593F]">
+                Discover something new
+              </p>
+
+              <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+                Explore local deals
+              </h2>
+            </div>
+
+            <p className="text-sm text-[#17233B]/60">
+              {filteredOffers.length}{" "}
+              {filteredOffers.length === 1 ? "deal" : "deals"} available
+            </p>
+          </div>
+
+          <div className="mt-6">
+            <label htmlFor="offer-search" className="sr-only">
+              Search offers
+            </label>
+
+            <input
+              id="offer-search"
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search deals, businesses or categories..."
+              className="w-full rounded-2xl border border-[#17233B]/15 bg-white px-5 py-3 text-sm outline-none transition focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20"
+            />
+          </div>
 
           <div className="mt-5 flex flex-wrap gap-3">
             {categories.map((category) => (
@@ -118,11 +173,6 @@ export default function Home() {
                   selectedCategory === category ? "default" : "outline"
                 }
                 onClick={() => setSelectedCategory(category)}
-                className={
-                  selectedCategory === category
-                    ? "rounded-full bg-[#FF593F] text-[#17233B] hover:bg-[#e94d36]"
-                    : "rounded-full border-[#17233B]/20 text-[#17233B] hover:bg-[#17233B]/5"
-                }
               >
                 {category}
               </Button>
@@ -130,26 +180,49 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {filteredOffers.length > 0 ? (
-            filteredOffers.map((offer) => (
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="h-64 animate-pulse rounded-2xl bg-[#17233B]/5"
+              />
+            ))}
+          </div>
+        ) : filteredOffers.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {filteredOffers.map((offer) => (
               <OfferCard key={offer.slug} {...offer} />
-            ))
-          ) : (
-            <div className="rounded-2xl border border-dashed border-[#17233B]/20 p-8 text-center md:col-span-2">
-              <p className="font-medium text-[#17233B]">
-                No offers in this category yet.
-              </p>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#17233B]/20 bg-white p-10 text-center">
+            <p className="font-medium">
+              {searchQuery
+                ? "No deals match your search."
+                : "No offers in this category yet."}
+            </p>
 
-              <p className="mt-2 text-sm text-[#17233B]/60">
-                Check back soon for new local deals.
-              </p>
-            </div>
-          )}
-        </div>
+            <p className="mt-2 text-sm text-[#17233B]/60">
+              Try another search or check back soon for new local deals.
+            </p>
+
+            {(searchQuery || selectedCategory !== "All deals") && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-5"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("All deals");
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        )}
       </section>
-
-
     </main>
   );
 }

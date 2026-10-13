@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 type RedeemButtonProps = {
     offerId: string;
+};
+
+type RedemptionResult = {
+    redemption_code: string;
 };
 
 export default function RedeemButton({
@@ -40,7 +46,9 @@ export default function RedeemButton({
             return;
         }
 
-        setCode(data.redemption_code);
+        const redemption = data as RedemptionResult;
+
+        setCode(redemption.redemption_code);
         setIsRedeeming(false);
     }
 
@@ -62,14 +70,16 @@ export default function RedeemButton({
 
     return (
         <div className="mt-8">
-            <button
+            <Button
                 type="button"
+                size="lg"
+                variant="default"
                 onClick={redeemOffer}
                 disabled={isRedeeming}
-                className="w-full rounded-full bg-[#FF593F] px-6 py-3 font-semibold text-[#17233B] transition hover:bg-[#E94D36] disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full"
             >
                 {isRedeeming ? "Redeeming…" : "Get this deal"}
-            </button>
+            </Button>
 
             {errorMessage && (
                 <p className="mt-3 text-center text-sm text-red-600">
