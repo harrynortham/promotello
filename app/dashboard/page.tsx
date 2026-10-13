@@ -260,6 +260,19 @@ async function DashboardContent() {
                                                         >
                                                             Analytics
                                                         </Button>
+
+                                                        <Button
+                                                            render={
+                                                                <Link
+                                                                    href={`/dashboard/${business.id}/settings/notifications`}
+                                                                />
+                                                            }
+                                                            nativeButton={false}
+                                                            variant="outline"
+                                                            size="sm"
+                                                        >
+                                                            Notifications
+                                                        </Button>
                                                     </>
                                                 )}
 
