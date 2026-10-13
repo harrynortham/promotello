@@ -12,6 +12,19 @@ type AnalyticsPageProps = {
     }>;
 };
 
+type OfferRow = {
+    id: string;
+    title: string;
+    max_redemptions: number | null;
+    redemption_count: number;
+    approval_status: string;
+};
+
+type RedemptionRow = {
+    offer_id: string;
+    used_at: string | null;
+};
+
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
@@ -30,9 +43,7 @@ function LoadingState() {
     );
 }
 
-async function AnalyticsContent({
-    params,
-}: AnalyticsPageProps) {
+async function AnalyticsContent({ params }: AnalyticsPageProps) {
     await connection();
 
     const { businessId } = await params;
@@ -53,10 +64,7 @@ async function AnalyticsContent({
         .eq("user_id", user.id)
         .maybeSingle();
 
-    if (
-        !membership ||
-        !["owner", "admin"].includes(membership.role)
-    ) {
+    if (!membership || !["owner", "admin"].includes(membership.role)) {
         redirect(`/dashboard/${businessId}/offers`);
     }
 
@@ -78,26 +86,58 @@ async function AnalyticsContent({
 
     const { data: offerRows } = await supabase
         .from("offers")
-        .select("id, title")
-        .eq("business_id", businessId);
+        .select(
+            "id, title, max_redemptions, redemption_count, approval_status",
+        )
+        .eq("business_id", businessId)
+        .order("redemption_count", { ascending: false });
 
-    const offerIds = (offerRows ?? []).map((offer) => offer.id);
+    const offers = (offerRows ?? []) as OfferRow[];
+    const offerIds = offers.map((offer) => offer.id);
 
-    let totalRedemptions = 0;
-    let usedRedemptions = 0;
+    let redemptions: RedemptionRow[] = [];
 
     if (offerIds.length > 0) {
-        const { data: redemptions } = await supabase
+        const { data: redemptionRows } = await supabase
             .from("offer_redemptions")
-            .select("id, used_at")
+            .select("offer_id, used_at")
             .in("offer_id", offerIds);
 
-        totalRedemptions = redemptions?.length ?? 0;
-        usedRedemptions =
-            redemptions?.filter((redemption) => redemption.used_at).length ?? 0;
+        redemptions = (redemptionRows ?? []) as RedemptionRow[];
     }
 
+    const totalRedemptions = redemptions.length;
+
+    const usedRedemptions = redemptions.filter(
+        (redemption) => redemption.used_at,
+    ).length;
+
     const unusedRedemptions = totalRedemptions - usedRedemptions;
+
+    const offerStats = offers.map((offer) => {
+        const offerRedemptions = redemptions.filter(
+            (redemption) => redemption.offer_id === offer.id,
+        );
+
+        const usedCount = offerRedemptions.filter(
+            (redemption) => redemption.used_at,
+        ).length;
+
+        const remaining =
+            offer.max_redemptions === null
+                ? null
+                : Math.max(
+                    offer.max_redemptions - offer.redemption_count,
+                    0,
+                );
+
+        return {
+            ...offer,
+            totalRedemptions: offerRedemptions.length,
+            usedCount,
+            remaining,
+        };
+    });
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
@@ -113,13 +153,13 @@ async function AnalyticsContent({
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            Understand how your offers are performing.
+                            Understand how your promotions are performing.
                         </p>
                     </div>
 
                     <Button
                         render={
-                            <Link href={`/dashboard`} />
+                            <Link href={`/dashboard/${businessId}`} />
                         }
                         nativeButton={false}
                         variant="outline"
@@ -132,35 +172,27 @@ async function AnalyticsContent({
                 <section className="mt-10 grid gap-6 md:grid-cols-3">
                     <article className="rounded-3xl bg-white p-7 shadow-sm">
                         <p className="text-sm text-[#17233B]/60">
-                            Active offers
+                            Active promotions
                         </p>
 
                         <p className="mt-3 text-4xl font-semibold">
                             {activeOffers ?? 0}
                         </p>
-
-                        <p className="mt-2 text-sm text-[#17233B]/55">
-                            Approved promotions
-                        </p>
                     </article>
 
                     <article className="rounded-3xl bg-white p-7 shadow-sm">
                         <p className="text-sm text-[#17233B]/60">
-                            Total redemptions
+                            Total claims
                         </p>
 
                         <p className="mt-3 text-4xl font-semibold">
                             {totalRedemptions}
                         </p>
-
-                        <p className="mt-2 text-sm text-[#17233B]/55">
-                            Customer claims
-                        </p>
                     </article>
 
                     <article className="rounded-3xl bg-white p-7 shadow-sm">
                         <p className="text-sm text-[#17233B]/60">
-                            Used redemptions
+                            Used claims
                         </p>
 
                         <p className="mt-3 text-4xl font-semibold">
@@ -168,84 +200,136 @@ async function AnalyticsContent({
                         </p>
 
                         <p className="mt-2 text-sm text-[#17233B]/55">
-                            Offers accepted in store
+                            {unusedRedemptions} still awaiting use
                         </p>
                     </article>
                 </section>
 
-                <section className="mt-6 grid gap-6 md:grid-cols-2">
-                    <article className="rounded-3xl bg-white p-7 shadow-sm">
-                        <h2 className="text-xl font-semibold">
-                            Redemption activity
-                        </h2>
+                <section className="mt-10 rounded-3xl bg-white p-7 shadow-sm sm:p-8">
+                    <div>
+                        <p className="text-sm font-medium text-[#FF593F]">
+                            Promotion performance
+                        </p>
 
+                        <h2 className="mt-1 text-2xl font-semibold">
+                            Your most popular promotions
+                        </h2>
+                    </div>
+
+                    {offerStats.length === 0 ? (
+                        <p className="mt-6 text-sm text-[#17233B]/60">
+                            No promotion data is available yet.
+                        </p>
+                    ) : (
                         <div className="mt-6 space-y-4">
-                            <div className="flex items-center justify-between rounded-2xl bg-[#FFF8F0] px-4 py-3">
-                                <span className="text-sm text-[#17233B]/65">
-                                    Awaiting use
-                                </span>
+                            {offerStats.map((offer) => (
+                                <div
+                                    key={offer.id}
+                                    className="rounded-2xl bg-[#FFF8F0] p-5"
+                                >
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <h3 className="font-semibold">
+                                                {offer.title}
+                                            </h3>
 
-                                <span className="font-semibold">
-                                    {unusedRedemptions}
-                                </span>
-                            </div>
+                                            <p className="mt-1 text-sm text-[#17233B]/60">
+                                                {offer.approval_status}
+                                            </p>
+                                        </div>
 
-                            <div className="flex items-center justify-between rounded-2xl bg-[#FFF8F0] px-4 py-3">
-                                <span className="text-sm text-[#17233B]/65">
-                                    Marked as used
-                                </span>
+                                        <p className="font-semibold text-[#FF593F]">
+                                            {offer.totalRedemptions}{" "}
+                                            {offer.totalRedemptions === 1
+                                                ? "claim"
+                                                : "claims"}
+                                        </p>
+                                    </div>
 
-                                <span className="font-semibold">
-                                    {usedRedemptions}
-                                </span>
-                            </div>
+                                    <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                                        <div>
+                                            <p className="text-[#17233B]/55">
+                                                Used
+                                            </p>
+
+                                            <p className="mt-1 font-semibold">
+                                                {offer.usedCount}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <p className="text-[#17233B]/55">
+                                                Awaiting use
+                                            </p>
+
+                                            <p className="mt-1 font-semibold">
+                                                {offer.totalRedemptions - offer.usedCount}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <p className="text-[#17233B]/55">
+                                                Remaining
+                                            </p>
+
+                                            <p className="mt-1 font-semibold">
+                                                {offer.remaining === null
+                                                    ? "Unlimited"
+                                                    : offer.remaining}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </article>
+                    )}
+                </section>
 
-                    <article className="rounded-3xl bg-white p-7 shadow-sm">
-                        <h2 className="text-xl font-semibold">
-                            Quick actions
-                        </h2>
+                <section className="mt-6 rounded-3xl bg-white p-7 shadow-sm">
+                    <h2 className="text-xl font-semibold">
+                        Quick actions
+                    </h2>
 
-                        <div className="mt-6 flex flex-wrap gap-3">
-                            <Button
-                                render={
-                                    <Link
-                                        href={`/dashboard/${businessId}/offers/new`}
-                                    />
-                                }
-                                nativeButton={false}
-                                variant="default"
-                                size="sm"
-                            >
-                                Create promotion
-                            </Button>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                        <Button
+                            render={
+                                <Link
+                                    href={`/dashboard/${businessId}/offers/new`}
+                                />
+                            }
+                            nativeButton={false}
+                            variant="default"
+                            size="sm"
+                        >
+                            Create promotion
+                        </Button>
 
-                            <Button
-                                render={
-                                    <Link
-                                        href={`/dashboard/${businessId}/redemptions`}
-                                    />
-                                }
-                                nativeButton={false}
-                                variant="outline"
-                                size="sm"
-                            >
-                                View redemptions
-                            </Button>
+                        <Button
+                            render={
+                                <Link
+                                    href={`/dashboard/${businessId}/redemptions`}
+                                />
+                            }
+                            nativeButton={false}
+                            variant="outline"
+                            size="sm"
+                        >
+                            View redemptions
+                        </Button>
 
-                            <Button
-                                render={
-                                    <Link href={`/dashboard/${businessId}/offers`} />
-                                }
-                                nativeButton={false}
-                                variant="outline"
-                                size="sm"
-                            >
-                                Manage promotions
-                            </Button>
-                        </div>
-                    </article>
+                        <Button
+                            render={
+                                <Link
+                                    href={`/dashboard/${businessId}/offers`}
+                                />
+                            }
+                            nativeButton={false}
+                            variant="outline"
+                            size="sm"
+                        >
+                            Manage promotions
+                        </Button>
+                    </div>
                 </section>
             </div>
         </main>
