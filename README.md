@@ -5,6 +5,9 @@ In production change the supabase edge function for emails to use www.promotello
 ## Todo
 
 -- !!Pay supabase premium and backup database
+-- upgrade supabase to use custom domains
 
 - add styling to invite edge function email
 - login and signup should not be accessible when logged in - take user to dashboard
+- add styling to redeem email in edge function. Do we change email from auth.promotello.com?
+- register domain name to show icon in mail app
