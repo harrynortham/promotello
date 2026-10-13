@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 type NewOfferFormProps = {
@@ -51,6 +53,24 @@ export default function NewOfferForm({
         }
 
         const title = String(formData.get("title") ?? "");
+        const maxRedemptionsValue = String(
+            formData.get("maxRedemptions") ?? "",
+        ).trim();
+
+        const maxRedemptions = maxRedemptionsValue
+            ? Number(maxRedemptionsValue)
+            : null;
+
+        if (
+            maxRedemptions !== null &&
+            (!Number.isInteger(maxRedemptions) || maxRedemptions <= 0)
+        ) {
+            setIsSubmitting(false);
+            setErrorMessage(
+                "The maximum redemptions must be a whole number greater than zero.",
+            );
+            return;
+        }
 
         const { error } = await supabase.from("offers").insert({
             business_id: businessId,
@@ -63,6 +83,8 @@ export default function NewOfferForm({
             availability: formData.get("availability") || "Available now",
             expires_at: formData.get("expiresAt"),
             terms: formData.get("terms"),
+            max_redemptions: maxRedemptions,
+            redemption_count: 0,
             approval_status: "pending",
         });
 
@@ -98,20 +120,21 @@ export default function NewOfferForm({
                     </p>
 
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                        <Link
-                            href="/dashboard"
-                            className="rounded-xl border border-[#17233B]/15 px-6 py-3 font-semibold transition hover:bg-[#17233B]/5"
+                        <Button
+                            render={<Link href="/dashboard" />}
+                            nativeButton={false}
+                            variant="outline"
                         >
                             Back to dashboard
-                        </Link>
+                        </Button>
 
-                        <button
+                        <Button
                             type="button"
+                            variant="default"
                             onClick={() => setCreatedOffer(false)}
-                            className="rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36]"
                         >
                             Create another
-                        </button>
+                        </Button>
                     </div>
                 </section>
             </main>
@@ -121,12 +144,14 @@ export default function NewOfferForm({
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">
-                <Link
-                    href="/dashboard"
-                    className="text-sm font-semibold text-[#FF593F]"
+                <Button
+                    render={<Link href="/dashboard" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
                 >
                     ← Back to dashboard
-                </Link>
+                </Button>
 
                 <div className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -213,10 +238,28 @@ export default function NewOfferForm({
                             name="expiresAt"
                             type="date"
                             required
-                            min={new Date().toISOString().split("T")[0]}
                             className={inputClassName}
                         />
                     </label>
+
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Maximum redemptions
+                            <input
+                                name="maxRedemptions"
+                                type="number"
+                                min="1"
+                                step="1"
+                                className={inputClassName}
+                                placeholder="Leave empty for unlimited"
+                            />
+                        </label>
+
+                        <p className="mt-2 text-xs leading-5 text-[#17233B]/55">
+                            Set a limit to create scarcity or control your campaign budget.
+                            Leave this empty to allow unlimited redemptions.
+                        </p>
+                    </div>
 
                     <label className="block text-sm font-medium">
                         Terms and conditions <span className="text-[#FF593F]">*</span>
@@ -240,13 +283,15 @@ export default function NewOfferForm({
                         </p>
                     )}
 
-                    <button
+                    <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36] disabled:cursor-not-allowed disabled:opacity-60"
+                        variant="default"
+                        size="lg"
+                        className="w-full"
                     >
                         {isSubmitting ? "Submitting promotion…" : "Submit promotion"}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </main>

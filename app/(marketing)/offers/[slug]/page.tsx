@@ -16,7 +16,7 @@ type OfferPageProps = {
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
-            <div className="mx-auto h-[600px] w-full max-w-2xl animate-pulse rounded-3xl bg-white" />
+            <div className="mx-auto h-[650px] w-full max-w-2xl animate-pulse rounded-3xl bg-white" />
         </main>
     );
 }
@@ -40,6 +40,8 @@ async function OfferContent({ params }: OfferPageProps) {
         availability,
         expires_at,
         terms,
+        max_redemptions,
+        redemption_count,
         businesses!inner (
           id,
           name,
@@ -60,6 +62,16 @@ async function OfferContent({ params }: OfferPageProps) {
     const business = Array.isArray(offer.businesses)
         ? offer.businesses[0]
         : offer.businesses;
+
+    const remainingRedemptions =
+        offer.max_redemptions === null
+            ? null
+            : Math.max(
+                offer.max_redemptions - offer.redemption_count,
+                0,
+            );
+
+    const isFullyClaimed = remainingRedemptions === 0;
 
     const formattedExpiry = new Intl.DateTimeFormat("en-GB", {
         day: "numeric",
@@ -146,6 +158,17 @@ async function OfferContent({ params }: OfferPageProps) {
                         </div>
                     </div>
 
+                    {remainingRedemptions !== null && (
+                        <div className="mt-6 rounded-2xl bg-[#FFF4E8] p-4">
+                            <p className="text-sm font-semibold text-[#17233B]">
+                                {isFullyClaimed
+                                    ? "This offer has been fully claimed."
+                                    : `${remainingRedemptions} redemption${remainingRedemptions === 1 ? "" : "s"
+                                    } remaining`}
+                            </p>
+                        </div>
+                    )}
+
                     <div className="mt-8">
                         <h2 className="text-lg font-semibold text-[#17233B]">
                             Terms and conditions
@@ -166,7 +189,10 @@ async function OfferContent({ params }: OfferPageProps) {
                             code to the business when using this offer.
                         </p>
 
-                        <RedeemButton offerId={offer.id} />
+                        <RedeemButton
+                            offerId={offer.id}
+                            isFullyClaimed={isFullyClaimed}
+                        />
                     </div>
                 </section>
             </div>

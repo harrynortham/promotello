@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 type EditOfferFormProps = {
@@ -19,6 +21,8 @@ type Offer = {
     expires_at: string;
     terms: string;
     approval_status: string;
+    max_redemptions: number | null;
+    redemption_count: number;
 };
 
 const inputClassName =
@@ -43,7 +47,18 @@ export default function EditOfferForm({
             const { data, error } = await supabase
                 .from("offers")
                 .select(
-                    "title, category, discount, description, availability, expires_at, terms, approval_status",
+                    `
+            title,
+            category,
+            discount,
+            description,
+            availability,
+            expires_at,
+            terms,
+            approval_status,
+            max_redemptions,
+            redemption_count
+          `,
                 )
                 .eq("id", offerId)
                 .eq("business_id", businessId)
@@ -64,7 +79,38 @@ export default function EditOfferForm({
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
+        if (!offer) {
+            return;
+        }
+
         const formData = new FormData(event.currentTarget);
+        const maxRedemptionsValue = String(
+            formData.get("maxRedemptions") ?? "",
+        ).trim();
+
+        const maxRedemptions = maxRedemptionsValue
+            ? Number(maxRedemptionsValue)
+            : null;
+
+        if (
+            maxRedemptions !== null &&
+            (!Number.isInteger(maxRedemptions) || maxRedemptions <= 0)
+        ) {
+            setErrorMessage(
+                "The maximum redemptions must be a whole number greater than zero.",
+            );
+            return;
+        }
+
+        if (
+            maxRedemptions !== null &&
+            maxRedemptions < offer.redemption_count
+        ) {
+            setErrorMessage(
+                `The limit cannot be lower than the ${offer.redemption_count} redemptions already claimed.`,
+            );
+            return;
+        }
 
         setIsSaving(true);
         setErrorMessage("");
@@ -81,6 +127,7 @@ export default function EditOfferForm({
                 availability: formData.get("availability") || "Available now",
                 expires_at: formData.get("expiresAt"),
                 terms: formData.get("terms"),
+                max_redemptions: maxRedemptions,
             })
             .eq("id", offerId)
             .eq("business_id", businessId);
@@ -151,12 +198,16 @@ export default function EditOfferForm({
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">
-                <Link
-                    href={`/dashboard/${businessId}/offers`}
-                    className="text-sm font-semibold text-[#FF593F]"
+                <Button
+                    render={
+                        <Link href={`/dashboard/${businessId}/offers`} />
+                    }
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
                 >
                     ← Back to promotions
-                </Link>
+                </Button>
 
                 <h1 className="mt-8 text-4xl font-semibold tracking-tight">
                     Edit promotion
@@ -169,9 +220,25 @@ export default function EditOfferForm({
                     </span>
                 </p>
 
+                <div className="mt-5 rounded-2xl bg-white p-5 shadow-sm">
+                    <p className="text-sm text-[#17233B]/60">
+                        Current redemption usage
+                    </p>
+
+                    <p className="mt-1 text-2xl font-semibold">
+                        {offer.redemption_count} claimed
+                    </p>
+
+                    <p className="mt-1 text-sm text-[#17233B]/55">
+                        {offer.max_redemptions === null
+                            ? "Unlimited total redemptions"
+                            : `${offer.max_redemptions} total redemptions allowed`}
+                    </p>
+                </div>
+
                 <form
                     onSubmit={handleSubmit}
-                    className="mt-10 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
+                    className="mt-6 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
                 >
                     <label className="block text-sm font-medium">
                         Promotion title
@@ -238,6 +305,26 @@ export default function EditOfferForm({
                         />
                     </label>
 
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Maximum redemptions
+                            <input
+                                name="maxRedemptions"
+                                type="number"
+                                min={offer.redemption_count || 1}
+                                step="1"
+                                defaultValue={offer.max_redemptions ?? ""}
+                                className={inputClassName}
+                                placeholder="Leave empty for unlimited"
+                            />
+                        </label>
+
+                        <p className="mt-2 text-xs leading-5 text-[#17233B]/55">
+                            The limit cannot be lower than the number already claimed.
+                            Leave empty for unlimited redemptions.
+                        </p>
+                    </div>
+
                     <label className="block text-sm font-medium">
                         Terms and conditions
                         <textarea
@@ -256,22 +343,24 @@ export default function EditOfferForm({
                     )}
 
                     <div className="flex flex-col gap-3 sm:flex-row">
-                        <button
+                        <Button
                             type="submit"
                             disabled={isSaving || isDeleting}
-                            className="rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36] disabled:opacity-60"
+                            variant="default"
+                            size="lg"
                         >
                             {isSaving ? "Saving…" : "Save changes"}
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                             type="button"
                             disabled={isSaving || isDeleting}
                             onClick={handleDelete}
-                            className="rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                            variant="destructive"
+                            size="lg"
                         >
                             {isDeleting ? "Deleting…" : "Delete promotion"}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>

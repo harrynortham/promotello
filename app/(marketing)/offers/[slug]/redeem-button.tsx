@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 
 type RedeemButtonProps = {
     offerId: string;
+    isFullyClaimed?: boolean;
 };
 
 type RedemptionResult = {
@@ -15,6 +16,7 @@ type RedemptionResult = {
 
 export default function RedeemButton({
     offerId,
+    isFullyClaimed = false,
 }: RedeemButtonProps) {
     const [isRedeeming, setIsRedeeming] = useState(false);
     const [code, setCode] = useState("");
@@ -50,6 +52,20 @@ export default function RedeemButton({
 
         setCode(redemption.redemption_code);
         setIsRedeeming(false);
+    }
+
+    if (isFullyClaimed) {
+        return (
+            <div className="mt-8 rounded-2xl bg-[#17233B]/5 p-5 text-center">
+                <p className="font-semibold text-[#17233B]">
+                    This offer has been fully claimed.
+                </p>
+
+                <p className="mt-2 text-sm text-[#17233B]/60">
+                    Please browse our other available deals.
+                </p>
+            </div>
+        );
     }
 
     if (code) {
