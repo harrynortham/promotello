@@ -117,8 +117,8 @@ async function DashboardContent() {
                         </h2>
 
                         <p className="mt-4 max-w-xl leading-7 text-[#17233B]/65">
-                            You can browse approved offers and redeem deals from local
-                            businesses. Your redeemed offers will appear here when available.
+                            Browse approved offers and redeem deals from local businesses.
+                            Your redeemed offers will appear in your account.
                         </p>
 
                         <div className="mt-7 flex flex-wrap gap-3">
@@ -129,6 +129,7 @@ async function DashboardContent() {
                             >
                                 Explore deals
                             </Button>
+
                             <Button
                                 render={<Link href="/dashboard/redemptions" />}
                                 nativeButton={false}
@@ -245,6 +246,19 @@ async function DashboardContent() {
                                                             size="sm"
                                                         >
                                                             Promotions
+                                                        </Button>
+
+                                                        <Button
+                                                            render={
+                                                                <Link
+                                                                    href={`/dashboard/${business.id}/analytics`}
+                                                                />
+                                                            }
+                                                            nativeButton={false}
+                                                            variant="outline"
+                                                            size="sm"
+                                                        >
+                                                            Analytics
                                                         </Button>
                                                     </>
                                                 )}
