@@ -3,9 +3,14 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { OfferCard } from "@/components/offer-card";
 import { createClient } from "@/utils/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type BusinessPageProps = {
     params: Promise<{
@@ -41,8 +46,42 @@ function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
             <div className="mx-auto max-w-5xl">
-                <div className="h-48 animate-pulse rounded-3xl bg-white" />
-                <div className="mt-8 h-64 animate-pulse rounded-3xl bg-white" />
+                <Skeleton className="h-9 w-36 rounded-md" />
+
+                <div className="mt-6 overflow-hidden rounded-xl border border-[#17233B]/10 bg-white p-7 md:p-10">
+                    <Skeleton className="h-24 w-24 rounded-xl" />
+                    <Skeleton className="mt-6 h-5 w-32 rounded-md" />
+                    <Skeleton className="mt-3 h-12 w-72 rounded-md" />
+                    <Skeleton className="mt-5 h-20 w-full max-w-2xl rounded-md" />
+
+                    <Separator className="my-8" />
+
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <div className="space-y-3">
+                            <Skeleton className="h-4 w-24 rounded-md" />
+                            <Skeleton className="h-20 w-64 rounded-md" />
+                            <Skeleton className="h-9 w-36 rounded-md" />
+                        </div>
+
+                        <div className="space-y-3">
+                            <Skeleton className="h-4 w-24 rounded-md" />
+                            <Skeleton className="h-9 w-40 rounded-md" />
+                            <Skeleton className="h-9 w-40 rounded-md" />
+                        </div>
+                    </div>
+
+                    <Skeleton className="mt-8 h-72 w-full rounded-xl" />
+                </div>
+
+                <div className="mt-10">
+                    <Skeleton className="h-5 w-32 rounded-md" />
+                    <Skeleton className="mt-3 h-10 w-72 rounded-md" />
+
+                    <div className="mt-6 grid gap-6 md:grid-cols-2">
+                        <Skeleton className="h-80 w-full rounded-xl" />
+                        <Skeleton className="h-80 w-full rounded-xl" />
+                    </div>
+                </div>
             </div>
         </main>
     );
@@ -155,141 +194,175 @@ async function BusinessContent({ params }: BusinessPageProps) {
                     ← Back to deals
                 </Button>
 
-                <section className="mt-6 rounded-3xl bg-white p-7 shadow-sm md:p-10">
-                    {business.logo_url && (
-                        <img
-                            src={business.logo_url}
-                            alt={`${business.name} logo`}
-                            className="mb-6 h-24 w-24 rounded-2xl object-cover"
-                        />
-                    )}
-
-                    <p className="text-sm font-semibold uppercase tracking-wide text-[#FF593F]">
-                        {business.category}
-                    </p>
-
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        {business.name}
-                    </h1>
-
-                    {business.description && (
-                        <p className="mt-5 max-w-2xl leading-7 text-[#17233B]/70">
-                            {business.description}
-                        </p>
-                    )}
-
-                    <div className="mt-8 grid gap-8 border-t border-[#17233B]/10 pt-6 md:grid-cols-2">
-                        {location && (
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
-                                    Location
-                                </p>
-
-                                <p className="mt-2 text-sm leading-6 text-[#17233B]/70">
-                                    {location.name}
-                                    <br />
-                                    {fullAddress}
-                                </p>
-
-                                {directionsUrl && (
-                                    <Button
-                                        render={
-                                            <a
-                                                href={directionsUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            />
-                                        }
-                                        nativeButton={false}
-                                        variant="outline"
-                                        size="sm"
-                                        className="mt-4"
-                                    >
-                                        Get directions
-                                    </Button>
-                                )}
-                            </div>
+                <Card className="mt-6 border-[#17233B]/10 shadow-sm">
+                    <CardHeader>
+                        {business.logo_url && (
+                            <img
+                                src={business.logo_url}
+                                alt={`${business.name} logo`}
+                                className="mb-5 h-24 w-24 rounded-xl object-cover"
+                            />
                         )}
 
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
-                                Contact
+                        <Badge
+                            variant="outline"
+                            className="w-fit border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                        >
+                            {business.category}
+                        </Badge>
+
+                        <CardTitle className="mt-3 text-4xl tracking-tight">
+                            {business.name}
+                        </CardTitle>
+
+                        {business.description && (
+                            <p className="max-w-2xl leading-7 text-[#17233B]/70">
+                                {business.description}
                             </p>
+                        )}
+                    </CardHeader>
 
-                            <div className="mt-2 space-y-2 text-sm">
-                                {business.website_url && (
-                                    <a
-                                        href={business.website_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="block text-[#FF593F] hover:underline"
-                                    >
-                                        Visit website
-                                    </a>
-                                )}
+                    <CardContent>
+                        <Separator />
 
-                                {business.contact_email && (
-                                    <a
-                                        href={`mailto:${business.contact_email}`}
-                                        className="block text-[#FF593F] hover:underline"
-                                    >
-                                        Contact business
-                                    </a>
-                                )}
-                            </div>
+                        <div className="mt-8 grid gap-8 md:grid-cols-2">
+                            {location && (
+                                <section>
+                                    <h2 className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
+                                        Location
+                                    </h2>
+
+                                    <p className="mt-2 text-sm leading-6 text-[#17233B]/70">
+                                        {location.name}
+                                        <br />
+                                        {fullAddress}
+                                    </p>
+
+                                    {directionsUrl && (
+                                        <Button
+                                            render={
+                                                <a
+                                                    href={directionsUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                />
+                                            }
+                                            nativeButton={false}
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-4"
+                                        >
+                                            Get directions
+                                        </Button>
+                                    )}
+                                </section>
+                            )}
+
+                            <section>
+                                <h2 className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
+                                    Contact
+                                </h2>
+
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {business.website_url && (
+                                        <Button
+                                            render={
+                                                <a
+                                                    href={business.website_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                />
+                                            }
+                                            nativeButton={false}
+                                            variant="link"
+                                            size="sm"
+                                            className="h-auto p-0 text-[#FF593F]"
+                                        >
+                                            Visit website
+                                        </Button>
+                                    )}
+
+                                    {business.contact_email && (
+                                        <Button
+                                            render={
+                                                <a
+                                                    href={`mailto:${business.contact_email}`}
+                                                />
+                                            }
+                                            nativeButton={false}
+                                            variant="link"
+                                            size="sm"
+                                            className="h-auto p-0 text-[#FF593F]"
+                                        >
+                                            Contact business
+                                        </Button>
+                                    )}
+                                </div>
+                            </section>
                         </div>
-                    </div>
 
-                    {hours.length > 0 && (
-                        <div className="mt-8 border-t border-[#17233B]/10 pt-8">
-                            <h2 className="text-xl font-semibold">
-                                Opening hours
-                            </h2>
+                        {hours.length > 0 && (
+                            <>
+                                <Separator className="my-8" />
 
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                {hours.map((day) => (
-                                    <div
-                                        key={day.day_of_week}
-                                        className="flex items-center justify-between rounded-xl bg-[#FFF8F0] px-4 py-3 text-sm"
-                                    >
-                                        <span className="font-medium">
-                                            {dayNames[day.day_of_week]}
-                                        </span>
+                                <section>
+                                    <h2 className="text-xl font-semibold">
+                                        Opening hours
+                                    </h2>
 
-                                        <span className="text-[#17233B]/65">
-                                            {day.is_closed
-                                                ? "Closed"
-                                                : `${formatTime(day.opens_at)} – ${formatTime(
-                                                    day.closes_at,
-                                                )}`}
-                                        </span>
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                        {hours.map((day) => (
+                                            <div
+                                                key={day.day_of_week}
+                                                className="flex items-center justify-between rounded-xl bg-[#FFF8F0] px-4 py-3 text-sm"
+                                            >
+                                                <span className="font-medium">
+                                                    {dayNames[day.day_of_week]}
+                                                </span>
+
+                                                <span className="text-[#17233B]/65">
+                                                    {day.is_closed
+                                                        ? "Closed"
+                                                        : `${formatTime(day.opens_at)} – ${formatTime(
+                                                            day.closes_at,
+                                                        )}`}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                </section>
+                            </>
+                        )}
 
-                    {mapUrl && (
-                        <div className="mt-8 overflow-hidden rounded-2xl border border-[#17233B]/10">
-                            <iframe
-                                title={`Map showing ${business.name}`}
-                                src={mapUrl}
-                                className="h-72 w-full border-0"
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                                allowFullScreen
-                            />
-                        </div>
-                    )}
-                </section>
+                        {mapUrl && (
+                            <>
+                                <Separator className="my-8" />
+
+                                <div className="overflow-hidden rounded-xl border border-[#17233B]/10">
+                                    <iframe
+                                        title={`Map showing ${business.name}`}
+                                        src={mapUrl}
+                                        className="h-72 w-full border-0"
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        allowFullScreen
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <section className="mt-10">
                     <div className="mb-6">
-                        <p className="text-sm font-medium text-[#FF593F]">
+                        <Badge
+                            variant="outline"
+                            className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                        >
                             Available now
-                        </p>
+                        </Badge>
 
-                        <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+                        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
                             Offers from {business.name}
                         </h2>
                     </div>
@@ -313,15 +386,14 @@ async function BusinessContent({ params }: BusinessPageProps) {
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
-                            <p className="font-medium">
-                                This business has no active offers at the moment.
-                            </p>
+                        <Alert className="border-[#17233B]/10 bg-white">
+                            <AlertTitle>No active offers</AlertTitle>
 
-                            <p className="mt-2 text-sm text-[#17233B]/60">
-                                Check back soon for new deals.
-                            </p>
-                        </div>
+                            <AlertDescription>
+                                This business has no active offers at the moment. Check back
+                                soon for new deals.
+                            </AlertDescription>
+                        </Alert>
                     )}
                 </section>
             </div>

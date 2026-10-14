@@ -3,6 +3,17 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 
 export default function SignupPage() {
@@ -61,92 +72,121 @@ export default function SignupPage() {
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
-            <section className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm sm:p-10">
-                <Link
-                    href="/"
-                    className="text-sm font-semibold text-[#FF593F]"
-                >
-                    ← Back to Promotello
-                </Link>
-
-                <h1 className="mt-8 text-3xl font-semibold tracking-tight">
-                    Create your account
-                </h1>
-
-                <p className="mt-3 text-[#17233B]/65">
-                    Create an account to manage your businesses and promotions.
-                </p>
-
-                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                    <label className="block text-sm font-medium">
-                        Email address
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
-                            placeholder="you@example.com"
-                        />
-                    </label>
-
-                    <label className="block text-sm font-medium">
-                        Password
-                        <input
-                            type="password"
-                            required
-                            minLength={8}
-                            value={password}
-                            onChange={(event) => setPassword(event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
-                            placeholder="At least 8 characters"
-                        />
-                    </label>
-
-                    <label className="block text-sm font-medium">
-                        Confirm password
-                        <input
-                            type="password"
-                            required
-                            minLength={8}
-                            value={confirmPassword}
-                            onChange={(event) => setConfirmPassword(event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
-                            placeholder="Repeat your password"
-                        />
-                    </label>
-
-                    {errorMessage && (
-                        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {errorMessage}
-                        </p>
-                    )}
-
-                    {successMessage && (
-                        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {successMessage}
-                        </p>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36] disabled:opacity-60"
+            <Card className="w-full max-w-md border-[#17233B]/10 shadow-sm">
+                <CardHeader>
+                    <Button
+                        render={<Link href="/" />}
+                        nativeButton={false}
+                        variant="link"
+                        size="sm"
+                        className="w-fit p-0 text-[#FF593F]"
                     >
-                        {isSubmitting ? "Creating account…" : "Create account"}
-                    </button>
-                </form>
+                        ← Back to Promotello
+                    </Button>
 
-                <p className="mt-6 text-center text-sm text-[#17233B]/65">
-                    Already have an account?{" "}
-                    <Link
-                        href="/login"
-                        className="font-semibold text-[#FF593F]"
-                    >
-                        Sign in
-                    </Link>
-                </p>
-            </section>
+                    <CardTitle className="mt-5 text-3xl tracking-tight">
+                        Create your account
+                    </CardTitle>
+
+                    <p className="text-[#17233B]/65">
+                        Create an account to manage your businesses and promotions.
+                    </p>
+                </CardHeader>
+
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email address</Label>
+
+                            <Input
+                                id="email"
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
+                                placeholder="you@example.com"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                minLength={8}
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
+                                placeholder="At least 8 characters"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">
+                                Confirm password
+                            </Label>
+
+                            <Input
+                                id="confirmPassword"
+                                type="password"
+                                required
+                                minLength={8}
+                                value={confirmPassword}
+                                onChange={(event) =>
+                                    setConfirmPassword(event.target.value)
+                                }
+                                placeholder="Repeat your password"
+                            />
+                        </div>
+
+                        {errorMessage && (
+                            <Alert variant="destructive">
+                                <AlertTitle>Unable to create account</AlertTitle>
+
+                                <AlertDescription>
+                                    {errorMessage}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {successMessage && (
+                            <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                                <AlertTitle>Account created</AlertTitle>
+
+                                <AlertDescription>
+                                    {successMessage}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            variant="default"
+                            size="lg"
+                            className="w-full"
+                        >
+                            {isSubmitting ? "Creating account…" : "Create account"}
+                        </Button>
+                    </form>
+
+                    <Separator className="my-6" />
+
+                    <p className="text-center text-sm text-[#17233B]/65">
+                        Already have an account?{" "}
+                        <Button
+                            render={<Link href="/login" />}
+                            nativeButton={false}
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 font-semibold text-[#FF593F]"
+                        >
+                            Sign in
+                        </Button>
+                    </p>
+                </CardContent>
+            </Card>
         </main>
     );
 }

@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/utils/supabase/client";
 
 type NewOfferFormProps = {
     businessId: string;
 };
-
-const inputClassName =
-    "mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B] outline-none transition placeholder:text-[#17233B]/40 focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20";
 
 function createSlug(title: string) {
     const baseSlug = title
@@ -53,7 +56,7 @@ export default function NewOfferForm({
             return;
         }
 
-        const title = String(formData.get("title") ?? "");
+        const title = String(formData.get("title") ?? "").trim();
 
         const maxRedemptionsValue = String(
             formData.get("maxRedemptions") ?? "",
@@ -96,6 +99,7 @@ export default function NewOfferForm({
             }
 
             const fileExtension = imageFile.name.split(".").pop() ?? "jpg";
+
             const filePath = `${businessId}/offer-${crypto.randomUUID()}.${fileExtension}`;
 
             const { error: uploadError } = await supabase.storage
@@ -126,7 +130,8 @@ export default function NewOfferForm({
             discount: formData.get("discount"),
             title,
             description: formData.get("description"),
-            availability: formData.get("availability") || "Available now",
+            availability:
+                formData.get("availability") || "Available now",
             expires_at: formData.get("expiresAt"),
             terms: formData.get("terms"),
             max_redemptions: maxRedemptions,
@@ -150,41 +155,43 @@ export default function NewOfferForm({
     if (createdOffer) {
         return (
             <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
-                <section className="w-full max-w-lg rounded-3xl bg-white p-8 text-center shadow-sm sm:p-10">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl">
-                        ✓
-                    </div>
+                <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
+                    <CardContent className="p-8 sm:p-10">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl text-[#FF593F]">
+                            ✓
+                        </div>
 
-                    <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Promotion submitted
-                    </p>
+                        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Promotion submitted
+                        </p>
 
-                    <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-                        Your promotion is pending approval
-                    </h1>
+                        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
+                            Your promotion is pending approval
+                        </h1>
 
-                    <p className="mt-4 leading-7 text-[#17233B]/65">
-                        Once approved, it will become visible to customers.
-                    </p>
+                        <p className="mt-4 leading-7 text-[#17233B]/65">
+                            Once approved, it will become visible to customers.
+                        </p>
 
-                    <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                        <Button
-                            render={<Link href="/business/dashboard" />}
-                            nativeButton={false}
-                            variant="outline"
-                        >
-                            Back to dashboard
-                        </Button>
+                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                            <Button
+                                render={<Link href="/business/dashboard" />}
+                                nativeButton={false}
+                                variant="outline"
+                            >
+                                Back to dashboard
+                            </Button>
 
-                        <Button
-                            type="button"
-                            variant="default"
-                            onClick={() => setCreatedOffer(false)}
-                        >
-                            Create another
-                        </Button>
-                    </div>
-                </section>
+                            <Button
+                                type="button"
+                                variant="default"
+                                onClick={() => setCreatedOffer(false)}
+                            >
+                                Create another
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </main>
         );
     }
@@ -216,148 +223,187 @@ export default function NewOfferForm({
                     </p>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-10 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
-                >
-                    <label className="block text-sm font-medium">
-                        Promotion image
-                        <input
-                            name="image"
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={(event) =>
-                                setImageFile(event.target.files?.[0] ?? null)
-                            }
-                            className="mt-2 block w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm"
-                        />
+                <Card className="mt-10 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Promotion details</CardTitle>
+                    </CardHeader>
 
-                        <span className="mt-2 block text-xs text-[#17233B]/50">
-                            Optional. Use a JPG, PNG, or WebP image under 5MB.
-                        </span>
-                    </label>
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-7">
+                            <div className="space-y-2">
+                                <Label htmlFor="image">Promotion image</Label>
 
-                    <label className="block text-sm font-medium">
-                        Promotion title <span className="text-[#FF593F]">*</span>
-                        <input
-                            name="title"
-                            required
-                            minLength={2}
-                            maxLength={160}
-                            className={inputClassName}
-                            placeholder="20% off your next coffee"
-                        />
-                    </label>
+                                <Input
+                                    id="image"
+                                    name="image"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    onChange={(event) =>
+                                        setImageFile(event.target.files?.[0] ?? null)
+                                    }
+                                />
 
-                    <div className="grid gap-5 sm:grid-cols-2">
-                        <label className="block text-sm font-medium">
-                            Category <span className="text-[#FF593F]">*</span>
-                            <input
-                                name="category"
-                                required
-                                minLength={2}
-                                maxLength={100}
-                                className={inputClassName}
-                                placeholder="Food & drink"
-                            />
-                        </label>
+                                <p className="text-xs text-[#17233B]/50">
+                                    Optional. Use a JPG, PNG or WebP image under 5MB.
+                                </p>
+                            </div>
 
-                        <label className="block text-sm font-medium">
-                            Discount <span className="text-[#FF593F]">*</span>
-                            <input
-                                name="discount"
-                                required
-                                maxLength={100}
-                                className={inputClassName}
-                                placeholder="20% off"
-                            />
-                        </label>
-                    </div>
+                            <Separator />
 
-                    <label className="block text-sm font-medium">
-                        Description <span className="text-[#FF593F]">*</span>
-                        <textarea
-                            name="description"
-                            required
-                            minLength={2}
-                            maxLength={5000}
-                            rows={4}
-                            className={inputClassName}
-                            placeholder="Describe what customers will receive."
-                        />
-                    </label>
+                            <div className="space-y-2">
+                                <Label htmlFor="title">
+                                    Promotion title{" "}
+                                    <span className="text-[#FF593F]">*</span>
+                                </Label>
 
-                    <label className="block text-sm font-medium">
-                        Availability
-                        <input
-                            name="availability"
-                            maxLength={160}
-                            className={inputClassName}
-                            placeholder="Available this weekend"
-                        />
-                    </label>
+                                <Input
+                                    id="title"
+                                    name="title"
+                                    required
+                                    minLength={2}
+                                    maxLength={160}
+                                    placeholder="20% off your next coffee"
+                                />
+                            </div>
 
-                    <label className="block text-sm font-medium">
-                        Expiry date <span className="text-[#FF593F]">*</span>
-                        <input
-                            name="expiresAt"
-                            type="date"
-                            required
-                            className={inputClassName}
-                        />
-                    </label>
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">
+                                        Category{" "}
+                                        <span className="text-[#FF593F]">*</span>
+                                    </Label>
 
-                    <div>
-                        <label className="block text-sm font-medium">
-                            Maximum redemptions
-                            <input
-                                name="maxRedemptions"
-                                type="number"
-                                min="1"
-                                step="1"
-                                className={inputClassName}
-                                placeholder="Leave empty for unlimited"
-                            />
-                        </label>
+                                    <Input
+                                        id="category"
+                                        name="category"
+                                        required
+                                        minLength={2}
+                                        maxLength={100}
+                                        placeholder="Food & drink"
+                                    />
+                                </div>
 
-                        <p className="mt-2 text-xs leading-5 text-[#17233B]/55">
-                            Set a limit to create scarcity or control your campaign budget.
-                            Leave this empty to allow unlimited redemptions.
-                        </p>
-                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="discount">
+                                        Discount{" "}
+                                        <span className="text-[#FF593F]">*</span>
+                                    </Label>
 
-                    <label className="block text-sm font-medium">
-                        Terms and conditions <span className="text-[#FF593F]">*</span>
-                        <textarea
-                            name="terms"
-                            required
-                            minLength={2}
-                            maxLength={5000}
-                            rows={4}
-                            className={inputClassName}
-                            placeholder="Valid once per customer. Cannot be combined with other offers."
-                        />
-                    </label>
+                                    <Input
+                                        id="discount"
+                                        name="discount"
+                                        required
+                                        maxLength={100}
+                                        placeholder="20% off"
+                                    />
+                                </div>
+                            </div>
 
-                    {errorMessage && (
-                        <p
-                            role="alert"
-                            className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
-                        >
-                            {errorMessage}
-                        </p>
-                    )}
+                            <div className="space-y-2">
+                                <Label htmlFor="description">
+                                    Description{" "}
+                                    <span className="text-[#FF593F]">*</span>
+                                </Label>
 
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        variant="default"
-                        size="lg"
-                        className="w-full"
-                    >
-                        {isSubmitting ? "Submitting promotion…" : "Submit promotion"}
-                    </Button>
-                </form>
+                                <Textarea
+                                    id="description"
+                                    name="description"
+                                    required
+                                    minLength={2}
+                                    maxLength={5000}
+                                    rows={5}
+                                    placeholder="Describe what customers will receive."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="availability">Availability</Label>
+
+                                <Input
+                                    id="availability"
+                                    name="availability"
+                                    maxLength={160}
+                                    placeholder="Available this weekend"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="expiresAt">
+                                    Expiry date{" "}
+                                    <span className="text-[#FF593F]">*</span>
+                                </Label>
+
+                                <Input
+                                    id="expiresAt"
+                                    name="expiresAt"
+                                    type="date"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="maxRedemptions">
+                                    Maximum redemptions
+                                </Label>
+
+                                <Input
+                                    id="maxRedemptions"
+                                    name="maxRedemptions"
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    placeholder="Leave empty for unlimited"
+                                />
+
+                                <p className="text-xs leading-5 text-[#17233B]/55">
+                                    Set a limit to create scarcity or control your campaign
+                                    budget. Leave this empty for unlimited redemptions.
+                                </p>
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-2">
+                                <Label htmlFor="terms">
+                                    Terms and conditions{" "}
+                                    <span className="text-[#FF593F]">*</span>
+                                </Label>
+
+                                <Textarea
+                                    id="terms"
+                                    name="terms"
+                                    required
+                                    minLength={2}
+                                    maxLength={5000}
+                                    rows={5}
+                                    placeholder="Valid once per customer. Cannot be combined with other offers."
+                                />
+                            </div>
+
+                            {errorMessage && (
+                                <Alert variant="destructive">
+                                    <AlertTitle>Unable to create promotion</AlertTitle>
+
+                                    <AlertDescription>
+                                        {errorMessage}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                variant="default"
+                                size="lg"
+                                className="w-full"
+                            >
+                                {isSubmitting
+                                    ? "Submitting promotion…"
+                                    : "Submit promotion"}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );

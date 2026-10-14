@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
+
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
 import TeamManagement from "./team-management";
 
@@ -14,8 +16,45 @@ function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
             <div className="mx-auto max-w-4xl">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-64 animate-pulse rounded-3xl bg-white" />
+                <Skeleton className="h-9 w-44 rounded-md" />
+
+                <div className="mt-8">
+                    <Skeleton className="h-5 w-40 rounded-md" />
+                    <Skeleton className="mt-3 h-12 w-72 rounded-md" />
+                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                </div>
+
+                <div className="mt-10 space-y-8">
+                    <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                        <Skeleton className="h-7 w-56 rounded-md" />
+
+                        <div className="mt-6 space-y-5">
+                            <Skeleton className="h-10 w-full rounded-md" />
+                            <Skeleton className="h-10 w-full rounded-md" />
+                            <Skeleton className="h-10 w-40 rounded-md" />
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                        <Skeleton className="h-7 w-48 rounded-md" />
+
+                        <div className="mt-6 space-y-4">
+                            {[1, 2, 3].map((item) => (
+                                <div
+                                    key={item}
+                                    className="flex items-center justify-between gap-4 border-b border-[#17233B]/10 pb-4"
+                                >
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-5 w-48 rounded-md" />
+                                        <Skeleton className="h-5 w-20 rounded-full" />
+                                    </div>
+
+                                    <Skeleton className="h-9 w-28 rounded-md" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     );

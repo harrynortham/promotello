@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
+
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
 import EditBusinessForm from "./edit-business-form";
 
@@ -13,9 +15,42 @@ type PageProps = {
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
-            <div className="mx-auto max-w-2xl">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-[700px] animate-pulse rounded-3xl bg-white" />
+            <div className="mx-auto max-w-3xl">
+                <Skeleton className="h-9 w-44 rounded-md" />
+
+                <div className="mt-8">
+                    <Skeleton className="h-5 w-40 rounded-md" />
+                    <Skeleton className="mt-3 h-12 w-64 rounded-md" />
+                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                </div>
+
+                <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-10">
+                    <Skeleton className="h-7 w-56 rounded-md" />
+
+                    <div className="mt-6 space-y-5">
+                        <Skeleton className="h-24 w-24 rounded-xl" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                        <Skeleton className="h-28 w-full rounded-md" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                    </div>
+
+                    <Skeleton className="my-8 h-px w-full" />
+
+                    <Skeleton className="h-7 w-48 rounded-md" />
+
+                    <div className="mt-6 space-y-4">
+                        {[1, 2, 3, 4].map((item) => (
+                            <Skeleton
+                                key={item}
+                                className="h-16 w-full rounded-xl"
+                            />
+                        ))}
+                    </div>
+
+                    <Skeleton className="mt-8 h-11 w-full rounded-md" />
+                </div>
             </div>
         </main>
     );

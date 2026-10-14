@@ -2,15 +2,26 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { createClient } from "@/utils/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
             <div className="mx-auto max-w-5xl">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-48 animate-pulse rounded-3xl bg-white" />
+                <Skeleton className="h-10 w-64 rounded-md" />
+
+                <div className="mt-8 grid gap-6 md:grid-cols-2">
+                    <Skeleton className="h-64 w-full rounded-xl" />
+                    <Skeleton className="h-64 w-full rounded-xl" />
+                </div>
+
+                <Skeleton className="mt-8 h-48 w-full rounded-xl" />
             </div>
         </main>
     );
@@ -37,29 +48,34 @@ async function CustomerDashboardContent() {
     const hasBusinessAccess = (businessCount ?? 0) > 0;
 
     return (
-        <main className="px-6 py-6">
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
             <div className="mx-auto max-w-5xl">
-                <section className="rounded-3xl bg-white p-8 shadow-sm">
-                    <p className="text-sm font-medium text-[#FF593F]">
-                        Customer dashboard
-                    </p>
+                <Card className="border-[#17233B]/10 shadow-none">
+                    <CardHeader>
+                        <Badge
+                            variant="outline"
+                            className="w-fit border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                        >
+                            Customer dashboard
+                        </Badge>
 
-                    <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#17233B]">
-                        Welcome back
-                    </h1>
+                        <CardTitle className="mt-3 text-3xl tracking-tight text-[#17233B]">
+                            Welcome back
+                        </CardTitle>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Discover local deals, manage your redemptions and update your
-                        account.
-                    </p>
-
-                    {user.email && (
-                        <p className="mt-4 text-sm text-[#17233B]/50">
-                            Signed in as {user.email}
+                        <p className="text-[#17233B]/65">
+                            Discover local deals, manage your redemptions and update your
+                            account.
                         </p>
-                    )}
 
-                    <div className="mt-8 flex flex-wrap gap-3">
+                        {user.email && (
+                            <p className="text-sm text-[#17233B]/50">
+                                Signed in as {user.email}
+                            </p>
+                        )}
+                    </CardHeader>
+
+                    <CardContent className="flex flex-wrap gap-3">
                         <Button
                             render={<Link href="/#offers" />}
                             nativeButton={false}
@@ -88,74 +104,90 @@ async function CustomerDashboardContent() {
                                 Business dashboard
                             </Button>
                         )}
-                    </div>
-                </section>
+                    </CardContent>
+                </Card>
 
                 <section className="mt-8 grid gap-6 md:grid-cols-2">
-                    <article className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-                        <p className="text-sm font-medium text-[#FF593F]">
-                            Find your next deal
-                        </p>
+                    <Card className="border-[#17233B]/10 shadow-none">
+                        <CardHeader>
+                            <Badge
+                                variant="outline"
+                                className="w-fit border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                            >
+                                Find your next deal
+                            </Badge>
 
-                        <h2 className="mt-2 text-xl font-semibold text-[#17233B]">
-                            Save on the places you love
-                        </h2>
+                            <CardTitle className="text-xl text-[#17233B]">
+                                Save on the places you love
+                            </CardTitle>
+                        </CardHeader>
 
-                        <p className="mt-3 text-sm leading-6 text-[#17233B]/65">
-                            Explore approved local promotions and redeem deals directly from
-                            participating businesses.
-                        </p>
+                        <CardContent>
+                            <p className="text-sm leading-6 text-[#17233B]/65">
+                                Explore approved local promotions and redeem deals directly
+                                from participating businesses.
+                            </p>
 
-                        <div className="mt-6">
                             <Button
                                 render={<Link href="/#offers" />}
                                 nativeButton={false}
                                 variant="default"
                                 size="sm"
+                                className="mt-6"
                             >
                                 Explore deals
                             </Button>
-                        </div>
-                    </article>
+                        </CardContent>
+                    </Card>
 
-                    <article className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-                        <p className="text-sm font-medium text-[#FF593F]">
-                            Your activity
-                        </p>
+                    <Card className="border-[#17233B]/10 shadow-none">
+                        <CardHeader>
+                            <Badge
+                                variant="outline"
+                                className="w-fit border-[#17233B]/20 bg-[#17233B]/5 text-[#17233B]"
+                            >
+                                Your activity
+                            </Badge>
 
-                        <h2 className="mt-2 text-xl font-semibold text-[#17233B]">
-                            View your redemptions
-                        </h2>
+                            <CardTitle className="text-xl text-[#17233B]">
+                                View your redemptions
+                            </CardTitle>
+                        </CardHeader>
 
-                        <p className="mt-3 text-sm leading-6 text-[#17233B]/65">
-                            Keep track of the deals you have redeemed and show your codes to
-                            businesses.
-                        </p>
+                        <CardContent>
+                            <p className="text-sm leading-6 text-[#17233B]/65">
+                                Keep track of the deals you have redeemed and show your codes
+                                to businesses.
+                            </p>
 
-                        <div className="mt-6">
                             <Button
                                 render={<Link href="/dashboard/redemptions" />}
                                 nativeButton={false}
                                 variant="outline"
                                 size="sm"
+                                className="mt-6"
                             >
                                 View redemptions
                             </Button>
-                        </div>
-                    </article>
+                        </CardContent>
+                    </Card>
                 </section>
 
-                <section className="mt-8 rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-                    <h2 className="text-xl font-semibold text-[#17233B]">
-                        Are you a business owner?
-                    </h2>
+                <Card className="mt-8 border-[#17233B]/10 shadow-none">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-[#17233B]">
+                            Are you a business owner?
+                        </CardTitle>
 
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-[#17233B]/65">
-                        Create a business profile and start publishing promotions for
-                        customers in your area.
-                    </p>
+                        <p className="text-sm leading-6 text-[#17233B]/65">
+                            Create a business profile and start publishing promotions for
+                            customers in your area.
+                        </p>
+                    </CardHeader>
 
-                    <div className="mt-6">
+                    <CardContent>
+                        <Separator className="mb-6" />
+
                         <Button
                             render={<Link href="/onboarding" />}
                             nativeButton={false}
@@ -164,8 +196,8 @@ async function CustomerDashboardContent() {
                         >
                             Add a business
                         </Button>
-                    </div>
-                </section>
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );

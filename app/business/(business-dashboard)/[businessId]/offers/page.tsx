@@ -1,16 +1,23 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/utils/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
 };
+
+type OfferStatus = "pending" | "approved" | "rejected" | "suspended";
 
 type Offer = {
     id: string;
@@ -21,7 +28,8 @@ type Offer = {
     availability: string;
     expires_at: string;
     terms: string;
-    approval_status: "pending" | "approved" | "rejected" | "suspended";
+    image_url: string | null;
+    approval_status: OfferStatus;
     max_redemptions: number | null;
     redemption_count: number;
 };
@@ -36,21 +44,96 @@ type Membership = {
     businesses: BusinessSummary | BusinessSummary[] | null;
 };
 
-const statusStyles: Record<Offer["approval_status"], string> = {
-    pending: "bg-amber-100 text-amber-800",
-    approved: "bg-emerald-100 text-emerald-800",
-    rejected: "bg-red-100 text-red-800",
-    suspended: "bg-slate-100 text-slate-700",
+const statusLabels: Record<OfferStatus, string> = {
+    pending: "Pending approval",
+    approved: "Approved",
+    rejected: "Rejected",
+    suspended: "Suspended",
+};
+
+const statusClasses: Record<OfferStatus, string> = {
+    pending: "border-amber-200 bg-amber-100 text-amber-800",
+    approved: "border-emerald-200 bg-emerald-100 text-emerald-800",
+    rejected: "border-red-200 bg-red-100 text-red-800",
+    suspended: "border-slate-200 bg-slate-100 text-slate-700",
 };
 
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
-            <div className="mx-auto max-w-4xl">
-                <div className="h-10 w-72 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-48 animate-pulse rounded-3xl bg-white" />
+            <div className="mx-auto max-w-5xl">
+                <Skeleton className="h-9 w-44 rounded-md" />
+
+                <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <Skeleton className="h-5 w-32 rounded-md" />
+                        <Skeleton className="mt-3 h-12 w-72 rounded-md" />
+                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                    </div>
+
+                    <Skeleton className="h-9 w-40 rounded-md" />
+                </div>
+
+                <div className="mt-10 space-y-5">
+                    {[1, 2, 3].map((item) => (
+                        <div
+                            key={item}
+                            className="overflow-hidden rounded-xl border border-[#17233B]/10 bg-white"
+                        >
+                            <Skeleton className="h-48 w-full rounded-none" />
+
+                            <div className="space-y-5 p-6 sm:p-8">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <Skeleton className="h-4 w-24 rounded-md" />
+                                        <Skeleton className="mt-3 h-8 w-64 rounded-md" />
+                                        <Skeleton className="mt-2 h-4 w-32 rounded-md" />
+                                    </div>
+
+                                    <Skeleton className="h-6 w-28 rounded-full" />
+                                </div>
+
+                                <Skeleton className="h-16 w-full rounded-md" />
+
+                                <div className="rounded-xl bg-[#FFF8F0] p-4">
+                                    <Skeleton className="h-5 w-56 rounded-md" />
+                                    <Skeleton className="mt-3 h-2 w-full rounded-full" />
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Skeleton className="h-9 w-32 rounded-md" />
+                                    <Skeleton className="h-9 w-32 rounded-md" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </main>
+    );
+}
+
+function formatExpiry(date: string) {
+    return new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    }).format(new Date(date));
+}
+
+function getUsagePercentage(offer: Offer) {
+    if (
+        offer.max_redemptions === null ||
+        offer.max_redemptions <= 0
+    ) {
+        return 0;
+    }
+
+    return Math.min(
+        Math.round(
+            (offer.redemption_count / offer.max_redemptions) * 100,
+        ),
+        100,
     );
 }
 
@@ -73,13 +156,14 @@ async function OffersContent({ params }: PageProps) {
         .select("role, businesses (id, name)")
         .eq("business_id", businessId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
     if (!membershipData) {
         notFound();
     }
 
     const membership = membershipData as unknown as Membership;
+
     const canManageOffers =
         membership.role === "owner" || membership.role === "admin";
 
@@ -99,6 +183,7 @@ async function OffersContent({ params }: PageProps) {
         availability,
         expires_at,
         terms,
+        image_url,
         approval_status,
         max_redemptions,
         redemption_count
@@ -111,7 +196,7 @@ async function OffersContent({ params }: PageProps) {
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-5xl">
                 <Button
                     render={<Link href="/business/dashboard" />}
                     nativeButton={false}
@@ -132,7 +217,7 @@ async function OffersContent({ params }: PageProps) {
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            Review promotions submitted by this business.
+                            Manage promotions submitted by this business.
                         </p>
                     </div>
 
@@ -151,34 +236,41 @@ async function OffersContent({ params }: PageProps) {
                 </header>
 
                 {error ? (
-                    <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-                        We couldn’t load your promotions. Please refresh and try again.
-                    </div>
+                    <Alert variant="destructive" className="mt-10">
+                        <AlertTitle>Unable to load promotions</AlertTitle>
+
+                        <AlertDescription>
+                            We couldn’t load your promotions. Please refresh and try again.
+                        </AlertDescription>
+                    </Alert>
                 ) : typedOffers.length === 0 ? (
-                    <section className="mt-10 rounded-3xl bg-white p-8 text-center shadow-sm sm:p-12">
-                        <h2 className="text-2xl font-semibold">
-                            No promotions yet
-                        </h2>
+                    <Card className="mt-10 border-[#17233B]/10 text-center">
+                        <CardContent className="p-10 sm:p-14">
+                            <h2 className="text-2xl font-semibold">
+                                No promotions yet
+                            </h2>
 
-                        <p className="mx-auto mt-3 max-w-md leading-7 text-[#17233B]/65">
-                            {canManageOffers
-                                ? "Create your first promotion and submit it for approval."
-                                : "This business has not created any promotions yet."}
-                        </p>
+                            <p className="mx-auto mt-3 max-w-md leading-7 text-[#17233B]/65">
+                                {canManageOffers
+                                    ? "Create your first promotion and submit it for approval."
+                                    : "This business has not created any promotions yet."}
+                            </p>
 
-                        {canManageOffers && (
-                            <Button
-                                render={
-                                    <Link href={`/business/${businessId}/offers/new`} />
-                                }
-                                nativeButton={false}
-                                variant="default"
-                                className="mt-7"
-                            >
-                                Create promotion
-                            </Button>
-                        )}
-                    </section>
+                            {canManageOffers && (
+                                <Button
+                                    render={
+                                        <Link href={`/business/${businessId}/offers/new`} />
+                                    }
+                                    nativeButton={false}
+                                    variant="default"
+                                    size="sm"
+                                    className="mt-7"
+                                >
+                                    Create promotion
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
                 ) : (
                     <section className="mt-10 space-y-5">
                         {typedOffers.map((offer) => {
@@ -191,86 +283,119 @@ async function OffersContent({ params }: PageProps) {
                                     );
 
                             const isFullyClaimed = remainingRedemptions === 0;
+                            const usagePercentage = getUsagePercentage(offer);
 
                             return (
-                                <article
+                                <Card
                                     key={offer.id}
-                                    className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
+                                    className="overflow-hidden border-[#17233B]/10"
                                 >
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-[#FF593F]">
-                                                {offer.discount}
-                                            </p>
+                                    {offer.image_url && (
+                                        <div className="aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
+                                            <img
+                                                src={offer.image_url}
+                                                alt={offer.title}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                    )}
 
-                                            <h2 className="mt-1 text-2xl font-semibold">
-                                                {offer.title}
-                                            </h2>
+                                    <CardHeader>
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-[#FF593F]">
+                                                    {offer.discount}
+                                                </p>
 
-                                            <p className="mt-2 text-sm text-[#17233B]/55">
-                                                {offer.category}
+                                                <h2 className="mt-1 text-2xl font-semibold">
+                                                    {offer.title}
+                                                </h2>
+
+                                                <p className="mt-2 text-sm text-[#17233B]/55">
+                                                    {offer.category}
+                                                </p>
+                                            </div>
+
+                                            <Badge
+                                                variant="outline"
+                                                className={`w-fit ${statusClasses[offer.approval_status]}`}
+                                            >
+                                                {statusLabels[offer.approval_status]}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+
+                                    <CardContent>
+                                        <p className="leading-7 text-[#17233B]/65">
+                                            {offer.description}
+                                        </p>
+
+                                        <div className="mt-6 grid gap-3 border-t border-[#17233B]/10 pt-5 text-sm text-[#17233B]/60 sm:grid-cols-2">
+                                            <p>{offer.availability}</p>
+
+                                            <p>
+                                                Expires {formatExpiry(offer.expires_at)}
                                             </p>
                                         </div>
 
-                                        <span
-                                            className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[offer.approval_status]
-                                                }`}
-                                        >
-                                            {offer.approval_status}
-                                        </span>
-                                    </div>
+                                        <div className="mt-6 rounded-xl bg-[#FFF8F0] p-4">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                <p className="font-semibold">
+                                                    {offer.max_redemptions === null
+                                                        ? "Unlimited redemptions"
+                                                        : isFullyClaimed
+                                                            ? "Fully claimed"
+                                                            : `${remainingRedemptions} redemption${remainingRedemptions === 1 ? "" : "s"
+                                                            } remaining`}
+                                                </p>
 
-                                    <p className="mt-5 leading-7 text-[#17233B]/65">
-                                        {offer.description}
-                                    </p>
+                                                {offer.max_redemptions !== null && (
+                                                    <p className="text-sm text-[#17233B]/60">
+                                                        {offer.redemption_count} of{" "}
+                                                        {offer.max_redemptions} claimed
+                                                    </p>
+                                                )}
+                                            </div>
 
-                                    <div className="mt-6 grid gap-3 border-t border-[#17233B]/10 pt-5 text-sm text-[#17233B]/60 sm:grid-cols-2">
-                                        <p>{offer.availability}</p>
-
-                                        <p>
-                                            Expires{" "}
-                                            {new Intl.DateTimeFormat("en-GB", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric",
-                                            }).format(new Date(offer.expires_at))}
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-5 rounded-2xl bg-[#FFF8F0] p-4">
-                                        <p className="text-sm font-semibold text-[#17233B]">
-                                            {offer.max_redemptions === null
-                                                ? "Unlimited redemptions"
-                                                : isFullyClaimed
-                                                    ? "Fully claimed"
-                                                    : `${remainingRedemptions} redemption${remainingRedemptions === 1 ? "" : "s"
-                                                    } remaining`}
-                                        </p>
-
-                                        {offer.max_redemptions !== null && (
-                                            <p className="mt-1 text-xs text-[#17233B]/60">
-                                                {offer.redemption_count} of{" "}
-                                                {offer.max_redemptions} claimed
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {canManageOffers && (
-                                        <Button
-                                            render={
-                                                <Link
-                                                    href={`/business/${businessId}/offers/${offer.id}/edit`}
+                                            {offer.max_redemptions !== null && (
+                                                <Progress
+                                                    value={usagePercentage}
+                                                    className="mt-3 h-2"
                                                 />
-                                            }
-                                            nativeButton={false}
-                                            variant="outline"
-                                            size="sm"
-                                            className="mt-6"
-                                        >
-                                            Edit promotion
-                                        </Button>
-                                    )}
-                                </article>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-6 flex flex-wrap gap-3">
+                                            <Button
+                                                render={
+                                                    <Link
+                                                        href={`/offers/${offer.id}`}
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                View promotion
+                                            </Button>
+
+                                            {canManageOffers && (
+                                                <Button
+                                                    render={
+                                                        <Link
+                                                            href={`/business/${businessId}/offers/${offer.id}/edit`}
+                                                        />
+                                                    }
+                                                    nativeButton={false}
+                                                    variant="default"
+                                                    size="sm"
+                                                >
+                                                    Edit promotion
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             );
                         })}
                     </section>

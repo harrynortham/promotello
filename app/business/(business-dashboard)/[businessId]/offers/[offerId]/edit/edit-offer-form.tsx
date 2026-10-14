@@ -4,7 +4,27 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/utils/supabase/client";
 
 type EditOfferFormProps = {
@@ -26,9 +46,6 @@ type Offer = {
     image_url: string | null;
 };
 
-const inputClassName =
-    "mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B] outline-none transition placeholder:text-[#17233B]/40 focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20";
-
 export default function EditOfferForm({
     businessId,
     offerId,
@@ -41,6 +58,7 @@ export default function EditOfferForm({
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
@@ -71,7 +89,7 @@ export default function EditOfferForm({
             if (error || !data) {
                 setErrorMessage("We couldn't load this promotion.");
             } else {
-                setOffer(data);
+                setOffer(data as Offer);
             }
 
             setIsLoading(false);
@@ -83,11 +101,11 @@ export default function EditOfferForm({
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (!offer) {
-            return;
-        }
+        if (!offer) return;
 
-        const formData = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+
         const maxRedemptionsValue = String(
             formData.get("maxRedemptions") ?? "",
         ).trim();
@@ -120,7 +138,6 @@ export default function EditOfferForm({
         setErrorMessage("");
 
         const supabase = createClient();
-
         let imageUrl = removeImage ? null : offer.image_url;
 
         if (imageFile) {
@@ -172,7 +189,8 @@ export default function EditOfferForm({
                 category: formData.get("category"),
                 discount: formData.get("discount"),
                 description: formData.get("description"),
-                availability: formData.get("availability") || "Available now",
+                availability:
+                    formData.get("availability") || "Available now",
                 expires_at: formData.get("expiresAt"),
                 terms: formData.get("terms"),
                 max_redemptions: maxRedemptions,
@@ -193,14 +211,6 @@ export default function EditOfferForm({
     }
 
     async function handleDelete() {
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this promotion?",
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         setIsDeleting(true);
         setErrorMessage("");
 
@@ -215,6 +225,7 @@ export default function EditOfferForm({
         if (error) {
             setErrorMessage(error.message);
             setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
             return;
         }
 
@@ -226,7 +237,8 @@ export default function EditOfferForm({
         return (
             <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
                 <div className="mx-auto max-w-2xl">
-                    <div className="h-10 animate-pulse rounded bg-white" />
+                    <div className="h-10 animate-pulse rounded-md bg-white" />
+                    <div className="mt-6 h-96 animate-pulse rounded-xl bg-white" />
                 </div>
             </main>
         );
@@ -235,11 +247,16 @@ export default function EditOfferForm({
     if (!offer) {
         return (
             <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
-                <div className="mx-auto max-w-2xl rounded-3xl bg-white p-8">
-                    <p className="text-red-700">
-                        {errorMessage || "Promotion not found."}
-                    </p>
-                </div>
+                <Card className="mx-auto max-w-2xl border-red-200">
+                    <CardContent className="p-8">
+                        <Alert variant="destructive">
+                            <AlertTitle>Promotion unavailable</AlertTitle>
+                            <AlertDescription>
+                                {errorMessage || "Promotion not found."}
+                            </AlertDescription>
+                        </Alert>
+                    </CardContent>
+                </Card>
             </main>
         );
     }
@@ -258,210 +275,284 @@ export default function EditOfferForm({
                     ← Back to promotions
                 </Button>
 
-                <h1 className="mt-8 text-4xl font-semibold tracking-tight">
-                    Edit promotion
-                </h1>
-
-                <p className="mt-3 text-[#17233B]/65">
-                    Status:{" "}
-                    <span className="font-semibold capitalize">
-                        {offer.approval_status}
-                    </span>
-                </p>
-
-                <div className="mt-5 rounded-2xl bg-white p-5 shadow-sm">
-                    <p className="text-sm text-[#17233B]/60">
-                        Current redemption usage
+                <div className="mt-8">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Promotion management
                     </p>
 
-                    <p className="mt-1 text-2xl font-semibold">
-                        {offer.redemption_count} claimed
-                    </p>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                        Edit promotion
+                    </h1>
 
-                    <p className="mt-1 text-sm text-[#17233B]/55">
-                        {offer.max_redemptions === null
-                            ? "Unlimited total redemptions"
-                            : `${offer.max_redemptions} total redemptions allowed`}
-                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <p className="text-[#17233B]/65">Current status:</p>
+
+                        <Badge variant="outline" className="capitalize">
+                            {offer.approval_status}
+                        </Badge>
+                    </div>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-6 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Redemption usage</CardTitle>
+                    </CardHeader>
+
+                    <CardContent>
+                        <p className="text-2xl font-semibold">
+                            {offer.redemption_count} claimed
+                        </p>
+
+                        <p className="mt-1 text-sm text-[#17233B]/55">
+                            {offer.max_redemptions === null
+                                ? "Unlimited total redemptions"
+                                : `${offer.max_redemptions} total redemptions allowed`}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="mt-6 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Promotion details</CardTitle>
+                    </CardHeader>
+
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-7">
+                            {offer.image_url && !removeImage && (
+                                <div className="space-y-3">
+                                    <Label>Current promotion image</Label>
+
+                                    <img
+                                        src={offer.image_url}
+                                        alt={offer.title}
+                                        className="h-52 w-full rounded-xl object-cover"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <Label htmlFor="image">
+                                    {offer.image_url
+                                        ? "Replace promotion image"
+                                        : "Add promotion image"}
+                                </Label>
+
+                                <Input
+                                    id="image"
+                                    name="image"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    onChange={(event) => {
+                                        setImageFile(event.target.files?.[0] ?? null);
+                                        setRemoveImage(false);
+                                    }}
+                                />
+
+                                <p className="text-xs text-[#17233B]/50">
+                                    Use a JPG, PNG or WebP image under 5MB.
+                                </p>
+                            </div>
+
+                            {offer.image_url && (
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        id="removeImage"
+                                        checked={removeImage}
+                                        onCheckedChange={(checked) => {
+                                            const shouldRemove = checked === true;
+                                            setRemoveImage(shouldRemove);
+
+                                            if (shouldRemove) {
+                                                setImageFile(null);
+                                            }
+                                        }}
+                                    />
+
+                                    <Label htmlFor="removeImage">
+                                        Remove current image
+                                    </Label>
+                                </div>
+                            )}
+
+                            <Separator />
+
+                            <div className="space-y-2">
+                                <Label htmlFor="title">Promotion title</Label>
+
+                                <Input
+                                    id="title"
+                                    name="title"
+                                    required
+                                    minLength={2}
+                                    maxLength={160}
+                                    defaultValue={offer.title}
+                                />
+                            </div>
+
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Category</Label>
+
+                                    <Input
+                                        id="category"
+                                        name="category"
+                                        required
+                                        defaultValue={offer.category}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="discount">Discount</Label>
+
+                                    <Input
+                                        id="discount"
+                                        name="discount"
+                                        required
+                                        defaultValue={offer.discount}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Description</Label>
+
+                                <Textarea
+                                    id="description"
+                                    name="description"
+                                    required
+                                    rows={5}
+                                    defaultValue={offer.description}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="availability">Availability</Label>
+
+                                <Input
+                                    id="availability"
+                                    name="availability"
+                                    defaultValue={offer.availability}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="expiresAt">Expiry date</Label>
+
+                                <Input
+                                    id="expiresAt"
+                                    name="expiresAt"
+                                    type="date"
+                                    required
+                                    defaultValue={offer.expires_at}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="maxRedemptions">
+                                    Maximum redemptions
+                                </Label>
+
+                                <Input
+                                    id="maxRedemptions"
+                                    name="maxRedemptions"
+                                    type="number"
+                                    min={offer.redemption_count || 1}
+                                    step="1"
+                                    defaultValue={offer.max_redemptions ?? ""}
+                                    placeholder="Leave empty for unlimited"
+                                />
+
+                                <p className="text-xs leading-5 text-[#17233B]/55">
+                                    The limit cannot be lower than the number already claimed.
+                                    Leave empty for unlimited redemptions.
+                                </p>
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-2">
+                                <Label htmlFor="terms">
+                                    Terms and conditions
+                                </Label>
+
+                                <Textarea
+                                    id="terms"
+                                    name="terms"
+                                    required
+                                    rows={5}
+                                    defaultValue={offer.terms}
+                                />
+                            </div>
+
+                            {errorMessage && (
+                                <Alert variant="destructive">
+                                    <AlertTitle>Unable to save changes</AlertTitle>
+
+                                    <AlertDescription>
+                                        {errorMessage}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <Button
+                                    type="submit"
+                                    disabled={isSaving || isDeleting}
+                                    variant="default"
+                                    size="lg"
+                                >
+                                    {isSaving ? "Saving…" : "Save changes"}
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    disabled={isSaving || isDeleting}
+                                    onClick={() => setIsDeleteDialogOpen(true)}
+                                    variant="destructive"
+                                    size="lg"
+                                >
+                                    Delete promotion
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                <Dialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
                 >
-                    {offer.image_url && !removeImage && (
-                        <div>
-                            <p className="text-sm font-medium">
-                                Current promotion image
-                            </p>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete this promotion?</DialogTitle>
 
-                            <img
-                                src={offer.image_url}
-                                alt={offer.title}
-                                className="mt-3 h-52 w-full rounded-2xl object-cover"
-                            />
-                        </div>
-                    )}
+                            <DialogDescription>
+                                This action cannot be undone. The promotion and its details
+                                will be permanently deleted.
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    <label className="block text-sm font-medium">
-                        Replace promotion image
-                        <input
-                            name="image"
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={(event) => {
-                                setImageFile(event.target.files?.[0] ?? null);
-                                setRemoveImage(false);
-                            }}
-                            className="mt-2 block w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm"
-                        />
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsDeleteDialogOpen(false)}
+                                disabled={isDeleting}
+                            >
+                                Cancel
+                            </Button>
 
-                        <span className="mt-2 block text-xs text-[#17233B]/50">
-                            Use a JPG, PNG, or WebP image under 5MB.
-                        </span>
-                    </label>
-
-                    {offer.image_url && (
-                        <label className="flex items-center gap-3 text-sm font-medium">
-                            <input
-                                type="checkbox"
-                                checked={removeImage}
-                                onChange={(event) => {
-                                    setRemoveImage(event.target.checked);
-
-                                    if (event.target.checked) {
-                                        setImageFile(null);
-                                    }
-                                }}
-                                className="h-4 w-4 accent-[#FF593F]"
-                            />
-                            Remove current image
-                        </label>
-                    )}
-
-                    <label className="block text-sm font-medium">
-                        Promotion title
-                        <input
-                            name="title"
-                            required
-                            minLength={2}
-                            maxLength={160}
-                            defaultValue={offer.title}
-                            className={inputClassName}
-                        />
-                    </label>
-
-                    <div className="grid gap-5 sm:grid-cols-2">
-                        <label className="block text-sm font-medium">
-                            Category
-                            <input
-                                name="category"
-                                required
-                                defaultValue={offer.category}
-                                className={inputClassName}
-                            />
-                        </label>
-
-                        <label className="block text-sm font-medium">
-                            Discount
-                            <input
-                                name="discount"
-                                required
-                                defaultValue={offer.discount}
-                                className={inputClassName}
-                            />
-                        </label>
-                    </div>
-
-                    <label className="block text-sm font-medium">
-                        Description
-                        <textarea
-                            name="description"
-                            required
-                            rows={4}
-                            defaultValue={offer.description}
-                            className={inputClassName}
-                        />
-                    </label>
-
-                    <label className="block text-sm font-medium">
-                        Availability
-                        <input
-                            name="availability"
-                            defaultValue={offer.availability}
-                            className={inputClassName}
-                        />
-                    </label>
-
-                    <label className="block text-sm font-medium">
-                        Expiry date
-                        <input
-                            name="expiresAt"
-                            type="date"
-                            required
-                            defaultValue={offer.expires_at}
-                            className={inputClassName}
-                        />
-                    </label>
-
-                    <div>
-                        <label className="block text-sm font-medium">
-                            Maximum redemptions
-                            <input
-                                name="maxRedemptions"
-                                type="number"
-                                min={offer.redemption_count || 1}
-                                step="1"
-                                defaultValue={offer.max_redemptions ?? ""}
-                                className={inputClassName}
-                                placeholder="Leave empty for unlimited"
-                            />
-                        </label>
-
-                        <p className="mt-2 text-xs leading-5 text-[#17233B]/55">
-                            The limit cannot be lower than the number already claimed.
-                            Leave empty for unlimited redemptions.
-                        </p>
-                    </div>
-
-                    <label className="block text-sm font-medium">
-                        Terms and conditions
-                        <textarea
-                            name="terms"
-                            required
-                            rows={4}
-                            defaultValue={offer.terms}
-                            className={inputClassName}
-                        />
-                    </label>
-
-                    {errorMessage && (
-                        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {errorMessage}
-                        </p>
-                    )}
-
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                        <Button
-                            type="submit"
-                            disabled={isSaving || isDeleting}
-                            variant="default"
-                            size="lg"
-                        >
-                            {isSaving ? "Saving…" : "Save changes"}
-                        </Button>
-
-                        <Button
-                            type="button"
-                            disabled={isSaving || isDeleting}
-                            onClick={handleDelete}
-                            variant="destructive"
-                            size="lg"
-                        >
-                            {isDeleting ? "Deleting…" : "Delete promotion"}
-                        </Button>
-                    </div>
-                </form>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Deleting…" : "Delete promotion"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </main>
     );

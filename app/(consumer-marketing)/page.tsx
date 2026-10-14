@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { OfferCard } from "@/components/offer-card";
 import { createClient } from "@/utils/supabase/client";
 import type { Offer } from "@/lib/offers";
@@ -15,9 +20,23 @@ const categories = [
   "Shopping",
 ];
 
+function LoadingCards() {
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      {[1, 2, 3, 4].map((item) => (
+        <Card
+          key={item}
+          className="h-64 animate-pulse border-[#17233B]/10 bg-[#17233B]/5 shadow-none"
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("All deals");
+  const [selectedCategory, setSelectedCategory] =
+    useState("All deals");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -92,7 +111,8 @@ export default function Home() {
     return offers.filter((offer) => {
       const matchesCategory =
         selectedCategory === "All deals" ||
-        offer.category?.toLowerCase() === selectedCategory.toLowerCase();
+        offer.category?.toLowerCase() ===
+        selectedCategory.toLowerCase();
 
       const matchesSearch =
         !query ||
@@ -105,15 +125,23 @@ export default function Home() {
     });
   }, [offers, selectedCategory, searchQuery]);
 
+  function clearFilters() {
+    setSearchQuery("");
+    setSelectedCategory("All deals");
+  }
+
   return (
     <main className="min-h-screen bg-[#FFFDF9] text-[#17233B]">
       <section className="bg-[#FFF4E8]">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 py-20 text-center md:py-28">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#FF593F]">
+          <Badge
+            variant="outline"
+            className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+          >
             Local deals, made easy
-          </p>
+          </Badge>
 
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+          <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
             Save on the places you love.
           </h1>
 
@@ -134,110 +162,112 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="offers" className="mx-auto w-full max-w-6xl px-6 py-16">
-        <div className="mb-8">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-sm font-medium text-[#FF593F]">
-                Discover something new
+      <section
+        id="offers"
+        className="mx-auto w-full max-w-6xl px-6 py-16"
+      >
+        <Card className="border-[#17233B]/10 shadow-sm">
+          <CardHeader>
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <Badge
+                  variant="outline"
+                  className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                >
+                  Discover something new
+                </Badge>
+
+                <CardTitle className="mt-2 text-3xl tracking-tight">
+                  Explore local deals
+                </CardTitle>
+              </div>
+
+              <p className="text-sm text-[#17233B]/60">
+                {filteredOffers.length}{" "}
+                {filteredOffers.length === 1 ? "deal" : "deals"} available
               </p>
-
-              <h2 className="mt-1 text-3xl font-semibold tracking-tight">
-                Explore local deals
-              </h2>
             </div>
+          </CardHeader>
 
-            <p className="text-sm text-[#17233B]/60">
-              {filteredOffers.length}{" "}
-              {filteredOffers.length === 1 ? "deal" : "deals"} available
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <label htmlFor="offer-search" className="sr-only">
-              Search offers
-            </label>
-
-            <input
-              id="offer-search"
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search deals, businesses or categories..."
-              className="w-full rounded-2xl border border-[#17233B]/15 bg-white px-5 py-3 text-sm outline-none transition focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20"
-            />
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-3">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                size="sm"
-                variant={
-                  selectedCategory === category ? "default" : "outline"
+          <CardContent>
+            <div className="space-y-5">
+              <Input
+                id="offer-search"
+                type="search"
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(event.target.value)
                 }
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="h-64 animate-pulse rounded-2xl bg-[#17233B]/5"
+                placeholder="Search deals, businesses or categories..."
               />
-            ))}
-          </div>
-        ) : filteredOffers.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2">
-            {filteredOffers.map((offer) => (
-              <OfferCard
-                key={offer.slug}
-                slug={offer.slug}
-                discount={offer.discount}
-                title={offer.title}
-                description={offer.description}
-                availability={offer.availability}
-                business={offer.business}
-                businessId={offer.businessId}
-                businessLogoUrl={offer.businessLogoUrl}
-                imageUrl={offer.imageUrl}
-                expiresAt={offer.expiresAt}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-[#17233B]/20 bg-white p-10 text-center">
-            <p className="font-medium">
-              {searchQuery
-                ? "No deals match your search."
-                : "No offers in this category yet."}
-            </p>
 
-            <p className="mt-2 text-sm text-[#17233B]/60">
-              Try another search or check back soon for new local deals.
-            </p>
+              <div className="flex flex-wrap gap-3">
+                {categories.map((category) => (
+                  <Button
+                    key={category}
+                    size="sm"
+                    variant={
+                      selectedCategory === category
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
 
-            {(searchQuery || selectedCategory !== "All deals") && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-5"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory("All deals");
-                }}
-              >
-                Clear filters
-              </Button>
-            )}
-          </div>
-        )}
+              <Separator />
+
+              {isLoading ? (
+                <LoadingCards />
+              ) : filteredOffers.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {filteredOffers.map((offer) => (
+                    <OfferCard
+                      key={offer.slug}
+                      slug={offer.slug}
+                      discount={offer.discount}
+                      title={offer.title}
+                      description={offer.description}
+                      availability={offer.availability}
+                      business={offer.business}
+                      businessId={offer.businessId}
+                      businessLogoUrl={offer.businessLogoUrl}
+                      imageUrl={offer.imageUrl}
+                      expiresAt={offer.expiresAt}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Alert className="border-[#17233B]/10 bg-white">
+                  <AlertTitle>
+                    {searchQuery
+                      ? "No deals match your search."
+                      : "No offers in this category yet."}
+                  </AlertTitle>
+
+                  <AlertDescription>
+                    Try another search or check back soon for new local deals.
+                  </AlertDescription>
+
+                  {(searchQuery ||
+                    selectedCategory !== "All deals") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-5"
+                        onClick={clearFilters}
+                      >
+                        Clear filters
+                      </Button>
+                    )}
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </main>
   );

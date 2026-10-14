@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 
-const inputClassName =
-    "mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B] outline-none transition placeholder:text-[#17233B]/40 focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/utils/supabase/client";
 
 export default function OnboardingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,14 +40,19 @@ export default function OnboardingPage() {
                 business_category: formData.get("category"),
                 business_description: formData.get("description") || null,
                 business_website_url: formData.get("website") || null,
-                business_contact_email: formData.get("contactEmail") || null,
-                location_name: formData.get("locationName") || "Main location",
+                business_contact_email:
+                    formData.get("contactEmail") || null,
+                location_name:
+                    formData.get("locationName") || "Main location",
                 location_address_line_1: formData.get("addressLine1"),
-                location_address_line_2: formData.get("addressLine2") || null,
+                location_address_line_2:
+                    formData.get("addressLine2") || null,
                 location_city: formData.get("city"),
                 location_region: formData.get("region") || null,
-                location_postal_code: formData.get("postalCode") || null,
-                location_country_code: formData.get("countryCode") || "GB",
+                location_postal_code:
+                    formData.get("postalCode") || null,
+                location_country_code:
+                    formData.get("countryCode") || "GB",
             },
         );
 
@@ -61,31 +75,36 @@ export default function OnboardingPage() {
     if (businessId) {
         return (
             <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
-                <section className="w-full max-w-lg rounded-3xl bg-white p-8 text-center shadow-sm sm:p-10">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl">
-                        ✓
-                    </div>
+                <Card className="w-full max-w-lg border-[#17233B]/10 text-center shadow-sm">
+                    <CardContent className="p-8 sm:p-10">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl text-[#FF593F]">
+                            ✓
+                        </div>
 
-                    <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Business created
-                    </p>
+                        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Business created
+                        </p>
 
-                    <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
-                        Welcome to Promotello
-                    </h1>
+                        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
+                            Welcome to Promotello
+                        </h1>
 
-                    <p className="mt-3 leading-7 text-[#17233B]/65">
-                        Your business is pending approval. You can now continue building
-                        your first promotion.
-                    </p>
+                        <p className="mt-3 leading-7 text-[#17233B]/65">
+                            Your business is pending approval. You can now continue
+                            building your first promotion.
+                        </p>
 
-                    <Link
-                        href="/dashboard"
-                        className="mt-8 inline-flex rounded-xl bg-[#FF593F] px-6 py-3 font-semibold text-[#17233B] transition hover:bg-[#E94D36]"
-                    >
-                        Open dashboard
-                    </Link>
-                </section>
+                        <Button
+                            render={<Link href="/business/dashboard" />}
+                            nativeButton={false}
+                            variant="default"
+                            size="lg"
+                            className="mt-8"
+                        >
+                            Open business dashboard
+                        </Button>
+                    </CardContent>
+                </Card>
             </main>
         );
     }
@@ -93,9 +112,14 @@ export default function OnboardingPage() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">
-                <Link href="/" className="text-sm font-semibold text-[#FF593F]">
+                <Button
+                    render={<Link href="/" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
+                >
                     ← Back to Promotello
-                </Link>
+                </Button>
 
                 <div className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -112,166 +136,210 @@ export default function OnboardingPage() {
                     </p>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-10 space-y-8 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
-                >
-                    <fieldset className="space-y-5">
-                        <legend className="text-xl font-semibold">Business details</legend>
+                <Card className="mt-10 border-[#17233B]/10 shadow-sm">
+                    <CardHeader>
+                        <CardTitle>Business details</CardTitle>
+                    </CardHeader>
 
-                        <label className="block text-sm font-medium">
-                            Business name <span className="text-[#FF593F]">*</span>
-                            <input
-                                name="businessName"
-                                required
-                                minLength={2}
-                                maxLength={160}
-                                className={inputClassName}
-                                placeholder="Harbor Coffee"
-                            />
-                        </label>
+                    <CardContent>
+                        <form onSubmit={handleSubmit} className="space-y-8">
+                            <section className="space-y-5">
+                                <div className="space-y-2">
+                                    <Label htmlFor="businessName">
+                                        Business name
+                                    </Label>
 
-                        <label className="block text-sm font-medium">
-                            Category <span className="text-[#FF593F]">*</span>
-                            <input
-                                name="category"
-                                required
-                                minLength={2}
-                                maxLength={100}
-                                className={inputClassName}
-                                placeholder="Cafe"
-                            />
-                        </label>
+                                    <Input
+                                        id="businessName"
+                                        name="businessName"
+                                        required
+                                        minLength={2}
+                                        maxLength={160}
+                                        placeholder="Harbor Coffee"
+                                    />
+                                </div>
 
-                        <label className="block text-sm font-medium">
-                            Description
-                            <textarea
-                                name="description"
-                                maxLength={5000}
-                                rows={4}
-                                className={inputClassName}
-                                placeholder="Tell customers what makes your business special"
-                            />
-                        </label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Category</Label>
 
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <label className="block text-sm font-medium">
-                                Website
-                                <input
-                                    name="website"
-                                    type="url"
-                                    className={inputClassName}
-                                    placeholder="https://example.com"
-                                />
-                            </label>
+                                    <Input
+                                        id="category"
+                                        name="category"
+                                        required
+                                        minLength={2}
+                                        maxLength={100}
+                                        placeholder="Cafe"
+                                    />
+                                </div>
 
-                            <label className="block text-sm font-medium">
-                                Contact email
-                                <input
-                                    name="contactEmail"
-                                    type="email"
-                                    className={inputClassName}
-                                    placeholder="hello@example.com"
-                                />
-                            </label>
-                        </div>
-                    </fieldset>
+                                <div className="space-y-2">
+                                    <Label htmlFor="description">
+                                        Description
+                                    </Label>
 
-                    <fieldset className="space-y-5 border-t border-[#17233B]/10 pt-8">
-                        <legend className="text-xl font-semibold">First location</legend>
+                                    <Textarea
+                                        id="description"
+                                        name="description"
+                                        maxLength={5000}
+                                        rows={5}
+                                        placeholder="Tell customers what makes your business special"
+                                    />
+                                </div>
 
-                        <label className="block text-sm font-medium">
-                            Location name
-                            <input
-                                name="locationName"
-                                className={inputClassName}
-                                placeholder="Main location"
-                            />
-                        </label>
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="website">Website</Label>
 
-                        <label className="block text-sm font-medium">
-                            Address line 1 <span className="text-[#FF593F]">*</span>
-                            <input
-                                name="addressLine1"
-                                required
-                                minLength={2}
-                                maxLength={200}
-                                className={inputClassName}
-                                placeholder="12 Harbour Street"
-                            />
-                        </label>
+                                        <Input
+                                            id="website"
+                                            name="website"
+                                            type="url"
+                                            placeholder="https://example.com"
+                                        />
+                                    </div>
 
-                        <label className="block text-sm font-medium">
-                            Address line 2
-                            <input
-                                name="addressLine2"
-                                className={inputClassName}
-                                placeholder="Suite 2"
-                            />
-                        </label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="contactEmail">
+                                            Contact email
+                                        </Label>
 
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <label className="block text-sm font-medium">
-                                City <span className="text-[#FF593F]">*</span>
-                                <input
-                                    name="city"
-                                    required
-                                    minLength={2}
-                                    maxLength={100}
-                                    className={inputClassName}
-                                    placeholder="Bristol"
-                                />
-                            </label>
+                                        <Input
+                                            id="contactEmail"
+                                            name="contactEmail"
+                                            type="email"
+                                            placeholder="hello@example.com"
+                                        />
+                                    </div>
+                                </div>
+                            </section>
 
-                            <label className="block text-sm font-medium">
-                                Region
-                                <input
-                                    name="region"
-                                    className={inputClassName}
-                                    placeholder="Somerset"
-                                />
-                            </label>
-                        </div>
+                            <Separator />
 
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <label className="block text-sm font-medium">
-                                Postcode
-                                <input
-                                    name="postalCode"
-                                    className={inputClassName}
-                                    placeholder="BS1 1AA"
-                                />
-                            </label>
+                            <section className="space-y-5">
+                                <div>
+                                    <h2 className="text-xl font-semibold">
+                                        First location
+                                    </h2>
 
-                            <label className="block text-sm font-medium">
-                                Country code
-                                <input
-                                    name="countryCode"
-                                    defaultValue="GB"
-                                    maxLength={2}
-                                    className={inputClassName}
-                                />
-                            </label>
-                        </div>
-                    </fieldset>
+                                    <p className="mt-1 text-sm text-[#17233B]/60">
+                                        Add the main location customers can visit.
+                                    </p>
+                                </div>
 
-                    {errorMessage && (
-                        <p
-                            role="alert"
-                            className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
-                        >
-                            {errorMessage}
-                        </p>
-                    )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="locationName">
+                                        Location name
+                                    </Label>
 
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full rounded-xl bg-[#FF593F] px-6 py-3 font-semibold text-[#17233B] transition hover:bg-[#E94D36] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {isSubmitting ? "Creating your business…" : "Create business"}
-                    </button>
-                </form>
+                                    <Input
+                                        id="locationName"
+                                        name="locationName"
+                                        placeholder="Main location"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="addressLine1">
+                                        Address line 1
+                                    </Label>
+
+                                    <Input
+                                        id="addressLine1"
+                                        name="addressLine1"
+                                        required
+                                        minLength={2}
+                                        maxLength={200}
+                                        placeholder="12 Harbour Street"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="addressLine2">
+                                        Address line 2
+                                    </Label>
+
+                                    <Input
+                                        id="addressLine2"
+                                        name="addressLine2"
+                                        placeholder="Suite 2"
+                                    />
+                                </div>
+
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="city">City</Label>
+
+                                        <Input
+                                            id="city"
+                                            name="city"
+                                            required
+                                            minLength={2}
+                                            maxLength={100}
+                                            placeholder="Bristol"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="region">Region</Label>
+
+                                        <Input
+                                            id="region"
+                                            name="region"
+                                            placeholder="Somerset"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="postalCode">Postcode</Label>
+
+                                        <Input
+                                            id="postalCode"
+                                            name="postalCode"
+                                            placeholder="BS1 1AA"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="countryCode">
+                                            Country code
+                                        </Label>
+
+                                        <Input
+                                            id="countryCode"
+                                            name="countryCode"
+                                            defaultValue="GB"
+                                            maxLength={2}
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {errorMessage && (
+                                <Alert variant="destructive">
+                                    <AlertTitle>Unable to create business</AlertTitle>
+
+                                    <AlertDescription>
+                                        {errorMessage}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                variant="default"
+                                size="lg"
+                                className="w-full"
+                            >
+                                {isSubmitting
+                                    ? "Creating your business…"
+                                    : "Create business"}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );

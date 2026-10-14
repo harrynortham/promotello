@@ -2,6 +2,33 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { createClient } from "@/utils/supabase/client";
 
 type Member = {
@@ -27,6 +54,29 @@ type TeamManagementProps = {
     initialInvitations: Invitation[];
 };
 
+type ConfirmationAction =
+    | {
+        type: "member";
+        id: string;
+    }
+    | {
+        type: "invitation";
+        id: string;
+    }
+    | null;
+
+function roleBadgeClass(role: Member["role"]) {
+    if (role === "owner") {
+        return "border-purple-200 bg-purple-100 text-purple-800";
+    }
+
+    if (role === "admin") {
+        return "border-blue-200 bg-blue-100 text-blue-800";
+    }
+
+    return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
 export default function TeamManagement({
     businessId,
     businessName,
@@ -39,6 +89,8 @@ export default function TeamManagement({
     const [activeId, setActiveId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const [confirmationAction, setConfirmationAction] =
+        useState<ConfirmationAction>(null);
 
     async function handleInvite(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -91,6 +143,7 @@ export default function TeamManagement({
     ) {
         setActiveId(userId);
         setErrorMessage("");
+        setSuccessMessage("");
 
         const supabase = createClient();
 
@@ -117,16 +170,14 @@ export default function TeamManagement({
             ),
         );
 
+        setSuccessMessage("Team member role updated.");
         setActiveId("");
     }
 
     async function removeMember(userId: string) {
-        if (!window.confirm("Remove this team member?")) {
-            return;
-        }
-
         setActiveId(userId);
         setErrorMessage("");
+        setSuccessMessage("");
 
         const supabase = createClient();
 
@@ -145,16 +196,15 @@ export default function TeamManagement({
             current.filter((member) => member.user_id !== userId),
         );
 
+        setSuccessMessage("Team member removed.");
         setActiveId("");
+        setConfirmationAction(null);
     }
 
     async function revokeInvitation(invitationId: string) {
-        if (!window.confirm("Revoke this invitation?")) {
-            return;
-        }
-
         setActiveId(invitationId);
         setErrorMessage("");
+        setSuccessMessage("");
 
         const supabase = createClient();
 
@@ -176,18 +226,39 @@ export default function TeamManagement({
             current.filter((invitation) => invitation.id !== invitationId),
         );
 
+        setSuccessMessage("Invitation revoked.");
         setActiveId("");
+        setConfirmationAction(null);
     }
+
+    async function confirmAction() {
+        if (!confirmationAction) {
+            return;
+        }
+
+        if (confirmationAction.type === "member") {
+            await removeMember(confirmationAction.id);
+            return;
+        }
+
+        await revokeInvitation(confirmationAction.id);
+    }
+
+    const pendingInvitations = invitations.filter(
+        (invitation) => !invitation.accepted_at,
+    );
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
-            <div className="mx-auto max-w-4xl">
-                <Link
-                    href="/business/dashboard"
-                    className="text-sm font-semibold text-[#FF593F]"
+            <div className="mx-auto max-w-5xl">
+                <Button
+                    render={<Link href="/business/dashboard" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
                 >
                     ← Back to dashboard
-                </Link>
+                </Button>
 
                 <header className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -203,155 +274,248 @@ export default function TeamManagement({
                     </p>
                 </header>
 
-                {errorMessage && (
-                    <p className="mt-8 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {errorMessage}
-                    </p>
-                )}
+                <div className="mt-8 space-y-4">
+                    {errorMessage && (
+                        <Alert variant="destructive">
+                            <AlertTitle>Something went wrong</AlertTitle>
+                            <AlertDescription>{errorMessage}</AlertDescription>
+                        </Alert>
+                    )}
 
-                {successMessage && (
-                    <p className="mt-8 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        {successMessage}
-                    </p>
-                )}
+                    {successMessage && (
+                        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                            <AlertTitle>Success</AlertTitle>
+                            <AlertDescription>{successMessage}</AlertDescription>
+                        </Alert>
+                    )}
+                </div>
 
-                <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                    <h2 className="text-2xl font-semibold">
-                        Invite a team member
-                    </h2>
+                <Card className="mt-10 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Invite a team member</CardTitle>
+                    </CardHeader>
 
-                    <form onSubmit={handleInvite} className="mt-6 space-y-5">
-                        <label className="block text-sm font-medium">
-                            Email address
-                            <input
-                                name="email"
-                                type="email"
-                                required
-                                className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
-                                placeholder="staff@example.com"
-                            />
-                        </label>
+                    <CardContent>
+                        <form onSubmit={handleInvite} className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email address</Label>
 
-                        <label className="block text-sm font-medium">
-                            Role
-                            <select
-                                name="role"
-                                defaultValue="member"
-                                className="mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 outline-none focus:border-[#FF593F]"
-                            >
-                                <option value="member">Member</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </label>
-
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="rounded-xl bg-[#FF593F] px-5 py-3 font-semibold transition hover:bg-[#E94D36] disabled:opacity-60"
-                        >
-                            {isSubmitting
-                                ? "Sending invitation…"
-                                : "Send invitation"}
-                        </button>
-                    </form>
-                </section>
-
-                <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                    <h2 className="text-2xl font-semibold">Current members</h2>
-
-                    <div className="mt-6 space-y-3">
-                        {members.map((member) => (
-                            <div
-                                key={member.user_id}
-                                className="flex flex-col gap-4 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        {member.email ?? "Email unavailable"}
-                                    </p>
-
-                                    <span className="mt-2 inline-flex rounded-full bg-[#17233B]/5 px-3 py-1 text-xs font-semibold capitalize">
-                                        {member.role}
-                                    </span>
-                                </div>
-
-                                {member.role !== "owner" && (
-                                    <div className="flex flex-wrap gap-2">
-                                        <select
-                                            value={member.role}
-                                            disabled={activeId === member.user_id}
-                                            onChange={(event) =>
-                                                changeRole(
-                                                    member.user_id,
-                                                    event.target.value as "admin" | "member",
-                                                )
-                                            }
-                                            className="rounded-xl border border-[#17233B]/15 bg-white px-3 py-2 text-sm"
-                                        >
-                                            <option value="member">Member</option>
-                                            <option value="admin">Admin</option>
-                                        </select>
-
-                                        <button
-                                            type="button"
-                                            disabled={activeId === member.user_id}
-                                            onClick={() => removeMember(member.user_id)}
-                                            className="rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                )}
+                                <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    placeholder="staff@example.com"
+                                />
                             </div>
-                        ))}
-                    </div>
-                </section>
 
-                <section className="mt-8 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                    <h2 className="text-2xl font-semibold">
-                        Pending invitations
-                    </h2>
+                            <div className="space-y-2">
+                                <Label htmlFor="role">Role</Label>
 
-                    <div className="mt-6 space-y-3">
-                        {invitations.filter(
-                            (invitation) => !invitation.accepted_at,
-                        ).length === 0 ? (
+                                <Select name="role" defaultValue="member">
+                                    <SelectTrigger id="role">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="member">Member</SelectItem>
+                                        <SelectItem value="admin">Admin</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                variant="default"
+                            >
+                                {isSubmitting
+                                    ? "Sending invitation…"
+                                    : "Send invitation"}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Current members</CardTitle>
+                    </CardHeader>
+
+                    <CardContent className="space-y-4">
+                        {members.length === 0 ? (
+                            <p className="text-sm text-[#17233B]/60">
+                                No team members found.
+                            </p>
+                        ) : (
+                            members.map((member) => (
+                                <div key={member.user_id}>
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="font-medium">
+                                                {member.email ?? "Email unavailable"}
+                                            </p>
+
+                                            <Badge
+                                                variant="outline"
+                                                className={`mt-2 capitalize ${roleBadgeClass(
+                                                    member.role,
+                                                )}`}
+                                            >
+                                                {member.role}
+                                            </Badge>
+                                        </div>
+
+                                        {member.role !== "owner" && (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Select
+                                                    value={member.role}
+                                                    onValueChange={(value) =>
+                                                        changeRole(
+                                                            member.user_id,
+                                                            value as "admin" | "member",
+                                                        )
+                                                    }
+                                                    disabled={activeId === member.user_id}
+                                                >
+                                                    <SelectTrigger className="w-32">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+
+                                                    <SelectContent>
+                                                        <SelectItem value="member">
+                                                            Member
+                                                        </SelectItem>
+
+                                                        <SelectItem value="admin">
+                                                            Admin
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+
+                                                <Button
+                                                    type="button"
+                                                    disabled={activeId === member.user_id}
+                                                    onClick={() =>
+                                                        setConfirmationAction({
+                                                            type: "member",
+                                                            id: member.user_id,
+                                                        })
+                                                    }
+                                                    variant="destructive"
+                                                    size="sm"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <Separator className="mt-4" />
+                                </div>
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Pending invitations</CardTitle>
+                    </CardHeader>
+
+                    <CardContent className="space-y-4">
+                        {pendingInvitations.length === 0 ? (
                             <p className="text-sm text-[#17233B]/60">
                                 No pending invitations.
                             </p>
                         ) : (
-                            invitations
-                                .filter((invitation) => !invitation.accepted_at)
-                                .map((invitation) => (
-                                    <div
-                                        key={invitation.id}
-                                        className="flex flex-col gap-4 rounded-2xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-                                    >
+                            pendingInvitations.map((invitation) => (
+                                <div key={invitation.id}>
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="font-medium">
-                                                {invitation.email}
-                                            </p>
+                                            <p className="font-medium">{invitation.email}</p>
 
-                                            <p className="text-sm capitalize text-[#17233B]/55">
-                                                Role: {invitation.role}
-                                            </p>
+                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                <Badge variant="secondary" className="capitalize">
+                                                    {invitation.role}
+                                                </Badge>
+
+                                                <span className="text-sm text-[#17233B]/55">
+                                                    Expires{" "}
+                                                    {new Date(
+                                                        invitation.expires_at,
+                                                    ).toLocaleDateString("en-GB")}
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        <button
+                                        <Button
                                             type="button"
                                             disabled={activeId === invitation.id}
                                             onClick={() =>
-                                                revokeInvitation(invitation.id)
+                                                setConfirmationAction({
+                                                    type: "invitation",
+                                                    id: invitation.id,
+                                                })
                                             }
-                                            className="rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                                            variant="outline"
+                                            size="sm"
                                         >
                                             Revoke
-                                        </button>
+                                        </Button>
                                     </div>
-                                ))
+
+                                    <Separator className="mt-4" />
+                                </div>
+                            ))
                         )}
-                    </div>
-                </section>
+                    </CardContent>
+                </Card>
+
+                <Dialog
+                    open={confirmationAction !== null}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setConfirmationAction(null);
+                        }
+                    }}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {confirmationAction?.type === "member"
+                                    ? "Remove team member?"
+                                    : "Revoke invitation?"}
+                            </DialogTitle>
+
+                            <DialogDescription>
+                                {confirmationAction?.type === "member"
+                                    ? "This person will lose access to this business."
+                                    : "This invitation will no longer be valid."}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setConfirmationAction(null)}
+                                disabled={activeId !== ""}
+                            >
+                                Cancel
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={confirmAction}
+                                disabled={activeId !== ""}
+                            >
+                                {activeId !== "" ? "Processing…" : "Confirm"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </main>
     );

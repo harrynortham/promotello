@@ -3,8 +3,14 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type AnalyticsPageProps = {
     params: Promise<{
@@ -29,18 +35,70 @@ function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
             <div className="mx-auto max-w-5xl">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 grid gap-6 md:grid-cols-3">
+                <div className="flex items-end justify-between">
+                    <div>
+                        <Skeleton className="h-5 w-40 rounded-md" />
+                        <Skeleton className="mt-3 h-10 w-64 rounded-md" />
+                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                    </div>
+
+                    <Skeleton className="hidden h-9 w-40 rounded-md sm:block" />
+                </div>
+
+                <div className="mt-10 grid gap-5 md:grid-cols-3">
                     {[1, 2, 3].map((item) => (
                         <div
                             key={item}
-                            className="h-32 animate-pulse rounded-3xl bg-white"
-                        />
+                            className="rounded-xl border border-[#17233B]/10 bg-white p-6"
+                        >
+                            <Skeleton className="h-4 w-32 rounded-md" />
+                            <Skeleton className="mt-4 h-12 w-20 rounded-md" />
+                        </div>
                     ))}
+                </div>
+
+                <div className="mt-8 rounded-xl border border-[#17233B]/10 bg-white p-6">
+                    <Skeleton className="h-6 w-48 rounded-md" />
+                    <Skeleton className="mt-5 h-2 w-full rounded-full" />
+                    <Skeleton className="mt-3 h-4 w-72 rounded-md" />
+                </div>
+
+                <div className="mt-8 rounded-xl border border-[#17233B]/10 bg-white p-6">
+                    <Skeleton className="h-6 w-64 rounded-md" />
+
+                    <div className="mt-6 space-y-5">
+                        {[1, 2, 3].map((item) => (
+                            <div key={item}>
+                                <div className="flex items-center justify-between">
+                                    <Skeleton className="h-5 w-48 rounded-md" />
+                                    <Skeleton className="h-5 w-20 rounded-md" />
+                                </div>
+
+                                <Skeleton className="mt-4 h-2 w-full rounded-full" />
+                                <Skeleton className="mt-3 h-4 w-80 max-w-full rounded-md" />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </main>
     );
+}
+
+function statusBadgeClass(status: string) {
+    if (status === "approved") {
+        return "border-emerald-200 bg-emerald-100 text-emerald-800";
+    }
+
+    if (status === "rejected") {
+        return "border-red-200 bg-red-100 text-red-800";
+    }
+
+    if (status === "suspended") {
+        return "border-slate-200 bg-slate-100 text-slate-700";
+    }
+
+    return "border-amber-200 bg-amber-100 text-amber-800";
 }
 
 async function AnalyticsContent({ params }: AnalyticsPageProps) {
@@ -109,10 +167,15 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
     const totalRedemptions = redemptions.length;
 
     const usedRedemptions = redemptions.filter(
-        (redemption) => redemption.used_at,
+        (redemption) => redemption.used_at !== null,
     ).length;
 
     const unusedRedemptions = totalRedemptions - usedRedemptions;
+
+    const usageRate =
+        totalRedemptions > 0
+            ? Math.round((usedRedemptions / totalRedemptions) * 100)
+            : 0;
 
     const offerStats = offers.map((offer) => {
         const offerRedemptions = redemptions.filter(
@@ -120,7 +183,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
         );
 
         const usedCount = offerRedemptions.filter(
-            (redemption) => redemption.used_at,
+            (redemption) => redemption.used_at !== null,
         ).length;
 
         const remaining =
@@ -131,11 +194,22 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     0,
                 );
 
+        const offerUsageRate =
+            offer.max_redemptions && offer.max_redemptions > 0
+                ? Math.min(
+                    Math.round(
+                        (offer.redemption_count / offer.max_redemptions) * 100,
+                    ),
+                    100,
+                )
+                : 0;
+
         return {
             ...offer,
             totalRedemptions: offerRedemptions.length,
             usedCount,
             remaining,
+            offerUsageRate,
         };
     });
 
@@ -158,9 +232,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     </div>
 
                     <Button
-                        render={
-                            <Link href={`/business/dashboard`} />
-                        }
+                        render={<Link href="/business/dashboard" />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"
@@ -169,128 +241,185 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     </Button>
                 </div>
 
-                <section className="mt-10 grid gap-6 md:grid-cols-3">
-                    <article className="rounded-3xl bg-white p-7 shadow-sm">
-                        <p className="text-sm text-[#17233B]/60">
-                            Active promotions
-                        </p>
+                <section className="mt-10 grid gap-5 md:grid-cols-3">
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                                Active promotions
+                            </CardTitle>
+                        </CardHeader>
 
-                        <p className="mt-3 text-4xl font-semibold">
-                            {activeOffers ?? 0}
-                        </p>
-                    </article>
+                        <CardContent>
+                            <p className="text-4xl font-semibold">
+                                {activeOffers ?? 0}
+                            </p>
+                        </CardContent>
+                    </Card>
 
-                    <article className="rounded-3xl bg-white p-7 shadow-sm">
-                        <p className="text-sm text-[#17233B]/60">
-                            Total claims
-                        </p>
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                                Total claims
+                            </CardTitle>
+                        </CardHeader>
 
-                        <p className="mt-3 text-4xl font-semibold">
-                            {totalRedemptions}
-                        </p>
-                    </article>
+                        <CardContent>
+                            <p className="text-4xl font-semibold">
+                                {totalRedemptions}
+                            </p>
+                        </CardContent>
+                    </Card>
 
-                    <article className="rounded-3xl bg-white p-7 shadow-sm">
-                        <p className="text-sm text-[#17233B]/60">
-                            Used claims
-                        </p>
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                                Used claims
+                            </CardTitle>
+                        </CardHeader>
 
-                        <p className="mt-3 text-4xl font-semibold">
-                            {usedRedemptions}
-                        </p>
+                        <CardContent>
+                            <p className="text-4xl font-semibold">
+                                {usedRedemptions}
+                            </p>
 
-                        <p className="mt-2 text-sm text-[#17233B]/55">
-                            {unusedRedemptions} still awaiting use
-                        </p>
-                    </article>
+                            <p className="mt-2 text-sm text-[#17233B]/55">
+                                {unusedRedemptions} awaiting use
+                            </p>
+                        </CardContent>
+                    </Card>
                 </section>
 
-                <section className="mt-10 rounded-3xl bg-white p-7 shadow-sm sm:p-8">
-                    <div>
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Redemption completion</CardTitle>
+                    </CardHeader>
+
+                    <CardContent>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className="text-[#17233B]/60">
+                                Used claims
+                            </span>
+
+                            <span className="font-semibold">
+                                {usageRate}%
+                            </span>
+                        </div>
+
+                        <Progress value={usageRate} className="mt-3 h-2" />
+
+                        <p className="mt-3 text-sm text-[#17233B]/55">
+                            {usedRedemptions} of {totalRedemptions} claims have been
+                            marked as used.
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
                         <p className="text-sm font-medium text-[#FF593F]">
                             Promotion performance
                         </p>
 
-                        <h2 className="mt-1 text-2xl font-semibold">
-                            Your most popular promotions
-                        </h2>
-                    </div>
+                        <CardTitle>Your promotions</CardTitle>
+                    </CardHeader>
 
-                    {offerStats.length === 0 ? (
-                        <p className="mt-6 text-sm text-[#17233B]/60">
-                            No promotion data is available yet.
-                        </p>
-                    ) : (
-                        <div className="mt-6 space-y-4">
-                            {offerStats.map((offer) => (
-                                <div
-                                    key={offer.id}
-                                    className="rounded-2xl bg-[#FFF8F0] p-5"
-                                >
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <h3 className="font-semibold">
-                                                {offer.title}
-                                            </h3>
+                    <CardContent>
+                        {offerStats.length === 0 ? (
+                            <Alert>
+                                <AlertTitle>No promotion data yet</AlertTitle>
 
-                                            <p className="mt-1 text-sm text-[#17233B]/60">
-                                                {offer.approval_status}
+                                <AlertDescription>
+                                    Create a promotion to start tracking its performance.
+                                </AlertDescription>
+                            </Alert>
+                        ) : (
+                            <div className="space-y-5">
+                                {offerStats.map((offer) => (
+                                    <div key={offer.id}>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <h3 className="font-semibold">
+                                                    {offer.title}
+                                                </h3>
+
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`mt-2 capitalize ${statusBadgeClass(
+                                                        offer.approval_status,
+                                                    )}`}
+                                                >
+                                                    {offer.approval_status}
+                                                </Badge>
+                                            </div>
+
+                                            <p className="font-semibold text-[#FF593F]">
+                                                {offer.totalRedemptions}{" "}
+                                                {offer.totalRedemptions === 1
+                                                    ? "claim"
+                                                    : "claims"}
                                             </p>
                                         </div>
 
-                                        <p className="font-semibold text-[#FF593F]">
-                                            {offer.totalRedemptions}{" "}
-                                            {offer.totalRedemptions === 1
-                                                ? "claim"
-                                                : "claims"}
-                                        </p>
+                                        <div className="mt-4 grid gap-4 text-sm sm:grid-cols-3">
+                                            <div>
+                                                <p className="text-[#17233B]/55">Used</p>
+                                                <p className="mt-1 font-semibold">
+                                                    {offer.usedCount}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[#17233B]/55">
+                                                    Awaiting use
+                                                </p>
+                                                <p className="mt-1 font-semibold">
+                                                    {offer.totalRedemptions - offer.usedCount}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[#17233B]/55">
+                                                    Remaining
+                                                </p>
+                                                <p className="mt-1 font-semibold">
+                                                    {offer.remaining === null
+                                                        ? "Unlimited"
+                                                        : offer.remaining}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {offer.max_redemptions !== null && (
+                                            <div className="mt-4">
+                                                <div className="flex justify-between text-xs text-[#17233B]/55">
+                                                    <span>Usage limit</span>
+                                                    <span>
+                                                        {offer.redemption_count} of{" "}
+                                                        {offer.max_redemptions}
+                                                    </span>
+                                                </div>
+
+                                                <Progress
+                                                    value={offer.offerUsageRate}
+                                                    className="mt-2 h-2"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <Separator className="mt-5" />
                                     </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
-                                    <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-                                        <div>
-                                            <p className="text-[#17233B]/55">
-                                                Used
-                                            </p>
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Quick actions</CardTitle>
+                    </CardHeader>
 
-                                            <p className="mt-1 font-semibold">
-                                                {offer.usedCount}
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <p className="text-[#17233B]/55">
-                                                Awaiting use
-                                            </p>
-
-                                            <p className="mt-1 font-semibold">
-                                                {offer.totalRedemptions - offer.usedCount}
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <p className="text-[#17233B]/55">
-                                                Remaining
-                                            </p>
-
-                                            <p className="mt-1 font-semibold">
-                                                {offer.remaining === null
-                                                    ? "Unlimited"
-                                                    : offer.remaining}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-
-                <section className="mt-6 rounded-3xl bg-white p-7 shadow-sm">
-                    <h2 className="text-xl font-semibold">
-                        Quick actions
-                    </h2>
-
-                    <div className="mt-6 flex flex-wrap gap-3">
+                    <CardContent className="flex flex-wrap gap-3">
                         <Button
                             render={
                                 <Link
@@ -319,9 +448,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                         <Button
                             render={
-                                <Link
-                                    href={`/business/${businessId}/offers`}
-                                />
+                                <Link href={`/business/${businessId}/offers`} />
                             }
                             nativeButton={false}
                             variant="outline"
@@ -329,8 +456,8 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         >
                             Manage promotions
                         </Button>
-                    </div>
-                </section>
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );

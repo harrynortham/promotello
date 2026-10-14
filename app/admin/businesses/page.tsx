@@ -1,8 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/client";
 
 type Business = {
@@ -27,6 +48,11 @@ type Business = {
     | null;
 };
 
+type ReviewAction = {
+    businessId: string;
+    decision: "approved" | "rejected";
+} | null;
+
 const pageSize = 25;
 
 export default function AdminBusinessesPage() {
@@ -39,12 +65,15 @@ export default function AdminBusinessesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeBusinessId, setActiveBusinessId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [reviewAction, setReviewAction] =
+        useState<ReviewAction>(null);
 
     async function loadBusinesses(
         requestedSearch = "",
         requestedPage = 1,
     ) {
         setIsLoading(true);
+        setErrorMessage("");
 
         const supabase = createClient();
 
@@ -80,10 +109,10 @@ export default function AdminBusinessesPage() {
             .range(from, to);
 
         if (requestedSearch.trim()) {
-            const searchValue = requestedSearch.trim();
+            const value = requestedSearch.trim();
 
             query = query.or(
-                `name.ilike.%${searchValue}%,category.ilike.%${searchValue}%`,
+                `name.ilike.%${value}%,category.ilike.%${value}%`,
             );
         }
 
@@ -147,6 +176,7 @@ export default function AdminBusinessesPage() {
             return;
         }
 
+        setReviewAction(null);
         await loadBusinesses(search, page);
         setActiveBusinessId("");
     }
@@ -154,17 +184,22 @@ export default function AdminBusinessesPage() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-5xl">
-                <Link
-                    href="/admin"
-                    className="text-sm font-semibold text-[#FF593F]"
+                <Button
+                    render={<Link href="/admin" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
                 >
                     ← Back to admin
-                </Link>
+                </Button>
 
                 <header className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <Badge
+                        variant="outline"
+                        className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                    >
                         Administration
-                    </p>
+                    </Badge>
 
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight">
                         Business approvals
@@ -175,145 +210,188 @@ export default function AdminBusinessesPage() {
                     </p>
                 </header>
 
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        setPage(1);
-                        loadBusinesses(search, 1);
-                    }}
-                    className="mt-8 flex flex-col gap-3 sm:flex-row"
-                >
-                    <input
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search by business name or category"
-                        className="flex-1 rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#FF593F]"
-                    />
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardContent className="p-6">
+                        <form
+                            onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                                event.preventDefault();
+                                setPage(1);
+                                loadBusinesses(search, 1);
+                            }}
+                            className="flex flex-col gap-3 sm:flex-row sm:items-end"
+                        >
+                            <div className="flex-1 space-y-2">
+                                <Label htmlFor="search">Search businesses</Label>
 
-                    <button
-                        type="submit"
-                        className="rounded-xl bg-[#FF593F] px-5 py-3 text-sm font-semibold transition hover:bg-[#E94D36]"
-                    >
-                        Search
-                    </button>
-                </form>
+                                <Input
+                                    id="search"
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                    placeholder="Business name or category"
+                                />
+                            </div>
+
+                            <Button type="submit">Search</Button>
+                        </form>
+                    </CardContent>
+                </Card>
 
                 {errorMessage && (
-                    <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
-                        {errorMessage}
-                    </div>
+                    <Alert variant="destructive" className="mt-8">
+                        <AlertTitle>Unable to load businesses</AlertTitle>
+                        <AlertDescription>{errorMessage}</AlertDescription>
+                    </Alert>
                 )}
 
                 {isLoading ? (
-                    <div className="mt-10 h-48 animate-pulse rounded-3xl bg-white" />
-                ) : businesses.length === 0 ? (
-                    <section className="mt-10 rounded-3xl bg-white p-10 text-center shadow-sm">
-                        <h2 className="text-2xl font-semibold">
-                            No businesses need review
-                        </h2>
+                    <div className="mt-10 space-y-6">
+                        {[1, 2, 3].map((item) => (
+                            <div
+                                key={item}
+                                className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8"
+                            >
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-4 w-32 rounded-md" />
+                                        <Skeleton className="h-8 w-64 rounded-md" />
+                                    </div>
 
-                        <p className="mt-3 text-[#17233B]/65">
+                                    <Skeleton className="h-6 w-24 rounded-full" />
+                                </div>
+
+                                <Skeleton className="mt-6 h-16 w-full rounded-md" />
+
+                                <div className="mt-5 space-y-2">
+                                    <Skeleton className="h-4 w-56 rounded-md" />
+                                    <Skeleton className="h-4 w-72 rounded-md" />
+                                    <Skeleton className="h-4 w-80 rounded-md" />
+                                </div>
+
+                                <div className="mt-7 flex gap-3">
+                                    <Skeleton className="h-10 w-36 rounded-md" />
+                                    <Skeleton className="h-10 w-36 rounded-md" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : businesses.length === 0 ? (
+                    <Alert className="mt-10 border-[#17233B]/10 bg-white">
+                        <AlertTitle>No businesses need review</AlertTitle>
+
+                        <AlertDescription>
                             No pending businesses matched your search.
-                        </p>
-                    </section>
+                        </AlertDescription>
+                    </Alert>
                 ) : (
                     <>
                         <section className="mt-10 space-y-6">
                             {businesses.map((business) => {
                                 const location = business.business_locations?.[0];
 
-                                return (
-                                    <article
-                                        key={business.id}
-                                        className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
-                                    >
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-[#FF593F]">
-                                                    {business.category}
-                                                </p>
+                                const address = location
+                                    ? [
+                                        location.address_line_1,
+                                        location.address_line_2,
+                                        location.city,
+                                        location.region,
+                                        location.postal_code,
+                                        location.country_code,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(", ")
+                                    : null;
 
-                                                <h2 className="mt-1 text-2xl font-semibold">
-                                                    {business.name}
-                                                </h2>
+                                return (
+                                    <Card
+                                        key={business.id}
+                                        className="border-[#17233B]/10 shadow-sm"
+                                    >
+                                        <CardHeader>
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <p className="text-sm font-medium text-[#FF593F]">
+                                                        {business.category}
+                                                    </p>
+
+                                                    <CardTitle className="mt-1 text-2xl">
+                                                        {business.name}
+                                                    </CardTitle>
+                                                </div>
+
+                                                <Badge className="w-fit bg-amber-100 text-amber-800 hover:bg-amber-100">
+                                                    Pending
+                                                </Badge>
+                                            </div>
+                                        </CardHeader>
+
+                                        <CardContent>
+                                            {business.description && (
+                                                <p className="leading-7 text-[#17233B]/65">
+                                                    {business.description}
+                                                </p>
+                                            )}
+
+                                            <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
+                                                {business.contact_email && (
+                                                    <p>Contact: {business.contact_email}</p>
+                                                )}
+
+                                                {business.website_url && (
+                                                    <p>Website: {business.website_url}</p>
+                                                )}
+
+                                                {address && <p>Location: {address}</p>}
                                             </div>
 
-                                            <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                                                Pending
-                                            </span>
-                                        </div>
+                                            <Separator className="my-6" />
 
-                                        {business.description && (
-                                            <p className="mt-5 leading-7 text-[#17233B]/65">
-                                                {business.description}
-                                            </p>
-                                        )}
+                                            <div className="flex flex-col gap-3 sm:flex-row">
+                                                <Button
+                                                    type="button"
+                                                    disabled={activeBusinessId === business.id}
+                                                    onClick={() =>
+                                                        setReviewAction({
+                                                            businessId: business.id,
+                                                            decision: "approved",
+                                                        })
+                                                    }
+                                                >
+                                                    Approve business
+                                                </Button>
 
-                                        <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
-                                            {business.contact_email && (
-                                                <p>Contact: {business.contact_email}</p>
-                                            )}
-
-                                            {business.website_url && (
-                                                <p>Website: {business.website_url}</p>
-                                            )}
-
-                                            {location && (
-                                                <p>
-                                                    Location: {location.address_line_1},{" "}
-                                                    {location.city}
-                                                    {location.region ? `, ${location.region}` : ""}
-                                                    {location.postal_code
-                                                        ? `, ${location.postal_code}`
-                                                        : ""}
-                                                    {location.country_code
-                                                        ? `, ${location.country_code}`
-                                                        : ""}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                                            <button
-                                                type="button"
-                                                disabled={activeBusinessId === business.id}
-                                                onClick={() =>
-                                                    reviewBusiness(business.id, "approved")
-                                                }
-                                                className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                Approve business
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                disabled={activeBusinessId === business.id}
-                                                onClick={() =>
-                                                    reviewBusiness(business.id, "rejected")
-                                                }
-                                                className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                Reject business
-                                            </button>
-                                        </div>
-                                    </article>
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    disabled={activeBusinessId === business.id}
+                                                    onClick={() =>
+                                                        setReviewAction({
+                                                            businessId: business.id,
+                                                            decision: "rejected",
+                                                        })
+                                                    }
+                                                >
+                                                    Reject business
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 );
                             })}
                         </section>
 
                         <nav className="mt-8 flex items-center justify-between">
                             {page > 1 ? (
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
                                     onClick={() => {
                                         const nextPage = page - 1;
                                         setPage(nextPage);
                                         loadBusinesses(search, nextPage);
                                     }}
-                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
                                 >
                                     Previous
-                                </button>
+                                </Button>
                             ) : (
                                 <span />
                             )}
@@ -323,17 +401,17 @@ export default function AdminBusinessesPage() {
                             </span>
 
                             {page < totalPages ? (
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
                                     onClick={() => {
                                         const nextPage = page + 1;
                                         setPage(nextPage);
                                         loadBusinesses(search, nextPage);
                                     }}
-                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
                                 >
                                     Next
-                                </button>
+                                </Button>
                             ) : (
                                 <span />
                             )}
@@ -341,6 +419,66 @@ export default function AdminBusinessesPage() {
                     </>
                 )}
             </div>
+
+            <Dialog
+                open={reviewAction !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setReviewAction(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {reviewAction?.decision === "approved"
+                                ? "Approve this business?"
+                                : "Reject this business?"}
+                        </DialogTitle>
+
+                        <DialogDescription>
+                            {reviewAction?.decision === "approved"
+                                ? "This business will be eligible to appear publicly."
+                                : "This business will not be allowed to operate publicly."}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setReviewAction(null)}
+                            disabled={activeBusinessId !== ""}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant={
+                                reviewAction?.decision === "approved"
+                                    ? "default"
+                                    : "destructive"
+                            }
+                            disabled={activeBusinessId !== ""}
+                            onClick={() => {
+                                if (reviewAction) {
+                                    reviewBusiness(
+                                        reviewAction.businessId,
+                                        reviewAction.decision,
+                                    );
+                                }
+                            }}
+                        >
+                            {activeBusinessId !== ""
+                                ? "Saving…"
+                                : reviewAction?.decision === "approved"
+                                    ? "Approve business"
+                                    : "Reject business"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }

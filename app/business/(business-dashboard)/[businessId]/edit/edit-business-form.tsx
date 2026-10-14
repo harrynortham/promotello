@@ -4,7 +4,18 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/utils/supabase/client";
 
 type EditBusinessFormProps = {
@@ -54,9 +65,6 @@ const days = [
     "Saturday",
 ];
 
-const inputClassName =
-    "mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B] outline-none transition placeholder:text-[#17233B]/40 focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20";
-
 function createDefaultHours(): DayHours[] {
     return days.map(() => ({
         isClosed: false,
@@ -72,7 +80,9 @@ export default function EditBusinessForm({
 
     const [business, setBusiness] = useState<Business | null>(null);
     const [location, setLocation] = useState<Location | null>(null);
-    const [hours, setHours] = useState<DayHours[]>(createDefaultHours());
+    const [hours, setHours] = useState<DayHours[]>(
+        createDefaultHours(),
+    );
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -83,51 +93,60 @@ export default function EditBusinessForm({
         async function loadBusiness() {
             const supabase = createClient();
 
-            const { data: businessData, error: businessError } = await supabase
-                .from("businesses")
-                .select(
-                    "name, category, description, website_url, contact_email, logo_url",
-                )
-                .eq("id", businessId)
-                .single();
+            const [{ data: businessData, error: businessError }, locationResult, hoursResult] =
+                await Promise.all([
+                    supabase
+                        .from("businesses")
+                        .select(
+                            "name, category, description, website_url, contact_email, logo_url",
+                        )
+                        .eq("id", businessId)
+                        .single(),
 
-            const { data: locationData, error: locationError } = await supabase
-                .from("business_locations")
-                .select(
-                    "id, name, address_line_1, address_line_2, city, region, postal_code, country_code",
-                )
-                .eq("business_id", businessId)
-                .order("created_at", { ascending: true })
-                .limit(1)
-                .maybeSingle();
+                    supabase
+                        .from("business_locations")
+                        .select(
+                            "id, name, address_line_1, address_line_2, city, region, postal_code, country_code",
+                        )
+                        .eq("business_id", businessId)
+                        .order("created_at", { ascending: true })
+                        .limit(1)
+                        .maybeSingle(),
 
-            const { data: hoursData, error: hoursError } = await supabase
-                .from("business_hours")
-                .select("day_of_week, is_closed, opens_at, closes_at")
-                .eq("business_id", businessId)
-                .order("day_of_week", { ascending: true });
+                    supabase
+                        .from("business_hours")
+                        .select("day_of_week, is_closed, opens_at, closes_at")
+                        .eq("business_id", businessId)
+                        .order("day_of_week", { ascending: true }),
+                ]);
 
-            if (businessError || locationError || hoursError || !businessData) {
+            if (
+                businessError ||
+                locationResult.error ||
+                hoursResult.error ||
+                !businessData
+            ) {
                 setErrorMessage("We couldn't load this business.");
-            } else {
-                setBusiness(businessData);
-                setLocation(locationData);
-
-                const loadedHours = createDefaultHours();
-
-                for (const item of (hoursData ?? []) as BusinessHour[]) {
-                    if (item.day_of_week >= 0 && item.day_of_week <= 6) {
-                        loadedHours[item.day_of_week] = {
-                            isClosed: item.is_closed,
-                            opensAt: item.opens_at?.slice(0, 5) ?? "09:00",
-                            closesAt: item.closes_at?.slice(0, 5) ?? "17:00",
-                        };
-                    }
-                }
-
-                setHours(loadedHours);
+                setIsLoading(false);
+                return;
             }
 
+            setBusiness(businessData);
+            setLocation(locationResult.data);
+
+            const loadedHours = createDefaultHours();
+
+            for (const item of (hoursResult.data ?? []) as BusinessHour[]) {
+                if (item.day_of_week >= 0 && item.day_of_week <= 6) {
+                    loadedHours[item.day_of_week] = {
+                        isClosed: item.is_closed,
+                        opensAt: item.opens_at?.slice(0, 5) ?? "09:00",
+                        closesAt: item.closes_at?.slice(0, 5) ?? "17:00",
+                    };
+                }
+            }
+
+            setHours(loadedHours);
             setIsLoading(false);
         }
 
@@ -166,6 +185,24 @@ export default function EditBusinessForm({
         let logoUrl = business?.logo_url ?? null;
 
         if (logoFile) {
+            const allowedTypes = [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+            ];
+
+            if (!allowedTypes.includes(logoFile.type)) {
+                setErrorMessage("Please upload a PNG, JPG or WebP image.");
+                setIsSaving(false);
+                return;
+            }
+
+            if (logoFile.size > 5 * 1024 * 1024) {
+                setErrorMessage("The logo must be smaller than 5MB.");
+                setIsSaving(false);
+                return;
+            }
+
             const fileExtension = logoFile.name.split(".").pop() ?? "jpg";
             const filePath = `${businessId}/logo-${Date.now()}.${fileExtension}`;
 
@@ -270,7 +307,7 @@ export default function EditBusinessForm({
         return (
             <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
                 <div className="mx-auto max-w-2xl">
-                    <div className="h-96 animate-pulse rounded-3xl bg-white" />
+                    <div className="h-96 animate-pulse rounded-xl bg-white" />
                 </div>
             </main>
         );
@@ -279,18 +316,24 @@ export default function EditBusinessForm({
     if (!business) {
         return (
             <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
-                <div className="mx-auto max-w-2xl rounded-3xl bg-white p-8">
-                    <p className="text-red-700">
-                        {errorMessage || "Business not found."}
-                    </p>
-                </div>
+                <Card className="mx-auto max-w-2xl border-red-200">
+                    <CardContent className="p-8">
+                        <Alert variant="destructive">
+                            <AlertTitle>Business unavailable</AlertTitle>
+
+                            <AlertDescription>
+                                {errorMessage || "Business not found."}
+                            </AlertDescription>
+                        </Alert>
+                    </CardContent>
+                </Card>
             </main>
         );
     }
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
-            <div className="mx-auto max-w-2xl">
+            <div className="mx-auto max-w-3xl">
                 <Button
                     render={<Link href="/business/dashboard" />}
                     nativeButton={false}
@@ -300,274 +343,331 @@ export default function EditBusinessForm({
                     ← Back to dashboard
                 </Button>
 
-                <h1 className="mt-8 text-4xl font-semibold tracking-tight">
-                    Edit business
-                </h1>
+                <div className="mt-8">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Business settings
+                    </p>
 
-                <p className="mt-3 text-[#17233B]/65">
-                    Keep your business information up to date.
-                </p>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                        Edit business
+                    </h1>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="mt-10 space-y-8 rounded-3xl bg-white p-6 shadow-sm sm:p-10"
-                >
-                    <fieldset className="space-y-5">
-                        <legend className="text-xl font-semibold">
-                            Business details
-                        </legend>
+                    <p className="mt-3 text-[#17233B]/65">
+                        Keep your business information up to date.
+                    </p>
+                </div>
 
-                        {business.logo_url && (
-                            <img
-                                src={business.logo_url}
-                                alt={`${business.name} logo`}
-                                className="h-24 w-24 rounded-2xl object-cover"
-                            />
-                        )}
+                <Card className="mt-10 border-[#17233B]/10">
+                    <CardContent className="p-6 sm:p-10">
+                        <form onSubmit={handleSubmit} className="space-y-10">
+                            <section className="space-y-5">
+                                <div>
+                                    <h2 className="text-xl font-semibold">
+                                        Business details
+                                    </h2>
 
-                        <label className="block text-sm font-medium">
-                            Business logo
-                            <input
-                                name="logo"
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                onChange={(event) =>
-                                    setLogoFile(event.target.files?.[0] ?? null)
-                                }
-                                className="mt-2 block w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm"
-                            />
-                            <span className="mt-2 block text-xs text-[#17233B]/50">
-                                Use a PNG, JPG, or WebP image.
-                            </span>
-                        </label>
-
-                        <label className="block text-sm font-medium">
-                            Business name
-                            <input
-                                name="businessName"
-                                required
-                                defaultValue={business.name}
-                                className={inputClassName}
-                            />
-                        </label>
-
-                        <label className="block text-sm font-medium">
-                            Category
-                            <input
-                                name="category"
-                                required
-                                defaultValue={business.category}
-                                className={inputClassName}
-                            />
-                        </label>
-
-                        <label className="block text-sm font-medium">
-                            Description
-                            <textarea
-                                name="description"
-                                rows={4}
-                                defaultValue={business.description ?? ""}
-                                className={inputClassName}
-                            />
-                        </label>
-
-                        <label className="block text-sm font-medium">
-                            Website
-                            <input
-                                name="website"
-                                type="url"
-                                defaultValue={business.website_url ?? ""}
-                                className={inputClassName}
-                                placeholder="https://example.com"
-                            />
-                        </label>
-
-                        <label className="block text-sm font-medium">
-                            Contact email
-                            <input
-                                name="contactEmail"
-                                type="email"
-                                defaultValue={business.contact_email ?? ""}
-                                className={inputClassName}
-                            />
-                        </label>
-                    </fieldset>
-
-                    {location && (
-                        <fieldset className="space-y-5 border-t border-[#17233B]/10 pt-8">
-                            <legend className="text-xl font-semibold">
-                                Main location
-                            </legend>
-
-                            <label className="block text-sm font-medium">
-                                Location name
-                                <input
-                                    name="locationName"
-                                    defaultValue={location.name}
-                                    className={inputClassName}
-                                />
-                            </label>
-
-                            <label className="block text-sm font-medium">
-                                Address line 1
-                                <input
-                                    name="addressLine1"
-                                    required
-                                    defaultValue={location.address_line_1}
-                                    className={inputClassName}
-                                />
-                            </label>
-
-                            <label className="block text-sm font-medium">
-                                Address line 2
-                                <input
-                                    name="addressLine2"
-                                    defaultValue={location.address_line_2 ?? ""}
-                                    className={inputClassName}
-                                />
-                            </label>
-
-                            <div className="grid gap-5 sm:grid-cols-2">
-                                <label className="block text-sm font-medium">
-                                    City
-                                    <input
-                                        name="city"
-                                        required
-                                        defaultValue={location.city}
-                                        className={inputClassName}
-                                    />
-                                </label>
-
-                                <label className="block text-sm font-medium">
-                                    Region
-                                    <input
-                                        name="region"
-                                        defaultValue={location.region ?? ""}
-                                        className={inputClassName}
-                                    />
-                                </label>
-                            </div>
-
-                            <div className="grid gap-5 sm:grid-cols-2">
-                                <label className="block text-sm font-medium">
-                                    Postcode
-                                    <input
-                                        name="postalCode"
-                                        defaultValue={location.postal_code ?? ""}
-                                        className={inputClassName}
-                                    />
-                                </label>
-
-                                <label className="block text-sm font-medium">
-                                    Country code
-                                    <input
-                                        name="countryCode"
-                                        maxLength={2}
-                                        defaultValue={location.country_code}
-                                        className={inputClassName}
-                                    />
-                                </label>
-                            </div>
-                        </fieldset>
-                    )}
-
-                    <fieldset className="space-y-5 border-t border-[#17233B]/10 pt-8">
-                        <legend className="text-xl font-semibold">
-                            Opening hours
-                        </legend>
-
-                        <p className="text-sm leading-6 text-[#17233B]/65">
-                            Set the hours customers can visit your business.
-                        </p>
-
-                        <div className="space-y-4">
-                            {days.map((day, index) => (
-                                <div
-                                    key={day}
-                                    className="rounded-2xl border border-[#17233B]/10 p-4"
-                                >
-                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <label className="flex items-center gap-3 text-sm font-semibold">
-                                            <input
-                                                type="checkbox"
-                                                checked={!hours[index].isClosed}
-                                                onChange={(event) =>
-                                                    updateHours(
-                                                        index,
-                                                        "isClosed",
-                                                        !event.target.checked,
-                                                    )
-                                                }
-                                                className="h-4 w-4 rounded border-[#17233B]/30 accent-[#FF593F]"
-                                            />
-                                            {day}
-                                        </label>
-
-                                        {hours[index].isClosed ? (
-                                            <span className="text-sm text-[#17233B]/55">
-                                                Closed
-                                            </span>
-                                        ) : (
-                                            <div className="flex items-center gap-3">
-                                                <input
-                                                    type="time"
-                                                    value={hours[index].opensAt}
-                                                    onChange={(event) =>
-                                                        updateHours(
-                                                            index,
-                                                            "opensAt",
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="rounded-lg border border-[#17233B]/15 px-3 py-2 text-sm"
-                                                />
-
-                                                <span className="text-sm text-[#17233B]/50">
-                                                    to
-                                                </span>
-
-                                                <input
-                                                    type="time"
-                                                    value={hours[index].closesAt}
-                                                    onChange={(event) =>
-                                                        updateHours(
-                                                            index,
-                                                            "closesAt",
-                                                            event.target.value,
-                                                        )
-                                                    }
-                                                    className="rounded-lg border border-[#17233B]/15 px-3 py-2 text-sm"
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <p className="mt-1 text-sm text-[#17233B]/60">
+                                        Information customers will see on your business profile.
+                                    </p>
                                 </div>
-                            ))}
-                        </div>
-                    </fieldset>
 
-                    {errorMessage && (
-                        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {errorMessage}
-                        </p>
-                    )}
+                                {business.logo_url && (
+                                    <img
+                                        src={business.logo_url}
+                                        alt={`${business.name} logo`}
+                                        className="h-24 w-24 rounded-xl object-cover"
+                                    />
+                                )}
 
-                    {saved && (
-                        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            Business details saved successfully.
-                        </p>
-                    )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="logo">Business logo</Label>
 
-                    <Button
-                        type="submit"
-                        disabled={isSaving}
-                        variant="default"
-                        size="lg"
-                        className="w-full"
-                    >
-                        {isSaving ? "Saving changes…" : "Save changes"}
-                    </Button>
-                </form>
+                                    <Input
+                                        id="logo"
+                                        name="logo"
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/webp"
+                                        onChange={(event) =>
+                                            setLogoFile(event.target.files?.[0] ?? null)
+                                        }
+                                    />
+
+                                    <p className="text-xs text-[#17233B]/50">
+                                        Use a PNG, JPG or WebP image under 5MB.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="businessName">Business name</Label>
+
+                                    <Input
+                                        id="businessName"
+                                        name="businessName"
+                                        required
+                                        defaultValue={business.name}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Category</Label>
+
+                                    <Input
+                                        id="category"
+                                        name="category"
+                                        required
+                                        defaultValue={business.category}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="description">Description</Label>
+
+                                    <Textarea
+                                        id="description"
+                                        name="description"
+                                        rows={5}
+                                        defaultValue={business.description ?? ""}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="website">Website</Label>
+
+                                    <Input
+                                        id="website"
+                                        name="website"
+                                        type="url"
+                                        defaultValue={business.website_url ?? ""}
+                                        placeholder="https://example.com"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactEmail">Contact email</Label>
+
+                                    <Input
+                                        id="contactEmail"
+                                        name="contactEmail"
+                                        type="email"
+                                        defaultValue={business.contact_email ?? ""}
+                                    />
+                                </div>
+                            </section>
+
+                            <Separator />
+
+                            {location && (
+                                <section className="space-y-5">
+                                    <div>
+                                        <h2 className="text-xl font-semibold">
+                                            Main location
+                                        </h2>
+
+                                        <p className="mt-1 text-sm text-[#17233B]/60">
+                                            This location appears on your public business profile.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="locationName">Location name</Label>
+
+                                        <Input
+                                            id="locationName"
+                                            name="locationName"
+                                            defaultValue={location.name}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="addressLine1">
+                                            Address line 1
+                                        </Label>
+
+                                        <Input
+                                            id="addressLine1"
+                                            name="addressLine1"
+                                            required
+                                            defaultValue={location.address_line_1}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="addressLine2">
+                                            Address line 2
+                                        </Label>
+
+                                        <Input
+                                            id="addressLine2"
+                                            name="addressLine2"
+                                            defaultValue={location.address_line_2 ?? ""}
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="city">City</Label>
+
+                                            <Input
+                                                id="city"
+                                                name="city"
+                                                required
+                                                defaultValue={location.city}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="region">Region</Label>
+
+                                            <Input
+                                                id="region"
+                                                name="region"
+                                                defaultValue={location.region ?? ""}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid gap-5 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="postalCode">Postcode</Label>
+
+                                            <Input
+                                                id="postalCode"
+                                                name="postalCode"
+                                                defaultValue={location.postal_code ?? ""}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="countryCode">
+                                                Country code
+                                            </Label>
+
+                                            <Input
+                                                id="countryCode"
+                                                name="countryCode"
+                                                maxLength={2}
+                                                defaultValue={location.country_code}
+                                            />
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
+
+                            <Separator />
+
+                            <section className="space-y-5">
+                                <div>
+                                    <h2 className="text-xl font-semibold">
+                                        Opening hours
+                                    </h2>
+
+                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
+                                        Set the hours customers can visit your business.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {days.map((day, index) => (
+                                        <Card
+                                            key={day}
+                                            className="border-[#17233B]/10 shadow-none"
+                                        >
+                                            <CardContent className="p-4">
+                                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <Checkbox
+                                                            id={`open-${index}`}
+                                                            checked={!hours[index].isClosed}
+                                                            onCheckedChange={(checked) =>
+                                                                updateHours(
+                                                                    index,
+                                                                    "isClosed",
+                                                                    checked !== true,
+                                                                )
+                                                            }
+                                                        />
+
+                                                        <Label htmlFor={`open-${index}`}>
+                                                            {day}
+                                                        </Label>
+                                                    </div>
+
+                                                    {hours[index].isClosed ? (
+                                                        <span className="text-sm text-[#17233B]/55">
+                                                            Closed
+                                                        </span>
+                                                    ) : (
+                                                        <div className="flex items-center gap-3">
+                                                            <Input
+                                                                type="time"
+                                                                value={hours[index].opensAt}
+                                                                onChange={(event) =>
+                                                                    updateHours(
+                                                                        index,
+                                                                        "opensAt",
+                                                                        event.target.value,
+                                                                    )
+                                                                }
+                                                                className="w-auto"
+                                                            />
+
+                                                            <span className="text-sm text-[#17233B]/50">
+                                                                to
+                                                            </span>
+
+                                                            <Input
+                                                                type="time"
+                                                                value={hours[index].closesAt}
+                                                                onChange={(event) =>
+                                                                    updateHours(
+                                                                        index,
+                                                                        "closesAt",
+                                                                        event.target.value,
+                                                                    )
+                                                                }
+                                                                className="w-auto"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {errorMessage && (
+                                <Alert variant="destructive">
+                                    <AlertTitle>Unable to save changes</AlertTitle>
+
+                                    <AlertDescription>
+                                        {errorMessage}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            {saved && (
+                                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                                    <AlertTitle>Changes saved</AlertTitle>
+
+                                    <AlertDescription>
+                                        Business details saved successfully.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={isSaving}
+                                variant="default"
+                                size="lg"
+                                className="w-full"
+                            >
+                                {isSaving ? "Saving changes…" : "Save changes"}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );

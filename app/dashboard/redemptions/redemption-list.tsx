@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 type Redemption = {
     id: string;
@@ -15,12 +19,8 @@ type Redemption = {
         title: string;
         discount: string;
         businesses:
-        | {
-            name: string;
-        }
-        | {
-            name: string;
-        }[]
+        | { name: string }
+        | { name: string }[]
         | null;
     }
     | {
@@ -28,31 +28,21 @@ type Redemption = {
         title: string;
         discount: string;
         businesses:
-        | {
-            name: string;
-        }
-        | {
-            name: string;
-        }[]
+        | { name: string }
+        | { name: string }[]
         | null;
     }[]
     | null;
 };
 
-function getOffer(
-    offers: Redemption["offers"],
-) {
+function getOffer(offers: Redemption["offers"]) {
     return Array.isArray(offers) ? offers[0] : offers;
 }
 
 function getBusinessName(
     businesses:
-        | {
-            name: string;
-        }
-        | {
-            name: string;
-        }[]
+        | { name: string }
+        | { name: string }[]
         | null
         | undefined,
 ) {
@@ -71,13 +61,16 @@ export default function RedemptionList({
     redemptions: Redemption[];
 }) {
     return (
-        <main className=" px-6 py-6 text-[#17233B] sm:py-16">
+        <main className="min-h-screen px-6 py-6 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-4xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <Badge
+                            variant="outline"
+                            className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                        >
                             Customer account
-                        </p>
+                        </Badge>
 
                         <h1 className="mt-3 text-4xl font-semibold tracking-tight">
                             My redemptions
@@ -99,25 +92,24 @@ export default function RedemptionList({
                 </div>
 
                 {redemptions.length === 0 ? (
-                    <section className="mt-10 rounded-3xl bg-white p-8 text-center shadow-sm sm:p-12">
-                        <h2 className="text-2xl font-semibold">
-                            No redemptions yet
-                        </h2>
+                    <Alert className="mt-10 border-[#17233B]/10 bg-white">
+                        <AlertTitle>No redemptions yet</AlertTitle>
 
-                        <p className="mx-auto mt-3 max-w-md leading-7 text-[#17233B]/65">
+                        <AlertDescription>
                             When you redeem an offer, your redemption code and offer details
                             will appear here.
-                        </p>
+                        </AlertDescription>
 
                         <Button
                             render={<Link href="/#offers" />}
                             nativeButton={false}
                             variant="default"
-                            className="mt-7"
+                            size="sm"
+                            className="mt-5"
                         >
                             Explore deals
                         </Button>
-                    </section>
+                    </Alert>
                 ) : (
                     <section className="mt-10 grid gap-6">
                         {redemptions.map((redemption) => {
@@ -131,75 +123,98 @@ export default function RedemptionList({
                             const isUsed = Boolean(redemption.used_at);
 
                             return (
-                                <article
+                                <Card
                                     key={redemption.id}
-                                    className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
+                                    className="border-[#17233B]/10 shadow-sm"
                                 >
-                                    <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-[#17233B]/60">
-                                                {businessName}
+                                    <CardHeader>
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-[#17233B]/60">
+                                                    {businessName}
+                                                </p>
+
+                                                <CardTitle className="mt-2 text-2xl">
+                                                    {offer.title}
+                                                </CardTitle>
+
+                                                <p className="mt-2 font-semibold text-[#FF593F]">
+                                                    {offer.discount}
+                                                </p>
+                                            </div>
+
+                                            <Badge
+                                                variant="outline"
+                                                className={
+                                                    isUsed
+                                                        ? "border-slate-200 bg-slate-100 text-slate-700"
+                                                        : "border-emerald-200 bg-emerald-100 text-emerald-800"
+                                                }
+                                            >
+                                                {isUsed ? "Used" : "Active"}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+
+                                    <CardContent>
+                                        <div className="rounded-xl bg-[#17233B] p-5 text-center text-white">
+                                            <p className="text-sm text-white/70">
+                                                Redemption code
                                             </p>
 
-                                            <h2 className="mt-2 text-2xl font-semibold">
-                                                {offer.title}
-                                            </h2>
+                                            <p className="mt-2 text-2xl font-bold tracking-[0.2em]">
+                                                {redemption.redemption_code}
+                                            </p>
 
-                                            <p className="mt-2 font-semibold text-[#FF593F]">
-                                                {offer.discount}
+                                            <p className="mt-3 text-sm text-white/70">
+                                                {isUsed
+                                                    ? "This redemption has been marked as used."
+                                                    : "Show this code to the business."}
                                             </p>
                                         </div>
 
-                                        <span
-                                            className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${isUsed
-                                                ? "bg-slate-100 text-slate-700"
-                                                : "bg-emerald-100 text-emerald-800"
-                                                }`}
-                                        >
-                                            {isUsed ? "Used" : "Active"}
-                                        </span>
-                                    </div>
+                                        <Separator className="my-6" />
 
-                                    <div className="mt-6 rounded-2xl bg-[#17233B] p-5 text-center text-white">
-                                        <p className="text-sm text-white/70">
-                                            Redemption code
-                                        </p>
+                                        <div className="flex flex-wrap items-center justify-between gap-4">
+                                            <div className="text-sm text-[#17233B]/60">
+                                                <p>
+                                                    Redeemed{" "}
+                                                    {new Date(
+                                                        redemption.redeemed_at,
+                                                    ).toLocaleDateString("en-GB", {
+                                                        day: "numeric",
+                                                        month: "long",
+                                                        year: "numeric",
+                                                    })}
+                                                </p>
 
-                                        <p className="mt-2 text-2xl font-bold tracking-[0.2em]">
-                                            {redemption.redemption_code}
-                                        </p>
+                                                {redemption.used_at && (
+                                                    <p className="mt-1 text-green-700">
+                                                        Used{" "}
+                                                        {new Date(
+                                                            redemption.used_at,
+                                                        ).toLocaleDateString("en-GB", {
+                                                            day: "numeric",
+                                                            month: "long",
+                                                            year: "numeric",
+                                                        })}
+                                                    </p>
+                                                )}
+                                            </div>
 
-                                        <p className="mt-3 text-sm text-white/70">
-                                            {isUsed
-                                                ? "This redemption has been marked as used."
-                                                : "Show this code to the business."}
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[#17233B]/10 pt-5">
-                                        <p className="text-sm text-[#17233B]/60">
-                                            Redeemed{" "}
-                                            {new Date(
-                                                redemption.redeemed_at,
-                                            ).toLocaleDateString("en-GB", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric",
-                                            })}
-                                        </p>
-
-                                        <Button
-                                            render={
-                                                <Link href={`/offers/${offer.slug}`} />
-                                            }
-                                            nativeButton={false}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            View offer
-                                        </Button>
-                                    </div>
-                                </article>
+                                            <Button
+                                                render={
+                                                    <Link href={`/offers/${offer.slug}`} />
+                                                }
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                View offer
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             );
                         })}
                     </section>

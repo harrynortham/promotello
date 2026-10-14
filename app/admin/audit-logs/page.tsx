@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
+
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/server";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type PageProps = {
     searchParams: Promise<{
@@ -15,15 +27,11 @@ type AuditLog = {
     action: string;
     entity_type: string;
     entity_id: string;
-    metadata: Record<string, unknown>;
+    metadata: Record<string, unknown> | null;
     created_at: string;
     businesses:
-    | {
-        name: string;
-    }
-    | {
-        name: string;
-    }[]
+    | { name: string }
+    | { name: string }[]
     | null;
 };
 
@@ -32,10 +40,52 @@ const pageSize = 25;
 function LoadingState() {
     return (
         <main className="mt-8">
-            <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-            <div className="mt-8 h-64 animate-pulse rounded-3xl bg-white" />
+            <Skeleton className="h-9 w-36 rounded-md" />
+
+            <div className="mt-8">
+                <Skeleton className="h-5 w-40 rounded-md" />
+                <Skeleton className="mt-3 h-12 w-64 rounded-md" />
+                <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+            </div>
+
+            <div className="mt-8 rounded-xl border border-[#17233B]/10 bg-white p-6">
+                <Skeleton className="h-10 w-full rounded-md" />
+            </div>
+
+            <div className="mt-10 space-y-4">
+                {[1, 2, 3, 4].map((item) => (
+                    <div
+                        key={item}
+                        className="rounded-xl border border-[#17233B]/10 bg-white p-6"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-3">
+                                <Skeleton className="h-6 w-48 rounded-md" />
+                                <Skeleton className="h-4 w-40 rounded-md" />
+                            </div>
+
+                            <Skeleton className="h-4 w-36 rounded-md" />
+                        </div>
+
+                        <Skeleton className="mt-5 h-4 w-64 rounded-md" />
+                        <Skeleton className="mt-4 h-20 w-full rounded-xl" />
+                    </div>
+                ))}
+            </div>
         </main>
     );
+}
+
+function getBusinessName(log: AuditLog) {
+    if (Array.isArray(log.businesses)) {
+        return log.businesses[0]?.name ?? "Platform activity";
+    }
+
+    return log.businesses?.name ?? "Platform activity";
+}
+
+function formatAction(action: string) {
+    return action.replaceAll("_", " ");
 }
 
 async function AuditLogsContent({ searchParams }: PageProps) {
@@ -43,6 +93,7 @@ async function AuditLogsContent({ searchParams }: PageProps) {
 
     const params = await searchParams;
     const search = params.search?.trim() ?? "";
+
     const requestedPage = Number(params.page ?? "1");
     const page =
         Number.isInteger(requestedPage) && requestedPage > 0
@@ -84,17 +135,22 @@ async function AuditLogsContent({ searchParams }: PageProps) {
 
     return (
         <main className="mt-8">
-            <Link
-                href="/admin"
-                className="text-sm font-semibold text-[#FF593F]"
+            <Button
+                render={<Link href="/admin" />}
+                nativeButton={false}
+                variant="outline"
+                size="sm"
             >
                 ← Back to admin
-            </Link>
+            </Button>
 
             <header className="mt-8">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                <Badge
+                    variant="outline"
+                    className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                >
                     Administration
-                </p>
+                </Badge>
 
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">
                     Audit log
@@ -105,89 +161,117 @@ async function AuditLogsContent({ searchParams }: PageProps) {
                 </p>
             </header>
 
-            <form
-                method="get"
-                className="mt-8 flex flex-col gap-3 sm:flex-row"
-            >
-                <input
-                    name="search"
-                    defaultValue={search}
-                    placeholder="Search actions, e.g. approved"
-                    className="flex-1 rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#FF593F]"
-                />
+            <Card className="mt-8 border-[#17233B]/10">
+                <CardContent className="p-6">
+                    <form method="get" className="flex flex-col gap-3 sm:flex-row">
+                        <Input
+                            name="search"
+                            defaultValue={search}
+                            placeholder="Search actions, for example approved"
+                            className="flex-1"
+                        />
 
-                <button
-                    type="submit"
-                    className="rounded-xl bg-[#FF593F] px-5 py-3 text-sm font-semibold transition hover:bg-[#E94D36]"
-                >
-                    Search
-                </button>
-            </form>
+                        <Button type="submit" variant="default">
+                            Search
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
 
             {error ? (
-                <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
-                    We couldn’t load the audit log.
-                </div>
+                <Alert variant="destructive" className="mt-8">
+                    <AlertTitle>Unable to load the audit log</AlertTitle>
+
+                    <AlertDescription>
+                        Please refresh the page and try again.
+                    </AlertDescription>
+                </Alert>
             ) : logs.length === 0 ? (
-                <section className="mt-10 rounded-3xl bg-white p-10 text-center shadow-sm">
-                    <h2 className="text-2xl font-semibold">
-                        No matching activity
-                    </h2>
-                </section>
+                <Alert className="mt-10 border-[#17233B]/10 bg-white">
+                    <AlertTitle>No matching activity</AlertTitle>
+
+                    <AlertDescription>
+                        No audit log entries matched your search.
+                    </AlertDescription>
+                </Alert>
             ) : (
                 <>
                     <section className="mt-10 space-y-4">
                         {logs.map((log) => {
-                            const business = Array.isArray(log.businesses)
-                                ? log.businesses[0]
-                                : log.businesses;
+                            const metadata = log.metadata ?? {};
 
                             return (
-                                <article
+                                <Card
                                     key={log.id}
-                                    className="rounded-2xl bg-white p-5 shadow-sm"
+                                    className="border-[#17233B]/10 shadow-sm"
                                 >
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <p className="font-semibold capitalize">
-                                                {log.action.replaceAll("_", " ")}
-                                            </p>
+                                    <CardHeader>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <CardTitle className="text-xl capitalize">
+                                                        {formatAction(log.action)}
+                                                    </CardTitle>
 
-                                            <p className="mt-1 text-sm text-[#17233B]/60">
-                                                {business?.name ?? "Platform activity"}
-                                            </p>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="capitalize"
+                                                    >
+                                                        {log.entity_type}
+                                                    </Badge>
+                                                </div>
+
+                                                <p className="mt-2 text-sm text-[#17233B]/60">
+                                                    {getBusinessName(log)}
+                                                </p>
+                                            </div>
+
+                                            <time
+                                                dateTime={log.created_at}
+                                                className="text-sm text-[#17233B]/50"
+                                            >
+                                                {new Intl.DateTimeFormat("en-GB", {
+                                                    dateStyle: "medium",
+                                                    timeStyle: "short",
+                                                }).format(new Date(log.created_at))}
+                                            </time>
                                         </div>
+                                    </CardHeader>
 
-                                        <time className="text-sm text-[#17233B]/50">
-                                            {new Intl.DateTimeFormat("en-GB", {
-                                                dateStyle: "medium",
-                                                timeStyle: "short",
-                                            }).format(new Date(log.created_at))}
-                                        </time>
-                                    </div>
+                                    <CardContent>
+                                        <p className="text-xs text-[#17233B]/45">
+                                            Entity ID: {log.entity_id}
+                                        </p>
 
-                                    <p className="mt-4 text-xs text-[#17233B]/45">
-                                        {log.entity_type} · {log.entity_id}
-                                    </p>
+                                        {Object.keys(metadata).length > 0 && (
+                                            <>
+                                                <Separator className="my-4" />
 
-                                    {Object.keys(log.metadata).length > 0 && (
-                                        <pre className="mt-4 overflow-x-auto rounded-xl bg-[#17233B]/5 p-4 text-xs text-[#17233B]/70">
-                                            {JSON.stringify(log.metadata, null, 2)}
-                                        </pre>
-                                    )}
-                                </article>
+                                                <pre className="overflow-x-auto rounded-xl bg-[#17233B]/5 p-4 text-xs leading-6 text-[#17233B]/70">
+                                                    {JSON.stringify(metadata, null, 2)}
+                                                </pre>
+                                            </>
+                                        )}
+                                    </CardContent>
+                                </Card>
                             );
                         })}
                     </section>
 
                     <nav className="mt-8 flex items-center justify-between">
                         {page > 1 ? (
-                            <Link
-                                href={`/admin/audit-logs?page=${page - 1}&search=${encodeURIComponent(search)}`}
-                                className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
+                            <Button
+                                render={
+                                    <Link
+                                        href={`/admin/audit-logs?page=${page - 1}&search=${encodeURIComponent(search)}`}
+                                    />
+                                }
+                                nativeButton={false}
+                                variant="outline"
+                                size="sm"
                             >
                                 Previous
-                            </Link>
+                            </Button>
                         ) : (
                             <span />
                         )}
@@ -197,12 +281,18 @@ async function AuditLogsContent({ searchParams }: PageProps) {
                         </span>
 
                         {page < totalPages ? (
-                            <Link
-                                href={`/admin/audit-logs?page=${page + 1}&search=${encodeURIComponent(search)}`}
-                                className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
+                            <Button
+                                render={
+                                    <Link
+                                        href={`/admin/audit-logs?page=${page + 1}&search=${encodeURIComponent(search)}`}
+                                    />
+                                }
+                                nativeButton={false}
+                                variant="outline"
+                                size="sm"
                             >
                                 Next
-                            </Link>
+                            </Button>
                         ) : (
                             <span />
                         )}

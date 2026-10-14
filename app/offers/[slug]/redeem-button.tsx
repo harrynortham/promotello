@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 
 type RedeemButtonProps = {
@@ -75,37 +82,50 @@ export default function RedeemButton({
 
     if (isFullyClaimed) {
         return (
-            <div className="mt-8 rounded-2xl bg-[#17233B]/5 p-5 text-center">
-                <p className="font-semibold text-[#17233B]">
-                    This offer has been fully claimed.
-                </p>
+            <Alert className="mt-8 border-amber-200 bg-amber-50 text-amber-800">
+                <AlertTitle>This offer has been fully claimed</AlertTitle>
 
-                <p className="mt-2 text-sm text-[#17233B]/60">
+                <AlertDescription>
                     Please browse our other available deals.
-                </p>
-            </div>
+                </AlertDescription>
+            </Alert>
         );
     }
 
     if (code) {
         return (
-            <div className="mt-8 rounded-2xl bg-[#17233B] p-5 text-center text-white">
-                <p className="text-sm text-white/70">Your redemption code</p>
+            <Card className="mt-8 border-[#17233B] bg-[#17233B] text-white">
+                <CardContent className="p-6 text-center">
+                    <Badge
+                        variant="outline"
+                        className="border-white/20 bg-white/10 text-white/80"
+                    >
+                        Redemption successful
+                    </Badge>
 
-                <p className="mt-2 text-3xl font-bold tracking-[0.2em]">
-                    {code}
-                </p>
-
-                <p className="mt-3 text-sm text-white/70">
-                    Show this code to the business.
-                </p>
-
-                {emailWarning && (
-                    <p className="mt-4 text-sm text-amber-200">
-                        {emailWarning}
+                    <p className="mt-5 text-sm text-white/70">
+                        Your redemption code
                     </p>
-                )}
-            </div>
+
+                    <p className="mt-2 text-3xl font-bold tracking-[0.2em]">
+                        {code}
+                    </p>
+
+                    <p className="mt-3 text-sm text-white/70">
+                        Show this code to the business.
+                    </p>
+
+                    {emailWarning && (
+                        <Alert className="mt-5 border-amber-300/30 bg-amber-400/10 text-amber-200">
+                            <AlertTitle>Confirmation email unavailable</AlertTitle>
+
+                            <AlertDescription className="text-amber-200">
+                                {emailWarning}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                </CardContent>
+            </Card>
         );
     }
 
@@ -123,9 +143,11 @@ export default function RedeemButton({
             </Button>
 
             {message && (
-                <p className="mt-3 text-center text-sm text-red-600">
-                    {message}
-                </p>
+                <Alert variant="destructive" className="mt-4">
+                    <AlertTitle>Unable to redeem offer</AlertTitle>
+
+                    <AlertDescription>{message}</AlertDescription>
+                </Alert>
             )}
         </div>
     );

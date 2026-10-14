@@ -4,13 +4,18 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 import RedemptionList from "./redemption-list";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function LoadingState() {
     return (
-        <main className=" px-6 py-6">
+        <main className="min-h-screen px-6 py-6">
             <div className="mx-auto max-w-4xl">
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-64 animate-pulse rounded-3xl bg-white" />
+                <Skeleton className="h-10 w-64 rounded-md" />
+
+                <div className="mt-8 space-y-5">
+                    <Skeleton className="h-56 w-full rounded-xl" />
+                    <Skeleton className="h-56 w-full rounded-xl" />
+                </div>
             </div>
         </main>
     );

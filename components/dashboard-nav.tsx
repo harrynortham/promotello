@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
@@ -24,39 +25,51 @@ export function DashboardNav({ email }: DashboardNavProps) {
 
     return (
         <nav className="flex flex-col gap-4 border-b border-[#17233B]/10 pb-6 sm:flex-row sm:items-center sm:justify-between">
-            <Link
-                href="/dashboard"
-                className="text-lg font-semibold tracking-tight text-[#17233B]"
+            <Button
+                render={<Link href="/dashboard" />}
+                nativeButton={false}
+                variant="link"
+                size="sm"
+                className="h-auto w-fit p-0 text-lg font-semibold tracking-tight text-[#17233B]"
             >
                 Promotello
-            </Link>
+            </Button>
 
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-                <Link
-                    href="/dashboard"
-                    className="font-medium text-[#17233B]/70 hover:text-[#17233B]"
+            <div className="flex flex-wrap items-center gap-2">
+                <Button
+                    render={<Link href="/dashboard" />}
+                    nativeButton={false}
+                    variant="ghost"
+                    size="sm"
                 >
                     Dashboard
-                </Link>
+                </Button>
 
-                <Link
-                    href="/dashboard/redemptions"
-                    className="font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                <Button
+                    render={<Link href="/dashboard/redemptions" />}
+                    nativeButton={false}
+                    variant="ghost"
+                    size="sm"
                 >
                     My redemptions
-                </Link>
+                </Button>
 
-                <Link
-                    href="/onboarding"
-                    className="font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                <Button
+                    render={<Link href="/onboarding" />}
+                    nativeButton={false}
+                    variant="ghost"
+                    size="sm"
                 >
                     Add business
-                </Link>
+                </Button>
 
                 {email && (
-                    <span className="hidden text-[#17233B]/50 md:inline">
+                    <Badge
+                        variant="outline"
+                        className="hidden border-[#17233B]/15 bg-white text-[#17233B]/60 md:inline-flex"
+                    >
                         {email}
-                    </span>
+                    </Badge>
                 )}
 
                 <Button

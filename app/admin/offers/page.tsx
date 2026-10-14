@@ -3,7 +3,28 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Offer = {
     id: string;
@@ -14,18 +35,32 @@ type Offer = {
     availability: string;
     expires_at: string;
     terms: string;
-    approval_status: "pending" | "approved" | "rejected" | "suspended";
+    image_url: string | null;
+    approval_status:
+    | "pending"
+    | "approved"
+    | "rejected"
+    | "suspended";
     businesses:
-    | {
-        name: string;
-    }
-    | {
-        name: string;
-    }[]
+    | { name: string }
+    | { name: string }[]
     | null;
 };
 
+type ReviewAction = {
+    offerId: string;
+    decision: "approved" | "rejected";
+} | null;
+
 const pageSize = 25;
+
+function getBusinessName(offer: Offer) {
+    if (Array.isArray(offer.businesses)) {
+        return offer.businesses[0]?.name ?? "Unknown business";
+    }
+
+    return offer.businesses?.name ?? "Unknown business";
+}
 
 export default function AdminOffersPage() {
     const router = useRouter();
@@ -37,12 +72,15 @@ export default function AdminOffersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeOfferId, setActiveOfferId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [reviewAction, setReviewAction] =
+        useState<ReviewAction>(null);
 
     async function loadOffers(
         requestedSearch = "",
         requestedPage = 1,
     ) {
         setIsLoading(true);
+        setErrorMessage("");
 
         const supabase = createClient();
 
@@ -61,6 +99,7 @@ export default function AdminOffersPage() {
           availability,
           expires_at,
           terms,
+          image_url,
           approval_status,
           businesses (
             name
@@ -140,32 +179,30 @@ export default function AdminOffersPage() {
             return;
         }
 
+        setReviewAction(null);
         await loadOffers(search, page);
         setActiveOfferId("");
-    }
-
-    function getBusinessName(offer: Offer) {
-        if (Array.isArray(offer.businesses)) {
-            return offer.businesses[0]?.name ?? "Unknown business";
-        }
-
-        return offer.businesses?.name ?? "Unknown business";
     }
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-5xl">
-                <Link
-                    href="/admin"
-                    className="text-sm font-semibold text-[#FF593F]"
+                <Button
+                    render={<Link href="/admin" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
                 >
                     ← Back to admin
-                </Link>
+                </Button>
 
                 <header className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <Badge
+                        variant="outline"
+                        className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                    >
                         Administration
-                    </p>
+                    </Badge>
 
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight">
                         Promotion approvals
@@ -176,134 +213,200 @@ export default function AdminOffersPage() {
                     </p>
                 </header>
 
-                <form
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        setPage(1);
-                        loadOffers(search, 1);
-                    }}
-                    className="mt-8 flex flex-col gap-3 sm:flex-row"
-                >
-                    <input
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search by title or category"
-                        className="flex-1 rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#FF593F]"
-                    />
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardContent className="p-6">
+                        <form
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                setPage(1);
+                                loadOffers(search, 1);
+                            }}
+                            className="flex flex-col gap-3 sm:flex-row sm:items-end"
+                        >
+                            <div className="flex-1 space-y-2">
+                                <Label htmlFor="search">
+                                    Search promotions
+                                </Label>
 
-                    <button
-                        type="submit"
-                        className="rounded-xl bg-[#FF593F] px-5 py-3 text-sm font-semibold transition hover:bg-[#E94D36]"
-                    >
-                        Search
-                    </button>
-                </form>
+                                <Input
+                                    id="search"
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                    placeholder="Title or category"
+                                />
+                            </div>
+
+                            <Button type="submit" variant="default">
+                                Search
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
 
                 {errorMessage && (
-                    <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
-                        {errorMessage}
-                    </div>
+                    <Alert variant="destructive" className="mt-8">
+                        <AlertTitle>Unable to load promotions</AlertTitle>
+
+                        <AlertDescription>{errorMessage}</AlertDescription>
+                    </Alert>
                 )}
 
                 {isLoading ? (
-                    <div className="mt-10 h-48 animate-pulse rounded-3xl bg-white" />
-                ) : offers.length === 0 ? (
-                    <section className="mt-10 rounded-3xl bg-white p-10 text-center shadow-sm">
-                        <h2 className="text-2xl font-semibold">
-                            No promotions need review
-                        </h2>
+                    <div className="mt-10 space-y-6">
+                        {[1, 2, 3].map((item) => (
+                            <div
+                                key={item}
+                                className="overflow-hidden rounded-xl border border-[#17233B]/10 bg-white"
+                            >
+                                <Skeleton className="h-48 w-full rounded-none" />
 
-                        <p className="mt-3 text-[#17233B]/65">
+                                <div className="space-y-5 p-6 sm:p-8">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="space-y-3">
+                                            <Skeleton className="h-4 w-32 rounded-md" />
+                                            <Skeleton className="h-8 w-64 rounded-md" />
+                                            <Skeleton className="h-4 w-40 rounded-md" />
+                                        </div>
+
+                                        <Skeleton className="h-6 w-24 rounded-full" />
+                                    </div>
+
+                                    <Skeleton className="h-16 w-full rounded-md" />
+
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-56 rounded-md" />
+                                        <Skeleton className="h-4 w-72 rounded-md" />
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <Skeleton className="h-10 w-28 rounded-md" />
+                                        <Skeleton className="h-10 w-28 rounded-md" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : offers.length === 0 ? (
+                    <Alert className="mt-10 border-[#17233B]/10 bg-white">
+                        <AlertTitle>No promotions need review</AlertTitle>
+
+                        <AlertDescription>
                             No pending promotions matched your search.
-                        </p>
-                    </section>
+                        </AlertDescription>
+                    </Alert>
                 ) : (
                     <>
                         <section className="mt-10 space-y-6">
                             {offers.map((offer) => (
-                                <article
+                                <Card
                                     key={offer.id}
-                                    className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
+                                    className="overflow-hidden border-[#17233B]/10 shadow-sm"
                                 >
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-[#FF593F]">
-                                                {getBusinessName(offer)}
-                                            </p>
-
-                                            <h2 className="mt-1 text-2xl font-semibold">
-                                                {offer.title}
-                                            </h2>
-
-                                            <p className="mt-2 text-sm text-[#17233B]/55">
-                                                {offer.category} · {offer.discount}
-                                            </p>
+                                    {offer.image_url && (
+                                        <div className="aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
+                                            <img
+                                                src={offer.image_url}
+                                                alt={offer.title}
+                                                className="h-full w-full object-cover"
+                                            />
                                         </div>
+                                    )}
 
-                                        <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                                            Pending
-                                        </span>
-                                    </div>
+                                    <CardHeader>
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-[#FF593F]">
+                                                    {getBusinessName(offer)}
+                                                </p>
 
-                                    <p className="mt-5 leading-7 text-[#17233B]/65">
-                                        {offer.description}
-                                    </p>
+                                                <CardTitle className="mt-1 text-2xl">
+                                                    {offer.title}
+                                                </CardTitle>
 
-                                    <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
-                                        <p>{offer.availability}</p>
+                                                <p className="mt-2 text-sm text-[#17233B]/55">
+                                                    {offer.category} · {offer.discount}
+                                                </p>
+                                            </div>
 
-                                        <p>
-                                            Expires{" "}
-                                            {new Intl.DateTimeFormat("en-GB", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric",
-                                            }).format(new Date(offer.expires_at))}
+                                            <Badge
+                                                variant="outline"
+                                                className="w-fit border-amber-200 bg-amber-100 text-amber-800"
+                                            >
+                                                Pending
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+
+                                    <CardContent>
+                                        <p className="leading-7 text-[#17233B]/65">
+                                            {offer.description}
                                         </p>
 
-                                        <p>{offer.terms}</p>
-                                    </div>
+                                        <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
+                                            <p>{offer.availability}</p>
 
-                                    <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                                        <button
-                                            type="button"
-                                            disabled={activeOfferId === offer.id}
-                                            onClick={() =>
-                                                reviewOffer(offer.id, "approved")
-                                            }
-                                            className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            Approve
-                                        </button>
+                                            <p>
+                                                Expires{" "}
+                                                {new Intl.DateTimeFormat("en-GB", {
+                                                    day: "numeric",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                }).format(new Date(offer.expires_at))}
+                                            </p>
 
-                                        <button
-                                            type="button"
-                                            disabled={activeOfferId === offer.id}
-                                            onClick={() =>
-                                                reviewOffer(offer.id, "rejected")
-                                            }
-                                            className="rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            Reject
-                                        </button>
-                                    </div>
-                                </article>
+                                            <p>{offer.terms}</p>
+                                        </div>
+
+                                        <Separator className="my-6" />
+
+                                        <div className="flex flex-col gap-3 sm:flex-row">
+                                            <Button
+                                                type="button"
+                                                disabled={activeOfferId === offer.id}
+                                                onClick={() =>
+                                                    setReviewAction({
+                                                        offerId: offer.id,
+                                                        decision: "approved",
+                                                    })
+                                                }
+                                                variant="default"
+                                            >
+                                                Approve
+                                            </Button>
+
+                                            <Button
+                                                type="button"
+                                                disabled={activeOfferId === offer.id}
+                                                onClick={() =>
+                                                    setReviewAction({
+                                                        offerId: offer.id,
+                                                        decision: "rejected",
+                                                    })
+                                                }
+                                                variant="destructive"
+                                            >
+                                                Reject
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             ))}
                         </section>
 
                         <nav className="mt-8 flex items-center justify-between">
                             {page > 1 ? (
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
                                     onClick={() => {
                                         const nextPage = page - 1;
                                         setPage(nextPage);
                                         loadOffers(search, nextPage);
                                     }}
-                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
                                 >
                                     Previous
-                                </button>
+                                </Button>
                             ) : (
                                 <span />
                             )}
@@ -313,17 +416,17 @@ export default function AdminOffersPage() {
                             </span>
 
                             {page < totalPages ? (
-                                <button
+                                <Button
                                     type="button"
+                                    variant="outline"
                                     onClick={() => {
                                         const nextPage = page + 1;
                                         setPage(nextPage);
                                         loadOffers(search, nextPage);
                                     }}
-                                    className="rounded-xl border border-[#17233B]/15 px-4 py-2 text-sm font-semibold hover:bg-[#17233B]/5"
                                 >
                                     Next
-                                </button>
+                                </Button>
                             ) : (
                                 <span />
                             )}
@@ -331,6 +434,66 @@ export default function AdminOffersPage() {
                     </>
                 )}
             </div>
+
+            <Dialog
+                open={reviewAction !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setReviewAction(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>
+                            {reviewAction?.decision === "approved"
+                                ? "Approve this promotion?"
+                                : "Reject this promotion?"}
+                        </DialogTitle>
+
+                        <DialogDescription>
+                            {reviewAction?.decision === "approved"
+                                ? "This promotion will become eligible to appear publicly."
+                                : "This promotion will not appear publicly to customers."}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setReviewAction(null)}
+                            disabled={activeOfferId !== ""}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant={
+                                reviewAction?.decision === "approved"
+                                    ? "default"
+                                    : "destructive"
+                            }
+                            onClick={() => {
+                                if (reviewAction) {
+                                    reviewOffer(
+                                        reviewAction.offerId,
+                                        reviewAction.decision,
+                                    );
+                                }
+                            }}
+                            disabled={activeOfferId !== ""}
+                        >
+                            {activeOfferId !== ""
+                                ? "Saving…"
+                                : reviewAction?.decision === "approved"
+                                    ? "Approve promotion"
+                                    : "Reject promotion"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }

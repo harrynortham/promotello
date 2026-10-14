@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/utils/supabase/client";
 
 type NotificationSettings = {
@@ -39,9 +49,20 @@ export default function NotificationSettingsForm({
             ...current,
             [field]: value,
         }));
+
+        setSaved(false);
     }
 
     async function handleSave() {
+        const threshold = Number(settings.low_inventory_threshold);
+
+        if (!Number.isInteger(threshold) || threshold < 1) {
+            setErrorMessage(
+                "The alert threshold must be a whole number greater than zero.",
+            );
+            return;
+        }
+
         setIsSaving(true);
         setSaved(false);
         setErrorMessage("");
@@ -57,7 +78,7 @@ export default function NotificationSettingsForm({
                     offer_fully_claimed_enabled:
                         settings.offer_fully_claimed_enabled,
                     low_inventory_enabled: settings.low_inventory_enabled,
-                    low_inventory_threshold: settings.low_inventory_threshold,
+                    low_inventory_threshold: threshold,
                     updated_at: new Date().toISOString(),
                 },
                 {
@@ -72,6 +93,11 @@ export default function NotificationSettingsForm({
             return;
         }
 
+        setSettings((current) => ({
+            ...current,
+            low_inventory_threshold: threshold,
+        }));
+
         setSaved(true);
     }
 
@@ -79,9 +105,7 @@ export default function NotificationSettingsForm({
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">
                 <Button
-                    render={
-                        <Link href={`/business/dashboard`} />
-                    }
+                    render={<Link href="/business/dashboard" />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"
@@ -89,138 +113,155 @@ export default function NotificationSettingsForm({
                     ← Back to dashboard
                 </Button>
 
-                <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                    Business settings
-                </p>
+                <div className="mt-8">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Business settings
+                    </p>
 
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                    Notifications
-                </h1>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                        Notifications
+                    </h1>
 
-                <p className="mt-3 text-[#17233B]/65">
-                    Choose which notifications {businessName} receives.
-                </p>
+                    <p className="mt-3 text-[#17233B]/65">
+                        Choose which notifications {businessName} receives.
+                    </p>
+                </div>
 
-                <section className="mt-10 space-y-6 rounded-3xl bg-white p-6 shadow-sm sm:p-10">
-                    <label className="flex items-start gap-4">
-                        <input
-                            type="checkbox"
-                            checked={settings.daily_summary_enabled}
-                            onChange={(event) =>
-                                updateSetting(
-                                    "daily_summary_enabled",
-                                    event.target.checked,
-                                )
-                            }
-                            className="mt-1 h-5 w-5 accent-[#FF593F]"
-                        />
+                <Card className="mt-10 border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle>Email notifications</CardTitle>
+                    </CardHeader>
 
-                        <span>
-                            <span className="block font-semibold">
-                                Daily redemption summary
-                            </span>
+                    <CardContent className="space-y-7">
+                        <div className="flex items-start justify-between gap-6">
+                            <div>
+                                <Label htmlFor="daily-summary">
+                                    Daily redemption summary
+                                </Label>
 
-                            <span className="mt-1 block text-sm leading-6 text-[#17233B]/60">
-                                Receive one daily email summarising new and used redemptions.
-                            </span>
-                        </span>
-                    </label>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                    Receive one daily email summarising new and used
+                                    redemptions.
+                                </p>
+                            </div>
 
-                    <label className="flex items-start gap-4">
-                        <input
-                            type="checkbox"
-                            checked={settings.offer_fully_claimed_enabled}
-                            onChange={(event) =>
-                                updateSetting(
-                                    "offer_fully_claimed_enabled",
-                                    event.target.checked,
-                                )
-                            }
-                            className="mt-1 h-5 w-5 accent-[#FF593F]"
-                        />
+                            <Switch
+                                id="daily-summary"
+                                checked={settings.daily_summary_enabled}
+                                onCheckedChange={(checked) =>
+                                    updateSetting("daily_summary_enabled", checked)
+                                }
+                            />
+                        </div>
 
-                        <span>
-                            <span className="block font-semibold">
-                                Fully claimed offer alerts
-                            </span>
+                        <Separator />
 
-                            <span className="mt-1 block text-sm leading-6 text-[#17233B]/60">
-                                Receive an email when a limited promotion has no redemptions
-                                remaining.
-                            </span>
-                        </span>
-                    </label>
+                        <div className="flex items-start justify-between gap-6">
+                            <div>
+                                <Label htmlFor="fully-claimed">
+                                    Fully claimed offer alerts
+                                </Label>
 
-                    <div>
-                        <label className="flex items-start gap-4">
-                            <input
-                                type="checkbox"
-                                checked={settings.low_inventory_enabled}
-                                onChange={(event) =>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                    Receive an email when a limited promotion has no
+                                    redemptions remaining.
+                                </p>
+                            </div>
+
+                            <Switch
+                                id="fully-claimed"
+                                checked={settings.offer_fully_claimed_enabled}
+                                onCheckedChange={(checked) =>
                                     updateSetting(
-                                        "low_inventory_enabled",
-                                        event.target.checked,
+                                        "offer_fully_claimed_enabled",
+                                        checked,
                                     )
                                 }
-                                className="mt-1 h-5 w-5 accent-[#FF593F]"
                             />
+                        </div>
 
-                            <span>
-                                <span className="block font-semibold">
-                                    Low inventory alerts
-                                </span>
+                        <Separator />
 
-                                <span className="mt-1 block text-sm leading-6 text-[#17233B]/60">
-                                    Receive an email when a limited promotion reaches the
-                                    threshold below.
-                                </span>
-                            </span>
-                        </label>
+                        <div>
+                            <div className="flex items-start justify-between gap-6">
+                                <div>
+                                    <Label htmlFor="low-inventory">
+                                        Low inventory alerts
+                                    </Label>
 
-                        <label className="mt-4 block max-w-xs text-sm font-medium">
-                            Alert threshold
-                            <input
-                                type="number"
-                                min={1}
-                                step={1}
-                                value={settings.low_inventory_threshold}
-                                onChange={(event) =>
-                                    updateSetting(
-                                        "low_inventory_threshold",
-                                        Number(event.target.value),
-                                    )
-                                }
-                                className="mt-2 w-full rounded-xl border border-[#17233B]/15 bg-white px-4 py-3 text-sm outline-none focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20"
-                            />
-                            <span className="mt-1 block text-xs text-[#17233B]/50">
-                                Remaining redemptions
-                            </span>
-                        </label>
-                    </div>
+                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                        Receive an email when a limited promotion reaches
+                                        the threshold below.
+                                    </p>
+                                </div>
 
-                    {errorMessage && (
-                        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {errorMessage}
-                        </p>
-                    )}
+                                <Switch
+                                    id="low-inventory"
+                                    checked={settings.low_inventory_enabled}
+                                    onCheckedChange={(checked) =>
+                                        updateSetting("low_inventory_enabled", checked)
+                                    }
+                                />
+                            </div>
 
-                    {saved && (
-                        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            Notification settings saved successfully.
-                        </p>
-                    )}
+                            <div className="mt-5 max-w-xs space-y-2">
+                                <Label htmlFor="threshold">
+                                    Alert threshold
+                                </Label>
 
-                    <Button
-                        type="button"
-                        variant="default"
-                        size="lg"
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="w-full"
-                    >
-                        {isSaving ? "Saving settings…" : "Save settings"}
-                    </Button>
-                </section>
+                                <Input
+                                    id="threshold"
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={settings.low_inventory_threshold}
+                                    disabled={!settings.low_inventory_enabled}
+                                    onChange={(event) =>
+                                        updateSetting(
+                                            "low_inventory_threshold",
+                                            Number(event.target.value),
+                                        )
+                                    }
+                                />
+
+                                <p className="text-xs text-[#17233B]/50">
+                                    Remaining redemptions
+                                </p>
+                            </div>
+                        </div>
+
+                        {errorMessage && (
+                            <Alert variant="destructive">
+                                <AlertTitle>Unable to save settings</AlertTitle>
+
+                                <AlertDescription>
+                                    {errorMessage}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {saved && (
+                            <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                                <AlertTitle>Settings saved</AlertTitle>
+
+                                <AlertDescription>
+                                    Notification settings saved successfully.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <Button
+                            type="button"
+                            variant="default"
+                            size="lg"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="w-full"
+                        >
+                            {isSaving ? "Saving settings…" : "Save settings"}
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
         </main>
     );

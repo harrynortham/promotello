@@ -3,6 +3,17 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
@@ -39,80 +50,104 @@ export default function LoginPage() {
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
-            <section className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm sm:p-10">
-                <Link
-                    href="/"
-                    className="text-sm font-semibold text-[#FF593F]"
-                >
-                    ← Back to Promotello
-                </Link>
+            <Card className="w-full max-w-md border-[#17233B]/10 shadow-sm">
+                <CardHeader>
+                    <Button
+                        render={<Link href="/" />}
+                        nativeButton={false}
+                        variant="link"
+                        size="sm"
+                        className="w-fit p-0 text-[#FF593F]"
+                    >
+                        ← Back to Promotello
+                    </Button>
 
-                <h1 className="mt-8 text-3xl font-semibold tracking-tight">
-                    Welcome back
-                </h1>
+                    <CardTitle className="mt-5 text-3xl tracking-tight">
+                        Welcome back
+                    </CardTitle>
 
-                <p className="mt-3 text-[#17233B]/65">
-                    Sign in to manage your businesses and promotions.
-                </p>
+                    <p className="text-[#17233B]/65">
+                        Sign in to manage your businesses and promotions.
+                    </p>
+                </CardHeader>
 
-                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                    <label className="block text-sm font-medium">
-                        Email address
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
-                            placeholder="you@example.com"
-                        />
-                    </label>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email address</Label>
 
-                    <label className="block text-sm font-medium">
-                        Password
-                        <input
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(event) => setPassword(event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-[#17233B]/15 px-4 py-3 outline-none focus:border-[#FF593F]"
-                            placeholder="Your password"
-                        />
-                    </label>
-                    <div className="text-right">
-                        <Link
-                            href="/forgot-password"
-                            className="text-sm font-semibold text-[#FF593F]"
+                            <Input
+                                id="email"
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(event) => setEmail(event.target.value)}
+                                placeholder="you@example.com"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(event) => setPassword(event.target.value)}
+                                placeholder="Your password"
+                            />
+                        </div>
+
+                        <div className="text-right">
+                            <Button
+                                render={<Link href="/forgot-password" />}
+                                nativeButton={false}
+                                variant="link"
+                                size="sm"
+                                className="h-auto p-0 text-[#FF593F]"
+                            >
+                                Forgot password?
+                            </Button>
+                        </div>
+
+                        {errorMessage && (
+                            <Alert variant="destructive">
+                                <AlertTitle>Unable to sign in</AlertTitle>
+
+                                <AlertDescription>
+                                    {errorMessage}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            variant="default"
+                            size="lg"
+                            className="w-full"
                         >
-                            Forgot password?
-                        </Link>
-                    </div>
+                            {isSubmitting ? "Signing in…" : "Sign in"}
+                        </Button>
+                    </form>
 
-                    {errorMessage && (
-                        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                            {errorMessage}
-                        </p>
-                    )}
+                    <Separator className="my-6" />
 
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="w-full rounded-xl bg-[#FF593F] px-6 py-3 font-semibold transition hover:bg-[#E94D36] disabled:opacity-60"
-                    >
-                        {isSubmitting ? "Signing in…" : "Sign in"}
-                    </button>
-                </form>
-
-                <p className="mt-6 text-center text-sm text-[#17233B]/65">
-                    Don’t have an account?{" "}
-                    <Link
-                        href="/signup"
-                        className="font-semibold text-[#FF593F]"
-                    >
-                        Create one
-                    </Link>
-                </p>
-            </section>
+                    <p className="text-center text-sm text-[#17233B]/65">
+                        Don’t have an account?{" "}
+                        <Button
+                            render={<Link href="/signup" />}
+                            nativeButton={false}
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 font-semibold text-[#FF593F]"
+                        >
+                            Create one
+                        </Button>
+                    </p>
+                </CardContent>
+            </Card>
         </main>
     );
 }

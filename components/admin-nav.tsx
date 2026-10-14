@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
 type AdminNavProps = {
@@ -24,47 +27,77 @@ export function AdminNav({ email }: AdminNavProps) {
     }
 
     return (
-        <nav className="rounded-2xl border border-[#17233B]/10 bg-[#17233B] px-5 py-4 text-white">
+        <nav className="rounded-xl border border-[#17233B]/10 bg-[#17233B] px-5 py-4 text-white shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <Link href="/admin" className="font-semibold">
-                    Promotello Admin
-                </Link>
+                <div className="flex items-center gap-3">
+                    <Button
+                        render={<Link href="/admin" />}
+                        nativeButton={false}
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 font-semibold text-white hover:text-white"
+                    >
+                        Promotello Admin
+                    </Button>
 
-                <div className="flex flex-wrap items-center gap-4 text-sm">
-                    <Link
-                        href="/admin/businesses"
-                        className="text-white/75 hover:text-white"
+                    <Badge
+                        variant="outline"
+                        className="border-[#FF8F7D]/40 bg-[#FF8F7D]/10 text-[#FFB0A3]"
+                    >
+                        Admin
+                    </Badge>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        render={<Link href="/admin/businesses" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/75 hover:bg-white/10 hover:text-white"
                     >
                         Business approvals
-                    </Link>
+                    </Button>
 
-                    <Link
-                        href="/admin/offers"
-                        className="text-white/75 hover:text-white"
+                    <Button
+                        render={<Link href="/admin/offers" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/75 hover:bg-white/10 hover:text-white"
                     >
                         Promotion approvals
-                    </Link>
+                    </Button>
 
-
-                    <Link
-                        href="/admin/audit-logs"
-                        className="text-white/75 hover:text-white"
+                    <Button
+                        render={<Link href="/admin/audit-logs" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/75 hover:bg-white/10 hover:text-white"
                     >
                         Audit log
-                    </Link>
+                    </Button>
 
                     {email && (
-                        <span className="hidden text-white/50 md:inline">{email}</span>
+                        <Badge
+                            variant="outline"
+                            className="hidden border-white/20 bg-white/5 text-white/60 md:inline-flex"
+                        >
+                            {email}
+                        </Badge>
                     )}
 
-                    <button
+                    <Button
                         type="button"
                         onClick={handleSignOut}
                         disabled={isSigningOut}
-                        className="font-semibold text-[#FF8F7D] hover:text-[#FFB0A3] disabled:opacity-60"
+                        variant="ghost"
+                        size="sm"
+                        className="font-semibold text-[#FF8F7D] hover:bg-white/10 hover:text-[#FFB0A3]"
                     >
                         {isSigningOut ? "Signing out…" : "Sign out"}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </nav>

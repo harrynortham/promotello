@@ -1,13 +1,18 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/server";
 import { AdminNav } from "@/components/admin-nav";
 
 function AdminLoading() {
     return (
         <div className="border-b border-[#17233B]/10 pb-6">
-            <div className="h-6 w-40 animate-pulse rounded bg-[#17233B]/10" />
+            <div className="h-6 w-40 animate-pulse rounded-md bg-[#17233B]/10" />
         </div>
     );
 }
@@ -41,20 +46,61 @@ async function AdminShell({
         <>
             <AdminNav email={user.email} />
 
-            <div className="mt-8 flex flex-wrap gap-4 border-b border-[#17233B]/10 pb-6 text-sm">
-                <a
-                    href="/admin/businesses"
-                    className="font-semibold text-[#17233B]/70 hover:text-[#17233B]"
-                >
-                    Business approvals
-                </a>
+            <div className="mt-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <Badge
+                            variant="outline"
+                            className="border-[#17233B]/20 bg-white text-[#17233B]"
+                        >
+                            Platform administration
+                        </Badge>
 
-                <a
-                    href="/admin/offers"
-                    className="font-semibold text-[#17233B]/70 hover:text-[#17233B]"
-                >
-                    Promotion approvals
-                </a>
+                        <p className="mt-2 text-sm text-[#17233B]/60">
+                            Manage Promotello approvals and platform activity.
+                        </p>
+                    </div>
+
+                    <Button
+                        render={<Link href="/dashboard" />}
+                        nativeButton={false}
+                        variant="outline"
+                        size="sm"
+                    >
+                        Customer dashboard
+                    </Button>
+                </div>
+
+                <Separator className="my-6" />
+
+                <nav className="flex flex-wrap gap-2">
+                    <Button
+                        render={<Link href="/admin" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                    >
+                        Admin overview
+                    </Button>
+
+                    <Button
+                        render={<Link href="/admin/businesses" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                    >
+                        Business approvals
+                    </Button>
+
+                    <Button
+                        render={<Link href="/admin/offers" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                    >
+                        Promotion approvals
+                    </Button>
+                </nav>
             </div>
 
             {children}
