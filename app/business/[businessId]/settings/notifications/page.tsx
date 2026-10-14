@@ -45,7 +45,7 @@ async function NotificationSettingsContent({
         .maybeSingle();
 
     if (!membership || !["owner", "admin"].includes(membership.role)) {
-        redirect(`/dashboard/${businessId}`);
+        redirect(`/business/${businessId}`);
     }
 
     const { data: business } = await supabase

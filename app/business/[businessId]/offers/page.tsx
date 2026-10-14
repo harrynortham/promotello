@@ -113,7 +113,7 @@ async function OffersContent({ params }: PageProps) {
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-4xl">
                 <Button
-                    render={<Link href="/dashboard" />}
+                    render={<Link href="/business/dashboard" />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"
@@ -139,7 +139,7 @@ async function OffersContent({ params }: PageProps) {
                     {canManageOffers && (
                         <Button
                             render={
-                                <Link href={`/dashboard/${businessId}/offers/new`} />
+                                <Link href={`/business/${businessId}/offers/new`} />
                             }
                             nativeButton={false}
                             variant="default"
@@ -169,7 +169,7 @@ async function OffersContent({ params }: PageProps) {
                         {canManageOffers && (
                             <Button
                                 render={
-                                    <Link href={`/dashboard/${businessId}/offers/new`} />
+                                    <Link href={`/business/${businessId}/offers/new`} />
                                 }
                                 nativeButton={false}
                                 variant="default"
@@ -259,7 +259,7 @@ async function OffersContent({ params }: PageProps) {
                                         <Button
                                             render={
                                                 <Link
-                                                    href={`/dashboard/${businessId}/offers/${offer.id}/edit`}
+                                                    href={`/business/${businessId}/offers/${offer.id}/edit`}
                                                 />
                                             }
                                             nativeButton={false}

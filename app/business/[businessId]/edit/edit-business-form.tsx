@@ -292,7 +292,7 @@ export default function EditBusinessForm({
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">
                 <Button
-                    render={<Link href="/dashboard" />}
+                    render={<Link href="/business/dashboard" />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"

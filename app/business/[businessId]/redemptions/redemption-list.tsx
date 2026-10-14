@@ -77,7 +77,7 @@ export default function RedemptionList({
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-4xl">
                 <Link
-                    href={`/dashboard/${businessId}/offers`}
+                    href={`/business/${businessId}/offers`}
                     className="text-sm font-semibold text-[#FF593F]"
                 >
                     ← Back to promotions

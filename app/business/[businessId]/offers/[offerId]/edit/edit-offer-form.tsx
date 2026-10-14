@@ -188,7 +188,7 @@ export default function EditOfferForm({
             return;
         }
 
-        router.push(`/dashboard/${businessId}/offers`);
+        router.push(`/business/${businessId}/offers`);
         router.refresh();
     }
 
@@ -218,7 +218,7 @@ export default function EditOfferForm({
             return;
         }
 
-        router.push(`/dashboard/${businessId}/offers`);
+        router.push(`/business/${businessId}/offers`);
         router.refresh();
     }
 
@@ -249,7 +249,7 @@ export default function EditOfferForm({
             <div className="mx-auto max-w-2xl">
                 <Button
                     render={
-                        <Link href={`/dashboard/${businessId}/offers`} />
+                        <Link href={`/business/${businessId}/offers`} />
                     }
                     nativeButton={false}
                     variant="outline"

@@ -65,7 +65,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
         .maybeSingle();
 
     if (!membership || !["owner", "admin"].includes(membership.role)) {
-        redirect(`/dashboard/${businessId}/offers`);
+        redirect(`/business/${businessId}/offers`);
     }
 
     const { data: business } = await supabase
@@ -159,7 +159,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                     <Button
                         render={
-                            <Link href={`/dashboard/${businessId}`} />
+                            <Link href={`/business/dashboard`} />
                         }
                         nativeButton={false}
                         variant="outline"
@@ -294,7 +294,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         <Button
                             render={
                                 <Link
-                                    href={`/dashboard/${businessId}/offers/new`}
+                                    href={`/business/${businessId}/offers/new`}
                                 />
                             }
                             nativeButton={false}
@@ -307,7 +307,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         <Button
                             render={
                                 <Link
-                                    href={`/dashboard/${businessId}/redemptions`}
+                                    href={`/business/${businessId}/redemptions`}
                                 />
                             }
                             nativeButton={false}
@@ -320,7 +320,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         <Button
                             render={
                                 <Link
-                                    href={`/dashboard/${businessId}/offers`}
+                                    href={`/business/${businessId}/offers`}
                                 />
                             }
                             nativeButton={false}

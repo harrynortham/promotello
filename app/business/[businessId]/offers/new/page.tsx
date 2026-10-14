@@ -33,13 +33,13 @@ async function NewOfferPageContent({ params }: PageProps) {
         .maybeSingle();
 
     if (error || !membership) {
-        redirect("/dashboard");
+        redirect("/business/dashboard");
     }
 
     const allowedRoles = ["owner", "admin"];
 
     if (!allowedRoles.includes(membership.role)) {
-        redirect(`/dashboard/${businessId}/offers`);
+        redirect(`/business/${businessId}/offers`);
     }
 
     return <NewOfferForm businessId={businessId} />;

@@ -80,7 +80,7 @@ export default function NotificationSettingsForm({
             <div className="mx-auto max-w-2xl">
                 <Button
                     render={
-                        <Link href={`/dashboard/${businessId}`} />
+                        <Link href={`/business/dashboard`} />
                     }
                     nativeButton={false}
                     variant="outline"
