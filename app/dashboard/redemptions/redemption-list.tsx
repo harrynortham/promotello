@@ -71,7 +71,7 @@ export default function RedemptionList({
     redemptions: Redemption[];
 }) {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <main className=" px-6 py-6 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-4xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -152,8 +152,8 @@ export default function RedemptionList({
 
                                         <span
                                             className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${isUsed
-                                                    ? "bg-slate-100 text-slate-700"
-                                                    : "bg-emerald-100 text-emerald-800"
+                                                ? "bg-slate-100 text-slate-700"
+                                                : "bg-emerald-100 text-emerald-800"
                                                 }`}
                                         >
                                             {isUsed ? "Used" : "Active"}

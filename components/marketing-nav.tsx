@@ -25,24 +25,24 @@ export default function Header() {
                     </Link>
 
                     <nav className="hidden items-center gap-8 md:flex" aria-label="Primary navigation">
-                        <Link href="/product" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                            How it works
+                        <Link href="/offers" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            Offers
                         </Link>
 
-                        <Link href="/about" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                            About us
+                        <Link href="/categories" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            Categories
                         </Link>
 
-                        <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                            Log in
+                        <Link href="/businesses" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            Businesses
                         </Link>
 
                         <Button
                             size="lg"
-                            render={<Link href="/signup" />}
+                            render={<Link href="/Login" />}
                             nativeButton={false}
                         >
-                            Sign up
+                            Sign in
                         </Button>
                     </nav>
 

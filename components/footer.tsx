@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { FiExternalLink } from "react-icons/fi"
 import { SocialIcon } from "react-social-icons/component"
 import "react-social-icons/x"
 import "react-social-icons/facebook"
@@ -12,21 +13,27 @@ import "react-social-icons/tiktok"
 
 const linkGroups = [
     {
-        title: "Product",
+        title: "Explore",
         links: [
-            { label: "How it works", href: "/product" },
-            { label: "Pricing", href: "/pricing" },
-            { label: "Case studies", href: "/case-studies" },
-            { label: "Testimonials", href: "/testimonials" },
+            { label: "Browser offers", href: "/offers" },
+            { label: "Categories", href: "/categories" },
+            { label: "Businesses", href: "/businesses" },
         ],
     },
     {
-        title: "Company",
+        title: "Your Account",
+        links: [
+            { label: "Sign in / Register", href: "/login" },
+            { label: "My Vouchers", href: "/dashboard/redemptions" },
+            { label: "Help centre", href: "/help-centre" },
+        ],
+    },
+    {
+        title: "Promotello",
         links: [
             { label: "About us", href: "/about" },
+            { label: "For businesses", href: "/business", showLinkIcon: true },
             { label: "Contact", href: "/contact" },
-            { label: "FAQs", href: "/faq" },
-            { label: "Log in", href: "/login" },
         ],
     },
     {
@@ -64,7 +71,7 @@ export default function Footer() {
                                 className="h-auto max-w-full"
                             />
                         </Link>
-
+                        <p className="text-sm text-balance">Discover great local offers. Save them to your wallet. Enjoy more for less.</p>
                         <nav aria-label="Social media" className="mt-5 flex flex-wrap gap-2">
                             {socialLinks.map((social) => (
                                 <SocialIcon
@@ -91,9 +98,10 @@ export default function Footer() {
                                     <li key={link.href}>
                                         <Link
                                             href={link.href}
-                                            className="text-sm text-background/75 transition-colors hover:text-background hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-background"
+                                            className="inline-flex items-center gap-1 text-sm text-background/75 transition-colors hover:text-background hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-background"
                                         >
                                             {link.label}
+                                            {link.showLinkIcon && <FiExternalLink aria-hidden="true" className="size-3.5" />}
                                         </Link>
                                     </li>
                                 ))}

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { DashboardNav } from "@/components/dashboard-nav";
+import Footer from "@/components/footer";
 
 function DashboardLoading() {
     return (
@@ -43,12 +44,15 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-[#FFF8F0] px-6 py-6 text-[#17233B] sm:px-10">
-            <div className="mx-auto max-w-5xl">
-                <Suspense fallback={<DashboardLoading />}>
-                    <DashboardShell>{children}</DashboardShell>
-                </Suspense>
+        <div className="flex min-h-dvh flex-col bg-[#FFF8F0] text-[#17233B]">
+            <div className="flex-1 px-6 py-6 sm:px-10">
+                <div className="mx-auto max-w-5xl">
+                    <Suspense fallback={<DashboardLoading />}>
+                        <DashboardShell>{children}</DashboardShell>
+                    </Suspense>
+                </div>
             </div>
+            <Footer />
         </div>
     );
 }

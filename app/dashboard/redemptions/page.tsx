@@ -7,7 +7,7 @@ import RedemptionList from "./redemption-list";
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
+        <main className=" px-6 py-6">
             <div className="mx-auto max-w-4xl">
                 <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
                 <div className="mt-8 h-64 animate-pulse rounded-3xl bg-white" />
@@ -52,7 +52,7 @@ async function RedemptionsContent() {
 
     if (error) {
         return (
-            <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B]">
+            <main className="px-6 py-6 text-[#17233B]">
                 <div className="mx-auto max-w-4xl rounded-3xl bg-white p-8">
                     <h1 className="text-2xl font-semibold">
                         My redemptions

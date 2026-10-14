@@ -37,7 +37,7 @@ async function CustomerDashboardContent() {
     const hasBusinessAccess = (businessCount ?? 0) > 0;
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
+        <main className="px-6 py-6">
             <div className="mx-auto max-w-5xl">
                 <section className="rounded-3xl bg-white p-8 shadow-sm">
                     <p className="text-sm font-medium text-[#FF593F]">
