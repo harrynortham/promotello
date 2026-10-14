@@ -14,3 +14,4 @@ In production change the supabase edge function for emails to use www.promotello
 - SEO for Nextjs across all page
 - Blog locally or contentful for integrations and automation
 - Create events option for businesses (extra selling point)
+- Use react hook form and ZOD validation across forms for consitency

@@ -1,9 +1,13 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
     children: React.ReactNode;
@@ -12,23 +16,36 @@ type BusinessLayoutProps = {
     }>;
 };
 
-function BusinessLoading() {
+function BusinessLayoutLoading() {
     return (
         <div className="min-h-screen bg-[#FFF8F0]">
-            <header className="border-b border-[#17233B]/10 bg-white">
-                <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="space-y-2">
-                        <div className="h-7 w-48 animate-pulse rounded bg-[#17233B]/10" />
-                        <div className="h-5 w-36 animate-pulse rounded bg-[#17233B]/10" />
+            <div className="mx-auto flex max-w-7xl gap-8 px-6 py-8">
+                <aside className="hidden w-64 shrink-0 lg:block">
+                    <div className="rounded-xl border border-[#17233B]/10 bg-white p-5">
+                        <Skeleton className="h-5 w-32 rounded-md" />
+                        <Skeleton className="mt-5 h-8 w-48 rounded-md" />
+                        <Skeleton className="mt-3 h-6 w-24 rounded-full" />
+
+                        <Separator className="my-5" />
+
+                        <div className="space-y-3">
+                            {[1, 2, 3, 4, 5].map((item) => (
+                                <Skeleton key={item} className="h-9 w-full rounded-md" />
+                            ))}
+                        </div>
                     </div>
-                    <div className="h-8 w-full animate-pulse rounded bg-[#17233B]/10 lg:w-96" />
-                </div>
-            </header>
+                </aside>
+
+                <main className="min-w-0 flex-1">
+                    <Skeleton className="h-10 w-full rounded-md" />
+                    <Skeleton className="mt-8 h-96 w-full rounded-xl" />
+                </main>
+            </div>
         </div>
     );
 }
 
-async function BusinessShell({
+async function BusinessLayoutContent({
     children,
     params,
 }: BusinessLayoutProps) {
@@ -47,7 +64,7 @@ async function BusinessShell({
 
     const { data: membership } = await supabase
         .from("business_members")
-        .select("role, businesses(name)")
+        .select("role, businesses(id, name, approval_status)")
         .eq("business_id", businessId)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -60,123 +77,155 @@ async function BusinessShell({
         ? membership.businesses[0]
         : membership.businesses;
 
-    const canManageBusiness =
+    const canManage =
         membership.role === "owner" || membership.role === "admin";
 
     return (
         <div className="min-h-screen bg-[#FFF8F0]">
-            <header className="border-b border-[#17233B]/10 bg-white">
-                <div className="mx-auto flex max-w-7xl flex-col gap-5 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <Link
-                            href="/business/dashboard"
-                            className="text-lg font-semibold tracking-tight text-[#17233B]"
-                        >
-                            Promotello Business
-                        </Link>
-
-                        <p className="mt-1 text-sm text-[#17233B]/60">
-                            {business?.name ?? "Business management"}
-                        </p>
-                    </div>
-
-                    <nav className="flex flex-wrap items-center gap-2">
+            <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8 lg:flex-row lg:items-start">
+                <aside className="w-full shrink-0 lg:sticky lg:top-8 lg:w-64">
+                    <div className="rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm">
                         <Button
                             render={<Link href="/business/dashboard" />}
                             nativeButton={false}
-                            variant="ghost"
+                            variant="link"
                             size="sm"
+                            className="h-auto p-0 text-[#FF593F]"
                         >
-                            Businesses
+                            ← All businesses
                         </Button>
 
-                        <Button
-                            render={<Link href={`/business/${businessId}/offers`} />}
-                            nativeButton={false}
-                            variant="ghost"
-                            size="sm"
+                        <h2 className="mt-5 text-xl font-semibold">
+                            {business?.name ?? "Business"}
+                        </h2>
+
+                        <Badge
+                            variant="outline"
+                            className="mt-3 capitalize"
                         >
-                            Promotions
-                        </Button>
+                            {business?.approval_status ?? "pending"}
+                        </Badge>
 
-                        <Button
-                            render={
-                                <Link href={`/business/${businessId}/redemptions`} />
-                            }
-                            nativeButton={false}
-                            variant="ghost"
-                            size="sm"
-                        >
-                            Redemptions
-                        </Button>
+                        <Separator className="my-5" />
 
-                        {canManageBusiness && (
-                            <>
-                                <Button
-                                    render={<Link href={`/business/${businessId}/team`} />}
-                                    nativeButton={false}
-                                    variant="ghost"
-                                    size="sm"
-                                >
-                                    Team
-                                </Button>
+                        <nav className="flex flex-col gap-1">
+                            <Button
+                                render={<Link href={`/business/${businessId}`} />}
+                                nativeButton={false}
+                                variant="ghost"
+                                size="sm"
+                                className="justify-start"
+                            >
+                                Overview
+                            </Button>
 
-                                <Button
-                                    render={
-                                        <Link href={`/business/${businessId}/analytics`} />
-                                    }
-                                    nativeButton={false}
-                                    variant="ghost"
-                                    size="sm"
-                                >
-                                    Analytics
-                                </Button>
+                            <Button
+                                render={
+                                    <Link href={`/business/${businessId}/offers`} />
+                                }
+                                nativeButton={false}
+                                variant="ghost"
+                                size="sm"
+                                className="justify-start"
+                            >
+                                Promotions
+                            </Button>
 
-                                <Button
-                                    render={
-                                        <Link
-                                            href={`/business/${businessId}/settings/notifications`}
-                                        />
-                                    }
-                                    nativeButton={false}
-                                    variant="ghost"
-                                    size="sm"
-                                >
-                                    Notifications
-                                </Button>
+                            <Button
+                                render={
+                                    <Link
+                                        href={`/business/${businessId}/redemptions`}
+                                    />
+                                }
+                                nativeButton={false}
+                                variant="ghost"
+                                size="sm"
+                                className="justify-start"
+                            >
+                                Redemptions
+                            </Button>
 
-                                <Button
-                                    render={<Link href={`/business/${businessId}/edit`} />}
-                                    nativeButton={false}
-                                    variant="ghost"
-                                    size="sm"
-                                >
-                                    Edit business
-                                </Button>
-                            </>
-                        )}
+                            {canManage && (
+                                <>
+                                    <Button
+                                        render={
+                                            <Link
+                                                href={`/business/${businessId}/analytics`}
+                                            />
+                                        }
+                                        nativeButton={false}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="justify-start"
+                                    >
+                                        Analytics
+                                    </Button>
+
+                                    <Button
+                                        render={
+                                            <Link href={`/business/${businessId}/team`} />
+                                        }
+                                        nativeButton={false}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="justify-start"
+                                    >
+                                        Team
+                                    </Button>
+
+                                    <Button
+                                        render={
+                                            <Link href={`/business/${businessId}/edit`} />
+                                        }
+                                        nativeButton={false}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="justify-start"
+                                    >
+                                        Edit business
+                                    </Button>
+
+                                    <Button
+                                        render={
+                                            <Link
+                                                href={`/business/${businessId}/settings/notifications`}
+                                            />
+                                        }
+                                        nativeButton={false}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="justify-start"
+                                    >
+                                        Notifications
+                                    </Button>
+                                </>
+                            )}
+                        </nav>
+
+                        <Separator className="my-5" />
 
                         <Button
                             render={<Link href="/dashboard" />}
                             nativeButton={false}
                             variant="outline"
                             size="sm"
+                            className="w-full"
                         >
-                            Consumer area
+                            Customer area
                         </Button>
-                    </nav>
-                </div>
-            </header>
+                    </div>
+                </aside>
 
-            {children}
+                <section className="min-w-0 flex-1">{children}</section>
+            </div>
         </div>
     );
 }
 
 export default function BusinessLayout(props: BusinessLayoutProps) {
     return (
-        <Suspense fallback={<BusinessLoading />}>
-            <BusinessShell {...props} />
+        <Suspense fallback={<BusinessLayoutLoading />}>
+            <BusinessLayoutContent {...props} />
         </Suspense>
     );
 }
