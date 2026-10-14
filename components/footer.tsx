@@ -24,7 +24,7 @@ const linkGroups = [
         title: "Your Account",
         links: [
             { label: "Sign in / Register", href: "/login" },
-            { label: "My Vouchers", href: "/dashboard/redemptions" },
+            { label: "My vouchers", href: "/dashboard/redemptions" },
             { label: "Help centre", href: "/help-centre" },
         ],
     },

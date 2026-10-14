@@ -26,6 +26,10 @@ export default function Header() {
 
                     <nav className="hidden items-center gap-8 md:flex" aria-label="Primary navigation">
                         <Link href="/offers" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+                            Explore
+                        </Link>
+
+                        <Link href="/offers" className="text-sm font-medium text-slate-600 hover:text-slate-900">
                             Offers
                         </Link>
 
@@ -33,13 +37,9 @@ export default function Header() {
                             Categories
                         </Link>
 
-                        <Link href="/businesses" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-                            Businesses
-                        </Link>
-
                         <Button
                             size="lg"
-                            render={<Link href="/Login" />}
+                            render={<Link href="/login" />}
                             nativeButton={false}
                         >
                             Sign in
@@ -68,37 +68,37 @@ export default function Header() {
                     aria-label="Mobile navigation"
                 >
                     <Link
-                        href="/product"
+                        href="/explore"
                         className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setIsMobileMenuOpen(false)}
                     >
-                        How it works
+                        Explore
                     </Link>
 
                     <Link
-                        href="/about"
+                        href="/offers"
                         className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setIsMobileMenuOpen(false)}
                     >
-                        About us
+                        Offers
                     </Link>
 
                     <Link
-                        href="/login"
+                        href="/categories"
                         className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                         onClick={() => setIsMobileMenuOpen(false)}
                     >
-                        Log in
+                        Categories
                     </Link>
 
                     <Button
                         size="lg"
-                        render={<Link href="/signup" />}
+                        render={<Link href="/login" />}
                         nativeButton={false}
                         className="mt-2 w-full"
                         onClick={() => setIsMobileMenuOpen(false)}
                     >
-                        Sign up
+                        Sign in
                     </Button>
                 </nav>
             </header>
