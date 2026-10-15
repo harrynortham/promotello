@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BusinessNeedsAttention } from "@/components/business-needs-attention";
+import { BusinessRecentActivity } from "@/components/business-recent-activity";
 import { createClient } from "@/utils/supabase/server";
 
 type Business = {
@@ -31,7 +33,7 @@ type BusinessSummary = Business & {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B]">
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
             <div className="mx-auto max-w-7xl">
                 <Skeleton className="h-12 w-72" />
                 <Skeleton className="mt-4 h-6 w-96 max-w-full" />
@@ -42,23 +44,15 @@ function LoadingState() {
                     ))}
                 </div>
 
+                <Skeleton className="mt-10 h-32 rounded-3xl" />
                 <Skeleton className="mt-10 h-8 w-56" />
-
-                <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    {[1, 2].map((item) => (
-                        <Skeleton key={item} className="h-72 rounded-3xl" />
-                    ))}
-                </div>
             </div>
         </main>
     );
 }
 
 function statusVariant(status: string) {
-    if (status === "approved") {
-        return "default" as const;
-    }
-
+    if (status === "approved") return "default" as const;
     if (status === "rejected" || status === "suspended") {
         return "destructive" as const;
     }
@@ -79,7 +73,7 @@ async function BusinessDashboardContent() {
         redirect("/login");
     }
 
-    const { data: memberships, error: membershipError } = await supabase
+    const { data: memberships, error } = await supabase
         .from("business_members")
         .select(
             `
@@ -93,12 +87,15 @@ async function BusinessDashboardContent() {
         )
         .eq("user_id", user.id);
 
-    if (membershipError) {
+    if (error) {
         return (
-            <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B]">
+            <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
                 <div className="mx-auto max-w-7xl">
                     <Alert variant="destructive">
-                        <AlertTitle>Unable to load your businesses</AlertTitle>
+                        <AlertTitle>
+                            Unable to load your businesses
+                        </AlertTitle>
+
                         <AlertDescription>
                             Please refresh the page and try again.
                         </AlertDescription>
@@ -122,36 +119,41 @@ async function BusinessDashboardContent() {
                     Boolean(business?.id && business?.name),
             ) ?? [];
 
+    const today = new Date().toISOString().slice(0, 10);
+
     const summaries: BusinessSummary[] = await Promise.all(
         businesses.map(async (business) => {
-            const [{ count: activeOffers }, { count: totalRedemptions }, { count: pendingOffers }] =
-                await Promise.all([
-                    supabase
-                        .from("offers")
-                        .select("id", { count: "exact", head: true })
-                        .eq("business_id", business.id)
-                        .eq("approval_status", "approved")
-                        .gte("expires_at", new Date().toISOString().slice(0, 10)),
+            const [
+                { count: activeOffers },
+                { count: totalRedemptions },
+                { count: pendingOffers },
+            ] = await Promise.all([
+                supabase
+                    .from("offers")
+                    .select("id", { count: "exact", head: true })
+                    .eq("business_id", business.id)
+                    .eq("approval_status", "approved")
+                    .gte("expires_at", today),
 
-                    supabase
-                        .from("offer_redemptions")
-                        .select(
-                            `
-                                id,
-                                offers!inner (
-                                    business_id
-                                )
-                            `,
-                            { count: "exact", head: true },
-                        )
-                        .eq("offers.business_id", business.id),
+                supabase
+                    .from("offer_redemptions")
+                    .select(
+                        `
+                            id,
+                            offers!inner (
+                                business_id
+                            )
+                        `,
+                        { count: "exact", head: true },
+                    )
+                    .eq("offers.business_id", business.id),
 
-                    supabase
-                        .from("offers")
-                        .select("id", { count: "exact", head: true })
-                        .eq("business_id", business.id)
-                        .eq("approval_status", "pending"),
-                ]);
+                supabase
+                    .from("offers")
+                    .select("id", { count: "exact", head: true })
+                    .eq("business_id", business.id)
+                    .eq("approval_status", "pending"),
+            ]);
 
             return {
                 ...business,
@@ -161,6 +163,29 @@ async function BusinessDashboardContent() {
             };
         }),
     );
+
+    const businessIds = businesses.map((business) => business.id);
+
+    const { data: recentRedemptions } = businessIds.length
+        ? await supabase
+            .from("offer_redemptions")
+            .select(
+                `
+                      id,
+                      redemption_code,
+                      redeemed_at,
+                      used_at,
+                      offers!inner (
+                          title,
+                          discount,
+                          business_id
+                      )
+                  `,
+            )
+            .in("offers.business_id", businessIds)
+            .order("redeemed_at", { ascending: false })
+            .limit(5)
+        : { data: [] };
 
     const totalActiveOffers = summaries.reduce(
         (total, business) => total + business.activeOffers,
@@ -181,6 +206,79 @@ async function BusinessDashboardContent() {
         (business) => business.approval_status === "pending",
     ).length;
 
+    const attentionItems = summaries.flatMap((business) => {
+        const items: {
+            id: string;
+            title: string;
+            description: string;
+            href: string;
+        }[] = [];
+
+        if (business.approval_status === "pending") {
+            items.push({
+                id: `${business.id}-approval`,
+                title: `${business.name} is awaiting approval`,
+                description:
+                    "Your business must be approved before its promotions appear publicly.",
+                href: `/business/${business.id}/edit`,
+            });
+        }
+
+        if (business.approval_status === "rejected") {
+            items.push({
+                id: `${business.id}-rejected`,
+                title: `${business.name} needs an update`,
+                description:
+                    "Review your business information and make the requested changes.",
+                href: `/business/${business.id}/edit`,
+            });
+        }
+
+        if (business.pendingOffers > 0) {
+            items.push({
+                id: `${business.id}-pending-offers`,
+                title: `${business.pendingOffers} promotion${business.pendingOffers === 1 ? "" : "s"
+                    } awaiting approval`,
+                description:
+                    "Review your pending promotions while they are being assessed.",
+                href: `/business/${business.id}/offers`,
+            });
+        }
+
+        return items;
+    });
+
+    const formattedRedemptions = (recentRedemptions ?? []).map(
+        (redemption) => {
+            const offer = Array.isArray(redemption.offers)
+                ? redemption.offers[0]
+                : redemption.offers;
+
+            const business = businesses.find(
+                (item) => item.id === offer?.business_id,
+            );
+
+            return {
+                id: redemption.id,
+                redemption_code: redemption.redemption_code,
+                redeemed_at: redemption.redeemed_at,
+                used_at: redemption.used_at,
+                offer: offer
+                    ? {
+                        title: offer.title,
+                        discount: offer.discount,
+                    }
+                    : null,
+                business: business
+                    ? {
+                        id: business.id,
+                        name: business.name,
+                    }
+                    : null,
+            };
+        },
+    );
+
     const firstName =
         user.user_metadata?.full_name?.split(" ")[0] ??
         user.email?.split("@")[0] ??
@@ -199,8 +297,8 @@ async function BusinessDashboardContent() {
                     </h1>
 
                     <p className="mt-4 max-w-2xl leading-7 text-white/70">
-                        Manage your businesses, publish promotions, and keep track
-                        of customer activity from one place.
+                        Manage your businesses, publish promotions, and keep
+                        track of customer activity from one place.
                     </p>
 
                     <div className="mt-7 flex flex-wrap gap-3">
@@ -237,6 +335,7 @@ async function BusinessDashboardContent() {
                                 {summaries.length}
                             </CardTitle>
                         </CardHeader>
+
                         <CardContent>
                             <p className="text-sm text-[#17233B]/60">
                                 Businesses you manage
@@ -246,11 +345,14 @@ async function BusinessDashboardContent() {
 
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardDescription>Active promotions</CardDescription>
+                            <CardDescription>
+                                Active promotions
+                            </CardDescription>
                             <CardTitle className="text-3xl">
                                 {totalActiveOffers}
                             </CardTitle>
                         </CardHeader>
+
                         <CardContent>
                             <p className="text-sm text-[#17233B]/60">
                                 Currently visible promotions
@@ -265,6 +367,7 @@ async function BusinessDashboardContent() {
                                 {totalRedemptions}
                             </CardTitle>
                         </CardHeader>
+
                         <CardContent>
                             <p className="text-sm text-[#17233B]/60">
                                 Customer redemptions to date
@@ -279,6 +382,7 @@ async function BusinessDashboardContent() {
                                 {pendingBusinesses + totalPendingOffers}
                             </CardTitle>
                         </CardHeader>
+
                         <CardContent>
                             <p className="text-sm text-[#17233B]/60">
                                 Pending businesses or promotions
@@ -286,6 +390,8 @@ async function BusinessDashboardContent() {
                         </CardContent>
                     </Card>
                 </section>
+
+                <BusinessNeedsAttention items={attentionItems} />
 
                 <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -311,6 +417,7 @@ async function BusinessDashboardContent() {
                     <Card className="mt-6 border-dashed">
                         <CardHeader>
                             <CardTitle>Create your first business</CardTitle>
+
                             <CardDescription>
                                 Add your business profile to start publishing
                                 promotions on Promotello.
@@ -362,6 +469,7 @@ async function BusinessDashboardContent() {
                                             <AlertTitle>
                                                 Awaiting approval
                                             </AlertTitle>
+
                                             <AlertDescription>
                                                 Your business must be approved
                                                 before its promotions appear
@@ -375,6 +483,7 @@ async function BusinessDashboardContent() {
                                             <p className="text-2xl font-semibold">
                                                 {business.activeOffers}
                                             </p>
+
                                             <p className="mt-1 text-xs text-[#17233B]/60">
                                                 Active promotions
                                             </p>
@@ -384,6 +493,7 @@ async function BusinessDashboardContent() {
                                             <p className="text-2xl font-semibold">
                                                 {business.totalRedemptions}
                                             </p>
+
                                             <p className="mt-1 text-xs text-[#17233B]/60">
                                                 Redemptions
                                             </p>
@@ -393,6 +503,7 @@ async function BusinessDashboardContent() {
                                             <p className="text-2xl font-semibold">
                                                 {business.pendingOffers}
                                             </p>
+
                                             <p className="mt-1 text-xs text-[#17233B]/60">
                                                 Pending review
                                             </p>
@@ -430,6 +541,10 @@ async function BusinessDashboardContent() {
                         ))}
                     </section>
                 )}
+
+                <BusinessRecentActivity
+                    redemptions={formattedRedemptions}
+                />
             </div>
         </main>
     );

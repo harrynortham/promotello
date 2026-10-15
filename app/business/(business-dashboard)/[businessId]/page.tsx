@@ -3,10 +3,17 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
+import { BusinessOnboardingChecklist } from "@/components/business-onboarding-checklist";
+import { BusinessRecentRedemptions } from "@/components/business-recent-redemptions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,31 +33,41 @@ type OfferSummary = {
     redemption_count: number;
 };
 
-type ChecklistItem = {
-    label: string;
-    description: string;
-    complete: boolean;
-    href: string;
+type RecentRedemption = {
+    id: string;
+    redemption_code: string;
+    redeemed_at: string | null;
+    used_at: string | null;
+    offers:
+    | {
+        title: string;
+        discount: string;
+    }
+    | {
+        title: string;
+        discount: string;
+    }[]
+    | null;
 };
 
 function LoadingState() {
     return (
         <main className="space-y-8">
             <div>
-                <Skeleton className="h-5 w-40 rounded-md" />
-                <Skeleton className="mt-3 h-10 w-72 rounded-md" />
-                <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="mt-3 h-10 w-72" />
+                <Skeleton className="mt-3 h-5 w-96 max-w-full" />
             </div>
 
-            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-64 rounded-3xl" />
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((item) => (
-                    <Skeleton key={item} className="h-32 rounded-xl" />
+                    <Skeleton key={item} className="h-32 rounded-2xl" />
                 ))}
             </div>
 
-            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-64 rounded-3xl" />
         </main>
     );
 }
@@ -77,15 +94,15 @@ async function BusinessOverviewContent({ params }: PageProps) {
         .from("businesses")
         .select(
             `
-        id,
-        name,
-        category,
-        description,
-        logo_url,
-        website_url,
-        contact_email,
-        approval_status
-      `,
+                id,
+                name,
+                category,
+                description,
+                logo_url,
+                website_url,
+                contact_email,
+                approval_status
+            `,
         )
         .eq("id", businessId)
         .single();
@@ -101,6 +118,7 @@ async function BusinessOverviewContent({ params }: PageProps) {
         { data: hours },
         { data: notificationSettings },
         { count: memberCount },
+        { data: recentRedemptionRows },
     ] = await Promise.all([
         supabase
             .from("offers")
@@ -114,11 +132,11 @@ async function BusinessOverviewContent({ params }: PageProps) {
             .from("offer_redemptions")
             .select(
                 `
-          id,
-          offers!inner (
-            business_id
-          )
-        `,
+                    id,
+                    offers!inner (
+                        business_id
+                    )
+                `,
                 { count: "exact", head: true },
             )
             .eq("offers.business_id", businessId),
@@ -143,9 +161,31 @@ async function BusinessOverviewContent({ params }: PageProps) {
             .from("business_members")
             .select("id", { count: "exact", head: true })
             .eq("business_id", businessId),
+
+        supabase
+            .from("offer_redemptions")
+            .select(
+                `
+                    id,
+                    redemption_code,
+                    redeemed_at,
+                    used_at,
+                    offers!inner (
+                        title,
+                        discount,
+                        business_id
+                    )
+                `,
+            )
+            .eq("offers.business_id", businessId)
+            .order("redeemed_at", { ascending: false })
+            .limit(5),
     ]);
 
     const offers = (offerRows ?? []) as OfferSummary[];
+
+    const recentRedemptions =
+        (recentRedemptionRows ?? []) as RecentRedemption[];
 
     const approvedOffers = offers.filter(
         (offer) => offer.approval_status === "approved",
@@ -167,7 +207,7 @@ async function BusinessOverviewContent({ params }: PageProps) {
         0,
     );
 
-    const checklist: ChecklistItem[] = [
+    const checklist = [
         {
             label: "Business approved",
             description:
@@ -190,13 +230,13 @@ async function BusinessOverviewContent({ params }: PageProps) {
         {
             label: "Add your location",
             description: "Show customers where they can visit you.",
-            complete: Boolean(locations && locations.length > 0),
+            complete: Boolean(locations?.length),
             href: `/business/${businessId}/edit`,
         },
         {
             label: "Set opening hours",
             description: "Let customers know when you are available.",
-            complete: Boolean(hours && hours.length > 0),
+            complete: Boolean(hours?.length),
             href: `/business/${businessId}/edit`,
         },
         {
@@ -204,6 +244,13 @@ async function BusinessOverviewContent({ params }: PageProps) {
             description: "Publish your first offer for customers.",
             complete: offers.length > 0,
             href: `/business/${businessId}/offers/new`,
+        },
+        {
+            label: "Get your first promotion approved",
+            description:
+                "Approved promotions become visible to customers.",
+            complete: approvedOffers.length > 0,
+            href: `/business/${businessId}/offers`,
         },
         {
             label: "Configure notifications",
@@ -218,14 +265,6 @@ async function BusinessOverviewContent({ params }: PageProps) {
             href: `/business/${businessId}/team`,
         },
     ];
-
-    const completedItems = checklist.filter(
-        (item) => item.complete,
-    ).length;
-
-    const checklistProgress = Math.round(
-        (completedItems / checklist.length) * 100,
-    );
 
     return (
         <main className="space-y-8">
@@ -243,8 +282,8 @@ async function BusinessOverviewContent({ params }: PageProps) {
                     </h1>
 
                     <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                        Monitor your business activity and manage everything from one
-                        place.
+                        Monitor your business activity and manage everything
+                        from one place.
                     </p>
                 </div>
 
@@ -253,7 +292,6 @@ async function BusinessOverviewContent({ params }: PageProps) {
                         <Link href={`/business/${businessId}/offers/new`} />
                     }
                     nativeButton={false}
-                    variant="default"
                     size="sm"
                 >
                     Create promotion
@@ -267,73 +305,24 @@ async function BusinessOverviewContent({ params }: PageProps) {
                     </AlertTitle>
 
                     <AlertDescription>
-                        Your business must be approved before promotions appear publicly.
+                        Your business must be approved before promotions appear
+                        publicly.
                     </AlertDescription>
                 </Alert>
             )}
 
-            <Card className="border-[#17233B]/10">
-                <CardHeader>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <CardTitle>Get your business ready</CardTitle>
-
-                            <p className="mt-1 text-sm text-[#17233B]/60">
-                                Complete these steps to create a better customer experience.
-                            </p>
-                        </div>
-
-                        <Badge variant="secondary">
-                            {completedItems} of {checklist.length} complete
-                        </Badge>
-                    </div>
-
-                    <Progress value={checklistProgress} className="mt-4 h-2" />
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                    {checklist.map((item) => (
-                        <div
-                            key={item.label}
-                            className="flex flex-col gap-4 rounded-xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                            <div className="flex items-start gap-3">
-                                <div
-                                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${item.complete
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : "bg-[#17233B]/10 text-[#17233B]/50"
-                                        }`}
-                                >
-                                    {item.complete ? "✓" : "•"}
-                                </div>
-
-                                <div>
-                                    <p className="font-medium">{item.label}</p>
-
-                                    <p className="mt-1 text-sm leading-5 text-[#17233B]/60">
-                                        {item.description}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {!item.complete && (
-                                <Button
-                                    render={<Link href={item.href} />}
-                                    nativeButton={false}
-                                    variant="outline"
-                                    size="sm"
-                                    className="shrink-0"
-                                >
-                                    Complete
-                                </Button>
-                            )}
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+            <BusinessOnboardingChecklist
+                items={checklist.map((item, index) => ({
+                    id: `${businessId}-checklist-${index}`,
+                    label: item.label,
+                    description: item.description,
+                    completed: item.complete,
+                    href: item.href,
+                }))}
+            />
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <Card className="border-[#17233B]/10">
+                <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/60">
                             Total promotions
@@ -341,11 +330,13 @@ async function BusinessOverviewContent({ params }: PageProps) {
                     </CardHeader>
 
                     <CardContent>
-                        <p className="text-4xl font-semibold">{offers.length}</p>
+                        <p className="text-4xl font-semibold">
+                            {offers.length}
+                        </p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-[#17233B]/10">
+                <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/60">
                             Approved promotions
@@ -359,7 +350,7 @@ async function BusinessOverviewContent({ params }: PageProps) {
                     </CardContent>
                 </Card>
 
-                <Card className="border-[#17233B]/10">
+                <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/60">
                             Total claims
@@ -367,11 +358,13 @@ async function BusinessOverviewContent({ params }: PageProps) {
                     </CardHeader>
 
                     <CardContent>
-                        <p className="text-4xl font-semibold">{totalClaims}</p>
+                        <p className="text-4xl font-semibold">
+                            {totalClaims}
+                        </p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-[#17233B]/10">
+                <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/60">
                             Redemptions
@@ -388,17 +381,19 @@ async function BusinessOverviewContent({ params }: PageProps) {
 
             {lowInventoryOffers.length > 0 && (
                 <Alert className="border-orange-200 bg-orange-50 text-orange-800">
-                    <AlertTitle>Promotions nearing their limits</AlertTitle>
+                    <AlertTitle>
+                        Promotions nearing their limits
+                    </AlertTitle>
 
                     <AlertDescription>
                         {lowInventoryOffers.length} promotion
-                        {lowInventoryOffers.length === 1 ? "" : "s"} has limited
-                        redemptions remaining.
+                        {lowInventoryOffers.length === 1 ? "" : "s"} has
+                        limited redemptions remaining.
                     </AlertDescription>
                 </Alert>
             )}
 
-            <Card className="border-[#17233B]/10">
+            <Card>
                 <CardHeader>
                     <CardTitle>Promotion performance</CardTitle>
                 </CardHeader>
@@ -409,15 +404,17 @@ async function BusinessOverviewContent({ params }: PageProps) {
                             <AlertTitle>No promotions yet</AlertTitle>
 
                             <AlertDescription>
-                                Create your first promotion to start reaching customers.
+                                Create your first promotion to start reaching
+                                customers.
                             </AlertDescription>
 
                             <Button
                                 render={
-                                    <Link href={`/business/${businessId}/offers/new`} />
+                                    <Link
+                                        href={`/business/${businessId}/offers/new`}
+                                    />
                                 }
                                 nativeButton={false}
-                                variant="default"
                                 size="sm"
                                 className="mt-5"
                             >
@@ -469,7 +466,8 @@ async function BusinessOverviewContent({ params }: PageProps) {
                                                     <span>Usage limit</span>
 
                                                     <span>
-                                                        {offer.redemption_count} of{" "}
+                                                        {offer.redemption_count}{" "}
+                                                        of{" "}
                                                         {offer.max_redemptions}
                                                     </span>
                                                 </div>
@@ -490,7 +488,29 @@ async function BusinessOverviewContent({ params }: PageProps) {
                 </CardContent>
             </Card>
 
-            <Card className="border-[#17233B]/10">
+            <BusinessRecentRedemptions
+                businessId={businessId}
+                redemptions={recentRedemptions.map((redemption) => {
+                    const offer = Array.isArray(redemption.offers)
+                        ? redemption.offers[0]
+                        : redemption.offers;
+
+                    return {
+                        id: redemption.id,
+                        redemption_code: redemption.redemption_code,
+                        redeemed_at: redemption.redeemed_at,
+                        used_at: redemption.used_at,
+                        offer: offer
+                            ? {
+                                title: offer.title,
+                                discount: offer.discount,
+                            }
+                            : null,
+                    };
+                })}
+            />
+
+            <Card>
                 <CardHeader>
                     <CardTitle>Quick actions</CardTitle>
                 </CardHeader>
@@ -522,7 +542,9 @@ async function BusinessOverviewContent({ params }: PageProps) {
 
                     <Button
                         render={
-                            <Link href={`/business/${businessId}/analytics`} />
+                            <Link
+                                href={`/business/${businessId}/analytics`}
+                            />
                         }
                         nativeButton={false}
                         variant="outline"
