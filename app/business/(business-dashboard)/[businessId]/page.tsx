@@ -26,6 +26,13 @@ type OfferSummary = {
     redemption_count: number;
 };
 
+type ChecklistItem = {
+    label: string;
+    description: string;
+    complete: boolean;
+    href: string;
+};
+
 function LoadingState() {
     return (
         <main className="space-y-8">
@@ -35,13 +42,14 @@ function LoadingState() {
                 <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
             </div>
 
+            <Skeleton className="h-64 rounded-xl" />
+
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((item) => (
                     <Skeleton key={item} className="h-32 rounded-xl" />
                 ))}
             </div>
 
-            <Skeleton className="h-48 rounded-xl" />
             <Skeleton className="h-64 rounded-xl" />
         </main>
     );
@@ -67,7 +75,18 @@ async function BusinessOverviewContent({ params }: PageProps) {
 
     const { data: business } = await supabase
         .from("businesses")
-        .select("id, name, category, approval_status, description")
+        .select(
+            `
+        id,
+        name,
+        category,
+        description,
+        logo_url,
+        website_url,
+        contact_email,
+        approval_status
+      `,
+        )
         .eq("id", businessId)
         .single();
 
@@ -75,29 +94,56 @@ async function BusinessOverviewContent({ params }: PageProps) {
         notFound();
     }
 
-    const [{ data: offerRows }, { count: redemptionCount }] =
-        await Promise.all([
-            supabase
-                .from("offers")
-                .select(
-                    "id, title, approval_status, max_redemptions, redemption_count",
-                )
-                .eq("business_id", businessId)
-                .order("redemption_count", { ascending: false }),
-
-            supabase
-                .from("offer_redemptions")
-                .select(
-                    `
-            id,
-            offers!inner (
-              business_id
+    const [
+        { data: offerRows },
+        { count: redemptionCount },
+        { data: locations },
+        { data: hours },
+        { data: notificationSettings },
+        { count: memberCount },
+    ] = await Promise.all([
+        supabase
+            .from("offers")
+            .select(
+                "id, title, approval_status, max_redemptions, redemption_count",
             )
-          `,
-                    { count: "exact", head: true },
-                )
-                .eq("offers.business_id", businessId),
-        ]);
+            .eq("business_id", businessId)
+            .order("redemption_count", { ascending: false }),
+
+        supabase
+            .from("offer_redemptions")
+            .select(
+                `
+          id,
+          offers!inner (
+            business_id
+          )
+        `,
+                { count: "exact", head: true },
+            )
+            .eq("offers.business_id", businessId),
+
+        supabase
+            .from("business_locations")
+            .select("id")
+            .eq("business_id", businessId),
+
+        supabase
+            .from("business_hours")
+            .select("day_of_week")
+            .eq("business_id", businessId),
+
+        supabase
+            .from("business_notification_settings")
+            .select("business_id")
+            .eq("business_id", businessId)
+            .maybeSingle(),
+
+        supabase
+            .from("business_members")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId),
+    ]);
 
     const offers = (offerRows ?? []) as OfferSummary[];
 
@@ -119,6 +165,66 @@ async function BusinessOverviewContent({ params }: PageProps) {
     const totalClaims = offers.reduce(
         (total, offer) => total + offer.redemption_count,
         0,
+    );
+
+    const checklist: ChecklistItem[] = [
+        {
+            label: "Business approved",
+            description:
+                "Your business can appear publicly once it has been approved.",
+            complete: business.approval_status === "approved",
+            href: `/business/${businessId}/edit`,
+        },
+        {
+            label: "Add a business logo",
+            description: "Help customers recognise your business.",
+            complete: Boolean(business.logo_url),
+            href: `/business/${businessId}/edit`,
+        },
+        {
+            label: "Complete your business description",
+            description: "Tell customers what makes your business special.",
+            complete: Boolean(business.description?.trim()),
+            href: `/business/${businessId}/edit`,
+        },
+        {
+            label: "Add your location",
+            description: "Show customers where they can visit you.",
+            complete: Boolean(locations && locations.length > 0),
+            href: `/business/${businessId}/edit`,
+        },
+        {
+            label: "Set opening hours",
+            description: "Let customers know when you are available.",
+            complete: Boolean(hours && hours.length > 0),
+            href: `/business/${businessId}/edit`,
+        },
+        {
+            label: "Create your first promotion",
+            description: "Publish your first offer for customers.",
+            complete: offers.length > 0,
+            href: `/business/${businessId}/offers/new`,
+        },
+        {
+            label: "Configure notifications",
+            description: "Choose which business emails you receive.",
+            complete: Boolean(notificationSettings),
+            href: `/business/${businessId}/settings/notifications`,
+        },
+        {
+            label: "Invite your team",
+            description: "Give staff access to manage the business.",
+            complete: Boolean(memberCount && memberCount > 1),
+            href: `/business/${businessId}/team`,
+        },
+    ];
+
+    const completedItems = checklist.filter(
+        (item) => item.complete,
+    ).length;
+
+    const checklistProgress = Math.round(
+        (completedItems / checklist.length) * 100,
     );
 
     return (
@@ -165,6 +271,66 @@ async function BusinessOverviewContent({ params }: PageProps) {
                     </AlertDescription>
                 </Alert>
             )}
+
+            <Card className="border-[#17233B]/10">
+                <CardHeader>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <CardTitle>Get your business ready</CardTitle>
+
+                            <p className="mt-1 text-sm text-[#17233B]/60">
+                                Complete these steps to create a better customer experience.
+                            </p>
+                        </div>
+
+                        <Badge variant="secondary">
+                            {completedItems} of {checklist.length} complete
+                        </Badge>
+                    </div>
+
+                    <Progress value={checklistProgress} className="mt-4 h-2" />
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                    {checklist.map((item) => (
+                        <div
+                            key={item.label}
+                            className="flex flex-col gap-4 rounded-xl border border-[#17233B]/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <div className="flex items-start gap-3">
+                                <div
+                                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${item.complete
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : "bg-[#17233B]/10 text-[#17233B]/50"
+                                        }`}
+                                >
+                                    {item.complete ? "✓" : "•"}
+                                </div>
+
+                                <div>
+                                    <p className="font-medium">{item.label}</p>
+
+                                    <p className="mt-1 text-sm leading-5 text-[#17233B]/60">
+                                        {item.description}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {!item.complete && (
+                                <Button
+                                    render={<Link href={item.href} />}
+                                    nativeButton={false}
+                                    variant="outline"
+                                    size="sm"
+                                    className="shrink-0"
+                                >
+                                    Complete
+                                </Button>
+                            )}
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <Card className="border-[#17233B]/10">
@@ -248,9 +414,7 @@ async function BusinessOverviewContent({ params }: PageProps) {
 
                             <Button
                                 render={
-                                    <Link
-                                        href={`/business/${businessId}/offers/new`}
-                                    />
+                                    <Link href={`/business/${businessId}/offers/new`} />
                                 }
                                 nativeButton={false}
                                 variant="default"
