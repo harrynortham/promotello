@@ -16,3 +16,5 @@ In production change the supabase edge function for emails to use www.promotello
 - Create events option for businesses (extra selling point)
 - Use react hook form and ZOD validation across forms for consitency
 - Simplified footers for dashboard and account (check other SAAS)
+- Style 404 page
+- Make error page same UI as rest of site

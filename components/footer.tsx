@@ -32,16 +32,16 @@ const linkGroups = [
         title: "Promotello",
         links: [
             { label: "About us", href: "/about" },
-            { label: "For business", href: "/business", showLinkIcon: true },
+            { label: "Promote your business", href: "/business", showLinkIcon: true },
             { label: "Contact", href: "/contact" },
         ],
     },
     {
         title: "Legal",
         links: [
-            { label: "Privacy policy", href: "/legal/privacy-policy" },
-            { label: "Terms of service", href: "/legal/terms-of-service" },
-            { label: "Cookie policy", href: "/legal/cookie-policy" },
+            { label: "Privacy policy", href: "/legal/privacy" },
+            { label: "Terms of service", href: "/legal/terms" },
+            { label: "Cookie policy", href: "/legal/cookies" },
         ],
     },
 ]

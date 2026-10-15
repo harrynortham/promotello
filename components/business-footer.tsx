@@ -19,7 +19,7 @@ const linkGroups = [
             { label: "Features", href: "/business/features" },
 
             { label: "Pricing", href: "/business/pricing" },
-            { label: "About", href: "/business/about" },
+            { label: "About us", href: "/business/about" },
         ],
     },
     {
@@ -35,17 +35,17 @@ const linkGroups = [
         title: "Get started",
         links: [
             { label: "Create business account", href: "/business/register" },
-            { label: "Business login", href: "/business/login", showLinkIcon: true },
-            { label: "Explore local offers", href: "/explore" },
+            { label: "Business login", href: "/business/login" },
+            { label: "Explore local offers", href: "/explore", showLinkIcon: true },
         ],
     },
     {
         title: "Legal",
         links: [
 
-            { label: "Privacy policy", href: "/legal/privacy-policy" },
-            { label: "Terms of service", href: "/legal/terms-of-service" },
-            { label: "Cookie policy", href: "/legal/cookie-policy" },
+            { label: "Privacy policy", href: "/legal/privacy" },
+            { label: "Terms of service", href: "/legal/terms" },
+            { label: "Cookie policy", href: "/legal/cookies" },
         ],
     },
 ]
