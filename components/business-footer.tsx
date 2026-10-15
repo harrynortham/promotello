@@ -17,26 +17,23 @@ const linkGroups = [
         links: [
             { label: "How it works", href: "/business/how-it-works" },
             { label: "Features", href: "/business/features" },
-
             { label: "Pricing", href: "/business/pricing" },
-            { label: "About us", href: "/business/about" },
         ],
     },
     {
         title: "Resources",
         links: [
-            { label: "Help centre", href: "/business/help" },
-            { label: "FAQs", href: "/business/faq" },
             { label: "Getting started", href: "/business/getting-started" },
-            { label: "Contact", href: "/business/contact" },
+            { label: "FAQs", href: "/business/faq" },
+            { label: "Help centre", href: "/business/help" },
         ],
     },
     {
-        title: "Get started",
+        title: "Promotello",
         links: [
-            { label: "Create business account", href: "/business/register" },
-            { label: "Business login", href: "/business/login" },
+            { label: "About us", href: "/business/about" },
             { label: "Explore local offers", href: "/explore", showLinkIcon: true },
+            { label: "Contact", href: "/business/contact" },
         ],
     },
     {
