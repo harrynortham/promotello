@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 
@@ -35,6 +36,7 @@ function getInitials(name: string, email: string) {
 }
 
 export default function Header() {
+    const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -87,14 +89,18 @@ export default function Header() {
         setIsMobileMenuOpen(false);
     }
 
+    function isActiveLink(href: string) {
+        return pathname === href || pathname.startsWith(`${href}/`);
+    }
+
     const displayName =
         user?.name || user?.email?.split("@")[0] || "Account";
 
     const initials = user ? getInitials(user.name, user.email) : "U";
 
     return (
-        <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-            <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
+        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md px-6 ">
+            <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between">
                 <Link href="/" aria-label="Home">
                     <Image
                         src="/brand/promotello-horizontal-primary.svg"
@@ -106,28 +112,51 @@ export default function Header() {
                 </Link>
 
                 <nav
-                    className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex"
+                    className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 md:flex"
                     aria-label="Primary navigation"
                 >
                     <Link
-                        href="/business/features"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                        href="/explore"
+                        aria-current={pathname === "/explore" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/explore")
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
                     >
-                        Features
+                        Explore
                     </Link>
 
                     <Link
-                        href="/business/how-it-works"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                        href="/offers"
+                        aria-current={pathname === "/offers" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/offers")
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
                     >
-                        How it works
+                        Offers
                     </Link>
 
                     <Link
-                        href="/business/pricing"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                        href="/categories"
+                        aria-current={pathname === "/categories" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/categories")
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
                     >
-                        Pricing
+                        Categories
+                    </Link>
+
+                    <Link
+                        href="/businesses"
+                        aria-current={pathname === "/businesses" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/businesses")
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
+                    >
+                        Businesses
                     </Link>
                 </nav>
 
@@ -192,17 +221,17 @@ export default function Header() {
                                     </DropdownMenuItem>
 
                                     <DropdownMenuItem
+                                        render={<Link href="/dashboard" />}
+                                    >
+                                        Consumer dashboard
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
                                         render={
                                             <Link href="/business/dashboard" />
                                         }
                                     >
                                         Business dashboard
-                                    </DropdownMenuItem>
-
-                                    <DropdownMenuItem
-                                        render={<Link href="/dashboard" />}
-                                    >
-                                        Consumer dashboard
                                     </DropdownMenuItem>
                                 </DropdownMenuGroup>
 
@@ -224,10 +253,10 @@ export default function Header() {
                     ) : (
                         <Button
                             size="lg"
-                            render={<Link href="/business/register" />}
+                            render={<Link href="/login" />}
                             nativeButton={false}
                         >
-                            Sign up
+                            Sign in
                         </Button>
                     )}
                 </div>
@@ -240,7 +269,7 @@ export default function Header() {
                     aria-label={
                         isMobileMenuOpen ? "Close menu" : "Open menu"
                     }
-                    aria-controls="business-mobile-menu"
+                    aria-controls="mobile-menu"
                     aria-expanded={isMobileMenuOpen}
                     onClick={() =>
                         setIsMobileMenuOpen((isOpen) => !isOpen)
@@ -255,33 +284,57 @@ export default function Header() {
             </div>
 
             <nav
-                id="business-mobile-menu"
+                id="mobile-menu"
                 className={`${isMobileMenuOpen ? "block" : "hidden"
                     } border-t border-border bg-background px-5 pb-5 pt-3 md:hidden`}
                 aria-label="Mobile navigation"
             >
                 <Link
-                    href="/business/features"
-                    className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    href="/explore"
+                    aria-current={pathname === "/explore" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/explore")
+                        ? "bg-[#FF593F]/10 text-[#17233B]"
+                        : "text-slate-700 hover:bg-slate-50"
+                        }`}
                     onClick={closeMobileMenu}
                 >
-                    Features
+                    Explore
                 </Link>
 
                 <Link
-                    href="/business/how-it-works"
-                    className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    href="/offers"
+                    aria-current={pathname === "/offers" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/offers")
+                        ? "bg-[#FF593F]/10 text-[#17233B]"
+                        : "text-slate-700 hover:bg-slate-50"
+                        }`}
                     onClick={closeMobileMenu}
                 >
-                    How it works
+                    Offers
                 </Link>
 
                 <Link
-                    href="/business/pricing"
-                    className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    href="/categories"
+                    aria-current={pathname === "/categories" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/categories")
+                        ? "bg-[#FF593F]/10 text-[#17233B]"
+                        : "text-slate-700 hover:bg-slate-50"
+                        }`}
                     onClick={closeMobileMenu}
                 >
-                    Pricing
+                    Categories
+                </Link>
+
+                <Link
+                    href="/businesses"
+                    aria-current={pathname === "/businesses" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/businesses")
+                        ? "bg-[#FF593F]/10 text-[#17233B]"
+                        : "text-slate-700 hover:bg-slate-50"
+                        }`}
+                    onClick={closeMobileMenu}
+                >
+                    Businesses
                 </Link>
 
                 {user ? (
@@ -311,19 +364,19 @@ export default function Header() {
                         </Link>
 
                         <Link
-                            href="/business/dashboard"
-                            className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                            onClick={closeMobileMenu}
-                        >
-                            Business dashboard
-                        </Link>
-
-                        <Link
                             href="/dashboard"
                             className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                             onClick={closeMobileMenu}
                         >
                             Consumer dashboard
+                        </Link>
+
+                        <Link
+                            href="/business/dashboard"
+                            className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            onClick={closeMobileMenu}
+                        >
+                            Business dashboard
                         </Link>
 
                         <Button
@@ -339,25 +392,15 @@ export default function Header() {
                 ) : (
                     <Button
                         size="lg"
-                        render={<Link href="/business/register" />}
+                        render={<Link href="/login" />}
                         nativeButton={false}
                         className="mt-2 w-full"
                         onClick={closeMobileMenu}
                     >
-                        Sign up
+                        Sign in
                     </Button>
                 )}
             </nav>
-
-            {isMobileMenuOpen && (
-                <Button
-                    type="button"
-                    variant="ghost"
-                    className="fixed inset-x-0 bottom-0 top-20 z-40 h-auto rounded-none bg-slate-950/5 backdrop-blur-xs md:hidden"
-                    aria-label="Close menu"
-                    onClick={closeMobileMenu}
-                />
-            )}
         </header>
     );
 }

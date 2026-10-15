@@ -91,8 +91,9 @@ export default function BusinessDashboardNav() {
         : "U";
 
     return (
-        <header className="border-b border-border bg-background">
-            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
+        <header className="border-b border-border bg-background px-6">
+            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between max-w-7xl">
+
                 <Link href="/" aria-label="Home">
                     <Image
                         src="/brand/promotello-horizontal-primary.svg"

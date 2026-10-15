@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
     agentFeedback: true,
   },
   cacheComponents: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "owdxoarqivpoplpqiylt.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {

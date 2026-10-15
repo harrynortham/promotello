@@ -58,10 +58,10 @@ const socialLinks = [
 export default function Footer() {
 
     return (
-        <footer className="bg-foreground text-background mt-auto ">
-            <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-12">
-                <div className="flex flex-col gap-10 md:flex-row md:flex-wrap lg:flex-nowrap lg:justify-between lg:gap-12">
-                    <div className="min-w-0 md:basis-[calc(50%-1.25rem)] lg:flex-2 ">
+        <footer className="bg-foreground text-background mt-auto px-6 ">
+            <div className="max-w-7xl mx-auto py-12">
+                <div className="flex flex-wrap gap-10 lg:flex-nowrap lg:justify-between lg:gap-12">
+                    <div className="min-w-0 basis-full lg:flex-2 ">
                         <Link href="/" aria-label="Promotello home" className="inline-flex max-w-full">
                             <Image
                                 src="/brand/promotello-horizontal-white.svg"
@@ -91,7 +91,7 @@ export default function Footer() {
                         </nav>
                     </div>
                     {linkGroups.map((group) => (
-                        <nav key={group.title} aria-label={`${group.title} links`} className="min-w-0 md:basis-[calc(50%-1.25rem)] lg:flex-1">
+                        <nav key={group.title} aria-label={`${group.title} links`} className="min-w-0 basis-[calc(50%-1.25rem)] lg:flex-1">
                             <h2 className="text-sm font-semibold">{group.title}</h2>
                             <ul className="mt-5 space-y-3">
                                 {group.links.map((link) => (
