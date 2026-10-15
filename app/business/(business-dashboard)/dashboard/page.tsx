@@ -1,48 +1,69 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
-
-type BusinessLocation = {
-    city: string | null;
-    region: string | null;
-};
 
 type Business = {
     id: string;
     name: string;
-    category: string | null;
     approval_status: string;
-    business_locations:
-    | BusinessLocation[]
-    | BusinessLocation
-    | null;
 };
 
-type Membership = {
-    role: "owner" | "admin" | "member";
-    businesses: Business | Business[] | null;
+type BusinessSummary = Business & {
+    activeOffers: number;
+    totalRedemptions: number;
+    pendingOffers: number;
 };
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
-            <div className="mx-auto max-w-5xl">
-                <div className="h-10 w-72 animate-pulse rounded-md bg-[#17233B]/10" />
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B]">
+            <div className="mx-auto max-w-7xl">
+                <Skeleton className="h-12 w-72" />
+                <Skeleton className="mt-4 h-6 w-96 max-w-full" />
 
-                <div className="mt-10 grid gap-6 md:grid-cols-2">
-                    <div className="h-64 animate-pulse rounded-xl bg-white" />
-                    <div className="h-64 animate-pulse rounded-xl bg-white" />
+                <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    {[1, 2, 3, 4].map((item) => (
+                        <Skeleton key={item} className="h-32 rounded-2xl" />
+                    ))}
+                </div>
+
+                <Skeleton className="mt-10 h-8 w-56" />
+
+                <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                    {[1, 2].map((item) => (
+                        <Skeleton key={item} className="h-72 rounded-3xl" />
+                    ))}
                 </div>
             </div>
         </main>
     );
+}
+
+function statusVariant(status: string) {
+    if (status === "approved") {
+        return "default" as const;
+    }
+
+    if (status === "rejected" || status === "suspended") {
+        return "destructive" as const;
+    }
+
+    return "secondary" as const;
 }
 
 async function BusinessDashboardContent() {
@@ -58,129 +79,277 @@ async function BusinessDashboardContent() {
         redirect("/login");
     }
 
-    const { data, error } = await supabase
+    const { data: memberships, error: membershipError } = await supabase
         .from("business_members")
         .select(
             `
-        role,
-        businesses (
-          id,
-          name,
-          category,
-          approval_status,
-          business_locations (
-            city,
-            region
-          )
+                role,
+                businesses (
+                    id,
+                    name,
+                    approval_status
+                )
+            `,
         )
-      `,
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
+        .eq("user_id", user.id);
 
-    if (error) {
-        throw new Error("Unable to load your businesses.");
+    if (membershipError) {
+        return (
+            <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B]">
+                <div className="mx-auto max-w-7xl">
+                    <Alert variant="destructive">
+                        <AlertTitle>Unable to load your businesses</AlertTitle>
+                        <AlertDescription>
+                            Please refresh the page and try again.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+            </main>
+        );
     }
 
-    const businesses = ((data ?? []) as Membership[])
-        .map((membership) => {
-            const business = Array.isArray(membership.businesses)
-                ? membership.businesses[0]
-                : membership.businesses;
+    const businesses: Business[] =
+        memberships
+            ?.map((membership) => {
+                const business = Array.isArray(membership.businesses)
+                    ? membership.businesses[0]
+                    : membership.businesses;
 
-            if (!business) {
-                return null;
-            }
+                return business;
+            })
+            .filter(
+                (business): business is Business =>
+                    Boolean(business?.id && business?.name),
+            ) ?? [];
+
+    const summaries: BusinessSummary[] = await Promise.all(
+        businesses.map(async (business) => {
+            const [{ count: activeOffers }, { count: totalRedemptions }, { count: pendingOffers }] =
+                await Promise.all([
+                    supabase
+                        .from("offers")
+                        .select("id", { count: "exact", head: true })
+                        .eq("business_id", business.id)
+                        .eq("approval_status", "approved")
+                        .gte("expires_at", new Date().toISOString().slice(0, 10)),
+
+                    supabase
+                        .from("offer_redemptions")
+                        .select(
+                            `
+                                id,
+                                offers!inner (
+                                    business_id
+                                )
+                            `,
+                            { count: "exact", head: true },
+                        )
+                        .eq("offers.business_id", business.id),
+
+                    supabase
+                        .from("offers")
+                        .select("id", { count: "exact", head: true })
+                        .eq("business_id", business.id)
+                        .eq("approval_status", "pending"),
+                ]);
 
             return {
                 ...business,
-                role: membership.role,
+                activeOffers: activeOffers ?? 0,
+                totalRedemptions: totalRedemptions ?? 0,
+                pendingOffers: pendingOffers ?? 0,
             };
-        })
-        .filter(Boolean) as Array<
-            Business & { role: Membership["role"] }
-        >;
+        }),
+    );
 
-    if (businesses.length === 0) {
-        redirect("/onboarding");
-    }
+    const totalActiveOffers = summaries.reduce(
+        (total, business) => total + business.activeOffers,
+        0,
+    );
+
+    const totalRedemptions = summaries.reduce(
+        (total, business) => total + business.totalRedemptions,
+        0,
+    );
+
+    const totalPendingOffers = summaries.reduce(
+        (total, business) => total + business.pendingOffers,
+        0,
+    );
+
+    const pendingBusinesses = summaries.filter(
+        (business) => business.approval_status === "pending",
+    ).length;
+
+    const firstName =
+        user.user_metadata?.full_name?.split(" ")[0] ??
+        user.email?.split("@")[0] ??
+        "there";
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
-            <div className="mx-auto max-w-5xl">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <Badge
-                            variant="outline"
-                            className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B]">
+            <div className="mx-auto max-w-7xl">
+                <section className="rounded-3xl bg-[#17233B] px-6 py-10 text-white shadow-sm sm:px-10">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF8F7D]">
+                        Business dashboard
+                    </p>
+
+                    <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                        Good to see you, {firstName}.
+                    </h1>
+
+                    <p className="mt-4 max-w-2xl leading-7 text-white/70">
+                        Manage your businesses, publish promotions, and keep track
+                        of customer activity from one place.
+                    </p>
+
+                    <div className="mt-7 flex flex-wrap gap-3">
+                        <Button
+                            render={<Link href="/onboarding" />}
+                            nativeButton={false}
+                            className="bg-[#FF593F] text-[#17233B] hover:bg-[#ff735e]"
                         >
-                            Business area
-                        </Badge>
+                            Add a business
+                        </Button>
 
-                        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#17233B]">
+                        {summaries[0] && (
+                            <Button
+                                render={
+                                    <Link
+                                        href={`/business/${summaries[0].id}`}
+                                    />
+                                }
+                                nativeButton={false}
+                                variant="outline"
+                                className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                            >
+                                Open business overview
+                            </Button>
+                        )}
+                    </div>
+                </section>
+
+                <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardDescription>Businesses</CardDescription>
+                            <CardTitle className="text-3xl">
+                                {summaries.length}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-[#17233B]/60">
+                                Businesses you manage
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardDescription>Active promotions</CardDescription>
+                            <CardTitle className="text-3xl">
+                                {totalActiveOffers}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-[#17233B]/60">
+                                Currently visible promotions
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardDescription>Redemptions</CardDescription>
+                            <CardTitle className="text-3xl">
+                                {totalRedemptions}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-[#17233B]/60">
+                                Customer redemptions to date
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardDescription>Needs attention</CardDescription>
+                            <CardTitle className="text-3xl">
+                                {pendingBusinesses + totalPendingOffers}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-[#17233B]/60">
+                                Pending businesses or promotions
+                            </p>
+                        </CardContent>
+                    </Card>
+                </section>
+
+                <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Your businesses
-                        </h1>
-
-                        <p className="mt-3 text-[#17233B]/65">
-                            Choose a business to manage its promotions, team and settings.
                         </p>
+
+                        <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                            Manage your businesses
+                        </h2>
                     </div>
 
                     <Button
-                        render={<Link href="/dashboard" />}
+                        render={<Link href="/onboarding" />}
                         nativeButton={false}
                         variant="outline"
-                        size="sm"
                     >
-                        Customer dashboard
+                        Add another business
                     </Button>
                 </div>
 
-                <div className="mt-10 grid gap-6 md:grid-cols-2">
-                    {businesses.map((business) => {
-                        const location = Array.isArray(
-                            business.business_locations,
-                        )
-                            ? business.business_locations[0]
-                            : business.business_locations;
+                {summaries.length === 0 ? (
+                    <Card className="mt-6 border-dashed">
+                        <CardHeader>
+                            <CardTitle>Create your first business</CardTitle>
+                            <CardDescription>
+                                Add your business profile to start publishing
+                                promotions on Promotello.
+                            </CardDescription>
+                        </CardHeader>
 
-                        const locationText = [location?.city, location?.region]
-                            .filter(Boolean)
-                            .join(", ");
-
-                        const isApproved =
-                            business.approval_status === "approved";
-
-                        return (
+                        <CardContent>
+                            <Button
+                                render={<Link href="/onboarding" />}
+                                nativeButton={false}
+                            >
+                                Create business
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <section className="mt-6 grid gap-6 lg:grid-cols-2">
+                        {summaries.map((business) => (
                             <Card
                                 key={business.id}
-                                className="border-[#17233B]/10 shadow-sm"
+                                className="overflow-hidden rounded-3xl"
                             >
                                 <CardHeader>
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <p className="text-sm font-medium text-[#17233B]/55">
-                                                {business.category || "Business"}
-                                            </p>
-
-                                            <CardTitle className="mt-2 text-2xl">
+                                            <CardTitle className="text-2xl">
                                                 {business.name}
                                             </CardTitle>
 
-                                            {locationText && (
-                                                <p className="mt-2 text-sm text-[#17233B]/60">
-                                                    {locationText}
-                                                </p>
-                                            )}
+                                            <CardDescription className="mt-2">
+                                                Business management overview
+                                            </CardDescription>
                                         </div>
 
                                         <Badge
-                                            variant="outline"
-                                            className={
-                                                isApproved
-                                                    ? "border-emerald-200 bg-emerald-100 text-emerald-800"
-                                                    : "border-amber-200 bg-amber-100 text-amber-800"
-                                            }
+                                            variant={statusVariant(
+                                                business.approval_status,
+                                            )}
+                                            className="capitalize"
                                         >
                                             {business.approval_status}
                                         </Badge>
@@ -188,44 +357,79 @@ async function BusinessDashboardContent() {
                                 </CardHeader>
 
                                 <CardContent>
-                                    {!isApproved && (
-                                        <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
-                                            <AlertTitle>Approval pending</AlertTitle>
-
+                                    {business.approval_status === "pending" && (
+                                        <Alert className="mb-6">
+                                            <AlertTitle>
+                                                Awaiting approval
+                                            </AlertTitle>
                                             <AlertDescription>
-                                                This business must be approved before its promotions
-                                                appear publicly.
+                                                Your business must be approved
+                                                before its promotions appear
+                                                publicly.
                                             </AlertDescription>
                                         </Alert>
                                     )}
 
-                                    <Button
-                                        render={
-                                            <Link href={`/business/${business.id}`} />
-                                        }
-                                        nativeButton={false}
-                                        variant="default"
-                                        size="lg"
-                                        className="w-full"
-                                    >
-                                        Manage business
-                                    </Button>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="rounded-2xl bg-[#FFF8F0] p-4">
+                                            <p className="text-2xl font-semibold">
+                                                {business.activeOffers}
+                                            </p>
+                                            <p className="mt-1 text-xs text-[#17233B]/60">
+                                                Active promotions
+                                            </p>
+                                        </div>
+
+                                        <div className="rounded-2xl bg-[#FFF8F0] p-4">
+                                            <p className="text-2xl font-semibold">
+                                                {business.totalRedemptions}
+                                            </p>
+                                            <p className="mt-1 text-xs text-[#17233B]/60">
+                                                Redemptions
+                                            </p>
+                                        </div>
+
+                                        <div className="rounded-2xl bg-[#FFF8F0] p-4">
+                                            <p className="text-2xl font-semibold">
+                                                {business.pendingOffers}
+                                            </p>
+                                            <p className="mt-1 text-xs text-[#17233B]/60">
+                                                Pending review
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <Separator className="my-6" />
+
+                                    <div className="flex flex-wrap gap-3">
+                                        <Button
+                                            render={
+                                                <Link
+                                                    href={`/business/${business.id}`}
+                                                />
+                                            }
+                                            nativeButton={false}
+                                        >
+                                            Manage business
+                                        </Button>
+
+                                        <Button
+                                            render={
+                                                <Link
+                                                    href={`/business/${business.id}/offers`}
+                                                />
+                                            }
+                                            nativeButton={false}
+                                            variant="outline"
+                                        >
+                                            View promotions
+                                        </Button>
+                                    </div>
                                 </CardContent>
                             </Card>
-                        );
-                    })}
-                </div>
-
-                <div className="mt-8">
-                    <Button
-                        render={<Link href="/onboarding" />}
-                        nativeButton={false}
-                        variant="outline"
-                        size="sm"
-                    >
-                        Add another business
-                    </Button>
-                </div>
+                        ))}
+                    </section>
+                )}
             </div>
         </main>
     );

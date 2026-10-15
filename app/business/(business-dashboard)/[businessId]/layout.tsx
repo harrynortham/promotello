@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessMobileNav } from "@/components/business-mobile-nav";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
+import { BusinessSwitcher } from "@/components/business-switcher";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
@@ -18,13 +19,19 @@ type BusinessLayoutProps = {
     }>;
 };
 
+type Business = {
+    id: string;
+    name: string;
+    approval_status: string;
+};
+
 function BusinessLayoutLoading() {
     return (
         <div className="min-h-screen bg-[#FFF8F0]">
             <div className="mx-auto flex max-w-7xl gap-8 px-6 py-8">
                 <aside className="hidden w-64 shrink-0 lg:block">
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-5">
-                        <Skeleton className="h-5 w-32 rounded-md" />
+                        <Skeleton className="h-10 w-full rounded-md" />
                         <Skeleton className="mt-5 h-8 w-48 rounded-md" />
                         <Skeleton className="mt-3 h-6 w-24 rounded-full" />
 
@@ -67,11 +74,12 @@ async function BusinessLayoutContent({
         redirect("/login");
     }
 
-    const { data: membership } = await supabase
+    const { data: memberships } = await supabase
         .from("business_members")
         .select(
             `
                 role,
+                business_id,
                 businesses (
                     id,
                     name,
@@ -79,17 +87,37 @@ async function BusinessLayoutContent({
                 )
             `,
         )
-        .eq("business_id", businessId)
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
+
+    const membership = memberships?.find(
+        (item) => item.business_id === businessId,
+    );
 
     if (!membership) {
         redirect("/business/dashboard");
     }
 
-    const business = Array.isArray(membership.businesses)
+    const currentBusiness = Array.isArray(membership.businesses)
         ? membership.businesses[0]
         : membership.businesses;
+
+    if (!currentBusiness) {
+        redirect("/business/dashboard");
+    }
+
+    const businesses: Business[] =
+        memberships
+            ?.map((item) => {
+                const business = Array.isArray(item.businesses)
+                    ? item.businesses[0]
+                    : item.businesses;
+
+                return business;
+            })
+            .filter(
+                (business): business is Business =>
+                    Boolean(business?.id && business?.name),
+            ) ?? [];
 
     const canManage =
         membership.role === "owner" || membership.role === "admin";
@@ -100,7 +128,7 @@ async function BusinessLayoutContent({
                 <div className="flex items-center justify-between lg:hidden">
                     <div>
                         <p className="font-semibold text-[#17233B]">
-                            {business?.name ?? "Business"}
+                            {currentBusiness.name}
                         </p>
 
                         <p className="text-sm text-[#17233B]/60">
@@ -110,25 +138,31 @@ async function BusinessLayoutContent({
 
                     <BusinessMobileNav
                         businessId={businessId}
-                        businessName={business?.name ?? "Business"}
-                        approvalStatus={
-                            business?.approval_status ?? "pending"
-                        }
+                        businessName={currentBusiness.name}
+                        approvalStatus={currentBusiness.approval_status}
                         canManage={canManage}
+                        businesses={businesses}
                     />
                 </div>
 
                 <aside className="hidden w-64 shrink-0 lg:sticky lg:top-8 lg:block">
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm">
+                        <BusinessSwitcher
+                            currentBusinessId={businessId}
+                            businesses={businesses}
+                        />
+
+                        <Separator className="my-5" />
+
                         <h2 className="text-xl font-semibold text-[#17233B]">
-                            {business?.name ?? "Business"}
+                            {currentBusiness.name}
                         </h2>
 
                         <Badge
                             variant="outline"
                             className="mt-3 capitalize"
                         >
-                            {business?.approval_status ?? "pending"}
+                            {currentBusiness.approval_status}
                         </Badge>
 
                         <Separator className="my-5" />

@@ -11,12 +11,20 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+
+type Business = {
+    id: string;
+    name: string;
+    approval_status: string;
+};
 
 type BusinessMobileNavProps = {
     businessId: string;
     businessName: string;
     approvalStatus: string;
     canManage: boolean;
+    businesses?: Business[];
 };
 
 export function BusinessMobileNav({
@@ -24,15 +32,51 @@ export function BusinessMobileNav({
     businessName,
     approvalStatus,
     canManage,
+    businesses = [],
 }: BusinessMobileNavProps) {
+    const links = [
+        {
+            label: "Overview",
+            href: `/business/${businessId}`,
+        },
+        {
+            label: "Promotions",
+            href: `/business/${businessId}/offers`,
+        },
+        {
+            label: "Redemptions",
+            href: `/business/${businessId}/redemptions`,
+        },
+        ...(canManage
+            ? [
+                {
+                    label: "Analytics",
+                    href: `/business/${businessId}/analytics`,
+                },
+                {
+                    label: "Team",
+                    href: `/business/${businessId}/team`,
+                },
+                {
+                    label: "Edit business",
+                    href: `/business/${businessId}/edit`,
+                },
+                {
+                    label: "Notifications",
+                    href: `/business/${businessId}/settings/notifications`,
+                },
+            ]
+            : []),
+    ];
+
     return (
         <Sheet>
             <SheetTrigger
                 render={
                     <Button
+                        type="button"
                         variant="outline"
                         size="sm"
-                        className="lg:hidden"
                     />
                 }
             >
@@ -40,114 +84,90 @@ export function BusinessMobileNav({
             </SheetTrigger>
 
             <SheetContent
-                side="left"
-                className="w-80 bg-[#FFF8F0]"
+                side="right"
+                className="w-[min(22rem,90vw)]"
             >
-                <SheetHeader className="text-left">
-                    <SheetTitle className="text-[#17233B]">
-                        {businessName}
-                    </SheetTitle>
-
-                    <Badge
-                        variant="outline"
-                        className="w-fit capitalize"
-                    >
-                        {approvalStatus}
-                    </Badge>
+                <SheetHeader>
+                    <SheetTitle>{businessName}</SheetTitle>
                 </SheetHeader>
 
-                <nav className="mt-8 flex flex-col gap-2">
-                    <Button
-                        render={<Link href={`/business/${businessId}`} />}
-                        nativeButton={false}
-                        variant="ghost"
-                        className="justify-start"
-                    >
-                        Overview
-                    </Button>
+                <div className="mt-6 space-y-5">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                            Current business
+                        </p>
 
-                    <Button
-                        render={
-                            <Link href={`/business/${businessId}/offers`} />
-                        }
-                        nativeButton={false}
-                        variant="ghost"
-                        className="justify-start"
-                    >
-                        Promotions
-                    </Button>
+                        <p className="mt-2 truncate font-semibold text-[#17233B]">
+                            {businessName}
+                        </p>
 
-                    <Button
-                        render={
-                            <Link
-                                href={`/business/${businessId}/redemptions`}
-                            />
-                        }
-                        nativeButton={false}
-                        variant="ghost"
-                        className="justify-start"
-                    >
-                        Redemptions
-                    </Button>
+                        <Badge
+                            variant="outline"
+                            className="mt-2 capitalize"
+                        >
+                            {approvalStatus}
+                        </Badge>
+                    </div>
 
-                    {canManage && (
+                    {businesses.length > 1 && (
                         <>
-                            <Button
-                                render={
-                                    <Link
-                                        href={`/business/${businessId}/analytics`}
-                                    />
-                                }
-                                nativeButton={false}
-                                variant="ghost"
-                                className="justify-start"
-                            >
-                                Analytics
-                            </Button>
+                            <Separator />
 
-                            <Button
-                                render={
-                                    <Link href={`/business/${businessId}/team`} />
-                                }
-                                nativeButton={false}
-                                variant="ghost"
-                                className="justify-start"
-                            >
-                                Team
-                            </Button>
+                            <div>
+                                <p className="mb-2 text-sm font-semibold text-[#17233B]">
+                                    Switch business
+                                </p>
 
-                            <Button
-                                render={
-                                    <Link href={`/business/${businessId}/edit`} />
-                                }
-                                nativeButton={false}
-                                variant="ghost"
-                                className="justify-start"
-                            >
-                                Edit business
-                            </Button>
-
-                            <Button
-                                render={
-                                    <Link
-                                        href={`/business/${businessId}/settings/notifications`}
-                                    />
-                                }
-                                nativeButton={false}
-                                variant="ghost"
-                                className="justify-start"
-                            >
-                                Notifications
-                            </Button>
+                                <div className="space-y-1">
+                                    {businesses.map((business) => (
+                                        <Button
+                                            key={business.id}
+                                            render={
+                                                <Link
+                                                    href={`/business/${business.id}`}
+                                                />
+                                            }
+                                            nativeButton={false}
+                                            variant={
+                                                business.id === businessId
+                                                    ? "secondary"
+                                                    : "ghost"
+                                            }
+                                            className="w-full justify-start"
+                                        >
+                                            <span className="truncate">
+                                                {business.name}
+                                            </span>
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
                         </>
                     )}
 
-                    <div className="my-4 h-px bg-[#17233B]/10" />
+                    <Separator />
+
+                    <nav className="space-y-1">
+                        {links.map((link) => (
+                            <Button
+                                key={link.href}
+                                render={<Link href={link.href} />}
+                                nativeButton={false}
+                                variant="ghost"
+                                className="w-full justify-start"
+                            >
+                                {link.label}
+                            </Button>
+                        ))}
+                    </nav>
+
+                    <Separator />
 
                     <Button
                         render={<Link href="/business/dashboard" />}
                         nativeButton={false}
                         variant="outline"
+                        className="w-full"
                     >
                         All businesses
                     </Button>
@@ -156,10 +176,11 @@ export function BusinessMobileNav({
                         render={<Link href="/dashboard" />}
                         nativeButton={false}
                         variant="outline"
+                        className="w-full"
                     >
                         Customer area
                     </Button>
-                </nav>
+                </div>
             </SheetContent>
         </Sheet>
     );
