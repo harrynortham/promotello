@@ -115,49 +115,42 @@ export default function Header() {
                     className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 md:flex"
                     aria-label="Primary navigation"
                 >
-                    <Link
-                        href="/explore"
-                        aria-current={pathname === "/explore" ? "page" : undefined}
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/explore")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Explore
-                    </Link>
 
                     <Link
-                        href="/offers"
-                        aria-current={pathname === "/offers" ? "page" : undefined}
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/offers")
+                        href="/business/how-it-works"
+                        aria-current={pathname === "/business/how-it-works" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/how-it-works")
                             ? "bg-[#FF593F]/10 text-[#17233B]"
                             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
-                        Offers
+                        How it works
+                    </Link>
+                    <Link
+                        href="/business/features"
+                        aria-current={pathname === "/business/features" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/features")
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
+                    >
+                        Features
                     </Link>
 
-                    <Link
-                        href="/categories"
-                        aria-current={pathname === "/categories" ? "page" : undefined}
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/categories")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Categories
-                    </Link>
+
 
                     <Link
-                        href="/businesses"
-                        aria-current={pathname === "/businesses" ? "page" : undefined}
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/businesses")
+                        href="/business/pricing"
+                        aria-current={pathname === "/business/pricing" ? "page" : undefined}
+                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/pricing")
                             ? "bg-[#FF593F]/10 text-[#17233B]"
                             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
-                        Businesses
+                        Pricing
                     </Link>
+
+
                 </nav>
 
                 <div className="hidden md:block">
@@ -290,52 +283,42 @@ export default function Header() {
                 aria-label="Mobile navigation"
             >
                 <Link
-                    href="/explore"
-                    aria-current={pathname === "/explore" ? "page" : undefined}
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/explore")
+                    href="/business/how-it-works"
+                    aria-current={pathname === "/business/how-it-works" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/how-it-works")
                         ? "bg-[#FF593F]/10 text-[#17233B]"
                         : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
-                    Explore
+                    How it works
                 </Link>
 
                 <Link
-                    href="/offers"
-                    aria-current={pathname === "/offers" ? "page" : undefined}
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/offers")
+                    href="/business/features"
+                    aria-current={pathname === "/business/features" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/features")
                         ? "bg-[#FF593F]/10 text-[#17233B]"
                         : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
-                    Offers
+                    Features
                 </Link>
 
                 <Link
-                    href="/categories"
-                    aria-current={pathname === "/categories" ? "page" : undefined}
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/categories")
+                    href="/business/pricing"
+                    aria-current={pathname === "/business/pricing" ? "page" : undefined}
+                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/pricing")
                         ? "bg-[#FF593F]/10 text-[#17233B]"
                         : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
-                    Categories
+                    Pricing
                 </Link>
 
-                <Link
-                    href="/businesses"
-                    aria-current={pathname === "/businesses" ? "page" : undefined}
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/businesses")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Businesses
-                </Link>
+
 
                 {user ? (
                     <div className="mt-3 border-t border-border pt-4">

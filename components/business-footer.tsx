@@ -15,16 +15,17 @@ const linkGroups = [
     {
         title: "Product",
         links: [
-            { label: "Features", href: "/business/features" },
             { label: "How it works", href: "/business/how-it-works" },
+            { label: "Features", href: "/business/features" },
+
             { label: "Pricing", href: "/business/pricing" },
-            { label: "About Promotello", href: "/business/about" },
+            { label: "About", href: "/business/about" },
         ],
     },
     {
         title: "Resources",
         links: [
-            { label: "Business help centre", href: "/business/help-centre" },
+            { label: "Help centre", href: "/business/help" },
             { label: "FAQs", href: "/business/faq" },
             { label: "Getting started", href: "/business/getting-started" },
             { label: "Contact", href: "/business/contact" },
