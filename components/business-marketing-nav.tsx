@@ -101,7 +101,7 @@ export default function Header() {
     return (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md px-6 ">
             <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between">
-                <Link href="/" aria-label="Home">
+                <Link href="/business" aria-label="Home">
                     <Image
                         src="/brand/promotello-horizontal-primary.svg"
                         alt="Promotello"

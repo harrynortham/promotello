@@ -1,4 +1,4 @@
-export default function Terms() {
+export default function Contact() {
 
     return (
         <div>Hello</div>

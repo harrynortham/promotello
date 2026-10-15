@@ -18,7 +18,7 @@ const linkGroups = [
             { label: "Features", href: "/business/features" },
             { label: "How it works", href: "/business/how-it-works" },
             { label: "Pricing", href: "/business/pricing" },
-            { label: "About Promotello", href: "/about" },
+            { label: "About Promotello", href: "/business/about" },
         ],
     },
     {
@@ -27,7 +27,7 @@ const linkGroups = [
             { label: "Business help centre", href: "/business/help-centre" },
             { label: "FAQs", href: "/business/faq" },
             { label: "Getting started", href: "/business/getting-started" },
-            { label: "Contact", href: "/contact" },
+            { label: "Contact", href: "/business/contact" },
         ],
     },
     {
@@ -42,9 +42,9 @@ const linkGroups = [
         title: "Legal",
         links: [
 
-            { label: "Privacy policy", href: "/privacy-policy" },
-            { label: "Terms of service", href: "/terms-of-service" },
-            { label: "Cookie policy", href: "/cookie-policy" },
+            { label: "Privacy policy", href: "/legal/privacy-policy" },
+            { label: "Terms of service", href: "/legal/terms-of-service" },
+            { label: "Cookie policy", href: "/legal/cookie-policy" },
         ],
     },
 ]
