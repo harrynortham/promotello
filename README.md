@@ -15,3 +15,4 @@ In production change the supabase edge function for emails to use www.promotello
 - Blog locally or contentful for integrations and automation
 - Create events option for businesses (extra selling point)
 - Use react hook form and ZOD validation across forms for consitency
+- Simplified footers for dashboard and account (check other SAAS)
