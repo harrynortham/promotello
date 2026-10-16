@@ -18,3 +18,4 @@ In production change the supabase edge function for emails to use www.promotello
 - Simplified footers for dashboard and account (check other SAAS)
 - Style 404 page
 - Use shadcn avatar component in all headers
+- Change mobile business and customer menu to be sheet

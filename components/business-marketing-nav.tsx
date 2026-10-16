@@ -23,6 +23,21 @@ type UserProfile = {
     avatarUrl: string;
 };
 
+const navigationLinks = [
+    {
+        label: "How it works",
+        href: "/business/how-it-works",
+    },
+    {
+        label: "Features",
+        href: "/business/features",
+    },
+    {
+        label: "Pricing",
+        href: "/business/pricing",
+    },
+];
+
 function getInitials(name: string, email: string) {
     const source = name.trim() || email;
 
@@ -87,9 +102,7 @@ export default function Header() {
                 data: { user },
             } = await supabase.auth.getUser();
 
-            if (!isMounted) {
-                return;
-            }
+            if (!isMounted) return;
 
             if (user) {
                 const name =
@@ -163,56 +176,27 @@ export default function Header() {
                 </Link>
 
                 <nav
-                    className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 md:flex"
+                    className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 lg:flex"
                     aria-label="Primary navigation"
                 >
-                    <Link
-                        href="/business/how-it-works"
-                        aria-current={
-                            pathname === "/business/how-it-works"
-                                ? "page"
-                                : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/how-it-works")
+                    {navigationLinks.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            aria-current={
+                                isActiveLink(link.href) ? "page" : undefined
+                            }
+                            className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink(link.href)
                                 ? "bg-[#FF593F]/10 text-[#17233B]"
                                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        How it works
-                    </Link>
-
-                    <Link
-                        href="/business/features"
-                        aria-current={
-                            pathname === "/business/features"
-                                ? "page"
-                                : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/features")
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Features
-                    </Link>
-
-                    <Link
-                        href="/business/pricing"
-                        aria-current={
-                            pathname === "/business/pricing"
-                                ? "page"
-                                : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/pricing")
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Pricing
-                    </Link>
+                                }`}
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
                 </nav>
 
-                <div className="hidden md:block">
+                <div className="hidden lg:block">
                     {isLoading ? (
                         <div className="h-10 w-28 animate-pulse rounded-full bg-muted" />
                     ) : user ? (
@@ -222,6 +206,7 @@ export default function Header() {
                                     <Button
                                         type="button"
                                         variant="ghost"
+                                        aria-label={`Open account menu for ${displayName}`}
                                         className="flex h-auto items-center gap-3 rounded-full px-2 py-1.5"
                                     />
                                 }
@@ -270,6 +255,14 @@ export default function Header() {
 
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem
+                                        render={
+                                            <Link href="/business/dashboard" />
+                                        }
+                                    >
+                                        Business dashboard
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
                                         render={<Link href="/account" />}
                                     >
                                         Account settings
@@ -279,14 +272,6 @@ export default function Header() {
                                         render={<Link href="/dashboard" />}
                                     >
                                         Consumer dashboard
-                                    </DropdownMenuItem>
-
-                                    <DropdownMenuItem
-                                        render={
-                                            <Link href="/business/dashboard" />
-                                        }
-                                    >
-                                        Business dashboard
                                     </DropdownMenuItem>
                                 </DropdownMenuGroup>
 
@@ -306,13 +291,25 @@ export default function Header() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <Button
-                            size="lg"
-                            render={<Link href="/login" />}
-                            nativeButton={false}
-                        >
-                            Sign in
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                render={<Link href="/login?next=/business/dashboard" />}
+                                nativeButton={false}
+                                variant="ghost"
+                            >
+                                Sign in
+                            </Button>
+
+                            <Button
+                                render={
+                                    <Link href="/business/register" />
+                                }
+                                nativeButton={false}
+                                size="lg"
+                            >
+                                Get started
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -320,7 +317,7 @@ export default function Header() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="md:hidden"
+                    className="lg:hidden"
                     aria-label={
                         isMobileMenuOpen ? "Close menu" : "Open menu"
                     }
@@ -341,58 +338,29 @@ export default function Header() {
             <nav
                 id="mobile-menu"
                 className={`${isMobileMenuOpen ? "block" : "hidden"
-                    } border-t border-border bg-background px-5 pb-5 pt-3 md:hidden`}
+                    } border-t border-border bg-background px-5 pb-5 pt-3 lg:hidden`}
                 aria-label="Mobile navigation"
             >
-                <Link
-                    href="/business/how-it-works"
-                    aria-current={
-                        pathname === "/business/how-it-works"
-                            ? "page"
-                            : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/how-it-works")
+                {navigationLinks.map((link) => (
+                    <Link
+                        key={link.href}
+                        href={link.href}
+                        aria-current={
+                            isActiveLink(link.href) ? "page" : undefined
+                        }
+                        className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink(link.href)
                             ? "bg-[#FF593F]/10 text-[#17233B]"
                             : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    How it works
-                </Link>
+                            }`}
+                        onClick={closeMobileMenu}
+                    >
+                        {link.label}
+                    </Link>
+                ))}
 
-                <Link
-                    href="/business/features"
-                    aria-current={
-                        pathname === "/business/features"
-                            ? "page"
-                            : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/features")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Features
-                </Link>
-
-                <Link
-                    href="/business/pricing"
-                    aria-current={
-                        pathname === "/business/pricing"
-                            ? "page"
-                            : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/pricing")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Pricing
-                </Link>
-
-                {user ? (
+                {isLoading ? (
+                    <div className="mt-4 h-12 animate-pulse rounded-xl bg-muted" />
+                ) : user ? (
                     <div className="mt-3 border-t border-border pt-4">
                         <div className="flex items-center gap-3 px-3 pb-3">
                             <ProfilePhoto
@@ -412,6 +380,14 @@ export default function Header() {
                         </div>
 
                         <Link
+                            href="/business/dashboard"
+                            className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                            onClick={closeMobileMenu}
+                        >
+                            Business dashboard
+                        </Link>
+
+                        <Link
                             href="/account"
                             className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                             onClick={closeMobileMenu}
@@ -427,14 +403,6 @@ export default function Header() {
                             Consumer dashboard
                         </Link>
 
-                        <Link
-                            href="/business/dashboard"
-                            className="block rounded-md px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                            onClick={closeMobileMenu}
-                        >
-                            Business dashboard
-                        </Link>
-
                         <Button
                             type="button"
                             variant="outline"
@@ -446,15 +414,29 @@ export default function Header() {
                         </Button>
                     </div>
                 ) : (
-                    <Button
-                        size="lg"
-                        render={<Link href="/login" />}
-                        nativeButton={false}
-                        className="mt-2 w-full"
-                        onClick={closeMobileMenu}
-                    >
-                        Sign in
-                    </Button>
+                    <div className="mt-4 space-y-3 border-t border-border pt-4">
+                        <Button
+                            render={
+                                <Link href="/business/register" />
+                            }
+                            nativeButton={false}
+                            size="lg"
+                            className="w-full"
+                            onClick={closeMobileMenu}
+                        >
+                            Get started
+                        </Button>
+
+                        <Button
+                            render={<Link href="/login?next=/business/dashboard" />}
+                            nativeButton={false}
+                            variant="outline"
+                            className="w-full"
+                            onClick={closeMobileMenu}
+                        >
+                            Already registered? Sign in
+                        </Button>
+                    </div>
                 )}
             </nav>
         </header>
