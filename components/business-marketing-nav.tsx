@@ -20,6 +20,7 @@ import { createClient } from "@/utils/supabase/client";
 type UserProfile = {
     email: string;
     name: string;
+    avatarUrl: string;
 };
 
 function getInitials(name: string, email: string) {
@@ -35,8 +36,42 @@ function getInitials(name: string, email: string) {
     );
 }
 
+function ProfilePhoto({
+    src,
+    initials,
+    large = false,
+}: {
+    src: string;
+    initials: string;
+    large?: boolean;
+}) {
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
+    return (
+        <span
+            aria-hidden="true"
+            className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#17233B] text-sm font-semibold text-white ${large ? "h-10 w-10" : "h-9 w-9"
+                }`}
+        >
+            {src && failedSrc !== src ? (
+                <Image
+                    src={src}
+                    alt=""
+                    width={large ? 40 : 36}
+                    height={large ? 40 : 36}
+                    className="h-full w-full object-cover"
+                    onError={() => setFailedSrc(src)}
+                />
+            ) : (
+                initials
+            )}
+        </span>
+    );
+}
+
 export default function Header() {
     const pathname = usePathname();
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -57,19 +92,35 @@ export default function Header() {
             }
 
             if (user) {
+                const name =
+                    typeof user.user_metadata?.full_name === "string"
+                        ? user.user_metadata.full_name
+                        : typeof user.user_metadata?.name === "string"
+                            ? user.user_metadata.name
+                            : "";
+
+                const avatarPath =
+                    typeof user.user_metadata?.avatar_path === "string"
+                        ? user.user_metadata.avatar_path
+                        : "";
+
+                const avatarUrl = avatarPath
+                    ? supabase.storage
+                        .from("profile-images")
+                        .getPublicUrl(avatarPath).data.publicUrl
+                    : "";
+
                 setUser({
                     email: user.email ?? "",
-                    name:
-                        user.user_metadata?.full_name ??
-                        user.user_metadata?.name ??
-                        "",
+                    name,
+                    avatarUrl,
                 });
             }
 
             setIsLoading(false);
         }
 
-        loadUser();
+        void loadUser();
 
         return () => {
             isMounted = false;
@@ -115,42 +166,50 @@ export default function Header() {
                     className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 md:flex"
                     aria-label="Primary navigation"
                 >
-
                     <Link
                         href="/business/how-it-works"
-                        aria-current={pathname === "/business/how-it-works" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/business/how-it-works"
+                                ? "page"
+                                : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/how-it-works")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         How it works
                     </Link>
+
                     <Link
                         href="/business/features"
-                        aria-current={pathname === "/business/features" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/business/features"
+                                ? "page"
+                                : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/features")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         Features
                     </Link>
 
-
-
                     <Link
                         href="/business/pricing"
-                        aria-current={pathname === "/business/pricing" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/business/pricing"
+                                ? "page"
+                                : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/business/pricing")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         Pricing
                     </Link>
-
-
                 </nav>
 
                 <div className="hidden md:block">
@@ -177,9 +236,10 @@ export default function Header() {
                                     </span>
                                 </span>
 
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                    {initials}
-                                </span>
+                                <ProfilePhoto
+                                    src={user.avatarUrl}
+                                    initials={initials}
+                                />
                             </DropdownMenuTrigger>
 
                             <DropdownMenuContent
@@ -188,9 +248,11 @@ export default function Header() {
                             >
                                 <div className="px-2 py-2">
                                     <div className="flex items-center gap-3">
-                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                            {initials}
-                                        </span>
+                                        <ProfilePhoto
+                                            src={user.avatarUrl}
+                                            initials={initials}
+                                            large
+                                        />
 
                                         <div className="min-w-0">
                                             <p className="truncate font-semibold">
@@ -284,10 +346,14 @@ export default function Header() {
             >
                 <Link
                     href="/business/how-it-works"
-                    aria-current={pathname === "/business/how-it-works" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/business/how-it-works"
+                            ? "page"
+                            : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/how-it-works")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
@@ -296,10 +362,14 @@ export default function Header() {
 
                 <Link
                     href="/business/features"
-                    aria-current={pathname === "/business/features" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/business/features"
+                            ? "page"
+                            : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/features")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
@@ -308,24 +378,27 @@ export default function Header() {
 
                 <Link
                     href="/business/pricing"
-                    aria-current={pathname === "/business/pricing" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/business/pricing"
+                            ? "page"
+                            : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/business/pricing")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
                     Pricing
                 </Link>
 
-
-
                 {user ? (
                     <div className="mt-3 border-t border-border pt-4">
                         <div className="flex items-center gap-3 px-3 pb-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                {initials}
-                            </span>
+                            <ProfilePhoto
+                                src={user.avatarUrl}
+                                initials={initials}
+                            />
 
                             <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold">

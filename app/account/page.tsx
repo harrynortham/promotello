@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -60,14 +61,12 @@ const settings = [
     },
 ];
 
-function getDisplayName(metadata: Record<string, unknown>) {
-    for (const value of [metadata.full_name, metadata.name]) {
-        if (typeof value === "string" && value.trim()) {
-            return value.trim();
-        }
-    }
+function readText(value: unknown) {
+    return typeof value === "string" ? value.trim() : "";
+}
 
-    return "";
+function getDisplayName(metadata: Record<string, unknown>) {
+    return readText(metadata.full_name) || readText(metadata.name);
 }
 
 function getInitials(name: string, email?: string) {
@@ -101,6 +100,14 @@ async function AccountContent() {
     const initials = getInitials(displayName, user.email);
     const isEmailVerified = Boolean(user.email_confirmed_at);
 
+    const avatarPath = readText(user.user_metadata.avatar_path);
+
+    const avatarUrl = avatarPath
+        ? supabase.storage
+            .from("profile-images")
+            .getPublicUrl(avatarPath).data.publicUrl
+        : "";
+
     return (
         <section className="space-y-8">
             <div>
@@ -122,12 +129,21 @@ async function AccountContent() {
                 <CardContent className="p-6 sm:p-8">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-4">
-                            <span
-                                aria-hidden="true"
-                                className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xl font-semibold text-primary"
-                            >
-                                {initials}
-                            </span>
+                            <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xl font-semibold text-primary">
+                                {avatarUrl ? (
+                                    <Image
+                                        src={avatarUrl}
+                                        alt="Your profile photo"
+                                        width={64}
+                                        height={64}
+                                        className="size-16 object-cover"
+                                    />
+                                ) : (
+                                    <span aria-hidden="true">
+                                        {initials}
+                                    </span>
+                                )}
+                            </div>
 
                             <div className="min-w-0">
                                 <h2 className="truncate text-xl font-semibold">

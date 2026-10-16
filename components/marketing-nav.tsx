@@ -20,6 +20,7 @@ import { createClient } from "@/utils/supabase/client";
 type UserProfile = {
     email: string;
     name: string;
+    avatarUrl: string;
 };
 
 function getInitials(name: string, email: string) {
@@ -32,6 +33,39 @@ function getInitials(name: string, email: string) {
             .slice(0, 2)
             .map((part) => part.charAt(0).toUpperCase())
             .join("") || "U"
+    );
+}
+
+function ProfilePhoto({
+    src,
+    initials,
+    large = false,
+}: {
+    src: string;
+    initials: string;
+    large?: boolean;
+}) {
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
+    return (
+        <span
+            aria-hidden="true"
+            className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#17233B] text-sm font-semibold text-white ${large ? "h-10 w-10" : "h-9 w-9"
+                }`}
+        >
+            {src && failedSrc !== src ? (
+                <Image
+                    src={src}
+                    alt=""
+                    width={large ? 40 : 36}
+                    height={large ? 40 : 36}
+                    className="h-full w-full object-cover"
+                    onError={() => setFailedSrc(src)}
+                />
+            ) : (
+                initials
+            )}
+        </span>
     );
 }
 
@@ -57,19 +91,35 @@ export default function Header() {
             }
 
             if (user) {
+                const name =
+                    typeof user.user_metadata?.full_name === "string"
+                        ? user.user_metadata.full_name
+                        : typeof user.user_metadata?.name === "string"
+                            ? user.user_metadata.name
+                            : "";
+
+                const avatarPath =
+                    typeof user.user_metadata?.avatar_path === "string"
+                        ? user.user_metadata.avatar_path
+                        : "";
+
+                const avatarUrl = avatarPath
+                    ? supabase.storage
+                        .from("profile-images")
+                        .getPublicUrl(avatarPath).data.publicUrl
+                    : "";
+
                 setUser({
                     email: user.email ?? "",
-                    name:
-                        user.user_metadata?.full_name ??
-                        user.user_metadata?.name ??
-                        "",
+                    name,
+                    avatarUrl,
                 });
             }
 
             setIsLoading(false);
         }
 
-        loadUser();
+        void loadUser();
 
         return () => {
             isMounted = false;
@@ -117,10 +167,12 @@ export default function Header() {
                 >
                     <Link
                         href="/explore"
-                        aria-current={pathname === "/explore" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/explore" ? "page" : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/explore")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         Explore
@@ -128,10 +180,12 @@ export default function Header() {
 
                     <Link
                         href="/offers"
-                        aria-current={pathname === "/offers" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/offers" ? "page" : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/offers")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         Offers
@@ -139,10 +193,12 @@ export default function Header() {
 
                     <Link
                         href="/categories"
-                        aria-current={pathname === "/categories" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/categories" ? "page" : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/categories")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         Categories
@@ -150,10 +206,12 @@ export default function Header() {
 
                     <Link
                         href="/businesses"
-                        aria-current={pathname === "/businesses" ? "page" : undefined}
+                        aria-current={
+                            pathname === "/businesses" ? "page" : undefined
+                        }
                         className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/businesses")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                             }`}
                     >
                         Businesses
@@ -184,9 +242,10 @@ export default function Header() {
                                     </span>
                                 </span>
 
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                    {initials}
-                                </span>
+                                <ProfilePhoto
+                                    src={user.avatarUrl}
+                                    initials={initials}
+                                />
                             </DropdownMenuTrigger>
 
                             <DropdownMenuContent
@@ -195,9 +254,11 @@ export default function Header() {
                             >
                                 <div className="px-2 py-2">
                                     <div className="flex items-center gap-3">
-                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                            {initials}
-                                        </span>
+                                        <ProfilePhoto
+                                            src={user.avatarUrl}
+                                            initials={initials}
+                                            large
+                                        />
 
                                         <div className="min-w-0">
                                             <p className="truncate font-semibold">
@@ -291,10 +352,12 @@ export default function Header() {
             >
                 <Link
                     href="/explore"
-                    aria-current={pathname === "/explore" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/explore" ? "page" : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/explore")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
@@ -303,10 +366,12 @@ export default function Header() {
 
                 <Link
                     href="/offers"
-                    aria-current={pathname === "/offers" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/offers" ? "page" : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/offers")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
@@ -315,10 +380,12 @@ export default function Header() {
 
                 <Link
                     href="/categories"
-                    aria-current={pathname === "/categories" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/categories" ? "page" : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/categories")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
@@ -327,10 +394,12 @@ export default function Header() {
 
                 <Link
                     href="/businesses"
-                    aria-current={pathname === "/businesses" ? "page" : undefined}
+                    aria-current={
+                        pathname === "/businesses" ? "page" : undefined
+                    }
                     className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/businesses")
-                        ? "bg-[#FF593F]/10 text-[#17233B]"
-                        : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-[#FF593F]/10 text-[#17233B]"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                     onClick={closeMobileMenu}
                 >
@@ -340,9 +409,10 @@ export default function Header() {
                 {user ? (
                     <div className="mt-3 border-t border-border pt-4">
                         <div className="flex items-center gap-3 px-3 pb-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                {initials}
-                            </span>
+                            <ProfilePhoto
+                                src={user.avatarUrl}
+                                initials={initials}
+                            />
 
                             <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold">

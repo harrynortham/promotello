@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,73 +19,152 @@ import { createClient } from "@/utils/supabase/client";
 type UserProfile = {
     email: string;
     name: string;
+    avatarUrl: string;
 };
+
+function readText(value: unknown) {
+    return typeof value === "string" ? value.trim() : "";
+}
 
 function getInitials(name: string, email: string) {
     const source = name.trim() || email;
 
-    const initials = source
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part.charAt(0).toUpperCase())
-        .join("");
-
-    return initials || "U";
+    return (
+        source
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part.charAt(0).toUpperCase())
+            .join("") || "U"
+    );
 }
 
-export default function BusinessDashboardNav() {
+function ProfileAvatar({
+    src,
+    initials,
+    size = 36,
+}: {
+    src: string;
+    initials: string;
+    size?: number;
+}) {
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
+    return (
+        <span
+            aria-hidden="true"
+            className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary"
+            style={{ width: size, height: size }}
+        >
+            {src && failedSrc !== src ? (
+                <Image
+                    src={src}
+                    alt=""
+                    width={size}
+                    height={size}
+                    className="h-full w-full object-cover"
+                    onError={() => setFailedSrc(src)}
+                />
+            ) : (
+                initials
+            )}
+        </span>
+    );
+}
+
+export default function DashboardNav() {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSigningOut, setIsSigningOut] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
+        const supabase = createClient();
         let isMounted = true;
+        let authEventReceived = false;
 
-        async function loadUser() {
-            const supabase = createClient();
+        function updateUser(authUser: User | null) {
+            if (!isMounted) return;
 
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+            if (!authUser) {
+                setUser(null);
+            } else {
+                const avatarPath = readText(
+                    authUser.user_metadata.avatar_path,
+                );
 
-            if (!isMounted) {
-                return;
-            }
-
-            if (user) {
-                const name =
-                    user.user_metadata?.full_name ??
-                    user.user_metadata?.name ??
-                    "";
+                const avatarUrl = avatarPath
+                    ? supabase.storage
+                        .from("profile-images")
+                        .getPublicUrl(avatarPath).data.publicUrl
+                    : "";
 
                 setUser({
-                    email: user.email ?? "",
-                    name,
+                    email: authUser.email ?? "",
+                    name:
+                        readText(authUser.user_metadata.full_name) ||
+                        readText(authUser.user_metadata.name),
+                    avatarUrl,
                 });
             }
 
             setIsLoading(false);
         }
 
-        loadUser();
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            authEventReceived = true;
+            updateUser(session?.user ?? null);
+        });
+
+        async function loadUser() {
+            try {
+                const {
+                    data: { user },
+                } = await supabase.auth.getUser();
+
+                if (!authEventReceived) {
+                    updateUser(user);
+                }
+            } catch {
+                if (isMounted && !authEventReceived) {
+                    setIsLoading(false);
+                }
+            }
+        }
+
+        void loadUser();
 
         return () => {
             isMounted = false;
+            subscription.unsubscribe();
         };
     }, []);
 
     async function handleSignOut() {
+        if (isSigningOut) return;
+
         setIsSigningOut(true);
+        setErrorMessage("");
 
-        const supabase = createClient();
-        await supabase.auth.signOut();
+        try {
+            const supabase = createClient();
+            const { error } = await supabase.auth.signOut();
 
-        window.location.assign("/login");
+            if (error) throw error;
+
+            window.location.assign("/login");
+        } catch {
+            setErrorMessage(
+                "We couldn’t sign you out. Please try again.",
+            );
+            setIsSigningOut(false);
+        }
     }
 
     const displayName =
-        user?.name || user?.email?.split("@")[0] || "Account";
+        user?.name || user?.email.split("@")[0] || "Account";
 
     const initials = user
         ? getInitials(user.name, user.email)
@@ -92,9 +172,13 @@ export default function BusinessDashboardNav() {
 
     return (
         <header className="border-b border-border bg-background px-6">
-            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between max-w-7xl">
+            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between">
+                <Link
+                    href="/"
+                    aria-label="Promotello home"
+                    className="shrink-0"
+                >
 
-                <Link href="/" aria-label="Home">
                     <Image
                         src="/brand/promotello-horizontal-primary.svg"
                         alt="Promotello"
@@ -102,29 +186,15 @@ export default function BusinessDashboardNav() {
                         height={48}
                         priority
                     />
+
                 </Link>
 
-                {/* <nav
-                    className="hidden items-center gap-8 md:flex"
-                    aria-label="Primary navigation"
-                >
-                    <Link
-                        href="/business/dashboard"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        Dashboard
-                    </Link>
-
-                    <Link
-                        href="/dashboard"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        Customer area
-                    </Link>
-                </nav> */}
-
                 {isLoading ? (
-                    <div className="h-10 w-32 animate-pulse rounded-full bg-muted" />
+                    <div
+                        role="status"
+                        aria-label="Loading account"
+                        className="h-10 w-10 animate-pulse rounded-full bg-muted sm:w-32"
+                    />
                 ) : user ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger
@@ -132,12 +202,13 @@ export default function BusinessDashboardNav() {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="flex h-auto items-center gap-3 rounded-full px-2 py-1.5"
+                                    aria-label={`Open account menu for ${displayName}`}
+                                    className="h-auto gap-3 rounded-full px-2 py-1.5"
                                 />
                             }
                         >
-                            <span className="hidden text-right sm:block">
-                                <span className="block text-sm font-semibold text-foreground">
+                            <span className="hidden min-w-0 text-right sm:block">
+                                <span className="block max-w-40 truncate text-sm font-semibold">
                                     {displayName}
                                 </span>
 
@@ -146,30 +217,32 @@ export default function BusinessDashboardNav() {
                                 </span>
                             </span>
 
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                {initials}
-                            </span>
+                            <ProfileAvatar
+                                src={user.avatarUrl}
+                                initials={initials}
+
+                            />
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent
                             align="end"
-                            className="w-64"
+                            className="w-64 max-w-[calc(100vw-2rem)]"
                         >
-                            <div className="px-2 py-2">
-                                <div className="flex items-center gap-3">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                        {initials}
-                                    </span>
+                            <div className="flex items-center gap-3 px-2 py-3">
+                                <ProfileAvatar
+                                    src={user.avatarUrl}
+                                    initials={initials}
+                                    size={40}
+                                />
 
-                                    <div className="min-w-0">
-                                        <p className="truncate font-semibold">
-                                            {displayName}
-                                        </p>
+                                <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold">
+                                        {displayName}
+                                    </p>
 
-                                        <p className="truncate text-xs text-muted-foreground">
-                                            {user.email}
-                                        </p>
-                                    </div>
+                                    <p className="truncate text-xs text-muted-foreground">
+                                        {user.email}
+                                    </p>
                                 </div>
                             </div>
 
@@ -223,6 +296,17 @@ export default function BusinessDashboardNav() {
                     </Button>
                 )}
             </div>
+
+            {errorMessage && (
+                <div className="mx-auto max-w-7xl px-6 pb-3 sm:px-10">
+                    <p
+                        role="alert"
+                        className="text-sm text-destructive"
+                    >
+                        {errorMessage}
+                    </p>
+                </div>
+            )}
         </header>
     );
 }

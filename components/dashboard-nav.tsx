@@ -18,6 +18,7 @@ import { createClient } from "@/utils/supabase/client";
 type UserProfile = {
     email: string;
     name: string;
+    avatarUrl: string;
 };
 
 function getInitials(name: string, email: string) {
@@ -31,6 +32,39 @@ function getInitials(name: string, email: string) {
         .join("");
 
     return initials || "U";
+}
+
+function ProfilePhoto({
+    src,
+    initials,
+    large = false,
+}: {
+    src: string;
+    initials: string;
+    large?: boolean;
+}) {
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
+    return (
+        <span
+            aria-hidden="true"
+            className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#17233B] text-sm font-semibold text-white ${large ? "h-10 w-10" : "h-9 w-9"
+                }`}
+        >
+            {src && failedSrc !== src ? (
+                <Image
+                    src={src}
+                    alt=""
+                    width={large ? 40 : 36}
+                    height={large ? 40 : 36}
+                    className="h-full w-full object-cover"
+                    onError={() => setFailedSrc(src)}
+                />
+            ) : (
+                initials
+            )}
+        </span>
+    );
 }
 
 export default function DashboardNav() {
@@ -54,20 +88,34 @@ export default function DashboardNav() {
 
             if (user) {
                 const name =
-                    user.user_metadata?.full_name ??
-                    user.user_metadata?.name ??
-                    "";
+                    typeof user.user_metadata?.full_name === "string"
+                        ? user.user_metadata.full_name
+                        : typeof user.user_metadata?.name === "string"
+                            ? user.user_metadata.name
+                            : "";
+
+                const avatarPath =
+                    typeof user.user_metadata?.avatar_path === "string"
+                        ? user.user_metadata.avatar_path
+                        : "";
+
+                const avatarUrl = avatarPath
+                    ? supabase.storage
+                        .from("profile-images")
+                        .getPublicUrl(avatarPath).data.publicUrl
+                    : "";
 
                 setUser({
                     email: user.email ?? "",
                     name,
+                    avatarUrl,
                 });
             }
 
             setIsLoading(false);
         }
 
-        loadUser();
+        void loadUser();
 
         return () => {
             isMounted = false;
@@ -92,7 +140,7 @@ export default function DashboardNav() {
 
     return (
         <header className="border-b border-border bg-background px-6">
-            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between max-w-7xl">
+            <div className="mx-auto flex h-20 max-w-7xl items-center justify-between">
                 <Link href="/" aria-label="Home">
                     <Image
                         src="/brand/promotello-horizontal-primary.svg"
@@ -103,25 +151,6 @@ export default function DashboardNav() {
                     />
                 </Link>
 
-                {/* <nav
-                    className="hidden items-center gap-8 md:flex"
-                    aria-label="Primary navigation"
-                >
-                    <Link
-                        href="/business/dashboard"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        Dashboard
-                    </Link>
-
-                    <Link
-                        href="/dashboard"
-                        className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        Customer area
-                    </Link>
-                </nav> */}
-
                 {isLoading ? (
                     <div className="h-10 w-32 animate-pulse rounded-full bg-muted" />
                 ) : user ? (
@@ -131,6 +160,7 @@ export default function DashboardNav() {
                                 <Button
                                     type="button"
                                     variant="ghost"
+                                    aria-label={`Open account menu for ${displayName}`}
                                     className="flex h-auto items-center gap-3 rounded-full px-2 py-1.5"
                                 />
                             }
@@ -145,9 +175,10 @@ export default function DashboardNav() {
                                 </span>
                             </span>
 
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                {initials}
-                            </span>
+                            <ProfilePhoto
+                                src={user.avatarUrl}
+                                initials={initials}
+                            />
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent
@@ -156,9 +187,11 @@ export default function DashboardNav() {
                         >
                             <div className="px-2 py-2">
                                 <div className="flex items-center gap-3">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#17233B] text-sm font-semibold text-white">
-                                        {initials}
-                                    </span>
+                                    <ProfilePhoto
+                                        src={user.avatarUrl}
+                                        initials={initials}
+                                        large
+                                    />
 
                                     <div className="min-w-0">
                                         <p className="truncate font-semibold">
