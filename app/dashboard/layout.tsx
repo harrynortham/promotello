@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 import DashboardNav from "@/components/dashboard-nav";
-import Footer from "@/components/footer";
+import Footer from "@/components/customer-dashboard-footer";
 
 function DashboardLoading() {
     return (

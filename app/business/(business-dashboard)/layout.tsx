@@ -1,5 +1,5 @@
 
-import Footer from "@/components/business-footer"
+import Footer from "@/components/business-dashboard-footer"
 import Header from "@/components/business-dashboard-nav"
 export default function MarketingLayout({
     children,
