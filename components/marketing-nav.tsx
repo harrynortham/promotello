@@ -23,6 +23,13 @@ type UserProfile = {
     avatarUrl: string;
 };
 
+const navigationLinks = [
+    { label: "Explore", href: "/explore" },
+    { label: "Offers", href: "/offers" },
+    { label: "Categories", href: "/categories" },
+    { label: "Businesses", href: "/businesses" },
+];
+
 function getInitials(name: string, email: string) {
     const source = name.trim() || email;
 
@@ -71,6 +78,7 @@ function ProfilePhoto({
 
 export default function Header() {
     const pathname = usePathname();
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -86,9 +94,7 @@ export default function Header() {
                 data: { user },
             } = await supabase.auth.getUser();
 
-            if (!isMounted) {
-                return;
-            }
+            if (!isMounted) return;
 
             if (user) {
                 const name =
@@ -165,57 +171,21 @@ export default function Header() {
                     className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-4 md:flex"
                     aria-label="Primary navigation"
                 >
-                    <Link
-                        href="/explore"
-                        aria-current={
-                            pathname === "/explore" ? "page" : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/explore")
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Explore
-                    </Link>
-
-                    <Link
-                        href="/offers"
-                        aria-current={
-                            pathname === "/offers" ? "page" : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/offers")
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Offers
-                    </Link>
-
-                    <Link
-                        href="/categories"
-                        aria-current={
-                            pathname === "/categories" ? "page" : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/categories")
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Categories
-                    </Link>
-
-                    <Link
-                        href="/businesses"
-                        aria-current={
-                            pathname === "/businesses" ? "page" : undefined
-                        }
-                        className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink("/businesses")
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }`}
-                    >
-                        Businesses
-                    </Link>
+                    {navigationLinks.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            aria-current={
+                                isActiveLink(link.href) ? "page" : undefined
+                            }
+                            className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActiveLink(link.href)
+                                    ? "bg-[#FF593F]/10 text-[#17233B]"
+                                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                }`}
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
                 </nav>
 
                 <div className="hidden md:block">
@@ -312,13 +282,23 @@ export default function Header() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <Button
-                            size="lg"
-                            render={<Link href="/login" />}
-                            nativeButton={false}
-                        >
-                            Sign in
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                render={<Link href="/signup" />}
+                                nativeButton={false}
+                                variant="ghost"
+                            >
+                                Sign up
+                            </Button>
+
+                            <Button
+                                size="lg"
+                                render={<Link href="/login" />}
+                                nativeButton={false}
+                            >
+                                Log in
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -350,63 +330,26 @@ export default function Header() {
                     } border-t border-border bg-background px-5 pb-5 pt-3 md:hidden`}
                 aria-label="Mobile navigation"
             >
-                <Link
-                    href="/explore"
-                    aria-current={
-                        pathname === "/explore" ? "page" : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/explore")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Explore
-                </Link>
+                {navigationLinks.map((link) => (
+                    <Link
+                        key={link.href}
+                        href={link.href}
+                        aria-current={
+                            isActiveLink(link.href) ? "page" : undefined
+                        }
+                        className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink(link.href)
+                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                        onClick={closeMobileMenu}
+                    >
+                        {link.label}
+                    </Link>
+                ))}
 
-                <Link
-                    href="/offers"
-                    aria-current={
-                        pathname === "/offers" ? "page" : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/offers")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Offers
-                </Link>
-
-                <Link
-                    href="/categories"
-                    aria-current={
-                        pathname === "/categories" ? "page" : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/categories")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Categories
-                </Link>
-
-                <Link
-                    href="/businesses"
-                    aria-current={
-                        pathname === "/businesses" ? "page" : undefined
-                    }
-                    className={`block rounded-full px-3 py-3 text-sm font-medium ${isActiveLink("/businesses")
-                            ? "bg-[#FF593F]/10 text-[#17233B]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                    onClick={closeMobileMenu}
-                >
-                    Businesses
-                </Link>
-
-                {user ? (
+                {isLoading ? (
+                    <div className="mt-4 h-12 animate-pulse rounded-xl bg-muted" />
+                ) : user ? (
                     <div className="mt-3 border-t border-border pt-4">
                         <div className="flex items-center gap-3 px-3 pb-3">
                             <ProfilePhoto
@@ -460,15 +403,27 @@ export default function Header() {
                         </Button>
                     </div>
                 ) : (
-                    <Button
-                        size="lg"
-                        render={<Link href="/login" />}
-                        nativeButton={false}
-                        className="mt-2 w-full"
-                        onClick={closeMobileMenu}
-                    >
-                        Sign in
-                    </Button>
+                    <div className="mt-4 space-y-3 border-t border-border pt-4">
+                        <Button
+                            size="lg"
+                            render={<Link href="/login" />}
+                            nativeButton={false}
+                            className="w-full"
+                            onClick={closeMobileMenu}
+                        >
+                            Log in
+                        </Button>
+
+                        <Button
+                            render={<Link href="/signup" />}
+                            nativeButton={false}
+                            variant="ghost"
+                            className="w-full"
+                            onClick={closeMobileMenu}
+                        >
+                            Sign up
+                        </Button>
+                    </div>
                 )}
             </nav>
         </header>
