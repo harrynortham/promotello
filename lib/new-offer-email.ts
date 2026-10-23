@@ -67,7 +67,8 @@ You're getting this because you follow ${e(business)} on Promotello.<br>
 
     return {
         to,
-        subject: `${business}: ${offer.title}`,
+        subject: `${offer.discount}: ${offer.title}`,
+        senderName: offer.businesses?.name,
         html,
         text,
         headers: {

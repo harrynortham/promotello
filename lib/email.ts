@@ -8,7 +8,21 @@ export type Email = {
     html: string;
     text: string;
     headers?: Record<string, string>;
+    // Shown as "<senderName> via Promotello", sent from EMAIL_FROM's address.
+    senderName?: string;
 };
+
+// EMAIL_FROM may be "Name <address>" or just an address.
+function fromAddress(from: string) {
+    return from.match(/<([^>]+)>/)?.[1]?.trim() ?? from.trim();
+}
+
+function senderFor(from: string, senderName?: string) {
+    // Drop characters that could break or spoof the From header.
+    const name = senderName?.replace(/["<>\\\r\n]/g, "").replace(/\s+/g, " ").trim();
+
+    return name ? `"${name} via Promotello" <${fromAddress(from)}>` : from;
+}
 
 // Addresses that can never receive mail (test accounts, reserved domains).
 function isDeliverable(address: string) {
@@ -41,7 +55,9 @@ export async function sendEmails(emails: Email[]) {
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(batch.map((email) => ({ from, ...email }))),
+            body: JSON.stringify(
+                batch.map(({ senderName, ...email }) => ({ from: senderFor(from, senderName), ...email })),
+            ),
         });
 
         if (response.ok) {
