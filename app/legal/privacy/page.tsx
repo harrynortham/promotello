@@ -204,8 +204,8 @@ const sections: LegalSection[] = [
                     <li>Resend: sending emails</li>
                     <li>Stripe: subscription payments for businesses</li>
                     <li>
-                        Google: only if you choose to click through to leave a
-                        review
+                        Google: only when you choose to show a business&apos;s
+                        map or click through to leave a review
                     </li>
                 </ul>
                 <p>

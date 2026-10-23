@@ -34,6 +34,7 @@ import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 import { FollowButton } from "@/components/follow-button";
+import { MapEmbed } from "@/components/map-embed";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { LoyaltyCallout } from "./loyalty-callout";
 
@@ -655,13 +656,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
                             {mapUrl && (
                                 <div className="overflow-hidden border-t">
-                                    <iframe
+                                    <MapEmbed
                                         title={`Map showing ${business.name}`}
                                         src={mapUrl}
-                                        className="h-52 w-full border-0"
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                        allowFullScreen
                                     />
                                 </div>
                             )}
