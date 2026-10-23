@@ -60,6 +60,68 @@ function statusVariant(status: string) {
     return "secondary" as const;
 }
 
+const welcomeSteps = [
+    {
+        title: "Add your business",
+        description: "Your name, category and address. About two minutes.",
+    },
+    {
+        title: "Create your first offer",
+        description: "Free on every plan. A good offer gives people a reason to visit.",
+    },
+    {
+        title: "Go live and bring people in",
+        description: "Once approved, print a QR poster for your window and watch the visits.",
+    },
+];
+
+function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
+    return (
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+            <div className="mx-auto max-w-3xl">
+                <section className="rounded-3xl bg-[#17233B] px-6 py-10 text-white sm:px-10 sm:py-12">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF8F7D]">
+                        Welcome to Promotello
+                    </p>
+                    <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                        {firstName ? `Let's get your business on Promotello, ${firstName}` : "Let's get your business on Promotello"}
+                    </h1>
+                    <p className="mt-4 max-w-xl leading-7 text-white/70">
+                        Three steps to your first customers. Start free, no card needed.
+                    </p>
+
+                    <ol className="mt-8 space-y-4">
+                        {welcomeSteps.map((step, index) => (
+                            <li key={step.title} className="flex gap-4">
+                                <span className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#FF593F] text-white" : "bg-white/10 text-white/70"}`}>
+                                    {index + 1}
+                                </span>
+                                <div>
+                                    <p className="font-semibold">{step.title}</p>
+                                    <p className="text-sm text-white/65">{step.description}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+
+                    <Button
+                        render={<Link href="/onboarding" />}
+                        nativeButton={false}
+                        size="lg"
+                        className="mt-10 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                    >
+                        Add your business
+                    </Button>
+                </section>
+
+                <p className="mt-6 text-center text-sm text-[#17233B]/60">
+                    Been invited to join a team? Open the link in your invitation email.
+                </p>
+            </div>
+        </main>
+    );
+}
+
 async function BusinessDashboardContent() {
     await connection();
 
@@ -118,6 +180,16 @@ async function BusinessDashboardContent() {
                 (business): business is Business =>
                     Boolean(business?.id && business?.name),
             ) ?? [];
+
+    // First visit: one clear next step instead of an empty dashboard.
+    if (businesses.length === 0) {
+        const name =
+            typeof user.user_metadata?.full_name === "string"
+                ? user.user_metadata.full_name.split(" ")[0]
+                : null;
+
+        return <NewBusinessWelcome firstName={name} />;
+    }
 
     const today = new Date().toISOString().slice(0, 10);
 
