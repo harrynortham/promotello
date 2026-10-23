@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
+import { connection } from "next/server";
 
 import { absoluteUrl } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
@@ -29,7 +30,9 @@ const staticPaths = [
     "/legal/cookies",
 ];
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+// Cached for an hour once generated, but only ever generated at request
+// time, so building the app never needs a database connection.
+async function getPublicListings() {
     "use cache";
     cacheLife("hours");
 
@@ -41,6 +44,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         supabase.from("businesses").select("id, updated_at"),
         supabase.from("offers").select("slug, updated_at"),
     ]);
+
+    return { businesses, offers };
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    await connection();
+
+    const { businesses, offers } = await getPublicListings();
 
     return [
         ...staticPaths.map((path) => ({
