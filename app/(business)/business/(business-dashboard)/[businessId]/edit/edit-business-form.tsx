@@ -10,7 +10,9 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -372,9 +374,11 @@ export default function EditBusinessForm({
                                 </div>
 
                                 {business.logo_url && (
-                                    <img
+                                    <Image
                                         src={business.logo_url}
                                         alt={`${business.name} logo`}
+                                        width={96}
+                                        height={96}
                                         className="h-24 w-24 rounded-xl object-cover"
                                     />
                                 )}

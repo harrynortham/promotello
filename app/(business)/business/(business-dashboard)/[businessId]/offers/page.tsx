@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
@@ -291,11 +292,12 @@ async function OffersContent({ params }: PageProps) {
                                     className="overflow-hidden border-[#17233B]/10"
                                 >
                                     {offer.image_url && (
-                                        <div className="aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
-                                            <img
+                                        <div className="relative aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
+                                            <Image
                                                 src={offer.image_url}
                                                 alt={offer.title}
-                                                className="h-full w-full object-cover"
+                                                fill
+                                                className="object-cover"
                                             />
                                         </div>
                                     )}

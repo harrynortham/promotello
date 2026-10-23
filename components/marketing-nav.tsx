@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 
@@ -78,6 +78,7 @@ function ProfilePhoto({
 
 export default function Header() {
     const pathname = usePathname();
+    const router = useRouter();
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -138,7 +139,7 @@ export default function Header() {
         const supabase = createClient();
         await supabase.auth.signOut();
 
-        window.location.assign("/");
+        router.push("/");
     }
 
     function closeMobileMenu() {

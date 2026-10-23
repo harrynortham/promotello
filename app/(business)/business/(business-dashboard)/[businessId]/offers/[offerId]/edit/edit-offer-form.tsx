@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -322,11 +323,14 @@ export default function EditOfferForm({
                                 <div className="space-y-3">
                                     <Label>Current promotion image</Label>
 
-                                    <img
-                                        src={offer.image_url}
-                                        alt={offer.title}
-                                        className="h-52 w-full rounded-xl object-cover"
-                                    />
+                                    <div className="relative h-52 w-full overflow-hidden rounded-xl">
+                                        <Image
+                                            src={offer.image_url}
+                                            alt={offer.title}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
                                 </div>
                             )}
 

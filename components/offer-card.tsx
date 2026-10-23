@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -38,21 +39,26 @@ export function OfferCard({
     return (
         <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white text-left shadow-sm transition-shadow hover:shadow-md">
             {imageUrl && (
-                <img
-                    src={imageUrl}
-                    alt={title}
-                    className="h-52 w-full object-cover"
-                />
+                <div className="relative h-52 w-full">
+                    <Image
+                        src={imageUrl}
+                        alt={title}
+                        fill
+                        className="object-cover"
+                    />
+                </div>
             )}
 
             <div className="flex flex-1 flex-col p-6">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                         {businessLogoUrl ? (
-                            <img
+                            <Image
                                 src={businessLogoUrl}
                                 alt={`${business ?? "Business"} logo`}
-                                className="h-12 w-12 rounded-xl object-cover"
+                                width={48}
+                                height={48}
+                                className="rounded-xl object-cover"
                             />
                         ) : (
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#FF593F]">

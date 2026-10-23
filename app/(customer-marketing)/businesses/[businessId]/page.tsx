@@ -3,19 +3,30 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
+import {
+    FiArrowLeft,
+    FiArrowUpRight,
+    FiClock,
+    FiGift,
+    FiGlobe,
+    FiMail,
+    FiMapPin,
+} from "react-icons/fi";
 
 import { OfferCard } from "@/components/offer-card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
 
@@ -35,39 +46,41 @@ const dayNames = [
     "Saturday",
 ];
 
-function formatTime(time: string | null) {
-    if (!time) {
-        return "";
-    }
+function formatTime(value: string | null) {
+    if (!value) return "";
 
-    const [hours, minutes] = time.split(":").map(Number);
-    const date = new Date(2000, 0, 1, hours, minutes);
+    const [hours, minutes] = value.split(":");
 
-    return date.toLocaleTimeString("en-GB", {
-        hour: "numeric",
-        minute: "2-digit",
-    });
+    if (!hours || !minutes) return "";
+
+    return `${hours.padStart(2, "0")}:${minutes}`;
 }
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
-            <div className="mx-auto max-w-6xl">
-                <Skeleton className="h-9 w-36" />
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 sm:px-10">
+            <div
+                role="status"
+                aria-label="Loading business profile"
+                className="mx-auto max-w-6xl space-y-6"
+            >
+                <Skeleton className="h-9 w-44" />
+                <Skeleton className="h-64 rounded-2xl" />
 
-                <div className="mt-6 overflow-hidden rounded-3xl bg-white">
-                    <Skeleton className="h-72 w-full" />
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                    <div className="space-y-6">
+                        <Skeleton className="h-44 rounded-2xl" />
 
-                    <div className="space-y-4 p-8">
-                        <Skeleton className="h-24 w-24 rounded-2xl" />
-                        <Skeleton className="h-8 w-72" />
-                        <Skeleton className="h-5 w-96 max-w-full" />
+                        <div className="grid gap-6 sm:grid-cols-2">
+                            <Skeleton className="h-80 rounded-2xl" />
+                            <Skeleton className="h-80 rounded-2xl" />
+                        </div>
                     </div>
-                </div>
 
-                <div className="mt-10 grid gap-6 lg:grid-cols-3">
-                    <Skeleton className="h-72 rounded-3xl lg:col-span-2" />
-                    <Skeleton className="h-72 rounded-3xl" />
+                    <div className="space-y-6">
+                        <Skeleton className="h-80 rounded-2xl" />
+                        <Skeleton className="h-72 rounded-2xl" />
+                    </div>
                 </div>
             </div>
         </main>
@@ -80,7 +93,7 @@ async function BusinessContent({ params }: BusinessPageProps) {
     const { businessId } = await params;
     const supabase = await createClient();
 
-    const { data: business } = await supabase
+    const { data: business, error: businessError } = await supabase
         .from("businesses")
         .select(
             `
@@ -109,7 +122,11 @@ async function BusinessContent({ params }: BusinessPageProps) {
         )
         .eq("id", businessId)
         .eq("approval_status", "approved")
-        .single();
+        .maybeSingle();
+
+    if (businessError) {
+        throw new Error("We couldn’t load this business. Please try again.");
+    }
 
     if (!business) {
         notFound();
@@ -117,7 +134,7 @@ async function BusinessContent({ params }: BusinessPageProps) {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    const { data: offers } = await supabase
+    const { data: offers, error: offersError } = await supabase
         .from("offers")
         .select(
             `
@@ -145,20 +162,23 @@ async function BusinessContent({ params }: BusinessPageProps) {
 
     const hours = Array.isArray(business.business_hours)
         ? [...business.business_hours].sort(
-            (a, b) => a.day_of_week - b.day_of_week,
+            // Display Monday first, Sunday last.
+            (a, b) =>
+                ((a.day_of_week + 6) % 7) -
+                ((b.day_of_week + 6) % 7),
         )
         : [];
 
-    const fullAddress = location
+    const addressLines = location
         ? [
             location.address_line_1,
             location.city,
             location.region,
             location.postal_code,
-        ]
-            .filter(Boolean)
-            .join(", ")
-        : "";
+        ].filter((line): line is string => Boolean(line))
+        : [];
+
+    const fullAddress = addressLines.join(", ");
 
     const directionsUrl = fullAddress
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -172,277 +192,435 @@ async function BusinessContent({ params }: BusinessPageProps) {
         )}&output=embed`
         : null;
 
+    const promotionCount = offers?.length ?? 0;
+
+    const initials = business.name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((word: string) => word.charAt(0))
+        .join("")
+        .toUpperCase();
+
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:px-10">
+        <main className="min-h-screen bg-[#FFF8F0] px-6 py-8 text-[#17233B] sm:px-10 sm:py-10">
             <div className="mx-auto max-w-6xl">
                 <Button
                     render={<Link href="/businesses" />}
                     nativeButton={false}
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
+                    className="mb-6"
                 >
-                    ← Back to businesses
+                    <FiArrowLeft aria-hidden="true" />
+                    All businesses
                 </Button>
 
-                <section className="relative mt-6 overflow-hidden rounded-3xl bg-[#17233B] text-white shadow-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#17233B] via-[#17233B] to-[#293b60]" />
+                {/* Business identity */}
+                <section
+                    aria-labelledby="business-name"
+                    className="overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm"
+                >
+                    <div
+                        aria-hidden="true"
+                        className="relative h-24 overflow-hidden bg-[#17233B] sm:h-28"
+                    >
+                        <div className="absolute -right-8 -top-24 size-64 rounded-full border-[32px] border-white/5" />
+                        <div className="absolute right-44 top-12 size-32 rounded-full bg-[#FF593F]/20" />
+                    </div>
 
-                    <div className="relative px-6 py-10 sm:px-10 sm:py-14">
-                        <div className="flex flex-col gap-8 sm:flex-row sm:items-end">
-                            {business.logo_url ? (
-                                <Image
-                                    src={business.logo_url}
-                                    alt={`${business.name} logo`}
-                                    width={128}
-                                    height={128}
-                                    className="h-32 w-32 rounded-3xl bg-white object-contain p-3 shadow-lg"
-                                />
-                            ) : (
-                                <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-[#FF593F] text-5xl font-semibold text-[#17233B] shadow-lg">
-                                    {business.name.charAt(0).toUpperCase()}
-                                </div>
+                    <div className="px-6 pb-7 sm:px-8">
+                        <div className="relative -mt-10 flex items-end justify-between gap-4">
+                            <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-sm sm:size-28">
+                                {business.logo_url ? (
+                                    <Image
+                                        src={business.logo_url}
+                                        alt={`${business.name} logo`}
+                                        width={112}
+                                        height={112}
+                                        className="h-full w-full object-contain p-2"
+                                    />
+                                ) : (
+                                    <span className="flex h-full w-full items-center justify-center bg-[#FFF4E8] text-3xl font-semibold">
+                                        {initials}
+                                    </span>
+                                )}
+                            </div>
+
+                            {business.category && (
+                                <Badge
+                                    variant="secondary"
+                                    className="mb-1 max-w-[60%] whitespace-normal text-right"
+                                >
+                                    {business.category}
+                                </Badge>
                             )}
+                        </div>
 
-                            <div>
-                                <div className="flex flex-wrap gap-2">
-                                    {business.category && (
-                                        <Badge className="bg-[#FF593F] text-[#17233B] hover:bg-[#FF593F]">
-                                            {business.category}
-                                        </Badge>
-                                    )}
-
-                                    <Badge
-                                        variant="outline"
-                                        className="border-white/30 text-white"
-                                    >
-                                        {offers?.length ?? 0} active{" "}
-                                        {offers?.length === 1
-                                            ? "promotion"
-                                            : "promotions"}
-                                    </Badge>
-                                </div>
-
-                                <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+                        <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="min-w-0">
+                                <h1
+                                    id="business-name"
+                                    className="break-words text-3xl font-semibold tracking-tight sm:text-4xl"
+                                >
                                     {business.name}
                                 </h1>
 
-                                {location?.city && (
-                                    <p className="mt-3 text-white/70">
-                                        {location.city}
-                                    </p>
+                                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                                    {location?.city && (
+                                        <span className="inline-flex items-center gap-2">
+                                            <FiMapPin
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            {location.city}
+                                        </span>
+                                    )}
+
+                                    {!offersError && (
+                                        <span className="inline-flex items-center gap-2">
+                                            <FiGift
+                                                aria-hidden="true"
+                                                className="size-4"
+                                            />
+                                            {promotionCount} current{" "}
+                                            {promotionCount === 1
+                                                ? "promotion"
+                                                : "promotions"}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap gap-2">
+                                <Button
+                                    render={<Link href="#promotions" />}
+                                    nativeButton={false}
+                                >
+                                    View promotions
+                                </Button>
+
+                                {directionsUrl && (
+                                    <Button
+                                        render={
+                                            <a
+                                                href={directionsUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            />
+                                        }
+                                        nativeButton={false}
+                                        variant="outline"
+                                    >
+                                        <FiMapPin aria-hidden="true" />
+                                        Directions
+                                    </Button>
                                 )}
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <div className="mt-8 grid gap-6 lg:grid-cols-3">
-                    <Card className="rounded-3xl border-[#17233B]/10 lg:col-span-2">
-                        <CardHeader>
-                            <CardTitle>About {business.name}</CardTitle>
-                        </CardHeader>
+                <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                    {/* Main profile content */}
+                    <div className="min-w-0 space-y-8">
+                        <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
+                            <CardHeader>
+                                <CardTitle className="text-lg">
+                                    About this business
+                                </CardTitle>
+                            </CardHeader>
 
-                        <CardContent>
-                            <p className="leading-7 text-[#17233B]/70">
-                                {business.description ||
-                                    "Discover local promotions and experiences from this business."}
-                            </p>
+                            <CardContent>
+                                <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
+                                    {business.description ||
+                                        "Discover this business and explore its latest promotions on Promotello."}
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                            {(business.website_url ||
-                                business.contact_email) && (
-                                    <>
-                                        <Separator className="my-6" />
+                        <section
+                            id="promotions"
+                            aria-labelledby="promotions-heading"
+                            className="scroll-mt-28"
+                        >
+                            <div className="mb-5 flex items-center justify-between gap-4">
+                                <div>
+                                    <h2
+                                        id="promotions-heading"
+                                        className="text-2xl font-semibold tracking-tight"
+                                    >
+                                        Current promotions
+                                    </h2>
 
-                                        <div className="flex flex-wrap gap-3">
-                                            {business.website_url && (
-                                                <Button
-                                                    render={
-                                                        <a
-                                                            href={
-                                                                business.website_url
-                                                            }
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                        />
-                                                    }
-                                                    nativeButton={false}
-                                                    variant="outline"
-                                                >
-                                                    Visit website
-                                                </Button>
-                                            )}
-
-                                            {business.contact_email && (
-                                                <Button
-                                                    render={
-                                                        <a
-                                                            href={`mailto:${business.contact_email}`}
-                                                        />
-                                                    }
-                                                    nativeButton={false}
-                                                    variant="outline"
-                                                >
-                                                    Contact business
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="rounded-3xl border-[#17233B]/10">
-                        <CardHeader>
-                            <CardTitle>Visit this business</CardTitle>
-                        </CardHeader>
-
-                        <CardContent>
-                            {location ? (
-                                <>
-                                    <p className="text-sm leading-6 text-[#17233B]/70">
-                                        {location.name && (
-                                            <>
-                                                <span className="font-semibold text-[#17233B]">
-                                                    {location.name}
-                                                </span>
-                                                <br />
-                                            </>
-                                        )}
-
-                                        {fullAddress}
+                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                        Explore what’s on offer at{" "}
+                                        {business.name}.
                                     </p>
+                                </div>
 
-                                    {directionsUrl && (
+                                {!offersError && (
+                                    <Badge
+                                        variant="outline"
+                                        className="shrink-0"
+                                    >
+                                        {promotionCount}
+                                    </Badge>
+                                )}
+                            </div>
+
+                            {offersError ? (
+                                <Alert variant="destructive">
+                                    <AlertTitle>
+                                        Promotions couldn’t be loaded
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        Please refresh the page and try again.
+                                    </AlertDescription>
+                                </Alert>
+                            ) : promotionCount > 0 ? (
+                                <div className="grid gap-5 sm:grid-cols-2">
+                                    {offers?.map((offer) => (
+                                        <OfferCard
+                                            key={offer.id}
+                                            slug={offer.slug}
+                                            discount={offer.discount}
+                                            title={offer.title}
+                                            description={offer.description}
+                                            availability={offer.availability}
+                                            business={business.name}
+                                            businessId={business.id}
+                                            businessLogoUrl={business.logo_url}
+                                            imageUrl={offer.image_url}
+                                            expiresAt={offer.expires_at}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <Card className="rounded-2xl border-dashed shadow-none">
+                                    <CardContent className="px-6 py-10 text-center">
+                                        <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted">
+                                            <FiGift
+                                                aria-hidden="true"
+                                                className="size-5 text-muted-foreground"
+                                            />
+                                        </span>
+
+                                        <h3 className="mt-4 font-semibold">
+                                            Nothing on offer just yet
+                                        </h3>
+
+                                        <p className="mx-auto mt-2 max-w-sm text-sm leading-7 text-muted-foreground">
+                                            Check back for new promotions
+                                            from this business.
+                                        </p>
+
                                         <Button
                                             render={
-                                                <a
-                                                    href={directionsUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                />
+                                                <Link href="/explore" />
                                             }
                                             nativeButton={false}
-                                            className="mt-5 w-full"
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-5"
                                         >
-                                            Get directions
+                                            Explore other deals
                                         </Button>
-                                    )}
-                                </>
-                            ) : (
-                                <p className="text-sm text-[#17233B]/60">
-                                    Location details are not available yet.
-                                </p>
+                                    </CardContent>
+                                </Card>
                             )}
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {mapUrl && (
-                    <Card className="mt-6 overflow-hidden rounded-3xl border-[#17233B]/10">
-                        <CardHeader>
-                            <CardTitle>Location</CardTitle>
-
-                            <CardDescription>
-                                Find {business.name} on the map.
-                            </CardDescription>
-                        </CardHeader>
-
-                        <CardContent>
-                            <div className="overflow-hidden rounded-2xl border border-[#17233B]/10">
-                                <iframe
-                                    title={`Map showing ${business.name}`}
-                                    src={mapUrl}
-                                    className="h-80 w-full border-0"
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                    allowFullScreen
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {hours.length > 0 && (
-                    <Card className="mt-6 rounded-3xl border-[#17233B]/10">
-                        <CardHeader>
-                            <CardTitle>Opening hours</CardTitle>
-                        </CardHeader>
-
-                        <CardContent>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                                {hours.map((day) => (
-                                    <div
-                                        key={day.day_of_week}
-                                        className="flex items-center justify-between rounded-2xl bg-[#FFF8F0] px-4 py-3 text-sm"
-                                    >
-                                        <span className="font-medium">
-                                            {dayNames[day.day_of_week]}
-                                        </span>
-
-                                        <span className="text-[#17233B]/65">
-                                            {day.is_closed
-                                                ? "Closed"
-                                                : `${formatTime(
-                                                    day.opens_at,
-                                                )} – ${formatTime(
-                                                    day.closes_at,
-                                                )}`}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                <section className="mt-12">
-                    <div className="mb-6">
-                        <Badge
-                            variant="outline"
-                            className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                        >
-                            Available now
-                        </Badge>
-
-                        <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                            Promotions from {business.name}
-                        </h2>
-
-                        <p className="mt-2 text-[#17233B]/65">
-                            Discover the latest ways to save at this local
-                            business.
-                        </p>
+                        </section>
                     </div>
 
-                    {offers && offers.length > 0 ? (
-                        <div className="grid gap-6 md:grid-cols-2">
-                            {offers.map((offer) => (
-                                <OfferCard
-                                    key={offer.id}
-                                    slug={offer.slug}
-                                    discount={offer.discount}
-                                    title={offer.title}
-                                    description={offer.description}
-                                    availability={offer.availability}
-                                    business={business.name}
-                                    businessId={business.id}
-                                    businessLogoUrl={business.logo_url}
-                                    imageUrl={offer.image_url}
-                                    expiresAt={offer.expires_at}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <Alert className="border-[#17233B]/10 bg-white">
-                            <AlertTitle>No active promotions</AlertTitle>
+                    {/* Visiting information */}
+                    <aside
+                        aria-label="Business visiting information"
+                        className="space-y-5"
+                    >
+                        <Card className="gap-0 overflow-hidden rounded-2xl border-[#17233B]/10 pb-0 shadow-none">
+                            <CardHeader className="pb-5">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <FiMapPin
+                                        aria-hidden="true"
+                                        className="size-4 text-muted-foreground"
+                                    />
+                                    Find us
+                                </CardTitle>
+                            </CardHeader>
 
-                            <AlertDescription>
-                                This business has no active promotions at the
-                                moment. Check back soon for new deals.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                </section>
+                            <CardContent className="pb-6">
+                                {fullAddress ? (
+                                    <>
+                                        {location?.name && (
+                                            <p className="mb-2 text-sm font-medium">
+                                                {location.name}
+                                            </p>
+                                        )}
+
+                                        <address className="text-sm not-italic leading-7 text-muted-foreground">
+                                            {addressLines.map(
+                                                (line, index) => (
+                                                    <span
+                                                        key={`${index}-${line}`}
+                                                        className="block"
+                                                    >
+                                                        {line}
+                                                    </span>
+                                                ),
+                                            )}
+                                        </address>
+
+                                        {directionsUrl && (
+                                            <Button
+                                                render={
+                                                    <a
+                                                        href={directionsUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="sm"
+                                                className="mt-4 w-full"
+                                            >
+                                                Get directions
+                                                <FiArrowUpRight aria-hidden="true" />
+                                            </Button>
+                                        )}
+                                    </>
+                                ) : (
+                                    <p className="text-sm leading-7 text-muted-foreground">
+                                        Location details haven’t been added
+                                        yet.
+                                    </p>
+                                )}
+                            </CardContent>
+
+                            {mapUrl && (
+                                <div className="overflow-hidden border-t">
+                                    <iframe
+                                        title={`Map showing ${business.name}`}
+                                        src={mapUrl}
+                                        className="h-52 w-full border-0"
+                                        loading="lazy"
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        allowFullScreen
+                                    />
+                                </div>
+                            )}
+                        </Card>
+
+                        {hours.length > 0 && (
+                            <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-base">
+                                        <FiClock
+                                            aria-hidden="true"
+                                            className="size-4 text-muted-foreground"
+                                        />
+                                        Opening hours
+                                    </CardTitle>
+                                </CardHeader>
+
+                                <CardContent>
+                                    <dl className="divide-y divide-border">
+                                        {hours.map((day) => (
+                                            <div
+                                                key={day.day_of_week}
+                                                className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
+                                            >
+                                                <dt className="text-muted-foreground">
+                                                    {dayNames[
+                                                        day.day_of_week
+                                                    ]}
+                                                </dt>
+
+                                                <dd className="text-right font-medium tabular-nums">
+                                                    {day.is_closed
+                                                        ? "Closed"
+                                                        : day.opens_at &&
+                                                            day.closes_at
+                                                            ? `${formatTime(
+                                                                day.opens_at,
+                                                            )} – ${formatTime(
+                                                                day.closes_at,
+                                                            )}`
+                                                            : "Not provided"}
+                                                </dd>
+                                            </div>
+                                        ))}
+                                    </dl>
+
+                                    <p className="mt-5 border-t pt-4 text-xs leading-6 text-muted-foreground">
+                                        Promotion availability may differ
+                                        from opening hours. Check the offer
+                                        details before visiting.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {(business.website_url ||
+                            business.contact_email) && (
+                                <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
+                                    <CardHeader>
+                                        <CardTitle className="text-base">
+                                            Get in touch
+                                        </CardTitle>
+                                    </CardHeader>
+
+                                    <CardContent className="space-y-3">
+                                        <p className="text-sm leading-7 text-muted-foreground">
+                                            Contact the business for bookings
+                                            and questions about your visit.
+                                        </p>
+
+                                        {business.website_url && (
+                                            <Button
+                                                render={
+                                                    <a
+                                                        href={
+                                                            business.website_url
+                                                        }
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full justify-between"
+                                            >
+                                                <span className="inline-flex items-center gap-2">
+                                                    <FiGlobe aria-hidden="true" />
+                                                    Visit website
+                                                </span>
+                                                <FiArrowUpRight aria-hidden="true" />
+                                            </Button>
+                                        )}
+
+                                        {business.contact_email && (
+                                            <Button
+                                                render={
+                                                    <a
+                                                        href={`mailto:${business.contact_email}`}
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full justify-start"
+                                            >
+                                                <FiMail aria-hidden="true" />
+                                                Email business
+                                            </Button>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+                    </aside>
+                </div>
             </div>
         </main>
     );

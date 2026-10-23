@@ -1,16 +1,22 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { createClient } from "@/utils/supabase/server";
-import RedeemButton from "./redeem-button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/utils/supabase/server";
+
+import RedeemButton from "./redeem-button";
 
 type OfferPageProps = {
     params: Promise<{
@@ -29,26 +35,16 @@ function LoadingState() {
 
                     <div className="space-y-6 p-6 md:p-10">
                         <Skeleton className="h-20 w-20 rounded-xl" />
-
-                        <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-3">
-                                <Skeleton className="h-5 w-32 rounded-md" />
-                                <Skeleton className="h-4 w-24 rounded-md" />
-                            </div>
-
-                            <Skeleton className="h-9 w-24 rounded-full" />
-                        </div>
-
                         <Skeleton className="h-12 w-3/4 rounded-md" />
                         <Skeleton className="h-24 w-full rounded-md" />
 
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                            <Skeleton className="h-24 w-full rounded-xl" />
+                            <Skeleton className="h-24 rounded-xl" />
+                            <Skeleton className="h-24 rounded-xl" />
                         </div>
 
-                        <Skeleton className="h-32 w-full rounded-md" />
-                        <Skeleton className="h-12 w-full rounded-md" />
+                        <Skeleton className="h-32 rounded-md" />
+                        <Skeleton className="h-12 rounded-md" />
                     </div>
                 </div>
             </div>
@@ -56,12 +52,19 @@ function LoadingState() {
     );
 }
 
-function formatExpiry(date: string) {
+function formatExpiry(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Date unavailable";
+    }
+
     return new Intl.DateTimeFormat("en-GB", {
         day: "numeric",
         month: "long",
         year: "numeric",
-    }).format(new Date(date));
+        timeZone: "UTC",
+    }).format(date);
 }
 
 async function OfferContent({ params }: OfferPageProps) {
@@ -70,34 +73,45 @@ async function OfferContent({ params }: OfferPageProps) {
     const { slug } = await params;
     const supabase = await createClient();
 
-    const { data: offer } = await supabase
+    const { data: offer, error: offerError } = await supabase
         .from("offers")
         .select(
             `
-        id,
-        slug,
-        category,
-        discount,
-        title,
-        description,
-        availability,
-        expires_at,
-        terms,
-        image_url,
-        max_redemptions,
-        redemption_count,
-        businesses!inner (
-          id,
-          name,
-          logo_url,
-          approval_status
-        )
-      `,
+                id,
+                slug,
+                category,
+                discount,
+                title,
+                description,
+                availability,
+                expires_at,
+                terms,
+                image_url,
+                max_redemptions,
+                redemption_count,
+                businesses!inner (
+                    id,
+                    name,
+                    logo_url,
+                    approval_status,
+                    business_locations (
+                        name,
+                        address_line_1,
+                        city,
+                        region,
+                        postal_code
+                    )
+                )
+            `,
         )
         .eq("slug", slug)
         .eq("approval_status", "approved")
         .eq("businesses.approval_status", "approved")
-        .single();
+        .maybeSingle();
+
+    if (offerError) {
+        throw new Error("We couldn’t load this offer. Please try again.");
+    }
 
     if (!offer) {
         notFound();
@@ -107,21 +121,74 @@ async function OfferContent({ params }: OfferPageProps) {
         ? offer.businesses[0]
         : offer.businesses;
 
-    const remainingRedemptions =
+    if (!business) {
+        notFound();
+    }
+
+    const locations = business.business_locations;
+
+    const location = Array.isArray(locations)
+        ? locations[0]
+        : locations;
+
+    const fullAddress = location
+        ? [
+            location.address_line_1,
+            location.city,
+            location.region,
+            location.postal_code,
+        ]
+            .filter(Boolean)
+            .join(", ")
+        : "";
+
+    const directionsUrl = fullAddress
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            fullAddress,
+        )}`
+        : null;
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    const existingResult = user
+        ? await supabase
+            .from("offer_redemptions")
+            .select("id, redemption_code, used_at")
+            .eq("offer_id", offer.id)
+            .eq("user_id", user.id)
+            .maybeSingle()
+        : { data: null, error: null };
+
+    if (existingResult.error) {
+        throw new Error(
+            "We couldn’t check your voucher. Please refresh and try again.",
+        );
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const isExpired =
+        Boolean(offer.expires_at) &&
+        offer.expires_at.slice(0, 10) < today;
+
+    const remainingClaims =
         offer.max_redemptions === null
             ? null
             : Math.max(
-                offer.max_redemptions - offer.redemption_count,
+                offer.max_redemptions -
+                (offer.redemption_count ?? 0),
                 0,
             );
 
-    const isFullyClaimed = remainingRedemptions === 0;
+    const isFullyClaimed = remainingClaims === 0;
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
             <div className="mx-auto w-full max-w-2xl">
                 <Button
-                    render={<Link href="/#offers" />}
+                    render={<Link href="/offers" />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"
@@ -132,21 +199,24 @@ async function OfferContent({ params }: OfferPageProps) {
 
                 <Card className="overflow-hidden border-[#17233B]/10 shadow-sm">
                     {offer.image_url && (
-                        <div className="aspect-[16/8] w-full overflow-hidden bg-[#FFF8F0]">
-                            <img
+                        <div className="relative aspect-[16/8] w-full overflow-hidden bg-[#FFF8F0]">
+                            <Image
                                 src={offer.image_url}
                                 alt={offer.title}
-                                className="h-full w-full object-cover"
+                                fill
+                                className="object-cover"
                             />
                         </div>
                     )}
 
                     <CardContent className="p-6 md:p-10">
-                        {business?.logo_url && (
-                            <img
+                        {business.logo_url && (
+                            <Image
                                 src={business.logo_url}
                                 alt={`${business.name} logo`}
-                                className="mb-6 h-20 w-20 rounded-xl object-cover"
+                                width={80}
+                                height={80}
+                                className="mb-6 rounded-xl object-cover"
                             />
                         )}
 
@@ -165,14 +235,16 @@ async function OfferContent({ params }: OfferPageProps) {
 
                                 <Button
                                     render={
-                                        <Link href={`/businesses/${business?.id}`} />
+                                        <Link
+                                            href={`/businesses/${business.id}`}
+                                        />
                                     }
                                     nativeButton={false}
                                     variant="link"
                                     size="sm"
                                     className="h-auto p-0 text-base"
                                 >
-                                    {business?.name ?? "Local business"}
+                                    {business.name}
                                 </Button>
                             </div>
 
@@ -188,7 +260,7 @@ async function OfferContent({ params }: OfferPageProps) {
                             {offer.title}
                         </h1>
 
-                        <p className="mt-5 leading-7 text-[#17233B]/70">
+                        <p className="mt-5 whitespace-pre-line leading-7 text-[#17233B]/70">
                             {offer.description}
                         </p>
 
@@ -218,22 +290,22 @@ async function OfferContent({ params }: OfferPageProps) {
                             </Card>
                         </div>
 
-                        {remainingRedemptions !== null && (
-                            <Alert className="mt-6 border-[#FF593F]/20 bg-[#FFF4E8] text-[#17233B]">
-                                <AlertTitle>
-                                    {isFullyClaimed
-                                        ? "This offer has been fully claimed."
-                                        : `${remainingRedemptions} redemption${remainingRedemptions === 1 ? "" : "s"
-                                        } remaining`}
-                                </AlertTitle>
+                        {!isExpired &&
+                            remainingClaims !== null &&
+                            remainingClaims > 0 && (
+                                <Alert className="mt-6 border-[#FF593F]/20 bg-[#FFF4E8] text-[#17233B]">
+                                    <AlertTitle>
+                                        {remainingClaims} claim
+                                        {remainingClaims === 1 ? "" : "s"}{" "}
+                                        remaining
+                                    </AlertTitle>
 
-                                {!isFullyClaimed && (
                                     <AlertDescription>
-                                        Claim this offer while redemptions are still available.
+                                        Availability is checked again when
+                                        you claim.
                                     </AlertDescription>
-                                )}
-                            </Alert>
-                        )}
+                                </Alert>
+                            )}
 
                         <Separator className="my-8" />
 
@@ -247,21 +319,76 @@ async function OfferContent({ params }: OfferPageProps) {
                             </p>
                         </section>
 
+                        {fullAddress && (
+                            <>
+                                <Separator className="my-8" />
+
+                                <section>
+                                    <h2 className="text-lg font-semibold text-[#17233B]">
+                                        Plan your visit
+                                    </h2>
+
+                                    <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
+                                        {fullAddress}
+                                    </p>
+
+                                    <div className="mt-4 flex flex-wrap gap-3">
+                                        {directionsUrl && (
+                                            <Button
+                                                render={
+                                                    <a
+                                                        href={directionsUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                Get directions
+                                            </Button>
+                                        )}
+
+                                        <Button
+                                            render={
+                                                <Link
+                                                    href={`/businesses/${business.id}`}
+                                                />
+                                            }
+                                            nativeButton={false}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            View business
+                                        </Button>
+                                    </div>
+                                </section>
+                            </>
+                        )}
+
                         <Separator className="my-8" />
 
                         <section>
                             <h2 className="text-lg font-semibold text-[#17233B]">
-                                Ready to redeem?
+                                {existingResult.data
+                                    ? "Your voucher"
+                                    : "Claim this deal"}
                             </h2>
 
                             <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                                Select the button below to reveal your redemption code. Show
-                                the code to the business when using this offer.
+                                {existingResult.data
+                                    ? "You’ve already claimed this promotion. Your code and voucher status are shown below."
+                                    : "Read the terms before claiming. If a booking is required, arrange it with the business separately."}
                             </p>
 
                             <RedeemButton
+                                key={offer.id}
                                 offerId={offer.id}
+                                isSignedIn={Boolean(user)}
                                 isFullyClaimed={isFullyClaimed}
+                                isExpired={isExpired}
+                                initialRedemption={existingResult.data}
                             />
                         </section>
                     </CardContent>

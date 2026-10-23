@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ function ProfileAvatar({
 }
 
 export default function DashboardNav() {
+    const router = useRouter();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSigningOut, setIsSigningOut] = useState(false);
@@ -154,7 +156,7 @@ export default function DashboardNav() {
 
             if (error) throw error;
 
-            window.location.assign("/login");
+            router.push("/login");
         } catch {
             setErrorMessage(
                 "We couldn’t sign you out. Please try again.",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -304,11 +305,12 @@ export default function AdminOffersPage() {
                                     className="overflow-hidden border-[#17233B]/10 shadow-sm"
                                 >
                                     {offer.image_url && (
-                                        <div className="aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
-                                            <img
+                                        <div className="relative aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
+                                            <Image
                                                 src={offer.image_url}
                                                 alt={offer.title}
-                                                className="h-full w-full object-cover"
+                                                fill
+                                                className="object-cover"
                                             />
                                         </div>
                                     )}
