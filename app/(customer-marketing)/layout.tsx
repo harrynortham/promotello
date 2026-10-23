@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 
-import Header from "@/components/marketing-nav"
-import Footer from "@/components/footer"
+import { MarketingFooter } from "@/components/site/footers"
+import { CustomerHeader } from "@/components/site/headers"
 
 export default function MarketingLayout({
     children,
@@ -10,9 +10,9 @@ export default function MarketingLayout({
 }) {
     return <div className="flex flex-col min-h-dvh ">
         <Suspense fallback={<header className="sticky top-0 z-50 h-20 bg-background/95 backdrop-blur-md" />}>
-            <Header />
+            <CustomerHeader />
         </Suspense>
         {children}
-        <Footer />
+        <MarketingFooter variant="customer" />
     </div>
 }

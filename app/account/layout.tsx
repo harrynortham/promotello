@@ -3,8 +3,8 @@ import { Suspense, type ReactNode } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
-import AccountNav from "@/components/account-nav";
-import AccountFooter from "@/components/account-footer";
+import { AppFooter } from "@/components/site/footers";
+import { CustomerAppHeader } from "@/components/site/headers";
 import AccountSettingsNav from "@/components/account-settings-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
@@ -55,7 +55,7 @@ export default function AccountLayout({
 }: AccountLayoutProps) {
     return (
         <div className="flex min-h-dvh flex-col bg-[#FFF8F0] text-[#17233B]">
-            <AccountNav />
+            <CustomerAppHeader />
 
             <div className="flex-1 px-6 py-8 sm:px-10 lg:py-12">
                 <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12">
@@ -78,7 +78,7 @@ export default function AccountLayout({
                 </div>
             </div>
 
-            <AccountFooter />
+            <AppFooter variant="account" />
         </div>
     );
 }

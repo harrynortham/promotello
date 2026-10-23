@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Footer from "@/components/business-dashboard-footer"
-import Header from "@/components/business-dashboard-nav"
+import { AppFooter } from "@/components/site/footers"
+import { BusinessAppHeader } from "@/components/site/headers"
 
 // Signed-in area: keep it out of search results.
 export const metadata: Metadata = {
@@ -13,8 +13,8 @@ export default function MarketingLayout({
     children: React.ReactNode
 }) {
     return <div className="flex flex-col min-h-dvh ">
-        <Header />
+        <BusinessAppHeader />
         {children}
-        <Footer />
+        <AppFooter variant="business" />
     </div>
 }

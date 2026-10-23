@@ -4,8 +4,8 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
-import DashboardNav from "@/components/dashboard-nav";
-import Footer from "@/components/customer-dashboard-footer";
+import { AppFooter } from "@/components/site/footers";
+import { CustomerAppHeader } from "@/components/site/headers";
 
 // Signed-in area: keep it out of search results.
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ export default function DashboardLayout({
 }) {
     return (
         <div className="flex flex-col bg-[#FFF8F0] text-[#17233B]">
-            <DashboardNav />
+            <CustomerAppHeader />
 
             <div className="flex-1 px-6 pb-12 sm:px-10">
                 <div className="mx-auto max-w-7xl">
@@ -58,7 +58,7 @@ export default function DashboardLayout({
                 </div>
             </div>
 
-            <Footer />
+            <AppFooter variant="customer" />
         </div>
     );
 }

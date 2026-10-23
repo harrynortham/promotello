@@ -24,6 +24,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
+import { initialsFor } from "@/lib/user-profile";
 import { signOut } from "./actions";
 
 const settings = [
@@ -69,19 +70,6 @@ function getDisplayName(metadata: Record<string, unknown>) {
     return readText(metadata.full_name) || readText(metadata.name);
 }
 
-function getInitials(name: string, email?: string) {
-    if (name) {
-        return name
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((part) => part.charAt(0))
-            .join("")
-            .toUpperCase();
-    }
-
-    return email?.charAt(0).toUpperCase() || "U";
-}
-
 async function AccountContent() {
     await connection();
 
@@ -97,7 +85,7 @@ async function AccountContent() {
 
     const displayName = getDisplayName(user.user_metadata);
     const firstName = displayName.split(/\s+/)[0];
-    const initials = getInitials(displayName, user.email);
+    const initials = initialsFor(displayName, user.email);
     const isEmailVerified = Boolean(user.email_confirmed_at);
 
     const avatarPath = readText(user.user_metadata.avatar_path);
