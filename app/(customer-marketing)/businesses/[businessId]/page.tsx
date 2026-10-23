@@ -33,6 +33,7 @@ import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
+import { PageViewTracker } from "@/components/page-view-tracker";
 import { LoyaltyCallout } from "./loyalty-callout";
 
 type BusinessPageProps = {
@@ -314,6 +315,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
             />
+            <PageViewTracker businessId={business.id} />
 
             <div className="mx-auto max-w-6xl">
                 <Button
