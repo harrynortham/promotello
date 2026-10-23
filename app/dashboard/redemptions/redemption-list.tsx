@@ -13,6 +13,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VoucherQr } from "@/components/voucher-qr";
 import {
     Card,
     CardContent,
@@ -204,6 +205,10 @@ function VoucherCard({
                         Your redemption code
                     </p>
 
+                    {isReady && (
+                        <VoucherQr code={redemption.code} className="mx-auto mt-4 size-44" />
+                    )}
+
                     <p className="mt-3 break-all font-mono text-3xl font-semibold tracking-widest sm:text-4xl">
                         {redemption.code}
                     </p>
@@ -215,7 +220,7 @@ function VoucherCard({
                             }`}
                     >
                         {status === "ready" &&
-                            "Show this code to the business when using your deal."}
+                            "Show this to staff when you pay. They can scan it or type the code."}
 
                         {status === "used" &&
                             "The business has marked this voucher as used."}

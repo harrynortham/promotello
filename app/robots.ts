@@ -21,6 +21,9 @@ export default function robots(): MetadataRoute.Robots {
                 "/api/",
                 // QR scan links: crawlers would count as scans.
                 "/q/",
+                // Staff pages opened by scanning a customer's card or voucher.
+                "/stamp/",
+                "/redeem/",
             ],
         },
         sitemap: absoluteUrl("/sitemap.xml"),
