@@ -26,6 +26,7 @@ import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 
 import RedeemButton from "./redeem-button";
+import { FollowButton } from "@/components/follow-button";
 import { PageViewTracker } from "@/components/page-view-tracker";
 
 type OfferPageProps = {
@@ -185,6 +186,15 @@ async function OfferContent({ params }: OfferPageProps) {
             .eq("user_id", user.id)
             .maybeSingle()
         : { data: null, error: null };
+
+    const { data: follow } = user
+        ? await supabase
+            .from("business_followers")
+            .select("business_id")
+            .eq("business_id", business.id)
+            .eq("user_id", user.id)
+            .maybeSingle()
+        : { data: null };
 
     if (existingResult.error) {
         throw new Error(
@@ -437,6 +447,13 @@ async function OfferContent({ params }: OfferPageProps) {
                             >
                                 Opening hours and more
                             </Button>
+
+                            <FollowButton
+                                businessId={business.id}
+                                initialFollowing={Boolean(follow)}
+                                isSignedIn={Boolean(user)}
+                                size="sm"
+                            />
                         </div>
                     </section>
                 </div>

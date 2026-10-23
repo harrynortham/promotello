@@ -33,6 +33,8 @@ import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
+import { FollowButton } from "@/components/follow-button";
+import { MapEmbed } from "@/components/map-embed";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { LoyaltyCallout } from "./loyalty-callout";
 
@@ -195,6 +197,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             .maybeSingle(),
         supabase.auth.getUser(),
     ]);
+
+    const { data: follow } = viewer
+        ? await supabase
+            .from("business_followers")
+            .select("business_id")
+            .eq("business_id", businessId)
+            .eq("user_id", viewer.id)
+            .maybeSingle()
+        : { data: null };
 
     const { data: loyaltyCard } =
         loyaltyProgram && viewer
@@ -429,6 +440,12 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                     View promotions
                                 </Button>
 
+                                <FollowButton
+                                    businessId={business.id}
+                                    initialFollowing={Boolean(follow)}
+                                    isSignedIn={Boolean(viewer)}
+                                />
+
                                 {directionsUrl && (
                                     <Button
                                         render={
@@ -639,13 +656,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
                             {mapUrl && (
                                 <div className="overflow-hidden border-t">
-                                    <iframe
+                                    <MapEmbed
                                         title={`Map showing ${business.name}`}
                                         src={mapUrl}
-                                        className="h-52 w-full border-0"
-                                        loading="lazy"
-                                        referrerPolicy="no-referrer-when-downgrade"
-                                        allowFullScreen
                                     />
                                 </div>
                             )}

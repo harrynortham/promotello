@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -143,6 +144,11 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
         days: 30,
     });
 
+    const [{ data: followerCount }, hasPro] = await Promise.all([
+        supabase.rpc("business_follower_count", { requested_business_id: businessId }),
+        businessHasPro(supabase, businessId).catch(() => false),
+    ]);
+
     if (analyticsError) {
         console.error("Analytics: failed to load summary", analyticsError);
     }
@@ -256,7 +262,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                 <h2 className="mt-12 text-xl font-semibold">All time</h2>
 
-                <section className="mt-4 grid gap-5 md:grid-cols-3">
+                <section className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-[#17233B]/60">
@@ -299,6 +305,30 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                             <p className="mt-2 text-sm text-[#17233B]/55">
                                 {unusedRedemptions} awaiting use
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                                Followers
+                            </CardTitle>
+                        </CardHeader>
+
+                        <CardContent>
+                            <p className="text-4xl font-semibold">
+                                {followerCount ?? 0}
+                            </p>
+
+                            <p className="mt-2 text-sm text-[#17233B]/55">
+                                {hasPro ? (
+                                    "Emailed when a new offer goes live"
+                                ) : (
+                                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#FF593F] hover:underline">
+                                        Email them new offers on Pro
+                                    </Link>
+                                )}
                             </p>
                         </CardContent>
                     </Card>
