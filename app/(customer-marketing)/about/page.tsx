@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-    title: "About Promotello | Find Your Next Local Favourite",
+    title: { absolute: "About Promotello | Find Your Next Local Favourite" },
     description:
         "Discover what Promotello is about: local discoveries, clear offers, and more reasons to enjoy the businesses around you.",
 };

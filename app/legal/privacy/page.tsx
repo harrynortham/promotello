@@ -6,7 +6,7 @@ import {
 } from "@/components/legal-document";
 
 export const metadata: Metadata = {
-    title: "Privacy Policy | Promotello",
+    title: "Privacy Policy",
     description: "Information about how Promotello handles personal data.",
     robots: { index: false, follow: true },
 };

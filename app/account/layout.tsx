@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -7,6 +8,11 @@ import AccountFooter from "@/components/account-footer";
 import AccountSettingsNav from "@/components/account-settings-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
+
+// Signed-in area: keep it out of search results.
+export const metadata: Metadata = {
+    robots: { index: false, follow: false },
+};
 
 type AccountLayoutProps = {
     children: ReactNode;

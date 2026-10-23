@@ -6,7 +6,7 @@ import {
 } from "@/components/legal-document";
 
 export const metadata: Metadata = {
-    title: "Cookie Policy | Promotello",
+    title: "Cookie Policy",
     description: "Information about cookies and similar technologies.",
     robots: { index: false, follow: true },
 };

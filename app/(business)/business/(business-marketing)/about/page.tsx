@@ -11,7 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 export const metadata = {
-    title: "About Promotello for Businesses",
+    title: { absolute: "About Promotello for Businesses" },
     description:
         "Promotello helps local businesses attract new customers with simple, measurable promotions.",
 };

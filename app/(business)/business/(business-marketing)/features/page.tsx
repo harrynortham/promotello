@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-    title: "Business Features | Promotello",
+    title: "Business Features",
     description:
         "Create promotions, set claim limits, manage redemption codes, and track customer activity with Promotello’s business tools.",
 };

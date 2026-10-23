@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cacheLife } from "next/cache";
 import Link from "next/link";
+import { Suspense } from "react";
 import {
     FiArrowRight,
     FiCheck,
+    FiClock,
     FiMessageCircle,
     FiSliders,
     FiUsers,
@@ -18,24 +21,40 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+    FOUNDING_MEMBER_LIMIT,
+    FREE_LIVE_OFFER_LIMIT,
+    TRIAL_DAYS,
+    countFoundingMembers,
+    plans,
+} from "@/lib/billing";
 
 export const metadata: Metadata = {
-    title: "Business Pricing | Promotello",
-    description:
-        "Explore proposed Promotello launch pricing: £19 per business per month for promotion tools, redemption management, and business reporting.",
+    title: "Business Pricing",
+    description: `Start free with ${FREE_LIVE_OFFER_LIMIT} live offer, or go Pro for unlimited offers at ${plans.pro_monthly.price}/month with a ${TRIAL_DAYS}-day free trial. Founding members pay ${plans.pro_founding_monthly.price}/month.`,
 };
 
-const includedFeatures = [
-    "One business profile",
-    "Unlimited promotions",
-    "Promotion images and clear offer terms",
-    "Optional claim limits and expiry dates",
-    "Customer redemption codes",
-    "Redemption management",
+const freeFeatures = [
+    "Business profile with location, opening hours and contact details",
+    `${FREE_LIVE_OFFER_LIMIT} live promotion at a time`,
+    "Promotion images, claim limits and expiry dates",
+    "Customer redemption codes and redemption management",
     "Promotion performance reporting",
-    "Unlimited team members",
-    "Business notification preferences",
-    "Location, opening hours, and contact details",
+    "Team access for your colleagues",
+];
+
+const proFeatures = [
+    "Everything in Free",
+    "Unlimited live promotions",
+    "Run several offers side by side, from weekday specials to seasonal deals",
+    "Paused promotions come back as soon as you upgrade",
+];
+
+const comingToPro = [
+    "Digital loyalty stamp cards",
+    "Printable QR posters with scan tracking",
+    "Followers and new-offer emails",
+    "Google review prompts",
 ];
 
 const principles = [
@@ -53,17 +72,29 @@ const principles = [
     },
     {
         icon: FiMessageCircle,
-        title: "Ask before you commit",
-        description:
-            "Talk through your business, your promotion ideas, and any questions before subscribing.",
+        title: "Try it before you pay",
+        description: `Every Pro plan starts with a ${TRIAL_DAYS}-day free trial. Cancel before it ends and you won't be charged.`,
     },
 ];
 
 const questions = [
     {
-        question: "Is this pricing available now?",
+        question: "How does the free trial work?",
+        answer: `Pro starts with a ${TRIAL_DAYS}-day free trial. We ask for a card when you start, but don't charge it until the trial ends. Cancel any time before then from your billing page and you won't pay anything. Each business can have one free trial.`,
+    },
+    {
+        question: "What is the founding member price?",
+        answer: `The first ${FOUNDING_MEMBER_LIMIT} businesses to join Pro pay ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, for as long as they stay subscribed. It includes everything in Pro, now and as Pro grows.`,
+    },
+    {
+        question: "What counts as a live promotion?",
         answer:
-            "This is our proposed launch pricing. Contact us to discuss joining. We will confirm availability, final pricing, and subscription terms before you make a payment.",
+            "A promotion is live while it is waiting for approval or approved, and hasn't reached its expiry date. Expired promotions don't count, so on the Free plan you can publish a new one as soon as your current one ends.",
+    },
+    {
+        question: "What happens if I cancel Pro?",
+        answer:
+            "You keep Pro until the end of the period you've paid for, then move to the Free plan. Your newest live promotion stays up and the rest are paused and hidden from customers. Nothing is deleted, and paused promotions come back if you subscribe again.",
     },
     {
         question: "What counts as a business?",
@@ -73,7 +104,7 @@ const questions = [
     {
         question: "Do I pay for every promotion or customer claim?",
         answer:
-            "The proposed plan includes unlimited promotions with no additional Promotello fee per claim. The cost of fulfilling your promotion remains your responsibility.",
+            "No. There are no per-promotion or per-claim fees on any plan. The cost of fulfilling your promotion remains your responsibility.",
     },
     {
         question: "Does a subscription guarantee customers?",
@@ -93,9 +124,57 @@ const questions = [
     {
         question: "Is VAT included?",
         answer:
-            "Any applicable VAT and the final total will be confirmed before you subscribe.",
+            "Promotello isn't currently VAT registered, so no VAT is added to these prices. All prices are in GBP.",
     },
 ];
+
+// Refreshed at most hourly so the page stays fast and static.
+async function getFoundingPlacesLeft() {
+    "use cache";
+    cacheLife("hours");
+
+    try {
+        return Math.max(FOUNDING_MEMBER_LIMIT - (await countFoundingMembers()), 0);
+    } catch {
+        return null;
+    }
+}
+
+async function FoundingPlacesLeft() {
+    const placesLeft = await getFoundingPlacesLeft();
+
+    if (placesLeft === null) {
+        return <>Limited to the first {FOUNDING_MEMBER_LIMIT} businesses.</>;
+    }
+
+    if (placesLeft === 0) {
+        return <>All founding places have been taken.</>;
+    }
+
+    return (
+        <>
+            Only <strong>{placesLeft}</strong> of {FOUNDING_MEMBER_LIMIT}{" "}
+            founding places left.
+        </>
+    );
+}
+
+function FeatureList({ features }: { features: string[] }) {
+    return (
+        <ul className="mt-5 space-y-4">
+            {features.map((feature) => (
+                <li key={feature} className="flex items-start gap-3 text-sm">
+                    <FiCheck
+                        aria-hidden="true"
+                        className="mt-0.5 size-4 shrink-0 text-primary"
+                    />
+
+                    <span>{feature}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
 
 export default function BusinessPricingPage() {
     return (
@@ -109,44 +188,126 @@ export default function BusinessPricingPage() {
                 <div className="mx-auto max-w-7xl px-6 pb-14 pt-16 sm:px-10 sm:pt-24">
                     <div className="mx-auto max-w-3xl text-center">
                         <Badge variant="secondary">
-                            Proposed launch pricing
+                            Simple pricing, no per-claim fees
                         </Badge>
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
-                            One clear price.
+                            Start free.
                             <br />
-                            More reasons to be discovered.
+                            Upgrade when you&apos;re ready.
                         </h1>
 
                         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                            Give your promotions a home, keep your team
-                            organised, and understand customer activity—with
-                            a straightforward monthly plan.
+                            Put your business on the map with a free profile
+                            and your first promotion. Go Pro to run as many
+                            promotions as you like.
                         </p>
                     </div>
 
-                    <div className="mx-auto mt-12 grid max-w-5xl gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                        <Card className="overflow-hidden rounded-3xl border-primary/30 shadow-lg">
-                            <CardHeader className="p-7 sm:p-9">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <CardTitle className="text-2xl">
-                                        Promotello Business
-                                    </CardTitle>
+                    <div className="mx-auto mt-12 max-w-5xl rounded-3xl border border-primary/30 bg-[#FFF4E8] p-6 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-8">
+                        <div>
+                            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
+                                Founding member offer
+                            </p>
 
-                                    <Badge variant="secondary">
-                                        One simple plan
-                                    </Badge>
-                                </div>
+                            <p className="mt-2 text-xl font-semibold text-[#17233B]">
+                                Pro for {plans.pro_founding_monthly.price} a
+                                month, locked in for as long as you stay
+                                subscribed.
+                            </p>
+
+                            <p className="mt-2 text-sm text-[#17233B]/70">
+                                <Suspense
+                                    fallback={
+                                        <>
+                                            Limited to the first{" "}
+                                            {FOUNDING_MEMBER_LIMIT} businesses.
+                                        </>
+                                    }
+                                >
+                                    <FoundingPlacesLeft />
+                                </Suspense>
+                            </p>
+                        </div>
+
+                        <Button
+                            render={<Link href="/business/register" />}
+                            nativeButton={false}
+                            size="lg"
+                            className="mt-5 shrink-0 sm:mt-0"
+                        >
+                            Claim a founding place
+                            <FiArrowRight aria-hidden="true" />
+                        </Button>
+                    </div>
+
+                    <div className="mx-auto mt-6 grid max-w-5xl gap-6 lg:grid-cols-2">
+                        <Card className="rounded-3xl shadow-none">
+                            <CardHeader className="p-7 sm:p-9">
+                                <CardTitle className="text-2xl">Free</CardTitle>
 
                                 <CardDescription className="mt-2 text-base leading-7">
-                                    For local businesses ready to turn a good
-                                    offer into a new introduction.
+                                    Everything you need to get your first
+                                    promotion in front of local customers.
                                 </CardDescription>
 
                                 <div className="pt-7">
                                     <div className="flex items-end gap-2">
                                         <span className="text-6xl font-semibold tracking-tight">
-                                            £19
+                                            £0
+                                        </span>
+
+                                        <span className="pb-2 text-muted-foreground">
+                                            / forever
+                                        </span>
+                                    </div>
+
+                                    <p className="mt-3 text-sm text-muted-foreground">
+                                        No card needed
+                                    </p>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="px-7 pb-7 sm:px-9 sm:pb-9">
+                                <Button
+                                    render={<Link href="/business/register" />}
+                                    nativeButton={false}
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full"
+                                >
+                                    Get started free
+                                </Button>
+
+                                <Separator className="my-7" />
+
+                                <p className="text-sm font-semibold">
+                                    Included
+                                </p>
+
+                                <FeatureList features={freeFeatures} />
+                            </CardContent>
+                        </Card>
+
+                        <Card className="overflow-hidden rounded-3xl border-primary/30 shadow-lg">
+                            <CardHeader className="p-7 sm:p-9">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <CardTitle className="text-2xl">Pro</CardTitle>
+
+                                    <Badge variant="secondary">
+                                        {TRIAL_DAYS}-day free trial
+                                    </Badge>
+                                </div>
+
+                                <CardDescription className="mt-2 text-base leading-7">
+                                    For businesses ready to keep customers
+                                    coming back with more than one offer.
+                                </CardDescription>
+
+                                <div className="pt-7">
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-6xl font-semibold tracking-tight">
+                                            {plans.pro_monthly.price}
                                         </span>
 
                                         <span className="pb-2 text-muted-foreground">
@@ -155,118 +316,88 @@ export default function BusinessPricingPage() {
                                     </div>
 
                                     <p className="mt-3 text-sm text-muted-foreground">
-                                        Per business · GBP · Proposed launch
-                                        price
+                                        Or {plans.pro_yearly.price} a year
+                                        ({plans.pro_yearly.note?.toLowerCase()})
+                                        · Cancel any time
                                     </p>
                                 </div>
                             </CardHeader>
 
                             <CardContent className="px-7 pb-7 sm:px-9 sm:pb-9">
                                 <Button
-                                    render={
-                                        <Link href="/business/contact?subject=Business%20plan%20enquiry" />
-                                    }
+                                    render={<Link href="/business/register" />}
                                     nativeButton={false}
                                     size="lg"
                                     className="w-full"
                                 >
-                                    Enquire about joining
+                                    Start your free trial
                                     <FiArrowRight aria-hidden="true" />
                                 </Button>
 
                                 <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-                                    An enquiry does not start a subscription
-                                    or take a payment.
+                                    Card required. You won&apos;t be charged
+                                    until your trial ends.
                                 </p>
 
                                 <Separator className="my-7" />
 
                                 <p className="text-sm font-semibold">
-                                    Included in the proposed plan
+                                    Included
                                 </p>
 
-                                <ul className="mt-5 space-y-4">
-                                    {includedFeatures.map((feature) => (
+                                <FeatureList features={proFeatures} />
+
+                                <p className="mt-8 flex items-center gap-2 text-sm font-semibold">
+                                    <FiClock
+                                        aria-hidden="true"
+                                        className="size-4 text-primary"
+                                    />
+                                    Coming to Pro
+                                </p>
+
+                                <ul className="mt-4 space-y-3">
+                                    {comingToPro.map((feature) => (
                                         <li
                                             key={feature}
-                                            className="flex items-start gap-3 text-sm"
+                                            className="text-sm text-muted-foreground"
                                         >
-                                            <FiCheck
-                                                aria-hidden="true"
-                                                className="mt-0.5 size-4 shrink-0 text-primary"
-                                            />
-
-                                            <span>{feature}</span>
+                                            {feature}
                                         </li>
                                     ))}
                                 </ul>
                             </CardContent>
                         </Card>
+                    </div>
 
-                        <div className="flex flex-col gap-6">
-                            <Card className="rounded-3xl bg-muted/30 shadow-none">
-                                <CardHeader>
-                                    <CardTitle className="text-xl">
-                                        Start with an offer that works for you.
-                                    </CardTitle>
-                                </CardHeader>
+                    <div className="mx-auto mt-6 max-w-5xl rounded-3xl border p-7 sm:flex sm:items-center sm:justify-between sm:gap-8">
+                        <div>
+                            <h2 className="text-xl font-semibold">
+                                More than one business?
+                            </h2>
 
-                                <CardContent>
-                                    <p className="leading-7 text-muted-foreground">
-                                        A weekday special. An introductory
-                                        treatment. A bundle worth sharing.
-                                        Choose a promotion you can deliver
-                                        confidently, then follow the response.
-                                    </p>
-
-                                    <Button
-                                        render={
-                                            <Link href="/business/how-it-works" />
-                                        }
-                                        nativeButton={false}
-                                        variant="outline"
-                                        className="mt-6"
-                                    >
-                                        See how it works
-                                        <FiArrowRight aria-hidden="true" />
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="flex-1 rounded-3xl shadow-none">
-                                <CardHeader>
-                                    <CardTitle className="text-xl">
-                                        More than one business?
-                                    </CardTitle>
-                                </CardHeader>
-
-                                <CardContent>
-                                    <p className="leading-7 text-muted-foreground">
-                                        Manage your business profiles from
-                                        one account. If you operate several
-                                        businesses or locations, talk to us
-                                        about the right setup.
-                                    </p>
-
-                                    <Button
-                                        render={
-                                            <Link href="/business/contact?subject=Multiple%20businesses" />
-                                        }
-                                        nativeButton={false}
-                                        variant="outline"
-                                        className="mt-6"
-                                    >
-                                        Discuss your businesses
-                                    </Button>
-                                </CardContent>
-                            </Card>
+                            <p className="mt-2 leading-7 text-muted-foreground">
+                                Each business profile has its own plan, and
+                                you manage them all from one account. If you
+                                run several businesses or locations, talk to
+                                us about the right setup.
+                            </p>
                         </div>
+
+                        <Button
+                            render={
+                                <Link href="/business/contact?subject=Multiple%20businesses" />
+                            }
+                            nativeButton={false}
+                            variant="outline"
+                            className="mt-5 shrink-0 sm:mt-0"
+                        >
+                            Discuss your businesses
+                        </Button>
                     </div>
 
                     <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-6 text-muted-foreground">
-                        Final pricing, applicable VAT, billing arrangements,
-                        and cancellation terms will be confirmed before you
-                        subscribe.
+                        Prices are per business, in GBP. Promotello isn&apos;t
+                        currently VAT registered, so no VAT is added.
                     </p>
                 </div>
             </section>
@@ -353,21 +484,31 @@ export default function BusinessPricingPage() {
                         </h2>
 
                         <p className="mt-5 text-lg leading-8 text-[#17233B]/70">
-                            Tell us about your business and the kind of
-                            promotion you have in mind.
+                            Set up your business profile and your first
+                            promotion in a few minutes. It&apos;s free to start.
                         </p>
 
-                        <Button
-                            render={
-                                <Link href="/business/contact?subject=Business%20plan%20enquiry" />
-                            }
-                            nativeButton={false}
-                            size="lg"
-                            className="mt-8"
-                        >
-                            Talk to Promotello
-                            <FiArrowRight aria-hidden="true" />
-                        </Button>
+                        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                            <Button
+                                render={<Link href="/business/register" />}
+                                nativeButton={false}
+                                size="lg"
+                            >
+                                Get started free
+                                <FiArrowRight aria-hidden="true" />
+                            </Button>
+
+                            <Button
+                                render={
+                                    <Link href="/business/contact?subject=Business%20plan%20enquiry" />
+                                }
+                                nativeButton={false}
+                                variant="outline"
+                                size="lg"
+                            >
+                                Talk to Promotello
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </section>

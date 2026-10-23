@@ -5,7 +5,7 @@ import HelpCentre, {
 } from "@/components/help-centre";
 
 export const metadata: Metadata = {
-    title: "Help Centre | Promotello",
+    title: "Help Centre",
     description:
         "Help with finding offers, claiming promotions, using redemption codes, and managing your Promotello account.",
 };

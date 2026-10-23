@@ -6,7 +6,7 @@ import {
 } from "@/components/legal-document";
 
 export const metadata: Metadata = {
-    title: "Terms of Service | Promotello",
+    title: "Terms of Service",
     description: "Terms governing the use of Promotello.",
     robots: { index: false, follow: true },
 };

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -28,6 +29,8 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
+import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessPageProps = {
@@ -87,6 +90,46 @@ function LoadingState() {
     );
 }
 
+export async function generateMetadata({
+    params,
+}: BusinessPageProps): Promise<Metadata> {
+    const { businessId } = await params;
+
+    const { data: business } = await createPublicClient()
+        .from("businesses")
+        .select("id, name, category, description, logo_url, business_locations ( city )")
+        .eq("id", businessId)
+        .maybeSingle();
+
+    if (!business) {
+        return { title: "Business not found", robots: { index: false } };
+    }
+
+    const location = Array.isArray(business.business_locations)
+        ? business.business_locations[0]
+        : business.business_locations;
+
+    const place = location?.city ? ` in ${location.city}` : "";
+    const description = truncate(
+        business.description ||
+            `${business.name} is a ${business.category.toLowerCase()} business${place}. See their latest offers and opening hours on ${siteName}.`,
+    );
+    const path = `/businesses/${business.id}`;
+
+    return {
+        title: `${business.name}${place}`,
+        description,
+        alternates: { canonical: path },
+        openGraph: {
+            type: "website",
+            url: path,
+            title: business.name,
+            description,
+            images: business.logo_url ? [{ url: business.logo_url }] : undefined,
+        },
+    };
+}
+
 async function BusinessContent({ params }: BusinessPageProps) {
     await connection();
 
@@ -110,7 +153,8 @@ async function BusinessContent({ params }: BusinessPageProps) {
                     address_line_1,
                     city,
                     region,
-                    postal_code
+                    postal_code,
+                    country_code
                 ),
                 business_hours (
                     day_of_week,
@@ -154,6 +198,7 @@ async function BusinessContent({ params }: BusinessPageProps) {
         .eq("business_id", businessId)
         .eq("approval_status", "approved")
         .gte("expires_at", today)
+        .is("plan_paused_at", null)
         .order("created_at", { ascending: false });
 
     const location = Array.isArray(business.business_locations)
@@ -202,8 +247,53 @@ async function BusinessContent({ params }: BusinessPageProps) {
         .join("")
         .toUpperCase();
 
+    const pageUrl = absoluteUrl(`/businesses/${business.id}`);
+
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "@id": `${pageUrl}#business`,
+        name: business.name,
+        description: business.description ?? undefined,
+        url: pageUrl,
+        image: business.logo_url ?? undefined,
+        logo: business.logo_url ?? undefined,
+        email: business.contact_email ?? undefined,
+        sameAs: business.website_url ? [business.website_url] : undefined,
+        address: location
+            ? {
+                "@type": "PostalAddress",
+                streetAddress: location.address_line_1,
+                addressLocality: location.city,
+                addressRegion: location.region ?? undefined,
+                postalCode: location.postal_code ?? undefined,
+                addressCountry: location.country_code,
+            }
+            : undefined,
+        openingHoursSpecification: hours
+            .filter((day) => !day.is_closed && day.opens_at && day.closes_at)
+            .map((day) => ({
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: `https://schema.org/${dayNames[day.day_of_week]}`,
+                opens: formatTime(day.opens_at),
+                closes: formatTime(day.closes_at),
+            })),
+        makesOffer: (offers ?? []).map((offer) => ({
+            "@type": "Offer",
+            name: offer.title,
+            description: offer.description,
+            url: absoluteUrl(`/offers/${offer.slug}`),
+            validThrough: offer.expires_at,
+        })),
+    };
+
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-8 text-[#17233B] sm:px-10 sm:py-10">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
+            />
+
             <div className="mx-auto max-w-6xl">
                 <Button
                     render={<Link href="/businesses" />}

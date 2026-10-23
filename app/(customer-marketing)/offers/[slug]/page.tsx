@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -14,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { truncate } from "@/lib/site";
+import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 
 import RedeemButton from "./redeem-button";
@@ -67,6 +70,48 @@ function formatExpiry(value: string) {
     }).format(date);
 }
 
+export async function generateMetadata({
+    params,
+}: OfferPageProps): Promise<Metadata> {
+    const { slug } = await params;
+
+    const { data: offer } = await createPublicClient()
+        .from("offers")
+        .select(
+            "slug, title, discount, description, image_url, businesses!inner ( name, logo_url )",
+        )
+        .eq("slug", slug)
+        .maybeSingle();
+
+    if (!offer) {
+        return { title: "Offer not found", robots: { index: false } };
+    }
+
+    const business = Array.isArray(offer.businesses)
+        ? offer.businesses[0]
+        : offer.businesses;
+
+    const title = business
+        ? `${offer.discount} at ${business.name}: ${offer.title}`
+        : `${offer.discount}: ${offer.title}`;
+    const description = truncate(offer.description);
+    const image = offer.image_url ?? business?.logo_url;
+    const path = `/offers/${offer.slug}`;
+
+    return {
+        title,
+        description,
+        alternates: { canonical: path },
+        openGraph: {
+            type: "website",
+            url: path,
+            title,
+            description,
+            images: image ? [{ url: image }] : undefined,
+        },
+    };
+}
+
 async function OfferContent({ params }: OfferPageProps) {
     await connection();
 
@@ -106,6 +151,7 @@ async function OfferContent({ params }: OfferPageProps) {
         )
         .eq("slug", slug)
         .eq("approval_status", "approved")
+        .is("plan_paused_at", null)
         .eq("businesses.approval_status", "approved")
         .maybeSingle();
 

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-    title: "Getting Started | Promotello for Business",
+    title: { absolute: "Getting Started | Promotello for Business" },
     description:
         "Get your business ready for Promotello. Create your profile, prepare your first promotion, and help your team welcome customers.",
 };
