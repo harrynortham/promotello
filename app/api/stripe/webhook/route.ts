@@ -92,7 +92,125 @@ async function handleEvent(
       }
       break;
     }
+
+    case "charge.refunded": {
+      const charge = event.data.object;
+      await recordBillingAlert(stripe, supabase, event, {
+        type: "refund",
+        charge,
+        amount: charge.amount_refunded,
+        reason: null,
+      });
+      break;
+    }
+
+    case "charge.dispute.created": {
+      const dispute = event.data.object;
+      await recordBillingAlert(stripe, supabase, event, {
+        type: "dispute",
+        charge: await stripe.charges.retrieve(idOf(dispute.charge)),
+        amount: dispute.amount,
+        reason: dispute.reason,
+      });
+      break;
+    }
+
+    case "radar.early_fraud_warning.created": {
+      const warning = event.data.object;
+      const charge = await stripe.charges.retrieve(idOf(warning.charge));
+      await recordBillingAlert(stripe, supabase, event, {
+        type: "early_fraud_warning",
+        charge,
+        amount: charge.amount,
+        reason: warning.fraud_type,
+      });
+      break;
+    }
   }
+}
+
+// Records a refund, dispute or fraud warning for admin review and re-syncs
+// any subscription the payment belongs to.
+async function recordBillingAlert(
+  stripe: Stripe,
+  supabase: AdminClient,
+  event: Stripe.Event,
+  alert: {
+    type: "refund" | "dispute" | "early_fraud_warning";
+    charge: Stripe.Charge;
+    amount: number;
+    reason: string | null;
+  },
+) {
+  const { charge } = alert;
+  const subscriptionIds = charge.payment_intent
+    ? await subscriptionsForPaymentIntent(stripe, idOf(charge.payment_intent))
+    : [];
+
+  for (const subscriptionId of subscriptionIds) {
+    await syncSubscription(stripe, supabase, subscriptionId);
+  }
+
+  let businessId: string | null = null;
+
+  if (charge.customer) {
+    const { data, error } = await supabase
+      .from("billing_customers")
+      .select("business_id")
+      .eq("stripe_customer_id", idOf(charge.customer))
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    businessId = data?.business_id ?? null;
+  }
+
+  const { error } = await supabase.from("billing_alerts").upsert(
+    {
+      business_id: businessId,
+      type: alert.type,
+      stripe_event_id: event.id,
+      stripe_charge_id: charge.id,
+      stripe_subscription_id: subscriptionIds[0] ?? null,
+      amount: alert.amount,
+      currency: charge.currency,
+      reason: alert.reason,
+      livemode: event.livemode,
+    },
+    { onConflict: "stripe_event_id", ignoreDuplicates: true },
+  );
+
+  if (error) {
+    throw error;
+  }
+}
+
+// Since API version 2025-03-31.basil a Charge no longer links to its invoice.
+// Follow PaymentIntent -> invoice payments -> invoice -> subscription instead.
+async function subscriptionsForPaymentIntent(
+  stripe: Stripe,
+  paymentIntentId: string,
+) {
+  const subscriptionIds = new Set<string>();
+
+  for await (const payment of stripe.invoicePayments.list({
+    payment: { type: "payment_intent", payment_intent: paymentIntentId },
+    status: "paid",
+  })) {
+    const invoice = await stripe.invoices.retrieve(idOf(payment.invoice));
+    const subscription =
+      invoice.parent?.type === "subscription_details"
+        ? invoice.parent.subscription_details?.subscription
+        : null;
+
+    if (subscription) {
+      subscriptionIds.add(idOf(subscription));
+    }
+  }
+
+  return [...subscriptionIds];
 }
 
 // Always re-fetches the subscription from Stripe rather than trusting the
