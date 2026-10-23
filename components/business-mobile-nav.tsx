@@ -51,6 +51,10 @@ export function BusinessMobileNav({
             label: "QR posters",
             href: `/business/${businessId}/qr`,
         },
+        {
+            label: "Loyalty card",
+            href: `/business/${businessId}/loyalty`,
+        },
         ...(canManage
             ? [
                 {

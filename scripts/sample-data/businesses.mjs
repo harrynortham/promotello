@@ -39,6 +39,7 @@ export const sampleBusinesses = [
     // Food & drink
     {
         name: "Harbour Grind",
+        loyalty: { stampsRequired: 8, reward: "A free coffee of your choice" },
         category: "cafes-coffee",
         description: "A small-batch roastery and café on the water, roasting beans on site every Tuesday. Expect flat whites, seasonal filter coffee and pastries from the bakery up the road.",
         street: "Narrow Quay", area: areas.harbourside, hours: hours.cafe,
@@ -50,6 +51,7 @@ export const sampleBusinesses = [
     },
     {
         name: "Little Loaf",
+        loyalty: { stampsRequired: 6, reward: "A free loaf of sourdough" },
         category: "bakeries",
         description: "A neighbourhood bakery baking sourdough, focaccia and cinnamon buns from 5am. Loaves usually sell out by lunchtime on Saturdays.",
         street: "Gloucester Road", area: areas.gloucesterRoad, hours: hours.bakery,
@@ -61,6 +63,7 @@ export const sampleBusinesses = [
     },
     {
         name: "Forno Rosso",
+        loyalty: { stampsRequired: 8, reward: "A free pizza" },
         category: "restaurants",
         description: "Neapolitan-style pizza from a wood-fired oven, with a short list of natural wines and house-made tiramisu.",
         street: "Stokes Croft", area: areas.stokesCroft, hours: hours.restaurant,
@@ -72,6 +75,7 @@ export const sampleBusinesses = [
     },
     {
         name: "Tidewater Taproom",
+        loyalty: { stampsRequired: 10, reward: "A free pint" },
         category: "pubs-bars",
         description: "An independent brewery taproom with twelve lines of house and guest beers, board games behind the bar and a dog-friendly beer garden.",
         street: "North Street", area: areas.bedminster, hours: hours.bar,
@@ -83,6 +87,7 @@ export const sampleBusinesses = [
     },
     {
         name: "Scoop Theory",
+        loyalty: { stampsRequired: 8, reward: "A free double scoop" },
         category: "ice-cream-desserts",
         description: "Small-batch gelato made every morning with milk from a Somerset dairy. Around sixteen flavours, always two vegan.",
         street: "Princess Victoria Street", area: areas.clifton, hours: hours.cafe,
@@ -141,6 +146,7 @@ export const sampleBusinesses = [
     },
     {
         name: "Fern & Fig",
+        loyalty: { stampsRequired: 6, reward: "A free small houseplant" },
         category: "plants-flowers",
         description: "A plant shop full of houseplants, terracotta and hanging planters, with free care advice for anything you buy.",
         street: "Picton Street", area: areas.montpelier, hours: hours.shop,
@@ -176,6 +182,7 @@ export const sampleBusinesses = [
     // Health & beauty
     {
         name: "Northside Barbers",
+        loyalty: { stampsRequired: 6, reward: "A free haircut" },
         category: "hair-barbers",
         description: "Traditional cuts and skin fades, hot towel shaves and beard trims. Walk-ins welcome, or book online.",
         street: "Gloucester Road", area: areas.bishopston, hours: hours.salon,
@@ -187,6 +194,7 @@ export const sampleBusinesses = [
     },
     {
         name: "Still Point Yoga",
+        loyalty: { stampsRequired: 10, reward: "A free class" },
         category: "yoga-wellbeing",
         description: "A light-filled studio running vinyasa, yin and beginners' classes, with mats and props provided.",
         street: "Chandos Road", area: areas.redland, hours: hours.studio,

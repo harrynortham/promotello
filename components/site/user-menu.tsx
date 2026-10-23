@@ -20,6 +20,7 @@ import { UserAvatar } from "./user-avatar";
 // The same account links everywhere, so users always know where to find them.
 export const accountLinks = [
     { label: "My vouchers", href: "/dashboard" },
+    { label: "Loyalty cards", href: "/dashboard/loyalty" },
     { label: "Business dashboard", href: "/business/dashboard" },
     { label: "Account settings", href: "/account" },
 ];

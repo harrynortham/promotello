@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { connection } from "next/server";
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { qrLink, qrSvg } from "@/lib/qr";
+import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { PrintToolbar } from "./print-toolbar";
 
@@ -23,13 +23,6 @@ const sizes = {
     a4: { width: "210mm", height: "297mm", scale: 1 },
     a5: { width: "148mm", height: "210mm", scale: 0.705 },
 };
-
-async function getOrigin() {
-    const requestHeaders = await headers();
-    const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-    const protocol = requestHeaders.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-    return `${protocol}://${host}`;
-}
 
 function todayIso() {
     return new Date().toISOString().slice(0, 10);
@@ -86,7 +79,7 @@ async function Poster({ params, searchParams }: PageProps) {
         offerQuery = offerQuery.eq("id", qr.offer_id);
     }
 
-    const [{ data: offers }, origin] = await Promise.all([offerQuery, getOrigin()]);
+    const [{ data: offers }, origin] = await Promise.all([offerQuery, requestOrigin()]);
     const offer = offers?.[0] ?? null;
     const link = qrLink(origin, qr.code);
     const svg = await qrSvg(link);

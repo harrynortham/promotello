@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
-import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { FiExternalLink, FiPrinter } from "react-icons/fi";
 
@@ -14,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { qrLink, qrSvg } from "@/lib/qr";
+import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { archiveQrCode, createQrCode } from "./actions";
 
@@ -62,13 +62,6 @@ function scanWindows() {
     };
 }
 
-async function getOrigin() {
-    const requestHeaders = await headers();
-    const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-    const protocol = requestHeaders.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-    return `${protocol}://${host}`;
-}
-
 async function QrContent({ params, searchParams }: PageProps) {
     await connection();
 
@@ -113,7 +106,7 @@ async function QrContent({ params, searchParams }: PageProps) {
             .is("plan_paused_at", null)
             .order("created_at", { ascending: false }),
         businessHasPro(supabase, businessId),
-        getOrigin(),
+        requestOrigin(),
     ]);
 
     const qrCodes = (codes ?? []) as unknown as QrCode[];

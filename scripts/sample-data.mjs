@@ -200,6 +200,18 @@ async function seed({ reset }) {
             `logo for ${sample.name}`,
         );
 
+        if (sample.loyalty) {
+            check(
+                await supabase.from("loyalty_programs").insert({
+                    business_id: business.id,
+                    stamps_required: sample.loyalty.stampsRequired,
+                    reward: sample.loyalty.reward,
+                    terms: "One stamp per visit.",
+                }),
+                `loyalty card for ${sample.name}`,
+            );
+        }
+
         for (const [offerIndex, offer] of sample.offers.entries()) {
             const slug = `${slugify(offer.title)}-${randomBytes(3).toString("hex")}`;
             const imageUrl = await upload(
