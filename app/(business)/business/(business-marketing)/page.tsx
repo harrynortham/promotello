@@ -2,701 +2,304 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
     FiArrowRight,
+    FiAward,
     FiBarChart2,
     FiCheck,
-    FiCheckCircle,
     FiClock,
-    FiGift,
-    FiMapPin,
-    FiShield,
-    FiSliders,
-    FiUsers,
+    FiGrid,
+    FiHeart,
+    FiStar,
 } from "react-icons/fi";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+    Eyebrow,
+    FeatureSection,
+    FinalCta,
+    PlansSummary,
+    PrimaryActions,
+} from "@/components/business-marketing";
+import {
+    BirthdayEmail,
+    DashboardScreen,
+    FloatingNote,
+    LoyaltyCardScreen,
+    MonthlyReportEmail,
+    NewOfferEmail,
+    PosterScansCard,
+    PosterVisual,
+    StaffScanScreen,
+} from "@/components/product-visuals";
+import { Button } from "@/components/ui/button";
+import { qrSvg } from "@/lib/qr";
 
 export const metadata: Metadata = {
-    title: { absolute: "Promotello for Business | Give Customers a Reason to Visit" },
+    title: { absolute: "Promotello for Business | Turn First-Time Visitors into Regulars" },
     description:
-        "Create local promotions, control how many customers can claim them, and track when deals are used. Discover Promotello for your business.",
+        "Digital loyalty cards, QR posters, offers and follower emails for independent businesses. Free to start, set up in 15 minutes, no hardware.",
 };
 
-const benefits = [
-    {
-        icon: FiMapPin,
-        title: "Be someone’s next discovery.",
-        description:
-            "Give people browsing local deals a reason to choose your café, shop, salon, or experience.",
-    },
-    {
-        icon: FiSliders,
-        title: "Make the offer work for you.",
-        description:
-            "Choose your promotion, set its terms, and limit claims to a number your business can comfortably handle.",
-    },
-    {
-        icon: FiBarChart2,
-        title: "See what happens next.",
-        description:
-            "Follow promotion claims and used codes to understand how customers respond to your offers.",
-    },
-];
-
-const steps = [
-    {
-        number: "01",
-        title: "Introduce your business",
-        description:
-            "Add your profile, location, and opening hours so customers know who you are and where to find you.",
-    },
-    {
-        number: "02",
-        title: "Create a reason to visit",
-        description:
-            "Build a promotion with clear terms, an expiry date, and an optional claim limit. Submit it for approval.",
-    },
-    {
-        number: "03",
-        title: "Welcome customers in",
-        description:
-            "Customers claim a code, visit your business, and show it to your team. Mark it as used when they enjoy the deal.",
-    },
-];
-
-const ideas = [
-    {
-        icon: FiClock,
-        category: "Fill a quieter moment",
-        title: "Make Tuesday their new favourite.",
-        description:
-            "Give customers an extra reason to visit during the times you would like to be busier.",
-        example: "Example: a weekday lunch offer",
-    },
-    {
-        icon: FiGift,
-        category: "Introduce something new",
-        title: "Turn curiosity into a first visit.",
-        description:
-            "Put a new menu item, treatment, product, or experience in front of people looking for something different.",
-        example: "Example: an introductory treatment",
-    },
-    {
-        icon: FiUsers,
-        category: "Bring people together",
-        title: "Give them a reason to bring a friend.",
-        description:
-            "Create a promotion that makes your business part of their next catch-up, outing, or shared experience.",
-        example: "Example: a deal for two",
-    },
-];
-
-const controls = [
-    "Set an optional limit on total claims",
-    "Choose when your promotion expires",
-    "Explain exactly what is included",
-    "Give staff access to manage redemptions",
+const loop = [
+    { icon: FiGrid, title: "Get noticed", body: "A QR poster in your window and a page in the Promotello directory." },
+    { icon: FiHeart, title: "Bring them in", body: "An offer worth trying, emailed to everyone who follows you." },
+    { icon: FiAward, title: "Bring them back", body: "A loyalty card on their phone, and automatic reasons to return." },
+    { icon: FiBarChart2, title: "See it working", body: "Visits, followers and scans every month, compared with the last." },
 ];
 
 const faqs = [
     {
-        question: "What kind of promotion should I create?",
-        answer:
-            "Start with something that makes sense for your margins and your customers. That might be a weekday offer, a bundle, an introductory experience, or an added extra with a purchase.",
+        question: "Do my customers need to download an app?",
+        answer: "No. Customers scan your poster or open your page in their phone's browser and sign up in seconds. Their vouchers and loyalty cards live in their Promotello account.",
     },
     {
-        question: "Can I limit how many people claim an offer?",
-        answer:
-            "Yes. You can set a total claim limit for a promotion. Once that limit is reached, further claims are stopped.",
+        question: "Do I need a card reader or any hardware?",
+        answer: "No. Staff stamp loyalty cards and redeem vouchers by scanning the customer's QR code with their own phone's camera. Customers can't stamp their own cards.",
     },
     {
-        question: "How does my team check a customer’s deal?",
-        answer:
-            "The customer shows their redemption code at your business. Your team can find the code and mark it as used when the promotion is fulfilled.",
+        question: "How long does it take to set up?",
+        answer: "Most businesses are live in about 15 minutes: add your details, create an offer or loyalty card, and print your QR poster.",
     },
     {
-        question: "Will my promotion appear immediately?",
-        answer:
-            "Your business and promotion need approval before the promotion appears publicly. This helps keep information clear and useful for customers.",
+        question: "Who gets the emails?",
+        answer: "Only customers who choose to follow your business. Every email has an unsubscribe link, and you never have to write one: new offers and automations send themselves.",
+    },
+    {
+        question: "What does it cost?",
+        answer: `Free gets you a profile, one live offer and a QR poster. Pro adds loyalty cards, unlimited offers and follower emails, and Growth adds automations. Paid plans start with a 30-day free trial and you can cancel any time.`,
     },
 ];
 
-export default function BusinessPage() {
+export default async function BusinessPage() {
+    const posterQr = await qrSvg("https://www.promotello.com/business/demo");
+
     return (
-        <main className="overflow-hidden bg-background text-foreground">
+        <main className="overflow-hidden bg-background text-[#17233B]">
             {/* Hero */}
             <section className="relative isolate">
-                <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute right-0 top-0 -z-10 h-[34rem] w-[34rem] rounded-full bg-[#FF593F]/10 blur-3xl"
-                />
+                <div aria-hidden="true" className="pointer-events-none absolute -right-40 top-0 -z-10 h-[36rem] w-[36rem] rounded-full bg-[#FF593F]/10 blur-3xl" />
 
-                <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-2 lg:gap-16">
+                <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-[1.05fr_1fr]">
                     <div>
-                        <Badge variant="secondary">
-                            Meet your next local customer
-                        </Badge>
-
-                        <h1 className="mt-6 max-w-xl text-5xl font-semibold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">
-                            Give them a reason to{" "}
-                            <span className="text-[#FF593F]">
-                                walk through your door.
-                            </span>
+                        <Eyebrow>For independent cafés, shops and salons</Eyebrow>
+                        <h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+                            Turn first-time visitors into{" "}
+                            <span className="text-[#FF593F]">regulars.</span>
                         </h1>
-
-                        <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
-                            You bring the great business. Promotello helps you
-                            share an offer worth discovering—with tools to
-                            control your promotions and track how they’re used.
+                        <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
+                            Digital loyalty cards, QR posters, offers and follower emails in one simple app.
+                            It works from day one with your own customers. No hardware, no contract.
                         </p>
 
-                        <div className="mt-8 flex flex-wrap gap-3">
-                            <Button
-                                render={
-                                    <Link href="/business/register" />
-                                }
-                                nativeButton={false}
-                                size="lg"
-                            >
-                                Get started
-                                <FiArrowRight aria-hidden="true" />
-                            </Button>
-
-                            <Button
-                                render={
-                                    <Link href="/business/pricing" />
-                                }
-                                nativeButton={false}
-                                variant="outline"
-                                size="lg"
-                            >
-                                Explore pricing
-                            </Button>
+                        <div className="mt-8">
+                            <PrimaryActions />
                         </div>
 
-                        <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm text-muted-foreground">
-                            {[
-                                "Your offer",
-                                "Your claim limits",
-                                "Your terms",
-                            ].map((item) => (
-                                <span
-                                    key={item}
-                                    className="inline-flex items-center gap-2"
-                                >
-                                    <FiCheck
-                                        aria-hidden="true"
-                                        className="text-[#FF593F]"
-                                    />
+                        <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#17233B]/65">
+                            {["Free to start", "No app for customers to download", "Set up in 15 minutes"].map((item) => (
+                                <li key={item} className="inline-flex items-center gap-2">
+                                    <FiCheck aria-hidden="true" className="text-[#FF593F]" />
                                     {item}
-                                </span>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
 
-                        <p className="mt-7 text-sm text-muted-foreground">
-                            Already have an account?{" "}
-                            <Link
-                                href="/business/dashboard"
-                                className="font-medium text-foreground underline underline-offset-4"
-                            >
+                        <p className="mt-7 text-sm text-[#17233B]/55">
+                            Already on Promotello?{" "}
+                            <Link href="/business/dashboard" className="font-medium text-[#17233B] underline underline-offset-4">
                                 Open your dashboard
                             </Link>
                         </p>
                     </div>
 
-                    {/* Replace this visual area with a generated hero asset later. */}
-                    <div className="relative pb-8 sm:px-4">
-                        <div className="relative overflow-hidden rounded-[2rem] border border-[#17233B]/10 bg-[#FFF4E8] p-6 sm:p-8">
-                            <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
-                                    Your next visit starts here
-                                </span>
-
-                                <FiMapPin
-                                    aria-hidden="true"
-                                    className="size-5 text-[#FF593F]"
-                                />
-                            </div>
-
-                            <div className="relative mt-6 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl bg-[#17233B] p-8">
-                                <div
-                                    aria-hidden="true"
-                                    className="absolute -right-12 -top-12 size-52 rounded-full bg-[#FF593F]/30"
-                                />
-
-                                <div
-                                    aria-hidden="true"
-                                    className="absolute -bottom-16 -left-12 size-64 rounded-full border-[24px] border-white/10"
-                                />
-
-                                <div className="relative max-w-xs text-center text-white">
-                                    <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-white/10">
-                                        <FiGift
-                                            aria-hidden="true"
-                                            className="size-8 text-[#FF8F7D]"
-                                        />
-                                    </span>
-
-                                    <p className="mt-6 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-                                        A new favourite.
-                                        <br />
-                                        Just around the corner.
-                                    </p>
-
-                                    <p className="mt-4 text-sm leading-6 text-white/65">
-                                        Local businesses. Good discoveries.
-                                        More reasons to visit.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="mt-5 flex items-center gap-3">
-                                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-[#FF593F]">
-                                    <FiMapPin aria-hidden="true" />
-                                </span>
-
-                                <div>
-                                    <p className="text-sm font-semibold text-[#17233B]">
-                                        Make your business part of their plans
-                                    </p>
-
-                                    <p className="mt-1 text-xs text-[#17233B]/60">
-                                        From first discovery to a visit in person
-                                    </p>
-                                </div>
-                            </div>
+                    <div className="relative mx-auto w-full max-w-xl pb-10 lg:pb-0">
+                        <DashboardScreen />
+                        <div className="absolute -bottom-6 -right-2 hidden scale-[0.82] sm:block lg:-right-10">
+                            <LoyaltyCardScreen />
                         </div>
-
-                        <div className="relative mx-4 -mt-5 flex items-center gap-3 rounded-2xl border bg-background p-4 shadow-lg sm:mx-8">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                                <FiCheckCircle
-                                    aria-hidden="true"
-                                    className="size-5"
-                                />
-                            </span>
-
-                            <div>
-                                <p className="text-sm font-semibold">
-                                    Built around a real visit
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    Discover. Claim. Visit. Enjoy.
-                                </p>
-                            </div>
-                        </div>
+                        <FloatingNote
+                            icon="check"
+                            title="Ellie earned a free coffee"
+                            detail="Her 10th visit this month"
+                            className="absolute -left-4 bottom-4 hidden sm:flex lg:-left-10"
+                        />
                     </div>
                 </div>
             </section>
 
-            {/* Benefits */}
-            <section className="border-y bg-muted/30">
-                <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 sm:px-10 md:grid-cols-3">
-                    {benefits.map((benefit) => {
-                        const Icon = benefit.icon;
-
-                        return (
-                            <div key={benefit.title}>
-                                <Icon
-                                    aria-hidden="true"
-                                    className="size-6 text-[#FF593F]"
-                                />
-
-                                <h2 className="mt-4 text-xl font-semibold tracking-tight">
-                                    {benefit.title}
-                                </h2>
-
-                                <p className="mt-3 leading-7 text-muted-foreground">
-                                    {benefit.description}
-                                </p>
+            {/* The loop */}
+            <section className="border-y border-[#17233B]/10 bg-[#FFF8F0]">
+                <div className="mx-auto grid max-w-7xl gap-8 px-6 py-14 sm:grid-cols-2 sm:px-10 lg:grid-cols-4">
+                    {loop.map(({ icon: Icon, title, body }, index) => (
+                        <div key={title}>
+                            <div className="flex items-center gap-3">
+                                <span className="flex size-10 items-center justify-center rounded-full bg-white text-[#FF593F] shadow-sm">
+                                    <Icon aria-hidden="true" />
+                                </span>
+                                <span className="text-xs font-semibold text-[#17233B]/40">0{index + 1}</span>
                             </div>
-                        );
-                    })}
+                            <h2 className="mt-4 text-lg font-semibold">{title}</h2>
+                            <p className="mt-2 leading-7 text-[#17233B]/65">{body}</p>
+                        </div>
+                    ))}
                 </div>
             </section>
 
-            {/* Promotion ideas */}
-            <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
-                <div className="max-w-2xl">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
-                        Start with an opportunity
-                    </p>
+            <FeatureSection
+                eyebrow="Loyalty cards"
+                title="A stamp card that never gets lost in a coat pocket."
+                body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves."
+                points={[
+                    "Choose how many stamps and what the reward is",
+                    "Staff use their own phone: no card reader",
+                    "See members, stamps and rewards earned",
+                ]}
+                visual={
+                    <div className="flex items-end gap-4">
+                        <LoyaltyCardScreen />
+                        <div className="hidden translate-y-8 sm:block">
+                            <StaffScanScreen />
+                        </div>
+                    </div>
+                }
+            />
 
-                    <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                        What would a few more visits mean for your business?
-                    </h2>
+            <FeatureSection
+                tinted
+                reverse
+                eyebrow="QR posters"
+                title="Turn passers-by into followers."
+                body="Print a poster for your window, your till or your tables. A scan takes people to your page, where they can follow you, join your loyalty card or claim your offer."
+                points={[
+                    "A ready-to-print poster for each spot",
+                    "See how many scans each one gets",
+                    "Works with any phone camera",
+                ]}
+                visual={
+                    <div className="relative flex items-center">
+                        <PosterVisual qrSvg={posterQr} />
+                        <div className="relative z-10 -ml-12 mt-40 hidden sm:block">
+                            <PosterScansCard />
+                        </div>
+                    </div>
+                }
+            />
 
-                    <p className="mt-5 text-lg leading-8 text-muted-foreground">
-                        A promotion can do more than reduce a price. Use it to
-                        introduce your business, showcase something special,
-                        or give customers a reason to visit at a different time.
-                    </p>
-                </div>
+            <FeatureSection
+                eyebrow="Offers and followers"
+                title="Every new offer lands in your followers' inboxes."
+                body="Create an offer in a minute and choose how many people can claim it. On Pro it goes live straight away, and everyone who follows you gets an email. Staff redeem vouchers by scanning."
+                points={[
+                    "Claim limits, expiry dates and clear terms",
+                    "Vouchers redeemed in seconds at the till",
+                    "Customers who've just visited are asked for a Google review",
+                ]}
+                visual={
+                    <div className="relative w-full max-w-sm">
+                        <NewOfferEmail />
+                        <FloatingNote
+                            icon="star"
+                            title="21 Google review clicks"
+                            detail="From customers who just visited"
+                            className="absolute -bottom-16 -right-4 sm:-right-12"
+                        />
+                    </div>
+                }
+            />
 
-                <div className="mt-10 grid gap-6 md:grid-cols-3">
-                    {ideas.map((idea) => {
-                        const Icon = idea.icon;
+            <FeatureSection
+                tinted
+                reverse
+                eyebrow="Results"
+                title="Know it's worth it."
+                body="Your dashboard shows views, claims, visits, QR scans and loyalty stamps for the last 30 days, compared with the 30 before. On Growth, a summary lands in your inbox on the 1st of every month."
+                points={[
+                    "Page and offer views, claims and visits",
+                    "Scans for each QR poster",
+                    "A monthly value report on Growth",
+                ]}
+                visual={<MonthlyReportEmail />}
+            />
 
-                        return (
-                            <Card
-                                key={idea.title}
-                                className="flex flex-col rounded-3xl shadow-none"
-                            >
-                                <CardHeader>
-                                    <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#FF593F]">
-                                        <Icon
-                                            aria-hidden="true"
-                                            className="size-6"
-                                        />
-                                    </span>
-
-                                    <p className="pt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        {idea.category}
-                                    </p>
-
-                                    <CardTitle className="text-2xl leading-tight">
-                                        {idea.title}
-                                    </CardTitle>
-                                </CardHeader>
-
-                                <CardContent className="flex flex-1 flex-col">
-                                    <p className="leading-7 text-muted-foreground">
-                                        {idea.description}
-                                    </p>
-
-                                    <p className="mt-auto pt-6 text-sm font-medium">
-                                        {idea.example}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            </section>
-
-            {/* Business control */}
+            {/* Growth */}
             <section className="bg-[#17233B] text-white">
-                <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 sm:px-10 sm:py-24 lg:grid-cols-2">
+                <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 sm:px-10 lg:grid-cols-2 lg:py-24">
                     <div>
-                        <Badge
-                            variant="outline"
-                            className="border-white/25 text-white"
-                        >
-                            You stay in control
-                        </Badge>
-
-                        <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                            A good promotion should work for your business,
-                            too.
-                        </h2>
-
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8F7D]">Growth plan</p>
+                        <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Marketing that runs while you work.</h2>
                         <p className="mt-5 text-lg leading-8 text-white/70">
-                            Decide what you can offer, how long it lasts, and
-                            how many customers can claim it. Clear boundaries
-                            help you welcome new customers with confidence.
+                            Switch on an automation once and Promotello keeps sending it, each with a personal
+                            reward your staff redeem like any voucher.
                         </p>
-
-                        <ul className="mt-7 space-y-4">
-                            {controls.map((item) => (
-                                <li
-                                    key={item}
-                                    className="flex items-start gap-3"
-                                >
-                                    <FiCheckCircle
-                                        aria-hidden="true"
-                                        className="mt-1 size-5 shrink-0 text-[#FF8F7D]"
-                                    />
-
-                                    <span className="text-white/85">
-                                        {item}
+                        <ul className="mt-8 grid gap-5 sm:grid-cols-2">
+                            {[
+                                { icon: FiHeart, title: "Welcome", body: "A thank-you reward for every new follower." },
+                                { icon: FiStar, title: "Birthday", body: "A treat on their birthday, every year." },
+                                { icon: FiArrowRight, title: "Win-back", body: "A nudge for customers you haven't seen in a while." },
+                                { icon: FiClock, title: "Quiet hours", body: "Offers that only work when you're quiet, like Monday 2 to 4pm." },
+                            ].map(({ icon: Icon, title, body }) => (
+                                <li key={title} className="flex gap-3">
+                                    <Icon aria-hidden="true" className="mt-1 shrink-0 text-[#FF8F7D]" />
+                                    <span>
+                                        <span className="block font-semibold">{title}</span>
+                                        <span className="block text-sm text-white/65">{body}</span>
                                     </span>
                                 </li>
                             ))}
                         </ul>
-
-                        <Button
-                            render={
-                                <Link href="/business/features" />
-                            }
-                            nativeButton={false}
-                            variant="secondary"
-                            size="lg"
-                            className="mt-8"
-                        >
-                            Explore the features
-                            <FiArrowRight aria-hidden="true" />
-                        </Button>
                     </div>
-
-                    <div className="rounded-3xl border border-white/15 bg-white/5 p-6 sm:p-8">
-                        <div className="flex items-center justify-between gap-4">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-white/50">
-                                    A promotion on your terms
-                                </p>
-
-                                <h3 className="mt-3 text-2xl font-semibold">
-                                    Set the details.
-                                    <br />
-                                    Make it yours.
-                                </h3>
-                            </div>
-
-                            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-                                <FiSliders
-                                    aria-hidden="true"
-                                    className="size-6 text-[#FF8F7D]"
-                                />
-                            </span>
-                        </div>
-
-                        <div className="mt-8 space-y-3">
-                            {[
-                                {
-                                    label: "The offer",
-                                    value: "Something customers will love",
-                                },
-                                {
-                                    label: "Claim limit",
-                                    value: "A number that works for you",
-                                },
-                                {
-                                    label: "Expiry",
-                                    value: "A clear end date",
-                                },
-                                {
-                                    label: "Terms",
-                                    value: "Clear expectations for everyone",
-                                },
-                            ].map((row) => (
-                                <div
-                                    key={row.label}
-                                    className="rounded-2xl bg-white/5 p-4"
-                                >
-                                    <p className="text-xs text-white/50">
-                                        {row.label}
-                                    </p>
-
-                                    <p className="mt-1 text-sm font-medium">
-                                        {row.value}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="flex justify-center">
+                        <BirthdayEmail />
                     </div>
                 </div>
             </section>
 
-            {/* How it works */}
-            <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
-                <div className="mx-auto max-w-2xl text-center">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
-                        From profile to promotion
-                    </p>
-
-                    <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                        Your next chapter starts with one offer.
-                    </h2>
-
-                    <p className="mt-5 text-lg leading-8 text-muted-foreground">
-                        Start with a business profile and a promotion you feel
-                        good about. Build from there as you learn what customers
-                        respond to.
-                    </p>
-                </div>
-
-                <div className="mt-12 grid gap-10 md:grid-cols-3">
-                    {steps.map((step) => (
-                        <div key={step.number}>
-                            <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-sm font-semibold text-[#FF593F]">
-                                {step.number}
-                            </span>
-
-                            <h3 className="mt-5 text-xl font-semibold">
-                                {step.title}
-                            </h3>
-
-                            <p className="mt-3 leading-7 text-muted-foreground">
-                                {step.description}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="mt-10 text-center">
-                    <Button
-                        render={
-                            <Link href="/business/how-it-works" />
-                        }
-                        nativeButton={false}
-                        variant="outline"
-                    >
-                        Take a closer look
+            {/* Pricing */}
+            <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10 lg:py-24">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="max-w-2xl">
+                        <Eyebrow>Pricing</Eyebrow>
+                        <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Upgrade when it&apos;s working.</h2>
+                        <p className="mt-4 text-lg text-[#17233B]/70">
+                            Paid plans include a 30-day free trial. The first 50 businesses get Pro for £19 a month, for life.
+                        </p>
+                    </div>
+                    <Button render={<Link href="/business/pricing" />} nativeButton={false} variant="outline">
+                        Full pricing
                         <FiArrowRight aria-hidden="true" />
                     </Button>
                 </div>
-            </section>
-
-            {/* Trust */}
-            <section className="border-y bg-[#FFF8F0]">
-                <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:px-10 lg:grid-cols-[0.8fr_1.2fr]">
-                    <div>
-                        <FiShield
-                            aria-hidden="true"
-                            className="size-8 text-[#FF593F]"
-                        />
-
-                        <h2 className="mt-5 text-3xl font-semibold tracking-tight">
-                            Know what you’re getting.
-                        </h2>
-                    </div>
-
-                    <div>
-                        <p className="text-lg leading-8 text-muted-foreground">
-                            A promotion’s results depend on your offer,
-                            location, availability, and customer demand.
-                            Promotello gives you tools to publish it clearly
-                            and track claims and usage, so you can judge what
-                            works for your business.
-                        </p>
-
-                        <p className="mt-5 leading-7 text-muted-foreground">
-                            Explore the features and pricing before you decide.
-                            If you have questions, talk to us.
-                        </p>
-
-                        <div className="mt-6 flex flex-wrap gap-3">
-                            <Button
-                                render={
-                                    <Link href="/business/pricing" />
-                                }
-                                nativeButton={false}
-                                variant="outline"
-                            >
-                                View pricing
-                            </Button>
-
-                            <Button
-                                render={
-                                    <Link href="/business/contact" />
-                                }
-                                nativeButton={false}
-                                variant="ghost"
-                            >
-                                Ask a question
-                                <FiArrowRight aria-hidden="true" />
-                            </Button>
-                        </div>
-                    </div>
+                <div className="mt-10">
+                    <PlansSummary />
                 </div>
             </section>
 
-            {/* FAQs */}
-            <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
-                <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+            {/* FAQ */}
+            <section className="border-t border-[#17233B]/10 bg-[#FFF8F0]">
+                <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 sm:px-10 lg:grid-cols-[1fr_2fr]">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
-                            Before you get started
+                        <Eyebrow>Questions</Eyebrow>
+                        <h2 className="mt-4 text-3xl font-semibold tracking-tight">Good to know</h2>
+                        <p className="mt-4 text-[#17233B]/65">
+                            More in{" "}
+                            <Link href="/business/faq" className="font-medium text-[#FF593F] underline underline-offset-4">
+                                the full FAQ
+                            </Link>
+                            .
                         </p>
-
-                        <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                            A few useful answers.
-                        </h2>
-
-                        <p className="mt-5 leading-7 text-muted-foreground">
-                            Want to talk through your business or promotion
-                            idea? We’d like to hear from you.
-                        </p>
-
-                        <Button
-                            render={
-                                <Link href="/business/contact" />
-                            }
-                            nativeButton={false}
-                            variant="outline"
-                            className="mt-6"
-                        >
-                            Contact us
-                        </Button>
                     </div>
-
-                    <div className="grid gap-4">
+                    <dl className="divide-y divide-[#17233B]/10">
                         {faqs.map((faq) => (
-                            <Card
-                                key={faq.question}
-                                className="rounded-2xl shadow-none"
-                            >
-                                <CardHeader>
-                                    <CardTitle className="text-lg leading-7">
-                                        {faq.question}
-                                    </CardTitle>
-                                </CardHeader>
-
-                                <CardContent>
-                                    <CardDescription className="text-base leading-7">
-                                        {faq.answer}
-                                    </CardDescription>
-                                </CardContent>
-                            </Card>
+                            <div key={faq.question} className="py-5 first:pt-0">
+                                <dt className="font-semibold">{faq.question}</dt>
+                                <dd className="mt-2 leading-7 text-[#17233B]/70">{faq.answer}</dd>
+                            </div>
                         ))}
-                    </div>
+                    </dl>
                 </div>
             </section>
 
-            {/* Final CTA */}
-            <section className="mx-auto max-w-7xl px-6 pb-20 sm:px-10">
-                <div className="relative overflow-hidden rounded-[2rem] bg-[#FFF4E8] px-6 py-14 text-center sm:px-12 sm:py-20">
-                    <div
-                        aria-hidden="true"
-                        className="absolute -right-16 -top-16 size-64 rounded-full bg-[#FF593F]/10"
-                    />
-
-                    <div className="relative mx-auto max-w-2xl">
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
-                            Give your business a new introduction
-                        </p>
-
-                        <h2 className="mt-5 text-4xl font-semibold tracking-tight text-[#17233B] sm:text-5xl">
-                            Someone’s next favourite could be you.
-                        </h2>
-
-                        <p className="mt-5 text-lg leading-8 text-[#17233B]/70">
-                            Help them find you. Create your business profile
-                            and start planning your first promotion.
-                        </p>
-
-                        <div className="mt-8 flex flex-wrap justify-center gap-3">
-                            <Button
-                                render={
-                                    <Link href="/business/register" />
-                                }
-                                nativeButton={false}
-                                size="lg"
-                            >
-                                Get started with Promotello
-                                <FiArrowRight aria-hidden="true" />
-                            </Button>
-
-                            <Button
-                                render={
-                                    <Link href="/business/pricing" />
-                                }
-                                nativeButton={false}
-                                variant="outline"
-                                size="lg"
-                            >
-                                View pricing
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <div className="pt-20">
+                <FinalCta />
+            </div>
         </main>
     );
 }
