@@ -18,7 +18,7 @@ import {
 } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { openBillingPortal, startCheckout } from "./actions";
-import { SubmitButton } from "./submit-button";
+import { SubmitButton } from "@/components/submit-button";
 
 type PageProps = {
     params: Promise<{

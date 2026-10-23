@@ -24,6 +24,10 @@ const baseLinks = [
         path: "/redemptions",
     },
     {
+        label: "QR posters",
+        path: "/qr",
+    },
+    {
         label: "Analytics",
         path: "/analytics",
     },
