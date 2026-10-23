@@ -33,6 +33,7 @@ import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
+import { FollowButton } from "@/components/follow-button";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { LoyaltyCallout } from "./loyalty-callout";
 
@@ -195,6 +196,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             .maybeSingle(),
         supabase.auth.getUser(),
     ]);
+
+    const { data: follow } = viewer
+        ? await supabase
+            .from("business_followers")
+            .select("business_id")
+            .eq("business_id", businessId)
+            .eq("user_id", viewer.id)
+            .maybeSingle()
+        : { data: null };
 
     const { data: loyaltyCard } =
         loyaltyProgram && viewer
@@ -428,6 +438,12 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 >
                                     View promotions
                                 </Button>
+
+                                <FollowButton
+                                    businessId={business.id}
+                                    initialFollowing={Boolean(follow)}
+                                    isSignedIn={Boolean(viewer)}
+                                />
 
                                 {directionsUrl && (
                                     <Button

@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import {
     FiArrowRight,
     FiCheck,
-    FiClock,
     FiMessageCircle,
     FiSliders,
     FiUsers,
@@ -50,11 +49,8 @@ const proFeatures = [
     "Digital loyalty stamp cards, stamped by your staff",
     "A QR poster for every spot, with scans compared",
     "Google review prompts after a visit",
+    "Followers emailed whenever you post a new offer",
     "Paused promotions come back as soon as you upgrade",
-];
-
-const comingToPro = [
-    "Followers and new-offer emails",
 ];
 
 const principles = [
@@ -346,25 +342,6 @@ export default function BusinessPricingPage() {
                                 </p>
 
                                 <FeatureList features={proFeatures} />
-
-                                <p className="mt-8 flex items-center gap-2 text-sm font-semibold">
-                                    <FiClock
-                                        aria-hidden="true"
-                                        className="size-4 text-primary"
-                                    />
-                                    Coming to Pro
-                                </p>
-
-                                <ul className="mt-4 space-y-3">
-                                    {comingToPro.map((feature) => (
-                                        <li
-                                            key={feature}
-                                            className="text-sm text-muted-foreground"
-                                        >
-                                            {feature}
-                                        </li>
-                                    ))}
-                                </ul>
                             </CardContent>
                         </Card>
                     </div>

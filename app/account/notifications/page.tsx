@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
+import { FollowedBusinesses, type FollowedBusiness } from "./followed-businesses";
 import NotificationSettingsForm from "./notification-settings-form";
 
 async function NotificationsContent() {
@@ -20,10 +21,17 @@ async function NotificationsContent() {
         redirect("/login");
     }
 
+    const { data: follows } = await supabase
+        .from("business_followers")
+        .select("business_id, emails_enabled, businesses ( name, logo_url )")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
     const { data: settings, error } = await supabase
         .from("account_notification_settings")
         .select(
             `
+                followed_business_emails_enabled,
                 local_deals_enabled,
                 product_updates_enabled,
                 feedback_requests_enabled
@@ -61,8 +69,14 @@ async function NotificationsContent() {
     return (
         <NotificationSettingsForm
             email={user.email ?? ""}
+            followedBusinesses={
+                <FollowedBusinesses
+                    follows={(follows ?? []) as unknown as FollowedBusiness[]}
+                />
+            }
             initialSettings={
                 settings ?? {
+                    followed_business_emails_enabled: true,
                     local_deals_enabled: false,
                     product_updates_enabled: false,
                     feedback_requests_enabled: false,

@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
                 // Staff pages opened by scanning a customer's card or voucher.
                 "/stamp/",
                 "/redeem/",
+                "/unsubscribe/",
             ],
         },
         sitemap: absoluteUrl("/sitemap.xml"),

@@ -27,6 +27,8 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { notifyFollowersOfApprovedOffer } from "./actions";
+
 type Offer = {
     id: string;
     title: string;
@@ -178,6 +180,13 @@ export default function AdminOffersPage() {
             setErrorMessage(error.message);
             setActiveOfferId("");
             return;
+        }
+
+        if (decision === "approved") {
+            // Followers are emailed once per offer, so a retry is harmless.
+            await notifyFollowersOfApprovedOffer(offerId).catch((notifyError) =>
+                console.error("Could not email followers", notifyError),
+            );
         }
 
         setReviewAction(null);

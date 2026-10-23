@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     FiBell,
     FiGift,
+    FiHeart,
     FiMail,
     FiMessageCircle,
     FiShield,
@@ -26,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/utils/supabase/client";
 
 type NotificationSettings = {
+    followed_business_emails_enabled: boolean;
     local_deals_enabled: boolean;
     product_updates_enabled: boolean;
     feedback_requests_enabled: boolean;
@@ -34,6 +36,7 @@ type NotificationSettings = {
 type NotificationSettingsFormProps = {
     email: string;
     initialSettings: NotificationSettings;
+    followedBusinesses: React.ReactNode;
 };
 
 type Feedback = {
@@ -42,6 +45,13 @@ type Feedback = {
 } | null;
 
 const preferences = [
+    {
+        key: "followed_business_emails_enabled",
+        title: "New offers from businesses you follow",
+        description:
+            "An email when a business you follow posts a new offer. You can also turn this off for one business below.",
+        icon: FiHeart,
+    },
     {
         key: "local_deals_enabled",
         title: "Deals & discoveries",
@@ -75,6 +85,7 @@ function settingsMatch(
     second: NotificationSettings,
 ) {
     return (
+        first.followed_business_emails_enabled === second.followed_business_emails_enabled &&
         first.local_deals_enabled === second.local_deals_enabled &&
         first.product_updates_enabled === second.product_updates_enabled &&
         first.feedback_requests_enabled === second.feedback_requests_enabled
@@ -84,6 +95,7 @@ function settingsMatch(
 export default function NotificationSettingsForm({
     email,
     initialSettings,
+    followedBusinesses,
 }: NotificationSettingsFormProps) {
     const router = useRouter();
     const busyRef = useRef(false);
@@ -313,6 +325,8 @@ export default function NotificationSettingsForm({
                     </form>
                 </CardContent>
             </Card>
+
+            {followedBusinesses}
 
             <Card className="rounded-2xl bg-muted/30 shadow-none">
                 <CardHeader>
