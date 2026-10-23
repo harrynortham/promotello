@@ -26,6 +26,8 @@ type RedeemButtonProps = {
     isFullyClaimed?: boolean;
     isExpired?: boolean;
     initialRedemption: Redemption | null;
+    // Where to come back to after signing in or creating an account.
+    returnPath: string;
 };
 
 function parseRedemption(value: unknown): Redemption | null {
@@ -60,6 +62,7 @@ export default function RedeemButton({
     isFullyClaimed = false,
     isExpired = false,
     initialRedemption,
+    returnPath,
 }: RedeemButtonProps) {
     const router = useRouter();
     const busyRef = useRef(false);
@@ -192,7 +195,7 @@ export default function RedeemButton({
                 : "Your claimed voucher";
 
         return (
-            <Card className="mt-8 border-[#17233B] bg-[#17233B] text-white">
+            <Card className="mt-6 border-[#17233B] bg-[#17233B] text-white">
                 <CardContent className="p-6 text-center">
                     <Badge
                         variant="outline"
@@ -246,7 +249,7 @@ export default function RedeemButton({
 
     if (isExpired) {
         return (
-            <Alert className="mt-8 border-amber-200 bg-amber-50 text-amber-800">
+            <Alert className="mt-6 border-amber-200 bg-amber-50 text-amber-800">
                 <AlertTitle>This promotion has expired</AlertTitle>
 
                 <AlertDescription>
@@ -268,7 +271,7 @@ export default function RedeemButton({
 
     if (isFullyClaimed) {
         return (
-            <Alert className="mt-8 border-amber-200 bg-amber-50 text-amber-800">
+            <Alert className="mt-6 border-amber-200 bg-amber-50 text-amber-800">
                 <AlertTitle>
                     This offer has been fully claimed
                 </AlertTitle>
@@ -294,9 +297,9 @@ export default function RedeemButton({
 
     if (!isSignedIn) {
         return (
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 space-y-3">
                 <Button
-                    render={<Link href="/login" />}
+                    render={<Link href={`/login?next=${encodeURIComponent(returnPath)}`} />}
                     nativeButton={false}
                     size="lg"
                     className="w-full"
@@ -307,10 +310,10 @@ export default function RedeemButton({
                 <p className="text-center text-sm text-muted-foreground">
                     New to Promotello?{" "}
                     <Link
-                        href="/signup"
+                        href={`/signup?next=${encodeURIComponent(returnPath)}`}
                         className="font-medium underline underline-offset-4"
                     >
-                        Create an account
+                        Create a free account
                     </Link>
                 </p>
             </div>
@@ -318,7 +321,7 @@ export default function RedeemButton({
     }
 
     return (
-        <div className="mt-8">
+        <div className="mt-6">
             <Button
                 type="button"
                 size="lg"

@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/utils/supabase/client";
+import { initialsFor } from "@/lib/user-profile";
 
 type ProfileFormProps = {
     initialProfile: {
@@ -41,18 +42,6 @@ const imageExtensions: Record<string, string> = {
     "image/png": "png",
     "image/webp": "webp",
 };
-
-function getInitials(name: string, email: string) {
-    const words = name.trim().split(/\s+/).filter(Boolean);
-
-    return words.length
-        ? words
-            .slice(0, 2)
-            .map((word) => word.charAt(0))
-            .join("")
-            .toUpperCase()
-        : email.charAt(0).toUpperCase() || "U";
-}
 
 export default function ProfileForm({
     initialProfile,
@@ -314,7 +303,7 @@ export default function ProfileForm({
                                 />
                             ) : (
                                 <span aria-label="Your initials">
-                                    {getInitials(name, initialProfile.email)}
+                                    {initialsFor(name, initialProfile.email)}
                                 </span>
                             )}
                         </div>

@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { safeNextPath } from "@/lib/redirects";
 import { createClient } from "@/utils/supabase/client";
 
 function LoginContent() {
@@ -28,16 +29,18 @@ function LoginContent() {
     const searchParams = useSearchParams();
     const submittingRef = useRef(false);
 
-    const isBusinessLogin =
-        searchParams.get("next") === "/business/dashboard";
+    const requestedNext = safeNextPath(searchParams.get("next"));
 
-    const destination = isBusinessLogin
-        ? "/business/dashboard"
-        : "/dashboard";
+    const isBusinessLogin = requestedNext === "/business/dashboard";
+
+    // Return to the page that asked for sign-in, e.g. an offer being claimed.
+    const destination = requestedNext ?? "/dashboard";
 
     const registerHref = isBusinessLogin
         ? "/business/register"
-        : "/signup";
+        : requestedNext
+            ? `/signup?next=${encodeURIComponent(requestedNext)}`
+            : "/signup";
 
     const hasCallbackError = Boolean(searchParams.get("error"));
 

@@ -1,5 +1,5 @@
-import Header from "@/components/business-marketing-nav"
-import Footer from "@/components/business-footer"
+import { MarketingFooter } from "@/components/site/footers"
+import { BusinessMarketingHeader } from "@/components/site/headers"
 
 export default function MarketingLayout({
     children,
@@ -7,8 +7,8 @@ export default function MarketingLayout({
     children: React.ReactNode
 }) {
     return <div className="flex flex-col min-h-dvh ">
-        <Header />
+        <BusinessMarketingHeader />
         {children}
-        <Footer />
+        <MarketingFooter variant="business" />
     </div>
 }

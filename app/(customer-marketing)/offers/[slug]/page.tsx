@@ -6,15 +6,21 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
 import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-} from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+    FiCalendar,
+    FiChevronRight,
+    FiClock,
+    FiMapPin,
+    FiNavigation,
+    FiUsers,
+} from "react-icons/fi";
+
+import { SectionHeading } from "@/components/listing-ui";
+import { OfferCard } from "@/components/offer-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { addressParts, directionsUrl } from "@/lib/address";
+import { topLevelFor } from "@/lib/categories";
+import { getCategories, getLiveOffers } from "@/lib/listings";
 import { truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
@@ -29,26 +35,12 @@ type OfferPageProps = {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
-            <div className="mx-auto w-full max-w-2xl">
-                <Skeleton className="h-9 w-40 rounded-md" />
-
-                <div className="mt-6 overflow-hidden rounded-xl border border-[#17233B]/10 bg-white">
-                    <Skeleton className="h-72 w-full rounded-none" />
-
-                    <div className="space-y-6 p-6 md:p-10">
-                        <Skeleton className="h-20 w-20 rounded-xl" />
-                        <Skeleton className="h-12 w-3/4 rounded-md" />
-                        <Skeleton className="h-24 w-full rounded-md" />
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <Skeleton className="h-24 rounded-xl" />
-                            <Skeleton className="h-24 rounded-xl" />
-                        </div>
-
-                        <Skeleton className="h-32 rounded-md" />
-                        <Skeleton className="h-12 rounded-md" />
-                    </div>
+        <main className="min-h-screen bg-[#FFF8F0] px-6 pt-8 sm:px-10">
+            <div className="mx-auto max-w-6xl">
+                <Skeleton className="h-5 w-56 rounded-md" />
+                <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
+                    <Skeleton className="aspect-[16/9] rounded-3xl lg:aspect-[4/3]" />
+                    <Skeleton className="h-96 rounded-3xl" />
                 </div>
             </div>
         </main>
@@ -134,6 +126,7 @@ async function OfferContent({ params }: OfferPageProps) {
                 expires_at,
                 terms,
                 image_url,
+                category_id,
                 max_redemptions,
                 redemption_count,
                 businesses!inner (
@@ -174,27 +167,10 @@ async function OfferContent({ params }: OfferPageProps) {
     }
 
     const locations = business.business_locations;
-
-    const location = Array.isArray(locations)
-        ? locations[0]
-        : locations;
-
-    const fullAddress = location
-        ? [
-            location.address_line_1,
-            location.city,
-            location.region,
-            location.postal_code,
-        ]
-            .filter(Boolean)
-            .join(", ")
-        : "";
-
-    const directionsUrl = fullAddress
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            fullAddress,
-        )}`
-        : null;
+    const location = Array.isArray(locations) ? locations[0] : locations;
+    const address = addressParts(location);
+    const directions = directionsUrl(address);
+    const area = location?.region || location?.city || null;
 
     const {
         data: { user },
@@ -221,6 +197,11 @@ async function OfferContent({ params }: OfferPageProps) {
         Boolean(offer.expires_at) &&
         offer.expires_at.slice(0, 10) < today;
 
+    const daysLeft = Math.round(
+        (new Date(offer.expires_at).getTime() - new Date(today).getTime()) /
+        86_400_000,
+    );
+
     const remainingClaims =
         offer.max_redemptions === null
             ? null
@@ -232,215 +213,284 @@ async function OfferContent({ params }: OfferPageProps) {
 
     const isFullyClaimed = remainingClaims === 0;
 
-    return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
-            <div className="mx-auto w-full max-w-2xl">
-                <Button
-                    render={<Link href="/offers" />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                    className="mb-6"
-                >
-                    ← Back to all deals
-                </Button>
+    // Related offers come from the public listings (what any visitor sees).
+    const [groups, liveOffers] = await Promise.all([
+        getCategories(),
+        getLiveOffers(),
+    ]);
 
-                <Card className="overflow-hidden border-[#17233B]/10 shadow-sm">
-                    {offer.image_url && (
-                        <div className="relative aspect-[16/8] w-full overflow-hidden bg-[#FFF8F0]">
+    const group = topLevelFor(offer.category_id, groups);
+
+    const moreFromBusiness = liveOffers
+        .filter((item) => item.business.id === business.id && item.id !== offer.id)
+        .slice(0, 4);
+
+    // Same category, nearest (same area) first.
+    const similarOffers = group
+        ? liveOffers
+            .filter(
+                (item) =>
+                    item.business.id !== business.id &&
+                    topLevelFor(item.categoryId, groups)?.id === group.id,
+            )
+            .sort(
+                (a, b) =>
+                    Number(b.business.area === area) -
+                    Number(a.business.area === area),
+            )
+            .slice(0, 4)
+        : [];
+
+    const facts = [
+        {
+            icon: FiClock,
+            label: isExpired
+                ? "Expired"
+                : daysLeft <= 0
+                    ? "Ends today"
+                    : daysLeft <= 14
+                        ? `Ends in ${daysLeft} ${daysLeft === 1 ? "day" : "days"}`
+                        : `Ends ${formatExpiry(offer.expires_at)}`,
+            highlight: !isExpired && daysLeft <= 14,
+        },
+        { icon: FiCalendar, label: offer.availability, highlight: false },
+        ...(remainingClaims !== null && !isExpired && remainingClaims > 0
+            ? [
+                {
+                    icon: FiUsers,
+                    label: `${remainingClaims} ${remainingClaims === 1 ? "claim" : "claims"} left`,
+                    highlight: remainingClaims <= 20,
+                },
+            ]
+            : []),
+    ];
+
+    return (
+        <main className="min-h-screen bg-[#FFF8F0] pb-20 text-[#17233B]">
+            <div className="mx-auto max-w-6xl px-6 pt-5 sm:px-10 sm:pt-8">
+                <nav
+                    aria-label="Breadcrumb"
+                    className="flex items-center gap-1.5 text-sm text-[#17233B]/60"
+                >
+                    <Link href="/offers" className="hover:text-[#FF593F]">
+                        Offers
+                    </Link>
+                    {group && (
+                        <>
+                            <FiChevronRight aria-hidden="true" className="size-3.5" />
+                            <Link
+                                href={`/categories/${group.slug}`}
+                                className="hover:text-[#FF593F]"
+                            >
+                                {group.name}
+                            </Link>
+                        </>
+                    )}
+                    <FiChevronRight aria-hidden="true" className="size-3.5" />
+                    <span className="truncate text-[#17233B]/80">{business.name}</span>
+                </nav>
+
+                <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
+                    <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-[#FFF4E8] sm:aspect-[16/10] lg:aspect-[4/3]">
+                        {offer.image_url ? (
                             <Image
                                 src={offer.image_url}
                                 alt={offer.title}
                                 fill
+                                priority
+                                sizes="(min-width: 1024px) 640px, 100vw"
                                 className="object-cover"
                             />
-                        </div>
-                    )}
-
-                    <CardContent className="p-6 md:p-10">
-                        {business.logo_url && (
-                            <Image
-                                src={business.logo_url}
-                                alt={`${business.name} logo`}
-                                width={80}
-                                height={80}
-                                className="mb-6 rounded-xl object-cover"
-                            />
+                        ) : (
+                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-5xl font-semibold text-[#FF593F]/60">
+                                {offer.discount}
+                            </div>
                         )}
 
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <Badge
-                                    variant="outline"
-                                    className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                                >
-                                    {offer.category}
-                                </Badge>
+                        <span className="absolute left-4 top-4 rounded-full bg-[#FF593F] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
+                            {offer.discount}
+                        </span>
+                    </div>
 
-                                <p className="mt-4 text-sm text-[#17233B]/60">
-                                    Offered by
-                                </p>
+                    <aside className="rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-7 lg:sticky lg:top-24">
+                        <Link
+                            href={`/businesses/${business.id}`}
+                            className="group flex items-center gap-3"
+                        >
+                            {business.logo_url ? (
+                                <Image
+                                    src={business.logo_url}
+                                    alt=""
+                                    width={44}
+                                    height={44}
+                                    className="size-11 rounded-xl object-cover"
+                                />
+                            ) : (
+                                <span className="flex size-11 items-center justify-center rounded-xl bg-[#FFF4E8] font-semibold text-[#FF593F]">
+                                    {business.name.charAt(0).toUpperCase()}
+                                </span>
+                            )}
 
-                                <Button
-                                    render={
-                                        <Link
-                                            href={`/businesses/${business.id}`}
-                                        />
-                                    }
-                                    nativeButton={false}
-                                    variant="link"
-                                    size="sm"
-                                    className="h-auto p-0 text-base"
-                                >
+                            <span className="min-w-0">
+                                <span className="block truncate font-semibold group-hover:text-[#FF593F]">
                                     {business.name}
-                                </Button>
-                            </div>
+                                </span>
+                                {area && (
+                                    <span className="mt-0.5 flex items-center gap-1 text-sm text-[#17233B]/55">
+                                        <FiMapPin aria-hidden="true" className="size-3.5" />
+                                        {area}
+                                    </span>
+                                )}
+                            </span>
+                        </Link>
 
-                            <Badge
-                                variant="secondary"
-                                className="bg-[#FFF4E8] px-4 py-2 text-sm text-[#FF593F]"
-                            >
-                                {offer.discount}
-                            </Badge>
-                        </div>
-
-                        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-[#17233B] md:text-4xl">
+                        <h1 className="mt-5 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
                             {offer.title}
                         </h1>
 
-                        <p className="mt-5 whitespace-pre-line leading-7 text-[#17233B]/70">
-                            {offer.description}
-                        </p>
+                        <ul className="mt-5 space-y-2.5">
+                            {facts.map((fact) => {
+                                const Icon = fact.icon;
 
-                        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                            <Card className="border-[#17233B]/10 bg-[#FFF8F0] shadow-none">
-                                <CardContent className="p-5">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
-                                        Availability
-                                    </p>
+                                return (
+                                    <li
+                                        key={fact.label}
+                                        className={`flex items-center gap-2.5 text-sm ${fact.highlight ? "font-semibold text-[#FF593F]" : "text-[#17233B]/75"}`}
+                                    >
+                                        <Icon aria-hidden="true" className="size-4 shrink-0" />
+                                        {fact.label}
+                                    </li>
+                                );
+                            })}
+                        </ul>
 
-                                    <p className="mt-2 text-sm text-[#17233B]">
-                                        {offer.availability}
-                                    </p>
-                                </CardContent>
-                            </Card>
+                        <RedeemButton
+                            key={offer.id}
+                            offerId={offer.id}
+                            isSignedIn={Boolean(user)}
+                            isFullyClaimed={isFullyClaimed}
+                            isExpired={isExpired}
+                            initialRedemption={existingResult.data}
+                            returnPath={`/offers/${offer.slug}`}
+                        />
 
-                            <Card className="border-[#17233B]/10 bg-[#FFF8F0] shadow-none">
-                                <CardContent className="p-5">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
-                                        Expiry date
-                                    </p>
+                        {!existingResult.data && !isExpired && !isFullyClaimed && (
+                            <p className="mt-4 text-center text-xs leading-5 text-[#17233B]/55">
+                                Free to claim. Show your code when you pay.
+                            </p>
+                        )}
+                    </aside>
+                </div>
 
-                                    <p className="mt-2 text-sm text-[#17233B]">
-                                        {formatExpiry(offer.expires_at)}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
+                <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
+                    <div className="space-y-5">
+                        <section className="rounded-3xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                            <h2 className="text-lg font-semibold">About this offer</h2>
+                            <p className="mt-3 whitespace-pre-line leading-7 text-[#17233B]/70">
+                                {offer.description}
+                            </p>
 
-                        {!isExpired &&
-                            remainingClaims !== null &&
-                            remainingClaims > 0 && (
-                                <Alert className="mt-6 border-[#FF593F]/20 bg-[#FFF4E8] text-[#17233B]">
-                                    <AlertTitle>
-                                        {remainingClaims} claim
-                                        {remainingClaims === 1 ? "" : "s"}{" "}
-                                        remaining
-                                    </AlertTitle>
-
-                                    <AlertDescription>
-                                        Availability is checked again when
-                                        you claim.
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                        <Separator className="my-8" />
-
-                        <section>
-                            <h2 className="text-lg font-semibold text-[#17233B]">
-                                Terms and conditions
-                            </h2>
-
-                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#17233B]/65">
+                            <h2 className="mt-8 text-lg font-semibold">Terms</h2>
+                            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#17233B]/65">
                                 {offer.terms}
                             </p>
                         </section>
+                    </div>
 
-                        {fullAddress && (
-                            <>
-                                <Separator className="my-8" />
+                    <section className="h-fit rounded-3xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                        <h2 className="text-lg font-semibold">Where to use it</h2>
 
-                                <section>
-                                    <h2 className="text-lg font-semibold text-[#17233B]">
-                                        Plan your visit
-                                    </h2>
+                        <p className="mt-3 font-medium">{business.name}</p>
 
-                                    <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                                        {fullAddress}
-                                    </p>
-
-                                    <div className="mt-4 flex flex-wrap gap-3">
-                                        {directionsUrl && (
-                                            <Button
-                                                render={
-                                                    <a
-                                                        href={directionsUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                    />
-                                                }
-                                                nativeButton={false}
-                                                variant="outline"
-                                                size="sm"
-                                            >
-                                                Get directions
-                                            </Button>
-                                        )}
-
-                                        <Button
-                                            render={
-                                                <Link
-                                                    href={`/businesses/${business.id}`}
-                                                />
-                                            }
-                                            nativeButton={false}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            View business
-                                        </Button>
-                                    </div>
-                                </section>
-                            </>
+                        {address.length > 0 && (
+                            <address className="mt-1 not-italic text-sm leading-6 text-[#17233B]/65">
+                                {address.join(", ")}
+                            </address>
                         )}
 
-                        <Separator className="my-8" />
+                        <div className="mt-5 flex flex-wrap gap-2">
+                            {directions && (
+                                <Button
+                                    render={
+                                        <a
+                                            href={directions}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        />
+                                    }
+                                    nativeButton={false}
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    <FiNavigation aria-hidden="true" />
+                                    Directions
+                                </Button>
+                            )}
 
-                        <section>
-                            <h2 className="text-lg font-semibold text-[#17233B]">
-                                {existingResult.data
-                                    ? "Your voucher"
-                                    : "Claim this deal"}
-                            </h2>
+                            <Button
+                                render={<Link href={`/businesses/${business.id}`} />}
+                                nativeButton={false}
+                                variant="outline"
+                                size="sm"
+                            >
+                                Opening hours and more
+                            </Button>
+                        </div>
+                    </section>
+                </div>
 
-                            <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                                {existingResult.data
-                                    ? "You’ve already claimed this promotion. Your code and voucher status are shown below."
-                                    : "Read the terms before claiming. If a booking is required, arrange it with the business separately."}
-                            </p>
+                {moreFromBusiness.length > 0 && (
+                    <section className="mt-16">
+                        <SectionHeading
+                            title={`More from ${business.name}`}
+                            href={`/businesses/${business.id}`}
+                            linkLabel="View business"
+                        />
 
-                            <RedeemButton
-                                key={offer.id}
-                                offerId={offer.id}
-                                isSignedIn={Boolean(user)}
-                                isFullyClaimed={isFullyClaimed}
-                                isExpired={isExpired}
-                                initialRedemption={existingResult.data}
-                            />
-                        </section>
-                    </CardContent>
-                </Card>
+                        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                            {moreFromBusiness.map((item) => (
+                                <OfferCard
+                                    key={item.id}
+                                    slug={item.slug}
+                                    discount={item.discount}
+                                    title={item.title}
+                                    description={item.description}
+                                    availability={item.availability}
+                                    imageUrl={item.imageUrl}
+                                    expiresAt={item.expiresAt}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {similarOffers.length > 0 && group && (
+                    <section className="mt-16">
+                        <SectionHeading
+                            title={area ? `More ${group.name.toLowerCase()} near ${area}` : `More ${group.name.toLowerCase()}`}
+                            href={`/categories/${group.slug}`}
+                            linkLabel={`All ${group.name.toLowerCase()}`}
+                        />
+
+                        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                            {similarOffers.map((item) => (
+                                <OfferCard
+                                    key={item.id}
+                                    slug={item.slug}
+                                    discount={item.discount}
+                                    title={item.title}
+                                    description={item.description}
+                                    availability={item.availability}
+                                    business={item.business.name}
+                                    businessLogoUrl={item.business.logoUrl}
+                                    imageUrl={item.imageUrl}
+                                    expiresAt={item.expiresAt}
+                                    area={item.business.area}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
             </div>
         </main>
     );
