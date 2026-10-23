@@ -11,6 +11,12 @@ const staticPaths = [
     "/businesses",
     "/explore",
     "/categories",
+    "/categories/food-drink",
+    "/categories/things-to-do",
+    "/categories/shopping",
+    "/categories/health-beauty",
+    "/categories/services",
+    "/categories/travel-stays",
     "/about",
     "/help",
     "/contact",
@@ -40,9 +46,13 @@ async function getPublicListings() {
 
     // RLS limits both queries to what an anonymous visitor can see:
     // approved businesses, and approved, unexpired, unpaused offers.
+    // Sample (demo) listings are left out so search engines never index them.
     const [{ data: businesses }, { data: offers }] = await Promise.all([
-        supabase.from("businesses").select("id, updated_at"),
-        supabase.from("offers").select("slug, updated_at"),
+        supabase.from("businesses").select("id, updated_at").eq("is_sample", false),
+        supabase
+            .from("offers")
+            .select("slug, updated_at, businesses!inner ( is_sample )")
+            .eq("businesses.is_sample", false),
     ]);
 
     return { businesses, offers };

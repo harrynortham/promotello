@@ -78,7 +78,7 @@ export async function generateMetadata({
     const { data: offer } = await createPublicClient()
         .from("offers")
         .select(
-            "slug, title, discount, description, image_url, businesses!inner ( name, logo_url )",
+            "slug, title, discount, description, image_url, businesses!inner ( name, logo_url, is_sample )",
         )
         .eq("slug", slug)
         .maybeSingle();
@@ -102,6 +102,8 @@ export async function generateMetadata({
         title,
         description,
         alternates: { canonical: path },
+        // Sample (demo) listings must never appear in search results.
+        robots: business?.is_sample ? { index: false, follow: false } : undefined,
         openGraph: {
             type: "website",
             url: path,

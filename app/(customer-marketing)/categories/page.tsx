@@ -1,143 +1,145 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { connection } from "next/server";
+import { FiArrowRight } from "react-icons/fi";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { SearchForm } from "@/components/listing-ui";
+import { Skeleton } from "@/components/ui/skeleton";
+import { isInCategory } from "@/lib/categories";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+    categoryImage,
+    getCategories,
+    getLiveOffers,
+    offerCountsByCategory,
+} from "@/lib/listings";
 
-const categories = [
-    {
-        name: "Food & drink",
-        description:
-            "Discover restaurants, cafés, takeaways, bars, and local food spots.",
-        emoji: "🍽️",
-        color: "bg-orange-100",
-    },
-    {
-        name: "Things to do",
-        description:
-            "Find activities, experiences, entertainment, and days out.",
-        emoji: "🎟️",
-        color: "bg-blue-100",
-    },
-    {
-        name: "Shopping",
-        description:
-            "Save money at independent shops, retailers, and local makers.",
-        emoji: "🛍️",
-        color: "bg-pink-100",
-    },
-    {
-        name: "Health & beauty",
-        description:
-            "Explore salons, spas, fitness studios, and wellness services.",
-        emoji: "✨",
-        color: "bg-purple-100",
-    },
-    {
-        name: "Services",
-        description:
-            "Find trusted local services for your home, car, family, and lifestyle.",
-        emoji: "🛠️",
-        color: "bg-emerald-100",
-    },
-    {
-        name: "Travel & stays",
-        description:
-            "Discover local hotels, getaways, attractions, and travel experiences.",
-        emoji: "🧳",
-        color: "bg-cyan-100",
-    },
-];
+export const metadata: Metadata = {
+    title: "Categories",
+    description:
+        "Browse Bristol offers by category: food and drink, things to do, shopping, health and beauty, services, and places to stay.",
+    alternates: { canonical: "/categories" },
+};
+
+function CategoriesLoading() {
+    return (
+        <div className="grid gap-6 md:grid-cols-2">
+            {[1, 2, 3, 4].map((item) => (
+                <Skeleton key={item} className="h-96 rounded-3xl" />
+            ))}
+        </div>
+    );
+}
+
+async function CategoryGrid() {
+    await connection();
+
+    const [groups, offers] = await Promise.all([getCategories(), getLiveOffers()]);
+    const counts = offerCountsByCategory(offers, groups);
+
+    return (
+        <div className="grid gap-6 md:grid-cols-2">
+            {groups.map((group) => {
+                const count = counts[group.slug] ?? 0;
+                const withOffers = group.subcategories.filter((sub) =>
+                    offers.some((offer) => isInCategory(offer.categoryId, sub.slug, groups)),
+                );
+
+                return (
+                    <article
+                        key={group.id}
+                        className="group relative flex flex-col overflow-hidden rounded-3xl border border-[#17233B]/10 bg-white shadow-sm transition hover:shadow-lg"
+                    >
+                        <div className="relative aspect-[16/8] overflow-hidden bg-[#17233B]">
+                            <Image
+                                src={categoryImage(group)}
+                                alt=""
+                                fill
+                                sizes="(min-width: 768px) 50vw, 100vw"
+                                className="object-cover transition duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#17233B]/80 via-transparent to-transparent" />
+
+                            <div className="absolute bottom-0 left-0 flex w-full items-end justify-between gap-4 p-6 text-white">
+                                <h2 className="text-3xl font-semibold tracking-tight">
+                                    <Link
+                                        href={`/categories/${group.slug}`}
+                                        className="after:absolute after:inset-0 focus-visible:outline-none"
+                                    >
+                                        {group.name}
+                                    </Link>
+                                </h2>
+
+                                <span className="shrink-0 rounded-full bg-white/95 px-3 py-1 text-sm font-semibold text-[#17233B]">
+                                    {count} {count === 1 ? "offer" : "offers"}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-col p-6">
+                            {group.description && (
+                                <p className="leading-7 text-[#17233B]/70">{group.description}</p>
+                            )}
+
+                            <div className="relative z-10 mt-5 flex flex-wrap gap-2">
+                                {group.subcategories.map((sub) => {
+                                    const active = withOffers.includes(sub);
+
+                                    return (
+                                        <Link
+                                            key={sub.id}
+                                            href={`/categories/${group.slug}?sub=${sub.slug}`}
+                                            className={`rounded-full border px-3 py-1.5 text-sm transition ${active
+                                                ? "border-[#17233B]/15 bg-[#FFF8F0] text-[#17233B] hover:border-[#FF593F] hover:text-[#FF593F]"
+                                                : "border-transparent bg-[#17233B]/[0.04] text-[#17233B]/45 hover:text-[#17233B]"
+                                                }`}
+                                        >
+                                            {sub.name}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+
+                            <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#17233B] group-hover:text-[#FF593F]">
+                                Explore {group.name.toLowerCase()}
+                                <FiArrowRight aria-hidden="true" />
+                            </p>
+                        </div>
+                    </article>
+                );
+            })}
+        </div>
+    );
+}
 
 export default function CategoriesPage() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12 text-[#17233B] sm:px-10">
-            <div className="mx-auto max-w-7xl">
-                <section className="mx-auto max-w-3xl text-center">
-                    <Badge className="bg-[#FF593F] text-[#17233B] hover:bg-[#FF593F]">
-                        Browse by category
-                    </Badge>
+        <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
+            <section className="mx-auto max-w-7xl px-6 py-14 text-center sm:px-10 sm:py-20">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                    Browse by category
+                </p>
 
-                    <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">
-                        Find something you’ll love.
-                    </h1>
+                <h1 className="mx-auto mt-3 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
+                    Find something you&apos;ll love.
+                </h1>
 
-                    <p className="mt-5 text-lg leading-8 text-[#17233B]/65">
-                        Explore local promotions by the things you enjoy most.
-                        From dinner out to new experiences, there’s always
-                        something nearby to discover.
-                    </p>
-                </section>
+                <p className="mx-auto mt-5 max-w-2xl text-lg text-[#17233B]/65">
+                    From a morning coffee to a night away, explore offers from
+                    Bristol&apos;s independent businesses by the things you enjoy.
+                </p>
 
-                <section className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {categories.map((category) => (
-                        <Card
-                            key={category.name}
-                            className="group flex h-full flex-col rounded-3xl border-[#17233B]/10 transition-all hover:-translate-y-1 hover:shadow-lg"
-                        >
-                            <CardHeader>
-                                <div
-                                    className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl ${category.color}`}
-                                >
-                                    <span aria-hidden="true">
-                                        {category.emoji}
-                                    </span>
-                                </div>
+                <div className="mx-auto mt-8 max-w-xl text-left">
+                    <SearchForm action="/offers" placeholder="Or search every offer" size="lg" />
+                </div>
+            </section>
 
-                                <CardTitle className="mt-4 text-2xl">
-                                    {category.name}
-                                </CardTitle>
-
-                                <CardDescription className="text-base leading-7">
-                                    {category.description}
-                                </CardDescription>
-                            </CardHeader>
-
-                            <CardContent className="mt-auto">
-                                <Button
-                                    render={
-                                        <Link
-                                            href={`/explore?category=${encodeURIComponent(
-                                                category.name,
-                                            )}`}
-                                        />
-                                    }
-                                    nativeButton={false}
-                                    variant="outline"
-                                    className="w-full"
-                                >
-                                    Explore {category.name}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </section>
-
-                <section className="mt-16 rounded-3xl bg-[#17233B] px-6 py-10 text-center text-white sm:px-10">
-                    <h2 className="text-3xl font-semibold tracking-tight">
-                        Looking for something specific?
-                    </h2>
-
-                    <p className="mx-auto mt-3 max-w-2xl leading-7 text-white/70">
-                        Search all available promotions and discover great
-                        offers from local businesses.
-                    </p>
-
-                    <Button
-                        render={<Link href="/explore" />}
-                        nativeButton={false}
-                        className="mt-7 bg-[#FF593F] text-[#17233B] hover:bg-[#ff735e]"
-                    >
-                        Explore all promotions
-                    </Button>
-                </section>
-            </div>
+            <section className="mx-auto max-w-7xl px-6 sm:px-10">
+                <Suspense fallback={<CategoriesLoading />}>
+                    <CategoryGrid />
+                </Suspense>
+            </section>
         </main>
     );
 }
