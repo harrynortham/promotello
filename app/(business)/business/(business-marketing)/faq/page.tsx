@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-    title: "Frequently Asked Questions | Promotello for Business",
+    title: { absolute: "Frequently Asked Questions | Promotello for Business" },
     description:
         "Answers to common questions about joining Promotello, creating promotions, managing customer redemptions, and business pricing.",
 };

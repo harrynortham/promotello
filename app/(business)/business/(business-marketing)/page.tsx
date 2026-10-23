@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-    title: "Promotello for Business | Give Customers a Reason to Visit",
+    title: { absolute: "Promotello for Business | Give Customers a Reason to Visit" },
     description:
         "Create local promotions, control how many customers can claim them, and track when deals are used. Discover Promotello for your business.",
 };

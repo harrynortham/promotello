@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -5,6 +6,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import DashboardNav from "@/components/dashboard-nav";
 import Footer from "@/components/customer-dashboard-footer";
+
+// Signed-in area: keep it out of search results.
+export const metadata: Metadata = {
+    robots: { index: false, follow: false },
+};
 
 function DashboardLoading() {
     return (

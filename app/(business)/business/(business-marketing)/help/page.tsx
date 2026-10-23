@@ -5,7 +5,7 @@ import HelpCentre, {
 } from "@/components/help-centre";
 
 export const metadata: Metadata = {
-    title: "Business Help Centre | Promotello",
+    title: "Business Help Centre",
     description:
         "Practical guides to business profiles, promotions, claim limits, customer redemptions, team access, and notifications.",
 };

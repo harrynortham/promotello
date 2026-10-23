@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -8,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/server";
 import { AdminNav } from "@/components/admin-nav";
+
+// Signed-in area: keep it out of search results.
+export const metadata: Metadata = {
+    robots: { index: false, follow: false },
+};
 
 function AdminLoading() {
     return (
