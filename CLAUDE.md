@@ -1,16 +1,20 @@
 # CLAUDE.md
 
+Product roadmap and priorities: docs/ROADMAP.md (read when planning a feature)
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
 
 ```bash
-npm run dev      # Start dev server (Next.js with Turbopack)
-npm run build    # Production build
-npm run lint     # ESLint
+npm run dev          # Start dev server (Next.js with Turbopack)
+npm run build        # Production build
+npm run lint         # ESLint
+npm run test:e2e     # Playwright E2E tests (requires SUPABASE_SERVICE_ROLE_KEY in .env.local)
+npm run test:e2e:ui  # Same with the Playwright interactive UI
 ```
 
-There are no automated tests. Verification is done by running the app.
+E2E tests seed isolated test users and data via the Supabase admin API, then tear them down after the run. Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
 
 ## Architecture
 
@@ -18,21 +22,22 @@ There are no automated tests. Verification is done by running the app.
 
 ### Route groups
 
-| Group | Path prefix | Purpose |
-|---|---|---|
-| `(auth)` | `/login`, `/signup`, `/forgot-password`, `/reset-password` | Shared login/signup pages for both user types |
-| `(customer-marketing)` | `/`, `/offers`, `/businesses`, `/explore`, etc. | Public consumer-facing marketing and browsing |
-| `(business)/business/(business-marketing)` | `/business` | Marketing site for businesses considering the platform |
-| `(business)/business/(business-dashboard)/[businessId]` | `/business/[businessId]/*` | Authenticated per-business management dashboard |
-| `app/dashboard` | `/dashboard` | Authenticated customer area (saved offers, redemptions) |
-| `app/account` | `/account` | User account settings (profile, notifications, privacy, security) |
-| `app/admin` | `/admin` | Platform admin (business/offer approval, audit logs) |
+| Group                                                   | Path prefix                                                | Purpose                                                           |
+| ------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| `(auth)`                                                | `/login`, `/signup`, `/forgot-password`, `/reset-password` | Shared login/signup pages for both user types                     |
+| `(customer-marketing)`                                  | `/`, `/offers`, `/businesses`, `/explore`, etc.            | Public consumer-facing marketing and browsing                     |
+| `(business)/business/(business-marketing)`              | `/business`                                                | Marketing site for businesses considering the platform            |
+| `(business)/business/(business-dashboard)/[businessId]` | `/business/[businessId]/*`                                 | Authenticated per-business management dashboard                   |
+| `app/dashboard`                                         | `/dashboard`                                               | Authenticated customer area (saved offers, redemptions)           |
+| `app/account`                                           | `/account`                                                 | User account settings (profile, notifications, privacy, security) |
+| `app/admin`                                             | `/admin`                                                   | Platform admin (business/offer approval, audit logs)              |
 
 The `/login` page detects `?next=/business/dashboard` to decide whether to route a user to the customer dashboard or the business dashboard after authentication.
 
 ### Supabase integration
 
 Three client factories in `utils/supabase/`:
+
 - `server.ts` — async Server Component / Route Handler client (reads cookies via `next/headers`)
 - `client.ts` — browser client for Client Components (`createBrowserClient`)
 - `middleware.ts` — middleware client that propagates cookie mutations to the response

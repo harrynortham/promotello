@@ -12,6 +12,10 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/tests/.auth
+/tests/.test-state.json
 
 # next.js
 /.next/
@@ -39,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tooling
+/supabase/.temp
+/.claude/settings.local.json
