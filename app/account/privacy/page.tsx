@@ -9,6 +9,9 @@ import {
     FiUser,
 } from "react-icons/fi";
 
+import { Suspense } from "react";
+import { connection } from "next/server";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +21,10 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/utils/supabase/server";
+import type { DeletionOutcome } from "./actions";
+import { DeleteAccount } from "./delete-account";
 
 const settingsLinks = [
     {
@@ -37,6 +44,15 @@ const settingsLinks = [
         icon: FiBell,
     },
 ];
+
+async function DeleteAccountSection() {
+    await connection();
+
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("account_deletion_check");
+
+    return <DeleteAccount outcomes={(data ?? []) as DeletionOutcome[]} />;
+}
 
 export default function AccountPrivacyPage() {
     return (
@@ -210,53 +226,18 @@ export default function AccountPrivacyPage() {
                         />
                     </div>
 
-                    <CardTitle>Request account deletion</CardTitle>
+                    <CardTitle>Delete your account</CardTitle>
 
                     <CardDescription className="leading-7">
-                        If you would like to leave Promotello, contact us to
-                        discuss deleting your account and associated personal
-                        information.
+                        Permanently delete your Promotello account and personal
+                        information. This can&apos;t be undone.
                     </CardDescription>
                 </CardHeader>
 
-                <CardContent className="space-y-5">
-                    <div className="rounded-xl bg-muted/40 p-4">
-                        <h2 className="text-sm font-semibold">
-                            Before you request deletion
-                        </h2>
-
-                        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
-                            <li>
-                                Account deletion affects both your customer
-                                and business access.
-                            </li>
-                            <li>
-                                Tell us if you have outstanding promotion
-                                codes so we can explain how they may be
-                                affected.
-                            </li>
-                            <li>
-                                If you own a business, we’ll need to review
-                                ownership and any outstanding business
-                                responsibilities.
-                            </li>
-                        </ul>
-                    </div>
-
-                    <p className="text-sm leading-7 text-muted-foreground">
-                        We’ll verify your identity and explain the next steps,
-                        including any information that needs to be retained.
-                        Opening the contact page does not delete your account.
-                    </p>
-
-                    <Button
-                        render={<Link href="/contact" />}
-                        nativeButton={false}
-                        variant="outline"
-                    >
-                        Contact us about account deletion
-                        <FiArrowRight aria-hidden="true" />
-                    </Button>
+                <CardContent>
+                    <Suspense fallback={<Skeleton className="h-40 rounded-xl" />}>
+                        <DeleteAccountSection />
+                    </Suspense>
                 </CardContent>
             </Card>
         </section>

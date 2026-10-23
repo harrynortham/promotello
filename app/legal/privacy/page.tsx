@@ -284,6 +284,10 @@ const sections: LegalSection[] = [
                     </li>
                 </ul>
                 <p>
+                    You can delete your account yourself at any time in{" "}
+                    <Link href="/account/privacy">Account → Privacy &amp; data</Link>.
+                </p>
+                <p>
                     Make a request through our{" "}
                     <Link href="/contact">contact page</Link> using your account
                     email. We&apos;ll reply within one month, and may ask you to

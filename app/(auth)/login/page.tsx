@@ -44,7 +44,8 @@ function LoginContent() {
 
     const hasCallbackError = Boolean(searchParams.get("error"));
 
-    const [email, setEmail] = useState("");
+    // Prefilled from invitation links (?email=).
+    const [email, setEmail] = useState(searchParams.get("email") ?? "");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);

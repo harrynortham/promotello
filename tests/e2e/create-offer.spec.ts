@@ -21,8 +21,8 @@ test("business owner can create a new offer", async ({ page }) => {
 
     await page.locator('button[type="submit"]').click();
 
-    // After submission the form replaces itself with a pending-approval card.
-    await expect(page.getByText("Your promotion is pending approval")).toBeVisible({
+    // The test business is approved and on Pro, so the offer goes live at once.
+    await expect(page.getByText("Your promotion is live")).toBeVisible({
         timeout: 10_000,
     });
 });

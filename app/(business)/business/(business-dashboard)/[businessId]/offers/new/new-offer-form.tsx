@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/utils/supabase/client";
+import { announceNewOffer } from "./actions";
 
 type NewOfferFormProps = {
     businessId: string;
@@ -34,7 +35,7 @@ export default function NewOfferForm({
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [createdOffer, setCreatedOffer] = useState(false);
+    const [createdOffer, setCreatedOffer] = useState<"live" | "pending" | null>(null);
     const [errorMessage, setErrorMessage] = useState("");
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -125,7 +126,7 @@ export default function NewOfferForm({
             imageUrl = publicUrlData.publicUrl;
         }
 
-        const { error } = await supabase.from("offers").insert({
+        const { data: inserted, error } = await supabase.from("offers").insert({
             business_id: businessId,
             created_by: user.id,
             slug: createSlug(title),
@@ -141,18 +142,21 @@ export default function NewOfferForm({
             redemption_count: 0,
             image_url: imageUrl,
             approval_status: "pending",
-        });
+        }).select("id").single();
 
-        setIsSubmitting(false);
-
-        if (error) {
-            setErrorMessage(error.message);
+        if (error || !inserted) {
+            setIsSubmitting(false);
+            setErrorMessage(error?.message ?? "We couldn't create the promotion.");
             return;
         }
 
+        // Pro businesses' offers go live at once; this also emails followers.
+        const { live } = await announceNewOffer(inserted.id).catch(() => ({ live: false }));
+
+        setIsSubmitting(false);
         form.reset();
         setImageFile(null);
-        setCreatedOffer(true);
+        setCreatedOffer(live ? "live" : "pending");
     }
 
     if (createdOffer) {
@@ -165,15 +169,19 @@ export default function NewOfferForm({
                         </div>
 
                         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                            Promotion submitted
+                            {createdOffer === "live" ? "Promotion live" : "Promotion submitted"}
                         </p>
 
                         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
-                            Your promotion is pending approval
+                            {createdOffer === "live"
+                                ? "Your promotion is live"
+                                : "Your promotion is pending approval"}
                         </h1>
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
-                            Once approved, it will become visible to customers.
+                            {createdOffer === "live"
+                                ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                : "Once approved, it will become visible to customers. Pro businesses' promotions go live straight away."}
                         </p>
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -188,7 +196,7 @@ export default function NewOfferForm({
                             <Button
                                 type="button"
                                 variant="default"
-                                onClick={() => setCreatedOffer(false)}
+                                onClick={() => setCreatedOffer(null)}
                             >
                                 Create another
                             </Button>
@@ -221,8 +229,9 @@ export default function NewOfferForm({
                     </h1>
 
                     <p className="mt-4 leading-7 text-[#17233B]/65">
-                        Submit a promotion for review. Approved promotions will appear
-                        publicly on Promotello.
+                        Once your business is approved and on Pro, promotions go live
+                        as soon as you create them. Otherwise our team reviews them
+                        first.
                     </p>
                 </div>
 

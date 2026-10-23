@@ -11,6 +11,7 @@ const allowedPrefixes = [
     "/business/dashboard",
     "/onboarding",
     "/admin",
+    "/invite/",
 ];
 
 export function safeNextPath(value: string | null | undefined) {

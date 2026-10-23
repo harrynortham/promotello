@@ -90,13 +90,13 @@ export async function emailFollowersAboutOffer(offerId: string) {
 
     if (error) {
         console.error("New offer email: failed to load followers", error);
-        return { sent: 0, failed: 0 };
+        return { sent: 0, failed: 0, skipped: 0 };
     }
 
     const rows = (recipients ?? []) as { user_id: string; email: string; unsubscribe_token: string }[];
 
     if (rows.length === 0) {
-        return { sent: 0, failed: 0 };
+        return { sent: 0, failed: 0, skipped: 0 };
     }
 
     const { data: offer } = await admin
@@ -106,7 +106,7 @@ export async function emailFollowersAboutOffer(offerId: string) {
         .single<OfferForEmail>();
 
     if (!offer) {
-        return { sent: 0, failed: 0 };
+        return { sent: 0, failed: 0, skipped: 0 };
     }
 
     return sendEmails(rows.map((row) => newOfferEmail(offer, row.email, row.unsubscribe_token)));

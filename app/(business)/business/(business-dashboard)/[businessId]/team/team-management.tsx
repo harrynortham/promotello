@@ -30,6 +30,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/utils/supabase/client";
+import { handOverBusiness, inviteTeamMember, type InviteResult } from "./actions";
 
 type Member = {
     user_id: string;
@@ -41,7 +42,7 @@ type Member = {
 type Invitation = {
     id: string;
     email: string;
-    role: "admin" | "member";
+    role: "owner" | "admin" | "member";
     expires_at: string;
     accepted_at: string | null;
     created_at: string;
@@ -50,6 +51,8 @@ type Invitation = {
 type TeamManagementProps = {
     businessId: string;
     businessName: string;
+    // Shown to Promotello staff who set a business up for its owner.
+    suggestHandOver?: boolean;
     initialMembers: Member[];
     initialInvitations: Invitation[];
 };
@@ -80,6 +83,7 @@ function roleBadgeClass(role: Member["role"]) {
 export default function TeamManagement({
     businessId,
     businessName,
+    suggestHandOver = false,
     initialMembers,
     initialInvitations,
 }: TeamManagementProps) {
@@ -91,6 +95,49 @@ export default function TeamManagement({
     const [successMessage, setSuccessMessage] = useState("");
     const [confirmationAction, setConfirmationAction] =
         useState<ConfirmationAction>(null);
+    const [shareLink, setShareLink] = useState<{ url: string; emailSent: boolean; handOver: boolean } | null>(null);
+    const [isHandingOver, setIsHandingOver] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    function applyInviteResult(result: InviteResult, handOver: boolean, form: HTMLFormElement) {
+        if (!result.ok) {
+            setErrorMessage(result.error);
+            return;
+        }
+
+        setInvitations((current) => [
+            result.invitation,
+            ...current.filter((invitation) => !(handOver && invitation.role === "owner")),
+        ]);
+        setShareLink({ url: result.inviteUrl, emailSent: result.emailSent, handOver });
+        setCopied(false);
+        form.reset();
+    }
+
+    async function handleHandOver(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+
+        const form = event.currentTarget;
+        setIsHandingOver(true);
+        setErrorMessage("");
+        setSuccessMessage("");
+        setShareLink(null);
+
+        const result = await handOverBusiness(businessId, String(new FormData(form).get("ownerEmail") ?? ""));
+        applyInviteResult(result, true, form);
+        setIsHandingOver(false);
+    }
+
+    async function copyShareLink() {
+        if (!shareLink) return;
+
+        try {
+            await navigator.clipboard.writeText(shareLink.url);
+            setCopied(true);
+        } catch {
+            setCopied(false);
+        }
+    }
 
     async function handleInvite(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -101,40 +148,16 @@ export default function TeamManagement({
         setIsSubmitting(true);
         setErrorMessage("");
         setSuccessMessage("");
+        setShareLink(null);
 
-        const supabase = createClient();
-
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-            setErrorMessage("Please sign in before creating an invitation.");
-            setIsSubmitting(false);
-            return;
-        }
-
-        const { error } = await supabase.functions.invoke(
-            "send-business-invitation",
-            {
-                body: {
-                    business_id: businessId,
-                    email: formData.get("email"),
-                    role: formData.get("role"),
-                },
-            },
+        const result = await inviteTeamMember(
+            businessId,
+            String(formData.get("email") ?? ""),
+            formData.get("role") === "admin" ? "admin" : "member",
         );
 
+        applyInviteResult(result, false, form);
         setIsSubmitting(false);
-
-        if (error) {
-            setErrorMessage(error.message);
-            return;
-        }
-
-        setSuccessMessage("Invitation email sent successfully.");
-        form.reset();
-        window.location.reload();
     }
 
     async function changeRole(
@@ -279,6 +302,29 @@ export default function TeamManagement({
                         <Alert variant="destructive">
                             <AlertTitle>Something went wrong</AlertTitle>
                             <AlertDescription>{errorMessage}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {shareLink && (
+                        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
+                            <AlertTitle>
+                                {shareLink.handOver ? "Hand-over ready" : "Invitation created"}
+                            </AlertTitle>
+                            <AlertDescription>
+                                <p>
+                                    {shareLink.emailSent
+                                        ? "We've emailed the link. You can also share it directly:"
+                                        : "We couldn't send the email, so share this link with them directly:"}
+                                </p>
+                                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                                    <code className="min-w-0 flex-1 truncate rounded-md bg-white px-3 py-2 text-xs text-[#17233B]">
+                                        {shareLink.url}
+                                    </code>
+                                    <Button type="button" variant="outline" size="sm" onClick={copyShareLink}>
+                                        {copied ? "Copied" : "Copy link"}
+                                    </Button>
+                                </div>
+                            </AlertDescription>
                         </Alert>
                     )}
 
@@ -437,7 +483,7 @@ export default function TeamManagement({
 
                                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                                 <Badge variant="secondary" className="capitalize">
-                                                    {invitation.role}
+                                                    {invitation.role === "owner" ? "Hand-over" : invitation.role}
                                                 </Badge>
 
                                                 <span className="text-sm text-[#17233B]/55">
@@ -469,6 +515,39 @@ export default function TeamManagement({
                                 </div>
                             ))
                         )}
+                    </CardContent>
+                </Card>
+
+                <Card
+                    id="hand-over"
+                    className={`mt-8 scroll-mt-28 ${suggestHandOver ? "border-[#FF593F]/40 ring-2 ring-[#FF593F]/15" : "border-[#17233B]/10"}`}
+                >
+                    <CardHeader>
+                        <CardTitle>Hand over this business</CardTitle>
+                        <p className="text-sm text-[#17233B]/65">
+                            {suggestHandOver
+                                ? "Finished setting this business up? Send it to the owner. When they accept, they become owner and you leave the team."
+                                : "Pass ownership to someone else. When they accept, they become owner and you leave the team."}
+                        </p>
+                    </CardHeader>
+
+                    <CardContent>
+                        <form onSubmit={handleHandOver} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                            <div className="flex-1 space-y-2">
+                                <Label htmlFor="ownerEmail">New owner&apos;s email</Label>
+                                <Input
+                                    id="ownerEmail"
+                                    name="ownerEmail"
+                                    type="email"
+                                    required
+                                    placeholder="owner@example.com"
+                                />
+                            </div>
+
+                            <Button type="submit" disabled={isHandingOver}>
+                                {isHandingOver ? "Creating link…" : "Send hand-over"}
+                            </Button>
+                        </form>
                     </CardContent>
                 </Card>
 

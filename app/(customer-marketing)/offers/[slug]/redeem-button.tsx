@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { VoucherQr } from "@/components/voucher-qr";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
+import { sendVoucherConfirmation } from "./actions";
 
 type Redemption = {
     id: string;
@@ -155,17 +156,9 @@ export default function RedeemButton({
             setClaimedRedemption(newRedemption);
 
             try {
-                const { error: emailError } =
-                    await supabase.functions.invoke(
-                        "send-redemption-confirmation",
-                        {
-                            body: {
-                                redemption_id: newRedemption.id,
-                            },
-                        },
-                    );
+                const { ok } = await sendVoucherConfirmation(newRedemption.id);
 
-                if (emailError) throw emailError;
+                if (!ok) throw new Error("Email not sent");
             } catch {
                 setEmailWarning(
                     "Your voucher is saved, but we couldn’t send the confirmation email. You can still access it in My vouchers.",
