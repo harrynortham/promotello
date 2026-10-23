@@ -9,6 +9,7 @@ const customerLinks: HeaderLink[] = [
     { label: "Offers", href: "/offers" },
     { label: "Categories", href: "/categories" },
     { label: "Businesses", href: "/businesses" },
+    { label: "Events", href: "/events" },
 ];
 
 const businessLinks: HeaderLink[] = [

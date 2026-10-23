@@ -8,8 +8,10 @@ import { FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { formatSchedule, scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/server";
 import { markVoucherUsed } from "./actions";
+import { GiftVoucher, type StaffGift } from "./gift-voucher";
 
 export const metadata: Metadata = {
     title: "Redeem a voucher",
@@ -32,6 +34,10 @@ type StaffVoucher = {
     redeemed_at: string | null;
     used_at: string | null;
     customer_name: string | null;
+    schedule_days: number[] | null;
+    schedule_start: string | null;
+    schedule_end: string | null;
+    schedule_open: boolean;
 };
 
 function formatDateTime(value: string) {
@@ -74,6 +80,20 @@ async function RedeemContent({ params, searchParams }: PageProps) {
     const { data } = await supabase.rpc("staff_get_redemption", { requested_code: code });
     const voucher = (Array.isArray(data) ? data[0] : null) as StaffVoucher | null;
 
+    // Not an offer voucher? It may be a gift voucher from an automation.
+    if (!voucher) {
+        const { data: giftRows } = await supabase.rpc("staff_get_reward_voucher", { requested_code: code });
+        const gift = (Array.isArray(giftRows) ? giftRows[0] : null) as StaffGift | null;
+
+        if (gift) {
+            return (
+                <Shell>
+                    <GiftVoucher gift={gift} done={Boolean(done)} error={Boolean(error)} now={new Date().toISOString()} />
+                </Shell>
+            );
+        }
+    }
+
     if (!voucher) {
         return (
             <Shell>
@@ -93,6 +113,7 @@ async function RedeemContent({ params, searchParams }: PageProps) {
     }
 
     const expired = isExpired(voucher.offer_expires_at);
+    const schedule = scheduleFrom(voucher.schedule_days, voucher.schedule_start, voucher.schedule_end);
 
     return (
         <Shell>
@@ -160,13 +181,23 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                             </Alert>
                         )}
 
-                        <form action={markVoucherUsed} className="mt-6">
-                            <input type="hidden" name="code" value={voucher.redemption_code} />
-                            <input type="hidden" name="redemptionId" value={voucher.redemption_id} />
-                            <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90">
-                                Mark as used
-                            </SubmitButton>
-                        </form>
+                        {schedule && !voucher.schedule_open ? (
+                            <Alert className="mt-5 border-amber-200 bg-amber-50 text-amber-900">
+                                <FiAlertTriangle aria-hidden="true" />
+                                <AlertTitle>Not valid right now</AlertTitle>
+                                <AlertDescription>
+                                    This offer can only be used {formatSchedule(schedule)}. Ask the customer to come back then.
+                                </AlertDescription>
+                            </Alert>
+                        ) : (
+                            <form action={markVoucherUsed} className="mt-6">
+                                <input type="hidden" name="code" value={voucher.redemption_code} />
+                                <input type="hidden" name="redemptionId" value={voucher.redemption_id} />
+                                <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90">
+                                    Mark as used
+                                </SubmitButton>
+                            </form>
+                        )}
                     </>
                 ) : null}
 

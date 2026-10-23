@@ -88,6 +88,50 @@ export async function startCheckout(formData: FormData) {
     redirect(session.url);
 }
 
+// Moves an existing subscription between Pro and Growth. Stripe prorates
+// the difference; the webhook then updates the plan here.
+export async function changePlan(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const plan = formData.get("plan");
+    const billingPath = `/business/${businessId}/billing`;
+
+    // Founding prices can only be chosen at sign-up.
+    if (!isPlanKey(plan) || plan === "pro_founding_monthly") {
+        redirect(`${billingPath}?error=invalid_plan`);
+    }
+
+    await requireBillingManager(businessId);
+
+    const { data: current, error } = await createAdminClient()
+        .from("subscriptions")
+        .select("stripe_subscription_id")
+        .eq("business_id", businessId)
+        .in("status", CURRENT_SUBSCRIPTION_STATUSES)
+        .maybeSingle();
+
+    if (error) {
+        throw error;
+    }
+
+    if (!current) {
+        redirect(`${billingPath}?error=no_subscription`);
+    }
+
+    const stripe = createStripeClient();
+    const priceIds = await getPlanPriceIds();
+    const subscription = await stripe.subscriptions.retrieve(current.stripe_subscription_id);
+    const item = subscription.items.data[0];
+
+    if (item.price.id !== priceIds[plan]) {
+        await stripe.subscriptions.update(subscription.id, {
+            items: [{ id: item.id, price: priceIds[plan] }],
+            proration_behavior: "create_prorations",
+        });
+    }
+
+    redirect(`${billingPath}?changed=${plan}`);
+}
+
 export async function openBillingPortal(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     const billingPath = `/business/${businessId}/billing`;

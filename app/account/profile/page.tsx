@@ -23,6 +23,12 @@ async function ProfileContent() {
         redirect("/login");
     }
 
+    const { data: birthday } = await supabase
+        .from("customer_birthdays")
+        .select("birth_month, birth_day")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
     return (
         <ProfileForm
             key={user.id}
@@ -33,6 +39,8 @@ async function ProfileContent() {
                 city: readText(user.user_metadata.city),
                 avatarPath: readText(user.user_metadata.avatar_path),
                 email: user.email ?? "",
+                birthMonth: birthday?.birth_month ?? null,
+                birthDay: birthday?.birth_day ?? null,
             }}
         />
     );

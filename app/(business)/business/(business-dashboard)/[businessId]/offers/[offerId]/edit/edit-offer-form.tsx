@@ -27,11 +27,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { OfferScheduleFields, scheduleFromForm } from "@/components/offer-schedule-fields";
+import { formatSchedule, scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
 
 type EditOfferFormProps = {
     businessId: string;
     offerId: string;
+    canSchedule: boolean;
 };
 
 type Offer = {
@@ -47,11 +50,22 @@ type Offer = {
     max_redemptions: number | null;
     redemption_count: number;
     image_url: string | null;
+    schedule_days: number[] | null;
+    schedule_start: string | null;
+    schedule_end: string | null;
 };
+
+// Scheduled offers describe their days and times unless the business wrote
+// its own availability text.
+function defaultAvailability(schedule: ReturnType<typeof scheduleFromForm>) {
+    const parsed = scheduleFrom(schedule.schedule_days, schedule.schedule_start, schedule.schedule_end);
+    return parsed ? formatSchedule(parsed) : "Available now";
+}
 
 export default function EditOfferForm({
     businessId,
     offerId,
+    canSchedule,
 }: EditOfferFormProps) {
     const router = useRouter();
 
@@ -83,7 +97,10 @@ export default function EditOfferForm({
             approval_status,
             max_redemptions,
             redemption_count,
-            image_url
+            image_url,
+            schedule_days,
+            schedule_start,
+            schedule_end
           `,
                 )
                 .eq("id", offerId)
@@ -109,6 +126,7 @@ export default function EditOfferForm({
 
         const form = event.currentTarget;
         const formData = new FormData(form);
+        const schedule = scheduleFromForm(formData);
 
         const maxRedemptionsValue = String(
             formData.get("maxRedemptions") ?? "",
@@ -194,11 +212,12 @@ export default function EditOfferForm({
                 discount: formData.get("discount"),
                 description: formData.get("description"),
                 availability:
-                    formData.get("availability") || "Available now",
+                    formData.get("availability") || defaultAvailability(schedule),
                 expires_at: formData.get("expiresAt"),
                 terms: formData.get("terms"),
                 max_redemptions: maxRedemptions,
                 image_url: imageUrl,
+                ...schedule,
             })
             .eq("id", offerId)
             .eq("business_id", businessId);
@@ -441,6 +460,12 @@ export default function EditOfferForm({
                                     defaultValue={offer.availability}
                                 />
                             </div>
+
+                            <OfferScheduleFields
+                                businessId={businessId}
+                                canSchedule={canSchedule}
+                                initial={scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)}
+                            />
 
                             <div className="space-y-2">
                                 <Label htmlFor="expiresAt">Expiry date</Label>

@@ -13,7 +13,16 @@ export const FREE_LIVE_OFFER_LIMIT = 1;
 // public.business_has_pro(); past_due keeps Pro while Stripe retries.
 export const PRO_SUBSCRIPTION_STATUSES = ["trialing", "active", "past_due"];
 
-export type PlanKey = "pro_founding_monthly" | "pro_monthly" | "pro_yearly";
+export type PlanKey =
+    | "pro_founding_monthly"
+    | "pro_monthly"
+    | "pro_yearly"
+    | "growth_monthly"
+    | "growth_yearly";
+
+// Growth includes everything in Pro plus automations, quiet-hours offers,
+// the monthly value report and events.
+export type PlanTier = "free" | "pro" | "growth";
 
 export const plans: Record<
     PlanKey,
@@ -36,7 +45,23 @@ export const plans: Record<
         interval: "year",
         note: "2 months free",
     },
+    growth_monthly: {
+        name: "Growth",
+        price: "£39",
+        interval: "month",
+    },
+    growth_yearly: {
+        name: "Growth yearly",
+        price: "£390",
+        interval: "year",
+        note: "2 months free",
+    },
 };
+
+// Must match the lookup keys' prefix check in the Stripe webhook.
+export function tierForPlan(plan: PlanKey): Exclude<PlanTier, "free"> {
+    return plan.startsWith("growth") ? "growth" : "pro";
+}
 
 export function isPlanKey(value: unknown): value is PlanKey {
     return typeof value === "string" && value in plans;
@@ -119,6 +144,25 @@ export async function businessHasPro(
     }
 
     return data.length > 0;
+}
+
+// The business's plan: free, pro or growth. Uses the caller's client.
+export async function businessTier(
+    supabase: SupabaseClient,
+    businessId: string,
+): Promise<PlanTier> {
+    const { data, error } = await supabase
+        .from("subscriptions")
+        .select("tier")
+        .eq("business_id", businessId)
+        .in("status", PRO_SUBSCRIPTION_STATUSES);
+
+    if (error) {
+        throw error;
+    }
+
+    if (data.some((row) => row.tier === "growth")) return "growth";
+    return data.length > 0 ? "pro" : "free";
 }
 
 type OfferForPlan = {

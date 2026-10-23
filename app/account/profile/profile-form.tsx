@@ -31,8 +31,12 @@ type ProfileFormProps = {
         city: string;
         avatarPath: string;
         email: string;
+        birthMonth: number | null;
+        birthDay: number | null;
     };
 };
+
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const bucket = "profile-images";
 const maximumFileSize = 2 * 1024 * 1024;
@@ -52,6 +56,8 @@ export default function ProfileForm({
 
     const [name, setName] = useState(initialProfile.name);
     const [city, setCity] = useState(initialProfile.city);
+    const [birthMonth, setBirthMonth] = useState(initialProfile.birthMonth ? String(initialProfile.birthMonth) : "");
+    const [birthDay, setBirthDay] = useState(initialProfile.birthDay ? String(initialProfile.birthDay) : "");
     const [avatarPath, setAvatarPath] = useState(
         initialProfile.avatarPath,
     );
@@ -110,6 +116,23 @@ export default function ProfileForm({
             });
 
             if (error) throw error;
+
+            // Birthday (day and month only) lives in its own table, for
+            // birthday treats from businesses the customer follows.
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user) {
+                const { error: birthdayError } = birthMonth && birthDay
+                    ? await supabase.from("customer_birthdays").upsert({
+                        user_id: user.id,
+                        birth_month: Number(birthMonth),
+                        birth_day: Number(birthDay),
+                        updated_at: new Date().toISOString(),
+                    })
+                    : await supabase.from("customer_birthdays").delete().eq("user_id", user.id);
+
+                if (birthdayError) throw birthdayError;
+            }
 
             setName(name.trim());
             setCity(city.trim());
@@ -412,6 +435,42 @@ export default function ProfileForm({
                             />
                             <p className="text-xs leading-6 text-muted-foreground">
                                 Save your preferred town or city.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="profile-birth-day">
+                                Birthday (optional)
+                            </Label>
+                            <div className="grid max-w-sm grid-cols-[6rem_1fr] gap-3">
+                                <select
+                                    id="profile-birth-day"
+                                    aria-label="Birthday day"
+                                    value={birthDay}
+                                    onChange={(event) => setBirthDay(event.target.value)}
+                                    disabled={isBusy}
+                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                >
+                                    <option value="">Day</option>
+                                    {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
+                                        <option key={day} value={day}>{day}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    aria-label="Birthday month"
+                                    value={birthMonth}
+                                    onChange={(event) => setBirthMonth(event.target.value)}
+                                    disabled={isBusy}
+                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                >
+                                    <option value="">Month</option>
+                                    {monthNames.map((month, index) => (
+                                        <option key={month} value={index + 1}>{month}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <p className="text-xs leading-6 text-muted-foreground">
+                                Businesses you follow may send you a birthday treat. We never ask for the year.
                             </p>
                         </div>
 

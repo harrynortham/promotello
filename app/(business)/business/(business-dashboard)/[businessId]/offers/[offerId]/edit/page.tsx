@@ -1,4 +1,8 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
+
+import { businessTier } from "@/lib/billing";
+import { createClient } from "@/utils/supabase/server";
 import EditOfferForm from "./edit-offer-form";
 
 type PageProps = {
@@ -20,12 +24,16 @@ function LoadingState() {
 }
 
 async function EditOfferContent({ params }: PageProps) {
+    await connection();
+
     const { businessId, offerId } = await params;
+    const tier = await businessTier(await createClient(), businessId).catch(() => "free");
 
     return (
         <EditOfferForm
             businessId={businessId}
             offerId={offerId}
+            canSchedule={tier === "growth"}
         />
     );
 }

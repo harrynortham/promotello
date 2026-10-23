@@ -55,6 +55,8 @@ const monthlyValue: Record<PlanKey, number> = {
     pro_founding_monthly: 19,
     pro_monthly: 24,
     pro_yearly: 20,
+    growth_monthly: 39,
+    growth_yearly: 32.5,
 };
 
 // Targets from the roadmap (end of Phase 2).

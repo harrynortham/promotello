@@ -28,7 +28,8 @@ export type WalletRedemption = {
     claimedAt: string | null;
     usedAt: string | null;
     offer: {
-        slug: string;
+        // Null for gift vouchers from automations, which have no offer page.
+        slug: string | null;
         title: string;
         discount: string;
         availability: string;
@@ -325,7 +326,7 @@ function VoucherCard({
                 <Separator className="my-6" />
 
                 <div className="flex flex-wrap gap-3">
-                    {isReady && offer && (
+                    {isReady && offer?.slug && (
                         <Button
                             render={
                                 <Link href={`/offers/${offer.slug}`} />

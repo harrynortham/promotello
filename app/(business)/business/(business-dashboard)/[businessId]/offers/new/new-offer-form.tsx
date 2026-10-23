@@ -11,12 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { OfferScheduleFields, scheduleFromForm } from "@/components/offer-schedule-fields";
+import { formatSchedule, scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
 import { announceNewOffer } from "./actions";
 
 type NewOfferFormProps = {
     businessId: string;
     defaultCategoryId: string | null;
+    canSchedule: boolean;
 };
 
 function createSlug(title: string) {
@@ -29,9 +32,17 @@ function createSlug(title: string) {
     return `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+// Scheduled offers describe their days and times unless the business wrote
+// its own availability text.
+function defaultAvailability(schedule: ReturnType<typeof scheduleFromForm>) {
+    const parsed = scheduleFrom(schedule.schedule_days, schedule.schedule_start, schedule.schedule_end);
+    return parsed ? formatSchedule(parsed) : "Available now";
+}
+
 export default function NewOfferForm({
     businessId,
     defaultCategoryId,
+    canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +54,7 @@ export default function NewOfferForm({
 
         const form = event.currentTarget;
         const formData = new FormData(form);
+        const schedule = scheduleFromForm(formData);
 
         setIsSubmitting(true);
         setErrorMessage("");
@@ -135,7 +147,8 @@ export default function NewOfferForm({
             title,
             description: formData.get("description"),
             availability:
-                formData.get("availability") || "Available now",
+                formData.get("availability") || defaultAvailability(schedule),
+            ...schedule,
             expires_at: formData.get("expiresAt"),
             terms: formData.get("terms"),
             max_redemptions: maxRedemptions,
@@ -336,6 +349,12 @@ export default function NewOfferForm({
                                     placeholder="Available this weekend"
                                 />
                             </div>
+
+                            <OfferScheduleFields
+                                businessId={businessId}
+                                canSchedule={canSchedule}
+                                initial={null}
+                            />
 
                             <div className="space-y-2">
                                 <Label htmlFor="expiresAt">

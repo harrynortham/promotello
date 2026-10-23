@@ -27,6 +27,7 @@ type OfferStatus = "pending" | "approved" | "rejected" | "suspended";
 
 type Offer = {
     id: string;
+    slug: string;
     title: string;
     category: string;
     discount: string;
@@ -183,6 +184,7 @@ async function OffersContent({ params }: PageProps) {
         .select(
             `
         id,
+        slug,
         title,
         category,
         discount,
@@ -420,7 +422,7 @@ async function OffersContent({ params }: PageProps) {
                                             <Button
                                                 render={
                                                     <Link
-                                                        href={`/offers/${offer.id}`}
+                                                        href={`/offers/${offer.slug}`}
                                                     />
                                                 }
                                                 nativeButton={false}
@@ -429,6 +431,22 @@ async function OffersContent({ params }: PageProps) {
                                             >
                                                 View promotion
                                             </Button>
+
+                                            {offer.approval_status === "approved" && (
+                                                <Button
+                                                    render={
+                                                        <a
+                                                            href={`/offers/${offer.slug}/story-image`}
+                                                            download={`${offer.slug}-story.png`}
+                                                        />
+                                                    }
+                                                    nativeButton={false}
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Instagram image
+                                                </Button>
+                                            )}
 
                                             {canManageOffers && (
                                                 <Button

@@ -30,7 +30,7 @@ import {
 
 export const metadata: Metadata = {
     title: "Business Pricing",
-    description: `Start free with ${FREE_LIVE_OFFER_LIMIT} live offer, or go Pro for unlimited offers at ${plans.pro_monthly.price}/month with a ${TRIAL_DAYS}-day free trial. Founding members pay ${plans.pro_founding_monthly.price}/month.`,
+    description: `Start free with ${FREE_LIVE_OFFER_LIMIT} live offer, go Pro for unlimited offers and loyalty cards at ${plans.pro_monthly.price}/month, or Growth for automated marketing at ${plans.growth_monthly.price}/month, each with a ${TRIAL_DAYS}-day free trial. Founding members pay ${plans.pro_founding_monthly.price}/month.`,
 };
 
 const freeFeatures = [
@@ -41,6 +41,14 @@ const freeFeatures = [
     "1 printable QR poster with scan tracking",
     "Promotion performance reporting",
     "Team access for your colleagues",
+];
+
+const growthFeatures = [
+    "Everything in Pro",
+    "Welcome, birthday and win-back emails that run themselves",
+    "Quiet-hours offers that repeat on the days and times you choose",
+    "A monthly value report in your inbox",
+    "Events, plus share images for Instagram",
 ];
 
 const proFeatures = [
@@ -237,7 +245,7 @@ export default function BusinessPricingPage() {
                         </Button>
                     </div>
 
-                    <div className="mx-auto mt-6 grid max-w-5xl gap-6 lg:grid-cols-2">
+                    <div className="mx-auto mt-6 grid max-w-6xl gap-6 lg:grid-cols-3">
                         <Card className="rounded-3xl shadow-none">
                             <CardHeader className="p-7 sm:p-9">
                                 <CardTitle className="text-2xl">Free</CardTitle>
@@ -342,6 +350,66 @@ export default function BusinessPricingPage() {
                                 </p>
 
                                 <FeatureList features={proFeatures} />
+                            </CardContent>
+                        </Card>
+
+                        <Card className="rounded-3xl shadow-none">
+                            <CardHeader className="p-7 sm:p-9">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <CardTitle className="text-2xl">Growth</CardTitle>
+
+                                    <Badge variant="secondary">
+                                        {TRIAL_DAYS}-day free trial
+                                    </Badge>
+                                </div>
+
+                                <CardDescription className="mt-2 text-base leading-7">
+                                    Marketing that runs without you: automatic
+                                    emails, quiet-hours offers and monthly reports.
+                                </CardDescription>
+
+                                <div className="pt-7">
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-6xl font-semibold tracking-tight">
+                                            {plans.growth_monthly.price}
+                                        </span>
+
+                                        <span className="pb-2 text-muted-foreground">
+                                            / month
+                                        </span>
+                                    </div>
+
+                                    <p className="mt-3 text-sm text-muted-foreground">
+                                        Or {plans.growth_yearly.price} a year
+                                        ({plans.growth_yearly.note?.toLowerCase()})
+                                        · Cancel any time
+                                    </p>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="px-7 pb-7 sm:px-9 sm:pb-9">
+                                <Button
+                                    render={<Link href="/business/register" />}
+                                    nativeButton={false}
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full"
+                                >
+                                    Start your free trial
+                                </Button>
+
+                                <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
+                                    Card required. You won&apos;t be charged
+                                    until your trial ends.
+                                </p>
+
+                                <Separator className="my-7" />
+
+                                <p className="text-sm font-semibold">
+                                    Included
+                                </p>
+
+                                <FeatureList features={growthFeatures} />
                             </CardContent>
                         </Card>
                     </div>

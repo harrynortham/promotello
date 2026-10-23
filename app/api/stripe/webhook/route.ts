@@ -250,6 +250,8 @@ async function syncSubscription(
       stripe_customer_id: customerId,
       status: subscription.status,
       price_id: item?.price.id ?? null,
+      // Growth prices' lookup keys start with "growth" (see lib/billing.ts).
+      tier: item?.price.lookup_key?.startsWith("growth") ? "growth" : "pro",
       current_period_end: toTimestamp(item?.current_period_end),
       cancel_at_period_end: subscription.cancel_at_period_end,
       trial_end: toTimestamp(subscription.trial_end),

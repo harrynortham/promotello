@@ -149,7 +149,7 @@ export default function WhyPromotelloPage() {
 
                 <section className="mt-10 print:mt-4 print:break-inside-avoid">
                     <h2 className="text-xl font-semibold">Simple pricing</h2>
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2 print:grid-cols-2">
+                    <div className="mt-4 grid gap-4 sm:grid-cols-3 print:grid-cols-3">
                         <Plan
                             name="Free"
                             price="£0"
@@ -162,6 +162,12 @@ export default function WhyPromotelloPage() {
                             note="a month · 30-day free trial"
                             highlight
                             features={["Unlimited offers, live instantly", "Digital loyalty cards", "QR posters for every spot", "Followers emailed every new offer", "Google review prompts"]}
+                        />
+                        <Plan
+                            name="Growth"
+                            price="£39"
+                            note="a month · 30-day free trial"
+                            features={["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet-hours offers on repeat", "Monthly value report", "Events and Instagram share images"]}
                         />
                     </div>
                     <p className="mt-3 text-sm text-[#17233B]/60">

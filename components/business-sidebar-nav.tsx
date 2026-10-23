@@ -32,6 +32,14 @@ const baseLinks = [
         path: "/loyalty",
     },
     {
+        label: "Automations",
+        path: "/automations",
+    },
+    {
+        label: "Events",
+        path: "/events",
+    },
+    {
         label: "Analytics",
         path: "/analytics",
     },
