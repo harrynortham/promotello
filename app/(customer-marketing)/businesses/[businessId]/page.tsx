@@ -29,6 +29,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
@@ -216,22 +217,9 @@ async function BusinessContent({ params }: BusinessPageProps) {
         )
         : [];
 
-    const addressLines = location
-        ? [
-            location.address_line_1,
-            location.city,
-            location.region,
-            location.postal_code,
-        ].filter((line): line is string => Boolean(line))
-        : [];
-
+    const addressLines = addressParts(location);
     const fullAddress = addressLines.join(", ");
-
-    const directionsUrl = fullAddress
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            fullAddress,
-        )}`
-        : null;
+    const directionsUrl = directionsUrlFor(addressLines);
 
     const mapUrl = fullAddress
         ? `https://www.google.com/maps?q=${encodeURIComponent(
@@ -240,6 +228,13 @@ async function BusinessContent({ params }: BusinessPageProps) {
         : null;
 
     const promotionCount = offers?.length ?? 0;
+
+    // Newest offer photo doubles as the profile's cover image.
+    const coverImageUrl =
+        offers?.find((offer) => offer.image_url)?.image_url ?? null;
+    const placeName = [location?.region, location?.city]
+        .filter((part, index, parts) => part && parts.indexOf(part) === index)
+        .join(", ");
 
     const initials = business.name
         .trim()
@@ -315,10 +310,26 @@ async function BusinessContent({ params }: BusinessPageProps) {
                 >
                     <div
                         aria-hidden="true"
-                        className="relative h-24 overflow-hidden bg-[#17233B] sm:h-28"
+                        className={`relative overflow-hidden bg-[#17233B] ${coverImageUrl ? "h-44 sm:h-64" : "h-24 sm:h-28"}`}
                     >
-                        <div className="absolute -right-8 -top-24 size-64 rounded-full border-[32px] border-white/5" />
-                        <div className="absolute right-44 top-12 size-32 rounded-full bg-[#FF593F]/20" />
+                        {coverImageUrl ? (
+                            <>
+                                <Image
+                                    src={coverImageUrl}
+                                    alt=""
+                                    fill
+                                    priority
+                                    sizes="(min-width: 1280px) 1200px, 100vw"
+                                    className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#17233B]/50 to-transparent" />
+                            </>
+                        ) : (
+                            <>
+                                <div className="absolute -right-8 -top-24 size-64 rounded-full border-[32px] border-white/5" />
+                                <div className="absolute right-44 top-12 size-32 rounded-full bg-[#FF593F]/20" />
+                            </>
+                        )}
                     </div>
 
                     <div className="px-6 pb-7 sm:px-8">
@@ -359,13 +370,13 @@ async function BusinessContent({ params }: BusinessPageProps) {
                                 </h1>
 
                                 <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                                    {location?.city && (
+                                    {placeName && (
                                         <span className="inline-flex items-center gap-2">
                                             <FiMapPin
                                                 aria-hidden="true"
                                                 className="size-4"
                                             />
-                                            {location.city}
+                                            {placeName}
                                         </span>
                                     )}
 

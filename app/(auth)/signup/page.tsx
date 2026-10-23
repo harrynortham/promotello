@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { safeNextPath } from "@/lib/redirects";
 import { createClient } from "@/utils/supabase/client";
 
 export default function SignupPage() {
@@ -67,13 +68,19 @@ export default function SignupPage() {
         try {
             const supabase = createClient();
 
+            // Return to the page that sent them here, e.g. an offer to claim.
+            const next =
+                safeNextPath(
+                    new URLSearchParams(window.location.search).get("next"),
+                ) ?? "/dashboard";
+
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     emailRedirectTo:
                         `${window.location.origin}/auth/callback` +
-                        "?next=/dashboard",
+                        `?next=${encodeURIComponent(next)}`,
                 },
             });
 
@@ -82,7 +89,7 @@ export default function SignupPage() {
             form.reset();
 
             if (data.session) {
-                router.replace("/dashboard");
+                router.replace(next);
                 router.refresh();
                 return;
             }

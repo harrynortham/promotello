@@ -8,6 +8,7 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { addressParts } from "@/lib/address";
 import { createClient } from "@/utils/supabase/server";
 
 import RedemptionList, {
@@ -126,16 +127,7 @@ async function RedemptionsContent() {
                 ? firstRelation(locations)
                 : null;
 
-            const address = location
-                ? [
-                    location.address_line_1,
-                    location.city,
-                    location.region,
-                    location.postal_code,
-                ]
-                    .filter(Boolean)
-                    .join(", ")
-                : "";
+            const address = addressParts(location).join(", ");
 
             return {
                 id: redemption.id,

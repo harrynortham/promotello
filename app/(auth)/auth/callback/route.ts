@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { safeNextPath } from "@/lib/redirects";
 import { createClient } from "@/utils/supabase/server";
 
 const allowedDestinations = new Set([
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
   const next =
     requestedNext && allowedDestinations.has(requestedNext)
       ? requestedNext
-      : "/dashboard";
+      : (safeNextPath(requestedNext) ?? "/dashboard");
 
   const businessFlow = next === "/onboarding" || next === "/business/dashboard";
 

@@ -23,3 +23,23 @@ test("signed-in customer can claim an approved offer", async ({ page }) => {
     const code = (await codeEl.textContent())?.trim() ?? "";
     expect(code.length).toBeGreaterThan(0);
 });
+
+test.describe("signed out", () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
+
+    test("logging in from an offer returns the customer to that offer", async ({ page }) => {
+        const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+        await page.goto(`/offers/${state.claimOfferSlug}`);
+        await page.getByText("Log in to claim this deal").click();
+
+        await page.locator("#login-email").fill(state.customerEmail);
+        await page.locator("#login-password").fill(state.testPassword);
+        await page.locator('button[type="submit"]').click();
+
+        await page.waitForURL(`**/offers/${state.claimOfferSlug}`, { timeout: 15_000 });
+        await expect(
+            page.getByRole("button", { name: "Get this deal" }).or(page.getByText("Your claimed voucher")),
+        ).toBeVisible({ timeout: 10_000 });
+    });
+});
