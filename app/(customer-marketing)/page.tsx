@@ -1,274 +1,347 @@
-"use client";
-
+import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { connection } from "next/server";
+import { FiArrowRight, FiCheckCircle, FiMapPin, FiSearch, FiSmartphone } from "react-icons/fi";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { BusinessCard } from "@/components/business-card";
+import {
+    CategoryTile,
+    SearchForm,
+    SectionHeading,
+} from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
-import { createClient } from "@/utils/supabase/client";
-import type { Offer } from "@/lib/offers";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+    areasFrom,
+    categoryImage,
+    filterOffers,
+    getCategories,
+    getLiveOffers,
+    getPublicBusinesses,
+    offerCountsByCategory,
+} from "@/lib/listings";
 
-const categories = [
-  "All deals",
-  "Food & drink",
-  "Things to do",
-  "Shopping",
+const steps = [
+    {
+        icon: FiSearch,
+        title: "Find an offer",
+        description: "Browse deals from independent cafés, shops and studios near you.",
+    },
+    {
+        icon: FiSmartphone,
+        title: "Claim your code",
+        description: "Sign in and claim the offer. Your code is saved to your account.",
+    },
+    {
+        icon: FiCheckCircle,
+        title: "Show it in store",
+        description: "Show your code when you pay, and the business applies the discount.",
+    },
 ];
 
-function LoadingCards() {
-  return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {[1, 2, 3, 4].map((item) => (
-        <Card
-          key={item}
-          className="h-64 animate-pulse border-[#17233B]/10 bg-[#17233B]/5 shadow-none"
-        />
-      ))}
-    </div>
-  );
+function HomeLoading() {
+    return (
+        <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                    <Skeleton key={item} className="aspect-[5/4] rounded-2xl" />
+                ))}
+            </div>
+        </div>
+    );
 }
 
-export default function Home() {
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [selectedCategory, setSelectedCategory] =
-    useState("All deals");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+async function HomeListings() {
+    await connection();
 
-  useEffect(() => {
-    async function loadOffers() {
-      const supabase = createClient();
+    const [groups, offers, businesses] = await Promise.all([
+        getCategories(),
+        getLiveOffers(),
+        getPublicBusinesses(),
+    ]);
 
-      const { data, error } = await supabase
-        .from("offers")
-        .select(
-          `
-            id,
-            slug,
-            category,
-            discount,
-            title,
-            description,
-            availability,
-            expires_at,
-            terms,
-            image_url,
-            business_id,
-            businesses!inner (
-              name,
-              logo_url,
-              approval_status
-            )
-          `,
-        )
-        .eq("approval_status", "approved")
-        .eq("businesses.approval_status", "approved")
-        .order("created_at", { ascending: false });
+    const counts = offerCountsByCategory(offers, groups);
+    const newest = offers.slice(0, 8);
+    const endingSoon = filterOffers(offers, groups, { sort: "ending-soon" }).slice(0, 4);
+    const featured = businesses.filter((business) => business.offerCount > 0).slice(0, 6);
+    const areas = areasFrom(businesses).slice(0, 10);
 
-      if (error) {
-        console.error("Error loading offers:", error);
-        setIsLoading(false);
-        return;
-      }
+    return (
+        <>
+            <section className="mx-auto max-w-7xl px-6 pt-16 sm:px-10 sm:pt-20">
+                <SectionHeading
+                    eyebrow="Browse by category"
+                    title="What are you in the mood for?"
+                    href="/categories"
+                    linkLabel="All categories"
+                />
 
-      const formattedOffers: Offer[] = (data ?? []).map((offer) => {
-        const business = Array.isArray(offer.businesses)
-          ? offer.businesses[0]
-          : offer.businesses;
+                <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {groups.map((group) => (
+                        <CategoryTile
+                            key={group.id}
+                            href={`/categories/${group.slug}`}
+                            name={group.name}
+                            tagline={group.description}
+                            image={categoryImage(group)}
+                            count={counts[group.slug] ?? 0}
+                        />
+                    ))}
+                </div>
+            </section>
 
-        return {
-          id: offer.id,
-          slug: offer.slug,
-          category: offer.category,
-          discount: offer.discount,
-          title: offer.title,
-          description: offer.description,
-          availability: offer.availability,
-          business: business?.name ?? "Local business",
-          businessId: offer.business_id,
-          businessLogoUrl: business?.logo_url ?? null,
-          imageUrl: offer.image_url ?? null,
-          expiresAt: offer.expires_at,
-          terms: offer.terms,
-        };
-      });
+            {newest.length > 0 && (
+                <section className="mx-auto max-w-7xl px-6 pt-20 sm:px-10">
+                    <SectionHeading
+                        eyebrow="Fresh offers"
+                        title="New on Promotello"
+                        description="The latest offers from businesses around Bristol."
+                        href="/offers"
+                        linkLabel="Browse all offers"
+                    />
 
-      setOffers(formattedOffers);
-      setIsLoading(false);
+                    <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                        {newest.map((offer) => (
+                            <OfferCard
+                                key={offer.id}
+                                slug={offer.slug}
+                                discount={offer.discount}
+                                title={offer.title}
+                                description={offer.description}
+                                availability={offer.availability}
+                                business={offer.business.name}
+                                businessLogoUrl={offer.business.logoUrl}
+                                imageUrl={offer.imageUrl}
+                                expiresAt={offer.expiresAt}
+                                area={offer.business.area}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {areas.length > 0 && (
+                <section className="mx-auto mt-20 max-w-7xl px-6 sm:px-10">
+                    <div className="grid overflow-hidden rounded-3xl bg-[#17233B] text-white lg:grid-cols-[1.1fr_0.9fr]">
+                        <div className="p-8 sm:p-12">
+                            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8A73]">
+                                Explore Bristol
+                            </p>
+
+                            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                                Find something good on your doorstep.
+                            </h2>
+
+                            <p className="mt-4 max-w-lg text-white/70">
+                                From Gloucester Road to the Harbourside, see what
+                                independent businesses are offering in each part
+                                of the city.
+                            </p>
+
+                            <div className="mt-8 flex flex-wrap gap-2">
+                                {areas.map((area) => (
+                                    <Link
+                                        key={area.name}
+                                        href={`/explore?area=${encodeURIComponent(area.name)}`}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
+                                    >
+                                        <FiMapPin aria-hidden="true" className="size-3.5" />
+                                        {area.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="relative min-h-64">
+                            <Image
+                                src="/images/home/harbourside.jpg"
+                                alt="Bikes parked beside Bristol's harbour"
+                                fill
+                                sizes="(min-width: 1024px) 45vw, 100vw"
+                                className="object-cover"
+                            />
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {endingSoon.length > 0 && (
+                <section className="mx-auto max-w-7xl px-6 pt-20 sm:px-10">
+                    <SectionHeading
+                        eyebrow="Don't miss out"
+                        title="Ending soon"
+                        href="/offers?sort=ending-soon"
+                        linkLabel="See what's ending"
+                    />
+
+                    <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                        {endingSoon.map((offer) => (
+                            <OfferCard
+                                key={offer.id}
+                                slug={offer.slug}
+                                discount={offer.discount}
+                                title={offer.title}
+                                description={offer.description}
+                                availability={offer.availability}
+                                business={offer.business.name}
+                                businessLogoUrl={offer.business.logoUrl}
+                                imageUrl={offer.imageUrl}
+                                expiresAt={offer.expiresAt}
+                                area={offer.business.area}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {featured.length > 0 && (
+                <section className="mx-auto max-w-7xl px-6 pt-20 sm:px-10">
+                    <SectionHeading
+                        eyebrow="Local favourites"
+                        title="Businesses worth knowing"
+                        href="/businesses"
+                        linkLabel="All businesses"
+                    />
+
+                    <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        {featured.map((business) => (
+                            <BusinessCard key={business.id} business={business} />
+                        ))}
+                    </div>
+                </section>
+            )}
+        </>
+    );
+}
+
+async function HeroStats() {
+    await connection();
+
+    const [offers, businesses] = await Promise.all([getLiveOffers(), getPublicBusinesses()]);
+
+    if (offers.length === 0) {
+        return null;
     }
 
-    loadOffers();
-  }, []);
+    return (
+        <p className="mt-6 text-sm text-white/75">
+            <span className="font-semibold text-white">{offers.length} live offers</span>{" "}
+            from{" "}
+            <span className="font-semibold text-white">
+                {businesses.length} independent businesses
+            </span>{" "}
+            across Bristol
+        </p>
+    );
+}
 
-  const filteredOffers = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+export default function HomePage() {
+    return (
+        <main className="bg-[#FFF8F0] pb-20 text-[#17233B]">
+            <section className="relative isolate overflow-hidden">
+                <Image
+                    src="/images/home/hero.jpg"
+                    alt="Clifton Suspension Bridge over the Avon Gorge"
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="-z-10 object-cover"
+                />
 
-    return offers.filter((offer) => {
-      const matchesCategory =
-        selectedCategory === "All deals" ||
-        offer.category?.toLowerCase() ===
-        selectedCategory.toLowerCase();
+                <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#17233B]/90 via-[#17233B]/70 to-[#17233B]/20" />
 
-      const matchesSearch =
-        !query ||
-        offer.title.toLowerCase().includes(query) ||
-        offer.description?.toLowerCase().includes(query) ||
-        offer.business.toLowerCase().includes(query) ||
-        offer.category?.toLowerCase().includes(query);
+                <div className="mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32">
+                    <div className="max-w-2xl">
+                        <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
+                            Bristol&apos;s local offers, in one place
+                        </p>
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [offers, selectedCategory, searchQuery]);
+                        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-6xl">
+                            Save on the places you love.
+                        </h1>
 
-  function clearFilters() {
-    setSearchQuery("");
-    setSelectedCategory("All deals");
-  }
+                        <p className="mt-5 max-w-xl text-lg leading-8 text-white/80">
+                            Discover offers from independent cafés, shops,
+                            studios and stays, and support the businesses that
+                            make your neighbourhood.
+                        </p>
 
-  return (
-    <main className="min-h-screen bg-[#FFFDF9] text-[#17233B]">
-      <section className="bg-[#FFF4E8]">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 py-20 text-center md:py-28">
-          <Badge
-            variant="outline"
-            className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-          >
-            Local deals, made easy
-          </Badge>
+                        <div className="mt-8 max-w-xl">
+                            <SearchForm
+                                action="/offers"
+                                placeholder="Try coffee, haircut or Gloucester Road"
+                                size="lg"
+                            />
+                        </div>
 
-          <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
-            Save on the places you love.
-          </h1>
-
-          <p className="mt-5 max-w-xl text-base leading-7 text-[#17233B]/70 md:text-lg">
-            Discover great local offers, support independent businesses, and
-            enjoy more for less.
-          </p>
-
-          <Button
-            render={<Link href="#offers" />}
-            nativeButton={false}
-            size="lg"
-            variant="default"
-            className="mt-8"
-          >
-            Explore deals
-          </Button>
-        </div>
-      </section>
-
-      <section
-        id="offers"
-        className="mx-auto w-full max-w-6xl px-6 py-16"
-      >
-        <Card className="border-[#17233B]/10 shadow-sm">
-          <CardHeader>
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <Badge
-                  variant="outline"
-                  className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                >
-                  Discover something new
-                </Badge>
-
-                <CardTitle className="mt-2 text-3xl tracking-tight">
-                  Explore local deals
-                </CardTitle>
-              </div>
-
-              <p className="text-sm text-[#17233B]/60">
-                {filteredOffers.length}{" "}
-                {filteredOffers.length === 1 ? "deal" : "deals"} available
-              </p>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            <div className="space-y-5">
-              <Input
-                id="offer-search"
-                type="search"
-                value={searchQuery}
-                onChange={(event) =>
-                  setSearchQuery(event.target.value)
-                }
-                placeholder="Search deals, businesses or categories..."
-              />
-
-              <div className="flex flex-wrap gap-3">
-                {categories.map((category) => (
-                  <Button
-                    key={category}
-                    size="sm"
-                    variant={
-                      selectedCategory === category
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-
-              <Separator />
-
-              {isLoading ? (
-                <LoadingCards />
-              ) : filteredOffers.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2">
-                  {filteredOffers.map((offer) => (
-                    <OfferCard
-                      key={offer.slug}
-                      slug={offer.slug}
-                      discount={offer.discount}
-                      title={offer.title}
-                      description={offer.description}
-                      availability={offer.availability}
-                      business={offer.business}
-                      businessId={offer.businessId}
-                      businessLogoUrl={offer.businessLogoUrl}
-                      imageUrl={offer.imageUrl}
-                      expiresAt={offer.expiresAt}
-                    />
-                  ))}
+                        <Suspense fallback={<p className="mt-6 h-5" />}>
+                            <HeroStats />
+                        </Suspense>
+                    </div>
                 </div>
-              ) : (
-                <Alert className="border-[#17233B]/10 bg-white">
-                  <AlertTitle>
-                    {searchQuery
-                      ? "No deals match your search."
-                      : "No offers in this category yet."}
-                  </AlertTitle>
+            </section>
 
-                  <AlertDescription>
-                    Try another search or check back soon for new local deals.
-                  </AlertDescription>
+            <Suspense fallback={<HomeLoading />}>
+                <HomeListings />
+            </Suspense>
 
-                  {(searchQuery ||
-                    selectedCategory !== "All deals") && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-5"
-                        onClick={clearFilters}
-                      >
-                        Clear filters
-                      </Button>
-                    )}
-                </Alert>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-    </main>
-  );
+            <section className="mx-auto max-w-7xl px-6 pt-24 sm:px-10">
+                <SectionHeading
+                    eyebrow="How it works"
+                    title="Three steps to a better deal"
+                />
+
+                <div className="mt-8 grid gap-5 md:grid-cols-3">
+                    {steps.map((step, index) => {
+                        const Icon = step.icon;
+
+                        return (
+                            <div
+                                key={step.title}
+                                className="rounded-2xl border border-[#17233B]/10 bg-white p-7"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
+                                        <Icon aria-hidden="true" className="size-5" />
+                                    </span>
+                                    <span className="text-sm font-semibold text-[#17233B]/40">
+                                        Step {index + 1}
+                                    </span>
+                                </div>
+
+                                <h3 className="mt-5 text-xl font-semibold">{step.title}</h3>
+                                <p className="mt-2 leading-7 text-[#17233B]/65">{step.description}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
+
+            <section className="mx-auto max-w-7xl px-6 pt-20 sm:px-10">
+                <div className="flex flex-col items-start gap-6 rounded-3xl bg-[#FF593F] px-8 py-12 text-white sm:flex-row sm:items-center sm:justify-between sm:px-12">
+                    <div>
+                        <h2 className="text-3xl font-semibold tracking-tight">
+                            Run a local business?
+                        </h2>
+                        <p className="mt-2 max-w-xl text-white/85">
+                            List your business and your first offer for free,
+                            and give nearby customers a reason to visit.
+                        </p>
+                    </div>
+
+                    <Button
+                        render={<Link href="/business" />}
+                        nativeButton={false}
+                        size="lg"
+                        className="shrink-0 bg-white text-[#17233B] hover:bg-white/90"
+                    >
+                        List your business
+                        <FiArrowRight aria-hidden="true" />
+                    </Button>
+                </div>
+            </section>
+        </main>
+    );
 }

@@ -9,6 +9,7 @@ import {
     AlertDescription,
     AlertTitle,
 } from "@/components/ui/alert";
+import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
@@ -27,6 +28,7 @@ type EditBusinessFormProps = {
 type Business = {
     name: string;
     category: string;
+    category_id: string | null;
     description: string | null;
     website_url: string | null;
     contact_email: string | null;
@@ -100,7 +102,7 @@ export default function EditBusinessForm({
                     supabase
                         .from("businesses")
                         .select(
-                            "name, category, description, website_url, contact_email, logo_url",
+                            "name, category, category_id, description, website_url, contact_email, logo_url",
                         )
                         .eq("id", businessId)
                         .single(),
@@ -232,7 +234,7 @@ export default function EditBusinessForm({
             .from("businesses")
             .update({
                 name: formData.get("businessName"),
-                category: formData.get("category"),
+                category_id: formData.get("category"),
                 description: formData.get("description") || null,
                 website_url: formData.get("website") || null,
                 contact_email: formData.get("contactEmail") || null,
@@ -415,11 +417,11 @@ export default function EditBusinessForm({
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
 
-                                    <Input
+                                    <CategorySelect
                                         id="category"
                                         name="category"
                                         required
-                                        defaultValue={business.category}
+                                        defaultValue={business.category_id}
                                     />
                                 </div>
 

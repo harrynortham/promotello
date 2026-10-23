@@ -80,6 +80,16 @@ export function AdminNav({ email }: AdminNavProps) {
                     </Button>
 
                     <Button
+                        render={<Link href="/admin/categories" />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                        className="text-white/75 hover:bg-white/10 hover:text-white"
+                    >
+                        Categories
+                    </Button>
+
+                    <Button
                         render={<Link href="/admin/billing" />}
                         nativeButton={false}
                         variant="ghost"

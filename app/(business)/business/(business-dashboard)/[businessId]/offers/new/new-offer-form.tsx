@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { createClient } from "@/utils/supabase/client";
 
 type NewOfferFormProps = {
     businessId: string;
+    defaultCategoryId: string | null;
 };
 
 function createSlug(title: string) {
@@ -28,6 +30,7 @@ function createSlug(title: string) {
 
 export default function NewOfferForm({
     businessId,
+    defaultCategoryId,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,7 +129,7 @@ export default function NewOfferForm({
             business_id: businessId,
             created_by: user.id,
             slug: createSlug(title),
-            category: formData.get("category"),
+            category_id: formData.get("category"),
             discount: formData.get("discount"),
             title,
             description: formData.get("description"),
@@ -273,13 +276,11 @@ export default function NewOfferForm({
                                         <span className="text-[#FF593F]">*</span>
                                     </Label>
 
-                                    <Input
+                                    <CategorySelect
                                         id="category"
                                         name="category"
                                         required
-                                        minLength={2}
-                                        maxLength={100}
-                                        placeholder="Food & drink"
+                                        defaultValue={defaultCategoryId}
                                     />
                                 </div>
 

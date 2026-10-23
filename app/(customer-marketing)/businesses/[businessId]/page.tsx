@@ -97,7 +97,7 @@ export async function generateMetadata({
 
     const { data: business } = await createPublicClient()
         .from("businesses")
-        .select("id, name, category, description, logo_url, business_locations ( city )")
+        .select("id, name, category, description, logo_url, is_sample, business_locations ( city )")
         .eq("id", businessId)
         .maybeSingle();
 
@@ -120,6 +120,8 @@ export async function generateMetadata({
         title: `${business.name}${place}`,
         description,
         alternates: { canonical: path },
+        // Sample (demo) listings must never appear in search results.
+        robots: business.is_sample ? { index: false, follow: false } : undefined,
         openGraph: {
             type: "website",
             url: path,
