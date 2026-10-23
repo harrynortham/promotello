@@ -6,6 +6,7 @@ import {
     FiBarChart2,
     FiCheck,
     FiClock,
+    FiGift,
     FiGrid,
     FiHeart,
     FiStar,
@@ -25,9 +26,11 @@ import {
     LoyaltyCardScreen,
     MonthlyReportEmail,
     NewOfferEmail,
+    OfferClaimScreen,
     PosterScansCard,
     PosterVisual,
     StaffScanScreen,
+    VoucherScreen,
 } from "@/components/product-visuals";
 import { Button } from "@/components/ui/button";
 import { qrSvg } from "@/lib/qr";
@@ -40,7 +43,7 @@ export const metadata: Metadata = {
 
 const loop = [
     { icon: FiGrid, title: "Get noticed", body: "A QR poster in your window and a page in the Promotello directory." },
-    { icon: FiHeart, title: "Bring them in", body: "An offer worth trying, emailed to everyone who follows you." },
+    { icon: FiGift, title: "Bring them in", body: "A promotion worth trying, claimed on their phone in seconds." },
     { icon: FiAward, title: "Bring them back", body: "A loyalty card on their phone, and automatic reasons to return." },
     { icon: FiBarChart2, title: "See it working", body: "Visits, followers and scans every month, compared with the last." },
 ];
@@ -85,8 +88,9 @@ export default async function BusinessPage() {
                             <span className="text-[#FF593F]">regulars.</span>
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
-                            Digital loyalty cards, QR posters, offers and follower emails in one simple app.
-                            It works from day one with your own customers. No hardware, no contract.
+                            Promotions customers claim on their phone and digital loyalty cards that bring them
+                            back, plus QR posters and follower emails. It works from day one with your own
+                            customers. No hardware, no contract.
                         </p>
 
                         <div className="mt-8">
@@ -117,8 +121,8 @@ export default async function BusinessPage() {
                         </div>
                         <FloatingNote
                             icon="check"
-                            title="Ellie earned a free coffee"
-                            detail="Her 10th visit this month"
+                            title="Jo claimed your free pastry offer"
+                            detail="84 claimed so far · 2 min ago"
                             className="absolute -left-4 bottom-4 hidden sm:flex lg:-left-10"
                         />
                     </div>
@@ -144,6 +148,28 @@ export default async function BusinessPage() {
             </section>
 
             <FeatureSection
+                eyebrow="Promotions"
+                title="Promotions people claim in seconds and redeem at your till."
+                body="Create a promotion in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it on your page, in the Promotello directory or through your QR poster, claim it on their phone, and get their own voucher."
+                points={[
+                    "You choose the deal, the terms, the end date and how many can be claimed",
+                    "Each customer gets a personal voucher with a QR code",
+                    "Staff scan it at the till, and it can't be used twice",
+                    "See claims and redemptions for every promotion",
+                ]}
+                visual={
+                    <div className="flex items-start gap-4">
+                        <OfferClaimScreen />
+                        <div className="hidden translate-y-10 sm:block">
+                            <VoucherScreen />
+                        </div>
+                    </div>
+                }
+            />
+
+            <FeatureSection
+                tinted
+                reverse
                 eyebrow="Loyalty cards"
                 title="A stamp card that never gets lost in a coat pocket."
                 body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves."
@@ -163,8 +189,6 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
-                tinted
-                reverse
                 eyebrow="QR posters"
                 title="Turn passers-by into followers."
                 body="Print a poster for your window, your till or your tables. A scan takes people to your page, where they can follow you, join your loyalty card or claim your offer."
@@ -184,12 +208,14 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
-                eyebrow="Offers and followers"
-                title="Every new offer lands in your followers' inboxes."
-                body="Create an offer in a minute and choose how many people can claim it. On Pro it goes live straight away, and everyone who follows you gets an email. Staff redeem vouchers by scanning."
+                tinted
+                reverse
+                eyebrow="Followers"
+                title="Every new promotion lands in your followers' inboxes."
+                body="Customers follow you from your page or your poster. On Pro, a new promotion goes live straight away and everyone who follows you gets an email about it, with your name as the sender."
                 points={[
-                    "Claim limits, expiry dates and clear terms",
-                    "Vouchers redeemed in seconds at the till",
+                    "Nothing to write: the emails send themselves",
+                    "Every email has an unsubscribe link",
                     "Customers who've just visited are asked for a Google review",
                 ]}
                 visual={
@@ -206,8 +232,6 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
-                tinted
-                reverse
                 eyebrow="Results"
                 title="Know it's worth it."
                 body="Your dashboard shows views, claims, visits, QR scans and loyalty stamps for the last 30 days, compared with the 30 before. On Growth, a summary lands in your inbox on the 1st of every month."

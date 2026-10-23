@@ -411,3 +411,25 @@ export function StoryImagePreview() {
         </figure>
     );
 }
+
+// ---------------------------------------------------------------------------
+// Claiming a promotion
+// ---------------------------------------------------------------------------
+
+export function OfferClaimScreen() {
+    return (
+        <PhoneFrame label="A customer claiming a promotion on their phone">
+            <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFE3DA] to-[#FFF8F0]">
+                <span className="text-2xl font-semibold text-[#FF593F]/70">Free pastry</span>
+            </div>
+            <p className="mt-3 text-xs text-[#17233B]/55">{business} · Gloucester Road</p>
+            <p className="mt-0.5 font-semibold leading-snug">Free pastry with any coffee before 10am</p>
+            <div className="mt-3 flex items-center justify-between text-[11px] text-[#17233B]/60">
+                <span>Weekdays before 10am</span>
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-[#FF593F]/10 px-2 py-0.5 font-semibold text-[#C2341F]">16 of 100 left</span>
+            </div>
+            <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>
+            <p className="mt-2 text-center text-[10px] text-[#17233B]/50">Free to claim · Use it in store</p>
+        </PhoneFrame>
+    );
+}
