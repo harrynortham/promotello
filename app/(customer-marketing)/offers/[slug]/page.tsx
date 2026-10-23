@@ -26,6 +26,7 @@ import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 
 import RedeemButton from "./redeem-button";
+import { PageViewTracker } from "@/components/page-view-tracker";
 
 type OfferPageProps = {
     params: Promise<{
@@ -267,6 +268,7 @@ async function OfferContent({ params }: OfferPageProps) {
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-20 text-[#17233B]">
+            <PageViewTracker businessId={business.id} offerId={offer.id} />
             <div className="mx-auto max-w-6xl px-6 pt-5 sm:px-10 sm:pt-8">
                 <nav
                     aria-label="Breadcrumb"

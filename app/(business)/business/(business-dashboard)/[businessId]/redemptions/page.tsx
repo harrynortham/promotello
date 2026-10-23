@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { FiCamera } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -191,6 +192,16 @@ async function RedemptionsContent({ params }: PageProps) {
                     >
                         Back to promotions
                     </Button>
+                </div>
+
+                <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
+                    <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#FF593F]" />
+                    <p className="text-sm leading-6 text-[#17233B]/75">
+                        <span className="font-semibold text-[#17233B]">Quickest at the till:</span>{" "}
+                        point your phone camera at the QR code on the customer&apos;s
+                        voucher. It opens the voucher here so you can mark it used in
+                        one tap.
+                    </p>
                 </div>
 
                 {redemptions.length === 0 ? (

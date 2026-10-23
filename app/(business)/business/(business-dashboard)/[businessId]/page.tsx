@@ -107,7 +107,8 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 logo_url,
                 website_url,
                 contact_email,
-                approval_status
+                approval_status,
+                google_review_url
             `,
         )
         .eq("id", businessId)
@@ -292,6 +293,15 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     completed: Boolean(loyaltyCount),
                     href: hasPro ? `${base}/loyalty` : `${base}/billing`,
                     action: hasPro ? "Set up card" : "Try Pro free",
+                    pro: !hasPro,
+                },
+                {
+                    id: "reviews",
+                    label: "Get more Google reviews",
+                    description: "Customers who just visited are asked to leave you a review.",
+                    completed: Boolean(business.google_review_url),
+                    href: hasPro ? `${base}/edit` : `${base}/billing`,
+                    action: hasPro ? "Add review link" : "Try Pro free",
                     pro: !hasPro,
                 },
                 {

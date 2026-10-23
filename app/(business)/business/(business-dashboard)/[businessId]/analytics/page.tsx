@@ -12,6 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { PeriodSummary, type BusinessAnalytics } from "./period-summary";
+
 type AnalyticsPageProps = {
     params: Promise<{
         businessId: string;
@@ -136,6 +138,15 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
         notFound();
     }
 
+    const { data: analytics, error: analyticsError } = await supabase.rpc("business_analytics", {
+        requested_business_id: businessId,
+        days: 30,
+    });
+
+    if (analyticsError) {
+        console.error("Analytics: failed to load summary", analyticsError);
+    }
+
     const { count: activeOffers } = await supabase
         .from("offers")
         .select("id", { count: "exact", head: true })
@@ -227,7 +238,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            Understand how your promotions are performing.
+                            See the customers your promotions bring in.
                         </p>
                     </div>
 
@@ -241,7 +252,11 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     </Button>
                 </div>
 
-                <section className="mt-10 grid gap-5 md:grid-cols-3">
+                {analytics && <PeriodSummary analytics={analytics as BusinessAnalytics} />}
+
+                <h2 className="mt-12 text-xl font-semibold">All time</h2>
+
+                <section className="mt-4 grid gap-5 md:grid-cols-3">
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-[#17233B]/60">

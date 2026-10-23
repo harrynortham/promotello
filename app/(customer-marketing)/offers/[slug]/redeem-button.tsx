@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VoucherQr } from "@/components/voucher-qr";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 
@@ -208,7 +209,11 @@ export default function RedeemButton({
                         Your redemption code
                     </p>
 
-                    <p className="mt-2 break-all font-mono text-3xl font-bold tracking-[0.2em]">
+                    {!isUsed && !isExpired && (
+                        <VoucherQr code={redemption.redemption_code} className="mx-auto mt-4 size-40" />
+                    )}
+
+                    <p className="mt-3 break-all font-mono text-3xl font-bold tracking-[0.2em]">
                         {redemption.redemption_code}
                     </p>
 
@@ -217,7 +222,7 @@ export default function RedeemButton({
                             ? "The business has marked this voucher as used."
                             : isExpired
                                 ? "The published expiry date has passed. Contact the business if you have a question about this voucher."
-                                : "Show this code to the business when using your offer."}
+                                : "Show this to staff when you pay. They can scan it or type the code."}
                     </p>
 
                     <Button

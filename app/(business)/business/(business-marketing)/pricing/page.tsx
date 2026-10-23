@@ -38,7 +38,8 @@ const freeFeatures = [
     "Business profile with location, opening hours and contact details",
     `${FREE_LIVE_OFFER_LIMIT} live promotion at a time`,
     "Promotion images, claim limits and expiry dates",
-    "Customer redemption codes and redemption management",
+    "Customer redemption codes, with scan-to-redeem at the till",
+    "1 printable QR poster with scan tracking",
     "Promotion performance reporting",
     "Team access for your colleagues",
 ];
@@ -46,15 +47,14 @@ const freeFeatures = [
 const proFeatures = [
     "Everything in Free",
     "Unlimited live promotions",
-    "Run several offers side by side, from weekday specials to seasonal deals",
+    "Digital loyalty stamp cards, stamped by your staff",
+    "A QR poster for every spot, with scans compared",
+    "Google review prompts after a visit",
     "Paused promotions come back as soon as you upgrade",
 ];
 
 const comingToPro = [
-    "Digital loyalty stamp cards",
-    "Printable QR posters with scan tracking",
     "Followers and new-offer emails",
-    "Google review prompts",
 ];
 
 const principles = [

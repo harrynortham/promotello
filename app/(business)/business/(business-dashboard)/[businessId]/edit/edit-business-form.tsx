@@ -33,6 +33,7 @@ type Business = {
     website_url: string | null;
     contact_email: string | null;
     logo_url: string | null;
+    google_review_url: string | null;
 };
 
 type Location = {
@@ -102,7 +103,7 @@ export default function EditBusinessForm({
                     supabase
                         .from("businesses")
                         .select(
-                            "name, category, category_id, description, website_url, contact_email, logo_url",
+                            "name, category, category_id, description, website_url, contact_email, logo_url, google_review_url",
                         )
                         .eq("id", businessId)
                         .single(),
@@ -238,6 +239,7 @@ export default function EditBusinessForm({
                 description: formData.get("description") || null,
                 website_url: formData.get("website") || null,
                 contact_email: formData.get("contactEmail") || null,
+                google_review_url: String(formData.get("googleReviewUrl") ?? "").trim() || null,
                 logo_url: logoUrl,
             })
             .eq("id", businessId);
@@ -458,6 +460,25 @@ export default function EditBusinessForm({
                                         defaultValue={business.contact_email ?? ""}
                                     />
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="googleReviewUrl">Google review link</Label>
+
+                                    <Input
+                                        id="googleReviewUrl"
+                                        name="googleReviewUrl"
+                                        type="url"
+                                        defaultValue={business.google_review_url ?? ""}
+                                        placeholder="https://g.page/r/…/review"
+                                        pattern="https://(g\.page|maps\.app\.goo\.gl|(www\.|search\.)?google\.[a-z.]+)/.*"
+                                    />
+
+                                    <p className="text-xs leading-5 text-[#17233B]/55">
+                                        In Google Business Profile, choose &ldquo;Ask for
+                                        reviews&rdquo; and copy the link. On Pro, customers who
+                                        recently visited are asked to leave you a review.
+                                    </p>
+                                </div>
                             </section>
 
                             <Separator />
@@ -522,12 +543,13 @@ export default function EditBusinessForm({
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="region">Region</Label>
+                                            <Label htmlFor="region">Neighbourhood or area</Label>
 
                                             <Input
                                                 id="region"
                                                 name="region"
                                                 defaultValue={location.region ?? ""}
+                                                placeholder="e.g. Gloucester Road"
                                             />
                                         </div>
                                     </div>
