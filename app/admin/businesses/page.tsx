@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -182,26 +181,11 @@ export default function AdminBusinessesPage() {
     }
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
-            <div className="mx-auto max-w-5xl">
-                <Button
-                    render={<Link href="/admin" />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to admin
-                </Button>
+        <div>
+            <div>
 
-                <header className="mt-8">
-                    <Badge
-                        variant="outline"
-                        className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                    >
-                        Administration
-                    </Badge>
-
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                <header>
+                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                         Business approvals
                     </h1>
 
@@ -479,6 +463,6 @@ export default function AdminBusinessesPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </main>
+        </div>
     );
 }

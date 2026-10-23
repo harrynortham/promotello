@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,28 @@ export const accountLinks = [
     { label: "Business dashboard", href: "/business/dashboard" },
     { label: "Account settings", href: "/account" },
 ];
+
+// Platform admins also get a link to /admin. The check runs once per menu
+// and only grants a link: /admin itself enforces access.
+function useIsPlatformAdmin() {
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        createClient()
+            .rpc("is_platform_admin")
+            .then(({ data }) => {
+                if (isMounted) setIsAdmin(data === true);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    return isAdmin;
+}
 
 function useSignOut(redirectTo: string) {
     const router = useRouter();
@@ -73,6 +95,7 @@ export function UserMenu({
     signOutRedirect?: string;
 }) {
     const { signOut, isSigningOut, error } = useSignOut(signOutRedirect);
+    const isAdmin = useIsPlatformAdmin();
 
     return (
         <DropdownMenu>
@@ -111,6 +134,12 @@ export function UserMenu({
                             {link.label}
                         </DropdownMenuItem>
                     ))}
+
+                    {isAdmin && (
+                        <DropdownMenuItem render={<Link href="/admin" />}>
+                            Platform admin
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />

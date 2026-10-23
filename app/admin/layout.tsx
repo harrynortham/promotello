@@ -1,131 +1,107 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import Link from "next/link";
+import { Suspense, type ReactNode } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { AdminSidebarNav } from "@/components/admin-sidebar-nav";
+import { AppFooter } from "@/components/site/footers";
+import { AdminAppHeader } from "@/components/site/headers";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
-import { AdminNav } from "@/components/admin-nav";
 
 // Signed-in area: keep it out of search results.
 export const metadata: Metadata = {
+    title: "Admin",
     robots: { index: false, follow: false },
 };
 
-function AdminLoading() {
+function NavLoading() {
     return (
-        <div className="border-b border-[#17233B]/10 pb-6">
-            <div className="h-6 w-40 animate-pulse rounded-md bg-[#17233B]/10" />
+        <div className="flex gap-2 lg:flex-col">
+            {[1, 2, 3, 4].map((item) => (
+                <Skeleton key={item} className="h-9 w-32 rounded-full lg:w-full" />
+            ))}
         </div>
     );
 }
 
-async function AdminShell({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+function ContentLoading() {
+    return (
+        <div role="status" aria-label="Loading" className="space-y-6">
+            <Skeleton className="h-9 w-56" />
+            <Skeleton className="h-5 w-80 max-w-full" />
+            <Skeleton className="h-80 rounded-2xl" />
+        </div>
+    );
+}
+
+// Signed-in platform admins only; everyone else is sent away.
+async function requireAdmin() {
     await connection();
 
     const supabase = await createClient();
-
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect("/login");
+        redirect("/login?next=/admin");
     }
 
-    const { data: isAdmin, error } = await supabase.rpc(
-        "is_platform_admin",
-    );
+    const { data: isAdmin, error } = await supabase.rpc("is_platform_admin");
 
     if (error || !isAdmin) {
         redirect("/dashboard");
     }
 
+    return supabase;
+}
+
+async function AdminNavWithCounts() {
+    const supabase = await requireAdmin();
+
+    const [{ count: businesses }, { count: offers }, { count: billing }] = await Promise.all([
+        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
+        supabase.from("offers").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
+        supabase.from("billing_alerts").select("id", { count: "exact", head: true }).is("resolved_at", null),
+    ]);
+
     return (
-        <>
-            <AdminNav email={user.email} />
-
-            <div className="mt-8">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <Badge
-                            variant="outline"
-                            className="border-[#17233B]/20 bg-white text-[#17233B]"
-                        >
-                            Platform administration
-                        </Badge>
-
-                        <p className="mt-2 text-sm text-[#17233B]/60">
-                            Manage Promotello approvals and platform activity.
-                        </p>
-                    </div>
-
-                    <Button
-                        render={<Link href="/dashboard" />}
-                        nativeButton={false}
-                        variant="outline"
-                        size="sm"
-                    >
-                        Customer dashboard
-                    </Button>
-                </div>
-
-                <Separator className="my-6" />
-
-                <nav className="flex flex-wrap gap-2">
-                    <Button
-                        render={<Link href="/admin" />}
-                        nativeButton={false}
-                        variant="ghost"
-                        size="sm"
-                    >
-                        Admin overview
-                    </Button>
-
-                    <Button
-                        render={<Link href="/admin/businesses" />}
-                        nativeButton={false}
-                        variant="ghost"
-                        size="sm"
-                    >
-                        Business approvals
-                    </Button>
-
-                    <Button
-                        render={<Link href="/admin/offers" />}
-                        nativeButton={false}
-                        variant="ghost"
-                        size="sm"
-                    >
-                        Promotion approvals
-                    </Button>
-                </nav>
-            </div>
-
-            {children}
-        </>
+        <AdminSidebarNav
+            counts={{ businesses: businesses ?? 0, offers: offers ?? 0, billing: billing ?? 0 }}
+        />
     );
 }
 
-export default function AdminLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+async function AdminContent({ children }: { children: ReactNode }) {
+    await requireAdmin();
+    return <>{children}</>;
+}
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-screen bg-[#FFF8F0] px-6 py-6 text-[#17233B] sm:px-10">
-            <div className="mx-auto max-w-5xl">
-                <Suspense fallback={<AdminLoading />}>
-                    <AdminShell>{children}</AdminShell>
-                </Suspense>
+        <div className="flex min-h-dvh flex-col bg-[#FFF8F0] text-[#17233B]">
+            <AdminAppHeader />
+
+            <div className="flex-1 px-6 py-8 sm:px-10 lg:py-12">
+                <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12">
+                    <aside className="min-w-0">
+                        <div className="lg:sticky lg:top-28">
+                            <Suspense fallback={<NavLoading />}>
+                                <AdminNavWithCounts />
+                            </Suspense>
+                        </div>
+                    </aside>
+
+                    <main id="admin-content" className="min-w-0">
+                        <Suspense fallback={<ContentLoading />}>
+                            <AdminContent>{children}</AdminContent>
+                        </Suspense>
+                    </main>
+                </div>
             </div>
+
+            <AppFooter variant="admin" />
         </div>
     );
 }

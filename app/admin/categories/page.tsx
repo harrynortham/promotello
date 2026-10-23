@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
@@ -33,7 +32,7 @@ type Usage = Record<string, { businesses: number; offers: number }>;
 
 function LoadingState() {
     return (
-        <main className="mt-8">
+        <div>
             <Skeleton className="h-9 w-36 rounded-md" />
             <Skeleton className="mt-8 h-12 w-64 rounded-md" />
             <div className="mt-10 space-y-4">
@@ -41,7 +40,7 @@ function LoadingState() {
                     <Skeleton key={item} className="h-48 w-full rounded-xl" />
                 ))}
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -208,25 +207,10 @@ async function CategoriesContent({ searchParams }: PageProps) {
     const usageFor = (id: string) => usage[id] ?? { businesses: 0, offers: 0 };
 
     return (
-        <main className="mt-8">
-            <Button
-                render={<Link href="/admin" />}
-                nativeButton={false}
-                variant="outline"
-                size="sm"
-            >
-                ← Back to admin
-            </Button>
+        <div>
 
-            <header className="mt-8">
-                <Badge
-                    variant="outline"
-                    className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                >
-                    Administration
-                </Badge>
-
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            <header>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                     Categories
                 </h1>
 
@@ -337,7 +321,7 @@ async function CategoriesContent({ searchParams }: PageProps) {
                     </Card>
                 </section>
             )}
-        </main>
+        </div>
     );
 }
 

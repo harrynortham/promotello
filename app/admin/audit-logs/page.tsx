@@ -39,7 +39,7 @@ const pageSize = 25;
 
 function LoadingState() {
     return (
-        <main className="mt-8">
+        <div>
             <Skeleton className="h-9 w-36 rounded-md" />
 
             <div className="mt-8">
@@ -72,7 +72,7 @@ function LoadingState() {
                     </div>
                 ))}
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -134,25 +134,10 @@ async function AuditLogsContent({ searchParams }: PageProps) {
     const totalPages = Math.max(1, Math.ceil((count ?? 0) / pageSize));
 
     return (
-        <main className="mt-8">
-            <Button
-                render={<Link href="/admin" />}
-                nativeButton={false}
-                variant="outline"
-                size="sm"
-            >
-                ← Back to admin
-            </Button>
+        <div>
 
-            <header className="mt-8">
-                <Badge
-                    variant="outline"
-                    className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                >
-                    Administration
-                </Badge>
-
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            <header>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                     Audit log
                 </h1>
 
@@ -299,7 +284,7 @@ async function AuditLogsContent({ searchParams }: PageProps) {
                     </nav>
                 </>
             )}
-        </main>
+        </div>
     );
 }
 

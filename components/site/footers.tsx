@@ -192,6 +192,15 @@ const appFooters = {
         ],
         switchTo: { label: "Customer area", href: "/dashboard" },
     },
+    admin: {
+        homeHref: "/admin",
+        label: "Admin",
+        links: [
+            { label: "Help centre", href: "/business/help" },
+            { label: "Privacy policy", href: "/legal/privacy" },
+        ],
+        switchTo: { label: "Customer area", href: "/dashboard" },
+    },
     account: {
         homeHref: "/",
         label: "Account",
