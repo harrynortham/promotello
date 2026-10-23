@@ -26,6 +26,21 @@ type VoucherRow = {
     } | null;
 };
 
+type ReviewPrompt = {
+    business_id: string;
+    business_name: string;
+    logo_url: string | null;
+    source: "voucher" | "loyalty";
+    happened_at: string;
+};
+
+function visitedLabel(happenedAt: string) {
+    const days = Math.floor((Date.now() - new Date(happenedAt).getTime()) / 86_400_000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    return `${days} days ago`;
+}
+
 function LoadingState() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-12 sm:px-10">
@@ -55,7 +70,7 @@ async function CustomerDashboardContent() {
         redirect("/login");
     }
 
-    const [{ data: vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers] = await Promise.all([
+    const [{ data: vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers, { data: reviewPrompts }] = await Promise.all([
         supabase
             .from("offer_redemptions")
             .select(
@@ -75,7 +90,10 @@ async function CustomerDashboardContent() {
             .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
         getLiveOffers(),
+        supabase.rpc("review_prompts_for_current_user"),
     ]);
+
+    const prompts = (reviewPrompts ?? []) as ReviewPrompt[];
 
     const today = new Date().toISOString().slice(0, 10);
     const rows = (vouchers ?? []) as unknown as VoucherRow[];
@@ -132,6 +150,43 @@ async function CustomerDashboardContent() {
                         );
                     })}
                 </div>
+
+                {prompts.length > 0 && (
+                    <section className="mt-12 space-y-3" aria-label="Review your recent visits">
+                        {prompts.map((prompt) => (
+                            <div
+                                key={prompt.business_id}
+                                className="flex flex-col gap-4 rounded-2xl border border-[#FF593F]/30 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <div className="flex items-center gap-4">
+                                    {prompt.logo_url ? (
+                                        <Image src={prompt.logo_url} alt="" width={48} height={48} className="size-12 rounded-xl object-cover" />
+                                    ) : (
+                                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#FF593F]">
+                                            {prompt.business_name.charAt(0)}
+                                        </span>
+                                    )}
+                                    <div>
+                                        <p className="font-semibold">How was your visit to {prompt.business_name}?</p>
+                                        <p className="text-sm text-[#17233B]/60">
+                                            {prompt.source === "loyalty" ? "You got a loyalty stamp" : "You used a voucher"}{" "}
+                                            {visitedLabel(prompt.happened_at)}. A quick Google review really helps small businesses.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    render={<a href={`/review/${prompt.business_id}?source=${prompt.source}`} target="_blank" rel="noreferrer" />}
+                                    nativeButton={false}
+                                    className="shrink-0 bg-[#17233B] text-white hover:bg-[#17233B]/90"
+                                >
+                                    <FiStar aria-hidden="true" />
+                                    Leave a Google review
+                                </Button>
+                            </div>
+                        ))}
+                    </section>
+                )}
 
                 <section className="mt-12">
                     <SectionHeading
