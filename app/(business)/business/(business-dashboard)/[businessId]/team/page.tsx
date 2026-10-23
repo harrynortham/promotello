@@ -92,6 +92,8 @@ async function TeamContent({ params }: PageProps) {
         },
     );
 
+    const { data: isPlatformAdmin } = await supabase.rpc("is_platform_admin");
+
     const { data: invitations } = await supabase
         .from("business_invitations")
         .select("id, email, role, expires_at, accepted_at, created_at")
@@ -106,6 +108,7 @@ async function TeamContent({ params }: PageProps) {
         <TeamManagement
             businessId={businessId}
             businessName={business?.name ?? "Business"}
+            suggestHandOver={isPlatformAdmin === true}
             initialMembers={members ?? []}
             initialInvitations={invitations ?? []}
         />

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -184,14 +185,24 @@ export default function AdminBusinessesPage() {
         <div>
             <div>
 
-                <header>
-                    <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                        Business approvals
-                    </h1>
+                <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                            Business approvals
+                        </h1>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Review businesses waiting to join Promotello.
-                    </p>
+                        <p className="mt-3 text-[#17233B]/65">
+                            Review businesses waiting to join Promotello.
+                        </p>
+                    </div>
+
+                    <Button
+                        render={<Link href="/onboarding" />}
+                        nativeButton={false}
+                        variant="outline"
+                    >
+                        Set up a business for an owner
+                    </Button>
                 </header>
 
                 <Card className="mt-8 border-[#17233B]/10">

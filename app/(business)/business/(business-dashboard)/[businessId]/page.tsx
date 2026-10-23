@@ -128,6 +128,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { count: qrCodeCount },
         { count: loyaltyCount },
         hasPro,
+        { data: isPlatformAdmin },
     ] = await Promise.all([
         supabase
             .from("offers")
@@ -196,6 +197,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .eq("business_id", businessId),
 
         businessHasPro(supabase, businessId),
+        supabase.rpc("is_platform_admin"),
     ]);
 
     const offers = (offerRows ?? []) as OfferSummary[];
@@ -352,9 +354,29 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
                     <AlertTitle>Welcome to Promotello, {business.name} is set up</AlertTitle>
                     <AlertDescription>
-                        Our team checks every new business before it appears
-                        publicly. You can set everything up in the meantime, starting
-                        with the steps below.
+                        {business.approval_status === "approved"
+                            ? "Your business is live. Pick up from the steps below."
+                            : "Our team checks every new business before it appears publicly. You can set everything up in the meantime, starting with the steps below."}
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {isPlatformAdmin === true && (
+                <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
+                    <AlertTitle>Setting this business up for someone?</AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            Add their offer, QR poster and details, then hand it over.
+                            They become owner when they accept, and you leave the team.
+                        </p>
+                        <Button
+                            render={<Link href={`/business/${business.id}/team#hand-over`} />}
+                            nativeButton={false}
+                            size="sm"
+                            className="mt-3"
+                        >
+                            Hand over to the owner
+                        </Button>
                     </AlertDescription>
                 </Alert>
             )}
