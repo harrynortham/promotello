@@ -63,7 +63,19 @@ async function NewOfferPageContent({ params }: PageProps) {
         }
     }
 
-    return <NewOfferForm businessId={businessId} />;
+    // New offers default to the business's own category.
+    const { data: business } = await supabase
+        .from("businesses")
+        .select("category_id")
+        .eq("id", businessId)
+        .maybeSingle();
+
+    return (
+        <NewOfferForm
+            businessId={businessId}
+            defaultCategoryId={business?.category_id ?? null}
+        />
+    );
 }
 
 function OfferLimitReached({ businessId }: { businessId: string }) {

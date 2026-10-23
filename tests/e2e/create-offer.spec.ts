@@ -11,7 +11,7 @@ test("business owner can create a new offer", async ({ page }) => {
 
     // Fill all required fields.
     await page.locator("#title").fill("E2E New Promotion");
-    await page.locator("#category").fill("Testing");
+    await page.locator("#category").selectOption({ label: "Cafés & coffee" });
     await page.locator("#discount").fill("15% off");
     await page.locator("#description").fill(
         "A promotion created by the automated E2E test suite.",

@@ -11,6 +11,7 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,6 +37,7 @@ type EditOfferFormProps = {
 type Offer = {
     title: string;
     category: string;
+    category_id: string | null;
     discount: string;
     description: string;
     availability: string;
@@ -72,6 +74,7 @@ export default function EditOfferForm({
                     `
             title,
             category,
+            category_id,
             discount,
             description,
             availability,
@@ -187,7 +190,7 @@ export default function EditOfferForm({
             .from("offers")
             .update({
                 title: formData.get("title"),
-                category: formData.get("category"),
+                category_id: formData.get("category"),
                 discount: formData.get("discount"),
                 description: formData.get("description"),
                 availability:
@@ -397,11 +400,11 @@ export default function EditOfferForm({
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
 
-                                    <Input
+                                    <CategorySelect
                                         id="category"
                                         name="category"
                                         required
-                                        defaultValue={offer.category}
+                                        defaultValue={offer.category_id}
                                     />
                                 </div>
 

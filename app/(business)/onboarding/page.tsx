@@ -8,6 +8,7 @@ import {
     AlertDescription,
     AlertTitle,
 } from "@/components/ui/alert";
+import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -162,13 +163,10 @@ export default function OnboardingPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
 
-                                    <Input
+                                    <CategorySelect
                                         id="category"
                                         name="category"
                                         required
-                                        minLength={2}
-                                        maxLength={100}
-                                        placeholder="Cafe"
                                     />
                                 </div>
 
