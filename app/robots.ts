@@ -19,6 +19,8 @@ export default function robots(): MetadataRoute.Robots {
                 "/invite/",
                 "/auth/",
                 "/api/",
+                // QR scan links: crawlers would count as scans.
+                "/q/",
             ],
         },
         sitemap: absoluteUrl("/sitemap.xml"),
