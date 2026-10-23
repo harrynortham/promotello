@@ -19,7 +19,7 @@ const PRODUCTS = {
     },
     growth: {
         name: "Promotello Growth",
-        description: "Everything in Pro plus automations, quiet-hours offers, the monthly value report and events.",
+        description: "Everything in Pro plus automations, quiet-hours offers and the monthly value report.",
     },
 };
 

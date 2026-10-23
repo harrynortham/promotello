@@ -167,7 +167,7 @@ export default function WhyPromotelloPage() {
                             name="Growth"
                             price="£39"
                             note="a month · 30-day free trial"
-                            features={["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet-hours offers on repeat", "Monthly value report", "Events and Instagram share images"]}
+                            features={["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet-hours offers on repeat", "Monthly value report", "Instagram story images for offers"]}
                         />
                     </div>
                     <p className="mt-3 text-sm text-[#17233B]/60">

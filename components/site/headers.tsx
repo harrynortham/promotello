@@ -1,5 +1,6 @@
 "use client";
 
+import { EVENTS_ENABLED } from "@/lib/features";
 import { SiteHeader, type HeaderLink } from "./site-header";
 
 // One header component, configured per area of the site.
@@ -9,7 +10,7 @@ const customerLinks: HeaderLink[] = [
     { label: "Offers", href: "/offers" },
     { label: "Categories", href: "/categories" },
     { label: "Businesses", href: "/businesses" },
-    { label: "Events", href: "/events" },
+    ...(EVENTS_ENABLED ? [{ label: "Events", href: "/events" }] : []),
 ];
 
 const businessLinks: HeaderLink[] = [

@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
+import { EVENTS_ENABLED } from "../../lib/features";
 
 const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -152,6 +153,8 @@ test.describe.serial("Growth plan", () => {
     });
 
     test("events show on the business page and listing, with a story image", async ({ browser, request }) => {
+        test.skip(!EVENTS_ENABLED, "Events are switched off in lib/features.ts");
+
         const { businessId } = state();
         const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
         const title = `E2E Tasting ${Date.now()}`;
@@ -198,5 +201,17 @@ test.describe.serial("Growth plan", () => {
 
         const { data: second } = await admin().rpc("claim_monthly_reports", { report_month: month });
         expect((second as { business_id: string }[]).some((row) => row.business_id === businessId)).toBe(false);
+    });
+
+    test("events stay hidden while switched off", async ({ browser, request }) => {
+        test.skip(EVENTS_ENABLED, "Events are switched on");
+        const { businessId } = state();
+
+        expect((await request.get("/events")).status()).toBe(404);
+
+        const owner = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await owner.goto(`/business/${businessId}`);
+        await expect(owner.getByRole("navigation").getByRole("button", { name: "Events" })).toHaveCount(0);
+        await expect(owner.getByRole("link", { name: "Events" })).toHaveCount(0);
     });
 });

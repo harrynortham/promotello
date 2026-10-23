@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { businessTier } from "@/lib/billing";
+import { EVENTS_ENABLED } from "@/lib/features";
 import { formatEventTime } from "@/lib/uk-time";
 import { createClient } from "@/utils/supabase/server";
 import { createEvent, deleteEvent } from "./actions";
@@ -44,6 +45,10 @@ function nowIso() {
 
 async function EventsContent({ params, searchParams }: PageProps) {
     await connection();
+
+    if (!EVENTS_ENABLED) {
+        notFound();
+    }
 
     const [{ businessId }, { error, saved }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();

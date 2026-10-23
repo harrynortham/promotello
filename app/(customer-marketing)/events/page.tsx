@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { notFound } from "next/navigation";
 
 import { EventCard, type EventSummary } from "@/components/event-card";
 import { EmptyState } from "@/components/listing-ui";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EVENTS_ENABLED } from "@/lib/features";
 import { createPublicClient } from "@/utils/supabase/public";
 
 export const metadata: Metadata = {
@@ -50,6 +52,10 @@ async function UpcomingEvents() {
 }
 
 export default function EventsPage() {
+    if (!EVENTS_ENABLED) {
+        notFound();
+    }
+
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="border-b border-[#17233B]/10 bg-white">

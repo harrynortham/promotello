@@ -7,6 +7,7 @@ import { FiArrowLeft, FiCalendar, FiMapPin, FiTag } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EVENTS_ENABLED } from "@/lib/features";
 import { formatEventTime } from "@/lib/uk-time";
 import { createPublicClient } from "@/utils/supabase/public";
 
@@ -24,7 +25,7 @@ type EventDetail = {
 };
 
 async function getEvent(eventId: string) {
-    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return null;
+    if (!EVENTS_ENABLED || !/^[0-9a-f-]{36}$/i.test(eventId)) return null;
 
     const { data } = await createPublicClient()
         .from("business_events")

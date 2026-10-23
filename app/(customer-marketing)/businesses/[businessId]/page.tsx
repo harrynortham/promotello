@@ -37,6 +37,7 @@ import { FollowButton } from "@/components/follow-button";
 import { MapEmbed } from "@/components/map-embed";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { EventCard, type EventSummary } from "@/components/event-card";
+import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
 
 type BusinessPageProps = {
@@ -205,7 +206,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         supabase.auth.getUser(),
     ]);
 
-    const { data: eventRows } = await supabase
+    const { data: eventRows } = !EVENTS_ENABLED
+        ? { data: [] }
+        : await supabase
         .from("business_events")
         .select("id, title, description, starts_at, ends_at, location, price")
         .eq("business_id", businessId)

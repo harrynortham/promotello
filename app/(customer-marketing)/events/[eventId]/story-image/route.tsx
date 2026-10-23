@@ -1,3 +1,4 @@
+import { EVENTS_ENABLED } from "@/lib/features";
 import { storyImage } from "@/lib/story-image";
 import { formatEventTime } from "@/lib/uk-time";
 import { createPublicClient } from "@/utils/supabase/public";
@@ -6,7 +7,7 @@ import { createPublicClient } from "@/utils/supabase/public";
 export async function GET(_request: Request, { params }: { params: Promise<{ eventId: string }> }) {
     const { eventId } = await params;
 
-    if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
+    if (!EVENTS_ENABLED || !/^[0-9a-f-]{36}$/i.test(eventId)) {
         return new Response("Not found", { status: 404 });
     }
 

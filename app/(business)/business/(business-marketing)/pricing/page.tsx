@@ -48,7 +48,7 @@ const growthFeatures = [
     "Welcome, birthday and win-back emails that run themselves",
     "Quiet-hours offers that repeat on the days and times you choose",
     "A monthly value report in your inbox",
-    "Events, plus share images for Instagram",
+    "Instagram story images for your offers",
 ];
 
 const proFeatures = [
