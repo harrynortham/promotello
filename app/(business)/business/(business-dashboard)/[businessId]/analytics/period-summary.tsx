@@ -8,6 +8,7 @@ import {
     FiAward,
 } from "react-icons/fi";
 
+import { DailyBars } from "@/components/daily-bars";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Metric = { current: number; previous: number };
@@ -75,49 +76,6 @@ function Tile({ icon, label, metric, hint }: { icon: ReactNode; label: string; m
     );
 }
 
-function dayLabel(day: string) {
-    return new Date(`${day}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
-
-function ViewsChart({ daily }: { daily: BusinessAnalytics["daily"] }) {
-    const max = Math.max(1, ...daily.map((d) => d.views));
-    const total = daily.reduce((n, d) => n + d.views, 0);
-
-    if (total === 0) {
-        return (
-            <p className="rounded-lg border border-dashed border-[#17233B]/15 px-4 py-10 text-center text-sm text-[#17233B]/55">
-                No page views yet. Share your business page or put up a QR poster to get started.
-            </p>
-        );
-    }
-
-    return (
-        <div>
-            <div className="relative h-40" role="img" aria-label={`Daily page views, ${total} in total`}>
-                <div className="absolute inset-x-0 top-0 border-t border-dashed border-[#17233B]/10" />
-                <span className="absolute -top-2 right-0 bg-white pl-1 text-[10px] tabular-nums text-[#17233B]/45">{max}</span>
-                <div className="absolute inset-0 flex items-end gap-[2px] border-b border-[#17233B]/15">
-                    {daily.map((d) => (
-                        <div key={d.day} className="group relative flex h-full flex-1 items-end">
-                            <div
-                                className="w-full rounded-t-[4px] bg-[#FF593F]/80 group-hover:bg-[#FF593F]"
-                                style={{ height: d.views > 0 ? `${Math.max((d.views / max) * 100, 3)}%` : 0 }}
-                            />
-                            <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[#17233B] px-2 py-1 text-xs text-white shadow group-hover:block">
-                                <span className="font-semibold">{dayLabel(d.day)}</span> · {d.views} views · {d.claims} claims · {d.used} used
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="mt-2 flex justify-between text-xs text-[#17233B]/45">
-                <span>{daily[0] ? dayLabel(daily[0].day) : ""}</span>
-                <span>Today</span>
-            </div>
-        </div>
-    );
-}
-
 export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
     const { totals } = analytics;
     const views = sum(totals.profile_views, totals.offer_views);
@@ -151,7 +109,15 @@ export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
                 <div className="mt-8">
                     <h3 className="text-sm font-semibold">Page views per day</h3>
                     <p className="mb-4 text-xs text-[#17233B]/55">Hover a day to see its claims and used vouchers.</p>
-                    <ViewsChart daily={analytics.daily} />
+                    <DailyBars
+                        data={analytics.daily.map((d) => ({
+                            day: d.day,
+                            value: d.views,
+                            detail: `${d.claims} claims · ${d.used} used`,
+                        }))}
+                        unit="views"
+                        emptyMessage="No page views yet. Share your business page or put up a QR poster to get started."
+                    />
                 </div>
             </CardContent>
         </Card>

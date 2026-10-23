@@ -78,3 +78,16 @@ export function BusinessAppHeader() {
         />
     );
 }
+
+// Platform admin, which has its own sidebar navigation.
+export function AdminAppHeader() {
+    return (
+        <SiteHeader
+            homeHref="/admin"
+            links={[]}
+            variant="app"
+            signOutRedirect="/login"
+            signedOutActions={[{ label: "Sign in", href: "/login", primary: true }]}
+        />
+    );
+}
