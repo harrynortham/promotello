@@ -1,6 +1,7 @@
-export default function Terms() {
+import { redirect } from "next/navigation";
 
-    return (
-        <div>Hello</div>
-    )
+// No customer stories yet; send visitors to the business home page until
+// there are real ones to show.
+export default function TestimonialsPage() {
+    redirect("/business");
 }

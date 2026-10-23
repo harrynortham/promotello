@@ -4,9 +4,15 @@ import {
     FiArrowRight,
     FiAward,
     FiBarChart2,
+    FiActivity,
     FiCheck,
     FiClock,
+    FiCoffee,
     FiGift,
+    FiMusic,
+    FiScissors,
+    FiShoppingBag,
+    FiTool,
     FiGrid,
     FiHeart,
     FiStar,
@@ -48,6 +54,18 @@ const loop = [
     { icon: FiBarChart2, title: "See it working", body: "Visits, followers and scans every month, compared with the last." },
 ];
 
+// Examples across Promotello's categories, so no one thinks it's only for cafés.
+const businessTypes = [
+    { icon: FiCoffee, type: "Cafés and bakeries", example: "Buy 9 coffees, get the 10th free" },
+    { icon: FiClock, type: "Restaurants", example: "Two courses for £15, Monday to Wednesday, 5 to 7pm" },
+    { icon: FiMusic, type: "Pubs and bars", example: "A free drink for new followers on quiz night" },
+    { icon: FiScissors, type: "Hair and barbers", example: "Your 6th cut half price" },
+    { icon: FiStar, type: "Beauty, nails and spas", example: "10% off a first treatment, and a birthday treat" },
+    { icon: FiActivity, type: "Fitness, yoga and classes", example: "First class free, then a stamp every visit" },
+    { icon: FiShoppingBag, type: "Shops, florists and makers", example: "10% off your first order in store" },
+    { icon: FiTool, type: "Services, pets and repairs", example: "Every 5th groom or service free" },
+];
+
 const faqs = [
     {
         question: "Do my customers need to download an app?",
@@ -82,7 +100,7 @@ export default async function BusinessPage() {
 
                 <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-[1.05fr_1fr]">
                     <div>
-                        <Eyebrow>For independent cafés, shops and salons</Eyebrow>
+                        <Eyebrow>For independent local businesses</Eyebrow>
                         <h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
                             Turn first-time visitors into{" "}
                             <span className="text-[#FF593F]">regulars.</span>
@@ -147,7 +165,33 @@ export default async function BusinessPage() {
                 </div>
             </section>
 
+            {/* Business types */}
+            <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10 lg:py-24">
+                <div className="max-w-2xl">
+                    <Eyebrow>Who it&apos;s for</Eyebrow>
+                    <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                        Built for any local business with customers who could come back.
+                    </h2>
+                    <p className="mt-4 text-lg leading-8 text-[#17233B]/70">
+                        If people visit you in person, Promotello can help them visit again. A few ideas to
+                        get you started:
+                    </p>
+                </div>
+                <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {businessTypes.map(({ icon: Icon, type, example }) => (
+                        <li key={type} className="rounded-2xl border border-[#17233B]/10 bg-white p-5">
+                            <span className="flex size-10 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+                                <Icon aria-hidden="true" />
+                            </span>
+                            <p className="mt-4 font-semibold">{type}</p>
+                            <p className="mt-1 text-sm leading-6 text-[#17233B]/65">&ldquo;{example}&rdquo;</p>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+
             <FeatureSection
+                tinted
                 eyebrow="Promotions"
                 title="Promotions people claim in seconds and redeem at your till."
                 body="Create a promotion in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it on your page, in the Promotello directory or through your QR poster, claim it on their phone, and get their own voucher."
@@ -168,7 +212,6 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
-                tinted
                 reverse
                 eyebrow="Loyalty cards"
                 title="A stamp card that never gets lost in a coat pocket."
@@ -189,6 +232,7 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
+                tinted
                 eyebrow="QR posters"
                 title="Turn passers-by into followers."
                 body="Print a poster for your window, your till or your tables. A scan takes people to your page, where they can follow you, join your loyalty card or claim your offer."
@@ -208,7 +252,6 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
-                tinted
                 reverse
                 eyebrow="Followers"
                 title="Every new promotion lands in your followers' inboxes."
@@ -232,6 +275,7 @@ export default async function BusinessPage() {
             />
 
             <FeatureSection
+                tinted
                 eyebrow="Results"
                 title="Know it's worth it."
                 body="Your dashboard shows views, claims, visits, QR scans and loyalty stamps for the last 30 days, compared with the 30 before. On Growth, a summary lands in your inbox on the 1st of every month."

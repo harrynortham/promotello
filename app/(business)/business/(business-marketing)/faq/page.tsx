@@ -7,162 +7,184 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
     title: { absolute: "Frequently Asked Questions | Promotello for Business" },
     description:
-        "Answers to common questions about joining Promotello, creating promotions, managing customer redemptions, and business pricing.",
+        "Answers about promotions, vouchers, loyalty cards, QR posters, follower emails, automations, your team and pricing.",
 };
 
 const sections = [
     {
         id: "getting-started",
         title: "Getting started",
-        description: "A few things to know before joining.",
+        description: "What Promotello is and who it's for.",
         questions: [
             {
                 question: "What is Promotello?",
                 answer:
-                    "Promotello helps customers discover local businesses through promotions. Businesses can create a public profile, publish offers, manage customer redemption codes, and follow promotion activity.",
+                    "Promotello helps independent businesses turn first-time visitors into regulars. You get promotions customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place. Your business also gets a page in the Promotello directory.",
             },
             {
-                question: "Is Promotello suitable for my business?",
+                question: "Is it right for my business?",
                 answer:
-                    "Promotello is designed for businesses that can offer customers a product, service, or experience with clear redemption terms. Examples include cafés, restaurants, shops, salons, and activity providers. Contact us if you are unsure whether your business is a good fit.",
+                    "If customers visit you in person, it should be. Cafés, restaurants, pubs, bakeries, barbers, salons, spas, gyms and studios, shops, florists, pet groomers and repair shops all use the same tools: an offer to bring people in and a reason to come back.",
             },
             {
-                question: "What do I need to get started?",
+                question: "How long does it take to set up?",
                 answer:
-                    "Start with your business name, description, contact details, location, and opening hours. A logo and an idea for your first promotion will also help you prepare your profile.",
+                    "About 15 minutes. Add your business details, opening hours and logo, create a promotion or loyalty card, and print your QR poster. Our team checks each new business before it appears publicly.",
             },
             {
-                question: "Can I manage more than one business?",
+                question: "Do I or my customers need to download an app?",
                 answer:
-                    "Yes. You can belong to multiple businesses with one account and switch between their dashboards. Contact us to discuss pricing and the right setup if you manage several businesses or locations.",
+                    "No. Everything works in the phone's web browser, for customers and staff. You don't need a card reader or any other hardware either.",
             },
             {
-                question: "Can I use the same account as a customer?",
+                question: "Can I try it before I pay?",
                 answer:
-                    "Yes. Your account menu lets you move between the consumer dashboard and business dashboard. Your business access depends on the businesses you own or have been invited to join.",
+                    "Yes. The Free plan has no time limit, and Pro and Growth start with a 30-day free trial.",
             },
         ],
     },
     {
         id: "promotions",
-        title: "Creating promotions",
-        description: "Choose an offer that works for your business.",
+        title: "Promotions and vouchers",
+        description: "Creating offers and redeeming them at the till.",
         questions: [
             {
-                question: "Do I have to offer a large discount?",
+                question: "Do I have to offer a big discount?",
                 answer:
-                    "No. Choose an offer that suits your margins and gives customers a reason to visit. A bundle, an introductory experience, or an extra with a purchase may be more suitable than a large discount.",
+                    "No. Plenty of businesses offer an extra instead, like a free pastry with a coffee, a bundle, or an introductory treatment. Choose something that suits your margins.",
             },
             {
-                question: "What information should my promotion include?",
+                question: "How do customers claim a promotion?",
                 answer:
-                    "Explain what the customer receives, when they can use it, its expiry date, and any conditions. Make booking requirements, exclusions, and minimum spends clear before someone claims the offer.",
+                    "They find it on your page, in the Promotello directory or by scanning your poster, then tap to claim it. They get their own voucher with a QR code and a short code, kept in their account. Each customer can claim each promotion once.",
             },
             {
-                question: "Can I limit the number of claims?",
+                question: "How do my staff redeem a voucher?",
                 answer:
-                    "Yes. You can set an optional total claim limit for a promotion. Further claims stop once that limit is reached. A claim reserves access to a redemption code; it does not mean the customer has visited.",
+                    "The customer shows the voucher and your staff scan the QR code with their phone camera, then tap \"Mark as used\". If it's already been used or the offer has ended, they'll see a clear warning. Vouchers can also be found on your Redemptions page.",
             },
             {
-                question: "Will my promotion appear straight away?",
+                question: "Can I limit how many people claim it?",
                 answer:
-                    "Your business and promotion must both be approved before the promotion appears publicly. An approved promotion must also be within its expiry date to appear in active listings.",
+                    "Yes. Set a claim limit and an end date. Once the limit is reached, nobody else can claim it.",
             },
             {
-                question: "Does approval guarantee customers or sales?",
+                question: "Does my promotion go live straight away?",
                 answer:
-                    "No. Approval allows an eligible promotion to appear publicly. Results depend on factors such as the offer, location, availability, and customer demand.",
+                    "Once your business has been approved, promotions on Pro and Growth go live as soon as you create them, and your followers are emailed. On the Free plan, our team reviews each promotion first.",
+            },
+            {
+                question: "Can a promotion only work at certain times?",
+                answer:
+                    "Yes, on Growth. Quiet-hours promotions only work on the days and times you choose, such as Monday to Thursday, 2pm to 4pm. Customers can claim them any time, but staff can only redeem them in the window.",
             },
         ],
     },
     {
-        id: "redemptions",
-        title: "Claims and redemptions",
-        description: "Understand what happens when a customer chooses your deal.",
+        id: "loyalty",
+        title: "Loyalty cards and QR posters",
+        description: "Bringing customers back and getting found.",
         questions: [
             {
-                question: "What happens when a customer claims my promotion?",
+                question: "How does the loyalty card work?",
                 answer:
-                    "The customer receives a redemption code that they can show your team when visiting. The claim appears in your business redemption records.",
+                    "Choose how many stamps it takes (3 to 20) and the reward. Customers join from your page and keep the card on their phone. Staff scan the customer's card and tap \"Add stamp\". Loyalty cards are part of Pro.",
             },
             {
-                question: "What is the difference between claimed and used?",
+                question: "Can customers stamp their own cards?",
                 answer:
-                    "Claimed means the customer has received a code. Used means your team has marked that code as used after fulfilling the promotion. A claim alone does not confirm a visit or sale.",
+                    "No. Only members of your team can add stamps, by scanning the customer's card.",
             },
             {
-                question: "How does my team check a code?",
+                question: "What are QR posters?",
                 answer:
-                    "Open the redemptions page for your business, find the customer’s code, and check its status and the relevant promotion terms. Mark it as used when you fulfil the deal.",
+                    "Printable A4 and A5 posters for your window, till or tables. Scanning one takes people to your page, where they can follow you, join your loyalty card or claim a promotion. Each poster counts its own scans, so you can see which spots work. Free includes one poster; Pro and Growth have no limit.",
+            },
+        ],
+    },
+    {
+        id: "followers",
+        title: "Followers and emails",
+        description: "Staying in touch without writing a thing.",
+        questions: [
+            {
+                question: "What does following my business do?",
+                answer:
+                    "Customers who follow you get an email whenever you post a new promotion (on Pro and Growth). The emails send themselves, with your business name as the sender.",
             },
             {
-                question: "When should I mark a redemption as used?",
+                question: "Can I see who follows me?",
                 answer:
-                    "Only mark it as used when your business provides the promotion. Do not mark a code as used simply because the customer has claimed it.",
+                    "You see how many followers you have, but not who they are or their email addresses. That keeps customers' details private and the emails trustworthy.",
             },
             {
-                question: "What if a customer claims an offer but never visits?",
+                question: "Can customers unsubscribe?",
                 answer:
-                    "The redemption remains unused. You do not need to mark it as used or fulfil the promotion unless the customer presents a valid code in accordance with the offer terms.",
+                    "Yes. Every email has an unsubscribe link, and customers can turn emails off for one business or all of them in their account.",
             },
             {
-                question: "Who provides the promotion to the customer?",
+                question: "What are automations?",
                 answer:
-                    "Your business provides the product, service, or experience described in the promotion. Make sure your team understands the offer and can fulfil it according to its published terms.",
+                    "On Growth, welcome, birthday and win-back emails go to your followers automatically, each with a personal gift voucher your staff redeem like any other. You choose the reward and switch each one on once.",
+            },
+            {
+                question: "How do Google review prompts work?",
+                answer:
+                    "Add your Google review link. Customers who used a voucher or got a stamp from you in the last two weeks are asked to leave a review, and aren't asked again for three months. Review prompts are part of Pro.",
             },
         ],
     },
     {
         id: "managing-your-business",
-        title: "Managing your business",
-        description: "Keep your team and business information organised.",
+        title: "Your team and business",
+        description: "Staff, locations and results.",
         questions: [
             {
-                question: "Can I invite staff to help?",
+                question: "Can my staff help?",
                 answer:
-                    "Yes. Business owners can invite team members and assign supported roles. What each person can access depends on their role, so you can give staff access to redemptions while keeping management tasks restricted.",
+                    "Yes. Invite them by email from the Team page. Members can scan vouchers and stamp loyalty cards; admins can also create promotions and manage settings. There's no charge per team member.",
             },
             {
-                question: "Can I update my business profile?",
+                question: "Can I manage more than one business?",
                 answer:
-                    "Yes. Owners and business admins can edit business information, including the description, logo, location, opening hours, and contact details.",
+                    "Yes. One account can run several businesses, and you switch between them in the dashboard. Each business has its own plan.",
             },
             {
-                question: "Can I choose which business emails I receive?",
+                question: "Can someone set my business up for me?",
                 answer:
-                    "Yes. Owners and business admins can configure business notification settings, including daily summaries and promotion availability updates.",
+                    "Yes. Whoever sets it up can hand it over from the Team page. You'll get an email, and when you accept you become the owner.",
             },
             {
-                question: "Where can I see how my promotions are doing?",
+                question: "How do I see whether it's working?",
                 answer:
-                    "Your business overview and analytics pages show promotion activity. You can also review individual redemption records to distinguish claims from codes marked as used.",
+                    "Analytics shows the last 30 days against the 30 before: page and promotion views, claims, vouchers used, QR scans, loyalty stamps and review clicks. On Growth, owners also get a monthly report by email.",
             },
         ],
     },
     {
         id: "pricing",
-        title: "Pricing and joining",
-        description: "Understand the proposed plan before you commit.",
+        title: "Pricing and billing",
+        description: "Plans, trials and cancelling.",
         questions: [
             {
                 question: "How much does Promotello cost?",
                 answer:
-                    "Our proposed launch price is £19 per business per month in GBP. This is proposed pricing rather than an active checkout offer. Final pricing, availability, applicable VAT, and subscription terms will be confirmed before you pay.",
+                    "Free costs nothing and includes your page, 1 live promotion and 1 QR poster. Pro is £24 a month (or £240 a year) and Growth is £39 a month (or £390 a year). The first 50 businesses can get Pro for £19 a month, locked for life.",
             },
             {
-                question: "Are there additional fees for claims or team members?",
+                question: "How does the free trial work?",
                 answer:
-                    "The proposed business plan includes unlimited promotions and team members, with no additional Promotello fee per claim. Your business remains responsible for the cost of fulfilling its promotions. Final plan terms will be confirmed before subscription.",
+                    "Pro and Growth start with a 30-day free trial. We ask for a card but don't charge it until the trial ends, and each business gets one trial.",
             },
             {
-                question: "Does sending an enquiry start a subscription?",
+                question: "Are there fees per claim or per customer?",
                 answer:
-                    "No. Sending an enquiry does not start a subscription or take a payment. It gives us a chance to discuss your business and confirm the details with you.",
+                    "No. You pay your plan and nothing else. You do cover the cost of whatever your promotions give away.",
             },
             {
-                question: "Where can I check billing and cancellation terms?",
+                question: "Can I switch plans or cancel?",
                 answer:
-                    "Billing arrangements and cancellation terms will be provided before you subscribe. Contact us if you would like to discuss these before joining.",
+                    "Yes, any time from your Billing page. If you cancel, you keep your plan until the end of the period you've paid for, then move to Free: your newest live promotion stays up and the rest are paused, not deleted.",
             },
         ],
     },
@@ -190,9 +212,9 @@ export default function BusinessFaqPage() {
                         </h1>
 
                         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                            Get to know Promotello before you get started.
-                            Find answers about promotions, customer codes,
-                            managing your business, and pricing.
+                            Everything businesses ask before getting started:
+                            promotions, loyalty cards, emails, your team and
+                            pricing.
                         </p>
 
                         <Button
@@ -298,28 +320,26 @@ export default function BusinessFaqPage() {
                         </h2>
 
                         <p className="mt-4 text-lg leading-8 text-[#17233B]/70">
-                            Follow our setup guide, explore the proposed
-                            pricing, or talk to us about your business.
+                            Start free, try the demo, or talk to us about your
+                            business.
                         </p>
 
                         <div className="mt-7 flex flex-wrap justify-center gap-3">
                             <Button
-                                render={
-                                    <Link href="/business/getting-started" />
-                                }
+                                render={<Link href="/business/register" />}
                                 nativeButton={false}
                                 size="lg"
                             >
-                                Getting started
+                                Start free
                             </Button>
 
                             <Button
-                                render={<Link href="/business/pricing" />}
+                                render={<Link href="/business/demo" />}
                                 nativeButton={false}
                                 variant="outline"
                                 size="lg"
                             >
-                                View pricing
+                                Try the demo
                             </Button>
 
                             <Button

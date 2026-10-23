@@ -84,7 +84,7 @@ const principles = [
 const questions = [
     {
         question: "How does the free trial work?",
-        answer: `Pro starts with a ${TRIAL_DAYS}-day free trial. We ask for a card when you start, but don't charge it until the trial ends. Cancel any time before then from your billing page and you won't pay anything. Each business can have one free trial.`,
+        answer: `Pro and Growth start with a ${TRIAL_DAYS}-day free trial. We ask for a card when you start, but don't charge it until the trial ends. Cancel any time before then from your billing page and you won't pay anything. Each business can have one free trial.`,
     },
     {
         question: "What is the founding member price?",
@@ -96,9 +96,9 @@ const questions = [
             "A promotion is live while it is waiting for approval or approved, and hasn't reached its expiry date. Expired promotions don't count, so on the Free plan you can publish a new one as soon as your current one ends.",
     },
     {
-        question: "What happens if I cancel Pro?",
+        question: "What happens if I cancel?",
         answer:
-            "You keep Pro until the end of the period you've paid for, then move to the Free plan. Your newest live promotion stays up and the rest are paused and hidden from customers. Nothing is deleted, and paused promotions come back if you subscribe again.",
+            "You keep your plan until the end of the period you've paid for, then move to the Free plan. Your newest live promotion stays up and the rest are paused and hidden from customers. Nothing is deleted, and paused promotions come back if you subscribe again.",
     },
     {
         question: "What counts as a business?",
@@ -113,7 +113,7 @@ const questions = [
     {
         question: "Does a subscription guarantee customers?",
         answer:
-            "No. Results depend on your offer, location, customer demand, and availability. Promotello provides tools to publish promotions and track claims and usage so you can assess the response.",
+            "No. Results depend on your offer, location and customers. Promotello gives you the tools and shows you what they bring in, so you can judge whether it's worth it.",
     },
     {
         question: "Can I limit a promotion?",
@@ -123,7 +123,12 @@ const questions = [
     {
         question: "Will my promotions appear immediately?",
         answer:
-            "Your business and promotions need approval before promotions appear publicly. Subscribing does not bypass that review.",
+            "Our team checks every new business first. Once yours is approved, promotions on Pro and Growth go live as soon as you create them. On the Free plan, each promotion is reviewed before it appears.",
+    },
+    {
+        question: "What's the difference between Pro and Growth?",
+        answer:
+            "Pro has everything to bring customers back: unlimited promotions, a loyalty card, QR posters, follower emails and review prompts. Growth adds marketing that runs itself: welcome, birthday and win-back emails with gift vouchers, quiet-hours promotions and a monthly value report. You can switch between them any time.",
     },
     {
         question: "Is VAT included?",

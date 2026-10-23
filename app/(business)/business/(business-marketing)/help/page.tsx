@@ -7,7 +7,7 @@ import HelpCentre, {
 export const metadata: Metadata = {
     title: "Business Help Centre",
     description:
-        "Practical guides to business profiles, promotions, claim limits, customer redemptions, team access, and notifications.",
+        "Practical guides to promotions, vouchers, loyalty cards, QR posters, followers, automations, your team and billing.",
 };
 
 const guides: HelpGuide[] = [
@@ -131,17 +131,17 @@ const guides: HelpGuide[] = [
     {
         id: "validate-code",
         category: "Customer redemptions",
-        title: "Check a customer’s code",
-        description: "Record a deal as used when your team fulfils it.",
+        title: "Redeem a customer’s voucher",
+        description: "Scan it at the till and mark it as used.",
         steps: [
-            "Open the correct business and choose Redemptions.",
-            "Find the code shown by the customer.",
-            "Check the promotion details and whether the code is already used.",
-            "Check the offer’s applicable terms and expiry.",
-            "Mark it as used when providing the deal.",
+            "Sign in to Promotello on your phone with your business account.",
+            "Point your phone camera at the QR code on the customer’s voucher and open the link.",
+            "Check the promotion shown matches what the customer is asking for.",
+            "Tap Mark as used, then give them the deal.",
+            "No QR code? Find the customer’s code on your Redemptions page instead.",
         ],
         note:
-            "Only validate a code presented for fulfilment. Unused claims do not mean customers are waiting at your business.",
+            "You’ll see a warning if the voucher was already used, the promotion has ended, or it’s outside its set hours. Gift vouchers from automations (codes starting with G) work the same way.",
     },
     {
         id: "unused-claims",
@@ -243,14 +243,131 @@ const guides: HelpGuide[] = [
             "Use Profile for your name and photo.",
             "Use Security for password and email changes.",
             "Use Notifications for optional personal emails.",
-            "Use Privacy for information about data and deletion requests.",
+            "Use Privacy to request a copy of your data or delete your account.",
         ],
         note:
-            "Deleting a personal account can affect business access. Business owners should contact support to review ownership before requesting deletion.",
+            "If you’re the only owner of a business with a team or a subscription, hand it over or cancel the subscription before deleting your account.",
         link: {
             label: "Open Account settings",
             href: "/account",
         },
+    },
+    {
+        id: "loyalty-card",
+        category: "Loyalty cards",
+        title: "Start a loyalty card",
+        description: "Set up a digital stamp card on Pro.",
+        steps: [
+            "Open your business and choose Loyalty card.",
+            "Choose how many stamps it takes, from 3 to 20.",
+            "Describe the reward and add any terms.",
+            "Save it. Customers can now join from your page or your QR poster.",
+        ],
+        note: "Loyalty cards are part of Pro and Growth.",
+        link: { label: "Open business dashboard", href: "/business/dashboard" },
+    },
+    {
+        id: "stamp-card",
+        category: "Loyalty cards",
+        title: "Stamp a customer’s card",
+        description: "Add a stamp by scanning at the till.",
+        steps: [
+            "Ask the customer to open their loyalty card on their phone.",
+            "Scan the QR code on their card with your phone camera and open the link.",
+            "Tap Add stamp.",
+            "When the card is full, give them the reward and it starts again.",
+        ],
+        note: "Only members of your team can add stamps. Customers can’t stamp their own cards.",
+    },
+    {
+        id: "qr-posters",
+        category: "QR posters",
+        title: "Make and print a QR poster",
+        description: "Turn passers-by into followers and customers.",
+        steps: [
+            "Open your business and choose QR posters.",
+            "Create a poster and name it after where it will go, like Front window.",
+            "Choose what it promotes, then print it at A4 or A5.",
+            "Check its scan count after a few days to see which spots work best.",
+        ],
+        note: "The Free plan includes one poster. Pro and Growth have no limit.",
+    },
+    {
+        id: "followers",
+        category: "Followers and emails",
+        title: "How followers and offer emails work",
+        description: "Customers who follow you hear about new promotions.",
+        steps: [
+            "Customers follow you from your page, a promotion page or your QR poster.",
+            "On Pro and Growth, each new promotion is emailed to your followers when it goes live.",
+            "Your follower count is shown in Analytics.",
+        ],
+        note: "You see how many followers you have, but not who they are. Every email has an unsubscribe link.",
+    },
+    {
+        id: "google-reviews",
+        category: "Followers and emails",
+        title: "Get more Google reviews",
+        description: "Ask customers who just visited for a review.",
+        steps: [
+            "In Google Business Profile, choose Ask for reviews and copy your link.",
+            "Open your business, choose Edit business and paste it into Google review link.",
+            "Customers who used a voucher or got a stamp in the last two weeks are asked for a review.",
+        ],
+        note: "Review prompts are part of Pro and Growth. Customers aren’t asked again for three months after clicking.",
+    },
+    {
+        id: "automations",
+        category: "Growth",
+        title: "Switch on automations",
+        description: "Welcome, birthday and win-back rewards.",
+        steps: [
+            "Open your business and choose Automations.",
+            "Write the reward for each automation, like A free coffee.",
+            "Choose how long the gift voucher lasts, and for win-back, how long since their last visit.",
+            "Tick Send this automatically and save.",
+        ],
+        note: "Automations go to followers only, once a day. Gift vouchers are redeemed by scanning, like any voucher.",
+    },
+    {
+        id: "quiet-hours",
+        category: "Growth",
+        title: "Make a quiet-hours promotion",
+        description: "A promotion that only works at set times.",
+        steps: [
+            "Create or edit a promotion.",
+            "Tick Only on set days and times.",
+            "Choose the days, and the start and end times.",
+            "Save. Customers can claim it any time but only use it in that window.",
+        ],
+        note: "Times are UK time. Staff see a warning if a customer tries to use it outside the window.",
+    },
+    {
+        id: "hand-over",
+        category: "Your team",
+        title: "Hand over a business",
+        description: "Make someone else the owner.",
+        steps: [
+            "Open your business and choose Team.",
+            "In Hand over this business, enter the new owner’s email address.",
+            "Send the hand-over. You can also copy the link and send it yourself.",
+            "When they accept, they become the owner and you leave the team.",
+        ],
+        note: "The link lasts 14 days. Sending a new hand-over replaces any pending one.",
+    },
+    {
+        id: "plans",
+        category: "Plans and billing",
+        title: "Choose, change or cancel a plan",
+        description: "Free, Pro and Growth.",
+        steps: [
+            "Open your business and choose Billing.",
+            "Pick Pro or Growth to start a 30-day free trial.",
+            "Already subscribed? Switch between Pro and Growth from the same page.",
+            "Use Manage billing to update your card, see invoices or cancel.",
+        ],
+        note: "If you cancel, you keep your plan until the end of the paid period, then move to Free.",
+        link: { label: "See pricing", href: "/business/pricing" },
     },
 ];
 
@@ -259,8 +376,8 @@ export default function BusinessHelpPage() {
         <HelpCentre
             audience="Business help centre"
             title="Let’s keep your business moving."
-            description="Practical guides for setting up your business, managing promotions, and helping your team welcome customers."
-            searchPlaceholder="Search promotions, codes, team access…"
+            description="Practical guides for promotions, loyalty cards, QR posters, scanning at the till, automations and more."
+            searchPlaceholder="Search scanning, loyalty, posters, billing…"
             guides={guides}
             contactHref="/business/contact"
             alternateHref="/help"
