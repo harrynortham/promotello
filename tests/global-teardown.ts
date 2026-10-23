@@ -45,6 +45,14 @@ async function globalTeardown() {
             const { error } = await admin.auth.admin.deleteUser(id);
             if (error) console.warn(`[teardown] deleteUser(${id}) failed: ${error.message}`);
         }
+
+        // signup.spec.ts registers a real account each run; remove them too.
+        const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
+        for (const user of users?.users ?? []) {
+            if (!/^e2e-signup-\d+@test\.internal$/.test(user.email ?? "")) continue;
+            const { error } = await admin.auth.admin.deleteUser(user.id);
+            if (error) console.warn(`[teardown] deleteUser(${user.email}) failed: ${error.message}`);
+        }
     } catch (err) {
         console.warn("[teardown] Error during cleanup:", err);
     } finally {
