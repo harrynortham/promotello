@@ -119,7 +119,7 @@ export default function SignupPage() {
                             />
                         </Link>
 
-                        <Button
+                        {/* <Button
                             render={<Link href="/login" />}
                             nativeButton={false}
                             variant="ghost"
@@ -127,7 +127,7 @@ export default function SignupPage() {
                         >
                             Sign in
                             <FiArrowRight aria-hidden="true" />
-                        </Button>
+                        </Button> */}
                     </div>
 
                     <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12 lg:py-20">
@@ -190,12 +190,12 @@ export default function SignupPage() {
                             </div>
                         ) : (
                             <>
-                                <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                {/* <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                     <FiUserPlus
                                         aria-hidden="true"
                                         className="size-6"
                                     />
-                                </span>
+                                </span> */}
 
                                 <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
                                     Make yourself at home.

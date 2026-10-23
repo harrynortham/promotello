@@ -99,7 +99,7 @@ function LoginContent() {
                             />
                         </Link>
 
-                        <Button
+                        {/* <Button
                             render={<Link href={registerHref} />}
                             nativeButton={false}
                             variant="ghost"
@@ -107,16 +107,16 @@ function LoginContent() {
                         >
                             Create an account
                             <FiArrowRight aria-hidden="true" />
-                        </Button>
+                        </Button> */}
                     </div>
 
                     <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12 lg:py-20">
-                        <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                        {/* <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                             <FiLock
                                 aria-hidden="true"
                                 className="size-6"
                             />
-                        </span>
+                        </span> */}
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
                             Welcome back.
@@ -175,25 +175,16 @@ function LoginContent() {
                             </div>
 
                             <div className="space-y-2">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <Label
-                                        htmlFor="login-password"
-                                        className="flex items-center gap-2"
-                                    >
-                                        <FiLock
-                                            aria-hidden="true"
-                                            className="size-4 text-muted-foreground"
-                                        />
-                                        Password
-                                    </Label>
-
-                                    <Link
-                                        href="/forgot-password"
-                                        className="text-xs font-medium underline-offset-4 hover:underline"
-                                    >
-                                        Forgot password?
-                                    </Link>
-                                </div>
+                                <Label
+                                    htmlFor="login-password"
+                                    className="flex items-center gap-2"
+                                >
+                                    <FiLock
+                                        aria-hidden="true"
+                                        className="size-4 text-muted-foreground"
+                                    />
+                                    Password
+                                </Label>
 
                                 <div className="relative">
                                     <Input
@@ -239,6 +230,15 @@ function LoginContent() {
                                             <FiEye aria-hidden="true" />
                                         )}
                                     </Button>
+                                </div>
+
+                                <div className="text-right">
+                                    <Link
+                                        href="/forgot-password"
+                                        className="text-xs font-medium underline-offset-4 hover:underline"
+                                    >
+                                        Forgot password?
+                                    </Link>
                                 </div>
                             </div>
 

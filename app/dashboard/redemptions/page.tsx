@@ -2,22 +2,44 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/utils/supabase/server";
-import RedemptionList from "./redemption-list";
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/utils/supabase/server";
+
+import RedemptionList, {
+    type WalletRedemption,
+} from "./redemption-list";
+
+function firstRelation<T>(value: T | T[] | null): T | null {
+    return Array.isArray(value) ? value[0] ?? null : value;
+}
 
 function LoadingState() {
     return (
-        <main className="min-h-screen px-6 py-6">
-            <div className="mx-auto max-w-4xl">
-                <Skeleton className="h-10 w-64 rounded-md" />
+        <section
+            role="status"
+            aria-label="Loading your vouchers"
+            className="mx-auto max-w-5xl space-y-6 py-6"
+        >
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-5 w-80 max-w-full" />
 
-                <div className="mt-8 space-y-5">
-                    <Skeleton className="h-56 w-full rounded-xl" />
-                    <Skeleton className="h-56 w-full rounded-xl" />
-                </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+                {[1, 2, 3].map((item) => (
+                    <Skeleton
+                        key={item}
+                        className="h-24 rounded-2xl"
+                    />
+                ))}
             </div>
-        </main>
+
+            <Skeleton className="h-80 rounded-3xl" />
+            <Skeleton className="h-80 rounded-3xl" />
+        </section>
     );
 }
 
@@ -34,44 +56,122 @@ async function RedemptionsContent() {
         redirect("/login");
     }
 
-    const { data: redemptions, error } = await supabase
+    const { data, error } = await supabase
         .from("offer_redemptions")
         .select(
             `
-        id,
-        redemption_code,
-        redeemed_at,
-        used_at,
-        offers (
-          slug,
-          title,
-          discount,
-          businesses (
-            name
-          )
-        )
-      `,
+                id,
+                redemption_code,
+                redeemed_at,
+                used_at,
+                offers (
+                    slug,
+                    title,
+                    discount,
+                    availability,
+                    expires_at,
+                    terms,
+                    approval_status,
+                    businesses (
+                        id,
+                        name,
+                        approval_status,
+                        business_locations (
+                            name,
+                            address_line_1,
+                            city,
+                            region,
+                            postal_code
+                        )
+                    )
+                )
+            `,
         )
         .eq("user_id", user.id)
-        .order("redeemed_at", { ascending: false });
+        .order("redeemed_at", {
+            ascending: false,
+            nullsFirst: false,
+        });
 
     if (error) {
         return (
-            <main className="px-6 py-6 text-[#17233B]">
-                <div className="mx-auto max-w-4xl rounded-3xl bg-white p-8">
-                    <h1 className="text-2xl font-semibold">
-                        My redemptions
-                    </h1>
+            <section className="mx-auto max-w-5xl space-y-6 py-6">
+                <h1 className="text-3xl font-semibold tracking-tight">
+                    My vouchers
+                </h1>
 
-                    <p className="mt-4 text-red-600">
-                        We couldn’t load your redemptions. Please try again.
-                    </p>
-                </div>
-            </main>
+                <Alert variant="destructive">
+                    <AlertTitle>
+                        We couldn’t load your vouchers
+                    </AlertTitle>
+
+                    <AlertDescription>
+                        Please refresh the page and try again.
+                    </AlertDescription>
+                </Alert>
+            </section>
         );
     }
 
-    return <RedemptionList redemptions={redemptions ?? []} />;
+    const redemptions: WalletRedemption[] = (data ?? []).map(
+        (redemption) => {
+            const offer = firstRelation(redemption.offers);
+
+            const business = offer
+                ? firstRelation(offer.businesses)
+                : null;
+
+            const locations = business?.business_locations;
+            const location = locations
+                ? firstRelation(locations)
+                : null;
+
+            const address = location
+                ? [
+                    location.address_line_1,
+                    location.city,
+                    location.region,
+                    location.postal_code,
+                ]
+                    .filter(Boolean)
+                    .join(", ")
+                : "";
+
+            return {
+                id: redemption.id,
+                code: redemption.redemption_code,
+                claimedAt: redemption.redeemed_at,
+                usedAt: redemption.used_at,
+                offer: offer
+                    ? {
+                        slug: offer.slug,
+                        title: offer.title,
+                        discount: offer.discount,
+                        availability: offer.availability,
+                        expiresAt: offer.expires_at,
+                        terms: offer.terms,
+                        approved:
+                            offer.approval_status === "approved" &&
+                            business?.approval_status === "approved",
+                    }
+                    : null,
+                business: business
+                    ? {
+                        id: business.id,
+                        name: business.name,
+                        address,
+                    }
+                    : null,
+            };
+        },
+    );
+
+    return (
+        <RedemptionList
+            redemptions={redemptions}
+            today={new Date().toISOString().slice(0, 10)}
+        />
+    );
 }
 
 export default function CustomerRedemptionsPage() {

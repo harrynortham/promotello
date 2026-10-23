@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,7 @@ function ProfilePhoto({
 }
 
 export default function DashboardNav() {
+    const router = useRouter();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSigningOut, setIsSigningOut] = useState(false);
@@ -128,7 +130,7 @@ export default function DashboardNav() {
         const supabase = createClient();
         await supabase.auth.signOut();
 
-        window.location.assign("/login");
+        router.push("/login");
     }
 
     const displayName =

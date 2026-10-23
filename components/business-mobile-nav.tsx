@@ -65,6 +65,10 @@ export function BusinessMobileNav({
                     label: "Notifications",
                     href: `/business/${businessId}/settings/notifications`,
                 },
+                {
+                    label: "Billing",
+                    href: `/business/${businessId}/billing`,
+                },
             ]
             : []),
     ];

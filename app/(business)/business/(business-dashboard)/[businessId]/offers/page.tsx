@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
@@ -8,6 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+    FREE_LIVE_OFFER_LIMIT,
+    businessHasPro,
+    isLiveOffer,
+} from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -32,6 +38,7 @@ type Offer = {
     approval_status: OfferStatus;
     max_redemptions: number | null;
     redemption_count: number;
+    plan_paused_at: string | null;
 };
 
 type BusinessSummary = {
@@ -186,13 +193,19 @@ async function OffersContent({ params }: PageProps) {
         image_url,
         approval_status,
         max_redemptions,
-        redemption_count
+        redemption_count,
+        plan_paused_at
       `,
         )
         .eq("business_id", businessId)
         .order("created_at", { ascending: false });
 
     const typedOffers = (offers ?? []) as Offer[];
+    const hasPro = await businessHasPro(supabase, businessId);
+    const liveOfferCount = typedOffers.filter(isLiveOffer).length;
+    const pausedOfferCount = typedOffers.filter(
+        (offer) => offer.plan_paused_at !== null,
+    ).length;
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
@@ -234,6 +247,32 @@ async function OffersContent({ params }: PageProps) {
                         </Button>
                     )}
                 </header>
+
+                {!hasPro && canManageOffers && (
+                    <Alert className="mt-8 border-[#FF593F]/30 bg-white">
+                        <AlertTitle>
+                            Free plan · {liveOfferCount} of {FREE_LIVE_OFFER_LIMIT} live
+                            offer used
+                        </AlertTitle>
+
+                        <AlertDescription>
+                            <p>
+                                {pausedOfferCount > 0
+                                    ? `${pausedOfferCount} paused ${pausedOfferCount === 1 ? "offer is" : "offers are"} hidden from customers. Upgrade to Pro to show them again and create unlimited offers.`
+                                    : "Upgrade to Pro for unlimited offers."}
+                            </p>
+
+                            <Button
+                                render={<Link href={`/business/${businessId}/billing`} />}
+                                nativeButton={false}
+                                size="sm"
+                                className="mt-3 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                            >
+                                Upgrade to Pro
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 {error ? (
                     <Alert variant="destructive" className="mt-10">
@@ -291,11 +330,12 @@ async function OffersContent({ params }: PageProps) {
                                     className="overflow-hidden border-[#17233B]/10"
                                 >
                                     {offer.image_url && (
-                                        <div className="aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
-                                            <img
+                                        <div className="relative aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
+                                            <Image
                                                 src={offer.image_url}
                                                 alt={offer.title}
-                                                className="h-full w-full object-cover"
+                                                fill
+                                                className="object-cover"
                                             />
                                         </div>
                                     )}
@@ -316,12 +356,23 @@ async function OffersContent({ params }: PageProps) {
                                                 </p>
                                             </div>
 
-                                            <Badge
-                                                variant="outline"
-                                                className={`w-fit ${statusClasses[offer.approval_status]}`}
-                                            >
-                                                {statusLabels[offer.approval_status]}
-                                            </Badge>
+                                            <div className="flex flex-wrap gap-2">
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`w-fit ${statusClasses[offer.approval_status]}`}
+                                                >
+                                                    {statusLabels[offer.approval_status]}
+                                                </Badge>
+
+                                                {offer.plan_paused_at && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="w-fit border-slate-200 bg-slate-100 text-slate-700"
+                                                    >
+                                                        Paused · Free plan limit
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
                                     </CardHeader>
 

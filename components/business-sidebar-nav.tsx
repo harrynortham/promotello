@@ -51,6 +51,10 @@ export function BusinessSidebarNav({
                     label: "Notifications",
                     path: "/settings/notifications",
                 },
+                {
+                    label: "Billing",
+                    path: "/billing",
+                },
             ]
             : []),
     ];

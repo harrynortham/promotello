@@ -1,7 +1,15 @@
+import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+    FREE_LIVE_OFFER_LIMIT,
+    businessHasPro,
+    isLiveOffer,
+} from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import NewOfferForm from "./new-offer-form";
 
@@ -42,7 +50,62 @@ async function NewOfferPageContent({ params }: PageProps) {
         redirect(`/business/${businessId}/offers`);
     }
 
+    if (!(await businessHasPro(supabase, businessId))) {
+        const { data: offers } = await supabase
+            .from("offers")
+            .select("approval_status, expires_at, plan_paused_at")
+            .eq("business_id", businessId);
+
+        const liveOffers = (offers ?? []).filter(isLiveOffer).length;
+
+        if (liveOffers >= FREE_LIVE_OFFER_LIMIT) {
+            return <OfferLimitReached businessId={businessId} />;
+        }
+    }
+
     return <NewOfferForm businessId={businessId} />;
+}
+
+function OfferLimitReached({ businessId }: { businessId: string }) {
+    return (
+        <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12 text-[#17233B]">
+            <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
+                <CardContent className="p-8 sm:p-10">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Free plan
+                    </p>
+
+                    <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+                        You&apos;ve reached your live offer limit
+                    </h1>
+
+                    <p className="mt-4 leading-7 text-[#17233B]/65">
+                        The Free plan includes {FREE_LIVE_OFFER_LIMIT} live
+                        offer. Upgrade to Pro for unlimited offers, or wait for
+                        your current offer to expire.
+                    </p>
+
+                    <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                        <Button
+                            render={<Link href={`/business/${businessId}/billing`} />}
+                            nativeButton={false}
+                            className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        >
+                            Upgrade to Pro
+                        </Button>
+
+                        <Button
+                            render={<Link href={`/business/${businessId}/offers`} />}
+                            nativeButton={false}
+                            variant="outline"
+                        >
+                            Back to promotions
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </main>
+    );
 }
 
 function LoadingState() {
