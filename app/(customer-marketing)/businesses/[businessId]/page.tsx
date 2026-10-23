@@ -33,11 +33,13 @@ import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
+import { LoyaltyCallout } from "./loyalty-callout";
 
 type BusinessPageProps = {
     params: Promise<{
         businessId: string;
     }>;
+    searchParams?: Promise<{ loyalty?: string }>;
 };
 
 const dayNames = [
@@ -133,10 +135,11 @@ export async function generateMetadata({
     };
 }
 
-async function BusinessContent({ params }: BusinessPageProps) {
+async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     await connection();
 
     const { businessId } = await params;
+    const loyaltyStatus = (await searchParams)?.loyalty;
     const supabase = await createClient();
 
     const { data: business, error: businessError } = await supabase
@@ -180,6 +183,27 @@ async function BusinessContent({ params }: BusinessPageProps) {
     }
 
     const today = new Date().toISOString().slice(0, 10);
+
+    // Active loyalty card, and the visitor's progress on it if they've joined.
+    const [{ data: loyaltyProgram }, { data: { user: viewer } }] = await Promise.all([
+        supabase
+            .from("loyalty_programs")
+            .select("id, stamps_required, reward, terms")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .maybeSingle(),
+        supabase.auth.getUser(),
+    ]);
+
+    const { data: loyaltyCard } =
+        loyaltyProgram && viewer
+            ? await supabase
+                .from("loyalty_cards")
+                .select("stamps")
+                .eq("program_id", loyaltyProgram.id)
+                .eq("user_id", viewer.id)
+                .maybeSingle()
+            : { data: null };
 
     const { data: offers, error: offersError } = await supabase
         .from("offers")
@@ -441,6 +465,17 @@ async function BusinessContent({ params }: BusinessPageProps) {
                                 </p>
                             </CardContent>
                         </Card>
+
+                        {loyaltyProgram && (
+                            <LoyaltyCallout
+                                businessId={business.id}
+                                businessName={business.name}
+                                program={loyaltyProgram}
+                                card={loyaltyCard}
+                                isSignedIn={Boolean(viewer)}
+                                unavailable={loyaltyStatus === "unavailable"}
+                            />
+                        )}
 
                         <section
                             id="promotions"
@@ -729,10 +764,10 @@ async function BusinessContent({ params }: BusinessPageProps) {
     );
 }
 
-export default function BusinessPage({ params }: BusinessPageProps) {
+export default function BusinessPage({ params, searchParams }: BusinessPageProps) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <BusinessContent params={params} />
+            <BusinessContent params={params} searchParams={searchParams} />
         </Suspense>
     );
 }

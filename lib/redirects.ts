@@ -4,6 +4,7 @@
 const allowedPrefixes = [
     "/offers/",
     "/businesses/",
+    "/stamp/",
     "/dashboard",
     "/account",
     "/business/dashboard",

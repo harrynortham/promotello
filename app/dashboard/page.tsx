@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { FiArrowRight, FiBriefcase, FiCheckCircle, FiCompass, FiGift } from "react-icons/fi";
+import { FiArrowRight, FiBriefcase, FiCheckCircle, FiGift, FiStar } from "react-icons/fi";
 
 import { EmptyState, SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
@@ -55,7 +55,7 @@ async function CustomerDashboardContent() {
         redirect("/login");
     }
 
-    const [{ data: vouchers }, { count: businessCount }, liveOffers] = await Promise.all([
+    const [{ data: vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers] = await Promise.all([
         supabase
             .from("offer_redemptions")
             .select(
@@ -69,6 +69,10 @@ async function CustomerDashboardContent() {
         supabase
             .from("business_members")
             .select("business_id", { count: "exact", head: true })
+            .eq("user_id", user.id),
+        supabase
+            .from("loyalty_cards")
+            .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
         getLiveOffers(),
     ]);
@@ -86,9 +90,9 @@ async function CustomerDashboardContent() {
         null;
 
     const stats = [
-        { icon: FiGift, label: "Ready to use", value: ready.length },
-        { icon: FiCheckCircle, label: "Used", value: usedCount },
-        { icon: FiCompass, label: "Live offers to explore", value: liveOffers.length },
+        { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: "/dashboard/redemptions" },
+        { icon: FiCheckCircle, label: "Vouchers used", value: usedCount, href: "/dashboard/redemptions" },
+        { icon: FiStar, label: "Loyalty cards", value: loyaltyCount ?? 0, href: "/dashboard/loyalty" },
     ];
 
     return (
@@ -118,13 +122,13 @@ async function CustomerDashboardContent() {
                         const Icon = stat.icon;
 
                         return (
-                            <div key={stat.label} className="flex items-center justify-between rounded-2xl border border-[#17233B]/10 bg-white p-5">
+                            <Link key={stat.label} href={stat.href} className="flex items-center justify-between rounded-2xl border border-[#17233B]/10 bg-white p-5 transition hover:border-[#17233B]/25 hover:shadow-sm">
                                 <div>
                                     <p className="text-sm text-[#17233B]/60">{stat.label}</p>
                                     <p className="mt-1 text-3xl font-semibold">{stat.value}</p>
                                 </div>
                                 <Icon aria-hidden="true" className="size-6 text-[#FF593F]" />
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>

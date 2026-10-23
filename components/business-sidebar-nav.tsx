@@ -28,6 +28,10 @@ const baseLinks = [
         path: "/qr",
     },
     {
+        label: "Loyalty card",
+        path: "/loyalty",
+    },
+    {
         label: "Analytics",
         path: "/analytics",
     },
