@@ -3,7 +3,10 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
-import { BusinessOnboardingChecklist } from "@/components/business-onboarding-checklist";
+import {
+    BusinessOnboardingChecklist,
+    type ChecklistGroup,
+} from "@/components/business-onboarding-checklist";
 import { BusinessRecentRedemptions } from "@/components/business-recent-redemptions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +20,14 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 
 type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
+    searchParams?: Promise<{ welcome?: string }>;
 };
 
 type OfferSummary = {
@@ -84,10 +89,11 @@ function statusClass(status: string) {
     return "border-amber-200 bg-amber-100 text-amber-800";
 }
 
-async function BusinessOverviewContent({ params }: PageProps) {
+async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     await connection();
 
     const { businessId } = await params;
+    const isWelcome = (await searchParams)?.welcome === "1";
     const supabase = await createClient();
 
     const { data: business } = await supabase
@@ -116,9 +122,11 @@ async function BusinessOverviewContent({ params }: PageProps) {
         { count: redemptionCount },
         { data: locations },
         { data: hours },
-        { data: notificationSettings },
         { count: memberCount },
         { data: recentRedemptionRows },
+        { count: qrCodeCount },
+        { count: loyaltyCount },
+        hasPro,
     ] = await Promise.all([
         supabase
             .from("offers")
@@ -152,14 +160,8 @@ async function BusinessOverviewContent({ params }: PageProps) {
             .eq("business_id", businessId),
 
         supabase
-            .from("business_notification_settings")
-            .select("business_id")
-            .eq("business_id", businessId)
-            .maybeSingle(),
-
-        supabase
             .from("business_members")
-            .select("id", { count: "exact", head: true })
+            .select("business_id", { count: "exact", head: true })
             .eq("business_id", businessId),
 
         supabase
@@ -180,6 +182,19 @@ async function BusinessOverviewContent({ params }: PageProps) {
             .eq("offers.business_id", businessId)
             .order("redeemed_at", { ascending: false })
             .limit(5),
+
+        supabase
+            .from("qr_codes")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId)
+            .is("archived_at", null),
+
+        supabase
+            .from("loyalty_programs")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId),
+
+        businessHasPro(supabase, businessId),
     ]);
 
     const offers = (offerRows ?? []) as OfferSummary[];
@@ -207,62 +222,87 @@ async function BusinessOverviewContent({ params }: PageProps) {
         0,
     );
 
-    const checklist = [
+    const base = `/business/${businessId}`;
+
+    const checklist: ChecklistGroup[] = [
         {
-            label: "Business approved",
-            description:
-                "Your business can appear publicly once it has been approved.",
-            complete: business.approval_status === "approved",
-            href: `/business/${businessId}/edit`,
+            title: "Get ready to go live",
+            description: "What customers see when they find you.",
+            required: true,
+            items: [
+                {
+                    id: "logo",
+                    label: "Add your logo",
+                    description: "Customers recognise you faster on offers and posters.",
+                    completed: Boolean(business.logo_url),
+                    href: `${base}/edit`,
+                    action: "Add logo",
+                },
+                {
+                    id: "description",
+                    label: "Describe your business",
+                    description: "A couple of sentences on what makes you worth a visit.",
+                    completed: Boolean(business.description?.trim()),
+                    href: `${base}/edit`,
+                    action: "Add description",
+                },
+                {
+                    id: "location",
+                    label: "Add your address",
+                    description: "So customers can find you and get directions.",
+                    completed: Boolean(locations?.length),
+                    href: `${base}/edit`,
+                    action: "Add address",
+                },
+                {
+                    id: "hours",
+                    label: "Set your opening hours",
+                    description: "Shown on your profile so nobody turns up to a closed door.",
+                    completed: Boolean(hours?.length),
+                    href: `${base}/edit`,
+                    action: "Set hours",
+                },
+                {
+                    id: "offer",
+                    label: "Create your first offer",
+                    description: "Give people a reason to visit. It goes live once approved.",
+                    completed: offers.length > 0,
+                    href: `${base}/offers/new`,
+                    action: "Create offer",
+                },
+            ],
         },
         {
-            label: "Add a business logo",
-            description: "Help customers recognise your business.",
-            complete: Boolean(business.logo_url),
-            href: `/business/${businessId}/edit`,
-        },
-        {
-            label: "Complete your business description",
-            description: "Tell customers what makes your business special.",
-            complete: Boolean(business.description?.trim()),
-            href: `/business/${businessId}/edit`,
-        },
-        {
-            label: "Add your location",
-            description: "Show customers where they can visit you.",
-            complete: Boolean(locations?.length),
-            href: `/business/${businessId}/edit`,
-        },
-        {
-            label: "Set opening hours",
-            description: "Let customers know when you are available.",
-            complete: Boolean(hours?.length),
-            href: `/business/${businessId}/edit`,
-        },
-        {
-            label: "Create your first promotion",
-            description: "Publish your first offer for customers.",
-            complete: offers.length > 0,
-            href: `/business/${businessId}/offers/new`,
-        },
-        {
-            label: "Get your first promotion approved",
-            description:
-                "Approved promotions become visible to customers.",
-            complete: approvedOffers.length > 0,
-            href: `/business/${businessId}/offers`,
-        },
-        {
-            label: "Configure notifications",
-            description: "Choose which business emails you receive.",
-            complete: Boolean(notificationSettings),
-            href: `/business/${businessId}/settings/notifications`,
-        },
-        {
-            label: "Invite your team",
-            description: "Give staff access to manage the business.",
-            complete: Boolean(memberCount && memberCount > 1),
-            href: `/business/${businessId}/team`,
+            title: "Bring in customers",
+            description: "Optional, but this is where regulars come from.",
+            required: false,
+            items: [
+                {
+                    id: "qr",
+                    label: "Print a QR poster",
+                    description: "Put it in your window or by the till so passers-by find your offers.",
+                    completed: Boolean(qrCodeCount),
+                    href: `${base}/qr`,
+                    action: "Make a poster",
+                },
+                {
+                    id: "loyalty",
+                    label: "Start a loyalty card",
+                    description: "Digital stamps that turn first visits into regulars.",
+                    completed: Boolean(loyaltyCount),
+                    href: hasPro ? `${base}/loyalty` : `${base}/billing`,
+                    action: hasPro ? "Set up card" : "Try Pro free",
+                    pro: !hasPro,
+                },
+                {
+                    id: "team",
+                    label: "Invite your team",
+                    description: "So staff can check codes and stamp loyalty cards.",
+                    completed: Boolean(memberCount && memberCount > 1),
+                    href: `${base}/team`,
+                    action: "Invite team",
+                },
+            ],
         },
     ];
 
@@ -298,28 +338,43 @@ async function BusinessOverviewContent({ params }: PageProps) {
                 </Button>
             </div>
 
-            {business.approval_status !== "approved" && (
-                <Alert className="border-amber-200 bg-amber-50 text-amber-800">
-                    <AlertTitle>
-                        Business approval: {business.approval_status}
-                    </AlertTitle>
-
+            {isWelcome && (
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
+                    <AlertTitle>Welcome to Promotello, {business.name} is set up</AlertTitle>
                     <AlertDescription>
-                        Your business must be approved before promotions appear
-                        publicly.
+                        Our team checks every new business before it appears
+                        publicly. You can set everything up in the meantime, starting
+                        with the steps below.
                     </AlertDescription>
                 </Alert>
             )}
 
-            <BusinessOnboardingChecklist
-                items={checklist.map((item, index) => ({
-                    id: `${businessId}-checklist-${index}`,
-                    label: item.label,
-                    description: item.description,
-                    completed: item.complete,
-                    href: item.href,
-                }))}
-            />
+            {business.approval_status === "pending" && !isWelcome && (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+                    <AlertTitle>Waiting for approval</AlertTitle>
+                    <AlertDescription>
+                        Your profile and offers go live once our team has approved
+                        your business. Finish setting up so you&apos;re ready.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {(business.approval_status === "rejected" || business.approval_status === "suspended") && (
+                <Alert variant="destructive">
+                    <AlertTitle>
+                        {business.approval_status === "rejected" ? "Your business wasn't approved" : "Your business is suspended"}
+                    </AlertTitle>
+                    <AlertDescription>
+                        It isn&apos;t visible to customers.{" "}
+                        <Link href="/business/contact" className="underline underline-offset-4">
+                            Contact us
+                        </Link>{" "}
+                        and we&apos;ll help sort it out.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            <BusinessOnboardingChecklist groups={checklist} />
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
@@ -558,10 +613,10 @@ async function BusinessOverviewContent({ params }: PageProps) {
     );
 }
 
-export default function BusinessOverviewPage({ params }: PageProps) {
+export default function BusinessOverviewPage({ params, searchParams }: PageProps) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <BusinessOverviewContent params={params} />
+            <BusinessOverviewContent params={params} searchParams={searchParams} />
         </Suspense>
     );
 }
