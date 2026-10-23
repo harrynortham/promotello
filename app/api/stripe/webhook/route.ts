@@ -144,6 +144,15 @@ async function syncSubscription(
   if (error) {
     throw error;
   }
+
+  // Pause offers over the Free limit on downgrade, restore them on upgrade.
+  const { error: planError } = await supabase.rpc("apply_business_plan", {
+    requested_business_id: customer.business_id,
+  });
+
+  if (planError) {
+    throw planError;
+  }
 }
 
 function idOf(value: string | { id: string }) {

@@ -17,12 +17,15 @@ async function globalTeardown() {
 
         // Delete child rows first in case foreign keys don't cascade to auth.users.
         await admin.from("offer_redemptions").delete().eq("user_id", state.customerUserId);
-        if (state.businessId) {
-            // Remove the sandbox Stripe customer (and its subscriptions) created by the billing test.
+        const businessIds = [state.businessId, state.freeBusinessId, state.billingBusinessId];
+        for (const businessId of businessIds) {
+            if (!businessId) continue;
+
+            // Remove any sandbox Stripe customer (and its subscriptions) created by the billing test.
             const { data: billingCustomer } = await admin
                 .from("billing_customers")
                 .select("stripe_customer_id")
-                .eq("business_id", state.businessId)
+                .eq("business_id", businessId)
                 .maybeSingle();
             if (billingCustomer && process.env.STRIPE_SECRET_KEY) {
                 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -32,9 +35,9 @@ async function globalTeardown() {
             }
 
             // billing_customers and subscriptions cascade from businesses.
-            await admin.from("offers").delete().eq("business_id", state.businessId);
-            await admin.from("business_members").delete().eq("business_id", state.businessId);
-            await admin.from("businesses").delete().eq("id", state.businessId);
+            await admin.from("offers").delete().eq("business_id", businessId);
+            await admin.from("business_members").delete().eq("business_id", businessId);
+            await admin.from("businesses").delete().eq("id", businessId);
         }
 
         for (const id of [state.businessUserId, state.customerUserId]) {

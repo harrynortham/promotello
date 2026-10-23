@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     CURRENT_SUBSCRIPTION_STATUSES,
     FOUNDING_MEMBER_LIMIT,
+    FREE_LIVE_OFFER_LIMIT,
     TRIAL_DAYS,
     countFoundingMembers,
     planKeyForPriceId,
@@ -285,6 +286,12 @@ async function PlanOptions({
     return (
         <div className="mt-10">
             <h2 className="text-xl font-semibold">Choose a plan</h2>
+
+            <p className="mt-2 text-[#17233B]/65">
+                You&apos;re on the Free plan, which includes{" "}
+                {FREE_LIVE_OFFER_LIMIT} live offer. Pro gives you unlimited
+                offers.
+            </p>
 
             <p className="mt-2 text-[#17233B]/65">
                 {trialEligible

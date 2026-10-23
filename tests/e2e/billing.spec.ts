@@ -11,7 +11,13 @@ test("business owner can start a founding member trial and open the billing port
 }) => {
     test.setTimeout(120_000);
 
-    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const { billingBusinessId: businessId } = JSON.parse(
+        fs.readFileSync(STATE_PATH, "utf8"),
+    );
+
+    // On Free, the second offer is paused.
+    await page.goto(`/business/${businessId}/offers`);
+    await expect(page.getByText("Paused · Free plan limit")).toHaveCount(1);
 
     await page.goto(`/business/${businessId}/billing`);
     await expect(page.getByRole("heading", { name: "Choose a plan" })).toBeVisible();
@@ -49,6 +55,12 @@ test("business owner can start a founding member trial and open the billing port
     await expect(page.getByText("Pro · founding member")).toBeVisible();
     await expect(page.getByText(/Your free trial ends on/)).toBeVisible();
 
+    // Upgrading restores paused offers and removes the Free plan banner.
+    await page.goto(`/business/${businessId}/offers`);
+    await expect(page.getByText("Paused · Free plan limit")).toHaveCount(0);
+    await expect(page.getByText(/Free plan ·/)).toHaveCount(0);
+
+    await page.goto(`/business/${businessId}/billing`);
     await page.getByRole("button", { name: "Manage billing" }).click();
     await page.waitForURL(/billing\.stripe\.com/, { timeout: 30_000 });
 });

@@ -1,8 +1,17 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createStripeClient } from "@/utils/stripe/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export const TRIAL_DAYS = 30;
 export const FOUNDING_MEMBER_LIMIT = 50;
+
+// Must match the limit in public.enforce_offer_plan_limit().
+export const FREE_LIVE_OFFER_LIMIT = 1;
+
+// Subscription states that give a business Pro features. Must match
+// public.business_has_pro(); past_due keeps Pro while Stripe retries.
+export const PRO_SUBSCRIPTION_STATUSES = ["trialing", "active", "past_due"];
 
 export type PlanKey = "pro_founding_monthly" | "pro_monthly" | "pro_yearly";
 
@@ -90,6 +99,43 @@ export async function countFoundingMembers() {
     }
 
     return new Set(data.map((row) => row.business_id)).size;
+}
+
+// Reads with the caller's client: members can see their business's
+// subscriptions under RLS.
+export async function businessHasPro(
+    supabase: SupabaseClient,
+    businessId: string,
+) {
+    const { data, error } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("business_id", businessId)
+        .in("status", PRO_SUBSCRIPTION_STATUSES)
+        .limit(1);
+
+    if (error) {
+        throw error;
+    }
+
+    return data.length > 0;
+}
+
+type OfferForPlan = {
+    approval_status: string;
+    expires_at: string;
+    plan_paused_at: string | null;
+};
+
+// Same definition of "live" as the database trigger.
+export function isLiveOffer(offer: OfferForPlan) {
+    const today = new Date().toISOString().slice(0, 10);
+
+    return (
+        ["pending", "approved"].includes(offer.approval_status) &&
+        offer.expires_at >= today &&
+        offer.plan_paused_at === null
+    );
 }
 
 export async function planKeyForPriceId(priceId: string | null) {
