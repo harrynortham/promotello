@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useRef, useState } from "react";
 import { FiArrowLeft, FiArrowRight, FiCheck } from "react-icons/fi";
 
 import { CategorySelect } from "@/components/category-select";
@@ -79,6 +79,17 @@ export function OnboardingForm({ firstName }: { firstName: string | null }) {
         setStep((current) => Math.min(current + 1, steps.length - 1));
     }
 
+    // Browsers only submit on Enter when the form has a submit button, and
+    // earlier steps don't, so Enter in a field moves to the next step here.
+    function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+        const target = event.target as HTMLElement;
+
+        if (event.key === "Enter" && target.tagName === "INPUT" && step < steps.length - 1) {
+            event.preventDefault();
+            goNext();
+        }
+    }
+
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -87,6 +98,8 @@ export function OnboardingForm({ firstName }: { firstName: string | null }) {
             goNext();
             return;
         }
+
+        if (!stepIsValid()) return;
 
         const formData = new FormData(event.currentTarget);
 
@@ -144,7 +157,10 @@ export function OnboardingForm({ firstName }: { firstName: string | null }) {
                 ))}
             </ol>
 
-            <form ref={formRef} onSubmit={handleSubmit} className="mt-8 rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
+            {/* noValidate: the browser would check every step's required
+                fields on submit, including hidden ones, and silently refuse.
+                Each step is validated on its own instead. */}
+            <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} noValidate className="mt-8 rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
                 <h2 className="text-xl font-semibold">{steps[step].title}</h2>
                 <p className="mt-1 text-sm text-[#17233B]/60">{steps[step].description}</p>
 

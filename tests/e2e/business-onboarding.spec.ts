@@ -36,9 +36,10 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await page.getByRole("button", { name: "Continue" }).click();
         await expect(page.getByRole("heading", { name: "Your business" })).toBeVisible();
 
-        await page.locator("#businessName").fill("E2E Onboarding Bakery");
         await page.locator("#category").selectOption({ label: "Bakeries" });
-        await page.getByRole("button", { name: "Continue" }).click();
+        await page.locator("#businessName").fill("E2E Onboarding Bakery");
+        // Pressing Enter moves on just like the Continue button.
+        await page.locator("#businessName").press("Enter");
 
         // Step 2: address, with Bristol filled in.
         await expect(page.getByRole("heading", { name: "Where to find you" })).toBeVisible();
