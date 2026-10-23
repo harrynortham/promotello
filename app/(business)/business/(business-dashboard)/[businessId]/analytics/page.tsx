@@ -13,7 +13,7 @@ import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { PeriodSummary, type BusinessAnalytics } from "./period-summary";
+import { PeriodSummary, type BusinessAnalytics } from "@/components/business-period-summary";
 
 type AnalyticsPageProps = {
     params: Promise<{

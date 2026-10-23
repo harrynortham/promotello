@@ -6,6 +6,7 @@ import { FiCheck, FiPlus } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
+import { welcomeNewFollower } from "./follow-actions";
 
 type FollowButtonProps = {
     businessId: string;
@@ -51,6 +52,11 @@ export function FollowButton({ businessId, initialFollowing, isSignedIn, size = 
         if (error) {
             setFailed(true);
         } else {
+            if (!following) {
+                // Fire and forget: the welcome email mustn't hold up the button.
+                welcomeNewFollower(businessId).catch(() => {});
+            }
+
             setFollowing(!following);
         }
 

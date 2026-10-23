@@ -9,6 +9,7 @@ import {
     FREE_LIVE_OFFER_LIMIT,
     businessHasPro,
     isLiveOffer,
+    businessTier,
 } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import NewOfferForm from "./new-offer-form";
@@ -74,6 +75,7 @@ async function NewOfferPageContent({ params }: PageProps) {
         <NewOfferForm
             businessId={businessId}
             defaultCategoryId={business?.category_id ?? null}
+            canSchedule={(await businessTier(supabase, businessId).catch(() => "free")) === "growth"}
         />
     );
 }

@@ -158,9 +158,47 @@ async function RedemptionsContent() {
         },
     );
 
+    // Gift vouchers from businesses' automations, shown alongside.
+    const { data: gifts } = await supabase
+        .from("reward_vouchers")
+        .select("id, code, kind, reward, created_at, expires_at, used_at, businesses ( id, name )")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+    const giftLabels: Record<string, string> = {
+        welcome: "Welcome gift",
+        birthday: "Birthday treat",
+        winback: "Come-back gift",
+    };
+
+    const giftRedemptions: WalletRedemption[] = (gifts ?? []).map((gift) => {
+        const business = firstRelation(gift.businesses);
+
+        return {
+            id: gift.id,
+            code: gift.code,
+            claimedAt: gift.created_at,
+            usedAt: gift.used_at,
+            offer: {
+                slug: null,
+                title: gift.reward,
+                discount: giftLabels[gift.kind] ?? "Gift",
+                availability: "One use. Show the code or QR to staff.",
+                expiresAt: gift.expires_at,
+                terms: "A personal gift from the business. It can't be swapped for cash.",
+                approved: true,
+            },
+            business: business ? { id: business.id, name: business.name, address: "" } : null,
+        };
+    });
+
+    const all = [...giftRedemptions, ...redemptions].sort(
+        (a, b) => (b.claimedAt ?? "").localeCompare(a.claimedAt ?? ""),
+    );
+
     return (
         <RedemptionList
-            redemptions={redemptions}
+            redemptions={all}
             today={new Date().toISOString().slice(0, 10)}
         />
     );

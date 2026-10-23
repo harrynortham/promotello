@@ -17,3 +17,15 @@ export async function markVoucherUsed(formData: FormData) {
 
     redirect(`/redeem/${code}?${error ? "error=failed" : "done=1"}`);
 }
+
+// Gift vouchers from automations ("G…" codes).
+export async function markGiftUsed(formData: FormData) {
+    const code = String(formData.get("code") ?? "");
+    const voucherId = String(formData.get("voucherId") ?? "");
+
+    const { error } = await (await createClient()).rpc("mark_reward_voucher_used", {
+        requested_voucher_id: voucherId,
+    });
+
+    redirect(`/redeem/${code}?${error ? "error=failed" : "done=1"}`);
+}

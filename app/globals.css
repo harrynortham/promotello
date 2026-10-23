@@ -159,3 +159,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Printable pages (e.g. /business/why-promotello) fit one A4 sheet. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: white;
+  }
+}

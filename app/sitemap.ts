@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
+import { EVENTS_ENABLED } from "@/lib/features";
+
 import { absoluteUrl } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 
@@ -21,8 +23,11 @@ const staticPaths = [
     "/help",
     "/contact",
     "/business",
+    ...(EVENTS_ENABLED ? ["/events"] : []),
     "/business/features",
     "/business/pricing",
+    "/business/demo",
+    "/business/why-promotello",
     "/business/how-it-works",
     "/business/getting-started",
     "/business/faq",

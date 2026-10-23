@@ -36,6 +36,8 @@ import { createClient } from "@/utils/supabase/server";
 import { FollowButton } from "@/components/follow-button";
 import { MapEmbed } from "@/components/map-embed";
 import { PageViewTracker } from "@/components/page-view-tracker";
+import { EventCard, type EventSummary } from "@/components/event-card";
+import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
 
 type BusinessPageProps = {
@@ -138,6 +140,12 @@ export async function generateMetadata({
     };
 }
 
+function startOfToday() {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    return today.toISOString();
+}
+
 async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     await connection();
 
@@ -197,6 +205,17 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             .maybeSingle(),
         supabase.auth.getUser(),
     ]);
+
+    const { data: eventRows } = !EVENTS_ENABLED
+        ? { data: [] }
+        : await supabase
+        .from("business_events")
+        .select("id, title, description, starts_at, ends_at, location, price")
+        .eq("business_id", businessId)
+        .gte("starts_at", startOfToday())
+        .order("starts_at", { ascending: true })
+        .limit(6);
+    const events = (eventRows ?? []) as EventSummary[];
 
     const { data: follow } = viewer
         ? await supabase
@@ -494,6 +513,19 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 isSignedIn={Boolean(viewer)}
                                 unavailable={loyaltyStatus === "unavailable"}
                             />
+                        )}
+
+                        {events.length > 0 && (
+                            <section id="events" aria-labelledby="events-heading">
+                                <h2 id="events-heading" className="text-2xl font-semibold tracking-tight">
+                                    Coming up
+                                </h2>
+                                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                    {events.map((event) => (
+                                        <EventCard key={event.id} event={event} />
+                                    ))}
+                                </div>
+                            </section>
                         )}
 
                         <section

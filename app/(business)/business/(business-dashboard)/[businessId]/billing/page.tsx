@@ -17,7 +17,7 @@ import {
     type PlanKey,
 } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
-import { openBillingPortal, startCheckout } from "./actions";
+import { changePlan, openBillingPortal, startCheckout } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 
 type PageProps = {
@@ -27,6 +27,7 @@ type PageProps = {
     searchParams: Promise<{
         checkout?: string;
         error?: string;
+        changed?: string;
     }>;
 };
 
@@ -45,6 +46,7 @@ const errorMessages: Record<string, string> = {
     founding_full:
         "All founding member places have now been taken. Pro is still available.",
     no_customer: "There's no billing account for this business yet.",
+    no_subscription: "There's no subscription to change. Choose a plan below.",
 };
 
 const statusLabels: Record<string, string> = {
@@ -82,7 +84,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
     await connection();
 
     const { businessId } = await params;
-    const { checkout, error } = await searchParams;
+    const { checkout, error, changed } = await searchParams;
     const supabase = await createClient();
 
     const {
@@ -159,6 +161,16 @@ async function BillingContent({ params, searchParams }: PageProps) {
                             Stripe has confirmed your details. Your plan will
                             appear here in a few seconds. Refresh the page if it
                             doesn&apos;t.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {changed && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>Plan changed</AlertTitle>
+                        <AlertDescription>
+                            You&apos;re moving to {plans[changed as PlanKey]?.name ?? "your new plan"}. Stripe
+                            adjusts your next invoice for the difference. It can take a few seconds to show here.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -246,6 +258,10 @@ async function CurrentPlan({
 
                 {detail && <p className="text-[#17233B]/70">{detail}</p>}
 
+                {!subscription.cancel_at_period_end && (
+                    <ChangePlan businessId={businessId} currentPlan={planKey} />
+                )}
+
                 <form action={openBillingPortal}>
                     <input type="hidden" name="businessId" value={businessId} />
                     <SubmitButton
@@ -265,6 +281,50 @@ async function CurrentPlan({
     );
 }
 
+const growthFeatures = [
+    "Everything in Pro",
+    "Welcome, birthday and win-back emails that run themselves",
+    "Quiet-hours offers that repeat on the days and times you choose",
+    "A monthly value report in your inbox",
+    "Instagram story images for your offers",
+];
+
+function ChangePlan({ businessId, currentPlan }: { businessId: string; currentPlan: PlanKey | null }) {
+    const isGrowth = currentPlan?.startsWith("growth") ?? false;
+    const choices: PlanKey[] = isGrowth
+        ? ["pro_monthly", "pro_yearly", currentPlan === "growth_monthly" ? "growth_yearly" : "growth_monthly"]
+        : ["growth_monthly", "growth_yearly"];
+
+    return (
+        <div className="rounded-xl border border-[#17233B]/10 p-4">
+            <p className="font-semibold">{isGrowth ? "Change plan" : "Upgrade to Growth"}</p>
+            {!isGrowth && (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#17233B]/65">
+                    {growthFeatures.slice(1).map((feature) => (
+                        <li key={feature}>{feature}</li>
+                    ))}
+                </ul>
+            )}
+            {currentPlan === "pro_founding_monthly" && (
+                <p className="mt-2 text-sm text-amber-800">
+                    Switching gives up your founding member price, and it can&apos;t be got back.
+                </p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+                {choices.map((key) => (
+                    <form key={key} action={changePlan}>
+                        <input type="hidden" name="businessId" value={businessId} />
+                        <input type="hidden" name="plan" value={key} />
+                        <SubmitButton variant="outline" pendingLabel="Switching…">
+                            {plans[key].name} · {plans[key].price}/{plans[key].interval}
+                        </SubmitButton>
+                    </form>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 async function PlanOptions({
     businessId,
     trialEligible,
@@ -277,11 +337,12 @@ async function PlanOptions({
         0,
     );
 
-    const options: PlanKey[] = [
+    const proOptions: PlanKey[] = [
         ...(foundingLeft > 0 ? (["pro_founding_monthly"] as const) : []),
         "pro_monthly",
         "pro_yearly",
     ];
+    const growthOptions: PlanKey[] = ["growth_monthly", "growth_yearly"];
 
     return (
         <div className="mt-10">
@@ -289,8 +350,8 @@ async function PlanOptions({
 
             <p className="mt-2 text-[#17233B]/65">
                 You&apos;re on the Free plan, which includes{" "}
-                {FREE_LIVE_OFFER_LIMIT} live offer. Pro gives you unlimited
-                offers.
+                {FREE_LIVE_OFFER_LIMIT} live offer. Pro adds unlimited offers,
+                loyalty cards and follower emails; Growth adds automations on top.
             </p>
 
             <p className="mt-2 text-[#17233B]/65">
@@ -299,8 +360,82 @@ async function PlanOptions({
                     : "Pick a plan to reactivate your subscription."}
             </p>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                {options.map((key) => {
+            <h3 className="mt-8 text-lg font-semibold">Pro</h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                {proOptions.map((key) => {
+                    const plan = plans[key];
+                    const isFounding = key === "pro_founding_monthly";
+
+                    return (
+                        <Card
+                            key={key}
+                            className={
+                                isFounding
+                                    ? "border-2 border-[#FF593F]"
+                                    : "border-[#17233B]/10"
+                            }
+                        >
+                            <CardHeader>
+                                <CardTitle className="text-base">
+                                    {plan.name}
+                                </CardTitle>
+                            </CardHeader>
+
+                            <CardContent className="flex h-full flex-col gap-4">
+                                <p className="text-3xl font-semibold">
+                                    {plan.price}
+                                    <span className="text-base font-normal text-[#17233B]/60">
+                                        {" "}
+                                        / {plan.interval}
+                                    </span>
+                                </p>
+
+                                {plan.note && (
+                                    <p className="text-sm font-medium text-[#FF593F]">
+                                        {plan.note}
+                                    </p>
+                                )}
+
+                                {isFounding && (
+                                    <p className="text-sm text-[#17233B]/65">
+                                        {foundingLeft} of {FOUNDING_MEMBER_LIMIT}{" "}
+                                        founding places left
+                                    </p>
+                                )}
+
+                                <form action={startCheckout} className="mt-auto">
+                                    <input
+                                        type="hidden"
+                                        name="businessId"
+                                        value={businessId}
+                                    />
+                                    <input type="hidden" name="plan" value={key} />
+                                    <SubmitButton
+                                        pendingLabel="Redirecting…"
+                                        variant={isFounding ? "default" : "outline"}
+                                        className={
+                                            isFounding
+                                                ? "w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                                : "w-full"
+                                        }
+                                    >
+                                        {trialEligible ? "Start free trial" : "Choose plan"}
+                                    </SubmitButton>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
+
+            <h3 className="mt-10 text-lg font-semibold">Growth</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#17233B]/65">
+                {growthFeatures.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                ))}
+            </ul>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {growthOptions.map((key) => {
                     const plan = plans[key];
                     const isFounding = key === "pro_founding_monthly";
 

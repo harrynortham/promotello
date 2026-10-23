@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { EVENTS_ENABLED } from "@/lib/features";
 
 type BusinessSidebarNavProps = {
     businessId: string;
@@ -31,6 +32,11 @@ const baseLinks = [
         label: "Loyalty card",
         path: "/loyalty",
     },
+    {
+        label: "Automations",
+        path: "/automations",
+    },
+    ...(EVENTS_ENABLED ? [{ label: "Events", path: "/events" }] : []),
     {
         label: "Analytics",
         path: "/analytics",

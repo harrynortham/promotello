@@ -12,10 +12,23 @@ import Stripe from "stripe";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.promotello.com";
 
 // Keep in sync with plans in lib/billing.ts.
+const PRODUCTS = {
+    pro: {
+        name: "Promotello Pro",
+        description: "Unlimited offers, loyalty, QR posters, follower emails and team access.",
+    },
+    growth: {
+        name: "Promotello Growth",
+        description: "Everything in Pro plus automations, quiet-hours offers and the monthly value report.",
+    },
+};
+
 const PRICES = [
-    { lookupKey: "pro_founding_monthly", amount: 1900, interval: "month", nickname: "Pro founding member monthly" },
-    { lookupKey: "pro_monthly", amount: 2400, interval: "month", nickname: "Pro monthly" },
-    { lookupKey: "pro_yearly", amount: 24000, interval: "year", nickname: "Pro yearly" },
+    { product: "pro", lookupKey: "pro_founding_monthly", amount: 1900, interval: "month", nickname: "Pro founding member monthly" },
+    { product: "pro", lookupKey: "pro_monthly", amount: 2400, interval: "month", nickname: "Pro monthly" },
+    { product: "pro", lookupKey: "pro_yearly", amount: 24000, interval: "year", nickname: "Pro yearly" },
+    { product: "growth", lookupKey: "growth_monthly", amount: 3900, interval: "month", nickname: "Growth monthly" },
+    { product: "growth", lookupKey: "growth_yearly", amount: 39000, interval: "year", nickname: "Growth yearly" },
 ];
 
 // Keep in sync with handleEvent in app/api/stripe/webhook/route.ts.
@@ -49,19 +62,21 @@ async function main() {
 
     console.log(`Stripe account ${account.id} (${livemode ? "LIVE" : "test"} mode)\n`);
 
-    // Product
+    // Products, found by metadata.plan
     const products = await stripe.products.list({ active: true, limit: 100 });
-    let product = products.data.find((item) => item.metadata.plan === "pro");
+    const productIds = {};
 
-    if (product) {
-        console.log(`✓ Product exists: ${product.id}`);
-    } else {
-        product = await stripe.products.create({
-            name: "Promotello Pro",
-            description: "Unlimited offers, loyalty, QR posters, follower emails and team access.",
-            metadata: { plan: "pro" },
-        });
-        console.log(`+ Created product: ${product.id}`);
+    for (const [plan, details] of Object.entries(PRODUCTS)) {
+        let product = products.data.find((item) => item.metadata.plan === plan);
+
+        if (product) {
+            console.log(`✓ Product ${plan} exists: ${product.id}`);
+        } else {
+            product = await stripe.products.create({ ...details, metadata: { plan } });
+            console.log(`+ Created product ${plan}: ${product.id}`);
+        }
+
+        productIds[plan] = product.id;
     }
 
     // Prices, found by lookup key
@@ -79,7 +94,7 @@ async function main() {
         }
 
         const created = await stripe.prices.create({
-            product: product.id,
+            product: productIds[price.product],
             currency: "gbp",
             unit_amount: price.amount,
             recurring: { interval: price.interval },
