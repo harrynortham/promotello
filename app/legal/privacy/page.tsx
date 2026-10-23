@@ -18,7 +18,7 @@ const summary = [
     "We collect what we need to run your account, your vouchers and loyalty cards, and the tools businesses use.",
     "Marketing emails are optional. Every one has an unsubscribe link, and you can turn them off in your account.",
     "Businesses see your first name on vouchers and loyalty cards you use with them. They never see who follows them or your email address.",
-    "We don't sell your information or use advertising trackers.",
+    "We only use Google Analytics if you accept analytics cookies. We don't sell your information or use advertising trackers.",
 ];
 
 const sections: LegalSection[] = [
@@ -95,6 +95,12 @@ const sections: LegalSection[] = [
                     to you: for QR scans we keep only the type of device
                     (mobile, tablet or desktop), not your IP address.
                 </p>
+                <p>
+                    <strong>Website analytics.</strong> Only if you accept
+                    analytics cookies: Google Analytics collects information
+                    about your visit, such as the pages you view, your device
+                    and browser, and your approximate location.
+                </p>
             </>
         ),
     },
@@ -131,6 +137,12 @@ const sections: LegalSection[] = [
                         after a recent visit, and showing businesses totals such
                         as views, claims, stamps and follower numbers, which
                         helps them decide whether Promotello works for them.
+                    </li>
+                    <li>
+                        <strong>Website analytics (consent):</strong> only if
+                        you accept analytics cookies. You can change your
+                        choice in our{" "}
+                        <Link href="/legal/cookies#choices">cookie settings</Link>.
                     </li>
                     <li>
                         <strong>Keeping Promotello safe (legitimate
@@ -204,8 +216,8 @@ const sections: LegalSection[] = [
                     <li>Resend: sending emails</li>
                     <li>Stripe: subscription payments for businesses</li>
                     <li>
-                        Google: only when you choose to show a business&apos;s
-                        map or click through to leave a review
+                        Google: Google Analytics if you accept analytics
+                        cookies, and maps or review links you choose to open
                     </li>
                 </ul>
                 <p>
@@ -238,6 +250,7 @@ const sections: LegalSection[] = [
                     Page view and QR scan counts aren&apos;t personal
                     information, so we may keep them.
                 </li>
+                <li>Google Analytics data: [14] months.</li>
             </ul>
         ),
     },
@@ -290,9 +303,10 @@ const sections: LegalSection[] = [
         title: "Cookies",
         content: (
             <p>
-                We use cookies that are needed to keep you signed in. We
-                don&apos;t use advertising or third-party tracking cookies. See
-                our <Link href="/legal/cookies">cookie policy</Link>.
+                We use essential cookies to keep you signed in, and Google
+                Analytics cookies only if you accept them. We don&apos;t use
+                advertising cookies. See our{" "}
+                <Link href="/legal/cookies">cookie policy</Link>.
             </p>
         ),
     },

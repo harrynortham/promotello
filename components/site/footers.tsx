@@ -19,6 +19,7 @@ const legalLinks: FooterLink[] = [
     { label: "Privacy policy", href: "/legal/privacy" },
     { label: "Terms of service", href: "/legal/terms" },
     { label: "Cookie policy", href: "/legal/cookies" },
+    { label: "Cookie settings", href: "/legal/cookies#choices" },
 ];
 
 const socialLinks = [
