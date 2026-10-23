@@ -72,7 +72,7 @@ function HeaderContent({
 
     return (
         <header
-            className={`sticky top-0 z-50 px-6 backdrop-blur-md ${variant === "app" ? "border-b border-border bg-background/95" : "bg-background/95"}`}
+            className={`sticky top-0 z-50 px-6 backdrop-blur-md print:hidden ${variant === "app" ? "border-b border-border bg-background/95" : "bg-background/95"}`}
         >
             <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between gap-4">
                 <Link href={homeHref} aria-label="Promotello home" className="shrink-0">

@@ -38,7 +38,7 @@ export function Analytics() {
         <div
             role="region"
             aria-label="Cookie choice"
-            className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-2xl border border-[#17233B]/10 bg-white p-5 text-[#17233B] shadow-lg sm:bottom-5"
+            className="fixed inset-x-3 bottom-3 z-50 print:hidden mx-auto max-w-xl rounded-2xl border border-[#17233B]/10 bg-white p-5 text-[#17233B] shadow-lg sm:bottom-5"
         >
             <p className="text-sm leading-6">
                 We&apos;d like to use Google Analytics cookies to see how people

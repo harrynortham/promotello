@@ -65,7 +65,7 @@ const marketingFooters = {
     },
     business: {
         homeHref: "/business",
-        tagline: "Create smarter promotions. Reach more customers. Measure what works.",
+        tagline: "Turn first-time visitors into regulars with loyalty cards, QR posters, offers and follower emails.",
         groups: [
             {
                 title: "Product",
@@ -73,6 +73,8 @@ const marketingFooters = {
                     { label: "How it works", href: "/business/how-it-works" },
                     { label: "Features", href: "/business/features" },
                     { label: "Pricing", href: "/business/pricing" },
+                    { label: "Try the demo", href: "/business/demo" },
+                    { label: "One-page overview", href: "/business/why-promotello" },
                 ],
             },
             {
@@ -101,7 +103,7 @@ export function MarketingFooter({ variant }: { variant: keyof typeof marketingFo
     const config = marketingFooters[variant];
 
     return (
-        <footer className="mt-auto bg-foreground px-6 text-background">
+        <footer className="mt-auto bg-foreground px-6 text-background print:hidden">
             <div className="mx-auto max-w-7xl py-12">
                 <div className="flex flex-wrap gap-10 lg:flex-nowrap lg:justify-between lg:gap-12">
                     <div className="min-w-0 basis-full lg:flex-2">
@@ -217,7 +219,7 @@ export function AppFooter({ variant }: { variant: keyof typeof appFooters }) {
     const config = appFooters[variant];
 
     return (
-        <footer className="mt-auto border-t border-border bg-background text-foreground">
+        <footer className="mt-auto border-t border-border bg-background text-foreground print:hidden">
             <div className="mx-auto max-w-7xl px-6 py-8 sm:px-10">
                 <div className="flex flex-col gap-7 lg:flex-row lg:items-center lg:justify-between">
                     <Link href={config.homeHref} aria-label="Promotello home" className="inline-flex w-fit shrink-0">

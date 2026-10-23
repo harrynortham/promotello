@@ -23,6 +23,8 @@ const staticPaths = [
     "/business",
     "/business/features",
     "/business/pricing",
+    "/business/demo",
+    "/business/why-promotello",
     "/business/how-it-works",
     "/business/getting-started",
     "/business/faq",
