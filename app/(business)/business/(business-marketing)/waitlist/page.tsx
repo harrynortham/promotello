@@ -19,7 +19,10 @@ export const metadata: Metadata = {
 type PageProps = { searchParams: Promise<{ joined?: string; error?: string }> };
 
 async function WaitlistContent({ searchParams }: PageProps) {
-    const [{ joined, error }, cities] = await Promise.all([searchParams, getCityOptions()]);
+    // Read the request first so the city lookup runs per request, not
+    // while the page is prerendered at build time.
+    const { joined, error } = await searchParams;
+    const cities = await getCityOptions();
     const liveCities = cities.map((city) => city.name).join(", ") || "Bristol";
 
     if (joined) {
