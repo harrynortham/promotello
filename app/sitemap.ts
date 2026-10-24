@@ -2,14 +2,13 @@ import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
-import { cityPath, getLiveCities } from "@/lib/cities";
 import { EVENTS_ENABLED } from "@/lib/features";
+
 import { absoluteUrl } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 
-// Listing pages exist once per live city, e.g. /bristol/offers.
-const cityPaths = [
-    "",
+const staticPaths = [
+    "/",
     "/offers",
     "/businesses",
     "/explore",
@@ -20,14 +19,11 @@ const cityPaths = [
     "/categories/health-beauty",
     "/categories/services",
     "/categories/travel-stays",
-    ...(EVENTS_ENABLED ? ["/events"] : []),
-];
-
-const staticPaths = [
     "/about",
     "/help",
     "/contact",
     "/business",
+    ...(EVENTS_ENABLED ? ["/events"] : []),
     "/business/features",
     "/business/pricing",
     "/business/demo",
@@ -68,20 +64,13 @@ async function getPublicListings() {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connection();
 
-    const [{ businesses, offers }, cities] = await Promise.all([getPublicListings(), getLiveCities()]);
+    const { businesses, offers } = await getPublicListings();
 
     return [
-        ...cities.flatMap((city) =>
-            cityPaths.map((path) => ({
-                url: absoluteUrl(cityPath(city, path)),
-                changeFrequency: "weekly" as const,
-                priority: path === "" ? 1 : 0.6,
-            })),
-        ),
         ...staticPaths.map((path) => ({
             url: absoluteUrl(path),
             changeFrequency: "weekly" as const,
-            priority: path === "/business" ? 0.8 : 0.5,
+            priority: path === "/" ? 1 : 0.5,
         })),
         ...(businesses ?? []).map((business) => ({
             url: absoluteUrl(`/businesses/${business.id}`),

@@ -51,17 +51,11 @@ export type ListingBusiness = {
     topOffer: { slug: string; title: string; discount: string } | null;
 };
 
-type LocationRow = { region: string | null; city: string | null; city_id: string | null };
+type LocationRow = { region: string | null; city: string | null };
 
 function areaOf(locations: LocationRow | LocationRow[] | null) {
     const location = Array.isArray(locations) ? locations[0] : locations;
     return location?.region || location?.city || null;
-}
-
-function inCity(locations: LocationRow | LocationRow[] | null, cityId: string | undefined) {
-    if (!cityId) return true;
-    const rows = Array.isArray(locations) ? locations : locations ? [locations] : [];
-    return rows.some((location) => location.city_id === cityId);
 }
 
 function one<T>(value: T | T[] | null): T | null {
@@ -75,8 +69,7 @@ export async function getCategories(): Promise<CategoryGroup[]> {
     return getCategoryGroups(createPublicClient());
 }
 
-// Pass a city id to list only that city's offers.
-export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
+export async function getLiveOffers(): Promise<ListingOffer[]> {
     "use cache";
     cacheLife("minutes");
 
@@ -89,7 +82,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                 redemption_count, max_redemptions,
                 businesses!inner (
                     id, name, logo_url,
-                    business_locations ( region, city, city_id )
+                    business_locations ( region, city )
                 )
             `,
         )
@@ -102,7 +95,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
     return data.flatMap((row) => {
         const business = one(row.businesses);
 
-        if (!business || !inCity(business.business_locations, cityId)) {
+        if (!business) {
             return [];
         }
 
@@ -132,8 +125,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
     });
 }
 
-// Pass a city id to list only that city's businesses.
-export async function getPublicBusinesses(cityId?: string): Promise<ListingBusiness[]> {
+export async function getPublicBusinesses(): Promise<ListingBusiness[]> {
     "use cache";
     cacheLife("minutes");
 
@@ -142,7 +134,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         .select(
             `
                 id, name, description, logo_url, category, category_id, created_at,
-                business_locations ( region, city, city_id ),
+                business_locations ( region, city ),
                 offers ( slug, title, discount, image_url, created_at )
             `,
         )
@@ -152,7 +144,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         throw error;
     }
 
-    return data.filter((row) => inCity(row.business_locations, cityId)).map((row) => {
+    return data.map((row) => {
         // RLS only returns live offers here; newest first.
         const offers = [...(row.offers ?? [])].sort((a, b) =>
             b.created_at.localeCompare(a.created_at),
