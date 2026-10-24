@@ -1,3 +1,4 @@
+import { businessPath } from "@/lib/slugs";
 import Link from "next/link";
 import { FiCalendar, FiMapPin } from "react-icons/fi";
 
@@ -11,7 +12,7 @@ export type EventSummary = {
     ends_at: string | null;
     location: string | null;
     price: string | null;
-    business?: { id: string; name: string } | null;
+    business?: { id: string; slug: string; name: string } | null;
 };
 
 export function EventCard({ event }: { event: EventSummary }) {
@@ -32,7 +33,7 @@ export function EventCard({ event }: { event: EventSummary }) {
                 </h3>
                 {event.business && (
                     <p className="mt-0.5 text-sm">
-                        <Link href={`/businesses/${event.business.id}`} className="text-[#17233B]/70 hover:text-[#FF593F]">
+                        <Link href={businessPath(event.business)} className="text-[#17233B]/70 hover:text-[#FF593F]">
                             {event.business.name}
                         </Link>
                     </p>

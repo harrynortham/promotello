@@ -31,6 +31,7 @@ export type ListingOffer = {
     maxRedemptions: number | null;
     business: {
         id: string;
+        slug: string;
         name: string;
         logoUrl: string | null;
         area: string | null;
@@ -39,6 +40,7 @@ export type ListingOffer = {
 
 export type ListingBusiness = {
     id: string;
+    slug: string;
     name: string;
     description: string | null;
     logoUrl: string | null;
@@ -88,7 +90,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                 expires_at, created_at, image_url, category, category_id,
                 redemption_count, max_redemptions,
                 businesses!inner (
-                    id, name, logo_url,
+                    id, slug, name, logo_url,
                     business_locations ( region, city, city_id )
                 )
             `,
@@ -123,6 +125,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                 maxRedemptions: row.max_redemptions,
                 business: {
                     id: business.id,
+                    slug: business.slug,
                     name: business.name,
                     logoUrl: business.logo_url,
                     area: areaOf(business.business_locations),
@@ -141,7 +144,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         .from("businesses")
         .select(
             `
-                id, name, description, logo_url, category, category_id, created_at,
+                id, slug, name, description, logo_url, category, category_id, created_at,
                 business_locations ( region, city, city_id ),
                 offers ( slug, title, discount, image_url, created_at )
             `,
@@ -161,6 +164,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
 
         return {
             id: row.id,
+            slug: row.slug,
             name: row.name,
             description: row.description,
             logoUrl: row.logo_url,

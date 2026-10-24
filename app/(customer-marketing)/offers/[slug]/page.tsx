@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import {
     FiCalendar,
@@ -32,6 +32,7 @@ import { FollowButton } from "@/components/follow-button";
 import { ShareOfferButton } from "@/components/share-offer-button";
 import { offerShareCaption, shareLink } from "@/lib/share";
 import { PageViewTracker } from "@/components/page-view-tracker";
+import { businessPath, canonicalPath } from "@/lib/slugs";
 
 type OfferPageProps = {
     params: Promise<{
@@ -143,6 +144,7 @@ async function OfferContent({ params }: OfferPageProps) {
                 redemption_count,
                 businesses!inner (
                     id,
+                    slug,
                     name,
                     logo_url,
                     approval_status,
@@ -167,6 +169,9 @@ async function OfferContent({ params }: OfferPageProps) {
     }
 
     if (!offer) {
+        // An old address (the proxy usually redirects these first).
+        const moved = await canonicalPath("offer", slug);
+        if (moved) permanentRedirect(moved);
         notFound();
     }
 
@@ -336,7 +341,7 @@ async function OfferContent({ params }: OfferPageProps) {
 
                     <aside className="rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-7 lg:sticky lg:top-24">
                         <Link
-                            href={`/businesses/${business.id}`}
+                            href={businessPath(business)}
                             className="group flex items-center gap-3"
                         >
                             {business.logo_url ? (
@@ -457,7 +462,7 @@ async function OfferContent({ params }: OfferPageProps) {
                             )}
 
                             <Button
-                                render={<Link href={`/businesses/${business.id}`} />}
+                                render={<Link href={businessPath(business)} />}
                                 nativeButton={false}
                                 variant="outline"
                                 size="sm"
@@ -479,7 +484,7 @@ async function OfferContent({ params }: OfferPageProps) {
                     <section className="mt-16">
                         <SectionHeading
                             title={`More from ${business.name}`}
-                            href={`/businesses/${business.id}`}
+                            href={businessPath(business)}
                             linkLabel="View business"
                         />
 

@@ -75,6 +75,7 @@ async function RedemptionsContent() {
                     approval_status,
                     businesses (
                         id,
+                        slug,
                         name,
                         approval_status,
                         business_locations (
@@ -150,6 +151,7 @@ async function RedemptionsContent() {
                 business: business
                     ? {
                         id: business.id,
+                        slug: business.slug,
                         name: business.name,
                         address,
                     }
@@ -161,7 +163,7 @@ async function RedemptionsContent() {
     // Gift vouchers from businesses' automations, shown alongside.
     const { data: gifts } = await supabase
         .from("reward_vouchers")
-        .select("id, code, kind, reward, created_at, expires_at, used_at, businesses ( id, name )")
+        .select("id, code, kind, reward, created_at, expires_at, used_at, businesses ( id, slug, name )")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -188,7 +190,7 @@ async function RedemptionsContent() {
                 terms: "A personal gift from the business. It can't be swapped for cash.",
                 approved: true,
             },
-            business: business ? { id: business.id, name: business.name, address: "" } : null,
+            business: business ? { id: business.id, slug: business.slug, name: business.name, address: "" } : null,
         };
     });
 

@@ -53,7 +53,7 @@ async function globalSetup() {
             approval_status: "approved",
             created_by: businessUserId,
         })
-        .select("id")
+        .select("id, slug")
         .single();
     if (bizInsertErr || !business) throw new Error(`Could not create business: ${bizInsertErr?.message}`);
 
@@ -177,6 +177,7 @@ async function globalSetup() {
         customerEmail: CUSTOMER_EMAIL,
         testPassword: TEST_PASSWORD,
         businessId: business.id,
+        businessSlug: business.slug,
         freeBusinessId,
         billingBusinessId,
         claimOfferSlug: claimOffer.slug,

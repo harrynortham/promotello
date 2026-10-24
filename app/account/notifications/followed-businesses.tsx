@@ -1,5 +1,6 @@
 "use client";
 
+import { businessPath } from "@/lib/slugs";
 import Link from "next/link";
 import { useState } from "react";
 import { FiHeart } from "react-icons/fi";
@@ -19,7 +20,7 @@ import { createClient } from "@/utils/supabase/client";
 export type FollowedBusiness = {
     business_id: string;
     emails_enabled: boolean;
-    businesses: { name: string; logo_url: string | null } | null;
+    businesses: { slug: string; name: string; logo_url: string | null } | null;
 };
 
 // Businesses the customer follows, with a per-business email switch.
@@ -92,7 +93,7 @@ export function FollowedBusinesses({ follows: initialFollows }: { follows: Follo
 
                             return (
                                 <li key={follow.business_id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0">
-                                    <Link href={`/businesses/${follow.business_id}`} className="min-w-0 font-medium hover:text-[#FF593F]">
+                                    <Link href={follow.businesses ? businessPath(follow.businesses) : "/businesses"} className="min-w-0 font-medium hover:text-[#FF593F]">
                                         {name}
                                     </Link>
 

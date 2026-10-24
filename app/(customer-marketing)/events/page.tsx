@@ -24,7 +24,7 @@ async function UpcomingEvents() {
 
     const { data } = await createPublicClient()
         .from("business_events")
-        .select("id, title, description, starts_at, ends_at, location, price, business:businesses ( id, name )")
+        .select("id, title, description, starts_at, ends_at, location, price, business:businesses ( id, slug, name )")
         .or(`ends_at.gte.${nowIso()},and(ends_at.is.null,starts_at.gte.${nowIso()})`)
         .order("starts_at", { ascending: true })
         .limit(60);

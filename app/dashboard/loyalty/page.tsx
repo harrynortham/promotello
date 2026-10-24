@@ -1,3 +1,4 @@
+import { businessPath } from "@/lib/slugs";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -32,7 +33,7 @@ type CardRow = {
         stamps_required: number;
         reward: string;
         is_active: boolean;
-        businesses: { id: string; name: string; logo_url: string | null } | { id: string; name: string; logo_url: string | null }[] | null;
+        businesses: { id: string; slug: string; name: string; logo_url: string | null } | { id: string; slug: string; name: string; logo_url: string | null }[] | null;
     } | null;
 };
 
@@ -70,7 +71,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
             .select(
                 `
                     id, card_code, stamps, rewards_redeemed,
-                    loyalty_programs ( id, stamps_required, reward, is_active, businesses ( id, name, logo_url ) )
+                    loyalty_programs ( id, stamps_required, reward, is_active, businesses ( id, slug, name, logo_url ) )
                 `,
             )
             .eq("user_id", user.id)
@@ -125,7 +126,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                                 <Image src={business.logo_url} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
                                             )}
                                             <div className="min-w-0">
-                                                <Link href={`/businesses/${business?.id}`} className="block truncate font-semibold hover:underline">
+                                                <Link href={business ? businessPath(business) : "/businesses"} className="block truncate font-semibold hover:underline">
                                                     {business?.name}
                                                 </Link>
                                                 <p className="text-sm text-white/70">
