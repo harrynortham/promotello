@@ -19,8 +19,41 @@ type City = {
     name: string;
     postcode_districts: string[];
     is_live: boolean;
+    latitude: number | null;
+    longitude: number | null;
+    radius_km: number;
+    hero_image_url: string | null;
+    feature_image_url: string | null;
     areas: { id: string; name: string; is_active: boolean }[];
 };
+
+// The most-asked-for towns, with "bath" and "Bath " counted together.
+function byTown(entries: { town: string }[]) {
+    const demand = new Map<string, number>();
+    for (const entry of entries) {
+        const town = entry.town.trim().replace(/\s+/g, " ");
+        const key = town.charAt(0).toUpperCase() + town.slice(1).toLowerCase();
+        demand.set(key, (demand.get(key) ?? 0) + 1);
+    }
+    return [...demand.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+}
+
+function TownList({ towns, empty }: { towns: [string, number][]; empty: string }) {
+    if (towns.length === 0) {
+        return <p className="text-sm text-[#17233B]/55">{empty}</p>;
+    }
+
+    return (
+        <ul className="divide-y divide-[#17233B]/5 text-sm">
+            {towns.map(([town, count]) => (
+                <li key={town} className="flex justify-between py-2">
+                    <span>{town}</span>
+                    <span className="font-semibold tabular-nums">{count}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
 
 const errors: Record<string, string> = {
     city: "Give the city a name and at least one postcode district, like BA1.",
@@ -34,10 +67,14 @@ async function CitiesContent({ searchParams }: PageProps) {
     const { error, saved } = await searchParams;
     const supabase = await createClient();
 
-    const [{ data: cityRows }, { data: waitlist }, { data: locations }] = await Promise.all([
-        supabase.from("cities").select("id, slug, name, postcode_districts, is_live, areas ( id, name, is_active )").order("name"),
+    const [{ data: cityRows }, { data: waitlist }, { data: locations }, { data: interest }] = await Promise.all([
+        supabase
+            .from("cities")
+            .select("id, slug, name, postcode_districts, is_live, latitude, longitude, radius_km, hero_image_url, feature_image_url, areas ( id, name, is_active )")
+            .order("name"),
         supabase.from("business_waitlist").select("town, created_at").order("created_at", { ascending: false }),
         supabase.from("business_locations").select("city_id, area_id"),
+        supabase.from("city_interest").select("town"),
     ]);
 
     const cities = (cityRows ?? []) as City[];
@@ -49,13 +86,8 @@ async function CitiesContent({ searchParams }: PageProps) {
         if (location.area_id) businessesByArea.set(location.area_id, (businessesByArea.get(location.area_id) ?? 0) + 1);
     }
 
-    const demand = new Map<string, number>();
-    for (const entry of waitlist ?? []) {
-        const town = entry.town.trim().replace(/\s+/g, " ");
-        const key = town.charAt(0).toUpperCase() + town.slice(1).toLowerCase();
-        demand.set(key, (demand.get(key) ?? 0) + 1);
-    }
-    const topTowns = [...demand.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+    const topTowns = byTown(waitlist ?? []);
+    const customerTowns = byTown(interest ?? []);
 
     return (
         <div className="space-y-8">
@@ -93,17 +125,48 @@ async function CitiesContent({ searchParams }: PageProps) {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <form action={updateCity} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <form action={updateCity} className="space-y-4">
                             <input type="hidden" name="cityId" value={city.id} />
-                            <div className="flex-1 space-y-2">
+                            <div className="space-y-2">
                                 <Label htmlFor={`districts-${city.id}`}>Postcode districts</Label>
                                 <Input id={`districts-${city.id}`} name="postcodeDistricts" defaultValue={city.postcode_districts.join(", ")} />
                             </div>
-                            <label className="flex items-center gap-2 pb-2 text-sm font-medium">
-                                <input type="checkbox" name="isLive" defaultChecked={city.is_live} className="size-4 accent-[#FF593F]" />
-                                Live
-                            </label>
-                            <SubmitButton variant="outline" pendingLabel="Saving…">Save</SubmitButton>
+                            <div className="grid gap-4 sm:grid-cols-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor={`lat-${city.id}`}>Centre latitude</Label>
+                                    <Input id={`lat-${city.id}`} name="latitude" inputMode="decimal" defaultValue={city.latitude ?? ""} placeholder="51.4545" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor={`lng-${city.id}`}>Centre longitude</Label>
+                                    <Input id={`lng-${city.id}`} name="longitude" inputMode="decimal" defaultValue={city.longitude ?? ""} placeholder="-2.5879" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor={`radius-${city.id}`}>Radius (km)</Label>
+                                    <Input id={`radius-${city.id}`} name="radiusKm" type="number" min={1} max={200} defaultValue={city.radius_km} />
+                                </div>
+                            </div>
+                            <p className="text-xs text-[#17233B]/55">
+                                Visitors within the radius of the centre see {city.name} first. Without a centre,
+                                visitors are never matched to this city automatically. Photos are a path on
+                                this site or a Supabase Storage link.
+                            </p>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor={`hero-${city.id}`}>Home page photo</Label>
+                                    <Input id={`hero-${city.id}`} name="heroImageUrl" defaultValue={city.hero_image_url ?? ""} placeholder="/images/home/hero.jpg" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor={`feature-${city.id}`}>Explore photo</Label>
+                                    <Input id={`feature-${city.id}`} name="featureImageUrl" defaultValue={city.feature_image_url ?? ""} placeholder="/images/home/harbourside.jpg" />
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <label className="flex items-center gap-2 text-sm font-medium">
+                                    <input type="checkbox" name="isLive" defaultChecked={city.is_live} className="size-4 accent-[#FF593F]" />
+                                    Live
+                                </label>
+                                <SubmitButton variant="outline" pendingLabel="Saving…">Save</SubmitButton>
+                            </div>
                         </form>
 
                         <div>
@@ -136,7 +199,7 @@ async function CitiesContent({ searchParams }: PageProps) {
                 </Card>
             ))}
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-3">
                 <Card className="border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle className="text-lg">Add a city</CardTitle>
@@ -163,18 +226,19 @@ async function CitiesContent({ searchParams }: PageProps) {
                         <p className="text-sm text-[#17233B]/60">{waitlist?.length ?? 0} businesses waiting, by town.</p>
                     </CardHeader>
                     <CardContent>
-                        {topTowns.length === 0 ? (
-                            <p className="text-sm text-[#17233B]/55">No one on the waitlist yet.</p>
-                        ) : (
-                            <ul className="divide-y divide-[#17233B]/5 text-sm">
-                                {topTowns.map(([town, count]) => (
-                                    <li key={town} className="flex justify-between py-2">
-                                        <span>{town}</span>
-                                        <span className="font-semibold tabular-nums">{count}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
+                        <TownList towns={topTowns} empty="No one on the waitlist yet." />
+                    </CardContent>
+                </Card>
+
+                <Card className="border-[#17233B]/10">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Customers asking</CardTitle>
+                        <p className="text-sm text-[#17233B]/60">
+                            {interest?.length ?? 0} customers want Promotello in their town.
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        <TownList towns={customerTowns} empty="No requests yet." />
                     </CardContent>
                 </Card>
             </div>

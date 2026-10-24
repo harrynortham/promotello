@@ -48,6 +48,7 @@ async function globalTeardown() {
 
         // cities.spec.ts joins the business waitlist.
         await admin.from("business_waitlist").delete().like("email", "e2e-waitlist-%@test.internal");
+        await admin.from("city_interest").delete().like("email", "e2e-interest-%@test.internal");
 
         // signup.spec.ts registers a real account each run; remove them too.
         const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });

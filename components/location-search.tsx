@@ -2,11 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { FiMapPin, FiX } from "react-icons/fi";
+import { FiMapPin, FiNavigation, FiX } from "react-icons/fi";
 
+import { ALL_LOCATIONS, rememberCity } from "@/lib/city-cookie";
 import type { Place } from "@/lib/cities";
+import { nearestCity } from "@/lib/geo";
 
-type Suggestion = { label: string; detail: string; href: string };
+// `remember` is what the visitor chose ("all" or a city slug); `locate`
+// marks the "Use my location" option.
+type Suggestion = { label: string; detail: string; href: string; remember?: string; locate?: boolean };
+
+function examplePlaceholder(places: Place[]) {
+    const [first] = places;
+    if (!first) return "Where?";
+    return first.areas[0] ? `Where? Try ${first.name} or ${first.areas[0]}` : `Where? Try ${first.name}`;
+}
 
 type LocationSearchProps = {
     places: Place[];
@@ -21,22 +31,24 @@ type LocationSearchProps = {
 
 // A TripAdvisor-style "Where?" box: type a city or neighbourhood and pick a
 // suggestion. Clearing it goes back to every location.
-export function LocationSearch({ places, basePath, current = null, placeholder = "Where? Try Bristol or Clifton", size = "md" }: LocationSearchProps) {
+export function LocationSearch({ places, basePath, current = null, placeholder, size = "md" }: LocationSearchProps) {
     const router = useRouter();
     const listId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState("");
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(0);
+    const [message, setMessage] = useState("");
 
     const suggestions = useMemo<Suggestion[]>(() => {
         const text = query.trim().toLowerCase();
         const all: Suggestion[] = places.flatMap((city) => [
-            { label: city.name, detail: "City", href: `${basePath}/${city.slug}` },
+            { label: city.name, detail: "City", href: `${basePath}/${city.slug}`, remember: city.slug },
             ...city.areas.map((area) => ({
                 label: area,
                 detail: city.name,
                 href: `${basePath}/${city.slug}?area=${encodeURIComponent(area)}`,
+                remember: city.slug,
             })),
         ]);
 
@@ -44,14 +56,61 @@ export function LocationSearch({ places, basePath, current = null, placeholder =
             ? all.filter((item) => `${item.label} ${item.detail}`.toLowerCase().includes(text))
             : all.filter((item) => item.detail === "City");
 
-        return [...(current ? [{ label: "All locations", detail: "Everywhere on Promotello", href: basePath }] : []), ...matches].slice(0, 8);
+        const extras: Suggestion[] = text
+            ? []
+            : [
+                { label: "Use my location", detail: "Find the nearest city", href: "", locate: true },
+                ...(current ? [{ label: "All locations", detail: "Everywhere on Promotello", href: basePath, remember: ALL_LOCATIONS }] : []),
+            ];
+
+        return [...extras, ...matches].slice(0, 9);
     }, [places, basePath, query, current]);
 
     function choose(suggestion: Suggestion | undefined) {
         if (!suggestion) return;
+
+        if (suggestion.locate) {
+            locateVisitor();
+            return;
+        }
+
         setOpen(false);
         setQuery("");
+        setMessage("");
+
+        if (suggestion.remember) {
+            rememberCity(suggestion.remember);
+        }
+
         router.push(suggestion.href);
+        router.refresh();
+    }
+
+    // Asks the browser for the visitor's position (they can say no) and
+    // goes to the nearest live city. The position isn't stored or sent.
+    function locateVisitor() {
+        setOpen(false);
+
+        if (!("geolocation" in navigator)) {
+            setMessage("Your browser can't share your location. Type a place instead.");
+            return;
+        }
+
+        setMessage("Finding you…");
+        navigator.geolocation.getCurrentPosition(
+            ({ coords }) => {
+                const city = nearestCity(places, coords.latitude, coords.longitude);
+
+                if (!city) {
+                    setMessage("Promotello isn't in your area yet. Pick a city to look around.");
+                    return;
+                }
+
+                choose({ label: city.name, detail: "City", href: `${basePath}/${city.slug}`, remember: city.slug });
+            },
+            () => setMessage("We couldn't get your location. Type a place instead."),
+            { timeout: 10_000, maximumAge: 600_000 },
+        );
     }
 
     function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -88,7 +147,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder =
                     aria-autocomplete="list"
                     aria-activedescendant={open && suggestions[active] ? `${listId}-${active}` : undefined}
                     value={query}
-                    placeholder={current ? current.name : placeholder}
+                    placeholder={current ? current.name : (placeholder ?? examplePlaceholder(places))}
                     onChange={(event) => {
                         setQuery(event.target.value);
                         setActive(0);
@@ -103,7 +162,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder =
                     <button
                         type="button"
                         aria-label="Show all locations"
-                        onClick={() => router.push(basePath)}
+                        onClick={() => choose({ label: "All locations", detail: "", href: basePath, remember: ALL_LOCATIONS })}
                         className="shrink-0 rounded-full p-1 text-[#17233B]/50 hover:bg-[#17233B]/5 hover:text-[#17233B]"
                     >
                         <FiX aria-hidden="true" />
@@ -120,7 +179,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder =
                 >
                     {suggestions.map((suggestion, index) => (
                         <li
-                            key={suggestion.href}
+                            key={`${suggestion.label}-${suggestion.href}`}
                             id={`${listId}-${index}`}
                             role="option"
                             aria-selected={index === active}
@@ -131,7 +190,11 @@ export function LocationSearch({ places, basePath, current = null, placeholder =
                             onMouseEnter={() => setActive(index)}
                             className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 ${index === active ? "bg-[#FF593F]/10" : ""}`}
                         >
-                            <FiMapPin aria-hidden="true" className="shrink-0 text-[#17233B]/40" />
+                            {suggestion.locate ? (
+                                <FiNavigation aria-hidden="true" className="shrink-0 text-[#FF593F]" />
+                            ) : (
+                                <FiMapPin aria-hidden="true" className="shrink-0 text-[#17233B]/40" />
+                            )}
                             <span className="min-w-0">
                                 <span className="block truncate text-sm font-medium">{suggestion.label}</span>
                                 <span className="block truncate text-xs text-[#17233B]/55">{suggestion.detail}</span>
@@ -139,6 +202,12 @@ export function LocationSearch({ places, basePath, current = null, placeholder =
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {message && (
+                <p role="status" className="mt-2 text-xs text-[#17233B]/70">
+                    {message}
+                </p>
             )}
         </div>
     );

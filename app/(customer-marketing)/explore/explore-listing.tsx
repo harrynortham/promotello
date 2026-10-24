@@ -22,7 +22,7 @@ import {
     type ListingOffer,
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
-import { getLiveCities, placeName, type City } from "@/lib/cities";
+import { cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
 
 // Neighbourhoods to explore, in every live city (/explore) or one
 // (/explore/bristol).
@@ -236,13 +236,13 @@ function SelectedArea({
 }
 
 export async function ExploreListing({ city, searchParams }: ListingProps) {
-    const [place, places] = await Promise.all([placeName(city), getLiveCities()]);
+    const [place, places, photos] = await Promise.all([placeName(city), getLiveCities(), cityPhotosFor(city)]);
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="relative isolate overflow-hidden bg-[#17233B]">
                 <Image
-                    src="/images/home/harbourside.jpg"
+                    src={photos.feature}
                     alt=""
                     fill
                     priority

@@ -102,6 +102,18 @@ const sections: LegalSection[] = [
                     (mobile, tablet or desktop), not your IP address.
                 </p>
                 <p>
+                    <strong>Your town or city.</strong> To show offers near
+                    you, our hosting provider (Vercel) works out your
+                    approximate town from your IP address when you visit. We
+                    use it to pick the nearest city and don&apos;t store it.
+                    If you choose &ldquo;Use my location&rdquo;, your browser
+                    shares your position with the page, which uses it on your
+                    device to find the nearest city; it isn&apos;t sent to us.
+                    If you ask us to tell you when Promotello comes to your
+                    town, we keep your email address and town for that, and
+                    only that.
+                </p>
+                <p>
                     <strong>Website analytics.</strong> Only if you accept
                     analytics cookies: Google Analytics collects information
                     about your visit, such as the pages you view, your device
@@ -143,6 +155,13 @@ const sections: LegalSection[] = [
                         after a recent visit, and showing businesses totals such
                         as views, claims, stamps and follower numbers, which
                         helps them decide whether Promotello works for them.
+                    </li>
+                    <li>
+                        <strong>Showing your nearest city (legitimate
+                        interests):</strong> using your approximate town,
+                        without storing it, so you see offers near you first.
+                        Launch updates for your town are sent only if you ask
+                        for them (consent).
                     </li>
                     <li>
                         <strong>Website analytics (consent):</strong> only if
@@ -339,7 +358,7 @@ export default function PrivacyPage() {
         <LegalDocument
             title="Privacy policy"
             description="How we handle personal information when you visit or use Promotello."
-            updatedAt="23 October 2026"
+            updatedAt="24 October 2026"
             version="Draft for review"
             draft
             summary={summary}

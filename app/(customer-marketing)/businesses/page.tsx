@@ -1,5 +1,8 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { NotHereYet, VisitorLoading } from "@/components/visitor-city";
+import { getVisitorContext } from "@/lib/visitor";
 import { BusinessesListing, businessesMetadata } from "./businesses-listing";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,7 +13,23 @@ type PageProps = {
     searchParams: Promise<{ search?: string; category?: string; area?: string }>;
 };
 
-// Every approved business, in every live city. /businesses/<city> shows one.
-export default function BusinessesPage({ searchParams }: PageProps) {
-    return <BusinessesListing city={null} searchParams={searchParams} />;
+async function VisitorBusinesses({ searchParams }: PageProps) {
+    const visitor = await getVisitorContext();
+
+    return (
+        <>
+            <NotHereYet visitor={visitor} />
+            <BusinessesListing city={visitor.city} searchParams={searchParams} />
+        </>
+    );
+}
+
+// Businesses in the visitor's city, or in every live city.
+// /businesses/<city> always shows that city.
+export default function BusinessesPage(props: PageProps) {
+    return (
+        <Suspense fallback={<VisitorLoading />}>
+            <VisitorBusinesses {...props} />
+        </Suspense>
+    );
 }
