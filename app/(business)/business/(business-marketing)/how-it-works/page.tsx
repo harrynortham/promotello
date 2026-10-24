@@ -7,6 +7,7 @@ import {
     DashboardScreen,
     LoyaltyCardScreen,
     NewOfferEmail,
+    OfferClaimScreen,
     PosterVisual,
     StaffScanScreen,
     VoucherScreen,
@@ -130,7 +131,14 @@ export default async function HowItWorksPage() {
                     "On Pro, offers go live straight away",
                     "Share it to WhatsApp, Facebook and Instagram in a tap",
                 ]}
-                visual={<LoyaltyCardScreen stamps={3} />}
+                visual={
+                    <div className="flex items-start gap-4">
+                        <OfferClaimScreen />
+                        <div className="hidden translate-y-10 sm:block">
+                            <LoyaltyCardScreen stamps={3} />
+                        </div>
+                    </div>
+                }
             />
 
             <FeatureSection
