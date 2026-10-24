@@ -14,6 +14,8 @@ import {
     businessHasPro,
     isLiveOffer,
 } from "@/lib/billing";
+import { SharePanel } from "@/components/share-panel";
+import { offerShareCaption, shareLink } from "@/lib/share";
 import { createClient } from "@/utils/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -203,6 +205,15 @@ async function OffersContent({ params }: PageProps) {
         .order("created_at", { ascending: false });
 
     const typedOffers = (offers ?? []) as Offer[];
+
+    // Views per promotion for the share panel (last 30 days).
+    const { data: viewRows } = await supabase.rpc("offer_view_counts", { requested_business_id: businessId });
+    const viewsByOffer = new Map(
+        ((viewRows ?? []) as { offer_id: string; views: number; shared_views: number }[]).map((row) => [
+            row.offer_id,
+            { views: Number(row.views), sharedViews: Number(row.shared_views) },
+        ]),
+    );
     const hasPro = await businessHasPro(supabase, businessId);
     const liveOfferCount = typedOffers.filter(isLiveOffer).length;
     const pausedOfferCount = typedOffers.filter(
@@ -433,19 +444,20 @@ async function OffersContent({ params }: PageProps) {
                                             </Button>
 
                                             {offer.approval_status === "approved" && (
-                                                <Button
-                                                    render={
-                                                        <a
-                                                            href={`/offers/${offer.slug}/story-image`}
-                                                            download={`${offer.slug}-story.png`}
-                                                        />
-                                                    }
-                                                    nativeButton={false}
-                                                    variant="outline"
-                                                    size="sm"
-                                                >
-                                                    Instagram image
-                                                </Button>
+                                                <SharePanel
+                                                    title={offer.title}
+                                                    url={shareLink(`/offers/${offer.slug}`)}
+                                                    caption={offerShareCaption({
+                                                        title: offer.title,
+                                                        discount: offer.discount,
+                                                        businessName: business?.name ?? "",
+                                                    })}
+                                                    images={[
+                                                        { label: "Story", href: `/offers/${offer.slug}/story-image`, filename: `${offer.slug}-story.png`, aspect: "aspect-[9/16]" },
+                                                        { label: "Square post", href: `/offers/${offer.slug}/post-image`, filename: `${offer.slug}-post.png`, aspect: "aspect-square" },
+                                                    ]}
+                                                    stats={viewsByOffer.get(offer.id) ?? { views: 0, sharedViews: 0 }}
+                                                />
                                             )}
 
                                             {canManageOffers && (

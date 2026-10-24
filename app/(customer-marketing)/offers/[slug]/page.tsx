@@ -27,6 +27,8 @@ import { createClient } from "@/utils/supabase/server";
 
 import RedeemButton from "./redeem-button";
 import { FollowButton } from "@/components/follow-button";
+import { ShareOfferButton } from "@/components/share-offer-button";
+import { offerShareCaption, shareLink } from "@/lib/share";
 import { PageViewTracker } from "@/components/page-view-tracker";
 
 type OfferPageProps = {
@@ -89,7 +91,6 @@ export async function generateMetadata({
         ? `${offer.discount} at ${business.name}: ${offer.title}`
         : `${offer.discount}: ${offer.title}`;
     const description = truncate(offer.description);
-    const image = offer.image_url ?? business?.logo_url;
     const path = `/offers/${offer.slug}`;
 
     return {
@@ -103,7 +104,7 @@ export async function generateMetadata({
             url: path,
             title,
             description,
-            images: image ? [{ url: image }] : undefined,
+            // The image comes from opengraph-image.tsx (photo, deal and business).
         },
     };
 }
@@ -390,6 +391,13 @@ async function OfferContent({ params }: OfferPageProps) {
                             <p className="mt-4 text-center text-xs leading-5 text-[#17233B]/55">
                                 Free to claim. Show your code when you pay.
                             </p>
+                        )}
+
+                        {!isExpired && (
+                            <ShareOfferButton
+                                url={shareLink(`/offers/${offer.slug}`)}
+                                text={offerShareCaption({ title: offer.title, discount: offer.discount, businessName: business.name })}
+                            />
                         )}
                     </aside>
                 </div>

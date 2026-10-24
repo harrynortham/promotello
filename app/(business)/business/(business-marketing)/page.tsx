@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
     FiArrowRight,
@@ -35,8 +36,11 @@ import {
     OfferClaimScreen,
     PosterScansCard,
     PosterVisual,
+    PhotoCard,
+    SquarePostPreview,
     StaffScanScreen,
     VoucherScreen,
+    WhatsAppShareScreen,
 } from "@/components/product-visuals";
 import { Button } from "@/components/ui/button";
 import { qrSvg } from "@/lib/qr";
@@ -49,21 +53,21 @@ export const metadata: Metadata = {
 
 const loop = [
     { icon: FiGrid, title: "Get noticed", body: "A QR poster in your window and a page in the Promotello directory." },
-    { icon: FiGift, title: "Bring them in", body: "A promotion worth trying, claimed on their phone in seconds." },
+    { icon: FiGift, title: "Bring them in", body: "A promotion worth trying, shared everywhere and claimed on their phone in seconds." },
     { icon: FiAward, title: "Bring them back", body: "A loyalty card on their phone, and automatic reasons to return." },
     { icon: FiBarChart2, title: "See it working", body: "Visits, followers and scans every month, compared with the last." },
 ];
 
 // Examples across Promotello's categories, so no one thinks it's only for cafés.
 const businessTypes = [
-    { icon: FiCoffee, type: "Cafés and bakeries", example: "Buy 9 coffees, get the 10th free" },
-    { icon: FiClock, type: "Restaurants", example: "Two courses for £15, Monday to Wednesday, 5 to 7pm" },
-    { icon: FiMusic, type: "Pubs and bars", example: "A free drink for new followers on quiz night" },
-    { icon: FiScissors, type: "Hair and barbers", example: "Your 6th cut half price" },
-    { icon: FiStar, type: "Beauty, nails and spas", example: "10% off a first treatment, and a birthday treat" },
-    { icon: FiActivity, type: "Fitness, yoga and classes", example: "First class free, then a stamp every visit" },
-    { icon: FiShoppingBag, type: "Shops, florists and makers", example: "10% off your first order in store" },
-    { icon: FiTool, type: "Services, pets and repairs", example: "Every 5th groom or service free" },
+    { icon: FiCoffee, type: "Cafés and bakeries", example: "Buy 9 coffees, get the 10th free", photo: "pastry-counter" },
+    { icon: FiClock, type: "Restaurants", example: "Two courses for £15, Monday to Wednesday, 5 to 7pm", photo: "pizza" },
+    { icon: FiMusic, type: "Pubs and bars", example: "A free drink for new followers on quiz night", photo: "pub" },
+    { icon: FiScissors, type: "Hair and barbers", example: "Your 6th cut half price", photo: "barber" },
+    { icon: FiStar, type: "Beauty, nails and spas", example: "10% off a first treatment, and a birthday treat", photo: "beauty" },
+    { icon: FiActivity, type: "Fitness, yoga and classes", example: "First class free, then a stamp every visit", photo: "yoga" },
+    { icon: FiShoppingBag, type: "Shops, florists and makers", example: "10% off your first order in store", photo: "plants" },
+    { icon: FiTool, type: "Services, pets and repairs", example: "Every 5th groom or service free", photo: "dog-grooming" },
 ];
 
 const faqs = [
@@ -132,16 +136,22 @@ export default async function BusinessPage() {
                         </p>
                     </div>
 
-                    <div className="relative mx-auto w-full max-w-xl pb-10 lg:pb-0">
-                        <DashboardScreen />
-                        <div className="absolute -bottom-6 -right-2 hidden scale-[0.82] sm:block lg:-right-10">
+                    <div className="relative mx-auto w-full max-w-xl pb-10 sm:pt-24 lg:pb-0">
+                        <PhotoCard
+                            src="/images/marketing/harbour-grind-cafe.jpg"
+                            caption="Harbour Grind"
+                            detail="Bristol"
+                            className="absolute -right-6 -top-8 hidden aspect-[4/3] w-3/5 sm:block"
+                        />
+                        <DashboardScreen className="relative z-10 sm:w-[88%]" />
+                        <div className="absolute -bottom-6 -right-2 z-20 hidden scale-[0.82] sm:block lg:-right-10">
                             <LoyaltyCardScreen />
                         </div>
                         <FloatingNote
                             icon="check"
                             title="Jo claimed your free pastry offer"
                             detail="84 claimed so far · 2 min ago"
-                            className="absolute -left-4 bottom-4 hidden sm:flex lg:-left-10"
+                            className="absolute -left-4 bottom-4 z-20 hidden sm:flex lg:-left-10"
                         />
                     </div>
                 </div>
@@ -178,13 +188,24 @@ export default async function BusinessPage() {
                     </p>
                 </div>
                 <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {businessTypes.map(({ icon: Icon, type, example }) => (
-                        <li key={type} className="rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                            <span className="flex size-10 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
-                                <Icon aria-hidden="true" />
-                            </span>
-                            <p className="mt-4 font-semibold">{type}</p>
-                            <p className="mt-1 text-sm leading-6 text-[#17233B]/65">&ldquo;{example}&rdquo;</p>
+                    {businessTypes.map(({ icon: Icon, type, example, photo }) => (
+                        <li key={type} className="overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white">
+                            <div className="relative aspect-[16/10]">
+                                <Image
+                                    src={`/images/marketing/${photo}.jpg`}
+                                    alt=""
+                                    fill
+                                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                                    className="object-cover"
+                                />
+                                <span className="absolute bottom-3 left-3 flex size-9 items-center justify-center rounded-full bg-white text-[#FF593F] shadow">
+                                    <Icon aria-hidden="true" />
+                                </span>
+                            </div>
+                            <div className="p-5">
+                                <p className="font-semibold">{type}</p>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/65">&ldquo;{example}&rdquo;</p>
+                            </div>
                         </li>
                     ))}
                 </ul>
@@ -276,6 +297,28 @@ export default async function BusinessPage() {
 
             <FeatureSection
                 tinted
+                eyebrow="Sharing"
+                title="Every promotion is ready to share."
+                body="One tap sends a promotion to WhatsApp, Facebook or X with a link preview showing your photo and the deal. Download ready-made images for Instagram stories and posts, copy a suggested caption, and see how many people came from your shares."
+                points={[
+                    "Link previews with your photo, deal and business name",
+                    "Story and square post images for Instagram and Facebook",
+                    "A suggested caption, ready to copy",
+                    "Customers can share your promotions with friends too",
+                    "Views from shared links counted in your analytics",
+                ]}
+                visual={
+                    <div className="flex items-end gap-4">
+                        <WhatsAppShareScreen />
+                        <div className="hidden -translate-y-16 sm:block">
+                            <SquarePostPreview />
+                        </div>
+                    </div>
+                }
+            />
+
+            <FeatureSection
+                reverse
                 eyebrow="Results"
                 title="Know it's worth it."
                 body="Your dashboard shows views, claims, visits, QR scans and loyalty stamps for the last 30 days, compared with the 30 before. On Growth, a summary lands in your inbox on the 1st of every month."

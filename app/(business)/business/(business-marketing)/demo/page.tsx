@@ -48,6 +48,7 @@ async function sampleAnalytics(): Promise<BusinessAnalytics> {
             qr_scans: { current: 403, previous: 288 },
             loyalty_stamps: { current: 612, previous: 455 },
             review_clicks: { current: 21, previous: 9 },
+            shared_views: { current: 187, previous: 96 },
         },
         daily,
     };

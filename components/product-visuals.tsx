@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
     FiBarChart2,
@@ -257,6 +258,9 @@ export function NewOfferEmail() {
             from={`${business} via Promotello`}
             subject="2 for £5: Two flat whites on Mondays"
         >
+            <div className="relative -mx-5 -mt-5 mb-4 aspect-[2/1] overflow-hidden">
+                <Image src="/images/marketing/harbour-grind-cafe.jpg" alt="" fill sizes="384px" className="object-cover" />
+            </div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">New from {business}</p>
             <p className="mt-2 text-lg font-semibold leading-snug">Two flat whites for £5 on Mondays</p>
             <span className="mt-2 inline-flex rounded-full bg-[#FF593F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#C2341F]">2 for £5</span>
@@ -419,8 +423,9 @@ export function StoryImagePreview() {
 export function OfferClaimScreen() {
     return (
         <PhoneFrame label="A customer claiming a promotion on their phone">
-            <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFE3DA] to-[#FFF8F0]">
-                <span className="text-2xl font-semibold text-[#FF593F]/70">Free pastry</span>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
+                <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="220px" className="object-cover" />
+                <span className="absolute left-2 top-2 rounded-full bg-[#FF593F] px-2.5 py-0.5 text-[11px] font-semibold text-white">Free pastry</span>
             </div>
             <p className="mt-3 text-xs text-[#17233B]/55">{business} · Gloucester Road</p>
             <p className="mt-0.5 font-semibold leading-snug">Free pastry with any coffee before 10am</p>
@@ -431,5 +436,67 @@ export function OfferClaimScreen() {
             <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>
             <p className="mt-2 text-center text-[10px] text-[#17233B]/50">Free to claim · Use it in store</p>
         </PhoneFrame>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Photos and sharing
+// ---------------------------------------------------------------------------
+
+export function PhotoCard({ src, caption, detail, className = "", sizes = "(min-width: 1024px) 40vw, 90vw" }: { src: string; caption: string; detail?: string; className?: string; sizes?: string }) {
+    return (
+        <figure className={`relative overflow-hidden rounded-3xl shadow-2xl shadow-[#17233B]/15 ${className}`}>
+            <Image src={src} alt="" fill sizes={sizes} className="object-cover" />
+            <figcaption className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#17233B] shadow">
+                {caption}
+                {detail && <span className="font-normal text-[#17233B]/60"> · {detail}</span>}
+            </figcaption>
+        </figure>
+    );
+}
+
+// A WhatsApp chat with the promotion's link preview: photo, deal, business.
+export function WhatsAppShareScreen() {
+    return (
+        <PhoneFrame label="A promotion shared in a WhatsApp group, with its link preview">
+            <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#075E54] px-4 py-3 text-white">
+                <span className="flex size-7 items-center justify-center rounded-full bg-white/20 text-[11px] font-semibold">GR</span>
+                <span>
+                    <span className="block text-xs font-semibold">Gloucester Rd mums</span>
+                    <span className="block text-[10px] text-white/70">Jo, Sam, Priya, you</span>
+                </span>
+            </div>
+            <div className="-mx-4 space-y-2 bg-[#ECE5DD] px-3 py-4">
+                <div className="ml-auto w-[88%] overflow-hidden rounded-lg bg-[#DCF8C6] text-[#17233B] shadow-sm">
+                    <div className="m-1 overflow-hidden rounded-md bg-white/70">
+                        <div className="relative aspect-[1.9/1]">
+                            <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="200px" className="object-cover" />
+                        </div>
+                        <div className="px-2 py-1.5">
+                            <p className="text-[11px] font-semibold leading-snug">Free pastry at {business}: with any coffee before 10am</p>
+                            <p className="text-[10px] text-[#17233B]/55">promotello.com</p>
+                        </div>
+                    </div>
+                    <p className="px-2 pb-1.5 text-[11px]">Free pastry before 10am this week 🥐 who&apos;s in?</p>
+                </div>
+                <div className="w-[60%] rounded-lg bg-white px-2 py-1.5 text-[11px] shadow-sm">Ooh yes, Thursday? ☕️</div>
+                <div className="w-[48%] rounded-lg bg-white px-2 py-1.5 text-[11px] shadow-sm">Claimed mine!</div>
+            </div>
+        </PhoneFrame>
+    );
+}
+
+// The square image businesses download for Instagram and Facebook posts.
+export function SquarePostPreview({ className = "" }: { className?: string }) {
+    return (
+        <figure aria-label="A square Instagram post made from a promotion" className={`relative aspect-square w-60 overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/25 ${className}`}>
+            <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="240px" className="object-cover" />
+            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-b from-transparent via-[#17233B]/30 to-[#17233B]/95 p-4 text-[#FFF8F0]">
+                <p className="text-[9px] uppercase tracking-[0.18em] text-[#FF8F7D]">{business}</p>
+                <span className="mt-1.5 inline-flex self-start rounded-full bg-[#FF593F] px-2 py-0.5 text-[10px] font-semibold text-white">Free pastry</span>
+                <p className="mt-1.5 text-base font-semibold leading-tight">With any coffee before 10am</p>
+                <p className="mt-2 text-right text-xs font-semibold text-[#FF593F]">promotello</p>
+            </div>
+        </figure>
     );
 }

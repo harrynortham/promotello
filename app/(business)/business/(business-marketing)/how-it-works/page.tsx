@@ -125,7 +125,11 @@ export default async function HowItWorksPage() {
                 eyebrow="Step 2"
                 title="Create an offer or a loyalty card."
                 body="Pick a reward that suits your margins: a free pastry with a coffee, two for one on quiet afternoons, or a free coffee after nine stamps."
-                points={["Set claim limits and an end date", "On Pro, offers go live straight away"]}
+                points={[
+                    "Set claim limits and an end date",
+                    "On Pro, offers go live straight away",
+                    "Share it to WhatsApp, Facebook and Instagram in a tap",
+                ]}
                 visual={<LoyaltyCardScreen stamps={3} />}
             />
 

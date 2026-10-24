@@ -14,8 +14,9 @@ import {
     QuietHoursCard,
     ReviewPromptScreen,
     StaffScanScreen,
-    StoryImagePreview,
+    SquarePostPreview,
     VoucherScreen,
+    WhatsAppShareScreen,
 } from "@/components/product-visuals";
 import { qrSvg } from "@/lib/qr";
 
@@ -34,7 +35,7 @@ const sections = [
     { id: "automations", label: "Automations" },
     { id: "quiet-hours", label: "Quiet hours" },
     { id: "results", label: "Results" },
-    { id: "instagram", label: "Instagram images" },
+    { id: "sharing", label: "Sharing" },
 ];
 
 type Availability = boolean | string;
@@ -49,7 +50,7 @@ const comparison: { feature: string; free: Availability; pro: Availability; grow
     { feature: "Digital loyalty card", free: false, pro: true, growth: true },
     { feature: "Followers emailed every new offer", free: false, pro: true, growth: true },
     { feature: "Google review prompts", free: false, pro: true, growth: true },
-    { feature: "Instagram story images for offers", free: true, pro: true, growth: true },
+    { feature: "Share links, Instagram images and captions", free: true, pro: true, growth: true },
     { feature: "30-day analytics", free: true, pro: true, growth: true },
     { feature: "Welcome, birthday and win-back automations", free: false, pro: false, growth: true },
     { feature: "Quiet-hours offers", free: false, pro: false, growth: true },
@@ -219,13 +220,24 @@ export default async function FeaturesPage() {
             />
 
             <FeatureSection
-                id="instagram"
+                id="sharing"
                 tinted
-                eyebrow="Instagram images"
-                title="Share your offers in a tap."
-                body="Every live offer has a ready-made Instagram story image. Download it from your promotions list and post it."
-                points={["Sized for Instagram stories", "Includes where to find the offer"]}
-                visual={<StoryImagePreview />}
+                eyebrow="Sharing"
+                title="Share every promotion in a tap."
+                body="Each promotion has a share panel: send it to WhatsApp, Facebook or X with a link preview showing your photo and the deal, download images sized for Instagram stories and posts, and copy a suggested caption. Customers can share your promotions with friends from the promotion page too."
+                points={[
+                    "Link previews with your photo, deal and business name",
+                    "Story (9:16) and square post images",
+                    "Views from shared links counted separately",
+                ]}
+                visual={
+                    <div className="flex items-end gap-4">
+                        <WhatsAppShareScreen />
+                        <div className="hidden -translate-y-16 sm:block">
+                            <SquarePostPreview />
+                        </div>
+                    </div>
+                }
             />
 
             <section className="mx-auto max-w-5xl px-6 py-20 sm:px-10">

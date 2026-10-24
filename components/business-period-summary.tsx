@@ -23,7 +23,8 @@ export type BusinessAnalytics = {
             | "used"
             | "qr_scans"
             | "loyalty_stamps"
-            | "review_clicks",
+            | "review_clicks"
+            | "shared_views",
             Metric
         >
     >;
@@ -98,7 +99,12 @@ export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
 
             <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Tile icon={<FiEye />} label="Page views" metric={views} hint="Visits to your business and promotion pages." />
+                    <Tile
+                        icon={<FiEye />}
+                        label="Page views"
+                        metric={views}
+                        hint={`Visits to your business and promotion pages, ${(totals.shared_views ?? empty).current} from shared links.`}
+                    />
                     <Tile icon={<FiTag />} label="Vouchers claimed" metric={claims} hint="Customers who saved one of your promotions." />
                     <Tile icon={<FiCheckCircle />} label="Vouchers used" metric={used} hint="Claims your staff marked as used in store." />
                     <Tile icon={<FiGrid />} label="QR poster scans" metric={totals.qr_scans ?? empty} hint="Scans of your printed QR posters." />
