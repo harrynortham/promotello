@@ -1,3 +1,4 @@
+import { businessPath } from "@/lib/slugs";
 import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
@@ -64,7 +65,7 @@ async function getPublicListings() {
     // approved businesses, and approved, unexpired, unpaused offers.
     // Sample (demo) listings are left out so search engines never index them.
     const [{ data: businesses }, { data: offers }] = await Promise.all([
-        supabase.from("businesses").select("id, updated_at").eq("is_sample", false),
+        supabase.from("businesses").select("slug, updated_at").eq("is_sample", false),
         supabase
             .from("offers")
             .select("slug, updated_at, businesses!inner ( is_sample )")
@@ -93,7 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: path === "/" ? 1 : 0.5,
         })),
         ...(businesses ?? []).map((business) => ({
-            url: absoluteUrl(`/businesses/${business.id}`),
+            url: absoluteUrl(businessPath(business)),
             lastModified: business.updated_at,
             changeFrequency: "weekly" as const,
             priority: 0.8,

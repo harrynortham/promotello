@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FiMapPin } from "react-icons/fi";
 
 import type { ListingBusiness } from "@/lib/listings";
+import { businessPath } from "@/lib/slugs";
 
 export function BusinessCard({ business }: { business: ListingBusiness }) {
     return (
@@ -50,7 +51,7 @@ export function BusinessCard({ business }: { business: ListingBusiness }) {
 
                 <h3 className="mt-3 text-lg font-semibold text-[#17233B]">
                     <Link
-                        href={`/businesses/${business.id}`}
+                        href={businessPath(business)}
                         className="after:absolute after:inset-0 focus-visible:outline-none"
                     >
                         {business.name}

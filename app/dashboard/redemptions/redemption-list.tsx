@@ -1,5 +1,6 @@
 "use client";
 
+import { businessPath } from "@/lib/slugs";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -39,6 +40,7 @@ export type WalletRedemption = {
     } | null;
     business: {
         id: string;
+        slug: string;
         name: string;
         address: string;
     } | null;
@@ -158,7 +160,7 @@ function VoucherCard({
                     <div>
                         {business ? (
                             <Link
-                                href={`/businesses/${business.id}`}
+                                href={businessPath(business)}
                                 className="text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
                             >
                                 {business.name}

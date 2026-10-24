@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
     FiArrowLeft,
     FiArrowUpRight,
@@ -39,12 +39,14 @@ import { PageViewTracker } from "@/components/page-view-tracker";
 import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
-import { getLiveCity } from "@/lib/cities";
+import { getLiveCities, getLiveCity } from "@/lib/cities";
+import { businessPath, canonicalPath, offerPath } from "@/lib/slugs";
 import { BusinessesListing, businessesMetadata } from "../businesses-listing";
 
 type BusinessPageProps = {
     params: Promise<{
-        businessId: string;
+        // A business's slug, or a live city's (/businesses/bristol).
+        slug: string;
     }>;
     searchParams?: Promise<{ loyalty?: string }>;
 };
@@ -104,18 +106,17 @@ export async function generateMetadata({
     params,
 }: BusinessPageProps): Promise<Metadata> {
     // /businesses/<city> is the directory for that city.
-    const city = await getLiveCity((await params).businessId);
+    const { slug } = await params;
+    const city = await getLiveCity(slug);
 
     if (city) {
         return businessesMetadata(city);
     }
 
-    const { businessId } = await params;
-
     const { data: business } = await createPublicClient()
         .from("businesses")
-        .select("id, name, category, description, logo_url, is_sample, business_locations ( city )")
-        .eq("id", businessId)
+        .select("id, slug, name, category, description, logo_url, is_sample, business_locations ( city, region )")
+        .eq("slug", slug)
         .maybeSingle();
 
     if (!business) {
@@ -126,15 +127,19 @@ export async function generateMetadata({
         ? business.business_locations[0]
         : business.business_locations;
 
+    // "Harbour Grind, Clifton, Bristol": the area and city people search for.
+    const where = [location?.region, location?.city]
+        .filter((part, index, parts) => part && parts.indexOf(part) === index)
+        .join(", ");
     const place = location?.city ? ` in ${location.city}` : "";
     const description = truncate(
         business.description ||
             `${business.name} is a ${business.category.toLowerCase()} business${place}. See their latest offers and opening hours on ${siteName}.`,
     );
-    const path = `/businesses/${business.id}`;
+    const path = businessPath(business);
 
     return {
-        title: `${business.name}${place}`,
+        title: where ? `${business.name}, ${where}: offers and loyalty card` : business.name,
         description,
         alternates: { canonical: path },
         // Sample (demo) listings must never appear in search results.
@@ -158,7 +163,7 @@ function startOfToday() {
 async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     await connection();
 
-    const { businessId } = await params;
+    const { slug } = await params;
     const loyaltyStatus = (await searchParams)?.loyalty;
     const supabase = await createClient();
 
@@ -167,6 +172,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         .select(
             `
                 id,
+                slug,
                 name,
                 logo_url,
                 category,
@@ -190,7 +196,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 )
             `,
         )
-        .eq("id", businessId)
+        .eq("slug", slug)
         .eq("approval_status", "approved")
         .maybeSingle();
 
@@ -199,9 +205,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     }
 
     if (!business) {
+        // An old address (the proxy usually redirects these first).
+        const moved = await canonicalPath("business", slug);
+        if (moved) permanentRedirect(moved);
         notFound();
     }
 
+    const businessId = business.id;
     const today = new Date().toISOString().slice(0, 10);
 
     // Active loyalty card, and the visitor's progress on it if they've joined.
@@ -308,7 +318,20 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         .join("")
         .toUpperCase();
 
-    const pageUrl = absoluteUrl(`/businesses/${business.id}`);
+    const pageUrl = absoluteUrl(businessPath(business));
+    const cityPage = (await getLiveCities()).find((city) => city.name === location?.city) ?? null;
+    const directoryPath = cityPage ? `/businesses/${cityPage.slug}` : "/businesses";
+
+    // Businesses › Bristol › Harbour Grind, shown in search results.
+    const breadcrumbs = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { name: "Businesses", item: absoluteUrl("/businesses") },
+            ...(cityPage ? [{ name: cityPage.name, item: absoluteUrl(directoryPath) }] : []),
+            { name: business.name, item: pageUrl },
+        ].map((crumb, index) => ({ "@type": "ListItem", position: index + 1, ...crumb })),
+    };
 
     const structuredData = {
         "@context": "https://schema.org",
@@ -343,7 +366,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             "@type": "Offer",
             name: offer.title,
             description: offer.description,
-            url: absoluteUrl(`/offers/${offer.slug}`),
+            url: absoluteUrl(offerPath(offer)),
             validThrough: offer.expires_at,
         })),
     };
@@ -354,18 +377,22 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
             />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+            />
             <PageViewTracker businessId={business.id} />
 
             <div className="mx-auto max-w-6xl">
                 <Button
-                    render={<Link href="/businesses" />}
+                    render={<Link href={directoryPath} />}
                     nativeButton={false}
                     variant="ghost"
                     size="sm"
                     className="mb-6"
                 >
                     <FiArrowLeft aria-hidden="true" />
-                    All businesses
+                    {cityPage ? `Businesses in ${cityPage.name}` : "All businesses"}
                 </Button>
 
                 {/* Business identity */}
@@ -823,7 +850,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 // Either one business, or (when the id is a live city, e.g.
 // /businesses/bristol) the directory for that city.
 async function BusinessOrCityListing({ params, searchParams }: BusinessPageProps) {
-    const city = await getLiveCity((await params).businessId);
+    const city = await getLiveCity((await params).slug);
 
     if (city) {
         return (

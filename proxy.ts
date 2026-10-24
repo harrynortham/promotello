@@ -2,10 +2,20 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { safeNextPath } from "@/lib/redirects";
+import { movedAddress } from "@/lib/slugs";
 
-// Signed-in users who open /login or /signup go straight to where they were
-// heading (?next=) or their dashboard. Runs only on those two pages.
+// 1. Old or outdated business and offer addresses (/businesses/<uuid>, a
+//    renamed business, an old offer slug) redirect permanently.
+// 2. Signed-in users who open /login or /signup go straight to where they
+//    were heading (?next=) or their dashboard.
 export async function proxy(request: NextRequest) {
+    const { pathname, search } = request.nextUrl;
+
+    if (pathname.startsWith("/businesses/") || pathname.startsWith("/offers/")) {
+        const moved = await movedAddress(pathname);
+        return moved ? NextResponse.redirect(new URL(`${moved}${search}`, request.url), 308) : NextResponse.next();
+    }
+
     let response = NextResponse.next({ request });
 
     const supabase = createServerClient(
@@ -40,5 +50,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/login", "/signup"],
+    matcher: ["/login", "/signup", "/businesses/:segment", "/offers/:segment"],
 };

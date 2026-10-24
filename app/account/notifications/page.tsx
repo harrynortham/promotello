@@ -23,7 +23,7 @@ async function NotificationsContent() {
 
     const { data: follows } = await supabase
         .from("business_followers")
-        .select("business_id, emails_enabled, businesses ( name, logo_url )")
+        .select("business_id, emails_enabled, businesses ( slug, name, logo_url )")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 

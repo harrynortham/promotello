@@ -1,3 +1,4 @@
+import { businessPath } from "@/lib/slugs";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -21,7 +22,7 @@ type EventDetail = {
     ends_at: string | null;
     location: string | null;
     price: string | null;
-    business: { id: string; name: string } | null;
+    business: { id: string; slug: string; name: string } | null;
 };
 
 async function getEvent(eventId: string) {
@@ -29,7 +30,7 @@ async function getEvent(eventId: string) {
 
     const { data } = await createPublicClient()
         .from("business_events")
-        .select("id, title, description, starts_at, ends_at, location, price, business:businesses ( id, name )")
+        .select("id, title, description, starts_at, ends_at, location, price, business:businesses ( id, slug, name )")
         .eq("id", eventId)
         .maybeSingle();
 
@@ -63,7 +64,7 @@ async function EventContent({ params }: PageProps) {
             {event.business && (
                 <p className="mt-2 text-lg">
                     at{" "}
-                    <Link href={`/businesses/${event.business.id}`} className="font-medium text-[#FF593F] hover:underline">
+                    <Link href={businessPath(event.business)} className="font-medium text-[#FF593F] hover:underline">
                         {event.business.name}
                     </Link>
                 </p>
@@ -93,7 +94,7 @@ async function EventContent({ params }: PageProps) {
             )}
 
             {event.business && (
-                <Button render={<Link href={`/businesses/${event.business.id}`} />} nativeButton={false} className="mt-8">
+                <Button render={<Link href={businessPath(event.business)} />} nativeButton={false} className="mt-8">
                     See {event.business.name}
                 </Button>
             )}
