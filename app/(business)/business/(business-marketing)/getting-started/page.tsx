@@ -3,9 +3,10 @@ import Link from "next/link";
 import {
     FiArrowRight,
     FiCheck,
+    FiAward,
     FiCheckCircle,
-    FiClipboard,
     FiGift,
+    FiGrid,
     FiMapPin,
     FiUsers,
 } from "react-icons/fi";
@@ -23,95 +24,109 @@ import {
 export const metadata: Metadata = {
     title: { absolute: "Getting Started | Promotello for Business" },
     description:
-        "Get your business ready for Promotello. Create your profile, prepare your first promotion, and help your team welcome customers.",
+        "Get set up on Promotello: your business page, first promotion, loyalty card and QR poster, and how your team scans at the till.",
 };
 
 const preparationItems = [
     "Your business name and a short description",
-    "Your business logo",
+    "Your logo",
     "Your address and opening hours",
-    "A contact email and website, if you have one",
     "An idea for your first promotion",
+    "A loyalty reward, like a free coffee after nine",
+    "Your Google review link, if you have one",
 ];
 
 const steps = [
     {
         number: "01",
         icon: FiMapPin,
-        title: "Create your business profile",
+        title: "Set up your business",
         description:
-            "Introduce your business and give customers the details they need to plan a visit.",
+            "Give customers what they need to find you and plan a visit. It takes about 15 minutes.",
         tasks: [
             "Create an account or sign in",
-            "Add your business name, category, and description",
-            "Add your logo, location, and opening hours",
-            "Check that your contact information is correct",
+            "Add your business name, category and description",
+            "Add your logo, address and opening hours",
+            "Our team checks it before your page goes public",
         ],
-        tip: "Write your description as if you’re welcoming someone who has never visited before.",
-        href: "/onboarding",
+        tip: "Write your description as if you're welcoming someone who has never visited before.",
+        href: "/business/register",
         action: "Add your business",
     },
     {
         number: "02",
         icon: FiGift,
-        title: "Prepare your first promotion",
+        title: "Create your first promotion",
         description:
-            "Choose an offer that gives customers a reason to visit and makes sense for your business.",
+            "Give people a reason to try you. Customers claim it on their phone and get their own voucher.",
         tasks: [
-            "Explain exactly what the customer receives",
-            "Add a clear, relevant promotion image",
-            "Set availability and an expiry date",
-            "Add any exclusions or conditions",
-            "Set an optional total claim limit",
+            "Say exactly what the customer gets",
+            "Add an image, an end date and any conditions",
+            "Set a claim limit you can comfortably honour",
+            "On Pro, it goes live as soon as your business is approved",
         ],
-        tip: "Start with an offer you can comfortably fulfil. You can learn from the response before planning your next one.",
+        tip: "Start with something you can easily fulfil. You can always try a different promotion next.",
         href: "/business/dashboard",
         action: "Open your dashboard",
     },
     {
         number: "03",
-        icon: FiClipboard,
-        title: "Check your approval status",
+        icon: FiAward,
+        title: "Start a loyalty card",
         description:
-            "Your business and promotion are reviewed before the promotion appears publicly.",
+            "Turn a first visit into a habit with a digital stamp card customers keep on their phone.",
         tasks: [
-            "Review the status shown in your business dashboard",
-            "Check your business details for missing information",
-            "Review any feedback and make requested changes",
+            "Choose how many stamps it takes (3 to 20)",
+            "Choose the reward",
+            "Add any terms, like one stamp per visit",
         ],
-        tip: "Both the business and promotion must be approved before customers can discover the promotion publicly.",
+        tip: "Loyalty cards are part of Pro, which starts with a 30-day free trial.",
         href: "/business/dashboard",
-        action: "Check your business",
+        action: "Open your dashboard",
     },
     {
         number: "04",
-        icon: FiUsers,
-        title: "Get your team ready",
+        icon: FiGrid,
+        title: "Print your QR poster",
         description:
-            "Make sure the people welcoming customers understand the promotion and know how to check a code.",
+            "Put a poster where customers will see it, so they can follow you, join your card or claim your promotion.",
         tasks: [
-            "Invite staff who need access",
-            "Explain what the offer includes and when it applies",
-            "Show your team where to find customer redemptions",
-            "Agree who will check codes during a shift",
+            "Create a poster for each spot: window, till or tables",
+            "Print it at A4 or A5",
+            "Check its scan count after a few days",
         ],
-        tip: "Working on your own? You can manage everything yourself. Inviting a team is optional.",
+        tip: "The front window and the till are usually the best places to start.",
         href: "/business/dashboard",
-        action: "Manage your business",
+        action: "Make a poster",
     },
     {
         number: "05",
-        icon: FiCheckCircle,
-        title: "Welcome your first customer",
+        icon: FiUsers,
+        title: "Show your team how to scan",
         description:
-            "Customers claim a code on Promotello and show it when they visit your business.",
+            "Staff redeem vouchers and stamp cards with their own phone's camera. No card reader needed.",
         tasks: [
-            "Find the customer’s redemption code",
-            "Check that it matches the promotion",
-            "Check whether it has already been used",
-            "Mark it as used when you fulfil the deal",
+            "Invite staff from the Team page",
+            "Show them how to scan a customer's QR code",
+            "Tap \"Mark as used\" for a voucher or \"Add stamp\" for a loyalty card",
         ],
-        tip: "A claimed code does not mean a customer has visited. Only mark it as used when your business provides the promotion.",
+        tip: "Working on your own? You can do everything yourself, and inviting a team is optional.",
+        href: "/business/dashboard",
+        action: "Manage your team",
+    },
+    {
+        number: "06",
+        icon: FiCheckCircle,
+        title: "Welcome your first customers",
+        description:
+            "Customers show their phone at the till, your team scans it, and that's it.",
+        tasks: [
+            "Scan the voucher or loyalty card",
+            "Apply the promotion or add the stamp",
+            "If a voucher was already used or has ended, you'll see a warning",
+            "Watch your results build up in Analytics",
+        ],
+        tip: "Add your Google review link in your business settings, so customers who've just visited are asked for a review.",
         href: "/business/dashboard",
         action: "View your dashboard",
     },
@@ -156,18 +171,18 @@ export default function BusinessGettingStartedPage() {
                         </Badge>
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
-                            Let’s get your business ready to be discovered.
+                            Let&apos;s get you set up.
                         </h1>
 
                         <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                            Follow these steps to create your profile, prepare
-                            your first promotion, and welcome customers with
-                            confidence.
+                            Six steps from signing up to welcoming your first
+                            customers: your page, a promotion, a loyalty card,
+                            a QR poster and a team that knows how to scan.
                         </p>
 
                         <div className="mt-8 flex flex-wrap gap-3">
                             <Button
-                                render={<Link href="/onboarding" />}
+                                render={<Link href="/business/register" />}
                                 nativeButton={false}
                                 size="lg"
                             >
@@ -322,7 +337,7 @@ export default function BusinessGettingStartedPage() {
                         </h2>
 
                         <p className="mt-5 text-lg leading-8 text-white/70">
-                            Answer these four questions before submitting your
+                            Answer these four questions before creating your
                             promotion.
                         </p>
                     </div>
@@ -350,7 +365,7 @@ export default function BusinessGettingStartedPage() {
                 <div className="rounded-[2rem] bg-[#FFF4E8] px-6 py-14 text-center sm:px-12 sm:py-20">
                     <div className="mx-auto max-w-2xl">
                         <h2 className="text-3xl font-semibold tracking-tight text-[#17233B] sm:text-5xl">
-                            Ready for your first introduction?
+                            Ready to welcome your first regulars?
                         </h2>
 
                         <p className="mt-5 text-lg leading-8 text-[#17233B]/70">
@@ -360,7 +375,7 @@ export default function BusinessGettingStartedPage() {
 
                         <div className="mt-8 flex flex-wrap justify-center gap-3">
                             <Button
-                                render={<Link href="/onboarding" />}
+                                render={<Link href="/business/register" />}
                                 nativeButton={false}
                                 size="lg"
                             >
@@ -386,7 +401,7 @@ export default function BusinessGettingStartedPage() {
                                 href="/business/pricing"
                                 className="font-medium underline underline-offset-4"
                             >
-                                View our proposed pricing
+                                See pricing
                             </Link>
                         </p>
                     </div>

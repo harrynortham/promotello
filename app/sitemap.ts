@@ -34,8 +34,6 @@ const staticPaths = [
     "/business/about",
     "/business/help",
     "/business/contact",
-    "/business/product",
-    "/business/testimonials",
     "/legal/terms",
     "/legal/privacy",
     "/legal/cookies",

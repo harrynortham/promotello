@@ -1,368 +1,235 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-    FiArrowRight,
-    FiCheck,
-    FiCheckCircle,
-    FiGift,
-    FiMapPin,
-    FiUsers,
-} from "react-icons/fi";
+import { FiCheck } from "react-icons/fi";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Eyebrow, FeatureSection, FinalCta, PrimaryActions } from "@/components/business-marketing";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+    BrowserFrame,
+    DashboardScreen,
+    LoyaltyCardScreen,
+    NewOfferEmail,
+    OfferClaimScreen,
+    PosterVisual,
+    StaffScanScreen,
+    VoucherScreen,
+} from "@/components/product-visuals";
+import { qrSvg } from "@/lib/qr";
 
 export const metadata: Metadata = {
     title: { absolute: "How It Works | Promotello for Business" },
     description:
-        "See how to add your business, create a promotion, and welcome customers with Promotello. A simple guide from setup to redemption.",
+        "Sign up free, put up your QR poster, and turn first-time visitors into regulars with loyalty cards, offers and follower emails. Here's how it works, step by step.",
 };
 
-const steps = [
-    {
-        number: "01",
-        icon: FiMapPin,
-        title: "Tell customers about your business.",
-        description:
-            "Create your account and add your business profile. Include the details people need to plan a visit.",
-        details: [
-            "Your business name, logo, and description",
-            "Your location and opening hours",
-            "Your website and contact details",
-        ],
-        note: "Your business is reviewed before its promotions can appear publicly.",
-    },
-    {
-        number: "02",
-        icon: FiGift,
-        title: "Create an offer worth discovering.",
-        description:
-            "Choose something you would like customers to try. Add a photo, explain the offer, and set the terms.",
-        details: [
-            "Explain what the customer receives",
-            "Choose an expiry date and availability",
-            "Set an optional limit on total claims",
-        ],
-        note: "Submit your promotion for approval. It can appear publicly once both the business and promotion are approved.",
-    },
-    {
-        number: "03",
-        icon: FiUsers,
-        title: "Customers discover and claim it.",
-        description:
-            "Customers browse Promotello, find your promotion, and claim a redemption code.",
-        details: [
-            "They can read your offer and its terms",
-            "They can explore your business profile",
-            "They receive a code to show your team",
-        ],
-        note: "A claim means someone has chosen your offer. It does not mean they have visited or used it yet.",
-    },
-    {
-        number: "04",
-        icon: FiCheckCircle,
-        title: "Welcome them in and check their code.",
-        description:
-            "When the customer visits, they show their code. Your team checks the redemption and marks it as used when the deal is fulfilled.",
-        details: [
-            "Find the customer’s redemption code",
-            "Check the offer and redemption status",
-            "Mark it as used when you provide the deal",
-        ],
-        note: "Your dashboard helps you follow claims and used redemptions.",
-    },
-];
+function SetupScreen() {
+    const steps = ["Your business", "Location and hours", "Your first offer"];
 
-const questions = [
-    {
-        question: "Do I need to offer a big discount?",
-        answer:
-            "Choose an offer that works for your business. A bundle, an introductory experience, or an extra with a purchase may be a better fit than a large discount.",
-    },
-    {
-        question: "Can I control how many customers claim it?",
-        answer:
-            "Yes. Set an optional total claim limit when creating your promotion. Further claims stop once that limit is reached.",
-    },
-    {
-        question: "Can my staff help?",
-        answer:
-            "Yes. Invite team members so they can help check customer codes and mark redemptions as used.",
-    },
-    {
-        question: "What if a customer claims but never visits?",
-        answer:
-            "The claim stays unused. Only mark a redemption as used when your business has fulfilled the promotion.",
-    },
-];
-
-export default function BusinessHowItWorksPage() {
     return (
-        <main className="overflow-hidden bg-background text-foreground">
-            <section className="relative isolate border-b">
-                <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 top-0 -z-10 mx-auto h-96 max-w-3xl rounded-full bg-[#FF593F]/10 blur-3xl"
-                />
-
-                <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10 sm:py-24">
-                    <div className="mx-auto max-w-3xl text-center">
-                        <Badge variant="secondary">
-                            How Promotello works
-                        </Badge>
-
-                        <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
-                            Create an offer.
-                            <br />
-                            Give someone a reason to visit.
-                        </h1>
-
-                        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                            Add your business, publish a promotion, and welcome
-                            customers who discover you on Promotello. Here’s
-                            how it works.
-                        </p>
-
-                        <div className="mt-8 flex flex-wrap justify-center gap-3">
-                            <Button
-                                render={<Link href="/business/register" />}
-                                nativeButton={false}
-                                size="lg"
-                            >
-                                Get started
-                                <FiArrowRight aria-hidden="true" />
-                            </Button>
-
-                            <Button
-                                render={<Link href="/business/pricing" />}
-                                nativeButton={false}
-                                variant="outline"
-                                size="lg"
-                            >
-                                View pricing
-                            </Button>
+        <BrowserFrame url="promotello.com/onboarding" label="Setting up a business on Promotello" className="w-full max-w-md">
+            <div className="p-6">
+                <div className="flex gap-2" aria-hidden="true">
+                    {steps.map((step, index) => (
+                        <span key={step} className={`h-1.5 flex-1 rounded-full ${index < 2 ? "bg-[#FF593F]" : "bg-[#17233B]/10"}`} />
+                    ))}
+                </div>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#FF593F]">Step 2 of 3</p>
+                <p className="mt-1 text-lg font-semibold">Where can customers find you?</p>
+                <div className="mt-4 space-y-3 text-sm">
+                    {[
+                        ["Address", "214 Gloucester Road"],
+                        ["Town or city", "Bristol"],
+                        ["Opening hours", "Mon–Fri 7:30am–5pm, Sat 8am–4pm"],
+                    ].map(([label, value]) => (
+                        <div key={label}>
+                            <p className="text-xs text-[#17233B]/55">{label}</p>
+                            <p className="mt-1 rounded-lg border border-[#17233B]/10 px-3 py-2">{value}</p>
                         </div>
+                    ))}
+                </div>
+                <div className="mt-5 inline-flex rounded-full bg-[#FF593F] px-5 py-2 text-sm font-semibold text-white">Continue</div>
+            </div>
+        </BrowserFrame>
+    );
+}
+
+const customerSteps = [
+    "Scan your poster or find you on Promotello",
+    "Sign up with their email in seconds, with no app to download",
+    "Follow you, claim your offer or join your loyalty card",
+    "Show their phone at the till",
+    "Get emails about your new offers (and can unsubscribe any time)",
+];
+
+const staffSteps = [
+    "Accept an invite to your business's team",
+    "Scan the customer's QR code with their phone camera",
+    "Tap \"Add stamp\" or \"Mark as used\"",
+    "See a clear warning if a voucher was already used or has ended",
+    "That's it: no card reader, no training needed",
+];
+
+const faqs = [
+    {
+        question: "What phones does it work on?",
+        answer: "Any smartphone with a camera and a web browser. Customers and staff use Promotello in the browser, so there's nothing to install.",
+    },
+    {
+        question: "Do customers need an account?",
+        answer: "Yes, a free one. It's how their loyalty card and vouchers follow them between visits, and how we stop the same person claiming an offer twice.",
+    },
+    {
+        question: "How do my staff get access?",
+        answer: "Invite them from the Team page with their email address. Members can scan and redeem; admins can also create offers.",
+    },
+    {
+        question: "What if I don't want to give a discount?",
+        answer: "You don't have to. Lots of businesses offer an extra instead, like a free pastry with a coffee, or a loyalty reward after a number of visits.",
+    },
+    {
+        question: "Can I try it before paying?",
+        answer: "Yes. The Free plan has no time limit, and Pro and Growth both start with a 30-day free trial. Cancel any time before it ends and you won't be charged.",
+    },
+];
+
+export default async function HowItWorksPage() {
+    const posterQr = await qrSvg("https://www.promotello.com/business/demo");
+
+    return (
+        <main className="overflow-hidden bg-background text-[#17233B]">
+            <section className="relative isolate">
+                <div aria-hidden="true" className="pointer-events-none absolute -left-40 -top-20 -z-10 h-[30rem] w-[30rem] rounded-full bg-[#FF593F]/10 blur-3xl" />
+                <div className="mx-auto max-w-4xl px-6 py-16 text-center sm:px-10 sm:py-24">
+                    <Eyebrow>How it works</Eyebrow>
+                    <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-6xl">
+                        From sign-up to regulars, in six steps.
+                    </h1>
+                    <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#17233B]/70">
+                        Promotello works with the customers you already have. Set up once, put up a poster, and
+                        your staff take it from there with nothing but their phones.
+                    </p>
+                    <div className="mt-8 flex justify-center">
+                        <PrimaryActions />
                     </div>
                 </div>
             </section>
 
-            <section
-                className="mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20"
-                aria-label="Steps to using Promotello"
-            >
-                <ol className="space-y-6">
-                    {steps.map((step) => {
-                        const Icon = step.icon;
+            <FeatureSection
+                tinted
+                eyebrow="Step 1 · About 15 minutes"
+                title="Set up your business."
+                body="Add your name, address, opening hours and logo. Your page goes into the Promotello directory once our team has checked it."
+                points={["Free, with no card needed", "Add more locations and team members whenever you like"]}
+                visual={<SetupScreen />}
+            />
 
-                        return (
-                            <li key={step.number}>
-                                <Card className="overflow-hidden rounded-3xl shadow-none">
-                                    <CardContent className="p-6 sm:p-9">
-                                        <div className="grid gap-6 sm:grid-cols-[4rem_1fr] sm:gap-8">
-                                            <div className="flex items-center gap-4 sm:block">
-                                                <span className="flex size-14 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-lg font-semibold text-[#FF593F]">
-                                                    {step.number}
-                                                </span>
+            <FeatureSection
+                reverse
+                eyebrow="Step 2"
+                title="Create an offer or a loyalty card."
+                body="Pick a reward that suits your margins: a free pastry with a coffee, two for one on quiet afternoons, or a free coffee after nine stamps."
+                points={[
+                    "Set claim limits and an end date",
+                    "On Pro, offers go live straight away",
+                    "Share it to WhatsApp, Facebook and Instagram in a tap",
+                ]}
+                visual={
+                    <div className="flex items-start gap-4">
+                        <OfferClaimScreen />
+                        <div className="hidden translate-y-10 sm:block">
+                            <LoyaltyCardScreen stamps={3} />
+                        </div>
+                    </div>
+                }
+            />
 
-                                                <Icon
-                                                    aria-hidden="true"
-                                                    className="size-6 text-muted-foreground sm:mx-auto sm:mt-5"
-                                                />
-                                            </div>
+            <FeatureSection
+                tinted
+                eyebrow="Step 3"
+                title="Put up your QR poster."
+                body="Print a poster for your window, your till or your tables. Anyone who scans it lands on your page, ready to follow you, claim your offer or join your card."
+                points={["A4 and A5 sizes, ready to print", "Each poster counts its own scans"]}
+                visual={<PosterVisual qrSvg={posterQr} />}
+            />
 
-                                            <div>
-                                                <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                                    {step.title}
-                                                </h2>
+            <FeatureSection
+                reverse
+                eyebrow="Step 4"
+                title="Customers claim and collect on their phones."
+                body="Vouchers and loyalty cards live in the customer's Promotello account, so they're always with them and never forgotten at home."
+                points={["No app to download", "Each customer can claim an offer once"]}
+                visual={<VoucherScreen />}
+            />
 
-                                                <p className="mt-4 text-lg leading-8 text-muted-foreground">
-                                                    {step.description}
-                                                </p>
+            <FeatureSection
+                tinted
+                eyebrow="Step 5"
+                title="Staff scan at the till."
+                body="The customer shows their phone and your staff scan it with their own. One tap adds a stamp or redeems a voucher, and nobody can stamp their own card."
+                points={["Works on any staff phone", "Warns about used or expired vouchers"]}
+                visual={<StaffScanScreen />}
+            />
 
-                                                <ul className="mt-5 space-y-3">
-                                                    {step.details.map(
-                                                        (detail) => (
-                                                            <li
-                                                                key={detail}
-                                                                className="flex items-start gap-3"
-                                                            >
-                                                                <FiCheck
-                                                                    aria-hidden="true"
-                                                                    className="mt-1 size-4 shrink-0 text-[#FF593F]"
-                                                                />
+            <FeatureSection
+                reverse
+                eyebrow="Step 6"
+                title="Keep them coming back, and see it working."
+                body="Followers get an email about every new offer, and on Growth they get welcome, birthday and win-back rewards automatically. Your dashboard shows what it's all bringing in."
+                points={["Visits, followers and scans compared month to month", "A monthly report in your inbox on Growth"]}
+                visual={
+                    <div className="relative w-full max-w-lg">
+                        <DashboardScreen />
+                        <div className="absolute -bottom-12 -left-6 hidden w-80 sm:block">
+                            <NewOfferEmail />
+                        </div>
+                    </div>
+                }
+            />
 
-                                                                <span className="text-sm leading-6">
-                                                                    {detail}
-                                                                </span>
-                                                            </li>
-                                                        ),
-                                                    )}
-                                                </ul>
-
-                                                <p className="mt-6 rounded-2xl bg-muted/50 p-4 text-sm leading-6 text-muted-foreground">
-                                                    {step.note}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </li>
-                        );
-                    })}
-                </ol>
+            <section className="border-t border-[#17233B]/10">
+                <div className="mx-auto grid max-w-7xl gap-6 px-6 py-20 sm:px-10 md:grid-cols-2">
+                    {[
+                        { title: "What your customers do", steps: customerSteps },
+                        { title: "What your staff do", steps: staffSteps },
+                    ].map((column) => (
+                        <div key={column.title} className="rounded-3xl border border-[#17233B]/10 bg-white p-8">
+                            <h2 className="text-2xl font-semibold tracking-tight">{column.title}</h2>
+                            <ol className="mt-6 space-y-4">
+                                {column.steps.map((step, index) => (
+                                    <li key={step} className="flex gap-3">
+                                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#17233B] text-xs font-semibold text-white">
+                                            {index + 1}
+                                        </span>
+                                        <span className="pt-0.5 text-[#17233B]/80">{step}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+                    ))}
+                </div>
             </section>
 
-            <section className="bg-[#17233B] text-white">
-                <div className="mx-auto max-w-5xl px-6 py-16 sm:px-10 sm:py-20">
-                    <div className="max-w-2xl">
-                        <Badge
-                            variant="outline"
-                            className="border-white/25 text-white"
-                        >
-                            A simple example
-                        </Badge>
-
-                        <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
-                            Imagine you run a local café.
-                        </h2>
-
-                        <p className="mt-5 text-lg leading-8 text-white/70">
-                            You want to encourage a few more weekday visits.
-                            You create a coffee-and-cake promotion with clear
-                            terms and a limit of 30 claims.
-                        </p>
+            <section className="bg-[#FFF8F0]">
+                <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 sm:px-10 lg:grid-cols-[1fr_2fr]">
+                    <div>
+                        <Eyebrow>Questions</Eyebrow>
+                        <h2 className="mt-4 text-3xl font-semibold tracking-tight">The practical bits</h2>
                     </div>
-
-                    <div className="mt-9 grid gap-4 md:grid-cols-3">
-                        {[
-                            {
-                                title: "You publish",
-                                description:
-                                    "Your approved promotion appears on Promotello.",
-                            },
-                            {
-                                title: "A customer claims",
-                                description:
-                                    "They receive a code and plan their visit.",
-                            },
-                            {
-                                title: "Your team welcomes",
-                                description:
-                                    "They check the code and mark it as used when serving the deal.",
-                            },
-                        ].map((item) => (
-                            <div
-                                key={item.title}
-                                className="rounded-2xl border border-white/15 bg-white/5 p-6"
-                            >
-                                <h3 className="text-lg font-semibold">
-                                    {item.title}
-                                </h3>
-
-                                <p className="mt-3 text-sm leading-7 text-white/70">
-                                    {item.description}
-                                </p>
+                    <dl className="divide-y divide-[#17233B]/10">
+                        {faqs.map((faq) => (
+                            <div key={faq.question} className="py-5 first:pt-0">
+                                <dt className="flex gap-2 font-semibold">
+                                    <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
+                                    {faq.question}
+                                </dt>
+                                <dd className="mt-2 pl-6 leading-7 text-[#17233B]/70">{faq.answer}</dd>
                             </div>
                         ))}
-                    </div>
-
-                    <p className="mt-6 text-sm text-white/60">
-                        Illustrative example. Your offer, terms, and claim
-                        limit are yours to choose.
-                    </p>
+                    </dl>
                 </div>
             </section>
 
-            <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10">
-                <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
-                            Before you start
-                        </p>
-
-                        <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                            A few things you might be wondering.
-                        </h2>
-
-                        <p className="mt-5 leading-7 text-muted-foreground">
-                            Have a question about how this would work for
-                            your business? Talk it through with us.
-                        </p>
-
-                        <Button
-                            render={<Link href="/business/contact" />}
-                            nativeButton={false}
-                            variant="outline"
-                            className="mt-6"
-                        >
-                            Ask a question
-                        </Button>
-                    </div>
-
-                    <div className="space-y-4">
-                        {questions.map((item) => (
-                            <Card
-                                key={item.question}
-                                className="rounded-2xl shadow-none"
-                            >
-                                <CardHeader>
-                                    <CardTitle className="text-lg leading-7">
-                                        {item.question}
-                                    </CardTitle>
-                                </CardHeader>
-
-                                <CardContent>
-                                    <CardDescription className="text-base leading-7">
-                                        {item.answer}
-                                    </CardDescription>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <section className="mx-auto max-w-7xl px-6 pb-20 sm:px-10">
-                <div className="rounded-[2rem] bg-[#FFF4E8] px-6 py-14 text-center sm:px-12 sm:py-20">
-                    <div className="mx-auto max-w-2xl">
-                        <h2 className="text-3xl font-semibold tracking-tight text-[#17233B] sm:text-5xl">
-                            What could your first offer be?
-                        </h2>
-
-                        <p className="mt-5 text-lg leading-8 text-[#17233B]/70">
-                            Start with something your customers will enjoy
-                            and your business can deliver confidently.
-                        </p>
-
-                        <div className="mt-8 flex flex-wrap justify-center gap-3">
-                            <Button
-                                render={<Link href="/business/register" />}
-                                nativeButton={false}
-                                size="lg"
-                            >
-                                Create your business profile
-                                <FiArrowRight aria-hidden="true" />
-                            </Button>
-
-                            <Button
-                                render={<Link href="/business/pricing" />}
-                                nativeButton={false}
-                                variant="outline"
-                                size="lg"
-                            >
-                                Explore pricing
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <div className="pt-20">
+                <FinalCta title="Ready to put your first poster up?" />
+            </div>
         </main>
     );
 }

@@ -193,7 +193,7 @@ export default function NewOfferForm({
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
-                                ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                ? "Customers can see and claim it now, and your followers are getting an email about it. Share it from your promotions list to reach even more people."
                                 : "Once approved, it will become visible to customers. Pro businesses' promotions go live straight away."}
                         </p>
 

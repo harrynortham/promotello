@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 export const metadata = {
     title: { absolute: "About Promotello for Businesses" },
     description:
-        "Promotello helps local businesses attract new customers with simple, measurable promotions.",
+        "Promotello helps independent businesses turn first-time visitors into regulars with promotions, loyalty cards, QR posters and follower emails.",
 };
 
 const principles = [
@@ -39,19 +39,19 @@ const principles = [
 
 const features = [
     {
-        title: "Reach nearby customers",
+        title: "Bring people in",
         description:
-            "Put your business and promotions in front of people actively looking for something to do, eat, buy, or experience.",
+            "Promotions customers claim on their phone, QR posters for your window and till, and a page in the Promotello directory.",
     },
     {
-        title: "Control your promotions",
+        title: "Bring them back",
         description:
-            "Set availability, redemption limits, expiry dates, and terms that work for your business.",
+            "A digital loyalty card, emails to your followers about every new promotion, and on Growth, welcome, birthday and win-back rewards that send themselves.",
     },
     {
-        title: "Understand performance",
+        title: "See what it's worth",
         description:
-            "Track claims, redemptions, and promotion activity so you can make better decisions over time.",
+            "Views, claims, visits, scans and stamps every month, compared with the month before, so you know whether it's working.",
     },
 ];
 
@@ -69,15 +69,15 @@ export default function About() {
                         </Badge>
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-                            A more useful way to bring customers through your
-                            door.
+                            Helping independent businesses turn first-time
+                            visitors into regulars.
                         </h1>
 
                         <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-                            Promotello helps local businesses create,
-                            share, and manage promotions without losing sight
-                            of what matters: attracting the right customers
-                            and building lasting relationships.
+                            Big chains have apps and loyalty schemes. Promotello
+                            gives independent cafés, shops, salons, studios and
+                            more the same tools, without the cost or the
+                            complexity.
                         </p>
 
                         <div className="mt-8 flex flex-wrap gap-3">
@@ -120,25 +120,25 @@ export default function About() {
 
                     <div className="space-y-6 text-lg leading-8 text-[#17233B]/70">
                         <p>
-                            Local businesses often know their customers well,
-                            but reaching new people consistently can be
-                            difficult. Traditional advertising can be
-                            expensive, difficult to measure, and disconnected
-                            from the experience you provide.
+                            Most independent businesses don&apos;t struggle to
+                            make a good first impression. The hard part is
+                            getting that first-time visitor to come back, and
+                            knowing whether anything you try is working.
                         </p>
 
                         <p>
-                            Promotello gives you a focused place to publish
-                            promotions, reach customers who are already looking
-                            for local experiences, and understand what happens
-                            after someone claims an offer.
+                            Promotello works from day one with the customers you
+                            already have: a promotion to try, a loyalty card on
+                            their phone, a poster that turns passers-by into
+                            followers, and emails that keep you in mind. Your
+                            staff need nothing but their own phones.
                         </p>
 
                         <p>
-                            We are building the platform around clarity. That
-                            means straightforward promotion tools, useful
-                            reporting, and pricing that should make sense for
-                            the value you receive.
+                            We&apos;re building it around clarity: tools that
+                            are quick to set up, results you can see every
+                            month, and a free plan so you can try it before
+                            you pay.
                         </p>
                     </div>
                 </div>
@@ -213,12 +213,12 @@ export default function About() {
                     </p>
 
                     <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#17233B] sm:text-4xl">
-                        Start with one business and one promotion.
+                        Start free with one promotion.
                     </h2>
 
                     <p className="mx-auto mt-4 max-w-2xl leading-7 text-[#17233B]/70">
-                        Create your profile, publish a promotion, and see
-                        whether Promotello is the right fit for your business.
+                        Set up your page, create a promotion and print your
+                        QR poster. Upgrade when you can see it working.
                     </p>
 
                     <div className="mt-7 flex flex-wrap justify-center gap-3">
