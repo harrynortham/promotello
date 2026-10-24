@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
     FiArrowRight,
@@ -42,22 +41,6 @@ export default function NotFound() {
                 aria-hidden="true"
                 className="pointer-events-none absolute -bottom-32 -left-32 -z-10 size-96 rounded-full bg-[#17233B]/5 blur-3xl"
             />
-
-            <div className="mx-auto w-full max-w-7xl px-6 py-7 sm:px-10">
-                <Link
-                    href="/"
-                    aria-label="Promotello home"
-                    className="inline-flex"
-                >
-                    <Image
-                        src="/brand/promotello-horizontal-primary.svg"
-                        alt="Promotello"
-                        width={180}
-                        height={48}
-                        priority
-                    />
-                </Link>
-            </div>
 
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-10 sm:px-10 sm:py-16">
                 <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">

@@ -39,6 +39,8 @@ import { PageViewTracker } from "@/components/page-view-tracker";
 import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
+import { getLiveCity } from "@/lib/cities";
+import { BusinessesListing, businessesMetadata } from "../businesses-listing";
 
 type BusinessPageProps = {
     params: Promise<{
@@ -101,6 +103,13 @@ function LoadingState() {
 export async function generateMetadata({
     params,
 }: BusinessPageProps): Promise<Metadata> {
+    // /businesses/<city> is the directory for that city.
+    const city = await getLiveCity((await params).businessId);
+
+    if (city) {
+        return businessesMetadata(city);
+    }
+
     const { businessId } = await params;
 
     const { data: business } = await createPublicClient()
@@ -811,10 +820,27 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     );
 }
 
+// Either one business, or (when the id is a live city, e.g.
+// /businesses/bristol) the directory for that city.
+async function BusinessOrCityListing({ params, searchParams }: BusinessPageProps) {
+    const city = await getLiveCity((await params).businessId);
+
+    if (city) {
+        return (
+            <BusinessesListing
+                city={city}
+                searchParams={(searchParams ?? Promise.resolve({})) as Promise<Record<string, string>>}
+            />
+        );
+    }
+
+    return <BusinessContent params={params} searchParams={searchParams} />;
+}
+
 export default function BusinessPage({ params, searchParams }: BusinessPageProps) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <BusinessContent params={params} searchParams={searchParams} />
+            <BusinessOrCityListing params={params} searchParams={searchParams} />
         </Suspense>
     );
 }

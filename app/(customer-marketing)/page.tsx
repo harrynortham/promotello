@@ -22,6 +22,10 @@ import {
     getPublicBusinesses,
     offerCountsByCategory,
 } from "@/lib/listings";
+import { LocationSearch } from "@/components/location-search";
+import { NotHereYet } from "@/components/visitor-city";
+import { cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
+import { getVisitorContext } from "@/lib/visitor";
 
 const steps = [
     {
@@ -53,14 +57,17 @@ function HomeLoading() {
     );
 }
 
-async function HomeListings() {
+async function HomeListings({ city }: { city: City | null }) {
     await connection();
 
-    const [groups, offers, businesses] = await Promise.all([
+    const [groups, offers, businesses, place, photos] = await Promise.all([
         getCategories(),
-        getLiveOffers(),
-        getPublicBusinesses(),
+        getLiveOffers(city?.id),
+        getPublicBusinesses(city?.id),
+        placeName(city),
+        cityPhotosFor(city),
     ]);
+    const suffix = city ? `/${city.slug}` : "";
 
     const counts = offerCountsByCategory(offers, groups);
     const newest = offers.slice(0, 8);
@@ -82,7 +89,7 @@ async function HomeListings() {
                     {groups.map((group) => (
                         <CategoryTile
                             key={group.id}
-                            href={`/categories/${group.slug}`}
+                            href={`/categories/${group.slug}${suffix}`}
                             name={group.name}
                             tagline={group.description}
                             image={categoryImage(group)}
@@ -97,8 +104,8 @@ async function HomeListings() {
                     <SectionHeading
                         eyebrow="Fresh offers"
                         title="New on Promotello"
-                        description="The latest offers from businesses around Bristol."
-                        href="/offers"
+                        description={`The latest offers from businesses around ${place}.`}
+                        href={`/offers${suffix}`}
                         linkLabel="Browse all offers"
                     />
 
@@ -127,7 +134,7 @@ async function HomeListings() {
                     <div className="grid overflow-hidden rounded-3xl bg-[#17233B] text-white lg:grid-cols-[1.1fr_0.9fr]">
                         <div className="p-8 sm:p-12">
                             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8A73]">
-                                Explore Bristol
+                                Explore {place}
                             </p>
 
                             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -135,16 +142,17 @@ async function HomeListings() {
                             </h2>
 
                             <p className="mt-4 max-w-lg text-white/70">
-                                From Gloucester Road to the Harbourside, see what
-                                independent businesses are offering in each part
-                                of the city.
+                                See what independent businesses are offering in
+                                each part of {place}, from{" "}
+                                {areas.slice(0, 2).map((area) => area.name).join(" to ")}{" "}
+                                and beyond.
                             </p>
 
                             <div className="mt-8 flex flex-wrap gap-2">
                                 {areas.map((area) => (
                                     <Link
                                         key={area.name}
-                                        href={`/explore?area=${encodeURIComponent(area.name)}`}
+                                        href={`/explore${suffix}?area=${encodeURIComponent(area.name)}`}
                                         className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
                                     >
                                         <FiMapPin aria-hidden="true" className="size-3.5" />
@@ -156,8 +164,8 @@ async function HomeListings() {
 
                         <div className="relative min-h-64">
                             <Image
-                                src="/images/home/harbourside.jpg"
-                                alt="Bikes parked beside Bristol's harbour"
+                                src={photos.feature}
+                                alt={photos.featureAlt}
                                 fill
                                 sizes="(min-width: 1024px) 45vw, 100vw"
                                 className="object-cover"
@@ -172,7 +180,7 @@ async function HomeListings() {
                     <SectionHeading
                         eyebrow="Don't miss out"
                         title="Ending soon"
-                        href="/offers?sort=ending-soon"
+                        href={`/offers${suffix}?sort=ending-soon`}
                         linkLabel="See what's ending"
                     />
 
@@ -201,7 +209,7 @@ async function HomeListings() {
                     <SectionHeading
                         eyebrow="Local favourites"
                         title="Businesses worth knowing"
-                        href="/businesses"
+                        href={`/businesses${suffix}`}
                         linkLabel="All businesses"
                     />
 
@@ -216,10 +224,14 @@ async function HomeListings() {
     );
 }
 
-async function HeroStats() {
+async function HeroStats({ city }: { city: City | null }) {
     await connection();
 
-    const [offers, businesses] = await Promise.all([getLiveOffers(), getPublicBusinesses()]);
+    const [offers, businesses, place] = await Promise.all([
+        getLiveOffers(city?.id),
+        getPublicBusinesses(city?.id),
+        placeName(city),
+    ]);
 
     if (offers.length === 0) {
         return null;
@@ -232,18 +244,29 @@ async function HeroStats() {
             <span className="font-semibold text-white">
                 {businesses.length} independent businesses
             </span>{" "}
-            across Bristol
+            across {place}
         </p>
     );
 }
 
-export default function HomePage() {
+// The hero and listings, for the visitor's city: their choice, or where
+// they are. Elsewhere, every live city with a "not here yet" note.
+async function VisitorHome() {
+    const visitor = await getVisitorContext();
+    const [place, places, photos] = await Promise.all([
+        placeName(visitor.city),
+        getLiveCities(),
+        cityPhotosFor(visitor.city),
+    ]);
+
     return (
-        <main className="bg-[#FFF8F0] pb-20 text-[#17233B]">
+        <>
+            <NotHereYet visitor={visitor} />
+
             <section className="relative isolate overflow-hidden">
                 <Image
-                    src="/images/home/hero.jpg"
-                    alt="Clifton Suspension Bridge over the Avon Gorge"
+                    src={photos.hero}
+                    alt={photos.heroAlt}
                     fill
                     priority
                     sizes="100vw"
@@ -255,7 +278,7 @@ export default function HomePage() {
                 <div className="mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32">
                     <div className="max-w-2xl">
                         <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
-                            Bristol&apos;s local offers, in one place
+                            {place}&apos;s local offers, in one place
                         </p>
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-6xl">
@@ -268,24 +291,45 @@ export default function HomePage() {
                             make your neighbourhood.
                         </p>
 
-                        <div className="mt-8 max-w-xl">
+                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_15rem]">
                             <SearchForm
                                 action="/offers"
-                                placeholder="Try coffee, haircut or Gloucester Road"
+                                placeholder="Try coffee, haircut or pizza"
                                 size="lg"
                             />
+                            <LocationSearch places={places} basePath="/explore" current={visitor.city} size="lg" />
                         </div>
 
                         <Suspense fallback={<p className="mt-6 h-5" />}>
-                            <HeroStats />
+                            <HeroStats city={visitor.city} />
                         </Suspense>
                     </div>
                 </div>
             </section>
 
             <Suspense fallback={<HomeLoading />}>
-                <HomeListings />
+                <HomeListings city={visitor.city} />
             </Suspense>
+        </>
+    );
+}
+
+function HeroLoading() {
+    return (
+        <>
+            <div className="h-[34rem] bg-[#17233B]" />
+            <HomeLoading />
+        </>
+    );
+}
+
+export default function HomePage() {
+    return (
+        <main className="bg-[#FFF8F0] pb-20 text-[#17233B]">
+            <Suspense fallback={<HeroLoading />}>
+                <VisitorHome />
+            </Suspense>
+
 
             <section className="mx-auto max-w-7xl px-6 pt-24 sm:px-10">
                 <SectionHeading

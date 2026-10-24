@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
+import { getLiveCities } from "@/lib/cities";
 import { EVENTS_ENABLED } from "@/lib/features";
 
 import { absoluteUrl } from "@/lib/site";
@@ -39,6 +40,18 @@ const staticPaths = [
     "/legal/cookies",
 ];
 
+// Each live city also has its own version of the listing pages.
+const categorySlugs = ["food-drink", "things-to-do", "shopping", "health-beauty", "services", "travel-stays"];
+
+function cityPaths(slug: string) {
+    return [
+        `/offers/${slug}`,
+        `/businesses/${slug}`,
+        `/explore/${slug}`,
+        ...categorySlugs.map((category) => `/categories/${category}/${slug}`),
+    ];
+}
+
 // Cached for an hour once generated, but only ever generated at request
 // time, so building the app never needs a database connection.
 async function getPublicListings() {
@@ -64,9 +77,16 @@ async function getPublicListings() {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connection();
 
-    const { businesses, offers } = await getPublicListings();
+    const [{ businesses, offers }, cities] = await Promise.all([getPublicListings(), getLiveCities()]);
 
     return [
+        ...cities.flatMap((city) =>
+            cityPaths(city.slug).map((path) => ({
+                url: absoluteUrl(path),
+                changeFrequency: "weekly" as const,
+                priority: 0.6,
+            })),
+        ),
         ...staticPaths.map((path) => ({
             url: absoluteUrl(path),
             changeFrequency: "weekly" as const,

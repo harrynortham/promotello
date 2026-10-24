@@ -26,6 +26,8 @@ import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 
 import RedeemButton from "./redeem-button";
+import { getLiveCity } from "@/lib/cities";
+import { OffersListing, offersMetadata } from "../offers-listing";
 import { FollowButton } from "@/components/follow-button";
 import { ShareOfferButton } from "@/components/share-offer-button";
 import { offerShareCaption, shareLink } from "@/lib/share";
@@ -70,6 +72,13 @@ export async function generateMetadata({
     params,
 }: OfferPageProps): Promise<Metadata> {
     const { slug } = await params;
+
+    // /offers/<city> is the offers listing for that city.
+    const city = await getLiveCity(slug);
+
+    if (city) {
+        return offersMetadata(city);
+    }
 
     const { data: offer } = await createPublicClient()
         .from("offers")
@@ -523,10 +532,26 @@ async function OfferContent({ params }: OfferPageProps) {
     );
 }
 
-export default function OfferPage({ params }: OfferPageProps) {
+// Either one offer, or (when the slug is a live city, e.g. /offers/bristol)
+// the offers listing for that city. Offer slugs end in a random code, so
+// they never match a city.
+async function OfferOrCityListing({ params, searchParams }: OfferPageProps & { searchParams: Promise<Record<string, string>> }) {
+    const city = await getLiveCity((await params).slug);
+
+    if (city) {
+        return <OffersListing city={city} searchParams={searchParams} />;
+    }
+
+    return <OfferContent params={params} />;
+}
+
+export default function OfferPage({
+    params,
+    searchParams,
+}: OfferPageProps & { searchParams: Promise<Record<string, string>> }) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <OfferContent params={params} />
+            <OfferOrCityListing params={params} searchParams={searchParams} />
         </Suspense>
     );
 }

@@ -5,11 +5,13 @@ import { FormEvent, KeyboardEvent, useRef, useState } from "react";
 import { FiArrowLeft, FiArrowRight, FiCheck } from "react-icons/fi";
 
 import { CategorySelect } from "@/components/category-select";
+import { LocationFields } from "@/components/location-fields";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { CityOption } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/client";
 
 const steps = [
@@ -38,7 +40,7 @@ function Field({
     );
 }
 
-export function OnboardingForm({ firstName }: { firstName: string | null }) {
+export function OnboardingForm({ firstName, cities }: { firstName: string | null; cities: CityOption[] }) {
     const router = useRouter();
     const formRef = useRef<HTMLFormElement>(null);
     const [step, setStep] = useState(0);
@@ -193,19 +195,7 @@ export function OnboardingForm({ firstName }: { firstName: string | null }) {
                         <Input id="addressLine2" name="addressLine2" maxLength={200} autoComplete="address-line2" />
                     </Field>
 
-                    <Field id="region" label="Neighbourhood or area" hint="Shown on your profile and used to help nearby customers find you.">
-                        <Input id="region" name="region" maxLength={100} placeholder="e.g. Gloucester Road, Clifton, Southville" />
-                    </Field>
-
-                    <div className="grid gap-5 sm:grid-cols-2">
-                        <Field id="city" label="Town or city">
-                            <Input id="city" name="city" required minLength={2} maxLength={100} defaultValue="Bristol" autoComplete="address-level2" />
-                        </Field>
-
-                        <Field id="postalCode" label="Postcode">
-                            <Input id="postalCode" name="postalCode" maxLength={10} placeholder="e.g. BS7 8AA" autoComplete="postal-code" />
-                        </Field>
-                    </div>
+                    <LocationFields cities={cities} />
                 </div>
 
                 <div data-step="2" hidden={step !== 2} className="mt-6 space-y-6">

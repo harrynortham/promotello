@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCityOptions } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/server";
 import { OnboardingForm } from "./onboarding-form";
 
@@ -30,7 +31,11 @@ async function OnboardingContent() {
 
     const fullName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "";
 
-    return <OnboardingForm firstName={fullName.split(" ")[0] || null} />;
+    // Platform admins can set businesses up in cities that aren't live yet.
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    const cities = await getCityOptions({ includeNotLive: isAdmin === true });
+
+    return <OnboardingForm firstName={fullName.split(" ")[0] || null} cities={cities} />;
 }
 
 export default function OnboardingPage() {

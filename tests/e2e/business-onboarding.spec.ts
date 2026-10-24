@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import { STATE_PATH } from "../global-setup";
 
 const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,13 +47,19 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await expect(page.getByRole("heading", { name: "Where to find you" })).toBeVisible();
         await expect(page.locator("#city")).toHaveValue("Bristol");
         await page.locator("#addressLine1").fill("Cotham Hill");
-        await page.locator("#region").fill("Cotham");
+        await page.locator("#region").selectOption("Cotham");
+
+        // Only postcodes in the city are accepted.
+        await page.locator("#postalCode").fill("BA1 1AA");
+        await page.getByRole("button", { name: "Continue" }).click();
+        await expect(page.getByText("That postcode isn't in Bristol.")).toBeVisible();
+        await page.locator("#postalCode").fill("bs6 6df");
         await page.getByRole("button", { name: "Continue" }).click();
 
         // Step 3: review, then create. Reaching the review step must not
         // create the business by itself.
         await expect(page.getByText("E2E Onboarding Bakery")).toBeVisible();
-        await expect(page.getByText("Cotham Hill, Cotham, Bristol")).toBeVisible();
+        await expect(page.getByText("Cotham Hill, Cotham, Bristol, bs6 6df")).toBeVisible();
         await page.waitForTimeout(1500);
         await expect(page).toHaveURL(/\/onboarding$/);
         const { count: early } = await admin
@@ -72,4 +80,38 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await admin.from("businesses").delete().eq("created_by", userId);
         await admin.auth.admin.deleteUser(userId);
     }
+});
+
+test("locations must be in a live city, in a listed area, with a postcode from the city", async () => {
+    const { freeBusinessId, businessEmail, testPassword } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const owner = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    await owner.auth.signInWithPassword({ email: businessEmail, password: testPassword });
+
+    const location = (city: string, region: string, postal_code: string) => ({
+        business_id: freeBusinessId,
+        name: "E2E location",
+        address_line_1: "1 Test Street",
+        city,
+        region,
+        postal_code,
+        country_code: "GB",
+    });
+
+    const outsideCity = await owner.from("business_locations").insert(location("Bath", "Centre", "BA1 1AA"));
+    expect(outsideCity.error?.message).toContain("isn't available");
+
+    const madeUpArea = await owner.from("business_locations").insert(location("Bristol", "Clifton, Southville", "BS8 4AA"));
+    expect(madeUpArea.error?.message).toContain("Choose your area");
+
+    const wrongPostcode = await owner.from("business_locations").insert(location("Bristol", "Clifton", "BA1 1AA"));
+    expect(wrongPostcode.error?.message).toContain("isn't in Bristol");
+
+    const good = await owner.from("business_locations").insert(location("bristol", "clifton", "bs8 4aa")).select("city, region, postal_code").single();
+    expect(good.error).toBeNull();
+    expect(good.data).toEqual({ city: "Bristol", region: "Clifton", postal_code: "BS8 4AA" });
+
+    await owner.from("business_locations").delete().eq("business_id", freeBusinessId).eq("name", "E2E location");
 });

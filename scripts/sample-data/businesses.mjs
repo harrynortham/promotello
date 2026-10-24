@@ -3,22 +3,23 @@
 // listing never points at a real shop. Photos are Unsplash photo IDs
 // (unsplash.com/photos/<id>), all under the Unsplash License.
 
+// Full postcodes in each area's district: locations must have one.
 const areas = {
-    harbourside: { region: "Harbourside", postal_code: "BS1", latitude: 51.4497, longitude: -2.5986 },
-    stokesCroft: { region: "Stokes Croft", postal_code: "BS1", latitude: 51.4632, longitude: -2.5893 },
-    gloucesterRoad: { region: "Gloucester Road", postal_code: "BS7", latitude: 51.4761, longitude: -2.5902 },
-    bishopston: { region: "Bishopston", postal_code: "BS7", latitude: 51.4802, longitude: -2.5879 },
-    clifton: { region: "Clifton", postal_code: "BS8", latitude: 51.4561, longitude: -2.6199 },
-    cotham: { region: "Cotham", postal_code: "BS6", latitude: 51.4641, longitude: -2.6003 },
-    redland: { region: "Redland", postal_code: "BS6", latitude: 51.4719, longitude: -2.6052 },
-    montpelier: { region: "Montpelier", postal_code: "BS6", latitude: 51.4672, longitude: -2.5868 },
-    kingsdown: { region: "Kingsdown", postal_code: "BS2", latitude: 51.4623, longitude: -2.5939 },
-    oldMarket: { region: "Old Market", postal_code: "BS2", latitude: 51.4561, longitude: -2.5806 },
-    stPhilips: { region: "St Philips", postal_code: "BS2", latitude: 51.4519, longitude: -2.5731 },
-    easton: { region: "Easton", postal_code: "BS5", latitude: 51.4631, longitude: -2.5652 },
-    bedminster: { region: "Bedminster", postal_code: "BS3", latitude: 51.4402, longitude: -2.6003 },
-    southville: { region: "Southville", postal_code: "BS3", latitude: 51.4433, longitude: -2.6048 },
-    fishponds: { region: "Fishponds", postal_code: "BS16", latitude: 51.4803, longitude: -2.5302 },
+    harbourside: { region: "Harbourside", postal_code: "BS1 5DB", latitude: 51.4497, longitude: -2.5986 },
+    stokesCroft: { region: "Stokes Croft", postal_code: "BS1 3QY", latitude: 51.4632, longitude: -2.5893 },
+    gloucesterRoad: { region: "Gloucester Road", postal_code: "BS7 8AE", latitude: 51.4761, longitude: -2.5902 },
+    bishopston: { region: "Bishopston", postal_code: "BS7 8NE", latitude: 51.4802, longitude: -2.5879 },
+    clifton: { region: "Clifton", postal_code: "BS8 4AA", latitude: 51.4561, longitude: -2.6199 },
+    cotham: { region: "Cotham", postal_code: "BS6 6DF", latitude: 51.4641, longitude: -2.6003 },
+    redland: { region: "Redland", postal_code: "BS6 6RE", latitude: 51.4719, longitude: -2.6052 },
+    montpelier: { region: "Montpelier", postal_code: "BS6 5EA", latitude: 51.4672, longitude: -2.5868 },
+    kingsdown: { region: "Kingsdown", postal_code: "BS2 8EF", latitude: 51.4623, longitude: -2.5939 },
+    oldMarket: { region: "Old Market", postal_code: "BS2 0EZ", latitude: 51.4561, longitude: -2.5806 },
+    stPhilips: { region: "St Philips", postal_code: "BS2 0PZ", latitude: 51.4519, longitude: -2.5731 },
+    easton: { region: "Easton", postal_code: "BS5 6DE", latitude: 51.4631, longitude: -2.5652 },
+    bedminster: { region: "Bedminster", postal_code: "BS3 4LS", latitude: 51.4402, longitude: -2.6003 },
+    southville: { region: "Southville", postal_code: "BS3 1AU", latitude: 51.4433, longitude: -2.6048 },
+    fishponds: { region: "Fishponds", postal_code: "BS16 3RN", latitude: 51.4803, longitude: -2.5302 },
 };
 
 // [opens, closes] per day, Sunday first; null means closed.

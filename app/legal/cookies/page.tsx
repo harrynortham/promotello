@@ -13,12 +13,12 @@ export const metadata: Metadata = {
     robots: { index: false, follow: true },
 };
 
-// Keep this in step with what the site actually sets. Audited 23 October
-// 2026: Supabase auth cookies, the consent cookie, and Google Analytics
-// after consent; the Google map loads on request.
+// Keep this in step with what the site actually sets. Audited 24 October
+// 2026: Supabase auth cookies, the consent cookie, the city choice, and
+// Google Analytics after consent; the Google map loads on request.
 
 const summary = [
-    "We use essential cookies to keep you signed in and to remember your cookie choice.",
+    "We use essential cookies to keep you signed in, to remember your cookie choice, and to remember the city you pick.",
     "Google Analytics cookies help us improve Promotello. They're only set if you accept them, and you can change your mind at any time.",
     "We don't use advertising cookies.",
     "Google Maps can set its own cookies, so a business's map only loads when you choose to show it.",
@@ -40,6 +40,11 @@ const essentialCookies = [
     {
         name: "promotello_consent",
         purpose: "Remembers whether you accepted or rejected analytics cookies.",
+        duration: "1 year",
+    },
+    {
+        name: "promotello_city",
+        purpose: "Remembers the city you chose in the location search, so you see its offers. Only set when you choose one.",
         duration: "1 year",
     },
 ];
@@ -197,7 +202,7 @@ export default function CookiesPage() {
         <LegalDocument
             title="Cookie policy"
             description="Information about cookies, similar technologies, and your choices when using Promotello."
-            updatedAt="23 October 2026"
+            updatedAt="24 October 2026"
             version="Draft for review"
             draft
             summary={summary}
