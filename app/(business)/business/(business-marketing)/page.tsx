@@ -36,7 +36,6 @@ import {
     OfferClaimScreen,
     PosterScansCard,
     PosterVisual,
-    PhotoCard,
     SquarePostPreview,
     StaffScanScreen,
     VoucherScreen,
@@ -136,14 +135,8 @@ export default async function BusinessPage() {
                         </p>
                     </div>
 
-                    <div className="relative mx-auto w-full max-w-xl pb-10 sm:pt-24 lg:pb-0">
-                        <PhotoCard
-                            src="/images/marketing/harbour-grind-cafe.jpg"
-                            caption="Harbour Grind"
-                            detail="Bristol"
-                            className="absolute -right-6 -top-8 hidden aspect-[4/3] w-3/5 sm:block"
-                        />
-                        <DashboardScreen className="relative z-10 sm:w-[88%]" />
+                    <div className="relative mx-auto w-full max-w-xl pb-10 lg:pb-0">
+                        <DashboardScreen />
                         <div className="absolute -bottom-6 -right-2 z-20 hidden scale-[0.82] sm:block lg:-right-10">
                             <LoyaltyCardScreen />
                         </div>

@@ -443,18 +443,6 @@ export function OfferClaimScreen() {
 // Photos and sharing
 // ---------------------------------------------------------------------------
 
-export function PhotoCard({ src, caption, detail, className = "", sizes = "(min-width: 1024px) 40vw, 90vw" }: { src: string; caption: string; detail?: string; className?: string; sizes?: string }) {
-    return (
-        <figure className={`relative overflow-hidden rounded-3xl shadow-2xl shadow-[#17233B]/15 ${className}`}>
-            <Image src={src} alt="" fill sizes={sizes} className="object-cover" />
-            <figcaption className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#17233B] shadow">
-                {caption}
-                {detail && <span className="font-normal text-[#17233B]/60"> · {detail}</span>}
-            </figcaption>
-        </figure>
-    );
-}
-
 // A WhatsApp chat with the promotion's link preview: photo, deal, business.
 export function WhatsAppShareScreen() {
     return (
