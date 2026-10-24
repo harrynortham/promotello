@@ -8,6 +8,7 @@ import { FiArrowRight } from "react-icons/fi";
 import { SearchForm } from "@/components/listing-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isInCategory } from "@/lib/categories";
+import { placeName } from "@/lib/cities";
 import {
     categoryImage,
     getCategories,
@@ -18,7 +19,7 @@ import {
 export const metadata: Metadata = {
     title: "Categories",
     description:
-        "Browse Bristol offers by category: food and drink, things to do, shopping, health and beauty, services, and places to stay.",
+        "Browse local offers by category: food and drink, things to do, shopping, health and beauty, services, and places to stay.",
     alternates: { canonical: "/categories" },
 };
 
@@ -113,7 +114,9 @@ async function CategoryGrid() {
     );
 }
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+    const place = await placeName(null);
+
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="mx-auto max-w-7xl px-6 py-14 text-center sm:px-10 sm:py-20">
@@ -127,7 +130,7 @@ export default function CategoriesPage() {
 
                 <p className="mx-auto mt-5 max-w-2xl text-lg text-[#17233B]/65">
                     From a morning coffee to a night away, explore offers from
-                    Bristol&apos;s independent businesses by the things you enjoy.
+                    {place}&apos;s independent businesses by the things you enjoy.
                 </p>
 
                 <div className="mx-auto mt-8 max-w-xl text-left">

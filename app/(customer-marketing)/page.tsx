@@ -22,6 +22,8 @@ import {
     getPublicBusinesses,
     offerCountsByCategory,
 } from "@/lib/listings";
+import { LocationSearch } from "@/components/location-search";
+import { getLiveCities, placeName } from "@/lib/cities";
 
 const steps = [
     {
@@ -97,7 +99,7 @@ async function HomeListings() {
                     <SectionHeading
                         eyebrow="Fresh offers"
                         title="New on Promotello"
-                        description="The latest offers from businesses around Bristol."
+                        description={`The latest offers from businesses around ${await placeName(null)}.`}
                         href="/offers"
                         linkLabel="Browse all offers"
                     />
@@ -127,7 +129,7 @@ async function HomeListings() {
                     <div className="grid overflow-hidden rounded-3xl bg-[#17233B] text-white lg:grid-cols-[1.1fr_0.9fr]">
                         <div className="p-8 sm:p-12">
                             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8A73]">
-                                Explore Bristol
+                                Explore {await placeName(null)}
                             </p>
 
                             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -232,12 +234,14 @@ async function HeroStats() {
             <span className="font-semibold text-white">
                 {businesses.length} independent businesses
             </span>{" "}
-            across Bristol
+            across {await placeName(null)}
         </p>
     );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+    const [place, places] = await Promise.all([placeName(null), getLiveCities()]);
+
     return (
         <main className="bg-[#FFF8F0] pb-20 text-[#17233B]">
             <section className="relative isolate overflow-hidden">
@@ -255,7 +259,7 @@ export default function HomePage() {
                 <div className="mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32">
                     <div className="max-w-2xl">
                         <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
-                            Bristol&apos;s local offers, in one place
+                            {place}&apos;s local offers, in one place
                         </p>
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-6xl">
@@ -268,12 +272,13 @@ export default function HomePage() {
                             make your neighbourhood.
                         </p>
 
-                        <div className="mt-8 max-w-xl">
+                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_15rem]">
                             <SearchForm
                                 action="/offers"
-                                placeholder="Try coffee, haircut or Gloucester Road"
+                                placeholder="Try coffee, haircut or pizza"
                                 size="lg"
                             />
+                            <LocationSearch places={places} basePath="/explore" size="lg" />
                         </div>
 
                         <Suspense fallback={<p className="mt-6 h-5" />}>

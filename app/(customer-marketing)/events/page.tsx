@@ -10,8 +10,8 @@ import { EVENTS_ENABLED } from "@/lib/features";
 import { createPublicClient } from "@/utils/supabase/public";
 
 export const metadata: Metadata = {
-    title: "Events in Bristol",
-    description: "Tastings, live music, workshops and more at independent businesses across Bristol.",
+    title: "Local events",
+    description: "Tastings, live music, workshops and more at independent local businesses.",
     alternates: { canonical: "/events" },
 };
 
@@ -61,7 +61,7 @@ export default function EventsPage() {
             <section className="border-b border-[#17233B]/10 bg-white">
                 <div className="mx-auto max-w-7xl px-6 py-12 sm:px-10 sm:py-16">
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">What&apos;s on</p>
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Events across Bristol</h1>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Local events</h1>
                     <p className="mt-3 max-w-2xl text-lg text-[#17233B]/65">
                         Tastings, live music, workshops and late openings at independent businesses.
                     </p>

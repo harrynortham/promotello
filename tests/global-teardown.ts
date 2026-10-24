@@ -46,6 +46,9 @@ async function globalTeardown() {
             if (error) console.warn(`[teardown] deleteUser(${id}) failed: ${error.message}`);
         }
 
+        // cities.spec.ts joins the business waitlist.
+        await admin.from("business_waitlist").delete().like("email", "e2e-waitlist-%@test.internal");
+
         // signup.spec.ts registers a real account each run; remove them too.
         const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
         for (const user of users?.users ?? []) {
