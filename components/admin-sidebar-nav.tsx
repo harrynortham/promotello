@@ -9,6 +9,7 @@ import {
     FiFileText,
     FiGift,
     FiMapPin,
+    FiSend,
     FiTag,
 } from "react-icons/fi";
 
@@ -19,6 +20,7 @@ const links = [
     { label: "Businesses", href: "/admin/businesses", icon: FiBriefcase, count: "businesses" },
     { label: "Promotions", href: "/admin/offers", icon: FiGift, count: "offers" },
     { label: "Categories", href: "/admin/categories", icon: FiTag },
+    { label: "Previews", href: "/admin/previews", icon: FiSend },
     { label: "Cities and areas", href: "/admin/cities", icon: FiMapPin },
     { label: "Billing alerts", href: "/admin/billing", icon: FiAlertTriangle, count: "billing" },
     { label: "Audit log", href: "/admin/audit-logs", icon: FiFileText },

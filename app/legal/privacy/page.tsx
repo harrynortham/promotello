@@ -82,7 +82,20 @@ const sections: LegalSection[] = [
                     hours, offers and team members, and your role in the team.
                     Card payments are taken by Stripe; we receive your
                     subscription status and billing contact details but never
-                    your full card number.
+                    your full card number. In your first weeks we send a few
+                    emails to help you finish setting up, and a reminder before
+                    a free trial ends; you can turn the setup tips off in your
+                    notification settings.
+                </p>
+                <p>
+                    <strong>Business previews.</strong> We sometimes set up a
+                    private preview of a local business before it joins, using
+                    details the business publishes itself (its name, address
+                    and website) and, if we know it, the owner&apos;s first
+                    name. Previews aren&apos;t shown to customers. If the
+                    business doesn&apos;t claim it, we delete it, and the link
+                    stops working after 90 days. Ask us and we&apos;ll delete it
+                    straight away.
                 </p>
                 <p>
                     <strong>Business waitlist.</strong> If your business is

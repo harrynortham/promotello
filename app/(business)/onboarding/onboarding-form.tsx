@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { CityOption } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/client";
+import { welcomeNewBusiness } from "./actions";
 
 const steps = [
     { title: "Your business", description: "The basics customers see first." },
@@ -133,6 +134,8 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
             return;
         }
 
+        // The welcome email; a failure here mustn't block the dashboard.
+        await welcomeNewBusiness(data).catch(() => undefined);
         router.push(`/business/${data}?welcome=1`);
     }
 
