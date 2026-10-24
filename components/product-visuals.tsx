@@ -60,17 +60,29 @@ export function BrowserFrame({ children, url, label, className = "" }: { childre
 // Customer screens
 // ---------------------------------------------------------------------------
 
-export function LoyaltyCardScreen({ stamps = 7 }: { stamps?: number }) {
+export function LoyaltyCardScreen({
+    stamps = 7,
+    businessName = business,
+    required = 10,
+    reward = "a free coffee",
+    headline = "Buy 9 coffees, get the 10th free",
+}: {
+    stamps?: number;
+    businessName?: string;
+    required?: number;
+    reward?: string;
+    headline?: string;
+}) {
     return (
         <PhoneFrame label="A customer's loyalty card on their phone">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <p className="text-xs text-[#17233B]/55">{business}</p>
-                <p className="mt-0.5 font-semibold leading-snug">Buy 9 coffees, get the 10th free</p>
+                <p className="text-xs text-[#17233B]/55">{businessName}</p>
+                <p className="mt-0.5 font-semibold leading-snug">{headline}</p>
                 <div className="mt-3">
-                    <LoyaltyStamps stamps={stamps} required={10} size="sm" />
+                    <LoyaltyStamps stamps={stamps} required={required} size="sm" />
                 </div>
-                <p className="mt-3 text-xs text-[#17233B]/55">{10 - stamps} more to a free coffee</p>
+                <p className="mt-3 text-xs text-[#17233B]/55">{required - stamps} more to {reward}</p>
             </div>
             <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
                 <VoucherQr code="HGCARD7Q2K" className="mx-auto w-28" />
@@ -127,20 +139,30 @@ export function StaffScanScreen() {
 // QR poster
 // ---------------------------------------------------------------------------
 
-export function PosterVisual({ qrSvg, className = "" }: { qrSvg: string; className?: string }) {
+export function PosterVisual({
+    qrSvg,
+    className = "",
+    businessName = business,
+    headline = "Get a free pastry with your coffee",
+}: {
+    qrSvg: string;
+    className?: string;
+    businessName?: string;
+    headline?: string;
+}) {
     return (
         <figure
             aria-label="A printable QR poster for a shop window"
             className={`w-60 rotate-[-2deg] rounded-2xl border-[6px] border-[#17233B] bg-white p-6 text-center text-[#17233B] shadow-2xl shadow-[#17233B]/20 ${className}`}
         >
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF593F]">Scan me</p>
-            <p className="mt-2 text-xl font-semibold leading-tight">Get a free pastry with your coffee</p>
+            <p className="mt-2 text-xl font-semibold leading-tight">{headline}</p>
             <div
                 aria-hidden="true"
                 className="mx-auto mt-4 w-36 [&_svg]:h-auto [&_svg]:w-full"
                 dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
-            <p className="mt-4 text-xs text-[#17233B]/60">{business} · on Promotello</p>
+            <p className="mt-4 text-xs text-[#17233B]/60">{businessName} · on Promotello</p>
         </figure>
     );
 }

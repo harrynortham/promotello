@@ -34,7 +34,8 @@ async function NotificationsContent() {
                 followed_business_emails_enabled,
                 local_deals_enabled,
                 product_updates_enabled,
-                feedback_requests_enabled
+                feedback_requests_enabled,
+                business_tips_enabled
             `,
         )
         .eq("user_id", user.id)
@@ -80,6 +81,7 @@ async function NotificationsContent() {
                     local_deals_enabled: false,
                     product_updates_enabled: false,
                     feedback_requests_enabled: false,
+                    business_tips_enabled: true,
                 }
             }
         />

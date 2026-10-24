@@ -5,6 +5,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
     FiBell,
+    FiBriefcase,
     FiGift,
     FiHeart,
     FiMail,
@@ -31,6 +32,7 @@ type NotificationSettings = {
     local_deals_enabled: boolean;
     product_updates_enabled: boolean;
     feedback_requests_enabled: boolean;
+    business_tips_enabled: boolean;
 };
 
 type NotificationSettingsFormProps = {
@@ -51,6 +53,13 @@ const preferences = [
         description:
             "An email when a business you follow posts a new offer. You can also turn this off for one business below.",
         icon: FiHeart,
+    },
+    {
+        key: "business_tips_enabled",
+        title: "Tips for your business",
+        description:
+            "If you run a business on Promotello: a few emails to help you finish setting up. Trial and billing notices always arrive.",
+        icon: FiBriefcase,
     },
     {
         key: "local_deals_enabled",
@@ -88,7 +97,8 @@ function settingsMatch(
         first.followed_business_emails_enabled === second.followed_business_emails_enabled &&
         first.local_deals_enabled === second.local_deals_enabled &&
         first.product_updates_enabled === second.product_updates_enabled &&
-        first.feedback_requests_enabled === second.feedback_requests_enabled
+        first.feedback_requests_enabled === second.feedback_requests_enabled &&
+        first.business_tips_enabled === second.business_tips_enabled
     );
 }
 
