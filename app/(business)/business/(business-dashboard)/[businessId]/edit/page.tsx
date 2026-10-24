@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
+import { getCityOptions } from "@/lib/locations";
 import EditBusinessForm from "./edit-business-form";
 
 type PageProps = {
@@ -81,7 +82,10 @@ async function EditBusinessContent({ params }: PageProps) {
         notFound();
     }
 
-    return <EditBusinessForm businessId={businessId} />;
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    const cities = await getCityOptions({ includeNotLive: isAdmin === true });
+
+    return <EditBusinessForm businessId={businessId} cities={cities} />;
 }
 
 export default function EditBusinessPage({ params }: PageProps) {

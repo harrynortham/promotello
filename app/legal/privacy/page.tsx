@@ -85,6 +85,12 @@ const sections: LegalSection[] = [
                     your full card number.
                 </p>
                 <p>
+                    <strong>Business waitlist.</strong> If your business is
+                    somewhere we haven&apos;t launched yet and you join our
+                    waitlist: your name, email address, business name and
+                    town. We only use it to tell you when we launch near you.
+                </p>
+                <p>
                     <strong>Messages to us</strong> through the contact form,
                     including your name, email address and what you tell us.
                 </p>

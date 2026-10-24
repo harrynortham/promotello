@@ -19,10 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { LocationFields } from "@/components/location-fields";
+import type { CityOption } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/client";
 
 type EditBusinessFormProps = {
     businessId: string;
+    cities: CityOption[];
 };
 
 type Business = {
@@ -80,6 +83,7 @@ function createDefaultHours(): DayHours[] {
 
 export default function EditBusinessForm({
     businessId,
+    cities,
 }: EditBusinessFormProps) {
     const router = useRouter();
 
@@ -260,9 +264,7 @@ export default function EditBusinessForm({
                     city: formData.get("city"),
                     region: formData.get("region") || null,
                     postal_code: formData.get("postalCode") || null,
-                    country_code: String(
-                        formData.get("countryCode") || "GB",
-                    ).toUpperCase(),
+                    country_code: "GB",
                 })
                 .eq("id", location.id)
                 .eq("business_id", businessId);
@@ -530,54 +532,10 @@ export default function EditBusinessForm({
                                         />
                                     </div>
 
-                                    <div className="grid gap-5 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="city">City</Label>
-
-                                            <Input
-                                                id="city"
-                                                name="city"
-                                                required
-                                                defaultValue={location.city}
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="region">Neighbourhood or area</Label>
-
-                                            <Input
-                                                id="region"
-                                                name="region"
-                                                defaultValue={location.region ?? ""}
-                                                placeholder="e.g. Gloucester Road"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid gap-5 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="postalCode">Postcode</Label>
-
-                                            <Input
-                                                id="postalCode"
-                                                name="postalCode"
-                                                defaultValue={location.postal_code ?? ""}
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="countryCode">
-                                                Country code
-                                            </Label>
-
-                                            <Input
-                                                id="countryCode"
-                                                name="countryCode"
-                                                maxLength={2}
-                                                defaultValue={location.country_code}
-                                            />
-                                        </div>
-                                    </div>
+                                    <LocationFields
+                                        cities={cities}
+                                        defaults={{ city: location.city, area: location.region, postalCode: location.postal_code }}
+                                    />
                                 </section>
                             )}
 
