@@ -2,22 +2,34 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { UseFormRegisterReturn } from "react-hook-form";
 
+import { FieldError, invalidProps } from "@/components/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { normalisePostcode, type CityOption } from "@/lib/locations";
 
 const selectClass = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
 
+type LocationField = "city" | "region" | "postalCode";
+
 // City, area and postcode for a business location. Submits `city` and
 // `region` as names (the database matches them to its lists) and
 // `postalCode`. The database enforces the same rules.
+//
+// In a react-hook-form form, pass `fields` (register("city") and so on) and
+// `errors`; validate with locationShape and postcodeInCity from
+// lib/validation. Without them it's a plain form with browser validation.
 export function LocationFields({
     cities,
     defaults,
+    fields,
+    errors,
 }: {
     cities: CityOption[];
     defaults?: { city?: string | null; area?: string | null; postalCode?: string | null };
+    fields?: Record<LocationField, UseFormRegisterReturn>;
+    errors?: Partial<Record<LocationField, { message?: string }>>;
 }) {
     const [cityName, setCityName] = useState(
         cities.find((city) => city.name === defaults?.city)?.name ?? cities[0]?.name ?? "",
@@ -26,6 +38,9 @@ export function LocationFields({
     const [postcodeError, setPostcodeError] = useState("");
 
     function checkPostcode(input: HTMLInputElement) {
+        // react-hook-form forms check it with Zod instead.
+        if (fields) return;
+
         const postcode = normalisePostcode(input.value);
         const message = !input.value.trim()
             ? ""
@@ -51,7 +66,7 @@ export function LocationFields({
                     {cities.length === 1 ? (
                         <>
                             <Input id="city" value={cities[0].name} readOnly className="bg-muted/40" />
-                            <input type="hidden" name="city" value={cities[0].name} />
+                            <input type="hidden" value={cities[0].name} {...(fields?.city ?? { name: "city" })} />
                         </>
                     ) : (
                         <select
@@ -59,7 +74,11 @@ export function LocationFields({
                             name="city"
                             required
                             value={cityName}
-                            onChange={(event) => setCityName(event.target.value)}
+                            {...fields?.city}
+                            onChange={(event) => {
+                                void fields?.city.onChange(event);
+                                setCityName(event.target.value);
+                            }}
                             className={selectClass}
                         >
                             {cities.map((option) => (
@@ -80,6 +99,8 @@ export function LocationFields({
                         key={cityName}
                         defaultValue={city?.areas.some((area) => area.name === defaults?.area) ? defaults?.area ?? "" : ""}
                         className={selectClass}
+                        {...fields?.region}
+                        {...invalidProps("region-error", errors?.region)}
                     >
                         <option value="" disabled>
                             Choose your area
@@ -90,6 +111,7 @@ export function LocationFields({
                             </option>
                         ))}
                     </select>
+                    <FieldError id="region-error" message={errors?.region?.message} />
                 </div>
             </div>
 
@@ -106,8 +128,11 @@ export function LocationFields({
                     className="max-w-48"
                     onChange={(event) => checkPostcode(event.currentTarget)}
                     onBlur={(event) => checkPostcode(event.currentTarget)}
+                    {...fields?.postalCode}
+                    {...invalidProps("postalCode-error", errors?.postalCode)}
                 />
                 {postcodeError && <p className="text-xs text-red-700">{postcodeError}</p>}
+                <FieldError id="postalCode-error" message={errors?.postalCode?.message} />
             </div>
 
             <p className="text-xs text-[#17233B]/55">

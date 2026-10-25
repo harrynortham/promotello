@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
     FiArrowRight,
     FiCheck,
@@ -21,6 +24,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError, invalidProps } from "@/components/field-error";
+import { email, password, passwordsMatch, passwordsMatchError, requiredText } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
 const benefits = [
@@ -29,89 +34,64 @@ const benefits = [
     "Manage customer codes with your team",
 ];
 
+const schema = z
+    .object({
+        name: requiredText("Your name", { max: 100 }),
+        email,
+        password,
+        confirmPassword: z.string(),
+    })
+    .refine(passwordsMatch, passwordsMatchError);
+
+type Values = z.infer<typeof schema>;
+
 export default function BusinessRegisterPage() {
     const router = useRouter();
-    const submittingRef = useRef(false);
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [confirmationEmail, setConfirmationEmail] = useState("");
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting: isSending },
+    } = useForm<Values>({
+        resolver: zodResolver(schema),
+        defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    });
 
-        if (submittingRef.current) return;
+    const isSubmitting = isSending || isRedirecting;
 
-        const form = event.currentTarget;
-        const values = new FormData(form);
-
-        const name = String(values.get("name") ?? "").trim();
-        const email = String(values.get("email") ?? "").trim();
-        const password = String(values.get("password") ?? "");
-        const confirmation = String(
-            values.get("confirmPassword") ?? "",
-        );
-
+    async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        if (!name) {
-            setErrorMessage("Please enter your name.");
+        const { data, error } = await createClient().auth.signUp({
+            email: values.email,
+            password: values.password,
+            options: {
+                data: { full_name: values.name },
+                emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+            },
+        });
+
+        if (error) {
+            setErrorMessage(error.message || "We couldn’t create your account. Please try again.");
             return;
         }
 
-        if (password.length < 8) {
-            setErrorMessage(
-                "Choose a password with at least 8 characters.",
-            );
+        reset();
+
+        if (data.session) {
+            setIsRedirecting(true);
+            router.replace("/onboarding");
+            router.refresh();
             return;
         }
 
-        if (password !== confirmation) {
-            setErrorMessage("Your passwords do not match.");
-            return;
-        }
-
-        submittingRef.current = true;
-        setIsSubmitting(true);
-
-        try {
-            const supabase = createClient();
-
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        full_name: name,
-                    },
-                    emailRedirectTo:
-                        `${window.location.origin}/auth/callback` +
-                        "?next=/onboarding",
-                },
-            });
-
-            if (error) throw error;
-
-            form.reset();
-
-            if (data.session) {
-                router.replace("/onboarding");
-                router.refresh();
-                return;
-            }
-
-            setConfirmationEmail(email);
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "We couldn’t create your account. Please try again.",
-            );
-        } finally {
-            submittingRef.current = false;
-            setIsSubmitting(false);
-        }
+        setConfirmationEmail(values.email);
     }
 
     return (
@@ -248,7 +228,8 @@ export default function BusinessRegisterPage() {
                                 </div>
 
                                 <form
-                                    onSubmit={handleSubmit}
+                                    onSubmit={handleSubmit(onSubmit)}
+                                    noValidate
                                     className="mt-8 space-y-5"
                                     aria-busy={isSubmitting}
                                 >
@@ -266,13 +247,15 @@ export default function BusinessRegisterPage() {
 
                                         <Input
                                             id="register-name"
-                                            name="name"
                                             autoComplete="name"
                                             placeholder="Your full name"
-                                            required
                                             maxLength={100}
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
+                                            {...register("name")}
+                                            {...invalidProps("register-name-error", errors.name)}
                                         />
+
+                                        <FieldError id="register-name-error" message={errors.name?.message} />
                                     </div>
 
                                     <div className="space-y-2">
@@ -289,14 +272,16 @@ export default function BusinessRegisterPage() {
 
                                         <Input
                                             id="register-email"
-                                            name="email"
                                             type="email"
                                             autoComplete="email"
                                             placeholder="you@yourbusiness.com"
-                                            required
                                             maxLength={254}
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
+                                            {...register("email")}
+                                            {...invalidProps("register-email-error", errors.email)}
                                         />
+
+                                        <FieldError id="register-email-error" message={errors.email?.message} />
 
                                         <p className="text-xs leading-6 text-muted-foreground">
                                             Use an address you can access.
@@ -319,7 +304,6 @@ export default function BusinessRegisterPage() {
                                         <div className="relative">
                                             <Input
                                                 id="register-password"
-                                                name="password"
                                                 type={
                                                     showPassword
                                                         ? "text"
@@ -327,10 +311,10 @@ export default function BusinessRegisterPage() {
                                                 }
                                                 autoComplete="new-password"
                                                 placeholder="Create a password"
-                                                required
-                                                minLength={8}
-                                                disabled={isSubmitting}
+                                                readOnly={isSubmitting}
                                                 className="pr-12"
+                                                {...register("password")}
+                                                {...invalidProps("register-password-help", errors.password)}
                                             />
 
                                             <Button
@@ -359,9 +343,13 @@ export default function BusinessRegisterPage() {
                                             </Button>
                                         </div>
 
-                                        <p className="text-xs leading-6 text-muted-foreground">
-                                            Use at least 8 characters and
-                                            choose a unique password.
+                                        <p
+                                            id="register-password-help"
+                                            className={`text-xs leading-6 ${errors.password ? "text-destructive" : "text-muted-foreground"}`}
+                                            role={errors.password ? "alert" : undefined}
+                                        >
+                                            {errors.password?.message ??
+                                                "Use at least 8 characters and choose a unique password."}
                                         </p>
                                     </div>
 
@@ -379,7 +367,6 @@ export default function BusinessRegisterPage() {
 
                                         <Input
                                             id="register-confirm-password"
-                                            name="confirmPassword"
                                             type={
                                                 showPassword
                                                     ? "text"
@@ -387,10 +374,12 @@ export default function BusinessRegisterPage() {
                                             }
                                             autoComplete="new-password"
                                             placeholder="Enter your password again"
-                                            required
-                                            minLength={8}
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
+                                            {...register("confirmPassword")}
+                                            {...invalidProps("register-confirm-error", errors.confirmPassword)}
                                         />
+
+                                        <FieldError id="register-confirm-error" message={errors.confirmPassword?.message} />
                                     </div>
 
                                     {errorMessage && (

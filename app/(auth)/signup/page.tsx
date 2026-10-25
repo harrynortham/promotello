@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
     FiArrowRight,
     FiCheckCircle,
@@ -22,89 +25,71 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError, invalidProps } from "@/components/field-error";
 import { safeNextPath } from "@/lib/redirects";
+import { email, password, passwordsMatch, passwordsMatchError } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
+
+const schema = z
+    .object({ email, password, confirmPassword: z.string() })
+    .refine(passwordsMatch, passwordsMatchError);
+
+type Values = z.infer<typeof schema>;
 
 export default function SignupPage() {
     const router = useRouter();
-    const submittingRef = useRef(false);
 
     const [showPassword, setShowPassword] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [confirmationEmail, setConfirmationEmail] = useState("");
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting: isSending },
+    } = useForm<Values>({
+        resolver: zodResolver(schema),
+        defaultValues: { email: "", password: "", confirmPassword: "" },
+    });
 
-        if (submittingRef.current) return;
+    const isSubmitting = isSending || isRedirecting;
 
-        const form = event.currentTarget;
-        const values = new FormData(form);
-
-        const email = String(values.get("email") ?? "").trim();
-        const password = String(values.get("password") ?? "");
-        const confirmPassword = String(
-            values.get("confirmPassword") ?? "",
-        );
-
+    async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        if (password.length < 8) {
-            setErrorMessage(
-                "Choose a password with at least 8 characters.",
-            );
+        // Return to the page that sent them here, e.g. an offer to claim.
+        const next =
+            safeNextPath(
+                new URLSearchParams(window.location.search).get("next"),
+            ) ?? "/dashboard";
+
+        const { data, error } = await createClient().auth.signUp({
+            email: values.email,
+            password: values.password,
+            options: {
+                emailRedirectTo:
+                    `${window.location.origin}/auth/callback` +
+                    `?next=${encodeURIComponent(next)}`,
+            },
+        });
+
+        if (error) {
+            setErrorMessage(error.message || "We couldn’t create your account. Please try again.");
             return;
         }
 
-        if (password !== confirmPassword) {
-            setErrorMessage("Your passwords do not match.");
+        reset();
+
+        if (data.session) {
+            setIsRedirecting(true);
+            router.replace(next);
+            router.refresh();
             return;
         }
 
-        submittingRef.current = true;
-        setIsSubmitting(true);
-
-        try {
-            const supabase = createClient();
-
-            // Return to the page that sent them here, e.g. an offer to claim.
-            const next =
-                safeNextPath(
-                    new URLSearchParams(window.location.search).get("next"),
-                ) ?? "/dashboard";
-
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    emailRedirectTo:
-                        `${window.location.origin}/auth/callback` +
-                        `?next=${encodeURIComponent(next)}`,
-                },
-            });
-
-            if (error) throw error;
-
-            form.reset();
-
-            if (data.session) {
-                router.replace(next);
-                router.refresh();
-                return;
-            }
-
-            setConfirmationEmail(email);
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "We couldn’t create your account. Please try again.",
-            );
-        } finally {
-            submittingRef.current = false;
-            setIsSubmitting(false);
-        }
+        setConfirmationEmail(values.email);
     }
 
     return (
@@ -214,7 +199,8 @@ export default function SignupPage() {
                                 </p>
 
                                 <form
-                                    onSubmit={handleSubmit}
+                                    onSubmit={handleSubmit(onSubmit)}
+                                    noValidate
                                     className="mt-8 space-y-5"
                                     aria-busy={isSubmitting}
                                 >
@@ -232,15 +218,17 @@ export default function SignupPage() {
 
                                         <Input
                                             id="signup-email"
-                                            name="email"
                                             type="email"
                                             autoComplete="username"
                                             placeholder="you@example.com"
-                                            required
                                             maxLength={254}
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
                                             className="h-12"
+                                            {...register("email")}
+                                            {...invalidProps("signup-email-error", errors.email)}
                                         />
+
+                                        <FieldError id="signup-email-error" message={errors.email?.message} />
                                     </div>
 
                                     <div className="space-y-2">
@@ -258,7 +246,6 @@ export default function SignupPage() {
                                         <div className="relative">
                                             <Input
                                                 id="signup-password"
-                                                name="password"
                                                 type={
                                                     showPassword
                                                         ? "text"
@@ -266,11 +253,11 @@ export default function SignupPage() {
                                                 }
                                                 autoComplete="new-password"
                                                 placeholder="Create a password"
-                                                required
-                                                minLength={8}
-                                                disabled={isSubmitting}
+                                                readOnly={isSubmitting}
                                                 aria-describedby="signup-password-help"
                                                 className="h-12 pr-12"
+                                                {...register("password")}
+                                                aria-invalid={errors.password ? true : undefined}
                                             />
 
                                             <Button
@@ -301,10 +288,11 @@ export default function SignupPage() {
 
                                         <p
                                             id="signup-password-help"
-                                            className="text-xs leading-6 text-muted-foreground"
+                                            className={`text-xs leading-6 ${errors.password ? "text-destructive" : "text-muted-foreground"}`}
+                                            role={errors.password ? "alert" : undefined}
                                         >
-                                            Use at least 8 characters and
-                                            choose a unique password.
+                                            {errors.password?.message ??
+                                                "Use at least 8 characters and choose a unique password."}
                                         </p>
                                     </div>
 
@@ -322,7 +310,6 @@ export default function SignupPage() {
 
                                         <Input
                                             id="signup-confirm-password"
-                                            name="confirmPassword"
                                             type={
                                                 showPassword
                                                     ? "text"
@@ -330,11 +317,13 @@ export default function SignupPage() {
                                             }
                                             autoComplete="new-password"
                                             placeholder="Enter your password again"
-                                            required
-                                            minLength={8}
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
                                             className="h-12"
+                                            {...register("confirmPassword")}
+                                            {...invalidProps("signup-confirm-error", errors.confirmPassword)}
                                         />
+
+                                        <FieldError id="signup-confirm-error" message={errors.confirmPassword?.message} />
                                     </div>
 
                                     {errorMessage && (

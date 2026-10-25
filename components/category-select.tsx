@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { UseFormRegisterReturn } from "react-hook-form";
 
 import { getCategoryGroups, type CategoryGroup } from "@/lib/categories";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,9 @@ type CategorySelectProps = {
     required?: boolean;
     placeholder?: string;
     className?: string;
+    // In a react-hook-form form: register("category").
+    registration?: UseFormRegisterReturn;
+    invalid?: { "aria-invalid"?: true; "aria-describedby"?: string };
 };
 
 // Subcategories grouped under their top-level category. Submits the
@@ -24,6 +28,8 @@ export function CategorySelect({
     required,
     placeholder = "Choose a category",
     className,
+    registration,
+    invalid,
 }: CategorySelectProps) {
     const [groups, setGroups] = useState<CategoryGroup[] | null>(null);
     const [failed, setFailed] = useState(false);
@@ -43,6 +49,8 @@ export function CategorySelect({
             required={required}
             defaultValue={defaultValue ?? ""}
             disabled={!groups}
+            {...registration}
+            {...invalid}
             className={cn(
                 "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
                 className,

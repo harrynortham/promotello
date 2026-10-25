@@ -1,15 +1,12 @@
-"use client";
-
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { Suspense } from "react";
 import {
     FiArrowRight,
-    FiCheckCircle,
     FiMessageCircle,
 } from "react-icons/fi";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { ContactForm } from "@/components/contact-form";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -18,68 +15,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/utils/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BusinessContactPage() {
-    const formRef = useRef<HTMLFormElement>(null);
-    const submittingRef = useRef(false);
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        if (submittingRef.current) return;
-
-        const form = event.currentTarget;
-        const values = new FormData(form);
-
-        submittingRef.current = true;
-        setIsSubmitting(true);
-        setErrorMessage("");
-
-        try {
-            const supabase = createClient();
-
-            const { data, error } = await supabase.functions.invoke(
-                "send-contact-message",
-                {
-                    body: {
-                        name: values.get("name"),
-                        email: values.get("email"),
-                        business: values.get("business"),
-                        subject: values.get("subject"),
-                        message: values.get("message"),
-                        website: values.get("website"),
-                    },
-                },
-            );
-
-            if (error || !data?.success) {
-                throw new Error(
-                    "We couldn’t send your message. Please try again later. You can send up to 3 messages every 30 minutes.",
-                );
-            }
-
-            form.reset();
-            setIsSuccess(true);
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "Something went wrong. Please try again later.",
-            );
-        } finally {
-            submittingRef.current = false;
-            setIsSubmitting(false);
-        }
-    }
-
     return (
         <main className="overflow-hidden bg-background text-foreground">
             <section className="relative isolate">
@@ -194,168 +132,9 @@ export default function BusinessContactPage() {
                     </CardHeader>
 
                     <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
-                        {isSuccess ? (
-                            <div
-                                role="status"
-                                className="rounded-2xl bg-muted/40 px-6 py-10 text-center"
-                            >
-                                <FiCheckCircle
-                                    aria-hidden="true"
-                                    className="mx-auto size-12 text-emerald-600"
-                                />
-
-                                <h2 className="mt-5 text-2xl font-semibold">
-                                    Your message is on its way.
-                                </h2>
-
-                                <p className="mt-3 leading-7 text-muted-foreground">
-                                    Thanks for getting in touch. We’ll review
-                                    your message and reply by email.
-                                </p>
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="mt-6"
-                                    onClick={() => setIsSuccess(false)}
-                                >
-                                    Send another message
-                                </Button>
-                            </div>
-                        ) : (
-                            <form
-                                ref={formRef}
-                                onSubmit={handleSubmit}
-                                className="space-y-6"
-                                aria-busy={isSubmitting}
-                            >
-                                <div className="grid gap-6 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="contact-name">
-                                            Your name
-                                        </Label>
-                                        <Input
-                                            id="contact-name"
-                                            name="name"
-                                            autoComplete="name"
-                                            required
-                                            maxLength={100}
-                                            placeholder="Your full name"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="contact-email">
-                                            Email address
-                                        </Label>
-                                        <Input
-                                            id="contact-email"
-                                            name="email"
-                                            type="email"
-                                            autoComplete="email"
-                                            required
-                                            maxLength={254}
-                                            placeholder="you@yourbusiness.com"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="contact-business">
-                                        Business name (optional)
-                                    </Label>
-                                    <Input
-                                        id="contact-business"
-                                        name="business"
-                                        autoComplete="organization"
-                                        maxLength={150}
-                                        placeholder="Your business"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="contact-subject">
-                                        What would you like to discuss?
-                                    </Label>
-                                    <Input
-                                        id="contact-subject"
-                                        name="subject"
-                                        required
-                                        maxLength={150}
-                                        placeholder="Joining, pricing, support…"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="contact-message">
-                                        Your message
-                                    </Label>
-                                    <Textarea
-                                        id="contact-message"
-                                        name="message"
-                                        required
-                                        minLength={20}
-                                        maxLength={5000}
-                                        rows={7}
-                                        placeholder="Tell us a little about your business and how we can help."
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Between 20 and 5,000 characters.
-                                    </p>
-                                </div>
-
-                                {/* Honeypot: leave empty. */}
-                                <div
-                                    aria-hidden="true"
-                                    className="absolute -left-[10000px]"
-                                >
-                                    <Label htmlFor="contact-website">
-                                        Leave this field empty
-                                    </Label>
-                                    <Input
-                                        id="contact-website"
-                                        name="website"
-                                        tabIndex={-1}
-                                        autoComplete="off"
-                                    />
-                                </div>
-
-                                {errorMessage && (
-                                    <Alert variant="destructive">
-                                        <AlertTitle>
-                                            Message not sent
-                                        </AlertTitle>
-                                        <AlertDescription>
-                                            {errorMessage}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-
-                                <p className="text-sm leading-6 text-muted-foreground">
-                                    We’ll use these details to respond to
-                                    your enquiry. Read our{" "}
-                                    <Link
-                                        href="/legal/privacy"
-                                        className="underline underline-offset-4"
-                                    >
-                                        privacy policy
-                                    </Link>
-                                    .
-                                </p>
-
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    disabled={isSubmitting}
-                                    className="w-full sm:w-auto"
-                                >
-                                    {isSubmitting
-                                        ? "Sending message…"
-                                        : "Send your message"}
-                                    <FiArrowRight aria-hidden="true" />
-                                </Button>
-                            </form>
-                        )}
+                        <Suspense fallback={<Skeleton className="h-96 rounded-2xl" />}>
+                            <ContactForm audience="business" />
+                        </Suspense>
                     </CardContent>
                 </Card>
             </section>

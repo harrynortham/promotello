@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useRef, useState, type FormEvent } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
     FiArrowRight,
     FiEye,
@@ -21,13 +24,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FieldError, invalidProps } from "@/components/field-error";
 import { safeNextPath } from "@/lib/redirects";
+import { email } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
+
+const schema = z.object({
+    email,
+    password: z.string().min(1, "Enter your password."),
+});
+
+type Values = z.infer<typeof schema>;
 
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const submittingRef = useRef(false);
 
     const requestedNext = safeNextPath(searchParams.get("next"));
 
@@ -44,44 +55,36 @@ function LoginContent() {
 
     const hasCallbackError = Boolean(searchParams.get("error"));
 
-    // Prefilled from invitation links (?email=).
-    const [email, setEmail] = useState(searchParams.get("email") ?? "");
-    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    // Stays true after success, while the next page loads.
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting: isSending },
+    } = useForm<Values>({
+        resolver: zodResolver(schema),
+        // Prefilled from invitation links (?email=).
+        defaultValues: { email: searchParams.get("email") ?? "", password: "" },
+    });
 
-        if (submittingRef.current) return;
+    const isSubmitting = isSending || isRedirecting;
 
-        submittingRef.current = true;
-        setIsSubmitting(true);
+    async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        try {
-            const supabase = createClient();
+        const { error } = await createClient().auth.signInWithPassword(values);
 
-            const { error } = await supabase.auth.signInWithPassword({
-                email: email.trim(),
-                password,
-            });
-
-            if (error) throw error;
-
-            router.replace(destination);
-            router.refresh();
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "We couldn’t sign you in. Please try again.",
-            );
-
-            submittingRef.current = false;
-            setIsSubmitting(false);
+        if (error) {
+            setErrorMessage(error.message || "We couldn’t sign you in. Please try again.");
+            return;
         }
+
+        setIsRedirecting(true);
+        router.replace(destination);
+        router.refresh();
     }
 
     return (
@@ -146,7 +149,8 @@ function LoginContent() {
                         )}
 
                         <form
-                            onSubmit={handleSubmit}
+                            onSubmit={handleSubmit(onSubmit)}
+                            noValidate
                             className="mt-8 space-y-5"
                             aria-busy={isSubmitting}
                         >
@@ -164,18 +168,16 @@ function LoginContent() {
 
                                 <Input
                                     id="login-email"
-                                    name="email"
                                     type="email"
                                     autoComplete="username"
-                                    required
-                                    value={email}
-                                    onChange={(event) =>
-                                        setEmail(event.target.value)
-                                    }
                                     placeholder="you@example.com"
-                                    disabled={isSubmitting}
+                                    readOnly={isSubmitting}
                                     className="h-12"
+                                    {...register("email")}
+                                    {...invalidProps("login-email-error", errors.email)}
                                 />
+
+                                <FieldError id="login-email-error" message={errors.email?.message} />
                             </div>
 
                             <div className="space-y-2">
@@ -193,21 +195,17 @@ function LoginContent() {
                                 <div className="relative">
                                     <Input
                                         id="login-password"
-                                        name="password"
                                         type={
                                             showPassword
                                                 ? "text"
                                                 : "password"
                                         }
                                         autoComplete="current-password"
-                                        required
-                                        value={password}
-                                        onChange={(event) =>
-                                            setPassword(event.target.value)
-                                        }
                                         placeholder="Your password"
-                                        disabled={isSubmitting}
+                                        readOnly={isSubmitting}
                                         className="h-12 pr-12"
+                                        {...register("password")}
+                                        {...invalidProps("login-password-error", errors.password)}
                                     />
 
                                     <Button
@@ -235,6 +233,8 @@ function LoginContent() {
                                         )}
                                     </Button>
                                 </div>
+
+                                <FieldError id="login-password-error" message={errors.password?.message} />
 
                                 <div className="text-right">
                                     <Link

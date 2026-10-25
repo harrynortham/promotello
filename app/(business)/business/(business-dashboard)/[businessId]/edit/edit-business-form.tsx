@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 
 import {
     Alert,
@@ -19,8 +22,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
 import type { CityOption } from "@/lib/locations";
+import {
+    locationShape,
+    optionalEmail,
+    optionalText,
+    optionalUrl,
+    postcodeInCity,
+    requiredText,
+} from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
 type EditBusinessFormProps = {
@@ -81,24 +93,70 @@ function createDefaultHours(): DayHours[] {
     }));
 }
 
+const reviewLink = /^https:\/\/(g\.page|maps\.app\.goo\.gl|(www\.|search\.)?google\.[a-z.]+)\//;
+
+const hoursSchema = z
+    .object({ isClosed: z.boolean(), opensAt: z.string(), closesAt: z.string() })
+    // Overnight hours (6pm to 2am) are fine; the same time twice isn't.
+    .refine((day) => day.isClosed || (day.opensAt && day.closesAt && day.opensAt !== day.closesAt), {
+        message: "Choose different opening and closing times.",
+        path: ["closesAt"],
+    });
+
+const businessShape = {
+    businessName: requiredText("The business name", { min: 2, max: 160 }),
+    category: z.string().min(1, "Choose a category."),
+    description: optionalText("The description", 5000),
+    website: optionalUrl,
+    contactEmail: optionalEmail,
+    googleReviewUrl: z
+        .string()
+        .trim()
+        .refine((value) => !value || reviewLink.test(value), "Paste the review link from your Google Business Profile."),
+    hours: z.array(hoursSchema).length(7),
+};
+
+const locationFieldsShape = {
+    locationName: optionalText("The location name", 120),
+    addressLine1: requiredText("The street address", { min: 2, max: 200 }),
+    addressLine2: optionalText("Address line 2", 200),
+    ...locationShape,
+};
+
+function withLocation(cities: CityOption[]) {
+    return z.object({ ...businessShape, ...locationFieldsShape }).superRefine(postcodeInCity(cities));
+}
+
+// A business without a location (rare) has no location fields to check.
+const withoutLocation = z.object({
+    ...businessShape,
+    locationName: z.string(),
+    addressLine1: z.string(),
+    addressLine2: z.string(),
+    city: z.string(),
+    region: z.string(),
+    postalCode: z.string(),
+});
+
+type Values = z.input<ReturnType<typeof withLocation>>;
+type Output = z.output<ReturnType<typeof withLocation>>;
+
 export default function EditBusinessForm({
     businessId,
     cities,
 }: EditBusinessFormProps) {
-    const router = useRouter();
-
-    const [business, setBusiness] = useState<Business | null>(null);
-    const [location, setLocation] = useState<Location | null>(null);
-    const [hours, setHours] = useState<DayHours[]>(
-        createDefaultHours(),
-    );
-    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [loaded, setLoaded] = useState<{
+        business: Business;
+        location: Location | null;
+        hours: DayHours[];
+    } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
+        // Only the latest load counts (development runs effects twice).
+        let current = true;
+
         async function loadBusiness() {
             const supabase = createClient();
 
@@ -129,6 +187,8 @@ export default function EditBusinessForm({
                         .order("day_of_week", { ascending: true }),
                 ]);
 
+            if (!current) return;
+
             if (
                 businessError ||
                 locationResult.error ||
@@ -139,9 +199,6 @@ export default function EditBusinessForm({
                 setIsLoading(false);
                 return;
             }
-
-            setBusiness(businessData);
-            setLocation(locationResult.data);
 
             const loadedHours = createDefaultHours();
 
@@ -155,161 +212,16 @@ export default function EditBusinessForm({
                 }
             }
 
-            setHours(loadedHours);
+            setLoaded({ business: businessData, location: locationResult.data, hours: loadedHours });
             setIsLoading(false);
         }
 
         loadBusiness();
+
+        return () => {
+            current = false;
+        };
     }, [businessId]);
-
-    function updateHours(
-        dayIndex: number,
-        field: keyof DayHours,
-        value: boolean | string,
-    ) {
-        setHours((current) =>
-            current.map((day, index) =>
-                index === dayIndex
-                    ? {
-                        ...day,
-                        [field]: value,
-                    }
-                    : day,
-            ),
-        );
-    }
-
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        const form = event.currentTarget;
-        const formData = new FormData(form);
-
-        setIsSaving(true);
-        setSaved(false);
-        setErrorMessage("");
-
-        const supabase = createClient();
-
-        let logoUrl = business?.logo_url ?? null;
-
-        if (logoFile) {
-            const allowedTypes = [
-                "image/png",
-                "image/jpeg",
-                "image/webp",
-            ];
-
-            if (!allowedTypes.includes(logoFile.type)) {
-                setErrorMessage("Please upload a PNG, JPG or WebP image.");
-                setIsSaving(false);
-                return;
-            }
-
-            if (logoFile.size > 5 * 1024 * 1024) {
-                setErrorMessage("The logo must be smaller than 5MB.");
-                setIsSaving(false);
-                return;
-            }
-
-            const fileExtension = logoFile.name.split(".").pop() ?? "jpg";
-            const filePath = `${businessId}/logo-${Date.now()}.${fileExtension}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from("business-logos")
-                .upload(filePath, logoFile, {
-                    upsert: true,
-                    contentType: logoFile.type,
-                });
-
-            if (uploadError) {
-                setErrorMessage(uploadError.message);
-                setIsSaving(false);
-                return;
-            }
-
-            const { data: publicUrlData } = supabase.storage
-                .from("business-logos")
-                .getPublicUrl(filePath);
-
-            logoUrl = publicUrlData.publicUrl;
-        }
-
-        const { error: businessError } = await supabase
-            .from("businesses")
-            .update({
-                name: formData.get("businessName"),
-                category_id: formData.get("category"),
-                description: formData.get("description") || null,
-                website_url: formData.get("website") || null,
-                contact_email: formData.get("contactEmail") || null,
-                google_review_url: String(formData.get("googleReviewUrl") ?? "").trim() || null,
-                logo_url: logoUrl,
-            })
-            .eq("id", businessId);
-
-        if (businessError) {
-            setErrorMessage(businessError.message);
-            setIsSaving(false);
-            return;
-        }
-
-        if (location) {
-            const { error: locationError } = await supabase
-                .from("business_locations")
-                .update({
-                    name: formData.get("locationName"),
-                    address_line_1: formData.get("addressLine1"),
-                    address_line_2: formData.get("addressLine2") || null,
-                    city: formData.get("city"),
-                    region: formData.get("region") || null,
-                    postal_code: formData.get("postalCode") || null,
-                    country_code: "GB",
-                })
-                .eq("id", location.id)
-                .eq("business_id", businessId);
-
-            if (locationError) {
-                setErrorMessage(locationError.message);
-                setIsSaving(false);
-                return;
-            }
-        }
-
-        const hoursRows = hours.map((day, dayOfWeek) => ({
-            business_id: businessId,
-            day_of_week: dayOfWeek,
-            is_closed: day.isClosed,
-            opens_at: day.isClosed ? null : day.opensAt,
-            closes_at: day.isClosed ? null : day.closesAt,
-        }));
-
-        const { error: hoursError } = await supabase
-            .from("business_hours")
-            .upsert(hoursRows, {
-                onConflict: "business_id,day_of_week",
-            });
-
-        if (hoursError) {
-            setErrorMessage(hoursError.message);
-            setIsSaving(false);
-            return;
-        }
-
-        setBusiness((current) =>
-            current
-                ? {
-                    ...current,
-                    logo_url: logoUrl,
-                }
-                : current,
-        );
-
-        setLogoFile(null);
-        setIsSaving(false);
-        setSaved(true);
-        router.refresh();
-    }
 
     if (isLoading) {
         return (
@@ -321,7 +233,7 @@ export default function EditBusinessForm({
         );
     }
 
-    if (!business) {
+    if (!loaded) {
         return (
             <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
                 <Card className="mx-auto max-w-2xl border-red-200">
@@ -337,6 +249,226 @@ export default function EditBusinessForm({
                 </Card>
             </main>
         );
+    }
+
+    return <BusinessForm businessId={businessId} cities={cities} {...loaded} />;
+}
+
+async function uploadLogo(supabase: ReturnType<typeof createClient>, businessId: string, file: File) {
+    const extension = file.name.split(".").pop() ?? "jpg";
+    const path = `${businessId}/logo-${Date.now()}.${extension}`;
+
+    const { error } = await supabase.storage
+        .from("business-logos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (error) return { error: error.message };
+
+    return { url: supabase.storage.from("business-logos").getPublicUrl(path).data.publicUrl };
+}
+
+function HoursRow({
+    index,
+    day,
+    control,
+    register,
+    error,
+}: {
+    index: number;
+    day: string;
+    control: ReturnType<typeof useForm<Values, unknown, Output>>["control"];
+    register: ReturnType<typeof useForm<Values, unknown, Output>>["register"];
+    error?: string;
+}) {
+    const isClosed = useWatch({ control, name: `hours.${index}.isClosed` });
+
+    return (
+        <Card className="border-[#17233B]/10 shadow-none">
+            <CardContent className="p-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <Controller
+                            control={control}
+                            name={`hours.${index}.isClosed`}
+                            render={({ field }) => (
+                                <Checkbox
+                                    id={`open-${index}`}
+                                    checked={!field.value}
+                                    onCheckedChange={(checked) => field.onChange(checked !== true)}
+                                />
+                            )}
+                        />
+
+                        <Label htmlFor={`open-${index}`}>{day}</Label>
+                    </div>
+
+                    {isClosed ? (
+                        <span className="text-sm text-[#17233B]/55">Closed</span>
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <Input
+                                type="time"
+                                aria-label={`${day} opens`}
+                                className="w-auto"
+                                {...register(`hours.${index}.opensAt`)}
+                            />
+
+                            <span className="text-sm text-[#17233B]/50">to</span>
+
+                            <Input
+                                type="time"
+                                aria-label={`${day} closes`}
+                                className="w-auto"
+                                {...register(`hours.${index}.closesAt`)}
+                                {...invalidProps(`hours-${index}-error`, error ? { message: error } : undefined)}
+                            />
+                        </div>
+                    )}
+                </div>
+                <FieldError id={`hours-${index}-error`} message={error} />
+            </CardContent>
+        </Card>
+    );
+}
+
+function BusinessForm({
+    businessId,
+    cities,
+    business: initialBusiness,
+    location,
+    hours,
+}: {
+    businessId: string;
+    cities: CityOption[];
+    business: Business;
+    location: Location | null;
+    hours: DayHours[];
+}) {
+    const router = useRouter();
+
+    const [business, setBusiness] = useState(initialBusiness);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [saved, setSaved] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const {
+        register,
+        handleSubmit,
+        control,
+        setError,
+        formState: { errors, isSubmitting: isSaving },
+    } = useForm<Values, unknown, Output>({
+        resolver: location ? zodResolver(withLocation(cities)) : zodResolver(withoutLocation),
+        defaultValues: {
+            businessName: business.name,
+            category: business.category_id ?? "",
+            description: business.description ?? "",
+            website: business.website_url ?? "",
+            contactEmail: business.contact_email ?? "",
+            googleReviewUrl: business.google_review_url ?? "",
+            hours,
+            locationName: location?.name ?? "",
+            addressLine1: location?.address_line_1 ?? "",
+            addressLine2: location?.address_line_2 ?? "",
+            city: location?.city ?? "",
+            region: location?.region ?? "",
+            postalCode: location?.postal_code ?? "",
+        },
+    });
+
+    async function onSubmit(values: Output) {
+        setSaved(false);
+        setErrorMessage("");
+
+        const supabase = createClient();
+
+        let logoUrl = business.logo_url;
+
+        if (logoFile) {
+            const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+
+            if (!allowedTypes.includes(logoFile.type)) {
+                setError("root.logo", { message: "Please upload a PNG, JPG or WebP image." });
+                return;
+            }
+
+            if (logoFile.size > 5 * 1024 * 1024) {
+                setError("root.logo", { message: "The logo must be smaller than 5MB." });
+                return;
+            }
+
+            const upload = await uploadLogo(supabase, businessId, logoFile);
+
+            if ("error" in upload) {
+                setErrorMessage(upload.error ?? "The logo couldn't be uploaded.");
+                return;
+            }
+
+            logoUrl = upload.url;
+        }
+
+        const { error: businessError } = await supabase
+            .from("businesses")
+            .update({
+                name: values.businessName,
+                category_id: values.category,
+                description: values.description || null,
+                website_url: values.website || null,
+                contact_email: values.contactEmail || null,
+                google_review_url: values.googleReviewUrl || null,
+                logo_url: logoUrl,
+            })
+            .eq("id", businessId);
+
+        if (businessError) {
+            setErrorMessage(businessError.message);
+            return;
+        }
+
+        if (location) {
+            const { error: locationError } = await supabase
+                .from("business_locations")
+                .update({
+                    name: values.locationName || location.name,
+                    address_line_1: values.addressLine1,
+                    address_line_2: values.addressLine2 || null,
+                    city: values.city,
+                    region: values.region,
+                    postal_code: values.postalCode,
+                    country_code: "GB",
+                })
+                .eq("id", location.id)
+                .eq("business_id", businessId);
+
+            if (locationError) {
+                setErrorMessage(locationError.message);
+                return;
+            }
+        }
+
+        const hoursRows = values.hours.map((day, dayOfWeek) => ({
+            business_id: businessId,
+            day_of_week: dayOfWeek,
+            is_closed: day.isClosed,
+            opens_at: day.isClosed ? null : day.opensAt,
+            closes_at: day.isClosed ? null : day.closesAt,
+        }));
+
+        const { error: hoursError } = await supabase
+            .from("business_hours")
+            .upsert(hoursRows, {
+                onConflict: "business_id,day_of_week",
+            });
+
+        if (hoursError) {
+            setErrorMessage(hoursError.message);
+            return;
+        }
+
+        setBusiness((current) => ({ ...current, logo_url: logoUrl }));
+        setLogoFile(null);
+        setSaved(true);
+        router.refresh();
     }
 
     return (
@@ -367,7 +499,7 @@ export default function EditBusinessForm({
 
                 <Card className="mt-10 border-[#17233B]/10">
                     <CardContent className="p-6 sm:p-10">
-                        <form onSubmit={handleSubmit} className="space-y-10">
+                        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-10">
                             <section className="space-y-5">
                                 <div>
                                     <h2 className="text-xl font-semibold">
@@ -402,6 +534,7 @@ export default function EditBusinessForm({
                                         }
                                     />
 
+                                    <FieldError id="logo-error" message={errors.root?.logo?.message} />
                                     <p className="text-xs text-[#17233B]/50">
                                         Use a PNG, JPG or WebP image under 5MB.
                                     </p>
@@ -412,10 +545,11 @@ export default function EditBusinessForm({
 
                                     <Input
                                         id="businessName"
-                                        name="businessName"
-                                        required
-                                        defaultValue={business.name}
+                                        maxLength={160}
+                                        {...register("businessName")}
+                                        {...invalidProps("businessName-error", errors.businessName)}
                                     />
+                                    <FieldError id="businessName-error" message={errors.businessName?.message} />
                                 </div>
 
                                 <div className="space-y-2">
@@ -424,9 +558,11 @@ export default function EditBusinessForm({
                                     <CategorySelect
                                         id="category"
                                         name="category"
-                                        required
                                         defaultValue={business.category_id}
+                                        registration={register("category")}
+                                        invalid={invalidProps("category-error", errors.category)}
                                     />
+                                    <FieldError id="category-error" message={errors.category?.message} />
                                 </div>
 
                                 <div className="space-y-2">
@@ -434,9 +570,9 @@ export default function EditBusinessForm({
 
                                     <Textarea
                                         id="description"
-                                        name="description"
                                         rows={5}
-                                        defaultValue={business.description ?? ""}
+                                        maxLength={5000}
+                                        {...register("description")}
                                     />
                                 </div>
 
@@ -445,11 +581,12 @@ export default function EditBusinessForm({
 
                                     <Input
                                         id="website"
-                                        name="website"
                                         type="url"
-                                        defaultValue={business.website_url ?? ""}
                                         placeholder="https://example.com"
+                                        {...register("website")}
+                                        {...invalidProps("website-error", errors.website)}
                                     />
+                                    <FieldError id="website-error" message={errors.website?.message} />
                                 </div>
 
                                 <div className="space-y-2">
@@ -457,10 +594,11 @@ export default function EditBusinessForm({
 
                                     <Input
                                         id="contactEmail"
-                                        name="contactEmail"
                                         type="email"
-                                        defaultValue={business.contact_email ?? ""}
+                                        {...register("contactEmail")}
+                                        {...invalidProps("contactEmail-error", errors.contactEmail)}
                                     />
+                                    <FieldError id="contactEmail-error" message={errors.contactEmail?.message} />
                                 </div>
 
                                 <div className="space-y-2">
@@ -468,12 +606,12 @@ export default function EditBusinessForm({
 
                                     <Input
                                         id="googleReviewUrl"
-                                        name="googleReviewUrl"
                                         type="url"
-                                        defaultValue={business.google_review_url ?? ""}
                                         placeholder="https://g.page/r/…/review"
-                                        pattern="https://(g\.page|maps\.app\.goo\.gl|(www\.|search\.)?google\.[a-z.]+)/.*"
+                                        {...register("googleReviewUrl")}
+                                        {...invalidProps("googleReviewUrl-error", errors.googleReviewUrl)}
                                     />
+                                    <FieldError id="googleReviewUrl-error" message={errors.googleReviewUrl?.message} />
 
                                     <p className="text-xs leading-5 text-[#17233B]/55">
                                         In Google Business Profile, choose &ldquo;Ask for
@@ -500,11 +638,7 @@ export default function EditBusinessForm({
                                     <div className="space-y-2">
                                         <Label htmlFor="locationName">Location name</Label>
 
-                                        <Input
-                                            id="locationName"
-                                            name="locationName"
-                                            defaultValue={location.name}
-                                        />
+                                        <Input id="locationName" maxLength={120} {...register("locationName")} />
                                     </div>
 
                                     <div className="space-y-2">
@@ -514,10 +648,11 @@ export default function EditBusinessForm({
 
                                         <Input
                                             id="addressLine1"
-                                            name="addressLine1"
-                                            required
-                                            defaultValue={location.address_line_1}
+                                            maxLength={200}
+                                            {...register("addressLine1")}
+                                            {...invalidProps("addressLine1-error", errors.addressLine1)}
                                         />
+                                        <FieldError id="addressLine1-error" message={errors.addressLine1?.message} />
                                     </div>
 
                                     <div className="space-y-2">
@@ -525,16 +660,14 @@ export default function EditBusinessForm({
                                             Address line 2
                                         </Label>
 
-                                        <Input
-                                            id="addressLine2"
-                                            name="addressLine2"
-                                            defaultValue={location.address_line_2 ?? ""}
-                                        />
+                                        <Input id="addressLine2" maxLength={200} {...register("addressLine2")} />
                                     </div>
 
                                     <LocationFields
                                         cities={cities}
                                         defaults={{ city: location.city, area: location.region, postalCode: location.postal_code }}
+                                        fields={{ city: register("city"), region: register("region"), postalCode: register("postalCode") }}
+                                        errors={errors}
                                     />
                                 </section>
                             )}
@@ -554,70 +687,14 @@ export default function EditBusinessForm({
 
                                 <div className="space-y-4">
                                     {days.map((day, index) => (
-                                        <Card
+                                        <HoursRow
                                             key={day}
-                                            className="border-[#17233B]/10 shadow-none"
-                                        >
-                                            <CardContent className="p-4">
-                                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <Checkbox
-                                                            id={`open-${index}`}
-                                                            checked={!hours[index].isClosed}
-                                                            onCheckedChange={(checked) =>
-                                                                updateHours(
-                                                                    index,
-                                                                    "isClosed",
-                                                                    checked !== true,
-                                                                )
-                                                            }
-                                                        />
-
-                                                        <Label htmlFor={`open-${index}`}>
-                                                            {day}
-                                                        </Label>
-                                                    </div>
-
-                                                    {hours[index].isClosed ? (
-                                                        <span className="text-sm text-[#17233B]/55">
-                                                            Closed
-                                                        </span>
-                                                    ) : (
-                                                        <div className="flex items-center gap-3">
-                                                            <Input
-                                                                type="time"
-                                                                value={hours[index].opensAt}
-                                                                onChange={(event) =>
-                                                                    updateHours(
-                                                                        index,
-                                                                        "opensAt",
-                                                                        event.target.value,
-                                                                    )
-                                                                }
-                                                                className="w-auto"
-                                                            />
-
-                                                            <span className="text-sm text-[#17233B]/50">
-                                                                to
-                                                            </span>
-
-                                                            <Input
-                                                                type="time"
-                                                                value={hours[index].closesAt}
-                                                                onChange={(event) =>
-                                                                    updateHours(
-                                                                        index,
-                                                                        "closesAt",
-                                                                        event.target.value,
-                                                                    )
-                                                                }
-                                                                className="w-auto"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                                            index={index}
+                                            day={day}
+                                            control={control}
+                                            register={register}
+                                            error={errors.hours?.[index]?.closesAt?.message}
+                                        />
                                     ))}
                                 </div>
                             </section>
