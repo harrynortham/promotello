@@ -40,7 +40,7 @@ function byTown(entries: { town: string }[]) {
 
 function TownList({ towns, empty }: { towns: [string, number][]; empty: string }) {
     if (towns.length === 0) {
-        return <p className="text-sm text-[#17233B]/55">{empty}</p>;
+        return <p className="text-sm text-[#17233B]/70">{empty}</p>;
     }
 
     return (
@@ -118,7 +118,7 @@ async function CitiesContent({ searchParams }: PageProps) {
                             <CardTitle className="text-xl">{city.name}</CardTitle>
                             <div className="flex items-center gap-2">
                                 <Badge variant="outline">{businessesByCity.get(city.id) ?? 0} locations</Badge>
-                                <Badge className={city.is_live ? "bg-emerald-100 text-emerald-800" : "bg-[#17233B]/5 text-[#17233B]/60"}>
+                                <Badge className={city.is_live ? "bg-emerald-100 text-emerald-800" : "bg-[#17233B]/5 text-[#17233B]/70"}>
                                     {city.is_live ? "Live" : "Not live"}
                                 </Badge>
                             </div>
@@ -145,7 +145,7 @@ async function CitiesContent({ searchParams }: PageProps) {
                                     <Input id={`radius-${city.id}`} name="radiusKm" type="number" min={1} max={200} defaultValue={city.radius_km} />
                                 </div>
                             </div>
-                            <p className="text-xs text-[#17233B]/55">
+                            <p className="text-xs text-[#17233B]/70">
                                 Visitors within the radius of the centre see {city.name} first. Without a centre,
                                 visitors are never matched to this city automatically. Photos are a path on
                                 this site or a Supabase Storage link.
@@ -180,10 +180,10 @@ async function CitiesContent({ searchParams }: PageProps) {
                                             <button
                                                 type="submit"
                                                 title={area.is_active ? "Click to hide from new locations" : "Click to make available again"}
-                                                className={`rounded-full border px-3 py-1 text-sm ${area.is_active ? "border-[#17233B]/15 bg-white" : "border-dashed text-[#17233B]/40 line-through"}`}
+                                                className={`rounded-full border px-3 py-1 text-sm ${area.is_active ? "border-[#17233B]/15 bg-white" : "border-dashed text-[#17233B]/65 line-through"}`}
                                             >
                                                 {area.name}
-                                                <span className="ml-1.5 text-xs text-[#17233B]/45">{businessesByArea.get(area.id) ?? 0}</span>
+                                                <span className="ml-1.5 text-xs text-[#17233B]/65">{businessesByArea.get(area.id) ?? 0}</span>
                                             </button>
                                         </form>
                                     </li>
@@ -214,7 +214,7 @@ async function CitiesContent({ searchParams }: PageProps) {
                                 <Label htmlFor="new-districts">Postcode districts</Label>
                                 <Input id="new-districts" name="postcodeDistricts" required placeholder="BA1, BA2" />
                             </div>
-                            <p className="text-xs text-[#17233B]/55">New cities start not live. Add their areas, then switch them on.</p>
+                            <p className="text-xs text-[#17233B]/70">New cities start not live. Add their areas, then switch them on.</p>
                             <SubmitButton pendingLabel="Adding…">Add city</SubmitButton>
                         </form>
                     </CardContent>
@@ -223,7 +223,7 @@ async function CitiesContent({ searchParams }: PageProps) {
                 <Card className="border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle className="text-lg">Waitlist</CardTitle>
-                        <p className="text-sm text-[#17233B]/60">{waitlist?.length ?? 0} businesses waiting, by town.</p>
+                        <p className="text-sm text-[#17233B]/70">{waitlist?.length ?? 0} businesses waiting, by town.</p>
                     </CardHeader>
                     <CardContent>
                         <TownList towns={topTowns} empty="No one on the waitlist yet." />
@@ -233,7 +233,7 @@ async function CitiesContent({ searchParams }: PageProps) {
                 <Card className="border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle className="text-lg">Customers asking</CardTitle>
-                        <p className="text-sm text-[#17233B]/60">
+                        <p className="text-sm text-[#17233B]/70">
                             {interest?.length ?? 0} customers want Promotello in their town.
                         </p>
                     </CardHeader>

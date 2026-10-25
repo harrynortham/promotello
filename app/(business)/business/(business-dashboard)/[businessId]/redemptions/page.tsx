@@ -171,7 +171,7 @@ async function RedemptionsContent({ params }: PageProps) {
             <div className="mx-auto max-w-5xl">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-medium text-[#FF593F]">
+                        <p className="text-sm font-medium text-[#C8371D]">
                             Business redemptions
                         </p>
 
@@ -195,7 +195,7 @@ async function RedemptionsContent({ params }: PageProps) {
                 </div>
 
                 <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                    <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#FF593F]" />
+                    <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#C8371D]" />
                     <p className="text-sm leading-6 text-[#17233B]/75">
                         <span className="font-semibold text-[#17233B]">Quickest at the till:</span>{" "}
                         point your phone camera at the QR code on the customer&apos;s
@@ -244,7 +244,7 @@ async function RedemptionsContent({ params }: PageProps) {
                                             </div>
 
                                             {offer?.discount && (
-                                                <p className="mt-2 text-sm font-medium text-[#FF593F]">
+                                                <p className="mt-2 text-sm font-medium text-[#C8371D]">
                                                     {offer.discount}
                                                 </p>
                                             )}
@@ -262,7 +262,7 @@ async function RedemptionsContent({ params }: PageProps) {
                                     </CardHeader>
 
                                     <CardContent>
-                                        <div className="space-y-1 text-sm text-[#17233B]/60">
+                                        <div className="space-y-1 text-sm text-[#17233B]/70">
                                             <p>
                                                 Redeemed{" "}
                                                 {new Date(

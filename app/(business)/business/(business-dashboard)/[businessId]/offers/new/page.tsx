@@ -85,7 +85,7 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
         <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12 text-[#17233B]">
             <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
                 <CardContent className="p-8 sm:p-10">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Free plan
                     </p>
 
@@ -103,7 +103,7 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
                         <Button
                             render={<Link href={`/business/${businessId}/billing`} />}
                             nativeButton={false}
-                            className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                            className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
                         >
                             Upgrade to Pro
                         </Button>

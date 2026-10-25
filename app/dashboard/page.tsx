@@ -118,7 +118,7 @@ async function CustomerDashboardContent() {
             <div className="mx-auto max-w-6xl">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
                             Your Promotello
                         </p>
                         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -142,10 +142,10 @@ async function CustomerDashboardContent() {
                         return (
                             <Link key={stat.label} href={stat.href} className="flex items-center justify-between rounded-2xl border border-[#17233B]/10 bg-white p-5 transition hover:border-[#17233B]/25 hover:shadow-sm">
                                 <div>
-                                    <p className="text-sm text-[#17233B]/60">{stat.label}</p>
+                                    <p className="text-sm text-[#17233B]/70">{stat.label}</p>
                                     <p className="mt-1 text-3xl font-semibold">{stat.value}</p>
                                 </div>
-                                <Icon aria-hidden="true" className="size-6 text-[#FF593F]" />
+                                <Icon aria-hidden="true" className="size-6 text-[#C8371D]" />
                             </Link>
                         );
                     })}
@@ -162,13 +162,13 @@ async function CustomerDashboardContent() {
                                     {prompt.logo_url ? (
                                         <Image src={prompt.logo_url} alt="" width={48} height={48} className="size-12 rounded-xl object-cover" />
                                     ) : (
-                                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#FF593F]">
+                                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#C8371D]">
                                             {prompt.business_name.charAt(0)}
                                         </span>
                                     )}
                                     <div>
                                         <p className="font-semibold">How was your visit to {prompt.business_name}?</p>
-                                        <p className="text-sm text-[#17233B]/60">
+                                        <p className="text-sm text-[#17233B]/70">
                                             {prompt.source === "loyalty" ? "You got a loyalty stamp" : "You used a voucher"}{" "}
                                             {visitedLabel(prompt.happened_at)}. A quick Google review really helps small businesses.
                                         </p>
@@ -222,7 +222,7 @@ async function CustomerDashboardContent() {
                                             </div>
 
                                             <div className="min-w-0 flex-1 p-4">
-                                                <p className="truncate text-sm text-[#17233B]/60">{business?.name}</p>
+                                                <p className="truncate text-sm text-[#17233B]/70">{business?.name}</p>
                                                 <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{offer.title}</p>
                                                 <p className="mt-3 inline-flex rounded-lg bg-[#17233B] px-2.5 py-1 font-mono text-sm font-semibold tracking-widest text-white">
                                                     {row.redemption_code}

@@ -62,12 +62,12 @@ export function OfferCard({
                         className="object-cover transition duration-500 group-hover:scale-105"
                     />
                 ) : (
-                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-4xl font-semibold tracking-tight text-[#FF593F]/60">
+                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-4xl font-semibold tracking-tight text-[#C8371D]">
                         {discount}
                     </div>
                 )}
 
-                <span className="absolute left-3 top-3 rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white shadow-sm">
+                <span className="absolute left-3 top-3 rounded-full bg-[#C8371D] px-3 py-1 text-sm font-semibold text-white shadow-sm">
                     {discount}
                 </span>
 
@@ -93,7 +93,7 @@ export function OfferCard({
                                 className="size-8 rounded-lg object-cover"
                             />
                         ) : (
-                            <span className="flex size-8 items-center justify-center rounded-lg bg-[#FFF4E8] text-sm font-semibold text-[#FF593F]">
+                            <span className="flex size-8 items-center justify-center rounded-lg bg-[#FFF4E8] text-sm font-semibold text-[#C8371D]">
                                 {business.charAt(0).toUpperCase()}
                             </span>
                         )}
@@ -104,7 +104,7 @@ export function OfferCard({
                             </p>
 
                             {(area || category) && (
-                                <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[#17233B]/55">
+                                <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[#17233B]/70">
                                     {area && (
                                         <FiMapPin aria-hidden="true" className="size-3 shrink-0" />
                                     )}
@@ -128,7 +128,7 @@ export function OfferCard({
                     {description}
                 </p>
 
-                <p className="mt-4 border-t border-[#17233B]/10 pt-4 text-sm text-[#17233B]/60">
+                <p className="mt-4 border-t border-[#17233B]/10 pt-4 text-sm text-[#17233B]/70">
                     {availability}
                 </p>
             </div>

@@ -100,14 +100,14 @@ export default function HelpCentre({
             <section className="border-b bg-[#FFF8F0]">
                 <div className="mx-auto max-w-7xl px-6 py-14 sm:px-10 sm:py-20">
                     <div className="mx-auto max-w-3xl text-center">
-                        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#FF593F]">
+                        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#C8371D]">
                             <FiBookOpen
                                 aria-hidden="true"
                                 className="size-6"
                             />
                         </span>
 
-                        <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                             {audience}
                         </p>
 

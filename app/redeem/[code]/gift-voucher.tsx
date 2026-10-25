@@ -41,22 +41,22 @@ export function GiftVoucher({ gift, done, error, now }: { gift: StaffGift; done:
 
     return (
         <div className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-            <p className="text-sm font-medium text-[#17233B]/55">
+            <p className="text-sm font-medium text-[#17233B]/70">
                 {gift.business_name} · {kindLabels[gift.kind]}
             </p>
             <h1 className="mt-1 text-2xl font-semibold leading-tight">{gift.reward}</h1>
 
             <dl className="mt-6 grid grid-cols-2 gap-3 rounded-2xl bg-[#FFF8F0] p-4 text-sm">
                 <div>
-                    <dt className="text-[#17233B]/55">Customer</dt>
+                    <dt className="text-[#17233B]/70">Customer</dt>
                     <dd className="mt-0.5 font-semibold">{gift.customer_name ?? "Customer"}</dd>
                 </div>
                 <div>
-                    <dt className="text-[#17233B]/55">Code</dt>
+                    <dt className="text-[#17233B]/70">Code</dt>
                     <dd className="mt-0.5 font-mono font-semibold tracking-widest">{gift.code}</dd>
                 </div>
                 <div>
-                    <dt className="text-[#17233B]/55">Valid until</dt>
+                    <dt className="text-[#17233B]/70">Valid until</dt>
                     <dd className={`mt-0.5 font-medium ${expired ? "text-red-700" : ""}`}>{formatDateTime(gift.expires_at)}</dd>
                 </div>
             </dl>
@@ -91,7 +91,7 @@ export function GiftVoucher({ gift, done, error, now }: { gift: StaffGift; done:
                 <form action={markGiftUsed} className="mt-6">
                     <input type="hidden" name="code" value={gift.code} />
                     <input type="hidden" name="voucherId" value={gift.voucher_id} />
-                    <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90">
+                    <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#C8371D] text-base text-white hover:bg-[#C8371D]/90">
                         Mark as used
                     </SubmitButton>
                 </form>

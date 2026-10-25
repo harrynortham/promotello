@@ -135,9 +135,9 @@ export function LocationFields({
                 <FieldError id="postalCode-error" message={errors?.postalCode?.message} />
             </div>
 
-            <p className="text-xs text-[#17233B]/55">
+            <p className="text-xs text-[#17233B]/70">
                 Promotello is in {cities.map((option) => option.name).join(", ")} for now.{" "}
-                <Link href="/business/waitlist" className="font-medium text-[#FF593F] underline underline-offset-2">
+                <Link href="/business/waitlist" className="font-medium text-[#C8371D] underline underline-offset-2">
                     Somewhere else? Join the waitlist
                 </Link>
             </p>

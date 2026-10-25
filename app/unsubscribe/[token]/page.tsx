@@ -79,7 +79,7 @@ async function UnsubscribeContent({ params, searchParams }: PageProps) {
                 </Alert>
             ) : (
                 <>
-                    <p className="text-sm font-medium text-[#17233B]/55">Email preferences</p>
+                    <p className="text-sm font-medium text-[#17233B]/70">Email preferences</p>
                     <h1 className="mt-1 text-2xl font-semibold leading-tight">
                         {stoppedBusiness
                             ? `You're not getting emails from ${follower.business_name}`
@@ -120,9 +120,9 @@ async function UnsubscribeContent({ params, searchParams }: PageProps) {
                 )}
             </form>
 
-            <p className="mt-6 text-sm text-[#17233B]/55">
+            <p className="mt-6 text-sm text-[#17233B]/70">
                 Changed your mind? Turn emails back on in{" "}
-                <Link href="/account/notifications" className="font-medium text-[#FF593F] hover:underline">
+                <Link href="/account/notifications" className="font-medium text-[#C8371D] hover:underline">
                     your email settings
                 </Link>
                 .

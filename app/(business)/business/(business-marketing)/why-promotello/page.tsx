@@ -82,12 +82,12 @@ function Plan({
             <p className="text-sm font-semibold">{name}</p>
             <p className="mt-1">
                 <span className="text-3xl font-semibold">{price}</span>{" "}
-                <span className="text-sm text-[#17233B]/55">{note}</span>
+                <span className="text-sm text-[#17233B]/70">{note}</span>
             </p>
             <ul className="mt-4 space-y-2 text-sm print:mt-2 print:space-y-1 print:text-xs">
                 {features.map((feature) => (
                     <li key={feature} className="flex gap-2">
-                        <FiCheck aria-hidden="true" className="mt-0.5 shrink-0 text-[#FF593F]" />
+                        <FiCheck aria-hidden="true" className="mt-0.5 shrink-0 text-[#C8371D]" />
                         {feature}
                     </li>
                 ))}
@@ -101,12 +101,12 @@ export default function WhyPromotelloPage() {
         <main className="bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16 print:bg-white print:p-0">
             <article className="mx-auto max-w-4xl print:max-w-none">
                 <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-                    <p className="text-sm text-[#17233B]/55">A one-page overview you can share or print.</p>
+                    <p className="text-sm text-[#17233B]/70">A one-page overview you can share or print.</p>
                     <PrintButton />
                 </div>
 
                 <header className="mt-6 print:mt-0">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Promotello for independent businesses
                     </p>
                     <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl print:text-3xl">
@@ -121,7 +121,7 @@ export default function WhyPromotelloPage() {
                 <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:mt-4 print:grid-cols-3 print:gap-2">
                     {tools.map((tool) => (
                         <div key={tool.title} className="rounded-2xl border border-[#17233B]/10 bg-white p-5 print:break-inside-avoid print:rounded-xl print:p-3">
-                            <span className="flex size-9 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F] print:size-7">
+                            <span className="flex size-9 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#C8371D] print:size-7">
                                 {tool.icon}
                             </span>
                             <h2 className="mt-3 font-semibold print:mt-2 print:text-sm">{tool.title}</h2>
@@ -170,7 +170,7 @@ export default function WhyPromotelloPage() {
                             features={["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet-hours offers on repeat", "Monthly value report", "Instagram story images for offers"]}
                         />
                     </div>
-                    <p className="mt-3 text-sm text-[#17233B]/60">
+                    <p className="mt-3 text-sm text-[#17233B]/70">
                         Founding members: the first 50 businesses pay £19 a month for Pro, locked for life.
                     </p>
                 </section>

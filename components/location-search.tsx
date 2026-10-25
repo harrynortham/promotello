@@ -141,7 +141,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
             <div
                 className={`flex items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white px-4 shadow-sm focus-within:border-[#FF593F]/50 ${tall ? "h-16" : "h-11"}`}
             >
-                <FiMapPin aria-hidden="true" className="shrink-0 text-[#FF593F]" />
+                <FiMapPin aria-hidden="true" className="shrink-0 text-[#C8371D]" />
                 <input
                     ref={inputRef}
                     type="text"
@@ -161,14 +161,14 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
                     onFocus={() => setOpen(true)}
                     onBlur={() => setTimeout(() => setOpen(false), 120)}
                     onKeyDown={onKeyDown}
-                    className={`min-w-0 flex-1 bg-transparent text-[#17233B] outline-none placeholder:text-[#17233B]/60 ${tall ? "text-base" : "text-sm"}`}
+                    className={`min-w-0 flex-1 bg-transparent text-[#17233B] outline-none placeholder:text-[#17233B]/70 ${tall ? "text-base" : "text-sm"}`}
                 />
                 {current && (
                     <button
                         type="button"
                         aria-label="Show all locations"
                         onClick={() => choose({ label: "All locations", detail: "", href: basePath, remember: ALL_LOCATIONS })}
-                        className="shrink-0 rounded-full p-1 text-[#17233B]/50 hover:bg-[#17233B]/5 hover:text-[#17233B]"
+                        className="shrink-0 rounded-full p-1 text-[#17233B]/65 hover:bg-[#17233B]/5 hover:text-[#17233B]"
                     >
                         <FiX aria-hidden="true" />
                     </button>
@@ -196,13 +196,13 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
                             className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 ${index === active ? "bg-[#FF593F]/10" : ""}`}
                         >
                             {suggestion.locate ? (
-                                <FiNavigation aria-hidden="true" className="shrink-0 text-[#FF593F]" />
+                                <FiNavigation aria-hidden="true" className="shrink-0 text-[#C8371D]" />
                             ) : (
-                                <FiMapPin aria-hidden="true" className="shrink-0 text-[#17233B]/40" />
+                                <FiMapPin aria-hidden="true" className="shrink-0 text-[#17233B]/65" />
                             )}
                             <span className="min-w-0">
                                 <span className="block truncate text-sm font-medium">{suggestion.label}</span>
-                                <span className="block truncate text-xs text-[#17233B]/55">{suggestion.detail}</span>
+                                <span className="block truncate text-xs text-[#17233B]/70">{suggestion.detail}</span>
                             </span>
                         </li>
                     ))}

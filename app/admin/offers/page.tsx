@@ -311,7 +311,7 @@ export default function AdminOffersPage() {
                                     <CardHeader>
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                             <div>
-                                                <p className="text-sm font-medium text-[#FF593F]">
+                                                <p className="text-sm font-medium text-[#C8371D]">
                                                     {getBusinessName(offer)}
                                                 </p>
 
@@ -319,7 +319,7 @@ export default function AdminOffersPage() {
                                                     {offer.title}
                                                 </CardTitle>
 
-                                                <p className="mt-2 text-sm text-[#17233B]/55">
+                                                <p className="mt-2 text-sm text-[#17233B]/70">
                                                     {offer.category} · {offer.discount}
                                                 </p>
                                             </div>
@@ -338,7 +338,7 @@ export default function AdminOffersPage() {
                                             {offer.description}
                                         </p>
 
-                                        <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
+                                        <div className="mt-5 space-y-2 text-sm text-[#17233B]/70">
                                             <p>{offer.availability}</p>
 
                                             <p>
@@ -406,7 +406,7 @@ export default function AdminOffersPage() {
                                 <span />
                             )}
 
-                            <span className="text-sm text-[#17233B]/55">
+                            <span className="text-sm text-[#17233B]/70">
                                 Page {page} of {totalPages}
                             </span>
 

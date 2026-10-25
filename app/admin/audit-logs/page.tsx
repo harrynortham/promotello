@@ -206,14 +206,14 @@ async function AuditLogsContent({ searchParams }: PageProps) {
                                                     </Badge>
                                                 </div>
 
-                                                <p className="mt-2 text-sm text-[#17233B]/60">
+                                                <p className="mt-2 text-sm text-[#17233B]/70">
                                                     {getBusinessName(log)}
                                                 </p>
                                             </div>
 
                                             <time
                                                 dateTime={log.created_at}
-                                                className="text-sm text-[#17233B]/50"
+                                                className="text-sm text-[#17233B]/65"
                                             >
                                                 {new Intl.DateTimeFormat("en-GB", {
                                                     dateStyle: "medium",
@@ -224,7 +224,7 @@ async function AuditLogsContent({ searchParams }: PageProps) {
                                     </CardHeader>
 
                                     <CardContent>
-                                        <p className="text-xs text-[#17233B]/45">
+                                        <p className="text-xs text-[#17233B]/65">
                                             Entity ID: {log.entity_id}
                                         </p>
 
@@ -261,7 +261,7 @@ async function AuditLogsContent({ searchParams }: PageProps) {
                             <span />
                         )}
 
-                        <span className="text-sm text-[#17233B]/55">
+                        <span className="text-sm text-[#17233B]/70">
                             Page {page} of {totalPages}
                         </span>
 

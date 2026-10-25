@@ -60,7 +60,7 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                     <section key={group.title}>
                         <div className="mb-3">
                             <h3 className="font-semibold text-[#17233B]">{group.title}</h3>
-                            <p className="text-sm text-[#17233B]/60">{group.description}</p>
+                            <p className="text-sm text-[#17233B]/70">{group.description}</p>
                         </div>
 
                         <ul className="space-y-2.5">
@@ -86,23 +86,23 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                                             </span>
 
                                             <div>
-                                                <p className={`font-medium ${item.completed ? "text-[#17233B]/55 line-through decoration-[#17233B]/25" : "text-[#17233B]"}`}>
+                                                <p className={`font-medium ${item.completed ? "text-[#17233B]/70 line-through decoration-[#17233B]/25" : "text-[#17233B]"}`}>
                                                     {item.label}
                                                     {item.pro && (
-                                                        <Badge variant="outline" className="ml-2 border-[#FF593F]/30 text-[10px] text-[#FF593F]">
+                                                        <Badge variant="outline" className="ml-2 border-[#FF593F]/30 text-[10px] text-[#C8371D]">
                                                             Pro
                                                         </Badge>
                                                     )}
                                                 </p>
                                                 {!item.completed && (
-                                                    <p className="mt-0.5 text-sm leading-6 text-[#17233B]/60">{item.description}</p>
+                                                    <p className="mt-0.5 text-sm leading-6 text-[#17233B]/70">{item.description}</p>
                                                 )}
                                                 {item.completed && <span className="sr-only">Done</span>}
                                             </div>
                                         </div>
 
                                         {item.completed ? (
-                                            <Button render={<Link href={item.href} />} nativeButton={false} variant="ghost" size="sm" className="shrink-0 text-[#17233B]/60">
+                                            <Button render={<Link href={item.href} />} nativeButton={false} variant="ghost" size="sm" className="shrink-0 text-[#17233B]/70">
                                                 Edit
                                             </Button>
                                         ) : (

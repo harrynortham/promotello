@@ -59,7 +59,7 @@ const comparison: { feature: string; free: Availability; pro: Availability; grow
 
 function Cell({ value }: { value: Availability }) {
     if (value === true) {
-        return <FiCheck aria-label="Included" className="mx-auto text-[#FF593F]" />;
+        return <FiCheck aria-label="Included" className="mx-auto text-[#C8371D]" />;
     }
 
     if (value === false) {
@@ -99,7 +99,7 @@ export default async function FeaturesPage() {
                             <li key={section.id}>
                                 <Link
                                     href={`#${section.id}`}
-                                    className="inline-flex rounded-full border border-[#17233B]/10 bg-white px-4 py-1.5 text-sm hover:border-[#FF593F]/40 hover:text-[#FF593F]"
+                                    className="inline-flex rounded-full border border-[#17233B]/10 bg-white px-4 py-1.5 text-sm hover:border-[#FF593F]/40 hover:text-[#C8371D]"
                                 >
                                     {section.label}
                                 </Link>
@@ -245,7 +245,7 @@ export default async function FeaturesPage() {
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">What&apos;s in each plan</h2>
                 <p className="mt-3 text-lg text-[#17233B]/70">
                     Free to start. Pro is {"£24"} a month and Growth is {"£39"}, both with a 30-day free trial.{" "}
-                    <Link href="/business/pricing" className="font-medium text-[#FF593F] underline underline-offset-4">
+                    <Link href="/business/pricing" className="font-medium text-[#C8371D] underline underline-offset-4">
                         See pricing
                     </Link>
                 </p>
@@ -254,7 +254,7 @@ export default async function FeaturesPage() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="border-b border-[#17233B]/10 text-sm">
-                                <th className="px-3 py-4 text-sm font-medium text-[#17233B]/55 sm:px-5">Feature</th>
+                                <th className="px-3 py-4 text-sm font-medium text-[#17233B]/70 sm:px-5">Feature</th>
                                 <th className="w-14 px-1 py-4 text-center font-semibold sm:w-24 sm:px-5">Free</th>
                                 <th className="w-14 px-1 py-4 text-center font-semibold text-[#C2341F] sm:w-24 sm:px-5">Pro</th>
                                 <th className="w-16 px-1 py-4 text-center font-semibold sm:w-24 sm:px-5">Growth</th>

@@ -45,7 +45,7 @@ export default function NotFound() {
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-10 sm:px-10 sm:py-16">
                 <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                             A little off the beaten track
                         </p>
 
@@ -120,7 +120,7 @@ export default function NotFound() {
                                 href={destination.href}
                                 className="group flex items-start gap-4 rounded-2xl border border-[#17233B]/10 bg-white p-5 transition-colors hover:border-[#FF593F]/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                             >
-                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
                                     <Icon
                                         aria-hidden="true"
                                         className="size-5"
@@ -132,21 +132,21 @@ export default function NotFound() {
                                         {destination.title}
                                     </p>
 
-                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
                                         {destination.description}
                                     </p>
                                 </div>
 
                                 <FiArrowRight
                                     aria-hidden="true"
-                                    className="mt-1 size-4 shrink-0 text-[#17233B]/40 transition-transform group-hover:translate-x-1"
+                                    className="mt-1 size-4 shrink-0 text-[#17233B]/65 transition-transform group-hover:translate-x-1"
                                 />
                             </Link>
                         );
                     })}
                 </nav>
 
-                <p className="mt-8 text-center text-sm text-[#17233B]/60">
+                <p className="mt-8 text-center text-sm text-[#17233B]/70">
                     Looking for the business side?{" "}
                     <Link
                         href="/business"
@@ -157,7 +157,7 @@ export default function NotFound() {
                 </p>
             </div>
 
-            <div className="px-6 py-6 text-center text-xs text-[#17233B]/50">
+            <div className="px-6 py-6 text-center text-xs text-[#17233B]/65">
                 Error 404 · Page not found
             </div>
         </main>

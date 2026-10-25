@@ -121,7 +121,7 @@ async function Poster({ params, searchParams }: PageProps) {
                     </header>
 
                     <div className="flex flex-1 flex-col items-center justify-center px-[2.5em] py-[1.5em] text-center">
-                        <p className="rounded-full bg-[#FF593F] px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em] text-white" style={{ fontSize: "0.95em" }}>
+                        <p className="rounded-full bg-[#C8371D] px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em] text-white" style={{ fontSize: "0.95em" }}>
                             {offer ? "Exclusive offer" : "Scan for offers"}
                         </p>
 
@@ -144,7 +144,7 @@ async function Poster({ params, searchParams }: PageProps) {
                         <p className="mt-[1em] font-semibold" style={{ fontSize: "1.5em" }}>
                             Point your phone camera here
                         </p>
-                        <p className="mt-[0.3em] text-[#17233B]/60" style={{ fontSize: "1.05em" }}>
+                        <p className="mt-[0.3em] text-[#17233B]/70" style={{ fontSize: "1.05em" }}>
                             Claim it free on Promotello, then show your code when you pay.
                         </p>
                     </div>
@@ -157,7 +157,7 @@ async function Poster({ params, searchParams }: PageProps) {
                             height={48}
                             style={{ width: "9em", height: "auto" }}
                         />
-                        <p className="text-[#17233B]/55" style={{ fontSize: "0.95em" }}>
+                        <p className="text-[#17233B]/70" style={{ fontSize: "0.95em" }}>
                             {link.replace(/^https?:\/\//, "")}
                         </p>
                     </footer>

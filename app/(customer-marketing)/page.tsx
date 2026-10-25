@@ -322,10 +322,18 @@ async function VisitorHome() {
     );
 }
 
-function HeroLoading() {
+// Shown while the visitor's city is worked out. It includes the default
+// city's photo so the browser starts loading the biggest image straight
+// away; the hero reuses it.
+async function HeroLoading() {
+    const photos = await cityPhotosFor(null);
+
     return (
         <>
-            <div className="h-[34rem] bg-[#17233B]" />
+            <div className="relative isolate h-[34rem] overflow-hidden">
+                <Image src={photos.hero} alt="" fill priority sizes="100vw" className="-z-10 object-cover" />
+                <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#17233B]/90 via-[#17233B]/70 to-[#17233B]/20" />
+            </div>
             <HomeLoading />
         </>
     );
@@ -355,10 +363,10 @@ export default function HomePage() {
                                 className="rounded-2xl border border-[#17233B]/10 bg-white p-7"
                             >
                                 <div className="flex items-center gap-3">
-                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
+                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
                                         <Icon aria-hidden="true" className="size-5" />
                                     </span>
-                                    <span className="text-sm font-semibold text-[#17233B]/40">
+                                    <span className="text-sm font-semibold text-[#17233B]/65">
                                         Step {index + 1}
                                     </span>
                                 </div>
@@ -372,12 +380,12 @@ export default function HomePage() {
             </section>
 
             <section className="mx-auto max-w-7xl px-6 pt-20 sm:px-10">
-                <div className="flex flex-col items-start gap-6 rounded-3xl bg-[#FF593F] px-8 py-12 text-white sm:flex-row sm:items-center sm:justify-between sm:px-12">
+                <div className="flex flex-col items-start gap-6 rounded-3xl bg-[#C8371D] px-8 py-12 text-white sm:flex-row sm:items-center sm:justify-between sm:px-12">
                     <div>
                         <h2 className="text-3xl font-semibold tracking-tight">
                             Run a local business?
                         </h2>
-                        <p className="mt-2 max-w-xl text-white/85">
+                        <p className="mt-2 max-w-xl text-white">
                             List your business and your first offer for free,
                             and give nearby customers a reason to visit.
                         </p>

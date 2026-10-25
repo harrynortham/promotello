@@ -75,7 +75,7 @@ async function WaitlistContent({ searchParams }: PageProps) {
                     </div>
                 </div>
                 <SubmitButton pendingLabel="Joining…">Join the waitlist</SubmitButton>
-                <p className="text-xs text-[#17233B]/55">
+                <p className="text-xs text-[#17233B]/70">
                     We&apos;ll only use your email to tell you when Promotello opens near you. See our{" "}
                     <Link href="/legal/privacy" className="underline">privacy policy</Link>.
                 </p>
@@ -88,7 +88,7 @@ export default function WaitlistPage(props: PageProps) {
     return (
         <main className="bg-[#FFF8F0] px-6 py-16 text-[#17233B] sm:py-24">
             <div className="mx-auto max-w-2xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Coming to your town</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">Coming to your town</p>
                 <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">Join the waitlist</h1>
                 <div className="mt-6">
                     <Suspense fallback={<Skeleton className="h-96 rounded-3xl" />}>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import {
     FiArrowRight,
@@ -26,6 +27,7 @@ export default function ErrorPage({
 }: ErrorPageProps) {
     useEffect(() => {
         console.error(error);
+        Sentry.captureException(error);
     }, [error]);
 
     return (
@@ -59,7 +61,7 @@ export default function ErrorPage({
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-10 sm:px-10 sm:py-16">
                 <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
                     <section aria-labelledby="error-heading">
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                             A small bump in the journey
                         </p>
 
@@ -97,14 +99,14 @@ export default function ErrorPage({
                             </Button>
                         </div>
 
-                        <p className="mt-5 max-w-lg text-sm leading-6 text-[#17233B]/60">
+                        <p className="mt-5 max-w-lg text-sm leading-6 text-[#17233B]/70">
                             If you were submitting a form or claiming an offer,
                             check whether it completed before submitting again.
                         </p>
 
                         {error.digest && (
                             <div className="mt-6 inline-block rounded-xl border border-[#17233B]/10 bg-white/70 px-4 py-3">
-                                <p className="text-xs text-[#17233B]/55">
+                                <p className="text-xs text-[#17233B]/70">
                                     Support reference
                                 </p>
 
@@ -129,7 +131,7 @@ export default function ErrorPage({
                                     <FiTool className="size-11 text-[#FF8F7D] sm:size-14" />
                                 </div>
 
-                                <span className="absolute bottom-0 right-0 flex size-12 items-center justify-center rounded-2xl border-4 border-[#FFF8F0] bg-[#FF593F] text-white">
+                                <span className="absolute bottom-0 right-0 flex size-12 items-center justify-center rounded-2xl border-4 border-[#FFF8F0] bg-[#C8371D] text-white">
                                     <FiRefreshCw className="size-5" />
                                 </span>
                             </div>
@@ -138,7 +140,7 @@ export default function ErrorPage({
                                 Let’s give that another go.
                             </p>
 
-                            <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#17233B]/60">
+                            <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#17233B]/70">
                                 Your next local discovery can wait a moment.
                             </p>
                         </div>
@@ -153,7 +155,7 @@ export default function ErrorPage({
                         href="/explore"
                         className="group flex items-start gap-4 rounded-2xl border border-[#17233B]/10 bg-white p-5 transition-colors hover:border-[#FF593F]/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                     >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
                             <FiCompass
                                 aria-hidden="true"
                                 className="size-5"
@@ -165,14 +167,14 @@ export default function ErrorPage({
                                 Keep exploring
                             </p>
 
-                            <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                            <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
                                 Discover promotions and local favourites.
                             </p>
                         </div>
 
                         <FiArrowRight
                             aria-hidden="true"
-                            className="mt-1 size-4 shrink-0 text-[#17233B]/40 transition-transform group-hover:translate-x-1"
+                            className="mt-1 size-4 shrink-0 text-[#17233B]/65 transition-transform group-hover:translate-x-1"
                         />
                     </Link>
 
@@ -180,7 +182,7 @@ export default function ErrorPage({
                         href="/contact"
                         className="group flex items-start gap-4 rounded-2xl border border-[#17233B]/10 bg-white p-5 transition-colors hover:border-[#FF593F]/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                     >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
                             <FiLifeBuoy
                                 aria-hidden="true"
                                 className="size-5"
@@ -192,20 +194,20 @@ export default function ErrorPage({
                                 Get a little help
                             </p>
 
-                            <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                            <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
                                 Tell us what happened if the problem continues.
                             </p>
                         </div>
 
                         <FiArrowRight
                             aria-hidden="true"
-                            className="mt-1 size-4 shrink-0 text-[#17233B]/40 transition-transform group-hover:translate-x-1"
+                            className="mt-1 size-4 shrink-0 text-[#17233B]/65 transition-transform group-hover:translate-x-1"
                         />
                     </Link>
                 </nav>
             </div>
 
-            <div className="px-6 py-6 text-center text-xs text-[#17233B]/50">
+            <div className="px-6 py-6 text-center text-xs text-[#17233B]/65">
                 Promotello · Something went wrong
             </div>
         </main>

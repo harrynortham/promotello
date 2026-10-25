@@ -134,7 +134,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-3xl">
                 <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Business settings
                     </p>
 
@@ -249,7 +249,7 @@ async function CurrentPlan({
                 {plan && (
                     <p className="text-3xl font-semibold">
                         {plan.price}
-                        <span className="text-base font-normal text-[#17233B]/60">
+                        <span className="text-base font-normal text-[#17233B]/70">
                             {" "}
                             / {plan.interval}
                         </span>
@@ -266,13 +266,13 @@ async function CurrentPlan({
                     <input type="hidden" name="businessId" value={businessId} />
                     <SubmitButton
                         pendingLabel="Opening…"
-                        className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
                     >
                         Manage billing
                     </SubmitButton>
                 </form>
 
-                <p className="text-sm text-[#17233B]/55">
+                <p className="text-sm text-[#17233B]/70">
                     Update your card, download invoices or cancel in the
                     secure Stripe billing portal.
                 </p>
@@ -384,14 +384,14 @@ async function PlanOptions({
                             <CardContent className="flex h-full flex-col gap-4">
                                 <p className="text-3xl font-semibold">
                                     {plan.price}
-                                    <span className="text-base font-normal text-[#17233B]/60">
+                                    <span className="text-base font-normal text-[#17233B]/70">
                                         {" "}
                                         / {plan.interval}
                                     </span>
                                 </p>
 
                                 {plan.note && (
-                                    <p className="text-sm font-medium text-[#FF593F]">
+                                    <p className="text-sm font-medium text-[#C8371D]">
                                         {plan.note}
                                     </p>
                                 )}
@@ -457,14 +457,14 @@ async function PlanOptions({
                             <CardContent className="flex h-full flex-col gap-4">
                                 <p className="text-3xl font-semibold">
                                     {plan.price}
-                                    <span className="text-base font-normal text-[#17233B]/60">
+                                    <span className="text-base font-normal text-[#17233B]/70">
                                         {" "}
                                         / {plan.interval}
                                     </span>
                                 </p>
 
                                 {plan.note && (
-                                    <p className="text-sm font-medium text-[#FF593F]">
+                                    <p className="text-sm font-medium text-[#C8371D]">
                                         {plan.note}
                                     </p>
                                 )}

@@ -138,7 +138,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
 
                 {areas.length > 1 && (
                     <div className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-                        <span className="shrink-0 text-sm font-medium text-[#17233B]/55">Area:</span>
+                        <span className="shrink-0 text-sm font-medium text-[#17233B]/70">Area:</span>
 
                         <FilterChip
                             href={hrefWith(base, current, { area: null })}
@@ -168,7 +168,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                 </p>
 
                 <div className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
-                    <span className="shrink-0 text-sm text-[#17233B]/55">Sort:</span>
+                    <span className="shrink-0 text-sm text-[#17233B]/70">Sort:</span>
                     {sortOptions.map((option) => (
                         <FilterChip
                             key={option.value}
@@ -240,7 +240,7 @@ export async function OffersListing({ city, searchParams }: ListingProps) {
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="border-b border-[#17233B]/10 bg-white">
                 <div className="mx-auto max-w-7xl px-6 py-12 sm:px-10 sm:py-16">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
                         All offers
                     </p>
 

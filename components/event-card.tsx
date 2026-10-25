@@ -27,24 +27,24 @@ export function EventCard({ event }: { event: EventSummary }) {
             </div>
             <div className="min-w-0">
                 <h3 className="font-semibold leading-snug">
-                    <Link href={`/events/${event.id}`} className="hover:text-[#FF593F]">
+                    <Link href={`/events/${event.id}`} className="hover:text-[#C8371D]">
                         {event.title}
                     </Link>
                 </h3>
                 {event.business && (
                     <p className="mt-0.5 text-sm">
-                        <Link href={businessPath(event.business)} className="text-[#17233B]/70 hover:text-[#FF593F]">
+                        <Link href={businessPath(event.business)} className="text-[#17233B]/70 hover:text-[#C8371D]">
                             {event.business.name}
                         </Link>
                     </p>
                 )}
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-[#17233B]/60">
+                <p className="mt-2 flex items-center gap-1.5 text-sm text-[#17233B]/70">
                     <FiCalendar aria-hidden="true" className="shrink-0" />
                     {formatEventTime(event.starts_at, event.ends_at)}
                     {event.price ? ` · ${event.price}` : ""}
                 </p>
                 {event.location && (
-                    <p className="mt-1 flex items-center gap-1.5 text-sm text-[#17233B]/60">
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-[#17233B]/70">
                         <FiMapPin aria-hidden="true" className="shrink-0" />
                         {event.location}
                     </p>

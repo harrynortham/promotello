@@ -78,7 +78,7 @@ export function BusinessRecentActivity({
                             No redemptions yet
                         </p>
 
-                        <p className="mt-2 text-sm text-[#17233B]/60">
+                        <p className="mt-2 text-sm text-[#17233B]/70">
                             Customer activity will appear here once someone
                             redeems one of your promotions.
                         </p>
@@ -94,7 +94,7 @@ export function BusinessRecentActivity({
                                                 "Promotion"}
                                         </p>
 
-                                        <p className="mt-1 text-sm text-[#17233B]/60">
+                                        <p className="mt-1 text-sm text-[#17233B]/70">
                                             {redemption.business?.name ??
                                                 "Business"}{" "}
                                             ·{" "}

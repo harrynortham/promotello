@@ -30,7 +30,7 @@ export function CityInterestForm({ town }: { town: string }) {
                 placeholder="you@example.com"
                 className="h-10 bg-white sm:w-64"
             />
-            <Button type="submit" disabled={pending} className="h-10 bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+            <Button type="submit" disabled={pending} className="h-10 bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
                 {pending ? "Saving…" : "Tell me when"}
             </Button>
             {state.status !== "idle" && (

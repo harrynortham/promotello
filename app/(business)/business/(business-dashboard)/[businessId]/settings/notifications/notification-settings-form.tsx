@@ -114,7 +114,7 @@ export default function NotificationSettingsForm({
                 </Button>
 
                 <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Business settings
                     </p>
 
@@ -139,7 +139,7 @@ export default function NotificationSettingsForm({
                                     Daily redemption summary
                                 </Label>
 
-                                <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
                                     Receive one daily email summarising new and used
                                     redemptions.
                                 </p>
@@ -162,7 +162,7 @@ export default function NotificationSettingsForm({
                                     Fully claimed offer alerts
                                 </Label>
 
-                                <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
                                     Receive an email when a limited promotion has no
                                     redemptions remaining.
                                 </p>
@@ -189,7 +189,7 @@ export default function NotificationSettingsForm({
                                         Low inventory alerts
                                     </Label>
 
-                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/60">
+                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
                                         Receive an email when a limited promotion reaches
                                         the threshold below.
                                     </p>
@@ -224,7 +224,7 @@ export default function NotificationSettingsForm({
                                     }
                                 />
 
-                                <p className="text-xs text-[#17233B]/50">
+                                <p className="text-xs text-[#17233B]/65">
                                     Remaining redemptions
                                 </p>
                             </div>

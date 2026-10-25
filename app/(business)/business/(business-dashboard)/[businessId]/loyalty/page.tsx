@@ -108,7 +108,7 @@ function ProgramForm({
                 />
             </div>
 
-            <SubmitButton pendingLabel="Saving…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+            <SubmitButton pendingLabel="Saving…" className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
                 {submitLabel}
             </SubmitButton>
         </form>
@@ -183,7 +183,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-14">
             <div className="mx-auto max-w-5xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                     Loyalty card
                 </p>
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">
@@ -239,7 +239,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         <Card className="mt-8 border-[#FF593F]/30">
                             <CardContent className="flex flex-col gap-6 p-8 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Pro feature</p>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">Pro feature</p>
                                     <h2 className="mt-2 text-2xl font-semibold">Turn first visits into regulars</h2>
                                     <p className="mt-2 max-w-lg text-[#17233B]/65">
                                         Digital stamp cards are included in Pro, with a 30-day free trial.
@@ -252,7 +252,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                     render={<Link href={`/business/${businessId}/billing`} />}
                                     nativeButton={false}
                                     size="lg"
-                                    className="shrink-0 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                    className="shrink-0 bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
                                 >
                                     Start free trial
                                 </Button>
@@ -292,7 +292,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             ["Rewards given", stats.rewards],
                                         ].map(([label, value]) => (
                                             <div key={label} className="rounded-xl bg-[#FFF8F0] px-3 py-4">
-                                                <dt className="text-xs text-[#17233B]/55">{label}</dt>
+                                                <dt className="text-xs text-[#17233B]/70">{label}</dt>
                                                 <dd className="mt-1 text-2xl font-semibold">{value}</dd>
                                             </div>
                                         ))}
@@ -332,7 +332,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                 </CardHeader>
                                 <CardContent>
                                     <ProgramForm businessId={businessId} program={program} submitLabel="Save changes" />
-                                    <p className="mt-4 text-xs text-[#17233B]/55">
+                                    <p className="mt-4 text-xs text-[#17233B]/70">
                                         Changing the number of stamps applies to everyone&apos;s card straight away.
                                     </p>
                                 </CardContent>

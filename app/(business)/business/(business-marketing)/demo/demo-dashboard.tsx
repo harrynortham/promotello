@@ -50,7 +50,7 @@ const posters = [
 function Stat({ label, value, note }: { label: string; value: string; note: string }) {
     return (
         <div className="rounded-xl border border-[#17233B]/10 bg-white p-5">
-            <p className="text-sm font-medium text-[#17233B]/60">{label}</p>
+            <p className="text-sm font-medium text-[#17233B]/70">{label}</p>
             <p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p>
             <p className="mt-1 text-xs text-emerald-700">{note}</p>
         </div>
@@ -92,7 +92,7 @@ function Overview() {
                     ].map(([text, when]) => (
                         <li key={text} className="flex items-center justify-between gap-4 py-3">
                             <span>{text}</span>
-                            <span className="shrink-0 text-[#17233B]/45">{when}</span>
+                            <span className="shrink-0 text-[#17233B]/65">{when}</span>
                         </li>
                     ))}
                 </ul>
@@ -109,12 +109,12 @@ function Loyalty() {
         >
             <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
                 <div className="rounded-2xl border border-[#17233B]/10 bg-white p-6">
-                    <p className="text-sm font-medium text-[#FF593F]">{business} coffee card</p>
+                    <p className="text-sm font-medium text-[#C8371D]">{business} coffee card</p>
                     <h3 className="mt-1 text-xl font-semibold">Buy 9 coffees, get the 10th free</h3>
                     <div className="mt-5">
                         <LoyaltyStamps stamps={6} required={10} size="lg" />
                     </div>
-                    <p className="mt-4 text-sm text-[#17233B]/60">Ellie&apos;s card: 6 of 10. Four more to a free coffee.</p>
+                    <p className="mt-4 text-sm text-[#17233B]/70">Ellie&apos;s card: 6 of 10. Four more to a free coffee.</p>
                 </div>
 
                 <div className="grid gap-4">
@@ -163,13 +163,13 @@ function Posters({ posterQr }: { posterQr: string }) {
                             </li>
                         ))}
                     </ul>
-                    <p className="mt-5 text-sm text-[#17233B]/60">
+                    <p className="mt-5 text-sm text-[#17233B]/70">
                         Your window poster brings in the most people. Worth keeping it at eye level.
                     </p>
                 </div>
 
                 <div className="rounded-2xl border-4 border-[#17233B] bg-white p-5 text-center shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Scan me</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C8371D]">Scan me</p>
                     <p className="mt-1 text-lg font-semibold leading-tight">Free pastry with your coffee</p>
                     <div
                         className="mx-auto mt-3 w-40 [&_svg]:h-auto [&_svg]:w-full"
@@ -177,7 +177,7 @@ function Posters({ posterQr }: { posterQr: string }) {
                         role="img"
                         dangerouslySetInnerHTML={{ __html: posterQr }}
                     />
-                    <p className="mt-3 text-xs text-[#17233B]/60">{business} · on Promotello</p>
+                    <p className="mt-3 text-xs text-[#17233B]/70">{business} · on Promotello</p>
                 </div>
             </div>
         </Panel>
@@ -192,7 +192,7 @@ function Offers() {
         >
             <div className="overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">
                 <table className="w-full min-w-[34rem] text-left text-sm">
-                    <thead className="text-[#17233B]/55">
+                    <thead className="text-[#17233B]/70">
                         <tr className="border-b border-[#17233B]/10">
                             <th className="px-5 py-3 font-medium">Offer</th>
                             <th className="px-5 py-3 text-right font-medium">Claimed</th>
@@ -222,14 +222,14 @@ function Offers() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="flex gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                    <FiHeart aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#FF593F]" />
+                    <FiHeart aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#C8371D]" />
                     <p className="text-sm leading-6">
                         <strong>186 followers</strong> got an email about your Monday offer. Customers follow
                         you from your page or a QR poster, and can unsubscribe any time.
                     </p>
                 </div>
                 <div className="flex gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                    <FiStar aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#FF593F]" />
+                    <FiStar aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#C8371D]" />
                     <p className="text-sm leading-6">
                         <strong>21 customers</strong> were sent to leave a Google review after a visit this
                         month.
@@ -264,23 +264,23 @@ function CustomerView() {
                 <div>
                     <p className="mb-3 text-sm font-semibold">Their voucher</p>
                     <div className="rounded-2xl border border-[#17233B]/10 bg-white p-5 text-center">
-                        <p className="text-sm text-[#17233B]/60">{business}</p>
+                        <p className="text-sm text-[#17233B]/70">{business}</p>
                         <p className="mt-1 font-semibold">Free pastry with any coffee</p>
                         <VoucherQr code="HG7K2Q" className="mx-auto mt-4 w-40" />
                         <p className="mt-3 font-mono text-lg font-semibold tracking-widest">HG7K2Q</p>
-                        <p className="mt-1 text-xs text-[#17233B]/55">Staff scan this to redeem</p>
+                        <p className="mt-1 text-xs text-[#17233B]/70">Staff scan this to redeem</p>
                     </div>
                 </div>
 
                 <div>
                     <p className="mb-3 text-sm font-semibold">Their loyalty card</p>
                     <div className="rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                        <p className="text-sm text-[#17233B]/60">{business}</p>
+                        <p className="text-sm text-[#17233B]/70">{business}</p>
                         <p className="mt-1 font-semibold">Free coffee after 9</p>
                         <div className="mt-4">
                             <LoyaltyStamps stamps={6} required={10} size="sm" />
                         </div>
-                        <p className="mt-3 text-xs text-[#17233B]/55">4 more to go</p>
+                        <p className="mt-3 text-xs text-[#17233B]/70">4 more to go</p>
                     </div>
                 </div>
             </div>
@@ -309,7 +309,7 @@ export function DemoDashboard({ analytics, posterQr }: { analytics: BusinessAnal
             <div className="mx-auto max-w-6xl px-6 py-8 lg:py-12">
                 <div className="grid gap-8 lg:grid-cols-[14rem_minmax(0,1fr)]">
                     <nav aria-label="Demo sections" className="min-w-0">
-                        <p className="mb-4 hidden px-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#17233B]/50 lg:block">
+                        <p className="mb-4 hidden px-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#17233B]/65 lg:block">
                             {business}
                         </p>
                         <div className="-mx-6 overflow-x-auto px-6 pb-2 lg:mx-0 lg:overflow-visible lg:p-0">

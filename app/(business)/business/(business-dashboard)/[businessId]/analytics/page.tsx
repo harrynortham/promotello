@@ -235,7 +235,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
             <div className="mx-auto max-w-5xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                             Business analytics
                         </p>
 
@@ -265,7 +265,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                 <section className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                            <CardTitle className="text-sm font-medium text-[#17233B]/70">
                                 Active promotions
                             </CardTitle>
                         </CardHeader>
@@ -279,7 +279,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                            <CardTitle className="text-sm font-medium text-[#17233B]/70">
                                 Total claims
                             </CardTitle>
                         </CardHeader>
@@ -293,7 +293,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                            <CardTitle className="text-sm font-medium text-[#17233B]/70">
                                 Used claims
                             </CardTitle>
                         </CardHeader>
@@ -303,7 +303,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                                 {usedRedemptions}
                             </p>
 
-                            <p className="mt-2 text-sm text-[#17233B]/55">
+                            <p className="mt-2 text-sm text-[#17233B]/70">
                                 {unusedRedemptions} awaiting use
                             </p>
                         </CardContent>
@@ -311,7 +311,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                            <CardTitle className="text-sm font-medium text-[#17233B]/70">
                                 Followers
                             </CardTitle>
                         </CardHeader>
@@ -321,11 +321,11 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                                 {followerCount ?? 0}
                             </p>
 
-                            <p className="mt-2 text-sm text-[#17233B]/55">
+                            <p className="mt-2 text-sm text-[#17233B]/70">
                                 {hasPro ? (
                                     "Emailed when a new offer goes live"
                                 ) : (
-                                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#FF593F] hover:underline">
+                                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#C8371D] hover:underline">
                                         Email them new offers on Pro
                                     </Link>
                                 )}
@@ -341,7 +341,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                     <CardContent>
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-[#17233B]/60">
+                            <span className="text-[#17233B]/70">
                                 Used claims
                             </span>
 
@@ -352,7 +352,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                         <Progress value={usageRate} className="mt-3 h-2" />
 
-                        <p className="mt-3 text-sm text-[#17233B]/55">
+                        <p className="mt-3 text-sm text-[#17233B]/70">
                             {usedRedemptions} of {totalRedemptions} claims have been
                             marked as used.
                         </p>
@@ -361,7 +361,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                 <Card className="mt-8 border-[#17233B]/10">
                     <CardHeader>
-                        <p className="text-sm font-medium text-[#FF593F]">
+                        <p className="text-sm font-medium text-[#C8371D]">
                             Promotion performance
                         </p>
 
@@ -397,7 +397,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                                                 </Badge>
                                             </div>
 
-                                            <p className="font-semibold text-[#FF593F]">
+                                            <p className="font-semibold text-[#C8371D]">
                                                 {offer.totalRedemptions}{" "}
                                                 {offer.totalRedemptions === 1
                                                     ? "claim"
@@ -407,14 +407,14 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                                         <div className="mt-4 grid gap-4 text-sm sm:grid-cols-3">
                                             <div>
-                                                <p className="text-[#17233B]/55">Used</p>
+                                                <p className="text-[#17233B]/70">Used</p>
                                                 <p className="mt-1 font-semibold">
                                                     {offer.usedCount}
                                                 </p>
                                             </div>
 
                                             <div>
-                                                <p className="text-[#17233B]/55">
+                                                <p className="text-[#17233B]/70">
                                                     Awaiting use
                                                 </p>
                                                 <p className="mt-1 font-semibold">
@@ -423,7 +423,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                                             </div>
 
                                             <div>
-                                                <p className="text-[#17233B]/55">
+                                                <p className="text-[#17233B]/70">
                                                     Remaining
                                                 </p>
                                                 <p className="mt-1 font-semibold">
@@ -436,7 +436,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                                         {offer.max_redemptions !== null && (
                                             <div className="mt-4">
-                                                <div className="flex justify-between text-xs text-[#17233B]/55">
+                                                <div className="flex justify-between text-xs text-[#17233B]/70">
                                                     <span>Usage limit</span>
                                                     <span>
                                                         {offer.redemption_count} of{" "}
