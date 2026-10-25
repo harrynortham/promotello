@@ -5,20 +5,20 @@ import {
     LegalDocument,
     type LegalSection,
 } from "@/components/legal-document";
+import { companyLine } from "@/lib/legal";
 
 export const metadata: Metadata = {
     title: "Privacy Policy",
     description: "Information about how Promotello handles personal data.",
-    robots: { index: false, follow: true },
 };
 
-// Details still to be confirmed before launch are marked [in brackets].
 
 const summary = [
     "We collect what we need to run your account, your vouchers and loyalty cards, and the tools businesses use.",
     "Marketing emails are optional. Every one has an unsubscribe link, and you can turn them off in your account.",
     "Businesses see your first name on vouchers and loyalty cards you use with them. They never see who follows them or your email address.",
     "We only use Google Analytics if you accept analytics cookies. We don't sell your information or use advertising trackers.",
+    "If you sign in with Google, we only receive your name, email address and profile photo, and use them only to run your account.",
 ];
 
 const sections: LegalSection[] = [
@@ -28,15 +28,15 @@ const sections: LegalSection[] = [
         content: (
             <>
                 <p>
-                    Promotello is operated by [legal entity name], [registered
-                    address] (&ldquo;we&rdquo;, &ldquo;us&rdquo;). We are the
+                    Promotello is operated by {companyLine()} (&ldquo;we&rdquo;,
+                    &ldquo;us&rdquo;). We are the
                     controller of the personal information described in this
-                    policy. [ICO registration number.]
+                    policy.
                 </p>
                 <p>
-                    For anything about your personal information, contact us at
-                    [privacy email address] or through our{" "}
-                    <Link href="/contact">contact page</Link>.
+                    For anything about your personal information, email{" "}
+                    <a href="mailto:hello@promotello.com">hello@promotello.com</a>{" "}
+                    or use our <Link href="/contact">contact page</Link>.
                 </p>
             </>
         ),
@@ -49,7 +49,9 @@ const sections: LegalSection[] = [
                 <p>
                     <strong>Your account.</strong> Your email address, password
                     (stored only as a secure hash), name and, if you add it,
-                    your town or city.
+                    your town or city. If you sign in with Google, we don&apos;t
+                    get a password; see{" "}
+                    <a href="#google">Signing in with Google</a>.
                 </p>
                 <p>
                     <strong>Vouchers.</strong> The offers you claim, your
@@ -131,6 +133,72 @@ const sections: LegalSection[] = [
                     analytics cookies: Google Analytics collects information
                     about your visit, such as the pages you view, your device
                     and browser, and your approximate location.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: "google",
+        title: "Signing in with Google",
+        content: (
+            <>
+                <p>
+                    You can create a Promotello account, or sign in to one, with
+                    your Google account. This is optional: you can always use an
+                    email address and password instead.
+                </p>
+                <p>
+                    <strong>What we receive.</strong> When you choose
+                    &ldquo;Continue with Google&rdquo;, Google asks your
+                    permission and then shares only your basic profile: your
+                    name, your email address (and whether Google has verified
+                    it), your profile photo and your Google account ID. We ask
+                    only for the standard <code>openid</code>,{" "}
+                    <code>email</code> and <code>profile</code> permissions. We
+                    can&apos;t see your Google password, contacts, Gmail,
+                    calendar, files or anything else in your Google account.
+                </p>
+                <p>
+                    <strong>How we use it.</strong> Only to create and sign you
+                    in to your Promotello account, to recognise you when you
+                    come back, to show your name and photo in your account, and
+                    to send the service emails described below. We don&apos;t
+                    use Google user data for advertising, we don&apos;t sell it,
+                    and we don&apos;t use it to build profiles of you or to
+                    train AI models.
+                </p>
+                <p>
+                    <strong>Who sees it.</strong> It&apos;s stored by our sign-in
+                    and database provider, Supabase, and isn&apos;t shared with
+                    anyone else except as this policy describes (for example, a
+                    business you visit sees your first name on your voucher).
+                    People at Promotello only look at it to provide support,
+                    for security, or where the law requires.
+                </p>
+                <p>
+                    <strong>How long we keep it, and deleting it.</strong> We keep
+                    it while you have an account. Delete your account in{" "}
+                    <Link href="/account/privacy">Account → Privacy &amp; data</Link>{" "}
+                    and we delete it as described under &ldquo;How long we keep
+                    information&rdquo;. You can also remove Promotello&apos;s
+                    access at any time in your Google Account&apos;s{" "}
+                    <a href="https://myaccount.google.com/connections" target="_blank" rel="noopener noreferrer">
+                        third-party connections
+                    </a>
+                    ; you can then still sign in with an email and password if
+                    you set one.
+                </p>
+                <p>
+                    Promotello&apos;s use of information received from Google
+                    APIs adheres to the{" "}
+                    <a
+                        href="https://developers.google.com/terms/api-services-user-data-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Google API Services User Data Policy
+                    </a>
+                    , including the Limited Use requirements.
                 </p>
             </>
         ),
@@ -249,7 +317,7 @@ const sections: LegalSection[] = [
                     for us under contract:
                 </p>
                 <ul>
-                    <li>Supabase: database, sign-in and file storage</li>
+                    <li>Supabase: database, sign-in (including Google sign-in) and file storage</li>
                     <li>Vercel: website hosting</li>
                     <li>Resend: sending emails</li>
                     <li>Stripe: subscription payments for businesses</li>
@@ -274,21 +342,21 @@ const sections: LegalSection[] = [
                 <li>
                     Account, voucher, loyalty and follow information: while your
                     account is open. When you delete your account, we delete it
-                    or make it anonymous within [30] days.
+                    or make it anonymous within 30 days.
                 </li>
                 <li>
                     Records of sent emails and review clicks: deleted with your
                     account.
                 </li>
                 <li>
-                    Billing and tax records: [6] years, as UK law requires.
+                    Billing and tax records: 6 years, as UK law requires.
                 </li>
-                <li>Contact-form messages: [2] years.</li>
+                <li>Contact-form messages: 2 years.</li>
                 <li>
                     Page view and QR scan counts aren&apos;t personal
                     information, so we may keep them.
                 </li>
-                <li>Google Analytics data: [14] months.</li>
+                <li>Google Analytics data: 2 months, after which Google deletes it.</li>
             </ul>
         ),
     },
@@ -301,8 +369,9 @@ const sections: LegalSection[] = [
                 States. Where your information leaves the UK, we rely on UK
                 adequacy regulations (including the UK Extension to the EU-US
                 Data Privacy Framework) or the UK International Data Transfer
-                Addendum to protect it. [Confirm the region our Supabase project
-                is hosted in.]
+                Addendum to protect it. Our database, sign-in and file storage
+                (Supabase) are hosted in the European Union, which the UK
+                recognises as protecting personal information adequately.
             </p>
         ),
     },
@@ -326,9 +395,10 @@ const sections: LegalSection[] = [
                     <Link href="/account/privacy">Account → Privacy &amp; data</Link>.
                 </p>
                 <p>
-                    Make a request through our{" "}
-                    <Link href="/contact">contact page</Link> using your account
-                    email. We&apos;ll reply within one month, and may ask you to
+                    Make a request by emailing{" "}
+                    <a href="mailto:hello@promotello.com">hello@promotello.com</a>{" "}
+                    from your account email, or through our{" "}
+                    <Link href="/contact">contact page</Link>. We&apos;ll reply within one month, and may ask you to
                     confirm your identity first.
                 </p>
                 <p>
@@ -371,9 +441,8 @@ export default function PrivacyPage() {
         <LegalDocument
             title="Privacy policy"
             description="How we handle personal information when you visit or use Promotello."
-            updatedAt="24 October 2026"
-            version="Draft for review"
-            draft
+            updatedAt="25 October 2026"
+            version="1.0"
             summary={summary}
             sections={sections}
         />

@@ -203,8 +203,7 @@ export default function CookiesPage() {
             title="Cookie policy"
             description="Information about cookies, similar technologies, and your choices when using Promotello."
             updatedAt="24 October 2026"
-            version="Draft for review"
-            draft
+            version="1.0"
             summary={summary}
             sections={sections}
         />

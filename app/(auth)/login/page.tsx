@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FieldError, invalidProps } from "@/components/field-error";
+import { SocialSignIn } from "@/components/social-sign-in";
 import { safeNextPath } from "@/lib/redirects";
 import { email } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
@@ -53,7 +54,9 @@ function LoginContent() {
             ? `/signup?next=${encodeURIComponent(requestedNext)}`
             : "/signup";
 
-    const hasCallbackError = Boolean(searchParams.get("error"));
+    const callbackError = searchParams.get("error");
+    const hasCallbackError = Boolean(callbackError) && callbackError !== "oauth";
+    const hasOAuthError = callbackError === "oauth";
 
     const [showPassword, setShowPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -148,10 +151,26 @@ function LoginContent() {
                             </Alert>
                         )}
 
+                        {hasOAuthError && (
+                            <Alert className="mt-6">
+                                <AlertTitle>
+                                    You weren’t signed in
+                                </AlertTitle>
+
+                                <AlertDescription>
+                                    Signing in with Google or Apple was
+                                    cancelled or didn’t finish. Try again, or
+                                    use your email and password.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <SocialSignIn next={destination} />
+
                         <form
                             onSubmit={handleSubmit(onSubmit)}
                             noValidate
-                            className="mt-8 space-y-5"
+                            className="mt-6 space-y-5"
                             aria-busy={isSubmitting}
                         >
                             <div className="space-y-2">
