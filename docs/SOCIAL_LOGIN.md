@@ -26,7 +26,8 @@ Supabase dashboard → **Authentication → URL Configuration**:
 2. **APIs & Services → OAuth consent screen** (Google Auth Platform):
    - User type **External**; app name **Promotello**; support email; logo.
    - App domain `https://www.promotello.com`, privacy policy `https://www.promotello.com/legal/privacy`, terms `https://www.promotello.com/legal/terms`.
-   - Authorised domains: `promotello.com` and `supabase.co`.
+   - Authorised domains: `promotello.com` and `owdxoarqivpoplpqiylt.supabase.co`. (Google rejects plain `supabase.co`, which is a public suffix.)
+   - Google's sign-in screen will say "continue to owdxoarqivpoplpqiylt.supabase.co" until Supabase has a custom domain (a paid add-on, e.g. `auth.promotello.com`). Then add that domain here and use its callback URL instead.
    - Scopes: `openid`, `email`, `profile` (the defaults).
    - **Publish** the app, so anyone can sign in, not just test users.
 3. **Credentials → Create credentials → OAuth client ID**, type **Web application**:
