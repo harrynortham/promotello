@@ -9,7 +9,7 @@ import { plans } from "@/lib/billing";
 // /business/features.
 
 export function Eyebrow({ children }: { children: ReactNode }) {
-    return <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">{children}</p>;
+    return <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">{children}</p>;
 }
 
 // Text on one side, a product visual on the other; alternate with `reverse`.
@@ -42,7 +42,7 @@ export function FeatureSection({
                     <ul className="mt-6 space-y-3">
                         {points.map((point) => (
                             <li key={point} className="flex gap-3 text-[#17233B]/80">
-                                <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
+                                <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#C8371D]" />
                                 {point}
                             </li>
                         ))}
@@ -130,13 +130,13 @@ export function PlansSummary() {
                     <p className="font-semibold">{plan.name}</p>
                     <p className="mt-2">
                         <span className="text-4xl font-semibold tracking-tight">{plan.price}</span>{" "}
-                        <span className="text-sm text-[#17233B]/55">{plan.note}</span>
+                        <span className="text-sm text-[#17233B]/70">{plan.note}</span>
                     </p>
                     <p className="mt-2 text-sm text-[#17233B]/65">{plan.description}</p>
                     <ul className="mt-5 space-y-2 text-sm">
                         {plan.features.map((feature) => (
                             <li key={feature} className="flex gap-2">
-                                <FiCheck aria-hidden="true" className="mt-0.5 shrink-0 text-[#FF593F]" />
+                                <FiCheck aria-hidden="true" className="mt-0.5 shrink-0 text-[#C8371D]" />
                                 {feature}
                             </li>
                         ))}

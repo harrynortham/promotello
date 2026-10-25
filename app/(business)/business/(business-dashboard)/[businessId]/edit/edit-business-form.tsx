@@ -303,7 +303,7 @@ function HoursRow({
                     </div>
 
                     {isClosed ? (
-                        <span className="text-sm text-[#17233B]/55">Closed</span>
+                        <span className="text-sm text-[#17233B]/70">Closed</span>
                     ) : (
                         <div className="flex items-center gap-3">
                             <Input
@@ -313,7 +313,7 @@ function HoursRow({
                                 {...register(`hours.${index}.opensAt`)}
                             />
 
-                            <span className="text-sm text-[#17233B]/50">to</span>
+                            <span className="text-sm text-[#17233B]/65">to</span>
 
                             <Input
                                 type="time"
@@ -484,7 +484,7 @@ function BusinessForm({
                 </Button>
 
                 <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Business settings
                     </p>
 
@@ -506,7 +506,7 @@ function BusinessForm({
                                         Business details
                                     </h2>
 
-                                    <p className="mt-1 text-sm text-[#17233B]/60">
+                                    <p className="mt-1 text-sm text-[#17233B]/70">
                                         Information customers will see on your business profile.
                                     </p>
                                 </div>
@@ -535,7 +535,7 @@ function BusinessForm({
                                     />
 
                                     <FieldError id="logo-error" message={errors.root?.logo?.message} />
-                                    <p className="text-xs text-[#17233B]/50">
+                                    <p className="text-xs text-[#17233B]/65">
                                         Use a PNG, JPG or WebP image under 5MB.
                                     </p>
                                 </div>
@@ -613,7 +613,7 @@ function BusinessForm({
                                     />
                                     <FieldError id="googleReviewUrl-error" message={errors.googleReviewUrl?.message} />
 
-                                    <p className="text-xs leading-5 text-[#17233B]/55">
+                                    <p className="text-xs leading-5 text-[#17233B]/70">
                                         In Google Business Profile, choose &ldquo;Ask for
                                         reviews&rdquo; and copy the link. On Pro, customers who
                                         recently visited are asked to leave you a review.
@@ -630,7 +630,7 @@ function BusinessForm({
                                             Main location
                                         </h2>
 
-                                        <p className="mt-1 text-sm text-[#17233B]/60">
+                                        <p className="mt-1 text-sm text-[#17233B]/70">
                                             This location appears on your public business profile.
                                         </p>
                                     </div>

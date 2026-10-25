@@ -60,7 +60,7 @@ export default function EventsPage() {
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="border-b border-[#17233B]/10 bg-white">
                 <div className="mx-auto max-w-7xl px-6 py-12 sm:px-10 sm:py-16">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">What&apos;s on</p>
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">What&apos;s on</p>
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Local events</h1>
                     <p className="mt-3 max-w-2xl text-lg text-[#17233B]/65">
                         Tastings, live music, workshops and late openings at independent businesses.

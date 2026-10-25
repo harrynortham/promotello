@@ -33,7 +33,7 @@ export function BusinessNeedsAttention({
     return (
         <section className="mt-8">
             <div className="mb-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
                     Action required
                 </p>
 
@@ -41,7 +41,7 @@ export function BusinessNeedsAttention({
                     Needs your attention
                 </h2>
 
-                <p className="mt-2 text-sm text-[#17233B]/60">
+                <p className="mt-2 text-sm text-[#17233B]/70">
                     Resolve these items to keep your businesses and promotions
                     performing well.
                 </p>

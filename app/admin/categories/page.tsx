@@ -126,13 +126,13 @@ function EditCategory({
             <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{category.name}</span>
-                    <span className="text-sm text-[#17233B]/50">/{category.slug}</span>
+                    <span className="text-sm text-[#17233B]/65">/{category.slug}</span>
                     {!category.is_active && (
                         <Badge variant="outline">Hidden</Badge>
                     )}
                 </div>
 
-                <span className="text-sm text-[#17233B]/55">
+                <span className="text-sm text-[#17233B]/70">
                     {usage.businesses} businesses · {usage.offers} offers
                 </span>
             </summary>
@@ -168,7 +168,7 @@ function EditCategory({
                         Delete
                     </Button>
                     {inUse && (
-                        <p className="mt-2 text-xs text-[#17233B]/55">
+                        <p className="mt-2 text-xs text-[#17233B]/70">
                             {hasSubcategories
                                 ? "Has subcategories, so it can't be deleted."
                                 : "In use, so it can't be deleted."}{" "}
@@ -255,7 +255,7 @@ async function CategoriesContent({ searchParams }: PageProps) {
                                         <CardTitle className="text-2xl">
                                             {group.name}
                                         </CardTitle>
-                                        <span className="text-sm text-[#17233B]/55">
+                                        <span className="text-sm text-[#17233B]/70">
                                             {group.subcategories.length} subcategories ·{" "}
                                             {groupUsage} businesses
                                         </span>
@@ -279,7 +279,7 @@ async function CategoriesContent({ searchParams }: PageProps) {
                                         ))}
 
                                         <details className="rounded-xl border border-dashed border-[#17233B]/20">
-                                            <summary className="cursor-pointer list-none p-4 text-sm font-medium text-[#FF593F]">
+                                            <summary className="cursor-pointer list-none p-4 text-sm font-medium text-[#C8371D]">
                                                 + Add a subcategory to {group.name}
                                             </summary>
                                             <form

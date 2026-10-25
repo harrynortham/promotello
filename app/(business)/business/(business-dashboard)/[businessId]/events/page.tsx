@@ -89,7 +89,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
     return (
         <main className="space-y-8 text-[#17233B]">
             <header>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">Growth</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Events</h1>
                 <p className="mt-3 max-w-2xl text-[#17233B]/65">
                     Tastings, live music, workshops, late openings. Events show on your page and in
@@ -171,7 +171,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
             <section>
                 <h2 className="text-xl font-semibold">Coming up</h2>
                 {upcoming.length === 0 ? (
-                    <p className="mt-3 rounded-xl border border-dashed border-[#17233B]/15 bg-white px-4 py-8 text-center text-sm text-[#17233B]/55">
+                    <p className="mt-3 rounded-xl border border-dashed border-[#17233B]/15 bg-white px-4 py-8 text-center text-sm text-[#17233B]/70">
                         No upcoming events.
                     </p>
                 ) : (
@@ -179,12 +179,12 @@ async function EventsContent({ params, searchParams }: PageProps) {
                         {upcoming.map((event) => (
                             <li key={event.id} className="flex flex-col gap-3 rounded-xl border border-[#17233B]/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex gap-3">
-                                    <FiCalendar aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
+                                    <FiCalendar aria-hidden="true" className="mt-1 shrink-0 text-[#C8371D]" />
                                     <div>
-                                        <Link href={`/events/${event.id}`} className="font-semibold hover:text-[#FF593F]">
+                                        <Link href={`/events/${event.id}`} className="font-semibold hover:text-[#C8371D]">
                                             {event.title}
                                         </Link>
-                                        <p className="text-sm text-[#17233B]/60">
+                                        <p className="text-sm text-[#17233B]/70">
                                             {formatEventTime(event.starts_at, event.ends_at)}
                                             {event.price ? ` · ${event.price}` : ""}
                                         </p>
@@ -220,7 +220,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
             {past.length > 0 && (
                 <section>
                     <h2 className="text-lg font-semibold">Recent</h2>
-                    <ul className="mt-3 space-y-2 text-sm text-[#17233B]/60">
+                    <ul className="mt-3 space-y-2 text-sm text-[#17233B]/70">
                         {past.map((event) => (
                             <li key={event.id}>
                                 {event.title} · {formatEventTime(event.starts_at, event.ends_at)}

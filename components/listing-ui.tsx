@@ -23,7 +23,7 @@ export function SectionHeading({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 {eyebrow && (
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
                         {eyebrow}
                     </p>
                 )}
@@ -40,7 +40,7 @@ export function SectionHeading({
             {href && (
                 <Link
                     href={href}
-                    className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#17233B] hover:text-[#FF593F]"
+                    className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#17233B] hover:text-[#C8371D]"
                 >
                     {linkLabel ?? "See all"}
                     <FiArrowRight aria-hidden="true" />
@@ -99,7 +99,7 @@ export function SearchForm({
                 value ? <input key={name} type="hidden" name={name} value={value} /> : null,
             )}
 
-            <FiSearch aria-hidden="true" className="ml-3 size-5 shrink-0 text-[#17233B]/40" />
+            <FiSearch aria-hidden="true" className="ml-3 size-5 shrink-0 text-[#17233B]/65" />
 
             <input
                 type="search"
@@ -107,7 +107,7 @@ export function SearchForm({
                 defaultValue={defaultValue}
                 placeholder={placeholder}
                 aria-label={placeholder}
-                className={`min-w-0 flex-1 bg-transparent px-1 text-[#17233B] outline-none placeholder:text-[#17233B]/45 ${size === "lg" ? "h-12 text-base" : "h-10 text-sm"}`}
+                className={`min-w-0 flex-1 bg-transparent px-1 text-[#17233B] outline-none placeholder:text-[#17233B]/65 ${size === "lg" ? "h-12 text-base" : "h-10 text-sm"}`}
             />
 
             <Button type="submit" size={size === "lg" ? "lg" : "default"} className="shrink-0 rounded-xl">

@@ -126,11 +126,11 @@ export default function NewOfferForm({
             <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
                 <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
                     <CardContent className="p-8 sm:p-10">
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl text-[#FF593F]">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl text-[#C8371D]">
                             ✓
                         </div>
 
-                        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                             {createdOffer === "live" ? "Promotion live" : "Promotion submitted"}
                         </p>
 
@@ -182,7 +182,7 @@ export default function NewOfferForm({
                 </Button>
 
                 <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         New promotion
                     </p>
 
@@ -218,7 +218,7 @@ export default function NewOfferForm({
                                 />
 
                                 <FieldError id="image-error" message={errors.root?.image?.message} />
-                                <p className="text-xs text-[#17233B]/50">
+                                <p className="text-xs text-[#17233B]/65">
                                     Optional. Use a JPG, PNG or WebP image under 5MB.
                                 </p>
                             </div>

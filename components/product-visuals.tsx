@@ -49,7 +49,7 @@ export function BrowserFrame({ children, url, label, className = "" }: { childre
                 <span className="size-2.5 rounded-full bg-[#FF593F]/60" />
                 <span className="size-2.5 rounded-full bg-[#17233B]/15" />
                 <span className="size-2.5 rounded-full bg-[#17233B]/15" />
-                <span className="ml-3 truncate rounded-md bg-white px-3 py-0.5 text-[11px] text-[#17233B]/50">{url}</span>
+                <span className="ml-3 truncate rounded-md bg-white px-3 py-0.5 text-[11px] text-[#17233B]/65">{url}</span>
             </div>
             <div className="text-[#17233B]">{children}</div>
         </figure>
@@ -75,18 +75,18 @@ export function LoyaltyCardScreen({
 }) {
     return (
         <PhoneFrame label="A customer's loyalty card on their phone">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">My loyalty cards</p>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <p className="text-xs text-[#17233B]/55">{businessName}</p>
+                <p className="text-xs text-[#17233B]/70">{businessName}</p>
                 <p className="mt-0.5 font-semibold leading-snug">{headline}</p>
                 <div className="mt-3">
                     <LoyaltyStamps stamps={stamps} required={required} size="sm" />
                 </div>
-                <p className="mt-3 text-xs text-[#17233B]/55">{required - stamps} more to {reward}</p>
+                <p className="mt-3 text-xs text-[#17233B]/70">{required - stamps} more to {reward}</p>
             </div>
             <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
                 <VoucherQr code="HGCARD7Q2K" className="mx-auto w-28" />
-                <p className="mt-2 text-[11px] text-[#17233B]/55">Show this to be stamped</p>
+                <p className="mt-2 text-[11px] text-[#17233B]/70">Show this to be stamped</p>
             </div>
         </PhoneFrame>
     );
@@ -95,14 +95,14 @@ export function LoyaltyCardScreen({
 export function VoucherScreen() {
     return (
         <PhoneFrame label="A customer's voucher on their phone">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My vouchers</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">My vouchers</p>
             <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
-                <span className="inline-flex rounded-full bg-[#FF593F] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
+                <span className="inline-flex rounded-full bg-[#C8371D] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
                 <p className="mt-2 text-sm font-semibold leading-snug">With any coffee before 10am</p>
-                <p className="text-xs text-[#17233B]/55">{business}</p>
+                <p className="text-xs text-[#17233B]/70">{business}</p>
                 <VoucherQr code="HG7K2Q4M8P" className="mx-auto mt-3 w-32" />
                 <p className="mt-2 font-mono text-sm font-semibold tracking-widest">HG7K2Q4M8P</p>
-                <p className="mt-1 text-[11px] text-[#17233B]/55">Staff scan this to redeem</p>
+                <p className="mt-1 text-[11px] text-[#17233B]/70">Staff scan this to redeem</p>
             </div>
         </PhoneFrame>
     );
@@ -115,17 +115,17 @@ export function VoucherScreen() {
 export function StaffScanScreen() {
     return (
         <PhoneFrame label="A member of staff stamping a card after scanning it">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
-                <FiCamera aria-hidden="true" className="text-[#FF593F]" />
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#17233B]/70">
+                <FiCamera aria-hidden="true" className="text-[#C8371D]" />
                 Scanned
             </div>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <p className="text-xs text-[#17233B]/55">Loyalty card</p>
+                <p className="text-xs text-[#17233B]/70">Loyalty card</p>
                 <p className="mt-0.5 font-semibold">Ellie · 7 of 10 stamps</p>
                 <div className="mt-3">
                     <LoyaltyStamps stamps={7} required={10} size="sm" />
                 </div>
-                <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Add stamp</div>
+                <div className="mt-4 rounded-xl bg-[#C8371D] py-2.5 text-center text-sm font-semibold text-white">Add stamp</div>
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
                 <FiCheckCircle aria-hidden="true" className="shrink-0" />
@@ -155,14 +155,14 @@ export function PosterVisual({
             aria-label="A printable QR poster for a shop window"
             className={`w-60 rotate-[-2deg] rounded-2xl border-[6px] border-[#17233B] bg-white p-6 text-center text-[#17233B] shadow-2xl shadow-[#17233B]/20 ${className}`}
         >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF593F]">Scan me</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#C8371D]">Scan me</p>
             <p className="mt-2 text-xl font-semibold leading-tight">{headline}</p>
             <div
                 aria-hidden="true"
                 className="mx-auto mt-4 w-36 [&_svg]:h-auto [&_svg]:w-full"
                 dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
-            <p className="mt-4 text-xs text-[#17233B]/60">{businessName} · on Promotello</p>
+            <p className="mt-4 text-xs text-[#17233B]/70">{businessName} · on Promotello</p>
         </figure>
     );
 }
@@ -224,7 +224,7 @@ export function DashboardScreen({ className = "" }: { className?: string }) {
                         {nav.map(({ icon: Icon, label, active }) => (
                             <li
                                 key={label}
-                                className={`flex items-center gap-2 rounded-full px-2 py-1.5 text-[11px] ${active ? "bg-[#FF593F]/10 font-semibold text-[#C2341F]" : "text-[#17233B]/60"}`}
+                                className={`flex items-center gap-2 rounded-full px-2 py-1.5 text-[11px] ${active ? "bg-[#FF593F]/10 font-semibold text-[#C2341F]" : "text-[#17233B]/70"}`}
                             >
                                 <Icon aria-hidden="true" className="size-3" />
                                 {label}
@@ -233,7 +233,7 @@ export function DashboardScreen({ className = "" }: { className?: string }) {
                     </ul>
                 </div>
                 <div className="col-span-2 p-4 sm:col-span-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">Last 30 days</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">Last 30 days</p>
                     <p className="text-sm font-semibold">What Promotello brought you</p>
                     <div className="mt-3 grid grid-cols-3 gap-2">
                         {[
@@ -242,7 +242,7 @@ export function DashboardScreen({ className = "" }: { className?: string }) {
                             ["QR scans", "403", "▲ 40%"],
                         ].map(([label, value, change]) => (
                             <div key={label} className="rounded-lg border border-[#17233B]/10 p-2">
-                                <p className="text-[10px] text-[#17233B]/55">{label}</p>
+                                <p className="text-[10px] text-[#17233B]/70">{label}</p>
                                 <p className="text-lg font-semibold tabular-nums">{value}</p>
                                 <p className="text-[10px] text-emerald-700">{change}</p>
                             </div>
@@ -266,7 +266,7 @@ function EmailShell({ from, subject, children, label }: { from: string; subject:
         <figure aria-label={label} className="w-full max-w-sm rounded-2xl border border-[#17233B]/10 bg-white text-[#17233B] shadow-xl shadow-[#17233B]/10">
             <div className="border-b border-[#17233B]/10 px-5 py-3">
                 <p className="text-xs font-semibold">{from}</p>
-                <p className="truncate text-xs text-[#17233B]/55">{subject}</p>
+                <p className="truncate text-xs text-[#17233B]/70">{subject}</p>
             </div>
             <div className="p-5">{children}</div>
         </figure>
@@ -283,11 +283,11 @@ export function NewOfferEmail() {
             <div className="relative -mx-5 -mt-5 mb-4 aspect-[2/1] overflow-hidden">
                 <Image src="/images/marketing/harbour-grind-cafe.jpg" alt="" fill sizes="384px" className="object-cover" />
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">New from {business}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">New from {business}</p>
             <p className="mt-2 text-lg font-semibold leading-snug">Two flat whites for £5 on Mondays</p>
             <span className="mt-2 inline-flex rounded-full bg-[#FF593F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#C2341F]">2 for £5</span>
-            <div className="mt-4 inline-flex rounded-lg bg-[#FF593F] px-4 py-2 text-sm font-semibold text-white">Claim this offer</div>
-            <p className="mt-4 text-[10px] text-[#17233B]/45">You follow {business} · Unsubscribe</p>
+            <div className="mt-4 inline-flex rounded-lg bg-[#C8371D] px-4 py-2 text-sm font-semibold text-white">Claim this offer</div>
+            <p className="mt-4 text-[10px] text-[#17233B]/65">You follow {business} · Unsubscribe</p>
         </EmailShell>
     );
 }
@@ -302,10 +302,10 @@ export function BirthdayEmail() {
             <p className="text-lg font-semibold">Happy birthday, Ellie! 🎂</p>
             <p className="mt-2 text-sm leading-6 text-[#17233B]/70">Everyone at {business} hopes you have a lovely day. Here&apos;s a treat from us.</p>
             <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#FFF8F0] px-3 py-2 text-sm">
-                <FiGift aria-hidden="true" className="text-[#FF593F]" />
+                <FiGift aria-hidden="true" className="text-[#C8371D]" />
                 <span>A free slice of cake · code <span className="font-mono font-semibold">G4K9QX2M7</span></span>
             </div>
-            <p className="mt-4 text-[10px] text-[#17233B]/45">Sent automatically · Unsubscribe</p>
+            <p className="mt-4 text-[10px] text-[#17233B]/65">Sent automatically · Unsubscribe</p>
         </EmailShell>
     );
 }
@@ -320,7 +320,7 @@ export function MonthlyReportEmail() {
 
     return (
         <EmailShell label="The monthly value report email" from="Promotello" subject="Your September on Promotello">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">{business} · September</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">{business} · September</p>
             <p className="mt-2 font-semibold leading-snug">312 customer visits came through Promotello in September.</p>
             <table className="mt-3 w-full text-xs">
                 <tbody>
@@ -346,12 +346,12 @@ export function FloatingNote({ icon, title, detail, className = "" }: { icon: "c
 
     return (
         <div className={`flex items-center gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-3 pr-5 text-[#17233B] shadow-lg ${className}`}>
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#C8371D]">
                 <Icon aria-hidden="true" />
             </span>
             <span>
                 <span className="block text-sm font-semibold">{title}</span>
-                <span className="block text-xs text-[#17233B]/55">{detail}</span>
+                <span className="block text-xs text-[#17233B]/70">{detail}</span>
             </span>
         </div>
     );
@@ -364,19 +364,19 @@ export function FloatingNote({ icon, title, detail, className = "" }: { icon: "c
 export function ReviewPromptScreen() {
     return (
         <PhoneFrame label="A customer being asked for a Google review after a visit">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My dashboard</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">My dashboard</p>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-1 text-[#FF593F]" aria-hidden="true">
+                <div className="flex items-center gap-1 text-[#C8371D]" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((star) => (
                         <FiStar key={star} className="size-4 fill-current" />
                     ))}
                 </div>
                 <p className="mt-2 font-semibold leading-snug">How was your visit to {business}?</p>
-                <p className="mt-1 text-xs text-[#17233B]/55">You used a voucher there yesterday.</p>
+                <p className="mt-1 text-xs text-[#17233B]/70">You used a voucher there yesterday.</p>
                 <div className="mt-3 rounded-xl bg-[#17233B] py-2 text-center text-sm font-semibold text-white">Leave a Google review</div>
             </div>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <p className="text-xs text-[#17233B]/55">Ready to use</p>
+                <p className="text-xs text-[#17233B]/70">Ready to use</p>
                 <p className="mt-0.5 text-sm font-semibold">Two flat whites for £5</p>
             </div>
         </PhoneFrame>
@@ -401,7 +401,7 @@ export function QuietHoursCard() {
                 {days.map(([day, on]) => (
                     <span
                         key={day}
-                        className={`rounded-full border px-3 py-1 text-xs ${on ? "border-[#FF593F] bg-[#FF593F] text-white" : "border-[#17233B]/15"}`}
+                        className={`rounded-full border px-3 py-1 text-xs ${on ? "border-[#FF593F] bg-[#C8371D] text-white" : "border-[#17233B]/15"}`}
                     >
                         {day}
                     </span>
@@ -411,7 +411,7 @@ export function QuietHoursCard() {
                 <div className="rounded-lg border border-[#17233B]/10 px-3 py-2">From 2:00pm</div>
                 <div className="rounded-lg border border-[#17233B]/10 px-3 py-2">Until 4:00pm</div>
             </div>
-            <p className="mt-4 text-xs text-[#17233B]/60">Customers can claim it any time, and use it Mon–Thu, 2pm–4pm.</p>
+            <p className="mt-4 text-xs text-[#17233B]/70">Customers can claim it any time, and use it Mon–Thu, 2pm–4pm.</p>
         </div>
     );
 }
@@ -427,12 +427,12 @@ export function StoryImagePreview() {
                 <p className="mt-1 text-sm opacity-80">{business}</p>
             </div>
             <div>
-                <span className="inline-flex rounded-full bg-[#FF593F] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
+                <span className="inline-flex rounded-full bg-[#C8371D] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
                 <p className="mt-3 text-2xl font-semibold leading-tight">With any coffee before 10am</p>
             </div>
             <div>
                 <p className="text-[10px] opacity-70">Find it on</p>
-                <p className="text-lg font-semibold text-[#FF593F]">promotello</p>
+                <p className="text-lg font-semibold text-[#C8371D]">promotello</p>
             </div>
         </figure>
     );
@@ -447,16 +447,16 @@ export function OfferClaimScreen() {
         <PhoneFrame label="A customer claiming a promotion on their phone">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
                 <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="220px" className="object-cover" />
-                <span className="absolute left-2 top-2 rounded-full bg-[#FF593F] px-2.5 py-0.5 text-[11px] font-semibold text-white">Free pastry</span>
+                <span className="absolute left-2 top-2 rounded-full bg-[#C8371D] px-2.5 py-0.5 text-[11px] font-semibold text-white">Free pastry</span>
             </div>
-            <p className="mt-3 text-xs text-[#17233B]/55">{business} · Gloucester Road</p>
+            <p className="mt-3 text-xs text-[#17233B]/70">{business} · Gloucester Road</p>
             <p className="mt-0.5 font-semibold leading-snug">Free pastry with any coffee before 10am</p>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-[#17233B]/60">
+            <div className="mt-3 flex items-center justify-between text-[11px] text-[#17233B]/70">
                 <span>Weekdays before 10am</span>
                 <span className="shrink-0 whitespace-nowrap rounded-full bg-[#FF593F]/10 px-2 py-0.5 font-semibold text-[#C2341F]">16 of 100 left</span>
             </div>
-            <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>
-            <p className="mt-2 text-center text-[10px] text-[#17233B]/50">Free to claim · Use it in store</p>
+            <div className="mt-4 rounded-xl bg-[#C8371D] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>
+            <p className="mt-2 text-center text-[10px] text-[#17233B]/65">Free to claim · Use it in store</p>
         </PhoneFrame>
     );
 }
@@ -484,7 +484,7 @@ export function WhatsAppShareScreen() {
                         </div>
                         <div className="px-2 py-1.5">
                             <p className="text-[11px] font-semibold leading-snug">Free pastry at {business}: with any coffee before 10am</p>
-                            <p className="text-[10px] text-[#17233B]/55">promotello.com</p>
+                            <p className="text-[10px] text-[#17233B]/70">promotello.com</p>
                         </div>
                     </div>
                     <p className="px-2 pb-1.5 text-[11px]">Free pastry before 10am this week 🥐 who&apos;s in?</p>
@@ -503,9 +503,9 @@ export function SquarePostPreview({ className = "" }: { className?: string }) {
             <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="240px" className="object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-b from-transparent via-[#17233B]/30 to-[#17233B]/95 p-4 text-[#FFF8F0]">
                 <p className="text-[9px] uppercase tracking-[0.18em] text-[#FF8F7D]">{business}</p>
-                <span className="mt-1.5 inline-flex self-start rounded-full bg-[#FF593F] px-2 py-0.5 text-[10px] font-semibold text-white">Free pastry</span>
+                <span className="mt-1.5 inline-flex self-start rounded-full bg-[#C8371D] px-2 py-0.5 text-[10px] font-semibold text-white">Free pastry</span>
                 <p className="mt-1.5 text-base font-semibold leading-tight">With any coffee before 10am</p>
-                <p className="mt-2 text-right text-xs font-semibold text-[#FF593F]">promotello</p>
+                <p className="mt-2 text-right text-xs font-semibold text-[#C8371D]">promotello</p>
             </div>
         </figure>
     );

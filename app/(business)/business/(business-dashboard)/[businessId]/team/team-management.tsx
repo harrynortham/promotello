@@ -284,7 +284,7 @@ export default function TeamManagement({
                 </Button>
 
                 <header className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Team management
                     </p>
 
@@ -390,7 +390,7 @@ export default function TeamManagement({
 
                     <CardContent className="space-y-4">
                         {members.length === 0 ? (
-                            <p className="text-sm text-[#17233B]/60">
+                            <p className="text-sm text-[#17233B]/70">
                                 No team members found.
                             </p>
                         ) : (
@@ -471,7 +471,7 @@ export default function TeamManagement({
 
                     <CardContent className="space-y-4">
                         {pendingInvitations.length === 0 ? (
-                            <p className="text-sm text-[#17233B]/60">
+                            <p className="text-sm text-[#17233B]/70">
                                 No pending invitations.
                             </p>
                         ) : (
@@ -486,7 +486,7 @@ export default function TeamManagement({
                                                     {invitation.role === "owner" ? "Hand-over" : invitation.role}
                                                 </Badge>
 
-                                                <span className="text-sm text-[#17233B]/55">
+                                                <span className="text-sm text-[#17233B]/70">
                                                     Expires{" "}
                                                     {new Date(
                                                         invitation.expires_at,

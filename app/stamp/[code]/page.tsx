@@ -93,11 +93,11 @@ async function StampContent({ params, searchParams }: PageProps) {
     return (
         <Shell>
             <div className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-                <p className="text-sm font-medium text-[#17233B]/55">{card.business_name} loyalty card</p>
+                <p className="text-sm font-medium text-[#17233B]/70">{card.business_name} loyalty card</p>
                 <h1 className="mt-1 text-2xl font-semibold">
                     {card.customer_name ? `${card.customer_name}'s card` : "Customer card"}
                 </h1>
-                <p className="mt-1 font-mono text-sm tracking-widest text-[#17233B]/50">{card.card_code}</p>
+                <p className="mt-1 font-mono text-sm tracking-widest text-[#17233B]/65">{card.card_code}</p>
 
                 {done && !error && (
                     <Alert className="mt-5 border-emerald-200 bg-emerald-50 text-emerald-900">
@@ -128,7 +128,7 @@ async function StampContent({ params, searchParams }: PageProps) {
                         <LoyaltyStamps stamps={card.stamps} required={card.stamps_required} />
                     </div>
                     {card.rewards_redeemed > 0 && (
-                        <p className="mt-4 text-xs text-[#17233B]/55">
+                        <p className="mt-4 text-xs text-[#17233B]/70">
                             {card.rewards_redeemed} {card.rewards_redeemed === 1 ? "reward" : "rewards"} redeemed so far
                         </p>
                     )}

@@ -99,7 +99,7 @@ function AreaCard({
             <ul className="flex-1 space-y-2 p-5 text-sm">
                 {offers.slice(0, 3).map((offer) => (
                     <li key={offer.id} className="flex gap-2">
-                        <span className="shrink-0 font-semibold text-[#FF593F]">{offer.discount}</span>
+                        <span className="shrink-0 font-semibold text-[#C8371D]">{offer.discount}</span>
                         <span className="truncate text-[#17233B]/70">
                             {offer.business.name}
                         </span>
@@ -107,7 +107,7 @@ function AreaCard({
                 ))}
             </ul>
 
-            <p className="flex items-center gap-1.5 border-t border-[#17233B]/10 px-5 py-4 text-sm font-semibold text-[#17233B] group-hover:text-[#FF593F]">
+            <p className="flex items-center gap-1.5 border-t border-[#17233B]/10 px-5 py-4 text-sm font-semibold text-[#17233B] group-hover:text-[#C8371D]">
                 Explore {name}
                 <FiArrowRight aria-hidden="true" />
             </p>

@@ -79,7 +79,7 @@ export function BusinessRecentRedemptions({
                             No redemptions yet
                         </p>
 
-                        <p className="mt-2 text-sm text-[#17233B]/60">
+                        <p className="mt-2 text-sm text-[#17233B]/70">
                             Customer activity will appear here when someone
                             redeems a promotion.
                         </p>
@@ -95,7 +95,7 @@ export function BusinessRecentRedemptions({
                                                 "Promotion"}
                                         </p>
 
-                                        <p className="mt-1 text-sm text-[#17233B]/60">
+                                        <p className="mt-1 text-sm text-[#17233B]/70">
                                             {formatDate(
                                                 redemption.redeemed_at,
                                             )}

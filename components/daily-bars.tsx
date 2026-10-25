@@ -27,7 +27,7 @@ export function DailyBars({
 
     if (total === 0) {
         return (
-            <p className="rounded-lg border border-dashed border-[#17233B]/15 px-4 py-10 text-center text-sm text-[#17233B]/55">
+            <p className="rounded-lg border border-dashed border-[#17233B]/15 px-4 py-10 text-center text-sm text-[#17233B]/70">
                 {emptyMessage}
             </p>
         );
@@ -37,7 +37,7 @@ export function DailyBars({
         <div>
             <div className="relative h-40" role="img" aria-label={`Daily ${unit}, ${total} in total`}>
                 <div className="absolute inset-x-0 top-0 border-t border-dashed border-[#17233B]/10" />
-                <span className="absolute -top-2 right-0 bg-white pl-1 text-[10px] tabular-nums text-[#17233B]/45">{max}</span>
+                <span className="absolute -top-2 right-0 bg-white pl-1 text-[10px] tabular-nums text-[#17233B]/65">{max}</span>
                 <div className="absolute inset-0 flex items-end gap-[2px] border-b border-[#17233B]/15">
                     {data.map((d) => (
                         <div key={d.day} className="group relative flex h-full flex-1 items-end">
@@ -53,7 +53,7 @@ export function DailyBars({
                     ))}
                 </div>
             </div>
-            <div className="mt-2 flex justify-between text-xs text-[#17233B]/45">
+            <div className="mt-2 flex justify-between text-xs text-[#17233B]/65">
                 <span>{data[0] ? dayLabel(data[0].day) : ""}</span>
                 <span>Today</span>
             </div>

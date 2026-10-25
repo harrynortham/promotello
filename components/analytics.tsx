@@ -44,7 +44,7 @@ export function Analytics() {
                 We&apos;d like to use Google Analytics cookies to see how people
                 use Promotello so we can improve it. They&apos;re off unless you
                 accept.{" "}
-                <Link href="/legal/cookies" className="font-medium text-[#FF593F] underline underline-offset-4">
+                <Link href="/legal/cookies" className="font-medium text-[#C8371D] underline underline-offset-4">
                     Cookie policy
                 </Link>
             </p>

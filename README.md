@@ -40,16 +40,17 @@ npm run dev                  # http://localhost:3000
 
 Set these in `.env.local`, and in Vercel for **both Production and Preview** (the build needs the Supabase ones).
 
-| Variable                                                                       | Needed for                                                                                              |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`             | Everything                                                                                              |
-| `SUPABASE_SERVICE_ROLE_KEY`                                                    | Server jobs (emails, webhooks, cron) and the tests                                                      |
-| `NEXT_PUBLIC_SITE_URL`                                                         | Canonical links, sitemap and emails (default `https://www.promotello.com`)                              |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION_ID` | Billing                                                                                                 |
-| `RESEND_API_KEY`, `EMAIL_FROM`                                                 | Sending email. Without them nothing is sent, which keeps development safe                               |
-| `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                      |
+| Variable                                                                       | Needed for                                                                                                                                       |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`             | Everything                                                                                                                                       |
+| `SUPABASE_SERVICE_ROLE_KEY`                                                    | Server jobs (emails, webhooks, cron) and the tests                                                                                               |
+| `NEXT_PUBLIC_SITE_URL`                                                         | Canonical links, sitemap and emails (default `https://www.promotello.com`)                                                                       |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION_ID` | Billing                                                                                                                                          |
+| `RESEND_API_KEY`, `EMAIL_FROM`                                                 | Sending email. Without them nothing is sent, which keeps development safe                                                                        |
+| `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                                                               |
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID`                                                | Optional: Google Analytics outside production (it's on in production by default, behind cookie consent) |
+| `NEXT_PUBLIC_SENTRY_DSN`                                                      | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally) |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`                                                | Optional: Google Analytics outside production (it's on in production by default, behind cookie consent)                                          |
 
 Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on), so the same code works in test and live mode.
 
@@ -91,15 +92,23 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 ## Still to do
 
 - Take Stripe live: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md)
-- Move Supabase to a paid plan with backups, and a custom domain for auth emails
+- - Supabase paid plan (about $25 a month): it gives daily backups. Today, one bad mistake could lose every account with no way back.
 - Set up BIMI so the logo shows in mail apps
 - A blog (in the app or a CMS)
 - Events: built, and hidden until there are enough customers (`lib/features.ts`)
 - Apple and Google Wallet passes
 - Register company name and bank account for Stripe
 - Add styling to edge function emails, should these move locally to nextjs?
-- Add google and apple logins to register and login page, quicker than verifiying email
+- Add apple logins to register and login page, quicker than verifiying email
 - Find out why businesses or offer urls in sitemap?
-- Dkim records etc fto stop emails going to spam
+- Email authentication: add SPF, DKIM and DMARC records for promotello.com in Resend and your DNS, so welcome and offer emails don't land in spam. I can walk you through it.
 - Fix sending domains in resend so make sense to user
 - Remove confirm password field from sign up email
+- Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register.
+- Add ICO number and companny number to privacy policy and other legal pages
+- Setup google workspace to have email signature and profile photo
+- Add Instagram, TikTok, X and YouTube to google search console
+- Move analytics to hello@promotello.com account
+- Not receiving welcome emails, tested new account creation via google auth
+- Change Vercel from hobby to paid plan
+- Secure all platform emails with unique strong passwords

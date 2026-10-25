@@ -34,7 +34,7 @@ export function PrintToolbar({
                     </Button>
                 ))}
 
-                <Button type="button" size="sm" onClick={() => window.print()} className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+                <Button type="button" size="sm" onClick={() => window.print()} className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
                     <FiPrinter aria-hidden="true" />
                     Print or save as PDF
                 </Button>

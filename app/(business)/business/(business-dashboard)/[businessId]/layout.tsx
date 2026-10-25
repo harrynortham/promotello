@@ -131,7 +131,7 @@ async function BusinessLayoutContent({
                             {currentBusiness.name}
                         </p>
 
-                        <p className="text-sm text-[#17233B]/60">
+                        <p className="text-sm text-[#17233B]/70">
                             Business management
                         </p>
                     </div>

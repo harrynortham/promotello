@@ -46,9 +46,9 @@ function sum(...metrics: (Metric | undefined)[]): Metric {
 function Change({ metric }: { metric: Metric }) {
     if (metric.previous === 0) {
         return metric.current > 0 ? (
-            <span className="text-[#17233B]/55">New this period</span>
+            <span className="text-[#17233B]/70">New this period</span>
         ) : (
-            <span className="text-[#17233B]/40">No activity yet</span>
+            <span className="text-[#17233B]/65">No activity yet</span>
         );
     }
 
@@ -56,9 +56,9 @@ function Change({ metric }: { metric: Metric }) {
     const arrow = percent > 0 ? "▲" : percent < 0 ? "▼" : "";
 
     return (
-        <span className={percent > 0 ? "text-emerald-700" : percent < 0 ? "text-[#17233B]/60" : "text-[#17233B]/55"}>
+        <span className={percent > 0 ? "text-emerald-700" : percent < 0 ? "text-[#17233B]/70" : "text-[#17233B]/70"}>
             {arrow} {Math.abs(percent)}%{" "}
-            <span className="text-[#17233B]/45">vs previous period</span>
+            <span className="text-[#17233B]/65">vs previous period</span>
         </span>
     );
 }
@@ -66,13 +66,13 @@ function Change({ metric }: { metric: Metric }) {
 function Tile({ icon, label, metric, hint }: { icon: ReactNode; label: string; metric: Metric; hint: string }) {
     return (
         <div role="group" aria-label={label} className="rounded-xl border border-[#17233B]/10 bg-white p-5">
-            <div className="flex items-center gap-2 text-sm font-medium text-[#17233B]/60">
-                <span className="text-[#FF593F]">{icon}</span>
+            <div className="flex items-center gap-2 text-sm font-medium text-[#17233B]/70">
+                <span className="text-[#C8371D]">{icon}</span>
                 {label}
             </div>
             <p className="mt-3 text-3xl font-semibold tabular-nums">{metric.current.toLocaleString("en-GB")}</p>
             <p className="mt-1 text-xs"><Change metric={metric} /></p>
-            <p className="mt-3 text-xs text-[#17233B]/50">{hint}</p>
+            <p className="mt-3 text-xs text-[#17233B]/65">{hint}</p>
         </div>
     );
 }
@@ -87,9 +87,9 @@ export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
     return (
         <Card className="mt-10 border-[#17233B]/10">
             <CardHeader>
-                <p className="text-sm font-medium text-[#FF593F]">Last {analytics.days} days</p>
+                <p className="text-sm font-medium text-[#C8371D]">Last {analytics.days} days</p>
                 <CardTitle>What Promotello brought you</CardTitle>
-                <p className="text-sm text-[#17233B]/60">
+                <p className="text-sm text-[#17233B]/70">
                     {used.current > 0
                         ? `${used.current} ${used.current === 1 ? "customer" : "customers"} came in and used a voucher.`
                         : "Once customers use their vouchers in store, you'll see them here."}
@@ -114,7 +114,7 @@ export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
 
                 <div className="mt-8">
                     <h3 className="text-sm font-semibold">Page views per day</h3>
-                    <p className="mb-4 text-xs text-[#17233B]/55">Hover a day to see its claims and used vouchers.</p>
+                    <p className="mb-4 text-xs text-[#17233B]/70">Hover a day to see its claims and used vouchers.</p>
                     <DailyBars
                         data={analytics.daily.map((d) => ({
                             day: d.day,

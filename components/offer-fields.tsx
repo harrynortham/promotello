@@ -93,7 +93,7 @@ export async function uploadOfferImage(supabase: SupabaseClient, businessId: str
 }
 
 function Required() {
-    return <span className="text-[#FF593F]">*</span>;
+    return <span className="text-[#C8371D]">*</span>;
 }
 
 export function OfferFields({
@@ -207,7 +207,7 @@ export function OfferFields({
                     {...invalidProps("maxRedemptions-error", errors.maxRedemptions)}
                 />
                 <FieldError id="maxRedemptions-error" message={errors.maxRedemptions?.message} />
-                <p className="text-xs leading-5 text-[#17233B]/55">
+                <p className="text-xs leading-5 text-[#17233B]/70">
                     {minRedemptions > 0
                         ? "The limit cannot be lower than the number already claimed. Leave empty for unlimited redemptions."
                         : "Set a limit to create scarcity or control your campaign budget. Leave this empty for unlimited redemptions."}

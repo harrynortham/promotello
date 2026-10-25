@@ -184,13 +184,13 @@ async function BillingAlertsContent() {
                                             </CardTitle>
 
                                             {alert.reason && (
-                                                <p className="mt-1 text-sm capitalize text-[#17233B]/60">
+                                                <p className="mt-1 text-sm capitalize text-[#17233B]/70">
                                                     Reason: {alert.reason.replaceAll("_", " ")}
                                                 </p>
                                             )}
                                         </div>
 
-                                        <p className="text-sm text-[#17233B]/55">
+                                        <p className="text-sm text-[#17233B]/70">
                                             {formatDate(alert.created_at)}
                                         </p>
                                     </div>

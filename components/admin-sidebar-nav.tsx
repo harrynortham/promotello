@@ -66,7 +66,7 @@ export function AdminSidebarNav({ counts }: { counts: AdminNavCounts }) {
                                     {link.label}
                                     {count > 0 && (
                                         <span
-                                            className="ml-auto rounded-full bg-[#FF593F] px-1.5 text-xs font-semibold leading-5 text-white"
+                                            className="ml-auto rounded-full bg-[#C8371D] px-1.5 text-xs font-semibold leading-5 text-white"
                                             aria-label={`${count} waiting`}
                                         >
                                             {count}

@@ -86,7 +86,7 @@ async function InviteContent({ params }: PageProps) {
 
     return (
         <Shell>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                 {invitation.hand_over ? "Your business is ready" : "Team invitation"}
             </p>
 

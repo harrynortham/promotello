@@ -324,7 +324,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <div>
                     <Badge
                         variant="outline"
-                        className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
+                        className="border-[#FF593F]/30 bg-[#FF593F]/5 text-[#C8371D]"
                     >
                         Business overview
                     </Badge>
@@ -411,7 +411,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                        <CardTitle className="text-sm font-medium text-[#17233B]/70">
                             Total promotions
                         </CardTitle>
                     </CardHeader>
@@ -425,7 +425,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                        <CardTitle className="text-sm font-medium text-[#17233B]/70">
                             Approved promotions
                         </CardTitle>
                     </CardHeader>
@@ -439,7 +439,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                        <CardTitle className="text-sm font-medium text-[#17233B]/70">
                             Total claims
                         </CardTitle>
                     </CardHeader>
@@ -453,7 +453,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-[#17233B]/60">
+                        <CardTitle className="text-sm font-medium text-[#17233B]/70">
                             Redemptions
                         </CardTitle>
                     </CardHeader>
@@ -542,14 +542,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                                 </Badge>
                                             </div>
 
-                                            <p className="text-sm font-semibold text-[#FF593F]">
+                                            <p className="text-sm font-semibold text-[#C8371D]">
                                                 {offer.redemption_count} claimed
                                             </p>
                                         </div>
 
                                         {offer.max_redemptions !== null && (
                                             <div className="mt-4">
-                                                <div className="flex justify-between text-xs text-[#17233B]/55">
+                                                <div className="flex justify-between text-xs text-[#17233B]/70">
                                                     <span>Usage limit</span>
 
                                                     <span>

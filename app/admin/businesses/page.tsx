@@ -304,7 +304,7 @@ export default function AdminBusinessesPage() {
                                         <CardHeader>
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                                 <div>
-                                                    <p className="text-sm font-medium text-[#FF593F]">
+                                                    <p className="text-sm font-medium text-[#C8371D]">
                                                         {business.category}
                                                     </p>
 
@@ -326,7 +326,7 @@ export default function AdminBusinessesPage() {
                                                 </p>
                                             )}
 
-                                            <div className="mt-5 space-y-2 text-sm text-[#17233B]/60">
+                                            <div className="mt-5 space-y-2 text-sm text-[#17233B]/70">
                                                 {business.contact_email && (
                                                     <p>Contact: {business.contact_email}</p>
                                                 )}
@@ -391,7 +391,7 @@ export default function AdminBusinessesPage() {
                                 <span />
                             )}
 
-                            <span className="text-sm text-[#17233B]/55">
+                            <span className="text-sm text-[#17233B]/70">
                                 Page {page} of {totalPages}
                             </span>
 

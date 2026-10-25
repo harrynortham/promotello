@@ -68,7 +68,7 @@ function AutomationCard({
             <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#C8371D]">
                             <Icon aria-hidden="true" />
                         </span>
                         <div>
@@ -77,7 +77,7 @@ function AutomationCard({
                         </div>
                     </div>
                     <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${enabled ? "bg-emerald-100 text-emerald-800" : "bg-[#17233B]/5 text-[#17233B]/55"}`}
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${enabled ? "bg-emerald-100 text-emerald-800" : "bg-[#17233B]/5 text-[#17233B]/70"}`}
                     >
                         {enabled ? "On" : "Off"}
                     </span>
@@ -148,7 +148,7 @@ function AutomationCard({
                     </label>
 
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm text-[#17233B]/55">
+                        <p className="text-sm text-[#17233B]/70">
                             Last 30 days: {stats.issued} sent · {stats.used} used
                         </p>
                         <SubmitButton pendingLabel="Saving…" variant="outline">
@@ -210,7 +210,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
     return (
         <main className="space-y-8 text-[#17233B]">
             <header>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">Growth</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Automations</h1>
                 <p className="mt-3 max-w-2xl text-[#17233B]/65">
                     Emails that go to your followers automatically, each with a personal reward they can use
@@ -256,7 +256,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
                 ))}
             </div>
 
-            <p className="text-sm text-[#17233B]/55">
+            <p className="text-sm text-[#17233B]/70">
                 Only followers who&apos;ve agreed to your emails get these, and every email has an unsubscribe
                 link. Rewards are checked once a day, in the morning.
             </p>

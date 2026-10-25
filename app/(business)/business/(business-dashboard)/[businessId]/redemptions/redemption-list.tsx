@@ -78,13 +78,13 @@ export default function RedemptionList({
             <div className="mx-auto max-w-4xl">
                 <Link
                     href={`/business/${businessId}/offers`}
-                    className="text-sm font-semibold text-[#FF593F]"
+                    className="text-sm font-semibold text-[#C8371D]"
                 >
                     ← Back to promotions
                 </Link>
 
                 <header className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Customer redemptions
                     </p>
 
@@ -122,7 +122,7 @@ export default function RedemptionList({
                             >
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
-                                        <p className="text-sm text-[#17233B]/55">
+                                        <p className="text-sm text-[#17233B]/70">
                                             {getOfferTitle(redemption)}
                                         </p>
 

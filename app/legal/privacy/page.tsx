@@ -320,6 +320,11 @@ const sections: LegalSection[] = [
                     <li>Supabase: database, sign-in (including Google sign-in) and file storage</li>
                     <li>Vercel: website hosting</li>
                     <li>Resend: sending emails</li>
+                    <li>
+                        Sentry: error reports when something breaks, such as the
+                        page and browser involved (not your name, email or IP
+                        address)
+                    </li>
                     <li>Stripe: subscription payments for businesses</li>
                     <li>
                         Google: Google Analytics if you accept analytics

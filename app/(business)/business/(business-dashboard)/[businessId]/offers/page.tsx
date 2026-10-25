@@ -234,7 +234,7 @@ async function OffersContent({ params }: PageProps) {
 
                 <header className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                             Promotions
                         </p>
 
@@ -279,7 +279,7 @@ async function OffersContent({ params }: PageProps) {
                                 render={<Link href={`/business/${businessId}/billing`} />}
                                 nativeButton={false}
                                 size="sm"
-                                className="mt-3 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                className="mt-3 bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
                             >
                                 Upgrade to Pro
                             </Button>
@@ -356,7 +356,7 @@ async function OffersContent({ params }: PageProps) {
                                     <CardHeader>
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                             <div>
-                                                <p className="text-sm font-medium text-[#FF593F]">
+                                                <p className="text-sm font-medium text-[#C8371D]">
                                                     {offer.discount}
                                                 </p>
 
@@ -364,7 +364,7 @@ async function OffersContent({ params }: PageProps) {
                                                     {offer.title}
                                                 </h2>
 
-                                                <p className="mt-2 text-sm text-[#17233B]/55">
+                                                <p className="mt-2 text-sm text-[#17233B]/70">
                                                     {offer.category}
                                                 </p>
                                             </div>
@@ -394,7 +394,7 @@ async function OffersContent({ params }: PageProps) {
                                             {offer.description}
                                         </p>
 
-                                        <div className="mt-6 grid gap-3 border-t border-[#17233B]/10 pt-5 text-sm text-[#17233B]/60 sm:grid-cols-2">
+                                        <div className="mt-6 grid gap-3 border-t border-[#17233B]/10 pt-5 text-sm text-[#17233B]/70 sm:grid-cols-2">
                                             <p>{offer.availability}</p>
 
                                             <p>
@@ -414,7 +414,7 @@ async function OffersContent({ params }: PageProps) {
                                                 </p>
 
                                                 {offer.max_redemptions !== null && (
-                                                    <p className="text-sm text-[#17233B]/60">
+                                                    <p className="text-sm text-[#17233B]/70">
                                                         {offer.redemption_count} of{" "}
                                                         {offer.max_redemptions} claimed
                                                     </p>

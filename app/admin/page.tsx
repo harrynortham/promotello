@@ -87,15 +87,15 @@ async function monthlyRecurringRevenue(priceIds: (string | null)[]) {
 
 function ChangeLabel({ metric }: { metric: Change }) {
     if (metric.previous === 0) {
-        return <span className="text-[#17233B]/45">{metric.current > 0 ? "New this period" : "None yet"}</span>;
+        return <span className="text-[#17233B]/65">{metric.current > 0 ? "New this period" : "None yet"}</span>;
     }
 
     const change = Math.round(((metric.current - metric.previous) / metric.previous) * 100);
 
     return (
-        <span className={change > 0 ? "text-emerald-700" : "text-[#17233B]/60"}>
+        <span className={change > 0 ? "text-emerald-700" : "text-[#17233B]/70"}>
             {change > 0 ? "▲" : change < 0 ? "▼" : ""} {Math.abs(change)}%{" "}
-            <span className="text-[#17233B]/45">vs previous 30 days</span>
+            <span className="text-[#17233B]/65">vs previous 30 days</span>
         </span>
     );
 }
@@ -105,7 +105,7 @@ function SignupsLabel({ current, previous, noun }: { current: number; previous: 
     return (
         <span>
             {current} {noun} in 30 days
-            <span className="text-[#17233B]/45"> · {previous} the 30 days before</span>
+            <span className="text-[#17233B]/65"> · {previous} the 30 days before</span>
         </span>
     );
 }
@@ -121,9 +121,9 @@ function Stat({
 }) {
     return (
         <div role="group" aria-label={label} className="rounded-xl border border-[#17233B]/10 bg-white p-5">
-            <p className="text-sm font-medium text-[#17233B]/60">{label}</p>
+            <p className="text-sm font-medium text-[#17233B]/70">{label}</p>
             <p className="mt-2 text-3xl font-semibold tabular-nums">{value}</p>
-            {children && <div className="mt-1 text-xs text-[#17233B]/55">{children}</div>}
+            {children && <div className="mt-1 text-xs text-[#17233B]/70">{children}</div>}
         </div>
     );
 }
@@ -132,12 +132,12 @@ function RateTarget({ label, rate, target, detail }: { label: string; rate: numb
     return (
         <div role="group" aria-label={label} className="rounded-xl border border-[#17233B]/10 bg-white p-5">
             <div className="flex items-baseline justify-between gap-3">
-                <p className="text-sm font-medium text-[#17233B]/60">{label}</p>
-                <p className="text-xs text-[#17233B]/45">Target {target}%</p>
+                <p className="text-sm font-medium text-[#17233B]/70">{label}</p>
+                <p className="text-xs text-[#17233B]/65">Target {target}%</p>
             </div>
             <p className="mt-2 text-3xl font-semibold tabular-nums">{rate === null ? "–" : `${rate}%`}</p>
             <Progress value={Math.min(rate ?? 0, 100)} className="mt-3 h-1.5" />
-            <p className="mt-2 text-xs text-[#17233B]/55">{detail}</p>
+            <p className="mt-2 text-xs text-[#17233B]/70">{detail}</p>
         </div>
     );
 }
@@ -148,14 +148,14 @@ function AttentionLink({ href, icon, count, label }: { href: string; icon: React
             href={href}
             className="group flex items-center gap-4 rounded-xl border border-[#17233B]/10 bg-white p-4 transition-colors hover:border-[#FF593F]/40"
         >
-            <span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${count > 0 ? "bg-[#FF593F]/10 text-[#FF593F]" : "bg-[#17233B]/5 text-[#17233B]/40"}`}>
+            <span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${count > 0 ? "bg-[#FF593F]/10 text-[#C8371D]" : "bg-[#17233B]/5 text-[#17233B]/65"}`}>
                 {icon}
             </span>
             <span className="min-w-0 flex-1">
                 <span className="block text-2xl font-semibold tabular-nums">{count}</span>
-                <span className="block text-sm text-[#17233B]/60">{label}</span>
+                <span className="block text-sm text-[#17233B]/70">{label}</span>
             </span>
-            <FiArrowRight aria-hidden="true" className="text-[#17233B]/30 transition-colors group-hover:text-[#FF593F]" />
+            <FiArrowRight aria-hidden="true" className="text-[#17233B]/30 transition-colors group-hover:text-[#C8371D]" />
         </Link>
     );
 }
@@ -164,7 +164,7 @@ function Section({ title, description, children }: { title: string; description?
     return (
         <section className="mt-10">
             <h2 className="text-lg font-semibold">{title}</h2>
-            {description && <p className="mt-1 text-sm text-[#17233B]/60">{description}</p>}
+            {description && <p className="mt-1 text-sm text-[#17233B]/70">{description}</p>}
             <div className="mt-4">{children}</div>
         </section>
     );
@@ -221,7 +221,7 @@ async function OverviewContent() {
                         How Promotello is doing. Activity covers the last 30 days; sample businesses are left out.
                     </p>
                 </div>
-                <p className="text-xs text-[#17233B]/45">
+                <p className="text-xs text-[#17233B]/65">
                     Updated{" "}
                     {new Intl.DateTimeFormat("en-GB", { timeStyle: "short", timeZone: "Europe/London" }).format(
                         new Date(metrics.generated_at),
@@ -327,7 +327,7 @@ async function OverviewContent() {
                 <Card className="mt-4 border-[#17233B]/10 shadow-none">
                     <CardHeader>
                         <CardTitle className="text-base">Customer visits per day</CardTitle>
-                        <p className="text-xs text-[#17233B]/55">
+                        <p className="text-xs text-[#17233B]/70">
                             Vouchers used plus loyalty stamps. Hover a day for claims and sign-ups.
                         </p>
                     </CardHeader>
@@ -347,13 +347,13 @@ async function OverviewContent() {
 
             <Section title="Most active businesses" description="Ranked by customer visits in the last 30 days.">
                 {metrics.top_businesses.length === 0 ? (
-                    <p className="rounded-xl border border-dashed border-[#17233B]/15 bg-white px-4 py-8 text-center text-sm text-[#17233B]/55">
+                    <p className="rounded-xl border border-dashed border-[#17233B]/15 bg-white px-4 py-8 text-center text-sm text-[#17233B]/70">
                         No business activity in the last 30 days yet.
                     </p>
                 ) : (
                     <div className="overflow-x-auto rounded-xl border border-[#17233B]/10 bg-white">
                         <table className="w-full min-w-[32rem] text-left text-sm">
-                            <thead className="text-[#17233B]/55">
+                            <thead className="text-[#17233B]/70">
                                 <tr className="border-b border-[#17233B]/10">
                                     <th className="px-4 py-3 font-medium">Business</th>
                                     <th className="px-4 py-3 text-right font-medium">Visits</th>
@@ -365,7 +365,7 @@ async function OverviewContent() {
                                 {metrics.top_businesses.map((business) => (
                                     <tr key={business.id} className="border-b border-[#17233B]/5 last:border-0">
                                         <td className="px-4 py-3">
-                                            <Link href={`/businesses/${business.id}`} className="font-medium hover:text-[#FF593F]">
+                                            <Link href={`/businesses/${business.id}`} className="font-medium hover:text-[#C8371D]">
                                                 {business.name}
                                             </Link>
                                             {business.pro && (

@@ -132,7 +132,7 @@ async function PreviewsContent({ searchParams }: PageProps) {
                 </CardHeader>
                 <CardContent>
                     {previews.length === 0 ? (
-                        <p className="text-sm text-[#17233B]/55">No previews yet. Create one below.</p>
+                        <p className="text-sm text-[#17233B]/70">No previews yet. Create one below.</p>
                     ) : (
                         <ul className="divide-y divide-[#17233B]/5">
                             {previews.map((preview) => (
@@ -141,10 +141,10 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                         <p className="font-medium">
                                             {preview.businesses?.name}
                                             {preview.contact_name && (
-                                                <span className="font-normal text-[#17233B]/55"> · for {preview.contact_name}</span>
+                                                <span className="font-normal text-[#17233B]/70"> · for {preview.contact_name}</span>
                                             )}
                                         </p>
-                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#17233B]/55">
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#17233B]/70">
                                             <span>Created {formatDate(preview.created_at)}</span>
                                             <Status preview={preview} />
                                         </div>
@@ -185,7 +185,7 @@ async function PreviewsContent({ searchParams }: PageProps) {
             <Card className="border-[#17233B]/10">
                 <CardHeader>
                     <CardTitle className="text-lg">New preview</CardTitle>
-                    <p className="text-sm text-[#17233B]/60">
+                    <p className="text-sm text-[#17233B]/70">
                         Use their real address so the poster and page are right. You&apos;ll be the owner until they claim it.
                     </p>
                 </CardHeader>

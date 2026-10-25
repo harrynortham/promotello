@@ -75,7 +75,7 @@ function BusinessPagePreview({ preview }: { preview: Preview }) {
                     )}
                 </div>
                 <p className="mt-3 text-lg font-semibold">{preview.business_name}</p>
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-[#17233B]/60">
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-[#17233B]/70">
                     <FiMapPin aria-hidden="true" />
                     {[preview.category, where].filter(Boolean).join(" · ")}
                 </p>
@@ -83,9 +83,9 @@ function BusinessPagePreview({ preview }: { preview: Preview }) {
                     <p className="mt-2 line-clamp-2 text-sm text-[#17233B]/70">{preview.description}</p>
                 )}
                 <div className="mt-4 rounded-xl border border-[#17233B]/10 bg-white p-3">
-                    <span className="inline-flex rounded-full bg-[#FF593F] px-2.5 py-0.5 text-xs font-semibold text-white">Offer</span>
+                    <span className="inline-flex rounded-full bg-[#C8371D] px-2.5 py-0.5 text-xs font-semibold text-white">Offer</span>
                     <p className="mt-1.5 text-sm font-semibold">{preview.sample_offer}</p>
-                    <div className="mt-2 rounded-lg bg-[#FF593F] py-1.5 text-center text-xs font-semibold text-white">Claim offer</div>
+                    <div className="mt-2 rounded-lg bg-[#C8371D] py-1.5 text-center text-xs font-semibold text-white">Claim offer</div>
                 </div>
             </div>
         </BrowserFrame>
@@ -151,9 +151,9 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 </SubmitButton>
             </form>
             {!signedIn && (
-                <p className="text-sm text-[#17233B]/60">
+                <p className="text-sm text-[#17233B]/70">
                     You&apos;ll create an account first. Already have one?{" "}
-                    <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-medium text-[#FF593F] underline">
+                    <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-medium text-[#C8371D] underline">
                         Sign in
                     </Link>
                 </p>
@@ -164,7 +164,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     return (
         <>
             <section className="mx-auto max-w-7xl px-6 pb-12 pt-14 sm:px-10 sm:pt-20">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
                     A preview made for {preview.business_name}
                 </p>
                 <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -190,7 +190,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 <div className="mx-auto grid max-w-7xl items-start gap-12 px-6 py-14 sm:px-10 lg:grid-cols-3">
                     <div>
                         <h2 className="flex items-center gap-2 font-semibold">
-                            <FiUsers aria-hidden="true" className="text-[#FF593F]" />
+                            <FiUsers aria-hidden="true" className="text-[#C8371D]" />
                             Your page
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
@@ -203,7 +203,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
 
                     <div>
                         <h2 className="flex items-center gap-2 font-semibold">
-                            <FiGift aria-hidden="true" className="text-[#FF593F]" />
+                            <FiGift aria-hidden="true" className="text-[#C8371D]" />
                             Your loyalty card
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
@@ -222,7 +222,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
 
                     <div>
                         <h2 className="flex items-center gap-2 font-semibold">
-                            <FiCheckCircle aria-hidden="true" className="text-[#FF593F]" />
+                            <FiCheckCircle aria-hidden="true" className="text-[#C8371D]" />
                             Your window poster
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
@@ -244,7 +244,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                             <li>Pro: loyalty card, QR posters with scan counts, followers and unlimited offers.</li>
                             <li>Founding members in Bristol pay £19 a month for Pro, locked for life.</li>
                         </ul>
-                        <p className="mt-4 text-sm text-[#17233B]/55">
+                        <p className="mt-4 text-sm text-[#17233B]/70">
                             <Link href="/business/pricing" className="underline">See pricing</Link> ·{" "}
                             <Link href="/business/how-it-works" className="underline">How it works</Link>
                         </p>

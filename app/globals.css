@@ -62,14 +62,16 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
 
-  --primary: #ff593f;
-  --primary-foreground: #17233b;
+  /* A deeper coral, so white text on buttons is readable (5.2:1). The
+     brand coral, #ff593f, stays for illustrations and large headings. */
+  --primary: #c8371d;
+  --primary-foreground: #ffffff;
 
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
 
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.5 0 0);
 
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);

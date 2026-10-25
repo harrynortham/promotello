@@ -59,12 +59,12 @@ async function EventContent({ params }: PageProps) {
 
     return (
         <article className="rounded-3xl border border-[#17233B]/10 bg-white p-8 sm:p-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Event</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">Event</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{event.title}</h1>
             {event.business && (
                 <p className="mt-2 text-lg">
                     at{" "}
-                    <Link href={businessPath(event.business)} className="font-medium text-[#FF593F] hover:underline">
+                    <Link href={businessPath(event.business)} className="font-medium text-[#C8371D] hover:underline">
                         {event.business.name}
                     </Link>
                 </p>
@@ -72,18 +72,18 @@ async function EventContent({ params }: PageProps) {
 
             <ul className="mt-6 space-y-2 text-[#17233B]/75">
                 <li className="flex items-center gap-2">
-                    <FiCalendar aria-hidden="true" className="text-[#FF593F]" />
+                    <FiCalendar aria-hidden="true" className="text-[#C8371D]" />
                     {formatEventTime(event.starts_at, event.ends_at)}
                 </li>
                 {event.location && (
                     <li className="flex items-center gap-2">
-                        <FiMapPin aria-hidden="true" className="text-[#FF593F]" />
+                        <FiMapPin aria-hidden="true" className="text-[#C8371D]" />
                         {event.location}
                     </li>
                 )}
                 {event.price && (
                     <li className="flex items-center gap-2">
-                        <FiTag aria-hidden="true" className="text-[#FF593F]" />
+                        <FiTag aria-hidden="true" className="text-[#C8371D]" />
                         {event.price}
                     </li>
                 )}

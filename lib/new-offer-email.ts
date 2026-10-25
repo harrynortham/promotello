@@ -33,14 +33,14 @@ export function newOfferEmail(offer: OfferForEmail, to: string, unsubscribeToken
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
 <tr><td style="padding:28px 28px 8px">
-<p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">New from ${e(business)}</p>
+<p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#C8371D">New from ${e(business)}</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.25">${e(offer.title)}</h1>
 <p style="margin:12px 0 0;display:inline-block;background:#FFF0EC;color:#C2341F;font-weight:700;font-size:15px;padding:6px 12px;border-radius:999px">${e(offer.discount)}</p>
 <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(offer.description)}</p>
 ${until ? `<p style="margin:12px 0 0;font-size:13px;color:#6b7387">Available until ${e(until)}.</p>` : ""}
 </td></tr>
 <tr><td style="padding:20px 28px 28px">
-<a href="${offerUrl}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">Claim this offer</a>
+<a href="${offerUrl}" style="display:inline-block;background:#C8371D;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">Claim this offer</a>
 </td></tr>
 </table>
 <p style="max-width:520px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">

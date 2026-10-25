@@ -8,15 +8,25 @@ import { createClient } from "@/utils/supabase/server";
 export async function announceNewOffer(offerId: string) {
     const supabase = await createClient();
 
-    // RLS: only members of the offer's business can read it here.
     const { data: offer } = await supabase
         .from("offers")
-        .select("approval_status")
+        .select("approval_status, business_id")
         .eq("id", offerId)
         .maybeSingle();
 
     if (offer?.approval_status !== "approved") {
         return { live: false, emailed: 0 };
+    }
+
+    // Approved offers are public, so check the caller runs this business
+    // before emailing its followers.
+    const { data: canManage } = await supabase.rpc("is_business_member", {
+        requested_business_id: offer.business_id,
+        minimum_role: "admin",
+    });
+
+    if (!canManage) {
+        return { live: true, emailed: 0 };
     }
 
     const { sent } = await emailFollowersAboutOffer(offerId);

@@ -77,7 +77,7 @@ export function LoyaltyCallout({
                     <form action={joinLoyaltyProgram} className="shrink-0">
                         <input type="hidden" name="programId" value={program.id} />
                         <input type="hidden" name="businessId" value={businessId} />
-                        <SubmitButton pendingLabel="Joining…" className="h-11 bg-[#FF593F] px-6 text-base text-white hover:bg-[#FF593F]/90">
+                        <SubmitButton pendingLabel="Joining…" className="h-11 bg-[#C8371D] px-6 text-base text-white hover:bg-[#C8371D]/90">
                             Join the loyalty card
                         </SubmitButton>
                     </form>
@@ -86,7 +86,7 @@ export function LoyaltyCallout({
                         render={<Link href={`/login?next=${encodeURIComponent(`/businesses/${businessId}`)}`} />}
                         nativeButton={false}
                         size="lg"
-                        className="shrink-0 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        className="shrink-0 bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
                     >
                         Log in to join
                     </Button>

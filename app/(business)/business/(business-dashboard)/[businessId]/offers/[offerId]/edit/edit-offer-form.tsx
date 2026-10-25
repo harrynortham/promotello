@@ -267,7 +267,7 @@ export default function EditOfferForm({
                 </Button>
 
                 <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                         Promotion management
                     </p>
 
@@ -282,6 +282,14 @@ export default function EditOfferForm({
                             {offer.approval_status}
                         </Badge>
                     </div>
+
+                    {offer.approval_status === "approved" && (
+                        <p className="mt-3 text-sm text-[#17233B]/70">
+                            Changing the wording, terms or image sends a live promotion
+                            back to our team for a quick check, unless your business is
+                            on Pro.
+                        </p>
+                    )}
                 </div>
 
                 <Card className="mt-8 border-[#17233B]/10">
@@ -294,7 +302,7 @@ export default function EditOfferForm({
                             {offer.redemption_count} claimed
                         </p>
 
-                        <p className="mt-1 text-sm text-[#17233B]/55">
+                        <p className="mt-1 text-sm text-[#17233B]/70">
                             {offer.max_redemptions === null
                                 ? "Unlimited total redemptions"
                                 : `${offer.max_redemptions} total redemptions allowed`}
@@ -343,7 +351,7 @@ export default function EditOfferForm({
                                 />
 
                                 <FieldError id="image-error" message={errors.root?.image?.message} />
-                                <p className="text-xs text-[#17233B]/50">
+                                <p className="text-xs text-[#17233B]/65">
                                     Use a JPG, PNG or WebP image under 5MB.
                                 </p>
                             </div>

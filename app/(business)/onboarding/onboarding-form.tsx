@@ -75,7 +75,7 @@ function Field({
             <Label htmlFor={id}>{label}</Label>
             {children}
             <FieldError id={`${id}-error`} message={error} />
-            {hint && <p className="text-xs text-[#17233B]/55">{hint}</p>}
+            {hint && <p className="text-xs text-[#17233B]/70">{hint}</p>}
         </div>
     );
 }
@@ -184,7 +184,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
 
     return (
         <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
                 Add your business
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -198,7 +198,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                 {steps.map((item, index) => (
                     <li key={item.title} aria-current={index === step ? "step" : undefined}>
                         <div className={`h-1.5 rounded-full ${index <= step ? "bg-[#FF593F]" : "bg-[#17233B]/10"}`} />
-                        <p className={`mt-2 text-xs font-medium sm:text-sm ${index === step ? "text-[#17233B]" : "text-[#17233B]/45"}`}>
+                        <p className={`mt-2 text-xs font-medium sm:text-sm ${index === step ? "text-[#17233B]" : "text-[#17233B]/65"}`}>
                             {index + 1}. {item.title}
                         </p>
                     </li>
@@ -208,7 +208,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
             {/* Each step's fields are checked (with Zod) before moving on. */}
             <form ref={formRef} onSubmit={submit} onKeyDown={handleKeyDown} noValidate className="mt-8 rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
                 <h2 className="text-xl font-semibold">{steps[step].title}</h2>
-                <p className="mt-1 text-sm text-[#17233B]/60">{steps[step].description}</p>
+                <p className="mt-1 text-sm text-[#17233B]/70">{steps[step].description}</p>
 
                 <div data-step="0" hidden={step !== 0} className="mt-6 space-y-5">
                     <Field id="businessName" label="Business name" error={errors.businessName?.message}>
@@ -279,10 +279,10 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                         ].map(([label, value, target]) => (
                             <div key={label as string} className="flex items-start justify-between gap-4 p-4">
                                 <div className="min-w-0">
-                                    <dt className="text-xs text-[#17233B]/55">{label}</dt>
+                                    <dt className="text-xs text-[#17233B]/70">{label}</dt>
                                     <dd className="mt-0.5 font-medium">{value || "Not set"}</dd>
                                 </div>
-                                <button type="button" onClick={() => setStep(target as number)} className="shrink-0 text-sm font-medium text-[#FF593F] hover:underline">
+                                <button type="button" onClick={() => setStep(target as number)} className="shrink-0 text-sm font-medium text-[#C8371D] hover:underline">
                                     Change
                                 </button>
                             </div>
@@ -324,7 +324,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                                 "You start on the Free plan, with no card needed. Upgrade any time.",
                             ].map((line) => (
                                 <li key={line} className="flex gap-2">
-                                    <FiCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#FF593F]" />
+                                    <FiCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#C8371D]" />
                                     {line}
                                 </li>
                             ))}
@@ -355,12 +355,12 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                         the submit button, which would let the click that
                         opens the review step also submit the form. */}
                     {step < steps.length - 1 ? (
-                        <Button key="continue" type="button" size="lg" onClick={() => void goNext()} className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+                        <Button key="continue" type="button" size="lg" onClick={() => void goNext()} className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
                             Continue
                             <FiArrowRight aria-hidden="true" />
                         </Button>
                     ) : (
-                        <Button key="submit" type="submit" size="lg" disabled={isSubmitting} className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+                        <Button key="submit" type="submit" size="lg" disabled={isSubmitting} className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
                             {isSubmitting ? "Creating your business…" : "Create my business"}
                         </Button>
                     )}
