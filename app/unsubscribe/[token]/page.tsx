@@ -122,7 +122,7 @@ async function UnsubscribeContent({ params, searchParams }: PageProps) {
 
             <p className="mt-6 text-sm text-[#17233B]/70">
                 Changed your mind? Turn emails back on in{" "}
-                <Link href="/account/notifications" className="font-medium text-[#C8371D] hover:underline">
+                <Link href="/account/notifications" className="font-medium text-[#FF593F] hover:underline">
                     your email settings
                 </Link>
                 .

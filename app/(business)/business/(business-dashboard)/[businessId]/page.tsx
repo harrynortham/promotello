@@ -324,7 +324,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <div>
                     <Badge
                         variant="outline"
-                        className="border-[#FF593F]/30 bg-[#FF593F]/5 text-[#C8371D]"
+                        className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
                     >
                         Business overview
                     </Badge>
@@ -542,7 +542,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                                 </Badge>
                                             </div>
 
-                                            <p className="text-sm font-semibold text-[#C8371D]">
+                                            <p className="text-sm font-semibold text-[#FF593F]">
                                                 {offer.redemption_count} claimed
                                             </p>
                                         </div>

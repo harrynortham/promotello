@@ -267,7 +267,7 @@ export default function EditOfferForm({
                 </Button>
 
                 <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Promotion management
                     </p>
 

@@ -363,7 +363,7 @@ export default function HomePage() {
                                 className="rounded-2xl border border-[#17233B]/10 bg-white p-7"
                             >
                                 <div className="flex items-center gap-3">
-                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
+                                    <span className="flex size-11 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
                                         <Icon aria-hidden="true" className="size-5" />
                                     </span>
                                     <span className="text-sm font-semibold text-[#17233B]/65">
@@ -380,12 +380,12 @@ export default function HomePage() {
             </section>
 
             <section className="mx-auto max-w-7xl px-6 pt-20 sm:px-10">
-                <div className="flex flex-col items-start gap-6 rounded-3xl bg-[#C8371D] px-8 py-12 text-white sm:flex-row sm:items-center sm:justify-between sm:px-12">
+                <div className="flex flex-col items-start gap-6 rounded-3xl bg-[#FF593F] px-8 py-12 text-white sm:flex-row sm:items-center sm:justify-between sm:px-12">
                     <div>
                         <h2 className="text-3xl font-semibold tracking-tight">
                             Run a local business?
                         </h2>
-                        <p className="mt-2 max-w-xl text-white">
+                        <p className="mt-2 max-w-xl text-white/85">
                             List your business and your first offer for free,
                             and give nearby customers a reason to visit.
                         </p>

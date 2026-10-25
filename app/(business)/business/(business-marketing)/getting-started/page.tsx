@@ -259,7 +259,7 @@ export default function BusinessGettingStartedPage() {
                                     <CardContent className="p-6 sm:p-9">
                                         <div className="grid gap-6 sm:grid-cols-[4rem_1fr] sm:gap-8">
                                             <div className="flex items-center gap-4 sm:block">
-                                                <span className="flex size-14 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-lg font-semibold text-[#C8371D]">
+                                                <span className="flex size-14 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-lg font-semibold text-[#FF593F]">
                                                     {step.number}
                                                 </span>
 

@@ -5,7 +5,7 @@ export default function OfferNotFound() {
     return (
         <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6">
             <section className="w-full max-w-md text-center">
-                <p className="text-sm font-medium text-[#C8371D]">Offer unavailable</p>
+                <p className="text-sm font-medium text-[#FF593F]">Offer unavailable</p>
 
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
                     We couldn’t find that deal.

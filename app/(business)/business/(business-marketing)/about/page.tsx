@@ -109,7 +109,7 @@ export default function About() {
             <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10">
                 <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Why Promotello
                         </p>
 
@@ -147,7 +147,7 @@ export default function About() {
             <section className="border-y border-[#17233B]/10 bg-white">
                 <div className="mx-auto max-w-7xl px-6 py-20 sm:px-10">
                     <div className="max-w-2xl">
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             What you get
                         </p>
 
@@ -187,7 +187,7 @@ export default function About() {
                             className="rounded-3xl border-[#17233B]/10 bg-transparent shadow-none"
                         >
                             <CardHeader>
-                                <p className="text-sm font-semibold text-[#C8371D]">
+                                <p className="text-sm font-semibold text-[#FF593F]">
                                     {principle.number}
                                 </p>
 

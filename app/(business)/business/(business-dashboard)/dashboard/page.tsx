@@ -93,7 +93,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                     <ol className="mt-8 space-y-4">
                         {welcomeSteps.map((step, index) => (
                             <li key={step.title} className="flex gap-4">
-                                <span className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#C8371D] text-white" : "bg-white/10 text-white/70"}`}>
+                                <span className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#FF593F] text-white" : "bg-white/10 text-white/70"}`}>
                                     {index + 1}
                                 </span>
                                 <div>
@@ -108,7 +108,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                         render={<Link href="/onboarding" />}
                         nativeButton={false}
                         size="lg"
-                        className="mt-10 bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
+                        className="mt-10 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                     >
                         Add your business
                     </Button>
@@ -467,7 +467,7 @@ async function BusinessDashboardContent() {
 
                 <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Your businesses
                         </p>
 

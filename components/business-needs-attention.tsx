@@ -33,7 +33,7 @@ export function BusinessNeedsAttention({
     return (
         <section className="mt-8">
             <div className="mb-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                     Action required
                 </p>
 

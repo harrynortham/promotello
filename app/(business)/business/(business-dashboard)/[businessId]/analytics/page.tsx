@@ -235,7 +235,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
             <div className="mx-auto max-w-5xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Business analytics
                         </p>
 
@@ -325,7 +325,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                                 {hasPro ? (
                                     "Emailed when a new offer goes live"
                                 ) : (
-                                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#C8371D] hover:underline">
+                                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#FF593F] hover:underline">
                                         Email them new offers on Pro
                                     </Link>
                                 )}
@@ -361,7 +361,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
                 <Card className="mt-8 border-[#17233B]/10">
                     <CardHeader>
-                        <p className="text-sm font-medium text-[#C8371D]">
+                        <p className="text-sm font-medium text-[#FF593F]">
                             Promotion performance
                         </p>
 
@@ -397,7 +397,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                                                 </Badge>
                                             </div>
 
-                                            <p className="font-semibold text-[#C8371D]">
+                                            <p className="font-semibold text-[#FF593F]">
                                                 {offer.totalRedemptions}{" "}
                                                 {offer.totalRedemptions === 1
                                                     ? "claim"

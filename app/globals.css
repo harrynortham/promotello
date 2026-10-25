@@ -62,9 +62,8 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
 
-  /* A deeper coral, so white text on buttons is readable (5.2:1). The
-     brand coral, #ff593f, stays for illustrations and large headings. */
-  --primary: #c8371d;
+  /* The brand coral. Always this colour for buttons and coral elements. */
+  --primary: #ff593f;
   --primary-foreground: #ffffff;
 
   --secondary: oklch(0.97 0 0);

@@ -91,7 +91,7 @@ export function GiftVoucher({ gift, done, error, now }: { gift: StaffGift; done:
                 <form action={markGiftUsed} className="mt-6">
                     <input type="hidden" name="code" value={gift.code} />
                     <input type="hidden" name="voucherId" value={gift.voucher_id} />
-                    <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#C8371D] text-base text-white hover:bg-[#C8371D]/90">
+                    <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90">
                         Mark as used
                     </SubmitButton>
                 </form>

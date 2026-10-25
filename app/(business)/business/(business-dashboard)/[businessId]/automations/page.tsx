@@ -68,7 +68,7 @@ function AutomationCard({
             <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#C8371D]">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
                             <Icon aria-hidden="true" />
                         </span>
                         <div>
@@ -210,7 +210,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
     return (
         <main className="space-y-8 text-[#17233B]">
             <header>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">Growth</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Automations</h1>
                 <p className="mt-3 max-w-2xl text-[#17233B]/65">
                     Emails that go to your followers automatically, each with a personal reward they can use

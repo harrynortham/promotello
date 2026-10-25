@@ -166,7 +166,7 @@ export async function BusinessesListing({ city, searchParams }: ListingProps) {
             <section className="border-b border-[#17233B]/10 bg-white">
                 <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 sm:px-10 sm:py-16 lg:grid-cols-[1fr_auto] lg:items-end">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Business directory
                         </p>
 
@@ -195,7 +195,7 @@ export async function BusinessesListing({ city, searchParams }: ListingProps) {
                         <p className="mt-1 text-sm text-[#17233B]/65">
                             Get listed for free and publish your first offer today.
                         </p>
-                        <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#C8371D]">
+                        <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FF593F]">
                             List your business
                             <FiArrowRight aria-hidden="true" className="transition group-hover:translate-x-0.5" />
                         </p>

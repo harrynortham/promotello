@@ -30,9 +30,9 @@ export function LoyaltyStamps({
                     <span
                         key={index}
                         className={`flex ${dimension} items-center justify-center rounded-full border-2 transition ${isFilled
-                            ? "border-[#FF593F] bg-[#C8371D] text-white"
+                            ? "border-[#FF593F] bg-[#FF593F] text-white"
                             : isReward
-                                ? "border-dashed border-[#FF593F]/50 bg-[#FF593F]/5 text-[#C8371D]"
+                                ? "border-dashed border-[#FF593F]/50 bg-[#FF593F]/5 text-[#FF593F]"
                                 : "border-dashed border-[#17233B]/20 bg-white text-transparent"
                             }`}
                     >

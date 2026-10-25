@@ -80,7 +80,7 @@ export function FollowedBusinesses({ follows: initialFollows }: { follows: Follo
                 {follows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                         You don&apos;t follow any businesses yet. Tap Follow on a{" "}
-                        <Link href="/businesses" className="font-medium text-[#C8371D] hover:underline">
+                        <Link href="/businesses" className="font-medium text-[#FF593F] hover:underline">
                             business page
                         </Link>{" "}
                         to hear about their new offers.
@@ -93,7 +93,7 @@ export function FollowedBusinesses({ follows: initialFollows }: { follows: Follo
 
                             return (
                                 <li key={follow.business_id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0">
-                                    <Link href={follow.businesses ? businessPath(follow.businesses) : "/businesses"} className="min-w-0 font-medium hover:text-[#C8371D]">
+                                    <Link href={follow.businesses ? businessPath(follow.businesses) : "/businesses"} className="min-w-0 font-medium hover:text-[#FF593F]">
                                         {name}
                                     </Link>
 

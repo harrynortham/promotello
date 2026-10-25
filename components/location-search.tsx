@@ -141,7 +141,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
             <div
                 className={`flex items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white px-4 shadow-sm focus-within:border-[#FF593F]/50 ${tall ? "h-16" : "h-11"}`}
             >
-                <FiMapPin aria-hidden="true" className="shrink-0 text-[#C8371D]" />
+                <FiMapPin aria-hidden="true" className="shrink-0 text-[#FF593F]" />
                 <input
                     ref={inputRef}
                     type="text"
@@ -196,7 +196,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
                             className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 ${index === active ? "bg-[#FF593F]/10" : ""}`}
                         >
                             {suggestion.locate ? (
-                                <FiNavigation aria-hidden="true" className="shrink-0 text-[#C8371D]" />
+                                <FiNavigation aria-hidden="true" className="shrink-0 text-[#FF593F]" />
                             ) : (
                                 <FiMapPin aria-hidden="true" className="shrink-0 text-[#17233B]/65" />
                             )}

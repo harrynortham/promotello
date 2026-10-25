@@ -39,7 +39,7 @@ export function BusinessCard({ business }: { business: ListingBusiness }) {
                             className="size-16 rounded-2xl border-4 border-white object-cover shadow-sm"
                         />
                     ) : (
-                        <span className="flex size-16 items-center justify-center rounded-2xl border-4 border-white bg-[#FFF4E8] text-xl font-semibold text-[#C8371D] shadow-sm">
+                        <span className="flex size-16 items-center justify-center rounded-2xl border-4 border-white bg-[#FFF4E8] text-xl font-semibold text-[#FF593F] shadow-sm">
                             {business.name.charAt(0).toUpperCase()}
                         </span>
                     )}
@@ -73,7 +73,7 @@ export function BusinessCard({ business }: { business: ListingBusiness }) {
 
                 {business.topOffer && (
                     <p className="mt-4 truncate rounded-xl bg-[#FFF8F0] px-3 py-2.5 text-sm">
-                        <span className="font-semibold text-[#C8371D]">
+                        <span className="font-semibold text-[#FF593F]">
                             {business.topOffer.discount}
                         </span>
                         {/* Skip the title when it just repeats the discount. */}

@@ -92,7 +92,7 @@ async function CategoryGrid() {
                                             key={sub.id}
                                             href={`/categories/${sub.slug}`}
                                             className={`rounded-full border px-3 py-1.5 text-sm transition ${active
-                                                ? "border-[#17233B]/15 bg-[#FFF8F0] text-[#17233B] hover:border-[#FF593F] hover:text-[#C8371D]"
+                                                ? "border-[#17233B]/15 bg-[#FFF8F0] text-[#17233B] hover:border-[#FF593F] hover:text-[#FF593F]"
                                                 : "border-transparent bg-[#17233B]/[0.04] text-[#17233B]/65 hover:text-[#17233B]"
                                                 }`}
                                         >
@@ -102,7 +102,7 @@ async function CategoryGrid() {
                                 })}
                             </div>
 
-                            <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#17233B] group-hover:text-[#C8371D]">
+                            <p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#17233B] group-hover:text-[#FF593F]">
                                 Explore {group.name.toLowerCase()}
                                 <FiArrowRight aria-hidden="true" />
                             </p>
@@ -120,7 +120,7 @@ export default async function CategoriesPage() {
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="mx-auto max-w-7xl px-6 py-14 text-center sm:px-10 sm:py-20">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                     Browse by category
                 </p>
 

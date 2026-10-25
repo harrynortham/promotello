@@ -33,7 +33,7 @@ export default function BusinessContactPage() {
 
                     <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
                         A good conversation could be your next{" "}
-                        <span className="text-[#C8371D]">
+                        <span className="text-[#FF593F]">
                             first step.
                         </span>
                     </h1>
@@ -49,7 +49,7 @@ export default function BusinessContactPage() {
             <section className="mx-auto grid max-w-7xl gap-10 px-6 pb-20 sm:px-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
                 <div className="space-y-8 lg:pt-6">
                     <div>
-                        <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#C8371D]">
+                        <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#FF593F]">
                             <FiMessageCircle
                                 aria-hidden="true"
                                 className="size-6"

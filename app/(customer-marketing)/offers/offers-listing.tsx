@@ -240,7 +240,7 @@ export async function OffersListing({ city, searchParams }: ListingProps) {
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
             <section className="border-b border-[#17233B]/10 bg-white">
                 <div className="mx-auto max-w-7xl px-6 py-12 sm:px-10 sm:py-16">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                         All offers
                     </p>
 

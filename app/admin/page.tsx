@@ -148,14 +148,14 @@ function AttentionLink({ href, icon, count, label }: { href: string; icon: React
             href={href}
             className="group flex items-center gap-4 rounded-xl border border-[#17233B]/10 bg-white p-4 transition-colors hover:border-[#FF593F]/40"
         >
-            <span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${count > 0 ? "bg-[#FF593F]/10 text-[#C8371D]" : "bg-[#17233B]/5 text-[#17233B]/65"}`}>
+            <span className={`flex size-10 shrink-0 items-center justify-center rounded-full ${count > 0 ? "bg-[#FF593F]/10 text-[#FF593F]" : "bg-[#17233B]/5 text-[#17233B]/65"}`}>
                 {icon}
             </span>
             <span className="min-w-0 flex-1">
                 <span className="block text-2xl font-semibold tabular-nums">{count}</span>
                 <span className="block text-sm text-[#17233B]/70">{label}</span>
             </span>
-            <FiArrowRight aria-hidden="true" className="text-[#17233B]/30 transition-colors group-hover:text-[#C8371D]" />
+            <FiArrowRight aria-hidden="true" className="text-[#17233B]/30 transition-colors group-hover:text-[#FF593F]" />
         </Link>
     );
 }
@@ -365,7 +365,7 @@ async function OverviewContent() {
                                 {metrics.top_businesses.map((business) => (
                                     <tr key={business.id} className="border-b border-[#17233B]/5 last:border-0">
                                         <td className="px-4 py-3">
-                                            <Link href={`/businesses/${business.id}`} className="font-medium hover:text-[#C8371D]">
+                                            <Link href={`/businesses/${business.id}`} className="font-medium hover:text-[#FF593F]">
                                                 {business.name}
                                             </Link>
                                             {business.pro && (

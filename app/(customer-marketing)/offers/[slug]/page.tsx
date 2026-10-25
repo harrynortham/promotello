@@ -299,7 +299,7 @@ async function OfferContent({ params }: OfferPageProps) {
                     aria-label="Breadcrumb"
                     className="flex items-center gap-1.5 text-sm text-[#17233B]/70"
                 >
-                    <Link href="/offers" className="hover:text-[#C8371D]">
+                    <Link href="/offers" className="hover:text-[#FF593F]">
                         Offers
                     </Link>
                     {group && (
@@ -307,7 +307,7 @@ async function OfferContent({ params }: OfferPageProps) {
                             <FiChevronRight aria-hidden="true" className="size-3.5" />
                             <Link
                                 href={`/categories/${group.slug}`}
-                                className="hover:text-[#C8371D]"
+                                className="hover:text-[#FF593F]"
                             >
                                 {group.name}
                             </Link>
@@ -329,12 +329,12 @@ async function OfferContent({ params }: OfferPageProps) {
                                 className="object-cover"
                             />
                         ) : (
-                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-5xl font-semibold text-[#C8371D]">
+                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-5xl font-semibold text-[#FF593F]">
                                 {offer.discount}
                             </div>
                         )}
 
-                        <span className="absolute left-4 top-4 rounded-full bg-[#C8371D] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
+                        <span className="absolute left-4 top-4 rounded-full bg-[#FF593F] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
                             {offer.discount}
                         </span>
                     </div>
@@ -353,13 +353,13 @@ async function OfferContent({ params }: OfferPageProps) {
                                     className="size-11 rounded-xl object-cover"
                                 />
                             ) : (
-                                <span className="flex size-11 items-center justify-center rounded-xl bg-[#FFF4E8] font-semibold text-[#C8371D]">
+                                <span className="flex size-11 items-center justify-center rounded-xl bg-[#FFF4E8] font-semibold text-[#FF593F]">
                                     {business.name.charAt(0).toUpperCase()}
                                 </span>
                             )}
 
                             <span className="min-w-0">
-                                <span className="block truncate font-semibold group-hover:text-[#C8371D]">
+                                <span className="block truncate font-semibold group-hover:text-[#FF593F]">
                                     {business.name}
                                 </span>
                                 {area && (
@@ -382,7 +382,7 @@ async function OfferContent({ params }: OfferPageProps) {
                                 return (
                                     <li
                                         key={fact.label}
-                                        className={`flex items-center gap-2.5 text-sm ${fact.highlight ? "font-semibold text-[#C8371D]" : "text-[#17233B]/75"}`}
+                                        className={`flex items-center gap-2.5 text-sm ${fact.highlight ? "font-semibold text-[#FF593F]" : "text-[#17233B]/75"}`}
                                     >
                                         <Icon aria-hidden="true" className="size-4 shrink-0" />
                                         {fact.label}

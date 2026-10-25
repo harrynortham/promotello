@@ -27,13 +27,13 @@ export function EventCard({ event }: { event: EventSummary }) {
             </div>
             <div className="min-w-0">
                 <h3 className="font-semibold leading-snug">
-                    <Link href={`/events/${event.id}`} className="hover:text-[#C8371D]">
+                    <Link href={`/events/${event.id}`} className="hover:text-[#FF593F]">
                         {event.title}
                     </Link>
                 </h3>
                 {event.business && (
                     <p className="mt-0.5 text-sm">
-                        <Link href={businessPath(event.business)} className="text-[#17233B]/70 hover:text-[#C8371D]">
+                        <Link href={businessPath(event.business)} className="text-[#17233B]/70 hover:text-[#FF593F]">
                             {event.business.name}
                         </Link>
                     </p>

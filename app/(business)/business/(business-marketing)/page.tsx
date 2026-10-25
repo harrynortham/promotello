@@ -106,7 +106,7 @@ export default async function BusinessPage() {
                         <Eyebrow>For independent local businesses</Eyebrow>
                         <h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
                             Turn first-time visitors into{" "}
-                            <span className="text-[#C8371D]">regulars.</span>
+                            <span className="text-[#FF593F]">regulars.</span>
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
                             Promotions customers claim on their phone and digital loyalty cards that bring them
@@ -121,7 +121,7 @@ export default async function BusinessPage() {
                         <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#17233B]/65">
                             {["Free to start", "No app for customers to download", "Set up in 15 minutes"].map((item) => (
                                 <li key={item} className="inline-flex items-center gap-2">
-                                    <FiCheck aria-hidden="true" className="text-[#C8371D]" />
+                                    <FiCheck aria-hidden="true" className="text-[#FF593F]" />
                                     {item}
                                 </li>
                             ))}
@@ -156,7 +156,7 @@ export default async function BusinessPage() {
                     {loop.map(({ icon: Icon, title, body }, index) => (
                         <div key={title}>
                             <div className="flex items-center gap-3">
-                                <span className="flex size-10 items-center justify-center rounded-full bg-white text-[#C8371D] shadow-sm">
+                                <span className="flex size-10 items-center justify-center rounded-full bg-white text-[#FF593F] shadow-sm">
                                     <Icon aria-hidden="true" />
                                 </span>
                                 <span className="text-xs font-semibold text-[#17233B]/65">0{index + 1}</span>
@@ -191,7 +191,7 @@ export default async function BusinessPage() {
                                     sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                                     className="object-cover"
                                 />
-                                <span className="absolute bottom-3 left-3 flex size-9 items-center justify-center rounded-full bg-white text-[#C8371D] shadow">
+                                <span className="absolute bottom-3 left-3 flex size-9 items-center justify-center rounded-full bg-white text-[#FF593F] shadow">
                                     <Icon aria-hidden="true" />
                                 </span>
                             </div>
@@ -384,7 +384,7 @@ export default async function BusinessPage() {
                         <h2 className="mt-4 text-3xl font-semibold tracking-tight">Good to know</h2>
                         <p className="mt-4 text-[#17233B]/65">
                             More in{" "}
-                            <Link href="/business/faq" className="font-medium text-[#C8371D] underline underline-offset-4">
+                            <Link href="/business/faq" className="font-medium text-[#FF593F] underline underline-offset-4">
                                 the full FAQ
                             </Link>
                             .

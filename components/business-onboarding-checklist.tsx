@@ -89,7 +89,7 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                                                 <p className={`font-medium ${item.completed ? "text-[#17233B]/70 line-through decoration-[#17233B]/25" : "text-[#17233B]"}`}>
                                                     {item.label}
                                                     {item.pro && (
-                                                        <Badge variant="outline" className="ml-2 border-[#FF593F]/30 text-[10px] text-[#C8371D]">
+                                                        <Badge variant="outline" className="ml-2 border-[#FF593F]/30 text-[10px] text-[#FF593F]">
                                                             Pro
                                                         </Badge>
                                                     )}
