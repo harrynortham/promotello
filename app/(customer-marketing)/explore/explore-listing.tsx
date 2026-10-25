@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
+import { permanentRedirect } from "next/navigation";
 import { FiArrowRight, FiMapPin } from "react-icons/fi";
 
 import { BusinessCard } from "@/components/business-card";
@@ -22,7 +23,7 @@ import {
     type ListingOffer,
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
-import { cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
+import { areaPath, cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
 
 // Neighbourhoods to explore, in every live city (/explore) or one
 // (/explore/bristol).
@@ -53,12 +54,12 @@ function ExploreLoading() {
 }
 
 function AreaCard({
-    base,
+    href,
     name,
     businesses,
     offers,
 }: {
-    base: string;
+    href: string;
     name: string;
     businesses: ListingBusiness[];
     offers: ListingOffer[];
@@ -67,8 +68,7 @@ function AreaCard({
 
     return (
         <Link
-            href={`${base}?area=${encodeURIComponent(name)}`}
-            scroll={false}
+            href={href}
             className="group flex flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
         >
             <div className="relative aspect-[16/9] overflow-hidden bg-[#17233B]">
@@ -121,8 +121,24 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
     const base = city ? `/explore/${city.slug}` : "/explore";
     const offersBase = city ? `/offers/${city.slug}` : "/offers";
     const { area } = await searchParams;
-    const [offers, businesses] = await Promise.all([getLiveOffers(city?.id), getPublicBusinesses(city?.id)]);
+    const [offers, businesses, places] = await Promise.all([
+        getLiveOffers(city?.id),
+        getPublicBusinesses(city?.id),
+        getLiveCities(),
+    ]);
     const areas = areasFrom(businesses);
+
+    // Each area has its own page, e.g. /explore/bristol/gloucester-road.
+    const pathFor = (name: string) => {
+        const cityId = city?.id ?? businesses.find((business) => business.area === name)?.cityId;
+        const place = places.find((item) => item.id === cityId);
+        return place ? areaPath(place, name) : null;
+    };
+
+    // Old ?area= links go to the area's page.
+    const selectedPath = area ? pathFor(area) : null;
+    if (selectedPath) permanentRedirect(selectedPath);
+
     const selected = areas.find((item) => item.name === area)?.name ?? null;
 
     return (
@@ -135,7 +151,7 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
                 {areas.map((item) => (
                     <FilterChip
                         key={item.name}
-                        href={hrefWith(base, {}, { area: item.name })}
+                        href={pathFor(item.name) ?? hrefWith(base, {}, { area: item.name })}
                         active={selected === item.name}
                     >
                         {item.name}
@@ -162,7 +178,7 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
                     {areas.map((item) => (
                         <AreaCard
                             key={item.name}
-                            base={base}
+                            href={pathFor(item.name) ?? hrefWith(base, {}, { area: item.name })}
                             name={item.name}
                             businesses={businesses.filter((business) => business.area === item.name)}
                             offers={offers.filter((offer) => offer.business.area === item.name)}
@@ -174,7 +190,7 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
     );
 }
 
-function SelectedArea({
+export function SelectedArea({
     offersBase,
     name,
     offers,

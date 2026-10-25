@@ -21,7 +21,8 @@ function examplePlaceholder(places: Place[]) {
 type LocationSearchProps = {
     places: Place[];
     // Where a choice goes: e.g. "/offers" sends Bristol to /offers/bristol
-    // and Clifton to /offers/bristol?area=Clifton.
+    // and Clifton to /offers/bristol?area=Clifton (or, from /explore, to
+    // /explore/bristol/clifton).
     basePath: string;
     // The city currently shown, if any.
     current?: { name: string } | null;
@@ -47,7 +48,11 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
             ...city.areas.map((area) => ({
                 label: area,
                 detail: city.name,
-                href: `${basePath}/${city.slug}?area=${encodeURIComponent(area)}`,
+                // Areas have their own explore pages; elsewhere they're a filter.
+                href:
+                    basePath === "/explore" && city.areaSlugs?.[area]
+                        ? `/explore/${city.slug}/${city.areaSlugs[area]}`
+                        : `${basePath}/${city.slug}?area=${encodeURIComponent(area)}`,
                 remember: city.slug,
             })),
         ]);

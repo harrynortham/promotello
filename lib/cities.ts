@@ -10,6 +10,8 @@ export type City = { id: string; slug: string; name: string };
 
 export type Place = City & {
     areas: string[];
+    // Area name to its slug, for /explore/<city>/<area>.
+    areaSlugs: Record<string, string>;
     latitude: number | null;
     longitude: number | null;
     radiusKm: number;
@@ -24,7 +26,7 @@ export async function getLiveCities(): Promise<Place[]> {
 
     const { data } = await createPublicClient()
         .from("cities")
-        .select("id, slug, name, latitude, longitude, radius_km, hero_image_url, feature_image_url, areas ( name, is_active )")
+        .select("id, slug, name, latitude, longitude, radius_km, hero_image_url, feature_image_url, areas ( name, slug, is_active )")
         .eq("is_live", true)
         .order("name");
 
@@ -36,6 +38,9 @@ export async function getLiveCities(): Promise<Place[]> {
             .filter((area) => area.is_active)
             .map((area) => area.name)
             .sort((a, b) => a.localeCompare(b)),
+        areaSlugs: Object.fromEntries(
+            (city.areas ?? []).filter((area) => area.is_active).map((area) => [area.name, area.slug]),
+        ),
         latitude: city.latitude,
         longitude: city.longitude,
         radiusKm: city.radius_km,
@@ -47,6 +52,13 @@ export async function getLiveCities(): Promise<Place[]> {
 export async function getLiveCity(slug: string): Promise<City | null> {
     const city = (await getLiveCities()).find((item) => item.slug === slug);
     return city ? { id: city.id, slug: city.slug, name: city.name } : null;
+}
+
+// An area's own page, e.g. /explore/bristol/gloucester-road.
+export function areaPath(place: Pick<Place, "slug" | "areaSlugs">, areaName: string) {
+    // areaSlugs can be missing from city data cached before it existed.
+    const slug = place.areaSlugs?.[areaName];
+    return slug ? `/explore/${place.slug}/${slug}` : null;
 }
 
 // How to name "where" in copy: the city, or the only live city, or a

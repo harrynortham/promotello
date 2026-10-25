@@ -9,8 +9,8 @@ test("the home page stays at / and has a location search", async ({ page }) => {
     await location.fill("Clif");
     await expect(page.getByRole("option", { name: /Clifton/ })).toBeVisible();
     await location.press("Enter");
-    await page.waitForURL("**/explore/bristol?area=Clifton");
-    await expect(page.getByRole("heading", { name: /Find your next favourite place/ })).toBeVisible();
+    await page.waitForURL("**/explore/bristol/clifton");
+    await expect(page.getByRole("heading", { name: "Clifton, Bristol", level: 1 })).toBeVisible();
 });
 
 test("listing pages show every city by default, and one city when added to the URL", async ({ page }) => {
