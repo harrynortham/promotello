@@ -1,17 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { Suspense } from "react";
 import {
     FiArrowRight,
-    FiCheckCircle,
     FiGift,
     FiHelpCircle,
     FiMessageCircle,
 } from "react-icons/fi";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { ContactForm } from "@/components/contact-form";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -20,10 +17,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/utils/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const topics = [
     {
@@ -47,88 +41,6 @@ const topics = [
 ];
 
 export default function ContactPage() {
-    const submittingRef = useRef(false);
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        if (submittingRef.current) {
-            return;
-        }
-
-        const form = event.currentTarget;
-        const values = new FormData(form);
-
-        submittingRef.current = true;
-        setIsSubmitting(true);
-        setErrorMessage("");
-
-        try {
-            const supabase = createClient();
-
-            const { data, error } = await supabase.functions.invoke(
-                "send-contact-message",
-                {
-                    body: {
-                        name: values.get("name"),
-                        email: values.get("email"),
-                        business: "",
-                        subject: values.get("subject"),
-                        message: values.get("message"),
-                        website: values.get("website"),
-                    },
-                },
-            );
-
-            if (error) {
-                let message =
-                    "We couldn’t send your message. Please try again later.";
-
-                if (
-                    "context" in error &&
-                    error.context instanceof Response
-                ) {
-                    if (error.context.status === 429) {
-                        message =
-                            "You’ve reached the message limit. Please wait 30 minutes before trying again.";
-                    } else {
-                        const body = await error.context
-                            .json()
-                            .catch(() => null);
-
-                        if (typeof body?.error === "string") {
-                            message = body.error;
-                        }
-                    }
-                }
-
-                throw new Error(message);
-            }
-
-            if (!data?.success) {
-                throw new Error(
-                    "We couldn’t send your message. Please try again later.",
-                );
-            }
-
-            form.reset();
-            setIsSuccess(true);
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "Something went wrong. Please try again later.",
-            );
-        } finally {
-            submittingRef.current = false;
-            setIsSubmitting(false);
-        }
-    }
-
     return (
         <main className="overflow-hidden bg-background text-foreground">
             <section className="relative isolate">
@@ -249,178 +161,9 @@ export default function ContactPage() {
                     </CardHeader>
 
                     <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
-                        {isSuccess ? (
-                            <div
-                                role="status"
-                                aria-live="polite"
-                                className="rounded-2xl bg-muted/40 px-6 py-10 text-center"
-                            >
-                                <FiCheckCircle
-                                    aria-hidden="true"
-                                    className="mx-auto size-12 text-emerald-600"
-                                />
-
-                                <h2 className="mt-5 text-2xl font-semibold">
-                                    Thanks for reaching out.
-                                </h2>
-
-                                <p className="mt-3 leading-7 text-muted-foreground">
-                                    Your message has been sent. We’ll review it
-                                    and reply by email.
-                                </p>
-
-                                <div className="mt-7 flex flex-wrap justify-center gap-3">
-                                    <Button
-                                        render={<Link href="/explore" />}
-                                        nativeButton={false}
-                                    >
-                                        Keep exploring
-                                        <FiArrowRight aria-hidden="true" />
-                                    </Button>
-
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setErrorMessage("");
-                                            setIsSuccess(false);
-                                        }}
-                                    >
-                                        Send another message
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <form
-                                onSubmit={handleSubmit}
-                                className="space-y-6"
-                                aria-busy={isSubmitting}
-                            >
-                                <div className="grid gap-6 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="consumer-contact-name">
-                                            Your name
-                                        </Label>
-
-                                        <Input
-                                            id="consumer-contact-name"
-                                            name="name"
-                                            autoComplete="name"
-                                            placeholder="Your full name"
-                                            required
-                                            maxLength={100}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="consumer-contact-email">
-                                            Email address
-                                        </Label>
-
-                                        <Input
-                                            id="consumer-contact-email"
-                                            name="email"
-                                            type="email"
-                                            autoComplete="email"
-                                            placeholder="you@example.com"
-                                            required
-                                            maxLength={254}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="consumer-contact-subject">
-                                        What’s your message about?
-                                    </Label>
-
-                                    <Input
-                                        id="consumer-contact-subject"
-                                        name="subject"
-                                        placeholder="My account, a promotion, feedback…"
-                                        required
-                                        maxLength={150}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="consumer-contact-message">
-                                        Your message
-                                    </Label>
-
-                                    <Textarea
-                                        id="consumer-contact-message"
-                                        name="message"
-                                        placeholder="Tell us what happened or how we can help."
-                                        required
-                                        minLength={20}
-                                        maxLength={5000}
-                                        rows={7}
-                                    />
-
-                                    <p className="text-xs leading-6 text-muted-foreground">
-                                        Include the business or promotion name
-                                        if relevant. Please don’t send
-                                        passwords, payment details, or
-                                        redemption codes.
-                                    </p>
-                                </div>
-
-                                {/* Honeypot field for automated submissions. */}
-                                <div
-                                    aria-hidden="true"
-                                    className="absolute -left-[10000px]"
-                                >
-                                    <Label htmlFor="consumer-contact-website">
-                                        Leave this field empty
-                                    </Label>
-
-                                    <Input
-                                        id="consumer-contact-website"
-                                        name="website"
-                                        tabIndex={-1}
-                                        autoComplete="off"
-                                    />
-                                </div>
-
-                                {errorMessage && (
-                                    <Alert variant="destructive">
-                                        <AlertTitle>
-                                            Message not sent
-                                        </AlertTitle>
-
-                                        <AlertDescription>
-                                            {errorMessage}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-
-                                <p className="text-sm leading-6 text-muted-foreground">
-                                    We’ll use your details to respond to your
-                                    enquiry. Read our{" "}
-                                    <Link
-                                        href="/legal/privacy"
-                                        className="underline underline-offset-4"
-                                    >
-                                        privacy policy
-                                    </Link>
-                                    .
-                                </p>
-
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    disabled={isSubmitting}
-                                    className="w-full sm:w-auto"
-                                >
-                                    {isSubmitting
-                                        ? "Sending message…"
-                                        : "Send your message"}
-
-                                    <FiArrowRight aria-hidden="true" />
-                                </Button>
-                            </form>
-                        )}
+                        <Suspense fallback={<Skeleton className="h-96 rounded-2xl" />}>
+                            <ContactForm audience="customer" />
+                        </Suspense>
                     </CardContent>
                 </Card>
             </section>

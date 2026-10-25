@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
     FiArrowLeft,
     FiArrowRight,
@@ -19,53 +22,37 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError, invalidProps } from "@/components/field-error";
+import { email } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
-export default function ForgotPasswordPage() {
-    const submittingRef = useRef(false);
+const schema = z.object({ email });
 
-    const [email, setEmail] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+type Values = z.infer<typeof schema>;
+
+export default function ForgotPasswordPage() {
     const [submittedEmail, setSubmittedEmail] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "" } });
 
-        if (submittingRef.current) return;
-
-        submittingRef.current = true;
-        setIsSubmitting(true);
+    async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        const requestedEmail = email.trim();
+        const { error } = await createClient().auth.resetPasswordForEmail(values.email, {
+            redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        });
 
-        try {
-            const supabase = createClient();
-
-            const { error } =
-                await supabase.auth.resetPasswordForEmail(
-                    requestedEmail,
-                    {
-                        redirectTo:
-                            `${window.location.origin}/auth/callback` +
-                            "?next=/reset-password",
-                    },
-                );
-
-            if (error) throw error;
-
-            setSubmittedEmail(requestedEmail);
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "We couldn’t send the reset link. Please try again.",
-            );
-        } finally {
-            submittingRef.current = false;
-            setIsSubmitting(false);
+        if (error) {
+            setErrorMessage(error.message || "We couldn’t send the reset link. Please try again.");
+            return;
         }
+
+        setSubmittedEmail(values.email);
     }
 
     function useAnotherEmail() {
@@ -191,7 +178,8 @@ export default function ForgotPasswordPage() {
                                 </p>
 
                                 <form
-                                    onSubmit={handleSubmit}
+                                    onSubmit={handleSubmit(onSubmit)}
+                                    noValidate
                                     className="mt-8 space-y-5"
                                     aria-busy={isSubmitting}
                                 >
@@ -209,21 +197,17 @@ export default function ForgotPasswordPage() {
 
                                         <Input
                                             id="reset-email"
-                                            name="email"
                                             type="email"
                                             autoComplete="email"
-                                            required
                                             maxLength={254}
-                                            value={email}
-                                            onChange={(event) =>
-                                                setEmail(
-                                                    event.target.value,
-                                                )
-                                            }
                                             placeholder="you@example.com"
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
                                             className="h-12"
+                                            {...register("email")}
+                                            {...invalidProps("reset-email-error", errors.email)}
                                         />
+
+                                        <FieldError id="reset-email-error" message={errors.email?.message} />
                                     </div>
 
                                     {errorMessage && (

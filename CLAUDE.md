@@ -77,5 +77,4 @@ The Supabase project hostname is `owdxoarqivpoplpqiylt.supabase.co` (also allowl
 
 ## Key notes from README
 
-- In production, update the Supabase edge function for emails to use `www.promotello.com`.
-- Forms should eventually migrate to react-hook-form + Zod validation for consistency.
+- Data-entry forms use react-hook-form + Zod (shared rules in `lib/validation.ts`, field errors via `components/field-error.tsx`); one-button actions stay plain server-action forms.

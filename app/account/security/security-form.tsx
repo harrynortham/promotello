@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { FiLock, FiMail } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,7 +19,32 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError, invalidProps } from "@/components/field-error";
+import { email as emailField, password } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
+
+const passwordSchema = z
+    .object({
+        currentPassword: z.string().min(1, "Enter your current password."),
+        newPassword: password,
+        confirmNewPassword: z.string(),
+    })
+    .refine((values) => values.newPassword === values.confirmNewPassword, {
+        message: "Your new passwords do not match.",
+        path: ["confirmNewPassword"],
+    })
+    .refine((values) => values.newPassword !== values.currentPassword, {
+        message: "Choose a different password from your current one.",
+        path: ["newPassword"],
+    });
+
+const emailSchema = z.object({
+    newEmail: emailField.transform((value) => value.toLowerCase()),
+    emailPassword: z.string().min(1, "Enter your current password."),
+});
+
+type PasswordValues = z.infer<typeof passwordSchema>;
+type EmailValues = z.infer<typeof emailSchema>;
 
 type SecurityFormProps = {
     email: string;
@@ -55,11 +83,6 @@ export default function SecurityForm({
     pendingEmail,
 }: SecurityFormProps) {
     const router = useRouter();
-    const busyRef = useRef(false);
-
-    const [busyForm, setBusyForm] = useState<
-        "password" | "email" | null
-    >(null);
 
     const [passwordFeedback, setPasswordFeedback] =
         useState<Feedback>(null);
@@ -67,9 +90,28 @@ export default function SecurityForm({
     const [emailFeedback, setEmailFeedback] =
         useState<Feedback>(null);
 
+    const passwordForm = useForm<PasswordValues>({
+        resolver: zodResolver(passwordSchema),
+        defaultValues: { currentPassword: "", newPassword: "", confirmNewPassword: "" },
+    });
+
+    const emailForm = useForm<EmailValues>({
+        resolver: zodResolver(emailSchema),
+        defaultValues: { newEmail: "", emailPassword: "" },
+    });
+
+    const passwordErrors = passwordForm.formState.errors;
+    const emailErrors = emailForm.formState.errors;
+
+    const busyForm = passwordForm.formState.isSubmitting
+        ? "password"
+        : emailForm.formState.isSubmitting
+            ? "email"
+            : null;
+
     const isBusy = busyForm !== null;
 
-    async function confirmPassword(password: string) {
+    async function confirmPassword(currentPassword: string) {
         const supabase = createClient();
 
         // Read the current identity instead of relying on page props.
@@ -87,7 +129,7 @@ export default function SecurityForm({
         const { data, error } =
             await supabase.auth.signInWithPassword({
                 email: user.email,
-                password,
+                password: currentPassword,
             });
 
         if (error || data.user?.id !== user.id) {
@@ -102,65 +144,21 @@ export default function SecurityForm({
         };
     }
 
-    async function changePassword(
-        event: FormEvent<HTMLFormElement>,
-    ) {
-        event.preventDefault();
-
-        if (busyRef.current) return;
-
-        const form = event.currentTarget;
-        const values = new FormData(form);
-
-        const currentPassword = String(
-            values.get("currentPassword") ?? "",
-        );
-        const newPassword = String(values.get("newPassword") ?? "");
-        const confirmNewPassword = String(
-            values.get("confirmNewPassword") ?? "",
-        );
+    async function changePassword(values: PasswordValues) {
+        if (isBusy) return;
 
         setPasswordFeedback(null);
 
-        if (newPassword.length < 8) {
-            setPasswordFeedback({
-                type: "error",
-                message: "Use a password with at least 8 characters.",
-            });
-            return;
-        }
-
-        if (newPassword !== confirmNewPassword) {
-            setPasswordFeedback({
-                type: "error",
-                message: "Your new passwords do not match.",
-            });
-            return;
-        }
-
-        if (newPassword === currentPassword) {
-            setPasswordFeedback({
-                type: "error",
-                message:
-                    "Choose a different password from your current one.",
-            });
-            return;
-        }
-
-        busyRef.current = true;
-        setBusyForm("password");
-
         try {
-            const { supabase } =
-                await confirmPassword(currentPassword);
+            const { supabase } = await confirmPassword(values.currentPassword);
 
             const { error } = await supabase.auth.updateUser({
-                password: newPassword,
+                password: values.newPassword,
             });
 
             if (error) throw error;
 
-            form.reset();
+            passwordForm.reset();
 
             setPasswordFeedback({
                 type: "success",
@@ -177,55 +175,25 @@ export default function SecurityForm({
                         ? error.message
                         : "Please try again.",
             });
-        } finally {
-            busyRef.current = false;
-            setBusyForm(null);
         }
     }
 
-    async function changeEmail(
-        event: FormEvent<HTMLFormElement>,
-    ) {
-        event.preventDefault();
-
-        if (busyRef.current) return;
-
-        const form = event.currentTarget;
-        const values = new FormData(form);
-
-        const newEmail = String(values.get("newEmail") ?? "")
-            .trim()
-            .toLowerCase();
-
-        const currentPassword = String(
-            values.get("emailPassword") ?? "",
-        );
+    async function changeEmail(values: EmailValues) {
+        if (isBusy) return;
 
         setEmailFeedback(null);
 
-        if (!newEmail || newEmail.length > 254) {
-            setEmailFeedback({
-                type: "error",
-                message: "Enter a valid email address.",
-            });
-            return;
-        }
-
-        busyRef.current = true;
-        setBusyForm("email");
-
         try {
-            const { supabase, currentEmail } =
-                await confirmPassword(currentPassword);
+            const { supabase, currentEmail } = await confirmPassword(values.emailPassword);
 
-            if (newEmail === currentEmail.toLowerCase()) {
+            if (values.newEmail === currentEmail.toLowerCase()) {
                 throw new Error(
                     "Enter a different email address from your current one.",
                 );
             }
 
             const { data, error } = await supabase.auth.updateUser(
-                { email: newEmail },
+                { email: values.newEmail },
                 {
                     emailRedirectTo:
                         `${window.location.origin}/auth/callback` +
@@ -235,10 +203,10 @@ export default function SecurityForm({
 
             if (error) throw error;
 
-            form.reset();
+            emailForm.reset();
 
             const changedImmediately =
-                data.user?.email?.toLowerCase() === newEmail;
+                data.user?.email?.toLowerCase() === values.newEmail;
 
             setEmailFeedback({
                 type: "success",
@@ -256,9 +224,6 @@ export default function SecurityForm({
                         ? error.message
                         : "Please try again.",
             });
-        } finally {
-            busyRef.current = false;
-            setBusyForm(null);
         }
     }
 
@@ -294,7 +259,8 @@ export default function SecurityForm({
 
                 <CardContent>
                     <form
-                        onSubmit={changePassword}
+                        onSubmit={passwordForm.handleSubmit(changePassword)}
+                        noValidate
                         className="space-y-5"
                         aria-busy={busyForm === "password"}
                     >
@@ -305,12 +271,13 @@ export default function SecurityForm({
 
                             <Input
                                 id="current-password"
-                                name="currentPassword"
                                 type="password"
                                 autoComplete="current-password"
-                                required
-                                disabled={isBusy}
+                                readOnly={isBusy}
+                                {...passwordForm.register("currentPassword")}
+                                {...invalidProps("current-password-error", passwordErrors.currentPassword)}
                             />
+                            <FieldError id="current-password-error" message={passwordErrors.currentPassword?.message} />
                         </div>
 
                         <div className="grid gap-5 sm:grid-cols-2">
@@ -321,13 +288,13 @@ export default function SecurityForm({
 
                                 <Input
                                     id="new-password"
-                                    name="newPassword"
                                     type="password"
                                     autoComplete="new-password"
-                                    required
-                                    minLength={8}
-                                    disabled={isBusy}
+                                    readOnly={isBusy}
+                                    {...passwordForm.register("newPassword")}
+                                    {...invalidProps("new-password-error", passwordErrors.newPassword)}
                                 />
+                                <FieldError id="new-password-error" message={passwordErrors.newPassword?.message} />
                             </div>
 
                             <div className="space-y-2">
@@ -337,13 +304,13 @@ export default function SecurityForm({
 
                                 <Input
                                     id="confirm-new-password"
-                                    name="confirmNewPassword"
                                     type="password"
                                     autoComplete="new-password"
-                                    required
-                                    minLength={8}
-                                    disabled={isBusy}
+                                    readOnly={isBusy}
+                                    {...passwordForm.register("confirmNewPassword")}
+                                    {...invalidProps("confirm-new-password-error", passwordErrors.confirmNewPassword)}
                                 />
+                                <FieldError id="confirm-new-password-error" message={passwordErrors.confirmNewPassword?.message} />
                             </div>
                         </div>
 
@@ -417,7 +384,8 @@ export default function SecurityForm({
                     )}
 
                     <form
-                        onSubmit={changeEmail}
+                        onSubmit={emailForm.handleSubmit(changeEmail)}
+                        noValidate
                         className="space-y-5"
                         aria-busy={busyForm === "email"}
                     >
@@ -428,14 +396,15 @@ export default function SecurityForm({
 
                             <Input
                                 id="new-email"
-                                name="newEmail"
                                 type="email"
                                 autoComplete="email"
                                 placeholder="you@example.com"
-                                required
                                 maxLength={254}
-                                disabled={isBusy}
+                                readOnly={isBusy}
+                                {...emailForm.register("newEmail")}
+                                {...invalidProps("new-email-error", emailErrors.newEmail)}
                             />
+                            <FieldError id="new-email-error" message={emailErrors.newEmail?.message} />
                         </div>
 
                         <div className="space-y-2">
@@ -445,12 +414,13 @@ export default function SecurityForm({
 
                             <Input
                                 id="email-password"
-                                name="emailPassword"
                                 type="password"
                                 autoComplete="current-password"
-                                required
-                                disabled={isBusy}
+                                readOnly={isBusy}
+                                {...emailForm.register("emailPassword")}
+                                {...invalidProps("email-password-error", emailErrors.emailPassword)}
                             />
+                            <FieldError id="email-password-error" message={emailErrors.emailPassword?.message} />
                         </div>
 
                         <p className="text-sm leading-7 text-muted-foreground">

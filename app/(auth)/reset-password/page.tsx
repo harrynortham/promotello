@@ -2,12 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-    useEffect,
-    useRef,
-    useState,
-    type FormEvent,
-} from "react";
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
     FiArrowLeft,
     FiArrowRight,
@@ -26,22 +24,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FieldError, invalidProps } from "@/components/field-error";
+import { password, passwordsMatch, passwordsMatchError } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
 type SessionStatus = "loading" | "ready" | "unavailable";
 
-export default function ResetPasswordPage() {
-    const submittingRef = useRef(false);
+const schema = z
+    .object({ password, confirmPassword: z.string() })
+    .refine(passwordsMatch, passwordsMatchError);
 
+type Values = z.infer<typeof schema>;
+
+export default function ResetPasswordPage() {
     const [sessionStatus, setSessionStatus] =
         useState<SessionStatus>("loading");
 
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting },
+    } = useForm<Values>({
+        resolver: zodResolver(schema),
+        defaultValues: { password: "", confirmPassword: "" },
+    });
 
     useEffect(() => {
         let isMounted = true;
@@ -74,66 +85,31 @@ export default function ResetPasswordPage() {
         };
     }, []);
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        if (
-            submittingRef.current ||
-            sessionStatus !== "ready" ||
-            isSuccess
-        ) {
-            return;
-        }
+    async function onSubmit(values: Values) {
+        if (sessionStatus !== "ready" || isSuccess) return;
 
         setErrorMessage("");
 
-        if (password.length < 8) {
-            setErrorMessage(
-                "Choose a password with at least 8 characters.",
-            );
+        const supabase = createClient();
+        const {
+            data: { user },
+            error: sessionError,
+        } = await supabase.auth.getUser();
+
+        if (sessionError || !user) {
+            setSessionStatus("unavailable");
             return;
         }
 
-        if (password !== confirmPassword) {
-            setErrorMessage("Your passwords do not match.");
+        const { error } = await supabase.auth.updateUser({ password: values.password });
+
+        if (error) {
+            setErrorMessage(error.message || "We couldn’t update your password. Please try again.");
             return;
         }
 
-        submittingRef.current = true;
-        setIsSubmitting(true);
-
-        try {
-            const supabase = createClient();
-
-            const {
-                data: { user },
-                error: sessionError,
-            } = await supabase.auth.getUser();
-
-            if (sessionError || !user) {
-                setSessionStatus("unavailable");
-                return;
-            }
-
-            const { error } = await supabase.auth.updateUser({
-                password,
-            });
-
-            if (error) throw error;
-
-            setPassword("");
-            setConfirmPassword("");
-            setIsSuccess(true);
-        } catch (error) {
-            setErrorMessage(
-                error instanceof Error
-                    ? error.message
-                    : "We couldn’t update your password. Please try again.",
-            );
-        } finally {
-            submittingRef.current = false;
-            setIsSubmitting(false);
-        }
+        reset();
+        setIsSuccess(true);
     }
 
     return (
@@ -267,7 +243,8 @@ export default function ResetPasswordPage() {
                                 </p>
 
                                 <form
-                                    onSubmit={handleSubmit}
+                                    onSubmit={handleSubmit(onSubmit)}
+                                    noValidate
                                     className="mt-8 space-y-5"
                                     aria-busy={isSubmitting}
                                 >
@@ -286,25 +263,18 @@ export default function ResetPasswordPage() {
                                         <div className="relative">
                                             <Input
                                                 id="reset-password"
-                                                name="password"
                                                 type={
                                                     showPassword
                                                         ? "text"
                                                         : "password"
                                                 }
                                                 autoComplete="new-password"
-                                                required
-                                                minLength={8}
-                                                value={password}
-                                                onChange={(event) =>
-                                                    setPassword(
-                                                        event.target.value,
-                                                    )
-                                                }
                                                 placeholder="Create a new password"
-                                                disabled={isSubmitting}
+                                                readOnly={isSubmitting}
                                                 aria-describedby="password-help"
                                                 className="h-12 pr-12"
+                                                {...register("password")}
+                                                aria-invalid={errors.password ? true : undefined}
                                             />
 
                                             <Button
@@ -335,11 +305,11 @@ export default function ResetPasswordPage() {
 
                                         <p
                                             id="password-help"
-                                            className="text-xs leading-6 text-muted-foreground"
+                                            className={`text-xs leading-6 ${errors.password ? "text-destructive" : "text-muted-foreground"}`}
+                                            role={errors.password ? "alert" : undefined}
                                         >
-                                            Use at least 8 characters. Any
-                                            additional account password
-                                            requirements also apply.
+                                            {errors.password?.message ??
+                                                "Use at least 8 characters. Any additional account password requirements also apply."}
                                         </p>
                                     </div>
 
@@ -357,25 +327,20 @@ export default function ResetPasswordPage() {
 
                                         <Input
                                             id="reset-confirm-password"
-                                            name="confirmPassword"
                                             type={
                                                 showPassword
                                                     ? "text"
                                                     : "password"
                                             }
                                             autoComplete="new-password"
-                                            required
-                                            minLength={8}
-                                            value={confirmPassword}
-                                            onChange={(event) =>
-                                                setConfirmPassword(
-                                                    event.target.value,
-                                                )
-                                            }
                                             placeholder="Enter your new password again"
-                                            disabled={isSubmitting}
+                                            readOnly={isSubmitting}
                                             className="h-12"
+                                            {...register("confirmPassword")}
+                                            {...invalidProps("reset-confirm-error", errors.confirmPassword)}
                                         />
+
+                                        <FieldError id="reset-confirm-error" message={errors.confirmPassword?.message} />
                                     </div>
 
                                     {errorMessage && (

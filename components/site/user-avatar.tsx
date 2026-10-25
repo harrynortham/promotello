@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Profile photo with an initials fallback (also used if the photo fails).
+// Profile photo with an initials fallback (also shown while the photo
+// loads, or if it fails).
 export function UserAvatar({
     src,
     initials,
@@ -13,27 +13,15 @@ export function UserAvatar({
     initials: string;
     size?: number;
 }) {
-    const [failedSrc, setFailedSrc] = useState<string | null>(null);
-    const showImage = Boolean(src) && failedSrc !== src;
-
     return (
-        <span
-            aria-hidden="true"
-            className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#17233B] font-semibold text-white"
-            style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}
-        >
-            {showImage ? (
-                <Image
-                    src={src!}
-                    alt=""
-                    width={size}
-                    height={size}
-                    className="h-full w-full object-cover"
-                    onError={() => setFailedSrc(src!)}
-                />
-            ) : (
-                initials
-            )}
-        </span>
+        <Avatar aria-hidden="true" style={{ width: size, height: size }}>
+            {src && <AvatarImage src={src} alt="" width={size} height={size} />}
+            <AvatarFallback
+                className="bg-[#17233B] font-semibold text-white"
+                style={{ fontSize: Math.round(size * 0.38) }}
+            >
+                {initials}
+            </AvatarFallback>
+        </Avatar>
     );
 }

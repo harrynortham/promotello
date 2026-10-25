@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 import {
     Alert,
@@ -11,7 +13,16 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { CategorySelect } from "@/components/category-select";
+import { FieldError } from "@/components/field-error";
+import {
+    OfferFields,
+    imageProblem,
+    offerRow,
+    offerSchema,
+    uploadOfferImage,
+    type OfferInput,
+    type OfferValues,
+} from "@/components/offer-fields";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,9 +37,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { OfferScheduleFields, scheduleFromForm } from "@/components/offer-schedule-fields";
-import { formatSchedule, scheduleFrom } from "@/lib/schedule";
+import { scheduleFromForm } from "@/components/offer-schedule-fields";
+import { scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
 
 type EditOfferFormProps = {
@@ -55,12 +65,8 @@ type Offer = {
     schedule_end: string | null;
 };
 
-// Scheduled offers describe their days and times unless the business wrote
-// its own availability text.
-function defaultAvailability(schedule: ReturnType<typeof scheduleFromForm>) {
-    const parsed = scheduleFrom(schedule.schedule_days, schedule.schedule_start, schedule.schedule_end);
-    return parsed ? formatSchedule(parsed) : "Available now";
-}
+// Editing may keep an expiry date that has already passed.
+const schema = offerSchema({ allowPastExpiry: true });
 
 export default function EditOfferForm({
     businessId,
@@ -73,12 +79,23 @@ export default function EditOfferForm({
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [removeImage, setRemoveImage] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setError,
+        formState: { errors, isSubmitting: isSaving },
+    } = useForm<OfferInput, unknown, OfferValues>({ resolver: zodResolver(schema) });
+
     useEffect(() => {
+        // Only the latest load fills the form (development runs effects
+        // twice, and a late first load would undo what's been typed).
+        let current = true;
+
         async function loadOffer() {
             const supabase = createClient();
 
@@ -107,122 +124,73 @@ export default function EditOfferForm({
                 .eq("business_id", businessId)
                 .single();
 
+            if (!current) return;
+
             if (error || !data) {
                 setErrorMessage("We couldn't load this promotion.");
             } else {
-                setOffer(data as Offer);
+                const loaded = data as Offer;
+                setOffer(loaded);
+                reset({
+                    title: loaded.title,
+                    category: loaded.category_id ?? "",
+                    discount: loaded.discount,
+                    description: loaded.description,
+                    availability: loaded.availability,
+                    expiresAt: loaded.expires_at,
+                    maxRedemptions: loaded.max_redemptions === null ? "" : String(loaded.max_redemptions),
+                    terms: loaded.terms,
+                });
             }
 
             setIsLoading(false);
         }
 
         loadOffer();
-    }, [businessId, offerId]);
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+        return () => {
+            current = false;
+        };
+    }, [businessId, offerId, reset]);
 
+    async function onSubmit(values: OfferValues, event?: React.BaseSyntheticEvent) {
         if (!offer) return;
 
-        const form = event.currentTarget;
-        const formData = new FormData(form);
-        const schedule = scheduleFromForm(formData);
-
-        const maxRedemptionsValue = String(
-            formData.get("maxRedemptions") ?? "",
-        ).trim();
-
-        const maxRedemptions = maxRedemptionsValue
-            ? Number(maxRedemptionsValue)
-            : null;
-
-        if (
-            maxRedemptions !== null &&
-            (!Number.isInteger(maxRedemptions) || maxRedemptions <= 0)
-        ) {
-            setErrorMessage(
-                "The maximum redemptions must be a whole number greater than zero.",
-            );
-            return;
-        }
-
-        if (
-            maxRedemptions !== null &&
-            maxRedemptions < offer.redemption_count
-        ) {
-            setErrorMessage(
-                `The limit cannot be lower than the ${offer.redemption_count} redemptions already claimed.`,
-            );
-            return;
-        }
-
-        setIsSaving(true);
         setErrorMessage("");
 
+        if (values.maxRedemptions !== null && values.maxRedemptions < offer.redemption_count) {
+            setError("maxRedemptions", {
+                message: `The limit can't be lower than the ${offer.redemption_count} already claimed.`,
+            });
+            return;
+        }
+
+        const problem = imageProblem(imageFile);
+        if (problem) {
+            setError("root.image", { message: problem });
+            return;
+        }
+
+        const schedule = scheduleFromForm(new FormData(event?.target as HTMLFormElement));
         const supabase = createClient();
         let imageUrl = removeImage ? null : offer.image_url;
 
         if (imageFile) {
-            const allowedTypes = [
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-            ];
+            const upload = await uploadOfferImage(supabase, businessId, imageFile);
 
-            if (!allowedTypes.includes(imageFile.type)) {
-                setErrorMessage("Please upload a JPG, PNG, or WebP image.");
-                setIsSaving(false);
+            if ("error" in upload) {
+                setErrorMessage(upload.error ?? "The image couldn't be uploaded.");
                 return;
             }
 
-            if (imageFile.size > 5 * 1024 * 1024) {
-                setErrorMessage("The image must be smaller than 5MB.");
-                setIsSaving(false);
-                return;
-            }
-
-            const fileExtension = imageFile.name.split(".").pop() ?? "jpg";
-            const filePath = `${businessId}/offer-${crypto.randomUUID()}.${fileExtension}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from("offer-images")
-                .upload(filePath, imageFile, {
-                    upsert: false,
-                    contentType: imageFile.type,
-                });
-
-            if (uploadError) {
-                setErrorMessage(uploadError.message);
-                setIsSaving(false);
-                return;
-            }
-
-            const { data: publicUrlData } = supabase.storage
-                .from("offer-images")
-                .getPublicUrl(filePath);
-
-            imageUrl = publicUrlData.publicUrl;
+            imageUrl = upload.url;
         }
 
         const { error } = await supabase
             .from("offers")
-            .update({
-                title: formData.get("title"),
-                category_id: formData.get("category"),
-                discount: formData.get("discount"),
-                description: formData.get("description"),
-                availability:
-                    formData.get("availability") || defaultAvailability(schedule),
-                expires_at: formData.get("expiresAt"),
-                terms: formData.get("terms"),
-                max_redemptions: maxRedemptions,
-                image_url: imageUrl,
-                ...schedule,
-            })
+            .update({ ...offerRow(values, schedule), image_url: imageUrl })
             .eq("id", offerId)
             .eq("business_id", businessId);
-
-        setIsSaving(false);
 
         if (error) {
             setErrorMessage(error.message);
@@ -340,7 +308,7 @@ export default function EditOfferForm({
                     </CardHeader>
 
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-7">
+                        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
                             {offer.image_url && !removeImage && (
                                 <div className="space-y-3">
                                     <Label>Current promotion image</Label>
@@ -374,6 +342,7 @@ export default function EditOfferForm({
                                     }}
                                 />
 
+                                <FieldError id="image-error" message={errors.root?.image?.message} />
                                 <p className="text-xs text-[#17233B]/50">
                                     Use a JPG, PNG or WebP image under 5MB.
                                 </p>
@@ -402,119 +371,15 @@ export default function EditOfferForm({
 
                             <Separator />
 
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Promotion title</Label>
-
-                                <Input
-                                    id="title"
-                                    name="title"
-                                    required
-                                    minLength={2}
-                                    maxLength={160}
-                                    defaultValue={offer.title}
-                                />
-                            </div>
-
-                            <div className="grid gap-6 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="category">Category</Label>
-
-                                    <CategorySelect
-                                        id="category"
-                                        name="category"
-                                        required
-                                        defaultValue={offer.category_id}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="discount">Discount</Label>
-
-                                    <Input
-                                        id="discount"
-                                        name="discount"
-                                        required
-                                        defaultValue={offer.discount}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Description</Label>
-
-                                <Textarea
-                                    id="description"
-                                    name="description"
-                                    required
-                                    rows={5}
-                                    defaultValue={offer.description}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="availability">Availability</Label>
-
-                                <Input
-                                    id="availability"
-                                    name="availability"
-                                    defaultValue={offer.availability}
-                                />
-                            </div>
-
-                            <OfferScheduleFields
+                            <OfferFields
+                                register={register}
+                                errors={errors}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
-                                initial={scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)}
+                                schedule={scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)}
+                                defaultCategoryId={offer.category_id}
+                                minRedemptions={offer.redemption_count}
                             />
-
-                            <div className="space-y-2">
-                                <Label htmlFor="expiresAt">Expiry date</Label>
-
-                                <Input
-                                    id="expiresAt"
-                                    name="expiresAt"
-                                    type="date"
-                                    required
-                                    defaultValue={offer.expires_at}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="maxRedemptions">
-                                    Maximum redemptions
-                                </Label>
-
-                                <Input
-                                    id="maxRedemptions"
-                                    name="maxRedemptions"
-                                    type="number"
-                                    min={offer.redemption_count || 1}
-                                    step="1"
-                                    defaultValue={offer.max_redemptions ?? ""}
-                                    placeholder="Leave empty for unlimited"
-                                />
-
-                                <p className="text-xs leading-5 text-[#17233B]/55">
-                                    The limit cannot be lower than the number already claimed.
-                                    Leave empty for unlimited redemptions.
-                                </p>
-                            </div>
-
-                            <Separator />
-
-                            <div className="space-y-2">
-                                <Label htmlFor="terms">
-                                    Terms and conditions
-                                </Label>
-
-                                <Textarea
-                                    id="terms"
-                                    name="terms"
-                                    required
-                                    rows={5}
-                                    defaultValue={offer.terms}
-                                />
-                            </div>
 
                             {errorMessage && (
                                 <Alert variant="destructive">

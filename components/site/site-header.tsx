@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiMenu } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from "./use-current-user";
 import { UserMenu } from "./user-menu";
 
@@ -129,68 +130,74 @@ function HeaderContent({
                     )}
 
                     {hasMobileMenu && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className={bp.hide}
-                            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-                            aria-controls="mobile-menu"
-                            aria-expanded={isMenuOpen}
-                            onClick={() => setIsMenuOpen((open) => !open)}
-                        >
-                            {isMenuOpen ? (
-                                <FiX className="size-6" aria-hidden="true" />
-                            ) : (
+                        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                            <SheetTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className={bp.hide}
+                                        aria-label="Open menu"
+                                    />
+                                }
+                            >
                                 <FiMenu className="size-6" aria-hidden="true" />
-                            )}
-                        </Button>
+                            </SheetTrigger>
+
+                            <SheetContent side="right" className="w-[min(22rem,88vw)] gap-0 p-0">
+                                <SheetHeader className="border-b border-border px-5 py-4">
+                                    <SheetTitle className="sr-only">Menu</SheetTitle>
+                                    <Image
+                                        src="/brand/promotello-horizontal-primary.svg"
+                                        alt="Promotello"
+                                        width={140}
+                                        height={37}
+                                        className="h-auto w-32"
+                                    />
+                                </SheetHeader>
+
+                                <nav aria-label="Mobile navigation" className="flex flex-1 flex-col overflow-y-auto px-3 py-4">
+                                    {links.map((link) => (
+                                        <Link
+                                            key={link.href}
+                                            href={link.href}
+                                            aria-current={isActive(link.href) ? "page" : undefined}
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className={`block rounded-xl px-3 py-3 text-base font-medium ${isActive(link.href)
+                                                ? "bg-[#FF593F]/10 text-[#17233B]"
+                                                : "text-slate-700 hover:bg-slate-50"
+                                                }`}
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    ))}
+
+                                    {!user && !isLoading && signedOutActions.length > 0 && (
+                                        <div className="mt-auto space-y-3 border-t border-border px-2 pt-5">
+                                            {[...signedOutActions]
+                                                .sort((a, b) => Number(Boolean(b.primary)) - Number(Boolean(a.primary)))
+                                                .map((action) => (
+                                                    <Button
+                                                        key={action.href}
+                                                        render={<Link href={action.href} />}
+                                                        nativeButton={false}
+                                                        variant={action.primary ? "default" : "outline"}
+                                                        size="lg"
+                                                        className="w-full"
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                    >
+                                                        {action.mobileLabel ?? action.label}
+                                                    </Button>
+                                                ))}
+                                        </div>
+                                    )}
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
                     )}
                 </div>
             </div>
-
-            {hasMobileMenu && (
-                <nav
-                    id="mobile-menu"
-                    aria-label="Mobile navigation"
-                    className={`${isMenuOpen ? "block" : "hidden"} -mx-6 border-t border-border bg-background px-5 pb-5 pt-3 ${bp.hide}`}
-                >
-                    {links.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            aria-current={isActive(link.href) ? "page" : undefined}
-                            onClick={() => setIsMenuOpen(false)}
-                            className={`block rounded-full px-3 py-3 text-sm font-medium ${isActive(link.href)
-                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                : "text-slate-700 hover:bg-slate-50"
-                                }`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
-
-                    {!user && !isLoading && signedOutActions.length > 0 && (
-                        <div className="mt-4 space-y-3 border-t border-border pt-4">
-                            {[...signedOutActions]
-                                .sort((a, b) => Number(Boolean(b.primary)) - Number(Boolean(a.primary)))
-                                .map((action) => (
-                                    <Button
-                                        key={action.href}
-                                        render={<Link href={action.href} />}
-                                        nativeButton={false}
-                                        variant={action.primary ? "default" : "outline"}
-                                        size="lg"
-                                        className="w-full"
-                                        onClick={() => setIsMenuOpen(false)}
-                                    >
-                                        {action.mobileLabel ?? action.label}
-                                    </Button>
-                                ))}
-                        </div>
-                    )}
-                </nav>
-            )}
         </header>
     );
 }

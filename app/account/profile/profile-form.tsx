@@ -2,13 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-    useRef,
-    useState,
-    type ChangeEvent,
-    type FormEvent,
-} from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 import { FiCamera, FiCheckCircle } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,8 +20,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldError, invalidProps } from "@/components/field-error";
 import { createClient } from "@/utils/supabase/client";
 import { initialsFor } from "@/lib/user-profile";
+import { optionalText, requiredText } from "@/lib/validation";
 
 type ProfileFormProps = {
     initialProfile: {
@@ -37,6 +37,27 @@ type ProfileFormProps = {
 };
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+const schema = z
+    .object({
+        name: requiredText("Your display name", { max: 100 }),
+        city: optionalText("Town or city", 100),
+        birthDay: z.string(),
+        birthMonth: z.string(),
+    })
+    // Both or neither, and a real date (29 February is allowed).
+    .refine((values) => Boolean(values.birthDay) === Boolean(values.birthMonth), {
+        message: "Choose both the day and the month, or neither.",
+        path: ["birthDay"],
+    })
+    .refine(
+        (values) =>
+            !values.birthDay ||
+            Number(values.birthDay) <= new Date(Date.UTC(2000, Number(values.birthMonth), 0)).getUTCDate(),
+        { message: "That date doesn’t exist.", path: ["birthDay"] },
+    );
+
+type Values = z.infer<typeof schema>;
 
 const bucket = "profile-images";
 const maximumFileSize = 2 * 1024 * 1024;
@@ -54,15 +75,28 @@ export default function ProfileForm({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const busyRef = useRef(false);
 
-    const [name, setName] = useState(initialProfile.name);
-    const [city, setCity] = useState(initialProfile.city);
-    const [birthMonth, setBirthMonth] = useState(initialProfile.birthMonth ? String(initialProfile.birthMonth) : "");
-    const [birthDay, setBirthDay] = useState(initialProfile.birthDay ? String(initialProfile.birthDay) : "");
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        formState: { errors, isSubmitting: isSaving },
+    } = useForm<Values>({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            name: initialProfile.name,
+            city: initialProfile.city,
+            birthDay: initialProfile.birthDay ? String(initialProfile.birthDay) : "",
+            birthMonth: initialProfile.birthMonth ? String(initialProfile.birthMonth) : "",
+        },
+    });
+
+    const name = useWatch({ control, name: "name" });
+
     const [avatarPath, setAvatarPath] = useState(
         initialProfile.avatarPath,
     );
 
-    const [isSaving, setIsSaving] = useState(false);
     const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
@@ -92,27 +126,14 @@ export default function ProfileForm({
         }
     }
 
-    async function saveProfile(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        if (busyRef.current) return;
+    async function saveProfile(values: Values) {
+        if (isUpdatingPhoto) return;
 
         clearMessages();
 
-        if (!name.trim()) {
-            setErrorMessage("Please enter your display name.");
-            return;
-        }
-
-        busyRef.current = true;
-        setIsSaving(true);
-
         try {
             const { error } = await supabase.auth.updateUser({
-                data: {
-                    full_name: name.trim(),
-                    city: city.trim(),
-                },
+                data: { full_name: values.name, city: values.city },
             });
 
             if (error) throw error;
@@ -122,11 +143,11 @@ export default function ProfileForm({
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
-                const { error: birthdayError } = birthMonth && birthDay
+                const { error: birthdayError } = values.birthMonth && values.birthDay
                     ? await supabase.from("customer_birthdays").upsert({
                         user_id: user.id,
-                        birth_month: Number(birthMonth),
-                        birth_day: Number(birthDay),
+                        birth_month: Number(values.birthMonth),
+                        birth_day: Number(values.birthDay),
                         updated_at: new Date().toISOString(),
                     })
                     : await supabase.from("customer_birthdays").delete().eq("user_id", user.id);
@@ -134,17 +155,13 @@ export default function ProfileForm({
                 if (birthdayError) throw birthdayError;
             }
 
-            setName(name.trim());
-            setCity(city.trim());
+            reset(values);
             setSuccessMessage("Your profile details have been saved.");
             router.refresh();
         } catch {
             setErrorMessage(
                 "We couldn’t save your profile. Please try again.",
             );
-        } finally {
-            busyRef.current = false;
-            setIsSaving(false);
         }
     }
 
@@ -153,7 +170,7 @@ export default function ProfileForm({
 
         event.target.value = "";
 
-        if (!file || busyRef.current) return;
+        if (!file || busyRef.current || isSaving) return;
 
         clearMessages();
 
@@ -391,7 +408,8 @@ export default function ProfileForm({
 
                 <CardContent>
                     <form
-                        onSubmit={saveProfile}
+                        onSubmit={handleSubmit(saveProfile)}
+                        noValidate
                         className="space-y-6"
                         aria-busy={isSaving}
                     >
@@ -401,17 +419,14 @@ export default function ProfileForm({
                             </Label>
                             <Input
                                 id="profile-name"
-                                name="name"
-                                value={name}
-                                onChange={(event) =>
-                                    setName(event.target.value)
-                                }
                                 autoComplete="name"
                                 placeholder="Your name"
-                                required
                                 maxLength={100}
-                                disabled={isBusy}
+                                readOnly={isBusy}
+                                {...register("name")}
+                                {...invalidProps("profile-name-error", errors.name)}
                             />
+                            <FieldError id="profile-name-error" message={errors.name?.message} />
                             <p className="text-xs leading-6 text-muted-foreground">
                                 The name shown in your account menu.
                             </p>
@@ -423,16 +438,14 @@ export default function ProfileForm({
                             </Label>
                             <Input
                                 id="profile-city"
-                                name="city"
-                                value={city}
-                                onChange={(event) =>
-                                    setCity(event.target.value)
-                                }
                                 autoComplete="address-level2"
                                 placeholder="For example, Bristol"
                                 maxLength={100}
-                                disabled={isBusy}
+                                readOnly={isBusy}
+                                {...register("city")}
+                                {...invalidProps("profile-city-error", errors.city)}
                             />
+                            <FieldError id="profile-city-error" message={errors.city?.message} />
                             <p className="text-xs leading-6 text-muted-foreground">
                                 Save your preferred town or city.
                             </p>
@@ -446,9 +459,8 @@ export default function ProfileForm({
                                 <select
                                     id="profile-birth-day"
                                     aria-label="Birthday day"
-                                    value={birthDay}
-                                    onChange={(event) => setBirthDay(event.target.value)}
-                                    disabled={isBusy}
+                                    {...register("birthDay")}
+                                    {...invalidProps("profile-birthday-error", errors.birthDay)}
                                     className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                 >
                                     <option value="">Day</option>
@@ -458,9 +470,7 @@ export default function ProfileForm({
                                 </select>
                                 <select
                                     aria-label="Birthday month"
-                                    value={birthMonth}
-                                    onChange={(event) => setBirthMonth(event.target.value)}
-                                    disabled={isBusy}
+                                    {...register("birthMonth")}
                                     className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                 >
                                     <option value="">Month</option>
@@ -469,6 +479,7 @@ export default function ProfileForm({
                                     ))}
                                 </select>
                             </div>
+                            <FieldError id="profile-birthday-error" message={errors.birthDay?.message} />
                             <p className="text-xs leading-6 text-muted-foreground">
                                 Businesses you follow may send you a birthday treat. We never ask for the year.
                             </p>
