@@ -1,19 +1,21 @@
 // Who runs Promotello, for the privacy policy and terms. UK law requires a
-// company's registered name, number and office address on its website.
-// Until `name` is filled in, the legal pages show a "details to follow"
-// note in their place.
+// company's registered name, number and office address on its website:
+// add the number once the company is incorporated.
 export const company = {
-    name: "",
-    number: "",
-    address: "",
-    email: "hello@promotello.com",
+  name: "Promotello",
+  number: "",
+  address: "71-75 Shelton Street, Covent Garden, London, WC2H 9JQ",
+  email: "hello@promotello.com",
 };
 
-export const companyComplete = Boolean(company.name && company.number && company.address);
-
-// "Promotello Ltd (company number 12345678), 1 Example Street, Bristol"
+// "Promotello Ltd (company number 12345678), 71-75 Shelton Street, …",
+// or without the number until there is one.
 export function companyLine() {
-    return companyComplete
-        ? `${company.name} (company number ${company.number}), ${company.address}`
-        : "the company that owns Promotello (registered details to follow)";
+  if (!company.name || !company.address) {
+    return "the company that owns Promotello (registered details to follow)";
+  }
+
+  return company.number
+    ? `${company.name} (company number ${company.number}), ${company.address}`
+    : `${company.name}, ${company.address}`;
 }
