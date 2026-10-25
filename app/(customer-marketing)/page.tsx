@@ -24,7 +24,7 @@ import {
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
 import { NotHereYet } from "@/components/visitor-city";
-import { cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
+import { areaPath, cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
 import { getVisitorContext } from "@/lib/visitor";
 
 const steps = [
@@ -60,14 +60,22 @@ function HomeLoading() {
 async function HomeListings({ city }: { city: City | null }) {
     await connection();
 
-    const [groups, offers, businesses, place, photos] = await Promise.all([
+    const [groups, offers, businesses, place, photos, places] = await Promise.all([
         getCategories(),
         getLiveOffers(city?.id),
         getPublicBusinesses(city?.id),
         placeName(city),
         cityPhotosFor(city),
+        getLiveCities(),
     ]);
+
     const suffix = city ? `/${city.slug}` : "";
+
+    const areaHref = (name: string) => {
+        const cityId = businesses.find((business) => business.area === name)?.cityId;
+        const home = places.find((item) => item.id === cityId);
+        return (home && areaPath(home, name)) ?? `/explore${suffix}?area=${encodeURIComponent(name)}`;
+    };
 
     const counts = offerCountsByCategory(offers, groups);
     const newest = offers.slice(0, 8);
@@ -152,7 +160,7 @@ async function HomeListings({ city }: { city: City | null }) {
                                 {areas.map((area) => (
                                     <Link
                                         key={area.name}
-                                        href={`/explore${suffix}?area=${encodeURIComponent(area.name)}`}
+                                        href={areaHref(area.name)}
                                         className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
                                     >
                                         <FiMapPin aria-hidden="true" className="size-3.5" />

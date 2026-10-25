@@ -10,10 +10,12 @@ type PageProps = {
     searchParams: Promise<{ sub?: string }>;
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
     const { slug, city: citySlug } = await params;
     const city = await getLiveCity(citySlug);
-    return city ? categoryMetadata(slug, city) : { title: "Location not found", robots: { index: false } };
+    return city
+        ? categoryMetadata(slug, city, (await searchParams).sub)
+        : { title: "Location not found", robots: { index: false } };
 }
 
 async function CityCategory({ params, searchParams }: PageProps) {
@@ -27,7 +29,8 @@ async function CityCategory({ params, searchParams }: PageProps) {
     return <CategoryContent slug={slug} city={city} searchParams={searchParams} />;
 }
 
-// A category in one city, e.g. /categories/food-drink/bristol.
+// A category or subcategory in one city, e.g. /categories/food-drink/bristol
+// or /categories/cafes-coffee/bristol.
 export default function CityCategoryPage(props: PageProps) {
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 pt-8 text-[#17233B]">

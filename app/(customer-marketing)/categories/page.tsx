@@ -90,7 +90,7 @@ async function CategoryGrid() {
                                     return (
                                         <Link
                                             key={sub.id}
-                                            href={`/categories/${group.slug}?sub=${sub.slug}`}
+                                            href={`/categories/${sub.slug}`}
                                             className={`rounded-full border px-3 py-1.5 text-sm transition ${active
                                                 ? "border-[#17233B]/15 bg-[#FFF8F0] text-[#17233B] hover:border-[#FF593F] hover:text-[#FF593F]"
                                                 : "border-transparent bg-[#17233B]/[0.04] text-[#17233B]/45 hover:text-[#17233B]"

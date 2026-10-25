@@ -3,7 +3,8 @@ import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
-import { getLiveCities } from "@/lib/cities";
+import { areaPath, getLiveCities } from "@/lib/cities";
+import { filterBusinesses, filterOffers, getCategories, getLiveOffers, getPublicBusinesses } from "@/lib/listings";
 import { EVENTS_ENABLED } from "@/lib/features";
 
 import { absoluteUrl } from "@/lib/site";
@@ -75,12 +76,49 @@ async function getPublicListings() {
     return { businesses, offers };
 }
 
+// Area pages and subcategory pages, only where there's something to show:
+// empty ones are noindex.
+async function landingPaths() {
+    const [cities, groups, offers, businesses] = await Promise.all([
+        getLiveCities(),
+        getCategories(),
+        getLiveOffers(),
+        getPublicBusinesses(),
+    ]);
+
+    const hasContent = (slug: string, cityId?: string) =>
+        filterOffers(offers.filter((offer) => !cityId || offer.business.cityId === cityId), groups, { category: slug }).length > 0 ||
+        filterBusinesses(businesses.filter((business) => !cityId || business.cityId === cityId), groups, { category: slug }).length > 0;
+
+    const subcategories = groups.flatMap((group) => group.subcategories.map((sub) => sub.slug));
+
+    return [
+        ...subcategories.filter((slug) => hasContent(slug)).map((slug) => `/categories/${slug}`),
+        ...cities.flatMap((city) => [
+            ...subcategories.filter((slug) => hasContent(slug, city.id)).map((slug) => `/categories/${slug}/${city.slug}`),
+            ...city.areas
+                .filter((area) => businesses.some((business) => business.cityId === city.id && business.area === area))
+                .map((area) => areaPath(city, area))
+                .filter((path): path is string => path !== null),
+        ]),
+    ];
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connection();
 
-    const [{ businesses, offers }, cities] = await Promise.all([getPublicListings(), getLiveCities()]);
+    const [{ businesses, offers }, cities, landings] = await Promise.all([
+        getPublicListings(),
+        getLiveCities(),
+        landingPaths(),
+    ]);
 
     return [
+        ...landings.map((path) => ({
+            url: absoluteUrl(path),
+            changeFrequency: "weekly" as const,
+            priority: 0.6,
+        })),
         ...cities.flatMap((city) =>
             cityPaths(city.slug).map((path) => ({
                 url: absoluteUrl(path),

@@ -10,8 +10,8 @@ type PageProps = {
     searchParams: Promise<{ sub?: string }>;
 };
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    return categoryMetadata((await params).slug, null);
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+    return categoryMetadata((await params).slug, null, (await searchParams).sub);
 }
 
 // The category in the visitor's city, or in every live city.

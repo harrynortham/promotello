@@ -35,6 +35,7 @@ export type ListingOffer = {
         name: string;
         logoUrl: string | null;
         area: string | null;
+        cityId: string | null;
     };
 };
 
@@ -47,6 +48,7 @@ export type ListingBusiness = {
     categoryId: string | null;
     categoryName: string;
     area: string | null;
+    cityId: string | null;
     createdAt: string;
     offerCount: number;
     coverImageUrl: string | null;
@@ -58,6 +60,11 @@ type LocationRow = { region: string | null; city: string | null; city_id: string
 function areaOf(locations: LocationRow | LocationRow[] | null) {
     const location = Array.isArray(locations) ? locations[0] : locations;
     return location?.region || location?.city || null;
+}
+
+function cityIdOf(locations: LocationRow | LocationRow[] | null) {
+    const location = Array.isArray(locations) ? locations[0] : locations;
+    return location?.city_id ?? null;
 }
 
 function inCity(locations: LocationRow | LocationRow[] | null, cityId: string | undefined) {
@@ -129,6 +136,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                     name: business.name,
                     logoUrl: business.logo_url,
                     area: areaOf(business.business_locations),
+                    cityId: cityIdOf(business.business_locations),
                 },
             },
         ];
@@ -171,6 +179,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
             categoryId: row.category_id,
             categoryName: row.category,
             area: areaOf(row.business_locations),
+            cityId: cityIdOf(row.business_locations),
             createdAt: row.created_at,
             offerCount: offers.length,
             coverImageUrl: offers.find((offer) => offer.image_url)?.image_url ?? null,
