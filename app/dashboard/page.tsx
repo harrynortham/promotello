@@ -118,7 +118,7 @@ async function CustomerDashboardContent() {
             <div className="mx-auto max-w-6xl">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Your Promotello
                         </p>
                         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -145,7 +145,7 @@ async function CustomerDashboardContent() {
                                     <p className="text-sm text-[#17233B]/70">{stat.label}</p>
                                     <p className="mt-1 text-3xl font-semibold">{stat.value}</p>
                                 </div>
-                                <Icon aria-hidden="true" className="size-6 text-[#C8371D]" />
+                                <Icon aria-hidden="true" className="size-6 text-[#FF593F]" />
                             </Link>
                         );
                     })}
@@ -162,7 +162,7 @@ async function CustomerDashboardContent() {
                                     {prompt.logo_url ? (
                                         <Image src={prompt.logo_url} alt="" width={48} height={48} className="size-12 rounded-xl object-cover" />
                                     ) : (
-                                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#C8371D]">
+                                        <span className="flex size-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#FF593F]">
                                             {prompt.business_name.charAt(0)}
                                         </span>
                                     )}

@@ -120,7 +120,7 @@ async function RedeemContent({ params, searchParams }: PageProps) {
             <div className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
                 <p className="text-sm font-medium text-[#17233B]/70">{voucher.business_name} voucher</p>
                 <h1 className="mt-1 text-2xl font-semibold leading-tight">{voucher.offer_title}</h1>
-                <p className="mt-2 inline-flex rounded-full bg-[#C8371D] px-3 py-1 text-sm font-semibold text-white">
+                <p className="mt-2 inline-flex rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white">
                     {voucher.offer_discount}
                 </p>
 
@@ -193,7 +193,7 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                             <form action={markVoucherUsed} className="mt-6">
                                 <input type="hidden" name="code" value={voucher.redemption_code} />
                                 <input type="hidden" name="redemptionId" value={voucher.redemption_id} />
-                                <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#C8371D] text-base text-white hover:bg-[#C8371D]/90">
+                                <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90">
                                     Mark as used
                                 </SubmitButton>
                             </form>

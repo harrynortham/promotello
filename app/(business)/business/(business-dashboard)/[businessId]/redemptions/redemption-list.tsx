@@ -78,13 +78,13 @@ export default function RedemptionList({
             <div className="mx-auto max-w-4xl">
                 <Link
                     href={`/business/${businessId}/offers`}
-                    className="text-sm font-semibold text-[#C8371D]"
+                    className="text-sm font-semibold text-[#FF593F]"
                 >
                     ← Back to promotions
                 </Link>
 
                 <header className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Customer redemptions
                     </p>
 

@@ -134,7 +134,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-3xl">
                 <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Business settings
                     </p>
 
@@ -266,7 +266,7 @@ async function CurrentPlan({
                     <input type="hidden" name="businessId" value={businessId} />
                     <SubmitButton
                         pendingLabel="Opening…"
-                        className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
+                        className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                     >
                         Manage billing
                     </SubmitButton>
@@ -391,7 +391,7 @@ async function PlanOptions({
                                 </p>
 
                                 {plan.note && (
-                                    <p className="text-sm font-medium text-[#C8371D]">
+                                    <p className="text-sm font-medium text-[#FF593F]">
                                         {plan.note}
                                     </p>
                                 )}
@@ -464,7 +464,7 @@ async function PlanOptions({
                                 </p>
 
                                 {plan.note && (
-                                    <p className="text-sm font-medium text-[#C8371D]">
+                                    <p className="text-sm font-medium text-[#FF593F]">
                                         {plan.note}
                                     </p>
                                 )}

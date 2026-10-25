@@ -105,7 +105,7 @@ export function BusinessMobileNav({
 
                 <div className="mt-6 space-y-5">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Current business
                         </p>
 

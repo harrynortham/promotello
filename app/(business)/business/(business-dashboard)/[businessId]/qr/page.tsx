@@ -135,7 +135,7 @@ async function QrContent({ params, searchParams }: PageProps) {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-14">
             <div className="mx-auto max-w-5xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                     QR posters
                 </p>
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">
@@ -172,7 +172,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 render={<Link href={`/business/${businessId}/billing`} />}
                                 nativeButton={false}
                                 size="sm"
-                                className="mt-3 bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
+                                className="mt-3 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                             >
                                 Upgrade to Pro
                             </Button>
@@ -211,7 +211,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                     </select>
                                 </div>
 
-                                <SubmitButton pendingLabel="Creating…" className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
+                                <SubmitButton pendingLabel="Creating…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
                                     Create QR code
                                 </SubmitButton>
                             </form>
@@ -252,7 +252,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                     href={link}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/65 hover:text-[#C8371D]"
+                                                    className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/65 hover:text-[#FF593F]"
                                                 >
                                                     {link.replace(/^https?:\/\//, "")}
                                                     <FiExternalLink aria-hidden="true" className="size-3" />

@@ -279,7 +279,7 @@ async function CategoriesContent({ searchParams }: PageProps) {
                                         ))}
 
                                         <details className="rounded-xl border border-dashed border-[#17233B]/20">
-                                            <summary className="cursor-pointer list-none p-4 text-sm font-medium text-[#C8371D]">
+                                            <summary className="cursor-pointer list-none p-4 text-sm font-medium text-[#FF593F]">
                                                 + Add a subcategory to {group.name}
                                             </summary>
                                             <form

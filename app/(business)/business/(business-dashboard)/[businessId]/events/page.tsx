@@ -89,7 +89,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
     return (
         <main className="space-y-8 text-[#17233B]">
             <header>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">Growth</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Events</h1>
                 <p className="mt-3 max-w-2xl text-[#17233B]/65">
                     Tastings, live music, workshops, late openings. Events show on your page and in
@@ -179,9 +179,9 @@ async function EventsContent({ params, searchParams }: PageProps) {
                         {upcoming.map((event) => (
                             <li key={event.id} className="flex flex-col gap-3 rounded-xl border border-[#17233B]/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex gap-3">
-                                    <FiCalendar aria-hidden="true" className="mt-1 shrink-0 text-[#C8371D]" />
+                                    <FiCalendar aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
                                     <div>
-                                        <Link href={`/events/${event.id}`} className="font-semibold hover:text-[#C8371D]">
+                                        <Link href={`/events/${event.id}`} className="font-semibold hover:text-[#FF593F]">
                                             {event.title}
                                         </Link>
                                         <p className="text-sm text-[#17233B]/70">

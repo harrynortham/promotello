@@ -93,7 +93,7 @@ export async function uploadOfferImage(supabase: SupabaseClient, businessId: str
 }
 
 function Required() {
-    return <span className="text-[#C8371D]">*</span>;
+    return <span className="text-[#FF593F]">*</span>;
 }
 
 export function OfferFields({

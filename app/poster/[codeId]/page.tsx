@@ -121,7 +121,7 @@ async function Poster({ params, searchParams }: PageProps) {
                     </header>
 
                     <div className="flex flex-1 flex-col items-center justify-center px-[2.5em] py-[1.5em] text-center">
-                        <p className="rounded-full bg-[#C8371D] px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em] text-white" style={{ fontSize: "0.95em" }}>
+                        <p className="rounded-full bg-[#FF593F] px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em] text-white" style={{ fontSize: "0.95em" }}>
                             {offer ? "Exclusive offer" : "Scan for offers"}
                         </p>
 

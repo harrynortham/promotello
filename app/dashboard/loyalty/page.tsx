@@ -85,7 +85,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:px-10 sm:py-14">
             <div className="mx-auto max-w-5xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">Your wallet</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Your wallet</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">My loyalty cards</h1>
                 <p className="mt-2 max-w-2xl text-[#17233B]/65">
                     Show your card when you pay. Staff scan the code to add a stamp.
@@ -137,7 +137,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
 
                                         <div className="p-6">
                                             {rewardReady && (
-                                                <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#FF593F]/10 px-3 py-2 text-sm font-semibold text-[#C8371D]">
+                                                <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#FF593F]/10 px-3 py-2 text-sm font-semibold text-[#FF593F]">
                                                     <FiGift aria-hidden="true" />
                                                     Reward ready: ask staff to redeem it
                                                 </p>

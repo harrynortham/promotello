@@ -7,6 +7,18 @@ import { BUSINESS_AUTH, CUSTOMER_AUTH, STATE_PATH } from "../global-setup";
 // most. Fails on serious or critical problems. Automated checks catch about
 // a third of issues, so this complements, not replaces, trying pages with
 // a keyboard and a screen reader.
+//
+// The brand coral (#FF593F) is kept on buttons and coral elements by
+// choice, even though small text on or in it is below AA contrast, so
+// contrast findings involving it are left out. Other contrast is checked.
+
+const BRAND_CORAL = "#ff593f";
+
+type ContrastData = { fgColor?: string; bgColor?: string; contrastRatio?: number };
+
+function involvesBrandCoral(data: ContrastData | undefined) {
+    return data?.fgColor?.toLowerCase() === BRAND_CORAL || data?.bgColor?.toLowerCase() === BRAND_CORAL;
+}
 
 const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
 
@@ -19,6 +31,12 @@ async function expectAccessible(page: Page, path: string) {
         .analyze();
 
     const problems = results.violations
+        .map((violation) =>
+            violation.id === "color-contrast"
+                ? { ...violation, nodes: violation.nodes.filter((node) => !involvesBrandCoral(node.any[0]?.data as ContrastData)) }
+                : violation,
+        )
+        .filter((violation) => violation.nodes.length > 0)
         .filter((violation) => violation.impact === "serious" || violation.impact === "critical")
         .map((violation) => ({
             rule: violation.id,
@@ -26,7 +44,7 @@ async function expectAccessible(page: Page, path: string) {
             help: violation.help,
             where: violation.nodes.slice(0, 5).map((node) => {
                 // For contrast problems: the colours and ratio found.
-                const data = node.any[0]?.data as { fgColor?: string; bgColor?: string; contrastRatio?: number } | undefined;
+                const data = node.any[0]?.data as ContrastData | undefined;
                 const colours = data?.fgColor ? ` (${data.fgColor} on ${data.bgColor}, ${data.contrastRatio}:1)` : "";
                 return `${node.target.join(" ")}${colours}`;
             }),

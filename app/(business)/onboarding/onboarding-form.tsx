@@ -184,7 +184,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
 
     return (
         <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                 Add your business
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -282,7 +282,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                                     <dt className="text-xs text-[#17233B]/70">{label}</dt>
                                     <dd className="mt-0.5 font-medium">{value || "Not set"}</dd>
                                 </div>
-                                <button type="button" onClick={() => setStep(target as number)} className="shrink-0 text-sm font-medium text-[#C8371D] hover:underline">
+                                <button type="button" onClick={() => setStep(target as number)} className="shrink-0 text-sm font-medium text-[#FF593F] hover:underline">
                                     Change
                                 </button>
                             </div>
@@ -324,7 +324,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                                 "You start on the Free plan, with no card needed. Upgrade any time.",
                             ].map((line) => (
                                 <li key={line} className="flex gap-2">
-                                    <FiCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#C8371D]" />
+                                    <FiCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#FF593F]" />
                                     {line}
                                 </li>
                             ))}
@@ -355,12 +355,12 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
                         the submit button, which would let the click that
                         opens the review step also submit the form. */}
                     {step < steps.length - 1 ? (
-                        <Button key="continue" type="button" size="lg" onClick={() => void goNext()} className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
+                        <Button key="continue" type="button" size="lg" onClick={() => void goNext()} className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
                             Continue
                             <FiArrowRight aria-hidden="true" />
                         </Button>
                     ) : (
-                        <Button key="submit" type="submit" size="lg" disabled={isSubmitting} className="bg-[#C8371D] text-white hover:bg-[#C8371D]/90">
+                        <Button key="submit" type="submit" size="lg" disabled={isSubmitting} className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
                             {isSubmitting ? "Creating your business…" : "Create my business"}
                         </Button>
                     )}

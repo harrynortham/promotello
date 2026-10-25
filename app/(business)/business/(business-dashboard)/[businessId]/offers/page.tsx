@@ -234,7 +234,7 @@ async function OffersContent({ params }: PageProps) {
 
                 <header className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Promotions
                         </p>
 
@@ -279,7 +279,7 @@ async function OffersContent({ params }: PageProps) {
                                 render={<Link href={`/business/${businessId}/billing`} />}
                                 nativeButton={false}
                                 size="sm"
-                                className="mt-3 bg-[#C8371D] text-white hover:bg-[#C8371D]/90"
+                                className="mt-3 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                             >
                                 Upgrade to Pro
                             </Button>
@@ -356,7 +356,7 @@ async function OffersContent({ params }: PageProps) {
                                     <CardHeader>
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                             <div>
-                                                <p className="text-sm font-medium text-[#C8371D]">
+                                                <p className="text-sm font-medium text-[#FF593F]">
                                                     {offer.discount}
                                                 </p>
 

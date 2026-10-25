@@ -109,7 +109,7 @@ function Loyalty() {
         >
             <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
                 <div className="rounded-2xl border border-[#17233B]/10 bg-white p-6">
-                    <p className="text-sm font-medium text-[#C8371D]">{business} coffee card</p>
+                    <p className="text-sm font-medium text-[#FF593F]">{business} coffee card</p>
                     <h3 className="mt-1 text-xl font-semibold">Buy 9 coffees, get the 10th free</h3>
                     <div className="mt-5">
                         <LoyaltyStamps stamps={6} required={10} size="lg" />
@@ -169,7 +169,7 @@ function Posters({ posterQr }: { posterQr: string }) {
                 </div>
 
                 <div className="rounded-2xl border-4 border-[#17233B] bg-white p-5 text-center shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#C8371D]">Scan me</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Scan me</p>
                     <p className="mt-1 text-lg font-semibold leading-tight">Free pastry with your coffee</p>
                     <div
                         className="mx-auto mt-3 w-40 [&_svg]:h-auto [&_svg]:w-full"
@@ -222,14 +222,14 @@ function Offers() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="flex gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                    <FiHeart aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#C8371D]" />
+                    <FiHeart aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#FF593F]" />
                     <p className="text-sm leading-6">
                         <strong>186 followers</strong> got an email about your Monday offer. Customers follow
                         you from your page or a QR poster, and can unsubscribe any time.
                     </p>
                 </div>
                 <div className="flex gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                    <FiStar aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#C8371D]" />
+                    <FiStar aria-hidden="true" className="mt-1 size-5 shrink-0 text-[#FF593F]" />
                     <p className="text-sm leading-6">
                         <strong>21 customers</strong> were sent to leave a Google review after a visit this
                         month.

@@ -75,7 +75,7 @@ export function LoyaltyCardScreen({
 }) {
     return (
         <PhoneFrame label="A customer's loyalty card on their phone">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">My loyalty cards</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
                 <p className="text-xs text-[#17233B]/70">{businessName}</p>
                 <p className="mt-0.5 font-semibold leading-snug">{headline}</p>
@@ -95,9 +95,9 @@ export function LoyaltyCardScreen({
 export function VoucherScreen() {
     return (
         <PhoneFrame label="A customer's voucher on their phone">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">My vouchers</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My vouchers</p>
             <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
-                <span className="inline-flex rounded-full bg-[#C8371D] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
+                <span className="inline-flex rounded-full bg-[#FF593F] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
                 <p className="mt-2 text-sm font-semibold leading-snug">With any coffee before 10am</p>
                 <p className="text-xs text-[#17233B]/70">{business}</p>
                 <VoucherQr code="HG7K2Q4M8P" className="mx-auto mt-3 w-32" />
@@ -116,7 +116,7 @@ export function StaffScanScreen() {
     return (
         <PhoneFrame label="A member of staff stamping a card after scanning it">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#17233B]/70">
-                <FiCamera aria-hidden="true" className="text-[#C8371D]" />
+                <FiCamera aria-hidden="true" className="text-[#FF593F]" />
                 Scanned
             </div>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
@@ -125,7 +125,7 @@ export function StaffScanScreen() {
                 <div className="mt-3">
                     <LoyaltyStamps stamps={7} required={10} size="sm" />
                 </div>
-                <div className="mt-4 rounded-xl bg-[#C8371D] py-2.5 text-center text-sm font-semibold text-white">Add stamp</div>
+                <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Add stamp</div>
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
                 <FiCheckCircle aria-hidden="true" className="shrink-0" />
@@ -155,7 +155,7 @@ export function PosterVisual({
             aria-label="A printable QR poster for a shop window"
             className={`w-60 rotate-[-2deg] rounded-2xl border-[6px] border-[#17233B] bg-white p-6 text-center text-[#17233B] shadow-2xl shadow-[#17233B]/20 ${className}`}
         >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#C8371D]">Scan me</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF593F]">Scan me</p>
             <p className="mt-2 text-xl font-semibold leading-tight">{headline}</p>
             <div
                 aria-hidden="true"
@@ -233,7 +233,7 @@ export function DashboardScreen({ className = "" }: { className?: string }) {
                     </ul>
                 </div>
                 <div className="col-span-2 p-4 sm:col-span-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">Last 30 days</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">Last 30 days</p>
                     <p className="text-sm font-semibold">What Promotello brought you</p>
                     <div className="mt-3 grid grid-cols-3 gap-2">
                         {[
@@ -283,10 +283,10 @@ export function NewOfferEmail() {
             <div className="relative -mx-5 -mt-5 mb-4 aspect-[2/1] overflow-hidden">
                 <Image src="/images/marketing/harbour-grind-cafe.jpg" alt="" fill sizes="384px" className="object-cover" />
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">New from {business}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">New from {business}</p>
             <p className="mt-2 text-lg font-semibold leading-snug">Two flat whites for £5 on Mondays</p>
             <span className="mt-2 inline-flex rounded-full bg-[#FF593F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#C2341F]">2 for £5</span>
-            <div className="mt-4 inline-flex rounded-lg bg-[#C8371D] px-4 py-2 text-sm font-semibold text-white">Claim this offer</div>
+            <div className="mt-4 inline-flex rounded-lg bg-[#FF593F] px-4 py-2 text-sm font-semibold text-white">Claim this offer</div>
             <p className="mt-4 text-[10px] text-[#17233B]/65">You follow {business} · Unsubscribe</p>
         </EmailShell>
     );
@@ -302,7 +302,7 @@ export function BirthdayEmail() {
             <p className="text-lg font-semibold">Happy birthday, Ellie! 🎂</p>
             <p className="mt-2 text-sm leading-6 text-[#17233B]/70">Everyone at {business} hopes you have a lovely day. Here&apos;s a treat from us.</p>
             <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#FFF8F0] px-3 py-2 text-sm">
-                <FiGift aria-hidden="true" className="text-[#C8371D]" />
+                <FiGift aria-hidden="true" className="text-[#FF593F]" />
                 <span>A free slice of cake · code <span className="font-mono font-semibold">G4K9QX2M7</span></span>
             </div>
             <p className="mt-4 text-[10px] text-[#17233B]/65">Sent automatically · Unsubscribe</p>
@@ -320,7 +320,7 @@ export function MonthlyReportEmail() {
 
     return (
         <EmailShell label="The monthly value report email" from="Promotello" subject="Your September on Promotello">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">{business} · September</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">{business} · September</p>
             <p className="mt-2 font-semibold leading-snug">312 customer visits came through Promotello in September.</p>
             <table className="mt-3 w-full text-xs">
                 <tbody>
@@ -346,7 +346,7 @@ export function FloatingNote({ icon, title, detail, className = "" }: { icon: "c
 
     return (
         <div className={`flex items-center gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-3 pr-5 text-[#17233B] shadow-lg ${className}`}>
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#C8371D]">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
                 <Icon aria-hidden="true" />
             </span>
             <span>
@@ -364,9 +364,9 @@ export function FloatingNote({ icon, title, detail, className = "" }: { icon: "c
 export function ReviewPromptScreen() {
     return (
         <PhoneFrame label="A customer being asked for a Google review after a visit">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#C8371D]">My dashboard</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My dashboard</p>
             <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-1 text-[#C8371D]" aria-hidden="true">
+                <div className="flex items-center gap-1 text-[#FF593F]" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((star) => (
                         <FiStar key={star} className="size-4 fill-current" />
                     ))}
@@ -401,7 +401,7 @@ export function QuietHoursCard() {
                 {days.map(([day, on]) => (
                     <span
                         key={day}
-                        className={`rounded-full border px-3 py-1 text-xs ${on ? "border-[#FF593F] bg-[#C8371D] text-white" : "border-[#17233B]/15"}`}
+                        className={`rounded-full border px-3 py-1 text-xs ${on ? "border-[#FF593F] bg-[#FF593F] text-white" : "border-[#17233B]/15"}`}
                     >
                         {day}
                     </span>
@@ -427,12 +427,12 @@ export function StoryImagePreview() {
                 <p className="mt-1 text-sm opacity-80">{business}</p>
             </div>
             <div>
-                <span className="inline-flex rounded-full bg-[#C8371D] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
+                <span className="inline-flex rounded-full bg-[#FF593F] px-3 py-1 text-xs font-semibold text-white">Free pastry</span>
                 <p className="mt-3 text-2xl font-semibold leading-tight">With any coffee before 10am</p>
             </div>
             <div>
                 <p className="text-[10px] opacity-70">Find it on</p>
-                <p className="text-lg font-semibold text-[#C8371D]">promotello</p>
+                <p className="text-lg font-semibold text-[#FF593F]">promotello</p>
             </div>
         </figure>
     );
@@ -447,7 +447,7 @@ export function OfferClaimScreen() {
         <PhoneFrame label="A customer claiming a promotion on their phone">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
                 <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="220px" className="object-cover" />
-                <span className="absolute left-2 top-2 rounded-full bg-[#C8371D] px-2.5 py-0.5 text-[11px] font-semibold text-white">Free pastry</span>
+                <span className="absolute left-2 top-2 rounded-full bg-[#FF593F] px-2.5 py-0.5 text-[11px] font-semibold text-white">Free pastry</span>
             </div>
             <p className="mt-3 text-xs text-[#17233B]/70">{business} · Gloucester Road</p>
             <p className="mt-0.5 font-semibold leading-snug">Free pastry with any coffee before 10am</p>
@@ -455,7 +455,7 @@ export function OfferClaimScreen() {
                 <span>Weekdays before 10am</span>
                 <span className="shrink-0 whitespace-nowrap rounded-full bg-[#FF593F]/10 px-2 py-0.5 font-semibold text-[#C2341F]">16 of 100 left</span>
             </div>
-            <div className="mt-4 rounded-xl bg-[#C8371D] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>
+            <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>
             <p className="mt-2 text-center text-[10px] text-[#17233B]/65">Free to claim · Use it in store</p>
         </PhoneFrame>
     );
@@ -503,9 +503,9 @@ export function SquarePostPreview({ className = "" }: { className?: string }) {
             <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="240px" className="object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-b from-transparent via-[#17233B]/30 to-[#17233B]/95 p-4 text-[#FFF8F0]">
                 <p className="text-[9px] uppercase tracking-[0.18em] text-[#FF8F7D]">{business}</p>
-                <span className="mt-1.5 inline-flex self-start rounded-full bg-[#C8371D] px-2 py-0.5 text-[10px] font-semibold text-white">Free pastry</span>
+                <span className="mt-1.5 inline-flex self-start rounded-full bg-[#FF593F] px-2 py-0.5 text-[10px] font-semibold text-white">Free pastry</span>
                 <p className="mt-1.5 text-base font-semibold leading-tight">With any coffee before 10am</p>
-                <p className="mt-2 text-right text-xs font-semibold text-[#C8371D]">promotello</p>
+                <p className="mt-2 text-right text-xs font-semibold text-[#FF593F]">promotello</p>
             </div>
         </figure>
     );

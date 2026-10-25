@@ -61,7 +61,7 @@ export default function ErrorPage({
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-10 sm:px-10 sm:py-16">
                 <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
                     <section aria-labelledby="error-heading">
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             A small bump in the journey
                         </p>
 
@@ -131,7 +131,7 @@ export default function ErrorPage({
                                     <FiTool className="size-11 text-[#FF8F7D] sm:size-14" />
                                 </div>
 
-                                <span className="absolute bottom-0 right-0 flex size-12 items-center justify-center rounded-2xl border-4 border-[#FFF8F0] bg-[#C8371D] text-white">
+                                <span className="absolute bottom-0 right-0 flex size-12 items-center justify-center rounded-2xl border-4 border-[#FFF8F0] bg-[#FF593F] text-white">
                                     <FiRefreshCw className="size-5" />
                                 </span>
                             </div>
@@ -155,7 +155,7 @@ export default function ErrorPage({
                         href="/explore"
                         className="group flex items-start gap-4 rounded-2xl border border-[#17233B]/10 bg-white p-5 transition-colors hover:border-[#FF593F]/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                     >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
                             <FiCompass
                                 aria-hidden="true"
                                 className="size-5"
@@ -182,7 +182,7 @@ export default function ErrorPage({
                         href="/contact"
                         className="group flex items-start gap-4 rounded-2xl border border-[#17233B]/10 bg-white p-5 transition-colors hover:border-[#FF593F]/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                     >
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#C8371D]">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FF593F]/10 text-[#FF593F]">
                             <FiLifeBuoy
                                 aria-hidden="true"
                                 className="size-5"

@@ -31,7 +31,7 @@ function SetupScreen() {
                         <span key={step} className={`h-1.5 flex-1 rounded-full ${index < 2 ? "bg-[#FF593F]" : "bg-[#17233B]/10"}`} />
                     ))}
                 </div>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#C8371D]">Step 2 of 3</p>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#FF593F]">Step 2 of 3</p>
                 <p className="mt-1 text-lg font-semibold">Where can customers find you?</p>
                 <div className="mt-4 space-y-3 text-sm">
                     {[
@@ -45,7 +45,7 @@ function SetupScreen() {
                         </div>
                     ))}
                 </div>
-                <div className="mt-5 inline-flex rounded-full bg-[#C8371D] px-5 py-2 text-sm font-semibold text-white">Continue</div>
+                <div className="mt-5 inline-flex rounded-full bg-[#FF593F] px-5 py-2 text-sm font-semibold text-white">Continue</div>
             </div>
         </BrowserFrame>
     );
@@ -217,7 +217,7 @@ export default async function HowItWorksPage() {
                         {faqs.map((faq) => (
                             <div key={faq.question} className="py-5 first:pt-0">
                                 <dt className="flex gap-2 font-semibold">
-                                    <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#C8371D]" />
+                                    <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
                                     {faq.question}
                                 </dt>
                                 <dd className="mt-2 pl-6 leading-7 text-[#17233B]/70">{faq.answer}</dd>

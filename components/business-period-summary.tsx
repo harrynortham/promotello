@@ -67,7 +67,7 @@ function Tile({ icon, label, metric, hint }: { icon: ReactNode; label: string; m
     return (
         <div role="group" aria-label={label} className="rounded-xl border border-[#17233B]/10 bg-white p-5">
             <div className="flex items-center gap-2 text-sm font-medium text-[#17233B]/70">
-                <span className="text-[#C8371D]">{icon}</span>
+                <span className="text-[#FF593F]">{icon}</span>
                 {label}
             </div>
             <p className="mt-3 text-3xl font-semibold tabular-nums">{metric.current.toLocaleString("en-GB")}</p>
@@ -87,7 +87,7 @@ export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
     return (
         <Card className="mt-10 border-[#17233B]/10">
             <CardHeader>
-                <p className="text-sm font-medium text-[#C8371D]">Last {analytics.days} days</p>
+                <p className="text-sm font-medium text-[#FF593F]">Last {analytics.days} days</p>
                 <CardTitle>What Promotello brought you</CardTitle>
                 <p className="text-sm text-[#17233B]/70">
                     {used.current > 0

@@ -83,7 +83,7 @@ export default function AboutPage() {
 
                         <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
                             Good things happen when you{" "}
-                            <span className="text-[#C8371D]">
+                            <span className="text-[#FF593F]">
                                 try somewhere new.
                             </span>
                         </h1>
@@ -170,7 +170,7 @@ export default function AboutPage() {
             <section className="border-y bg-muted/30">
                 <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 sm:px-10 lg:grid-cols-[0.8fr_1.2fr]">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Why we’re here
                         </p>
 
@@ -205,7 +205,7 @@ export default function AboutPage() {
 
             <section className="mx-auto max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
                 <div className="max-w-2xl">
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                         More reasons to explore
                     </p>
 
@@ -224,7 +224,7 @@ export default function AboutPage() {
                                 className="rounded-3xl shadow-none"
                             >
                                 <CardHeader>
-                                    <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#C8371D]">
+                                    <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#FF593F]">
                                         <Icon
                                             aria-hidden="true"
                                             className="size-6"
@@ -298,7 +298,7 @@ export default function AboutPage() {
 
             <section className="mx-auto grid max-w-7xl gap-10 px-6 py-20 sm:px-10 sm:py-24 lg:grid-cols-2">
                 <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                         Clear details matter
                     </p>
 
@@ -341,7 +341,7 @@ export default function AboutPage() {
                                 >
                                     <FiCheck
                                         aria-hidden="true"
-                                        className="mt-1 size-5 shrink-0 text-[#C8371D]"
+                                        className="mt-1 size-5 shrink-0 text-[#FF593F]"
                                     />
 
                                     <span className="leading-7">

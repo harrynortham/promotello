@@ -23,7 +23,7 @@ export function SectionHeading({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 {eyebrow && (
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#C8371D]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                         {eyebrow}
                     </p>
                 )}
@@ -40,7 +40,7 @@ export function SectionHeading({
             {href && (
                 <Link
                     href={href}
-                    className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#17233B] hover:text-[#C8371D]"
+                    className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#17233B] hover:text-[#FF593F]"
                 >
                     {linkLabel ?? "See all"}
                     <FiArrowRight aria-hidden="true" />

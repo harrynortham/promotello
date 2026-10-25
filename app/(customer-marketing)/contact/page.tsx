@@ -56,7 +56,7 @@ export default function ContactPage() {
 
                     <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
                         A question, an idea, or a little{" "}
-                        <span className="text-[#C8371D]">
+                        <span className="text-[#FF593F]">
                             help along the way?
                         </span>
                     </h1>
@@ -80,7 +80,7 @@ export default function ContactPage() {
                                     key={topic.title}
                                     className="flex items-start gap-4"
                                 >
-                                    <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#C8371D]">
+                                    <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-[#FF593F]">
                                         <Icon
                                             aria-hidden="true"
                                             className="size-5"

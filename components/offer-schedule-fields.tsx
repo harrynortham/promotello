@@ -34,7 +34,7 @@ export function OfferScheduleFields({
                 <p className="text-[#17233B]/65">
                     <strong className="text-[#17233B]">Quiet-hours offers</strong> repeat on the days and
                     times you choose, like Monday to Thursday, 2pm to 4pm, to fill your quieter moments.{" "}
-                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#C8371D] underline">
+                    <Link href={`/business/${businessId}/billing`} className="font-medium text-[#FF593F] underline">
                         Available on Growth
                     </Link>
                     .
@@ -54,7 +54,7 @@ export function OfferScheduleFields({
                     onChange={(event) => setEnabled(event.target.checked)}
                     className="size-4 accent-[#FF593F]"
                 />
-                <FiClock aria-hidden="true" className="text-[#C8371D]" />
+                <FiClock aria-hidden="true" className="text-[#FF593F]" />
                 Only on set days and times (quiet hours)
             </label>
 
@@ -75,7 +75,7 @@ export function OfferScheduleFields({
                                                 on ? current.filter((value) => value !== day) : [...current, day],
                                             )
                                         }
-                                        className={`rounded-full border px-3 py-1 text-sm ${on ? "border-[#FF593F] bg-[#C8371D] text-white" : "border-[#17233B]/15 bg-white"}`}
+                                        className={`rounded-full border px-3 py-1 text-sm ${on ? "border-[#FF593F] bg-[#FF593F] text-white" : "border-[#17233B]/15 bg-white"}`}
                                     >
                                         {dayLabels[day]}
                                     </button>

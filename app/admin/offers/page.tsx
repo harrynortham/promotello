@@ -311,7 +311,7 @@ export default function AdminOffersPage() {
                                     <CardHeader>
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                             <div>
-                                                <p className="text-sm font-medium text-[#C8371D]">
+                                                <p className="text-sm font-medium text-[#FF593F]">
                                                     {getBusinessName(offer)}
                                                 </p>
 
