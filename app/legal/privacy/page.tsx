@@ -49,7 +49,11 @@ const sections: LegalSection[] = [
                 <p>
                     <strong>Your account.</strong> Your email address, password
                     (stored only as a secure hash), name and, if you add it,
-                    your town or city.
+                    your town or city. If you sign in with Google or Apple, we
+                    don&apos;t get a password: Google shares your name, email
+                    address and profile photo, and Apple your name and email
+                    address (or a private relay address if you choose to hide
+                    yours).
                 </p>
                 <p>
                     <strong>Vouchers.</strong> The offers you claim, your

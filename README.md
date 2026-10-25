@@ -48,6 +48,7 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION_ID` | Billing                                                                                                 |
 | `RESEND_API_KEY`, `EMAIL_FROM`                                                 | Sending email. Without them nothing is sent, which keeps development safe                               |
 | `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                      |
+| `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`                                                | Optional: Google Analytics outside production (it's on in production by default, behind cookie consent) |
 
 Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on), so the same code works in test and live mode.

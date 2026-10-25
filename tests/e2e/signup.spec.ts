@@ -8,29 +8,10 @@ test.describe("Sign up", () => {
         await page.goto("/signup");
     });
 
-    test("rejects mismatched passwords", async ({ page }) => {
-        await page.locator("#signup-email").fill("test@example.com");
-        await page.locator("#signup-password").fill("Password1!");
-        await page.locator("#signup-confirm-password").fill("Different1!");
-        await page.locator('button[type="submit"]').click();
-
-        await expect(page.getByText("Your passwords do not match.")).toBeVisible();
-    });
-
     test("rejects passwords shorter than 8 characters", async ({ page }) => {
         await page.locator("#signup-email").fill("test@example.com");
 
-        // The input has a native minLength attribute that would block submission
-        // before the JS handler runs. Remove it so we can reach the JS check.
-        await page.locator("#signup-password").evaluate((el) =>
-            (el as HTMLInputElement).removeAttribute("minlength"),
-        );
-        await page.locator("#signup-confirm-password").evaluate((el) =>
-            (el as HTMLInputElement).removeAttribute("minlength"),
-        );
-
         await page.locator("#signup-password").fill("short");
-        await page.locator("#signup-confirm-password").fill("short");
         await page.locator('button[type="submit"]').click();
 
         await expect(
@@ -47,7 +28,6 @@ test.describe("Sign up", () => {
 
         await page.locator("#signup-email").fill(email);
         await page.locator("#signup-password").fill("E2eTestPass1!");
-        await page.locator("#signup-confirm-password").fill("E2eTestPass1!");
         await page.locator('button[type="submit"]').click();
 
         // Supabase may auto-confirm or require email verification depending

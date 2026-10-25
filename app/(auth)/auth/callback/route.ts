@@ -40,10 +40,18 @@ export async function GET(request: Request) {
 
   const loginUrl = new URL("/login", requestUrl.origin);
 
+  // Google or Apple sign-in that was cancelled or refused comes back with
+  // an error and no code; anything else is an email link that failed.
   loginUrl.searchParams.set(
     "error",
-    "This verification link could not be completed. It may have expired or already been used. Try signing in, or request a new link.",
+    requestUrl.searchParams.has("error_description") || requestUrl.searchParams.has("error")
+      ? "oauth"
+      : "link",
   );
+
+  if (next !== "/dashboard" && !businessFlow) {
+    loginUrl.searchParams.set("next", next);
+  }
 
   if (businessFlow) {
     loginUrl.searchParams.set("next", "/business/dashboard");

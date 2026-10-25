@@ -23,32 +23,43 @@ import { FieldError, invalidProps } from "@/components/field-error";
 import { email as emailField, password } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
-const passwordSchema = z
-    .object({
-        currentPassword: z.string().min(1, "Enter your current password."),
-        newPassword: password,
-        confirmNewPassword: z.string(),
-    })
-    .refine((values) => values.newPassword === values.confirmNewPassword, {
-        message: "Your new passwords do not match.",
-        path: ["confirmNewPassword"],
-    })
-    .refine((values) => values.newPassword !== values.currentPassword, {
-        message: "Choose a different password from your current one.",
-        path: ["newPassword"],
+// People who signed up with Google or Apple have no current password; they
+// can set one without it.
+function passwordSchemaFor(hasPassword: boolean) {
+    return z
+        .object({
+            currentPassword: hasPassword ? z.string().min(1, "Enter your current password.") : z.string(),
+            newPassword: password,
+            confirmNewPassword: z.string(),
+        })
+        .refine((values) => values.newPassword === values.confirmNewPassword, {
+            message: "Your new passwords do not match.",
+            path: ["confirmNewPassword"],
+        })
+        .refine((values) => !hasPassword || values.newPassword !== values.currentPassword, {
+            message: "Choose a different password from your current one.",
+            path: ["newPassword"],
+        });
+}
+
+const providerNames: Record<string, string> = { google: "Google", apple: "Apple" };
+
+function emailSchemaFor(hasPassword: boolean) {
+    return z.object({
+        newEmail: emailField.transform((value) => value.toLowerCase()),
+        emailPassword: hasPassword ? z.string().min(1, "Enter your current password.") : z.string(),
     });
+}
 
-const emailSchema = z.object({
-    newEmail: emailField.transform((value) => value.toLowerCase()),
-    emailPassword: z.string().min(1, "Enter your current password."),
-});
-
-type PasswordValues = z.infer<typeof passwordSchema>;
-type EmailValues = z.infer<typeof emailSchema>;
+type PasswordValues = z.infer<ReturnType<typeof passwordSchemaFor>>;
+type EmailValues = z.infer<ReturnType<typeof emailSchemaFor>>;
 
 type SecurityFormProps = {
     email: string;
     pendingEmail: string;
+    hasPassword: boolean;
+    // e.g. ["google"]
+    socialProviders: string[];
 };
 
 type Feedback = {
@@ -81,8 +92,11 @@ function FormFeedback({ feedback }: { feedback: Feedback }) {
 export default function SecurityForm({
     email,
     pendingEmail,
+    hasPassword,
+    socialProviders,
 }: SecurityFormProps) {
     const router = useRouter();
+    const signInWith = socialProviders.map((provider) => providerNames[provider] ?? provider).join(" and ");
 
     const [passwordFeedback, setPasswordFeedback] =
         useState<Feedback>(null);
@@ -91,12 +105,12 @@ export default function SecurityForm({
         useState<Feedback>(null);
 
     const passwordForm = useForm<PasswordValues>({
-        resolver: zodResolver(passwordSchema),
+        resolver: zodResolver(passwordSchemaFor(hasPassword)),
         defaultValues: { currentPassword: "", newPassword: "", confirmNewPassword: "" },
     });
 
     const emailForm = useForm<EmailValues>({
-        resolver: zodResolver(emailSchema),
+        resolver: zodResolver(emailSchemaFor(hasPassword)),
         defaultValues: { newEmail: "", emailPassword: "" },
     });
 
@@ -150,7 +164,9 @@ export default function SecurityForm({
         setPasswordFeedback(null);
 
         try {
-            const { supabase } = await confirmPassword(values.currentPassword);
+            const supabase = hasPassword
+                ? (await confirmPassword(values.currentPassword)).supabase
+                : createClient();
 
             const { error } = await supabase.auth.updateUser({
                 password: values.newPassword,
@@ -162,8 +178,9 @@ export default function SecurityForm({
 
             setPasswordFeedback({
                 type: "success",
-                message:
-                    "Your password has been changed. Use your new password the next time you sign in.",
+                message: hasPassword
+                    ? "Your password has been changed. Use your new password the next time you sign in."
+                    : "Your password is set. You can now also sign in with your email and password.",
             });
 
             router.refresh();
@@ -184,7 +201,11 @@ export default function SecurityForm({
         setEmailFeedback(null);
 
         try {
-            const { supabase, currentEmail } = await confirmPassword(values.emailPassword);
+            // Without a password (Google or Apple sign-in), the confirmation
+            // emails to both addresses are the check.
+            const { supabase, currentEmail } = hasPassword
+                ? await confirmPassword(values.emailPassword)
+                : { supabase: createClient(), currentEmail: email };
 
             if (values.newEmail === currentEmail.toLowerCase()) {
                 throw new Error(
@@ -249,11 +270,12 @@ export default function SecurityForm({
                         />
                     </div>
 
-                    <CardTitle>Change password</CardTitle>
+                    <CardTitle>{hasPassword ? "Change password" : "Set a password"}</CardTitle>
 
                     <CardDescription className="leading-7">
-                        Choose a strong, unique password that you don’t use
-                        for other accounts.
+                        {hasPassword
+                            ? "Choose a strong, unique password that you don’t use for other accounts."
+                            : `You sign in with ${signInWith}. Add a password if you'd also like to sign in with your email.`}
                     </CardDescription>
                 </CardHeader>
 
@@ -264,21 +286,23 @@ export default function SecurityForm({
                         className="space-y-5"
                         aria-busy={busyForm === "password"}
                     >
-                        <div className="space-y-2">
-                            <Label htmlFor="current-password">
-                                Current password
-                            </Label>
+                        {hasPassword && (
+                            <div className="space-y-2">
+                                <Label htmlFor="current-password">
+                                    Current password
+                                </Label>
 
-                            <Input
-                                id="current-password"
-                                type="password"
-                                autoComplete="current-password"
-                                readOnly={isBusy}
-                                {...passwordForm.register("currentPassword")}
-                                {...invalidProps("current-password-error", passwordErrors.currentPassword)}
-                            />
-                            <FieldError id="current-password-error" message={passwordErrors.currentPassword?.message} />
-                        </div>
+                                <Input
+                                    id="current-password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    readOnly={isBusy}
+                                    {...passwordForm.register("currentPassword")}
+                                    {...invalidProps("current-password-error", passwordErrors.currentPassword)}
+                                />
+                                <FieldError id="current-password-error" message={passwordErrors.currentPassword?.message} />
+                            </div>
+                        )}
 
                         <div className="grid gap-5 sm:grid-cols-2">
                             <div className="space-y-2">
@@ -326,16 +350,20 @@ export default function SecurityForm({
                         <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5">
                             <Button type="submit" disabled={isBusy}>
                                 {busyForm === "password"
-                                    ? "Updating password…"
-                                    : "Update password"}
+                                    ? "Saving password…"
+                                    : hasPassword
+                                        ? "Update password"
+                                        : "Set password"}
                             </Button>
 
-                            <Link
-                                href="/forgot-password"
-                                className="text-sm font-medium underline underline-offset-4"
-                            >
-                                Forgotten your password?
-                            </Link>
+                            {hasPassword && (
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-sm font-medium underline underline-offset-4"
+                                >
+                                    Forgotten your password?
+                                </Link>
+                            )}
                         </div>
                     </form>
                 </CardContent>
@@ -407,21 +435,23 @@ export default function SecurityForm({
                             <FieldError id="new-email-error" message={emailErrors.newEmail?.message} />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="email-password">
-                                Current password
-                            </Label>
+                        {hasPassword && (
+                            <div className="space-y-2">
+                                <Label htmlFor="email-password">
+                                    Current password
+                                </Label>
 
-                            <Input
-                                id="email-password"
-                                type="password"
-                                autoComplete="current-password"
-                                readOnly={isBusy}
-                                {...emailForm.register("emailPassword")}
-                                {...invalidProps("email-password-error", emailErrors.emailPassword)}
-                            />
-                            <FieldError id="email-password-error" message={emailErrors.emailPassword?.message} />
-                        </div>
+                                <Input
+                                    id="email-password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    readOnly={isBusy}
+                                    {...emailForm.register("emailPassword")}
+                                    {...invalidProps("email-password-error", emailErrors.emailPassword)}
+                                />
+                                <FieldError id="email-password-error" message={emailErrors.emailPassword?.message} />
+                            </div>
+                        )}
 
                         <p className="text-sm leading-7 text-muted-foreground">
                             Keep access to your current email while confirming

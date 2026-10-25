@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldError, invalidProps } from "@/components/field-error";
-import { email, password, passwordsMatch, passwordsMatchError, requiredText } from "@/lib/validation";
+import { SocialSignIn } from "@/components/social-sign-in";
+import { email, password, requiredText } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
 const benefits = [
@@ -34,14 +35,11 @@ const benefits = [
     "Manage customer codes with your team",
 ];
 
-const schema = z
-    .object({
-        name: requiredText("Your name", { max: 100 }),
-        email,
-        password,
-        confirmPassword: z.string(),
-    })
-    .refine(passwordsMatch, passwordsMatchError);
+const schema = z.object({
+    name: requiredText("Your name", { max: 100 }),
+    email,
+    password,
+});
 
 type Values = z.infer<typeof schema>;
 
@@ -60,7 +58,7 @@ export default function BusinessRegisterPage() {
         formState: { errors, isSubmitting: isSending },
     } = useForm<Values>({
         resolver: zodResolver(schema),
-        defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+        defaultValues: { name: "", email: "", password: "" },
     });
 
     const isSubmitting = isSending || isRedirecting;
@@ -227,10 +225,12 @@ export default function BusinessRegisterPage() {
                                     <span>Add business</span>
                                 </div>
 
+                                <SocialSignIn next="/onboarding" />
+
                                 <form
                                     onSubmit={handleSubmit(onSubmit)}
                                     noValidate
-                                    className="mt-8 space-y-5"
+                                    className="mt-6 space-y-5"
                                     aria-busy={isSubmitting}
                                 >
                                     <div className="space-y-2">
@@ -323,8 +323,8 @@ export default function BusinessRegisterPage() {
                                                 size="icon"
                                                 aria-label={
                                                     showPassword
-                                                        ? "Hide passwords"
-                                                        : "Show passwords"
+                                                        ? "Hide password"
+                                                        : "Show password"
                                                 }
                                                 aria-pressed={showPassword}
                                                 disabled={isSubmitting}
@@ -353,34 +353,6 @@ export default function BusinessRegisterPage() {
                                         </p>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="register-confirm-password"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiLock
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
-                                            Confirm password
-                                        </Label>
-
-                                        <Input
-                                            id="register-confirm-password"
-                                            type={
-                                                showPassword
-                                                    ? "text"
-                                                    : "password"
-                                            }
-                                            autoComplete="new-password"
-                                            placeholder="Enter your password again"
-                                            readOnly={isSubmitting}
-                                            {...register("confirmPassword")}
-                                            {...invalidProps("register-confirm-error", errors.confirmPassword)}
-                                        />
-
-                                        <FieldError id="register-confirm-error" message={errors.confirmPassword?.message} />
-                                    </div>
 
                                     {errorMessage && (
                                         <Alert variant="destructive">

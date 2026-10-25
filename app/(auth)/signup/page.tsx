@@ -26,13 +26,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldError, invalidProps } from "@/components/field-error";
+import { SocialSignIn } from "@/components/social-sign-in";
 import { safeNextPath } from "@/lib/redirects";
-import { email, password, passwordsMatch, passwordsMatchError } from "@/lib/validation";
+import { email, password } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
-const schema = z
-    .object({ email, password, confirmPassword: z.string() })
-    .refine(passwordsMatch, passwordsMatchError);
+const schema = z.object({ email, password });
 
 type Values = z.infer<typeof schema>;
 
@@ -51,19 +50,20 @@ export default function SignupPage() {
         formState: { errors, isSubmitting: isSending },
     } = useForm<Values>({
         resolver: zodResolver(schema),
-        defaultValues: { email: "", password: "", confirmPassword: "" },
+        defaultValues: { email: "", password: "" },
     });
 
     const isSubmitting = isSending || isRedirecting;
 
+    // Return to the page that sent them here, e.g. an offer to claim.
+    function nextPath() {
+        return safeNextPath(new URLSearchParams(window.location.search).get("next")) ?? "/dashboard";
+    }
+
     async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        // Return to the page that sent them here, e.g. an offer to claim.
-        const next =
-            safeNextPath(
-                new URLSearchParams(window.location.search).get("next"),
-            ) ?? "/dashboard";
+        const next = nextPath();
 
         const { data, error } = await createClient().auth.signUp({
             email: values.email,
@@ -198,10 +198,12 @@ export default function SignupPage() {
                                     promotions and keep your vouchers together.
                                 </p>
 
+                                <SocialSignIn next={nextPath} />
+
                                 <form
                                     onSubmit={handleSubmit(onSubmit)}
                                     noValidate
-                                    className="mt-8 space-y-5"
+                                    className="mt-6 space-y-5"
                                     aria-busy={isSubmitting}
                                 >
                                     <div className="space-y-2">
@@ -266,8 +268,8 @@ export default function SignupPage() {
                                                 size="icon"
                                                 aria-label={
                                                     showPassword
-                                                        ? "Hide passwords"
-                                                        : "Show passwords"
+                                                        ? "Hide password"
+                                                        : "Show password"
                                                 }
                                                 aria-pressed={showPassword}
                                                 disabled={isSubmitting}
@@ -296,35 +298,6 @@ export default function SignupPage() {
                                         </p>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="signup-confirm-password"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiLock
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
-                                            Confirm password
-                                        </Label>
-
-                                        <Input
-                                            id="signup-confirm-password"
-                                            type={
-                                                showPassword
-                                                    ? "text"
-                                                    : "password"
-                                            }
-                                            autoComplete="new-password"
-                                            placeholder="Enter your password again"
-                                            readOnly={isSubmitting}
-                                            className="h-12"
-                                            {...register("confirmPassword")}
-                                            {...invalidProps("signup-confirm-error", errors.confirmPassword)}
-                                        />
-
-                                        <FieldError id="signup-confirm-error" message={errors.confirmPassword?.message} />
-                                    </div>
 
                                     {errorMessage && (
                                         <Alert variant="destructive">
