@@ -31,7 +31,7 @@ export function teamInvitationEmail({
         footer: "If you weren't expecting this, you can ignore it.",
     });
 
-    return { to, subject: `You're invited to join ${businessName} on Promotello`, html, text, senderName: businessName };
+    return { to, subject: `You're invited to join ${businessName} on Promotello`, html, text };
 }
 
 export function handOverEmail({
@@ -93,5 +93,5 @@ export function voucherConfirmationEmail({
         footer: "You're getting this because you claimed a voucher on Promotello.",
     });
 
-    return { to, subject: `Your voucher: ${discount} at ${businessName}`, html, text, senderName: businessName };
+    return { to, subject: `Your voucher: ${discount} at ${businessName}`, html, text };
 }

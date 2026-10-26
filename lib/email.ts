@@ -14,6 +14,9 @@ export type Email = {
     text: string;
     headers?: Record<string, string>;
     // Shown as "<senderName> via Promotello", sent from EMAIL_FROM's address.
+    // Only for emails on a business's behalf to its followers (new offers,
+    // automation vouchers). Account emails come from plain "Promotello":
+    // one address with many display names looks like spoofing to filters.
     senderName?: string;
 };
 
