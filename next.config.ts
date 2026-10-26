@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     agentUpgrade: "security",
   },
   cacheComponents: true,
+  // Keystatic in GitHub mode moves the dev site to 127.0.0.1 (for GitHub's
+  // sign-in callback); the dev server blocks unknown origins otherwise.
+  allowedDevOrigins: ["127.0.0.1"],
   // Blog posts are files read at build time; ship them with the server too
   // in case a page is regenerated.
   outputFileTracingIncludes: {
