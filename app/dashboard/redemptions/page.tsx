@@ -1,90 +1,97 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { connection } from "next/server";
-import { redirect } from "next/navigation";
+import { FiArrowRight } from "react-icons/fi";
 
-import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-} from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/utils/supabase/server";
 
-import RedemptionList from "./redemption-list";
-import { getWallet } from "./wallet";
+import { VoucherGrid, VoucherTabs, WalletEmpty, WalletError, WalletHeader, WalletLoading, statusPages } from "./voucher-list";
+import type { StatusedVoucher, StatusFilter } from "./voucher-status";
+import { getGroupedWallet } from "./wallet";
 
-function LoadingState() {
+export const metadata: Metadata = {
+    title: "My vouchers",
+};
+
+// How many used and expired vouchers to show before "See all".
+const PREVIEW = 3;
+
+function Section({ status, items, limit }: { status: StatusFilter; items: StatusedVoucher[]; limit?: number }) {
+    const page = statusPages[status];
+    const shown = limit ? items.slice(0, limit) : items;
+
     return (
-        <section
-            role="status"
-            aria-label="Loading your vouchers"
-            className="mx-auto max-w-5xl space-y-6"
-        >
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-5 w-80 max-w-full" />
+        <section aria-labelledby={`${status}-heading`}>
+            <div className="flex items-end justify-between gap-4">
+                <h2 id={`${status}-heading`} className="text-2xl font-semibold tracking-tight">
+                    {page.label} <span className="text-[#17233B]/50">({items.length})</span>
+                </h2>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-                {[1, 2, 3].map((item) => (
-                    <Skeleton
-                        key={item}
-                        className="h-24 rounded-2xl"
-                    />
-                ))}
+                {limit && items.length > limit && (
+                    <Link href={page.href} className="inline-flex shrink-0 items-center gap-1 text-sm font-medium hover:underline">
+                        See all {items.length}
+                        <FiArrowRight aria-hidden="true" />
+                    </Link>
+                )}
             </div>
 
-            <Skeleton className="h-80 rounded-3xl" />
-            <Skeleton className="h-80 rounded-3xl" />
+            <div className="mt-5">
+                {items.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-[#17233B]/15 bg-white px-5 py-6 text-[#17233B]/65">{page.empty}</p>
+                ) : (
+                    <VoucherGrid items={shown} />
+                )}
+            </div>
         </section>
     );
 }
 
-async function RedemptionsContent() {
+async function WalletOverview() {
     await connection();
 
-    const supabase = await createClient();
-
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-        redirect("/login");
-    }
-
-    const { vouchers, error } = await getWallet(user.id);
-
-    if (error) {
-        return (
-            <section className="mx-auto max-w-5xl space-y-6">
-                <h1 className="text-3xl font-semibold tracking-tight">
-                    My vouchers
-                </h1>
-
-                <Alert variant="destructive">
-                    <AlertTitle>
-                        We couldn’t load your vouchers
-                    </AlertTitle>
-
-                    <AlertDescription>
-                        Please refresh the page and try again.
-                    </AlertDescription>
-                </Alert>
-            </section>
-        );
-    }
+    const { error, total, groups, counts } = await getGroupedWallet("/dashboard/redemptions");
 
     return (
-        <RedemptionList
-            redemptions={vouchers}
-            today={new Date().toISOString().slice(0, 10)}
-        />
+        <section className="mx-auto max-w-6xl space-y-8 text-[#17233B]">
+            <WalletHeader
+                title="My vouchers"
+                description="Tap a voucher to show its QR code at the till. The ones ending soonest are first."
+            />
+
+            <VoucherTabs active="all" counts={counts} />
+
+            {error ? (
+                <WalletError />
+            ) : total === 0 ? (
+                <WalletEmpty title="No vouchers yet" description={statusPages.ready.empty} />
+            ) : (
+                <div className="space-y-12">
+                    <Section status="ready" items={groups.ready} />
+
+                    {groups.unavailable.length > 0 && (
+                        <section aria-labelledby="unavailable-heading">
+                            <h2 id="unavailable-heading" className="text-2xl font-semibold tracking-tight">
+                                Not available right now
+                            </h2>
+                            <p className="mt-2 text-[#17233B]/65">These offers have been paused. Check with the business before you visit.</p>
+                            <div className="mt-5">
+                                <VoucherGrid items={groups.unavailable} />
+                            </div>
+                        </section>
+                    )}
+
+                    {groups.used.length > 0 && <Section status="used" items={groups.used} limit={PREVIEW} />}
+                    {groups.expired.length > 0 && <Section status="expired" items={groups.expired} limit={PREVIEW} />}
+                </div>
+            )}
+        </section>
     );
 }
 
 export default function CustomerRedemptionsPage() {
     return (
-        <Suspense fallback={<LoadingState />}>
-            <RedemptionsContent />
+        <Suspense fallback={<WalletLoading />}>
+            <WalletOverview />
         </Suspense>
     );
 }

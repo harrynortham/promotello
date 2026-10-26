@@ -8,8 +8,8 @@ import { FiArrowLeft } from "react-icons/fi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
 
-import { VoucherCard } from "../redemption-list";
-import { getStatus } from "../voucher-status";
+import { VoucherCard } from "../voucher-card";
+import { getStatus, todayInUk } from "../voucher-status";
 import { getWallet } from "../wallet";
 
 export const metadata: Metadata = {
@@ -77,8 +77,7 @@ async function VoucherContent({ params }: PageProps) {
             <h1 className="sr-only">Your voucher</h1>
             <VoucherCard
                 redemption={voucher}
-                status={getStatus(voucher, new Date().toISOString().slice(0, 10))}
-                standalone
+                status={getStatus(voucher, todayInUk())}
             />
         </section>
     );

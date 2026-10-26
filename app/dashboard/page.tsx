@@ -14,19 +14,9 @@ import { getLiveOffers } from "@/lib/listings";
 import { getVisitorContext } from "@/lib/visitor";
 import { createClient } from "@/utils/supabase/server";
 
-type VoucherRow = {
-    id: string;
-    redemption_code: string;
-    used_at: string | null;
-    offers: {
-        slug: string;
-        title: string;
-        discount: string;
-        image_url: string | null;
-        expires_at: string;
-        businesses: { name: string } | { name: string }[] | null;
-    } | null;
-};
+import { VoucherGrid, statusPages } from "./redemptions/voucher-list";
+import { groupVouchers } from "./redemptions/voucher-status";
+import { getWallet } from "./redemptions/wallet";
 
 type ReviewPrompt = {
     business_id: string;
@@ -75,17 +65,8 @@ async function CustomerDashboardContent() {
     // Suggestions come from the city they're browsing, like the home page.
     const visitor = await getVisitorContext();
 
-    const [{ data: vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers, { data: reviewPrompts }, place] = await Promise.all([
-        supabase
-            .from("offer_redemptions")
-            .select(
-                `
-                    id, redemption_code, used_at,
-                    offers ( slug, title, discount, image_url, expires_at, businesses ( name ) )
-                `,
-            )
-            .eq("user_id", user.id)
-            .order("redeemed_at", { ascending: false }),
+    const [{ vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers, { data: reviewPrompts }, place] = await Promise.all([
+        getWallet(user.id),
         supabase
             .from("business_members")
             .select("business_id", { count: "exact", head: true })
@@ -101,11 +82,8 @@ async function CustomerDashboardContent() {
 
     const prompts = (reviewPrompts ?? []) as ReviewPrompt[];
 
-    const today = new Date().toISOString().slice(0, 10);
-    const rows = (vouchers ?? []) as unknown as VoucherRow[];
-    const ready = rows.filter((row) => !row.used_at && row.offers && row.offers.expires_at >= today);
-    const usedCount = rows.filter((row) => row.used_at).length;
-    const claimedSlugs = new Set(rows.map((row) => row.offers?.slug));
+    const { ready, used } = groupVouchers(vouchers);
+    const claimedSlugs = new Set(vouchers.map((voucher) => voucher.offer?.slug));
     const suggestions = liveOffers.filter((offer) => !claimedSlugs.has(offer.slug)).slice(0, 4);
     const hasBusiness = (businessCount ?? 0) > 0;
 
@@ -114,8 +92,8 @@ async function CustomerDashboardContent() {
         null;
 
     const stats = [
-        { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: "/dashboard/redemptions" },
-        { icon: FiCheckCircle, label: "Vouchers used", value: usedCount, href: "/dashboard/redemptions" },
+        { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: statusPages.ready.href },
+        { icon: FiCheckCircle, label: "Vouchers used", value: used.length, href: statusPages.used.href },
         { icon: FiStar, label: "Loyalty cards", value: loyaltyCount ?? 0, href: "/dashboard/loyalty" },
     ];
 
@@ -210,40 +188,7 @@ async function CustomerDashboardContent() {
                                 linkLabel="Browse offers"
                             />
                         ) : (
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {ready.slice(0, 6).map((row) => {
-                                    const offer = row.offers!;
-                                    const business = Array.isArray(offer.businesses) ? offer.businesses[0] : offer.businesses;
-
-                                    return (
-                                        <Link
-                                            key={row.id}
-                                            href={`/dashboard/redemptions/${row.id}`}
-                                            className="group flex overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white transition hover:shadow-md"
-                                        >
-                                            <div className="relative w-28 shrink-0 bg-[#FFF4E8]">
-                                                {offer.image_url && (
-                                                    <Image src={offer.image_url} alt="" fill sizes="112px" className="object-cover" />
-                                                )}
-                                            </div>
-
-                                            <div className="min-w-0 flex-1 p-4">
-                                                <p className="truncate text-sm text-[#17233B]/70">{business?.name}</p>
-                                                <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{offer.title}</p>
-                                                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                                                    <p className="inline-flex rounded-lg bg-[#17233B] px-2.5 py-1 font-mono text-sm font-semibold tracking-widest text-white">
-                                                        {row.redemption_code}
-                                                    </p>
-                                                    <span className="inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] group-hover:underline">
-                                                        Show QR code
-                                                        <FiArrowRight aria-hidden="true" />
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    );
-                                })}
-                            </div>
+                            <VoucherGrid items={ready.slice(0, 6)} />
                         )}
                     </div>
                 </section>
