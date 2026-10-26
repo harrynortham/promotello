@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     agentUpgrade: "security",
   },
   cacheComponents: true,
+  // Blog posts are files read at build time; ship them with the server too
+  // in case a page is regenerated.
+  outputFileTracingIncludes: {
+    "/**": ["./content/**/*"],
+  },
   // Page titles and descriptions are streamed to browsers, but these
   // crawlers and link-preview bots get them in the <head> up front.
   htmlLimitedBots:

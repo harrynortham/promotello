@@ -81,6 +81,7 @@ const marketingFooters = {
                 title: "Resources",
                 links: [
                     { label: "Getting started", href: "/business/getting-started" },
+                    { label: "Blog", href: "/blog" },
                     { label: "FAQs", href: "/business/faq" },
                     { label: "Help centre", href: "/business/help" },
                 ],

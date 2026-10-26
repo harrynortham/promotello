@@ -1,5 +1,6 @@
 import { runAutomations } from "@/lib/automations";
 import { sendLifecycleEmails } from "@/lib/business-lifecycle";
+import { submitRecentPosts } from "@/lib/indexnow";
 import { sendMonthlyReports } from "@/lib/monthly-report";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -14,10 +15,11 @@ export async function GET(request: Request) {
     const automations = await runAutomations();
     const lifecycle = await sendLifecycleEmails();
     const { data: expiredPreviews } = await createAdminClient().rpc("delete_expired_business_previews");
+    const indexNow = await submitRecentPosts().catch(() => ({ submitted: 0 }));
 
     // Monthly value reports go out on the 1st (UK date).
     const ukDay = Number(new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone: "Europe/London" }).format(new Date()));
     const reports = ukDay === 1 ? await sendMonthlyReports() : null;
 
-    return Response.json({ automations, lifecycle, expiredPreviews, reports });
+    return Response.json({ automations, lifecycle, expiredPreviews, indexNow, reports });
 }

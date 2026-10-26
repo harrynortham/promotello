@@ -49,7 +49,8 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `RESEND_API_KEY`, `EMAIL_FROM`                                                 | Sending email. Without them nothing is sent, which keeps development safe                                                                        |
 | `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                                                               |
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
-| `NEXT_PUBLIC_SENTRY_DSN`                                                      | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally) |
+| `NEXT_PUBLIC_KEYSTATIC_STORAGE` and `KEYSTATIC_*`                             | Editing the blog on the live site through GitHub. See [docs/BLOG.md](docs/BLOG.md)                                                              |
+| `NEXT_PUBLIC_SENTRY_DSN`                                                       | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally)                             |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`                                                | Optional: Google Analytics outside production (it's on in production by default, behind cookie consent)                                          |
 
 Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on), so the same code works in test and live mode.
@@ -66,6 +67,7 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 | `app/api/cron/daily`                                         | Daily job: automations, setup and trial emails, monthly reports, preview clean-up |
 | `components/`                                                | App components; `components/ui/` are shadcn primitives                            |
 | `lib/`                                                       | Data loading, emails, billing, validation and other shared code                   |
+| `content/blog/`, `keystatic.config.ts`                       | Blog posts (Markdoc) and the Keystatic editor at `/keystatic`; see [docs/BLOG.md](docs/BLOG.md) |
 | `supabase/migrations/`                                       | Database schema, one file per change                                              |
 | `tests/e2e/`                                                 | Playwright tests; `tests/global-setup.ts` seeds test users and data               |
 
@@ -94,7 +96,6 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Take Stripe live: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md)
 - - Supabase paid plan (about $25 a month): it gives daily backups. Today, one bad mistake could lose every account with no way back.
 - Set up BIMI so the logo shows in mail apps
-- A blog (in the app or a CMS)
 - Events: built, and hidden until there are enough customers (`lib/features.ts`)
 - Apple and Google Wallet passes
 - Register company name and bank account for Stripe
@@ -112,3 +113,4 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Not receiving welcome emails, tested new account creation via google auth
 - Change Vercel from hobby to paid plan
 - Secure all platform emails with unique strong passwords
+- Learn keystatic for blog posts
