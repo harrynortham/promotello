@@ -3,6 +3,8 @@ import type { MetadataRoute } from "next";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
+import { blogCategories } from "@/keystatic.config";
+import { getPosts } from "@/lib/blog";
 import { areaPath, getLiveCities } from "@/lib/cities";
 import { filterBusinesses, filterOffers, getCategories, getLiveOffers, getPublicBusinesses } from "@/lib/listings";
 import { EVENTS_ENABLED } from "@/lib/features";
@@ -107,13 +109,26 @@ async function landingPaths() {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connection();
 
-    const [{ businesses, offers }, cities, landings] = await Promise.all([
+    const [{ businesses, offers }, cities, landings, posts] = await Promise.all([
         getPublicListings(),
         getLiveCities(),
         landingPaths(),
+        getPosts(),
     ]);
 
     return [
+        { url: absoluteUrl("/blog"), changeFrequency: "weekly" as const, priority: 0.7 },
+        ...blogCategories.map((category) => ({
+            url: absoluteUrl(`/blog/category/${category.value}`),
+            changeFrequency: "weekly" as const,
+            priority: 0.5,
+        })),
+        ...posts.map((post) => ({
+            url: absoluteUrl(`/blog/${post.slug}`),
+            lastModified: post.updatedAt ?? post.publishedAt,
+            changeFrequency: "monthly" as const,
+            priority: 0.8,
+        })),
         ...landings.map((path) => ({
             url: absoluteUrl(path),
             changeFrequency: "weekly" as const,

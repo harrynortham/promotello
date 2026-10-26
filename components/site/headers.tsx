@@ -18,6 +18,7 @@ const businessLinks: HeaderLink[] = [
     { label: "Features", href: "/business/features" },
     { label: "Pricing", href: "/business/pricing" },
     { label: "Demo", href: "/business/demo" },
+    { label: "Blog", href: "/blog" },
 ];
 
 // Public customer pages: /, /offers, /explore and so on.

@@ -54,7 +54,7 @@ async function expectAccessible(page: Page, path: string) {
 }
 
 test.describe("signed out", () => {
-    for (const path of ["/", "/offers", "/explore/bristol", "/login", "/signup", "/business", "/business/pricing", "/business/register"]) {
+    for (const path of ["/", "/offers", "/explore/bristol", "/login", "/signup", "/business", "/business/pricing", "/business/register", "/blog", "/blog/how-to-get-more-repeat-customers"]) {
         test(`${path} is accessible`, async ({ page }) => expectAccessible(page, path));
     }
 
