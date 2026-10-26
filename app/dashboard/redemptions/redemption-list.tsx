@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+import { getStatus, type VoucherStatus } from "./voucher-status";
+
 export type WalletRedemption = {
     id: string;
     code: string;
@@ -51,7 +53,6 @@ type RedemptionListProps = {
     today: string;
 };
 
-type VoucherStatus = "ready" | "used" | "expired" | "unavailable";
 type VoucherFilter = "all" | "ready" | "used" | "expired";
 
 const statusLabels: Record<VoucherStatus, string> = {
@@ -78,32 +79,6 @@ const filters: {
         { value: "expired", label: "Expired" },
     ];
 
-function getStatus(
-    redemption: WalletRedemption,
-    today: string,
-): VoucherStatus {
-    if (redemption.usedAt) {
-        return "used";
-    }
-
-    if (!redemption.offer) {
-        return "unavailable";
-    }
-
-    if (
-        redemption.offer.expiresAt &&
-        redemption.offer.expiresAt.slice(0, 10) < today
-    ) {
-        return "expired";
-    }
-
-    if (!redemption.offer.approved) {
-        return "unavailable";
-    }
-
-    return "ready";
-}
-
 function formatDate(value: string | null) {
     if (!value) {
         return "Date unavailable";
@@ -123,18 +98,23 @@ function formatDate(value: string | null) {
     }).format(date);
 }
 
-function VoucherCard({
+// One voucher. In the list it links to its own page; on that page
+// (standalone) the QR code is bigger, for showing at the till.
+export function VoucherCard({
     redemption,
     status,
+    standalone = false,
 }: {
     redemption: WalletRedemption;
     status: VoucherStatus;
+    standalone?: boolean;
 }) {
     const [copyMessage, setCopyMessage] = useState("");
 
     const offer = redemption.offer;
     const business = redemption.business;
     const isReady = status === "ready";
+    const voucherHref = `/dashboard/redemptions/${redemption.id}`;
 
     const directionsUrl = business?.address
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -172,8 +152,13 @@ function VoucherCard({
                         )}
 
                         <CardTitle className="mt-2 text-2xl leading-tight">
-                            {offer?.title ??
-                                "Promotion details unavailable"}
+                            {standalone ? (
+                                offer?.title ?? "Promotion details unavailable"
+                            ) : (
+                                <Link href={voucherHref} className="underline-offset-4 hover:underline">
+                                    {offer?.title ?? "Promotion details unavailable"}
+                                </Link>
+                            )}
                         </CardTitle>
 
                         {offer?.discount && (
@@ -209,7 +194,7 @@ function VoucherCard({
                     </p>
 
                     {isReady && (
-                        <VoucherQr code={redemption.code} className="mx-auto mt-4 size-44" />
+                        <VoucherQr code={redemption.code} className={`mx-auto mt-4 ${standalone ? "size-60" : "size-44"}`} />
                     )}
 
                     <p className="mt-3 break-all font-mono text-3xl font-semibold tracking-widest sm:text-4xl">
@@ -328,7 +313,19 @@ function VoucherCard({
                 <Separator className="my-6" />
 
                 <div className="flex flex-wrap gap-3">
-                    {isReady && offer?.slug && (
+                    {!standalone && (
+                        <Button
+                            render={<Link href={voucherHref} />}
+                            nativeButton={false}
+                            variant={isReady ? "default" : "outline"}
+                            size="sm"
+                        >
+                            {isReady ? "Open voucher" : "View details"}
+                            <FiArrowRight aria-hidden="true" />
+                        </Button>
+                    )}
+
+                    {offer?.slug && offer.approved && (
                         <Button
                             render={
                                 <Link href={`/offers/${offer.slug}`} />
@@ -337,8 +334,7 @@ function VoucherCard({
                             variant="outline"
                             size="sm"
                         >
-                            View offer
-                            <FiArrowRight aria-hidden="true" />
+                            View offer page
                         </Button>
                     )}
 
@@ -405,7 +401,7 @@ export default function RedemptionList({
     );
 
     return (
-        <section className="mx-auto max-w-5xl space-y-8 py-6">
+        <section className="mx-auto max-w-5xl space-y-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <Badge variant="outline">

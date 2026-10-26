@@ -8,16 +8,10 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { addressParts } from "@/lib/address";
 import { createClient } from "@/utils/supabase/server";
 
-import RedemptionList, {
-    type WalletRedemption,
-} from "./redemption-list";
-
-function firstRelation<T>(value: T | T[] | null): T | null {
-    return Array.isArray(value) ? value[0] ?? null : value;
-}
+import RedemptionList from "./redemption-list";
+import { getWallet } from "./wallet";
 
 function LoadingState() {
     return (
@@ -57,43 +51,7 @@ async function RedemptionsContent() {
         redirect("/login");
     }
 
-    const { data, error } = await supabase
-        .from("offer_redemptions")
-        .select(
-            `
-                id,
-                redemption_code,
-                redeemed_at,
-                used_at,
-                offers (
-                    slug,
-                    title,
-                    discount,
-                    availability,
-                    expires_at,
-                    terms,
-                    approval_status,
-                    businesses (
-                        id,
-                        slug,
-                        name,
-                        approval_status,
-                        business_locations (
-                            name,
-                            address_line_1,
-                            city,
-                            region,
-                            postal_code
-                        )
-                    )
-                )
-            `,
-        )
-        .eq("user_id", user.id)
-        .order("redeemed_at", {
-            ascending: false,
-            nullsFirst: false,
-        });
+    const { vouchers, error } = await getWallet(user.id);
 
     if (error) {
         return (
@@ -115,92 +73,9 @@ async function RedemptionsContent() {
         );
     }
 
-    const redemptions: WalletRedemption[] = (data ?? []).map(
-        (redemption) => {
-            const offer = firstRelation(redemption.offers);
-
-            const business = offer
-                ? firstRelation(offer.businesses)
-                : null;
-
-            const locations = business?.business_locations;
-            const location = locations
-                ? firstRelation(locations)
-                : null;
-
-            const address = addressParts(location).join(", ");
-
-            return {
-                id: redemption.id,
-                code: redemption.redemption_code,
-                claimedAt: redemption.redeemed_at,
-                usedAt: redemption.used_at,
-                offer: offer
-                    ? {
-                        slug: offer.slug,
-                        title: offer.title,
-                        discount: offer.discount,
-                        availability: offer.availability,
-                        expiresAt: offer.expires_at,
-                        terms: offer.terms,
-                        approved:
-                            offer.approval_status === "approved" &&
-                            business?.approval_status === "approved",
-                    }
-                    : null,
-                business: business
-                    ? {
-                        id: business.id,
-                        slug: business.slug,
-                        name: business.name,
-                        address,
-                    }
-                    : null,
-            };
-        },
-    );
-
-    // Gift vouchers from businesses' automations, shown alongside.
-    const { data: gifts } = await supabase
-        .from("reward_vouchers")
-        .select("id, code, kind, reward, created_at, expires_at, used_at, businesses ( id, slug, name )")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-    const giftLabels: Record<string, string> = {
-        welcome: "Welcome gift",
-        birthday: "Birthday treat",
-        winback: "Come-back gift",
-    };
-
-    const giftRedemptions: WalletRedemption[] = (gifts ?? []).map((gift) => {
-        const business = firstRelation(gift.businesses);
-
-        return {
-            id: gift.id,
-            code: gift.code,
-            claimedAt: gift.created_at,
-            usedAt: gift.used_at,
-            offer: {
-                slug: null,
-                title: gift.reward,
-                discount: giftLabels[gift.kind] ?? "Gift",
-                availability: "One use. Show the code or QR to staff.",
-                expiresAt: gift.expires_at,
-                terms: "A personal gift from the business. It can't be swapped for cash.",
-                approved: true,
-            },
-            business: business ? { id: business.id, slug: business.slug, name: business.name, address: "" } : null,
-        };
-    });
-
-    const all = [...giftRedemptions, ...redemptions].sort(
-        (a, b) => (b.claimedAt ?? "").localeCompare(a.claimedAt ?? ""),
-    );
-
     return (
         <RedemptionList
-            redemptions={all}
+            redemptions={vouchers}
             today={new Date().toISOString().slice(0, 10)}
         />
     );
