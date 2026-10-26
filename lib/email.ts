@@ -1,5 +1,6 @@
 // Sends email through Resend. Needs RESEND_API_KEY and EMAIL_FROM (a sender
-// on a domain verified in Resend, e.g. "Promotello <offers@auth.promotello.com>").
+// on a domain verified in Resend: "Promotello <offers@mail.promotello.com>".
+// (auth.promotello.com is kept for Supabase's sign-in emails only.)
 // Without them nothing is sent, so local development and tests are safe.
 //
 // Replies go to EMAIL_REPLY_TO (default hello@promotello.com), a real

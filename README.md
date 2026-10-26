@@ -83,6 +83,11 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 
 ## Emails
 
+Two sending subdomains in Resend, so sign-in emails keep their own reputation:
+
+- `auth.promotello.com`: Supabase's sign-in emails only (confirmations, password resets, sign-in links), from `no-reply@auth.promotello.com`, set in Supabase's SMTP settings.
+- `mail.promotello.com`: everything the app sends, from `EMAIL_FROM` (`Promotello <offers@mail.promotello.com>`). Replies go to `EMAIL_REPLY_TO` (default hello@promotello.com).
+
 Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Customer emails from a business show as "_Business_ via Promotello". Every marketing email has an unsubscribe link. The contact form uses the `send-contact-message` Supabase edge function.
 
 ## Tests
