@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 // Sends email through Resend. Needs RESEND_API_KEY and EMAIL_FROM (a sender
 // on a domain verified in Resend: "Promotello <offers@mail.promotello.com>".
 // (auth.promotello.com is kept for Supabase's sign-in emails only.)
@@ -5,7 +7,13 @@
 //
 // Replies go to EMAIL_REPLY_TO (default hello@promotello.com), a real
 // inbox: the sending subdomain has no mailbox.
-const replyTo = process.env.EMAIL_REPLY_TO || "hello@promotello.com";
+// Settings pasted into Vercel with their quotes ("Promotello <…>") would be
+// rejected by Resend, so stray quotes and spaces are removed.
+function setting(value: string | undefined) {
+    return value?.trim().replace(/^(["'])(.*)\1$/, "$2").trim() || undefined;
+}
+
+const replyTo = setting(process.env.EMAIL_REPLY_TO) ?? "hello@promotello.com";
 
 export type Email = {
     to: string;
@@ -41,7 +49,7 @@ const BATCH_SIZE = 100; // Resend's batch limit.
 
 export async function sendEmails(emails: Email[]) {
     const apiKey = process.env.RESEND_API_KEY;
-    const from = process.env.EMAIL_FROM;
+    const from = setting(process.env.EMAIL_FROM);
     const deliverable = emails.filter((email) => isDeliverable(email.to));
 
     // Skipped: test addresses, or sending isn't set up. Not a failure.
@@ -75,7 +83,10 @@ export async function sendEmails(emails: Email[]) {
             sent += batch.length;
         } else {
             failed += batch.length;
-            console.error("Email: Resend batch failed", response.status, await response.text());
+            const reason = await response.text();
+            console.error("Email: Resend batch failed", response.status, reason);
+            // Reported so a broken setting can't stop emails unnoticed.
+            Sentry.captureMessage(`Resend rejected ${batch.length} email(s): ${response.status} ${reason.slice(0, 300)}`, "error");
         }
     }
 
