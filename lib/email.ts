@@ -1,5 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 
+import { absoluteUrl } from "@/lib/site";
+
 // Sends email through Resend. Needs RESEND_API_KEY and EMAIL_FROM (a sender
 // on a domain verified in Resend: "Promotello <offers@mail.promotello.com>".
 // (auth.promotello.com is kept for Supabase's sign-in emails only.)
@@ -93,6 +95,13 @@ export async function sendEmails(emails: Email[]) {
     return { sent, failed, skipped: undeliverable };
 }
 
+// The Promotello logo at the top of every email: a PNG (Gmail and Outlook
+// don't show SVG), at twice its display size for sharp screens, with alt
+// text for apps that block images.
+export function emailLogoRow() {
+    return `<tr><td style="padding:24px 28px 0"><img src="${absoluteUrl("/brand/promotello-email-logo.png")}" width="150" height="40" alt="Promotello" style="display:block;width:150px;height:auto;border:0;outline:none;text-decoration:none;color:#FF593F;font-size:20px;font-weight:700"></td></tr>`;
+}
+
 export function escapeHtml(value: string) {
     return value
         .replace(/&/g, "&amp;")
@@ -126,7 +135,8 @@ export function brandedEmail({
 <html><body style="margin:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
-<tr><td style="padding:28px 28px 8px">
+${emailLogoRow()}
+<tr><td style="padding:20px 28px 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(eyebrow)}</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.25">${e(title)}</h1>
 ${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(text)}</p>`).join("\n")}

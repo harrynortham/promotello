@@ -1,4 +1,4 @@
-import { escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -53,7 +53,8 @@ export function monthlyReportEmail(report: Report, to: string, monthName: string
 <html><body style="margin:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
-<tr><td style="padding:28px">
+${emailLogoRow()}
+<tr><td style="padding:20px 28px 28px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(report.business_name)} · ${e(monthName)}</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.3">${e(headline)}</h1>
 <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#45506a">You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}. Changes are against the month before.</p>
