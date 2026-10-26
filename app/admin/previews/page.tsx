@@ -29,7 +29,11 @@ type PreviewRow = {
     view_count: number;
     last_viewed_at: string | null;
     claimed_at: string | null;
-    businesses: { name: string; approval_status: string } | null;
+    businesses: {
+        name: string;
+        approval_status: string;
+        business_locations: { city: string | null; cities: { name: string } | null }[];
+    } | null;
 };
 
 function formatDate(value: string) {
@@ -40,11 +44,13 @@ function formatDate(value: string) {
 function outreachMessage(preview: PreviewRow, sender: string) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(`/business/preview/${preview.token}`);
+    const location = preview.businesses?.business_locations?.[0];
+    const town = location?.cities?.name ?? location?.city?.trim();
 
     return [
         `Hi ${preview.contact_name || "there"},`,
         "",
-        `I run Promotello, a loyalty card and offers app for independent businesses in Bristol. I've set up a preview of ${name} so you can see how it would look: your page, a digital loyalty card and a QR poster for your window.`,
+        `I run Promotello, a loyalty card and offers app for independent businesses${town ? ` in ${town}` : " near you"}. I've set up a preview of ${name} so you can see how it would look: your page, a digital loyalty card and a QR poster for your window.`,
         "",
         url,
         "",
@@ -79,7 +85,7 @@ async function PreviewsContent({ searchParams }: PageProps) {
     const [{ data: rows }, cities, { data: userData }] = await Promise.all([
         supabase
             .from("business_previews")
-            .select("business_id, token, contact_name, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status )")
+            .select("business_id, token, contact_name, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, business_locations ( city, cities ( name ) ) )")
             .order("created_at", { ascending: false }),
         getCityOptions({ includeNotLive: true }),
         supabase.auth.getUser(),

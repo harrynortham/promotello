@@ -1,5 +1,6 @@
 import { FOUNDING_MEMBER_LIMIT, FREE_LIVE_OFFER_LIMIT, TRIAL_DAYS, plans } from "@/lib/billing";
 import { getPosts } from "@/lib/blog";
+import { getLiveCities } from "@/lib/cities";
 import { absoluteUrl } from "@/lib/site";
 
 // A plain-text guide to Promotello for AI assistants and LLM-powered search
@@ -7,12 +8,13 @@ import { absoluteUrl } from "@/lib/site";
 // guides worth reading, with Markdown versions of the blog posts.
 
 export async function GET() {
-    const posts = await getPosts();
+    const [posts, cities] = await Promise.all([getPosts(), getLiveCities()]);
+    const cityNames = cities.map((city) => city.name);
     const link = (title: string, path: string, note: string) => `- [${title}](${absoluteUrl(path)}): ${note}`;
 
     const text = `# Promotello
 
-> Promotello is a loyalty card, offers and QR poster platform for independent businesses in the UK, starting in Bristol. Businesses use it to turn first-time visitors into regulars: customers keep a digital stamp card on their phone (no app to download), claim offers, and follow businesses for new-offer emails. Customers find businesses in a local directory.
+> Promotello is a loyalty card, offers and QR poster platform for independent businesses in the UK${cityNames.length ? `, live in ${cityNames.join(", ")}` : ""}. Businesses use it to turn first-time visitors into regulars: customers keep a digital stamp card on their phone (no app to download), claim offers, and follow businesses for new-offer emails. Customers find businesses in a local directory.
 
 Promotello is for independent cafés, bakeries, restaurants, pubs, barbers, hair and beauty salons, gyms and studios, and independent shops. Staff stamp loyalty cards and redeem vouchers by scanning a QR code with their phone camera, so there's no card reader or till integration.
 
@@ -41,8 +43,11 @@ ${posts.map((post) => link(post.title, `/blog/md/${post.slug}`, post.summary)).j
 ## For customers
 
 ${[
-        link("Offers in Bristol", "/offers/bristol", "live offers from independent businesses"),
-        link("Explore Bristol", "/explore/bristol", "businesses and offers by neighbourhood"),
+        link("All offers", "/offers", "live offers from independent businesses"),
+        ...cities.flatMap((city) => [
+            link(`Offers in ${city.name}`, `/offers/${city.slug}`, `live offers from independent businesses in ${city.name}`),
+            link(`Explore ${city.name}`, `/explore/${city.slug}`, "businesses and offers by neighbourhood"),
+        ]),
     ].join("\n")}
 
 ## Optional

@@ -9,7 +9,9 @@ import { EmptyState, SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { placeName } from "@/lib/cities";
 import { getLiveOffers } from "@/lib/listings";
+import { getVisitorContext } from "@/lib/visitor";
 import { createClient } from "@/utils/supabase/server";
 
 type VoucherRow = {
@@ -70,7 +72,10 @@ async function CustomerDashboardContent() {
         redirect("/login");
     }
 
-    const [{ data: vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers, { data: reviewPrompts }] = await Promise.all([
+    // Suggestions come from the city they're browsing, like the home page.
+    const visitor = await getVisitorContext();
+
+    const [{ data: vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers, { data: reviewPrompts }, place] = await Promise.all([
         supabase
             .from("offer_redemptions")
             .select(
@@ -89,8 +94,9 @@ async function CustomerDashboardContent() {
             .from("loyalty_cards")
             .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
-        getLiveOffers(),
+        getLiveOffers(visitor.city?.id),
         supabase.rpc("review_prompts_for_current_user"),
+        placeName(visitor.city),
     ]);
 
     const prompts = (reviewPrompts ?? []) as ReviewPrompt[];
@@ -125,7 +131,7 @@ async function CustomerDashboardContent() {
                             {firstName ? `Hi ${firstName}` : "Welcome back"}
                         </h1>
                         <p className="mt-2 text-[#17233B]/65">
-                            Your vouchers, and new offers from businesses around Bristol.
+                            Your vouchers, and new offers from businesses around {place}.
                         </p>
                     </div>
 
