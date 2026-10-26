@@ -1,6 +1,10 @@
 // Sends email through Resend. Needs RESEND_API_KEY and EMAIL_FROM (a sender
-// on a domain verified in Resend, e.g. "Promotello <offers@promotello.com>").
+// on a domain verified in Resend, e.g. "Promotello <offers@auth.promotello.com>").
 // Without them nothing is sent, so local development and tests are safe.
+//
+// Replies go to EMAIL_REPLY_TO (default hello@promotello.com), a real
+// inbox: the sending subdomain has no mailbox.
+const replyTo = process.env.EMAIL_REPLY_TO || "hello@promotello.com";
 
 export type Email = {
     to: string;
@@ -59,7 +63,7 @@ export async function sendEmails(emails: Email[]) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(
-                batch.map(({ senderName, ...email }) => ({ from: senderFor(from, senderName), ...email })),
+                batch.map(({ senderName, ...email }) => ({ from: senderFor(from, senderName), reply_to: replyTo, ...email })),
             ),
         });
 
