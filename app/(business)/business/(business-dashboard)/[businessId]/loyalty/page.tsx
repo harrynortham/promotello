@@ -42,12 +42,12 @@ function weekAgo() {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
+        <div>
             <div className="mx-auto max-w-5xl">
                 <Skeleton className="h-10 w-64 rounded-md" />
                 <Skeleton className="mt-8 h-64 rounded-2xl" />
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -181,7 +181,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     }
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-14">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-5xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                     Loyalty card
@@ -341,7 +341,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     </>
                 )}
             </div>
-        </main>
+        </div>
     );
 }
 

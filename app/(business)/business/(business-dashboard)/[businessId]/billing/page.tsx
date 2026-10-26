@@ -69,14 +69,14 @@ function formatDate(value: string | null) {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+        <div>
             <div className="mx-auto max-w-3xl">
                 <Skeleton className="h-5 w-40 rounded-md" />
                 <Skeleton className="mt-3 h-12 w-64 rounded-md" />
                 <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
                 <Skeleton className="mt-10 h-64 w-full rounded-xl" />
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -131,7 +131,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
     const trialEligible = !subscriptions?.length;
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-3xl">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -206,7 +206,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
                     </form>
                 )}
             </div>
-        </main>
+        </div>
     );
 }
 

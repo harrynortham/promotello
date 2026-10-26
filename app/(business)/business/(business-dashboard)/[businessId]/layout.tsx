@@ -186,7 +186,7 @@ async function BusinessLayoutContent({
                     </div>
                 </aside>
 
-                <section className="min-w-0 flex-1">{children}</section>
+                <main className="min-w-0 flex-1">{children}</main>
             </div>
         </div>
     );

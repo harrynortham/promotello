@@ -225,17 +225,17 @@ export default function EditBusinessForm({
 
     if (isLoading) {
         return (
-            <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+            <div>
                 <div className="mx-auto max-w-2xl">
                     <div className="h-96 animate-pulse rounded-xl bg-white" />
                 </div>
-            </main>
+            </div>
         );
     }
 
     if (!loaded) {
         return (
-            <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+            <div>
                 <Card className="mx-auto max-w-2xl border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
@@ -247,7 +247,7 @@ export default function EditBusinessForm({
                         </Alert>
                     </CardContent>
                 </Card>
-            </main>
+            </div>
         );
     }
 
@@ -472,7 +472,7 @@ function BusinessForm({
     }
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-3xl">
                 <Button
                     render={<Link href="/business/dashboard" />}
@@ -732,6 +732,6 @@ function BusinessForm({
                     </CardContent>
                 </Card>
             </div>
-        </main>
+        </div>
     );
 }

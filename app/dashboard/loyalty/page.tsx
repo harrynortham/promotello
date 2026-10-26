@@ -39,7 +39,7 @@ type CardRow = {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12 sm:px-10">
+        <div>
             <div className="mx-auto max-w-5xl">
                 <Skeleton className="h-10 w-64 rounded-md" />
                 <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -47,7 +47,7 @@ function LoadingState() {
                     <Skeleton className="h-96 rounded-3xl" />
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -83,7 +83,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
     const svgs = await Promise.all(cards.map((card) => qrSvg(`${origin}/stamp/${card.card_code}`)));
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:px-10 sm:py-14">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-5xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Your wallet</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">My loyalty cards</h1>
@@ -170,7 +170,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                     )}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 

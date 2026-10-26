@@ -226,18 +226,18 @@ export default function EditOfferForm({
 
     if (isLoading) {
         return (
-            <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+            <div>
                 <div className="mx-auto max-w-2xl">
                     <div className="h-10 animate-pulse rounded-md bg-white" />
                     <div className="mt-6 h-96 animate-pulse rounded-xl bg-white" />
                 </div>
-            </main>
+            </div>
         );
     }
 
     if (!offer) {
         return (
-            <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+            <div>
                 <Card className="mx-auto max-w-2xl border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
@@ -248,12 +248,12 @@ export default function EditOfferForm({
                         </Alert>
                     </CardContent>
                 </Card>
-            </main>
+            </div>
         );
     }
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-2xl">
                 <Button
                     render={
@@ -459,6 +459,6 @@ export default function EditOfferForm({
                     </DialogContent>
                 </Dialog>
             </div>
-        </main>
+        </div>
     );
 }

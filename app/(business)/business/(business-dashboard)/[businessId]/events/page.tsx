@@ -87,7 +87,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
     const canAdd = tier === "growth" && ["owner", "admin"].includes(membership.role);
 
     return (
-        <main className="space-y-8 text-[#17233B]">
+        <div className="space-y-8 text-[#17233B]">
             <header>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Events</h1>
@@ -229,7 +229,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
                     </ul>
                 </section>
             )}
-        </main>
+        </div>
     );
 }
 

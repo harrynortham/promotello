@@ -82,7 +82,7 @@ async function NewOfferPageContent({ params }: PageProps) {
 
 function OfferLimitReached({ businessId }: { businessId: string }) {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12 text-[#17233B]">
+        <div className="flex items-center justify-center text-[#17233B]">
             <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
                 <CardContent className="p-8 sm:p-10">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -118,16 +118,16 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
                     </div>
                 </CardContent>
             </Card>
-        </main>
+        </div>
     );
 }
 
 function LoadingState() {
     return (
-        <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="mx-auto max-w-3xl">
             <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
             <div className="mt-6 h-96 animate-pulse rounded-2xl bg-slate-100" />
-        </main>
+        </div>
     );
 }
 

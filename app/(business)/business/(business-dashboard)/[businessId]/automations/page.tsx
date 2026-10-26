@@ -208,7 +208,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
     };
 
     return (
-        <main className="space-y-8 text-[#17233B]">
+        <div className="space-y-8 text-[#17233B]">
             <header>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Automations</h1>
@@ -260,7 +260,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
                 Only followers who&apos;ve agreed to your emails get these, and every email has an unsubscribe
                 link. Rewards are checked once a day, in the morning.
             </p>
-        </main>
+        </div>
     );
 }
 
