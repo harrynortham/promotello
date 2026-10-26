@@ -10,6 +10,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FOUNDING_MEMBER_LIMIT, plans } from "@/lib/billing";
 import { qrSvg } from "@/lib/qr";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
@@ -242,7 +243,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         <ul className="mt-4 space-y-2 text-[#17233B]/70">
                             <li>Free plan: your page and one live offer, for as long as you like.</li>
                             <li>Pro: loyalty card, QR posters with scan counts, followers and unlimited offers.</li>
-                            <li>Founding members in Bristol pay £19 a month for Pro, locked for life.</li>
+                            <li>The first {FOUNDING_MEMBER_LIMIT} businesses on Pro pay {plans.pro_founding_monthly.price} a month, locked for life.</li>
                         </ul>
                         <p className="mt-4 text-sm text-[#17233B]/70">
                             <Link href="/business/pricing" className="underline">See pricing</Link> ·{" "}
