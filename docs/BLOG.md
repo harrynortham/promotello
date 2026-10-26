@@ -15,7 +15,7 @@ Posts are Markdoc files in `content/blog/`, authors are in `content/authors/`, a
 
 **On the live site (one-time setup):** Keystatic saves through GitHub, so only people with access to the repository can edit, and every save is a commit that Vercel publishes in about a minute.
 
-1. In `.env.local`, add `NEXT_PUBLIC_KEYSTATIC_STORAGE=github`, run `npm run dev` and open http://localhost:3000/keystatic.
+1. In `.env.local`, add `wha`, run `npm run dev` and open http://localhost:3000/keystatic.
 2. Follow Keystatic's prompt to **create a GitHub app** for `harrynortham/promotello`. It creates the app and writes four values into `.env`: `KEYSTATIC_GITHUB_CLIENT_ID`, `KEYSTATIC_GITHUB_CLIENT_SECRET`, `KEYSTATIC_SECRET` and `NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`.
 3. Install the app on the `promotello` repository when GitHub asks.
 4. In the GitHub app's settings, add the live callback URL: `https://www.promotello.com/api/keystatic/github/oauth/callback`
