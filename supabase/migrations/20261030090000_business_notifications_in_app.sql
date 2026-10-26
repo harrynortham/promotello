@@ -22,7 +22,8 @@ where exists (select 1 from cron.job where jobname = 'send-business-daily-summar
 alter table public.business_notification_deliveries
   add column if not exists offer_id uuid references public.offers (id) on delete cascade;
 
-drop index if exists public.business_notification_delivery_unique;
+alter table public.business_notification_deliveries
+  drop constraint if exists business_notification_delivery_unique;
 
 -- Daily summaries: one per business, day and recipient.
 create unique index if not exists business_notification_daily_unique
