@@ -123,7 +123,7 @@ export default function NewOfferForm({
 
     if (createdOffer) {
         return (
-            <main className="flex min-h-screen items-center justify-center bg-[#FFF8F0] px-6 py-12">
+            <div className="flex items-center justify-center">
                 <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
                     <CardContent className="p-8 sm:p-10">
                         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF593F]/15 text-2xl text-[#FF593F]">
@@ -165,12 +165,12 @@ export default function NewOfferForm({
                         </div>
                     </CardContent>
                 </Card>
-            </main>
+            </div>
         );
     }
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-2xl">
                 <Button
                     render={<Link href="/business/dashboard" />}
@@ -259,6 +259,6 @@ export default function NewOfferForm({
                     </CardContent>
                 </Card>
             </div>
-        </main>
+        </div>
     );
 }

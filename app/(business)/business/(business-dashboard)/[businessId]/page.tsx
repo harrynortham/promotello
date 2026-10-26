@@ -57,7 +57,7 @@ type RecentRedemption = {
 
 function LoadingState() {
     return (
-        <main className="space-y-8">
+        <div className="space-y-8">
             <div>
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="mt-3 h-10 w-72" />
@@ -73,7 +73,7 @@ function LoadingState() {
             </div>
 
             <Skeleton className="h-64 rounded-3xl" />
-        </main>
+        </div>
     );
 }
 
@@ -319,7 +319,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     ];
 
     return (
-        <main className="space-y-8">
+        <div className="space-y-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <Badge
@@ -641,7 +641,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </Button>
                 </CardContent>
             </Card>
-        </main>
+        </div>
     );
 }
 

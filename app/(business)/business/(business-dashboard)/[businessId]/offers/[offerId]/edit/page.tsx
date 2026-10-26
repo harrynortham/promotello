@@ -14,12 +14,12 @@ type PageProps = {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+        <div>
             <div className="mx-auto max-w-2xl">
                 <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
                 <div className="mt-8 h-[700px] animate-pulse rounded-3xl bg-white" />
             </div>
-        </main>
+        </div>
     );
 }
 

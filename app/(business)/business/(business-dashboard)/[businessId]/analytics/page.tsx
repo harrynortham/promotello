@@ -36,7 +36,7 @@ type RedemptionRow = {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10">
+        <div>
             <div className="mx-auto max-w-5xl">
                 <div className="flex items-end justify-between">
                     <div>
@@ -84,7 +84,7 @@ function LoadingState() {
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -231,7 +231,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
     });
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-5xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -504,7 +504,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     </CardContent>
                 </Card>
             </div>
-        </main>
+        </div>
     );
 }
 

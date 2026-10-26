@@ -43,7 +43,7 @@ function visitedLabel(happenedAt: string) {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12 sm:px-10">
+        <div>
             <div className="mx-auto max-w-6xl">
                 <Skeleton className="h-10 w-64 rounded-md" />
                 <div className="mt-8 grid gap-5 sm:grid-cols-3">
@@ -53,7 +53,7 @@ function LoadingState() {
                 </div>
                 <Skeleton className="mt-10 h-64 rounded-2xl" />
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -114,7 +114,7 @@ async function CustomerDashboardContent() {
     ];
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:px-10 sm:py-14">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-6xl">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -287,7 +287,7 @@ async function CustomerDashboardContent() {
                     </Button>
                 </section>
             </div>
-        </main>
+        </div>
     );
 }
 

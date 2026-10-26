@@ -50,7 +50,7 @@ export default function DashboardLayout({
         <div className="flex flex-col bg-[#FFF8F0] text-[#17233B]">
             <CustomerAppHeader />
 
-            <div className="flex-1 px-6 pb-12 sm:px-10">
+            <div className="flex-1 px-6 pb-12 pt-8 sm:px-10 sm:pt-10">
                 <div className="mx-auto max-w-7xl">
                     <Suspense fallback={<DashboardLoading />}>
                         <DashboardShell>{children}</DashboardShell>

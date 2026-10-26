@@ -24,7 +24,7 @@ function LoadingState() {
         <section
             role="status"
             aria-label="Loading your vouchers"
-            className="mx-auto max-w-5xl space-y-6 py-6"
+            className="mx-auto max-w-5xl space-y-6"
         >
             <Skeleton className="h-10 w-64" />
             <Skeleton className="h-5 w-80 max-w-full" />
@@ -97,7 +97,7 @@ async function RedemptionsContent() {
 
     if (error) {
         return (
-            <section className="mx-auto max-w-5xl space-y-6 py-6">
+            <section className="mx-auto max-w-5xl space-y-6">
                 <h1 className="text-3xl font-semibold tracking-tight">
                     My vouchers
                 </h1>

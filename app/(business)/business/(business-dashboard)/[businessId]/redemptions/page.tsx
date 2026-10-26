@@ -80,7 +80,7 @@ async function markRedemptionUsed(formData: FormData) {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
+        <div>
             <div className="mx-auto max-w-5xl">
                 <div className="flex items-end justify-between">
                     <div>
@@ -114,7 +114,7 @@ function LoadingState() {
                     ))}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 async function RedemptionsContent({ params }: PageProps) {
@@ -167,7 +167,7 @@ async function RedemptionsContent({ params }: PageProps) {
     const redemptions = (data ?? []) as Redemption[];
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12">
+        <div>
             <div className="mx-auto max-w-5xl">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -306,7 +306,7 @@ async function RedemptionsContent({ params }: PageProps) {
                     </section>
                 )}
             </div>
-        </main>
+        </div>
     );
 }
 

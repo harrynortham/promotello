@@ -14,7 +14,7 @@ type PageProps = {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+        <div>
             <div className="mx-auto max-w-4xl">
                 <Skeleton className="h-9 w-44 rounded-md" />
 
@@ -56,7 +56,7 @@ function LoadingState() {
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 

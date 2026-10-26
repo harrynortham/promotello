@@ -70,7 +70,7 @@ const statusClasses: Record<OfferStatus, string> = {
 
 function LoadingState() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-16">
+        <div>
             <div className="mx-auto max-w-5xl">
                 <Skeleton className="h-9 w-44 rounded-md" />
 
@@ -119,7 +119,7 @@ function LoadingState() {
                     ))}
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
@@ -221,7 +221,7 @@ async function OffersContent({ params }: PageProps) {
     ).length;
 
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16">
+        <div className="text-[#17233B]">
             <div className="mx-auto max-w-5xl">
                 <Button
                     render={<Link href="/business/dashboard" />}
@@ -482,7 +482,7 @@ async function OffersContent({ params }: PageProps) {
                     </section>
                 )}
             </div>
-        </main>
+        </div>
     );
 }
 
