@@ -299,7 +299,7 @@ async function VisitorHome() {
                             make your neighbourhood.
                         </p>
 
-                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_15rem]">
+                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_17rem] md:grid-cols-[1fr_20rem]">
                             <SearchForm
                                 action="/offers"
                                 placeholder="Try coffee, haircut or pizza"
