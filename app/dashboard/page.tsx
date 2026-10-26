@@ -14,6 +14,8 @@ import { getLiveOffers } from "@/lib/listings";
 import { getVisitorContext } from "@/lib/visitor";
 import { createClient } from "@/utils/supabase/server";
 
+import { byNextReward, getLoyaltyCards } from "./loyalty/cards";
+import { LoyaltyCardTile } from "./loyalty/loyalty-card-tile";
 import { VoucherGrid, statusPages } from "./redemptions/voucher-list";
 import { groupVouchers } from "./redemptions/voucher-status";
 import { getWallet } from "./redemptions/wallet";
@@ -65,16 +67,13 @@ async function CustomerDashboardContent() {
     // Suggestions come from the city they're browsing, like the home page.
     const visitor = await getVisitorContext();
 
-    const [{ vouchers }, { count: businessCount }, { count: loyaltyCount }, liveOffers, { data: reviewPrompts }, place] = await Promise.all([
+    const [{ vouchers }, { count: businessCount }, loyaltyCards, liveOffers, { data: reviewPrompts }, place] = await Promise.all([
         getWallet(user.id),
         supabase
             .from("business_members")
             .select("business_id", { count: "exact", head: true })
             .eq("user_id", user.id),
-        supabase
-            .from("loyalty_cards")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id),
+        getLoyaltyCards(user.id),
         getLiveOffers(visitor.city?.id),
         supabase.rpc("review_prompts_for_current_user"),
         placeName(visitor.city),
@@ -94,7 +93,7 @@ async function CustomerDashboardContent() {
     const stats = [
         { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: statusPages.ready.href },
         { icon: FiCheckCircle, label: "Vouchers used", value: used.length, href: statusPages.used.href },
-        { icon: FiStar, label: "Loyalty cards", value: loyaltyCount ?? 0, href: "/dashboard/loyalty" },
+        { icon: FiStar, label: "Loyalty cards", value: loyaltyCards.length, href: "/dashboard/loyalty" },
     ];
 
     return (
@@ -189,6 +188,31 @@ async function CustomerDashboardContent() {
                             />
                         ) : (
                             <VoucherGrid items={ready.slice(0, 6)} />
+                        )}
+                    </div>
+                </section>
+
+                <section className="mt-12">
+                    <SectionHeading
+                        title="Loyalty cards"
+                        href="/dashboard/loyalty"
+                        linkLabel="All my loyalty cards"
+                    />
+
+                    <div className="mt-6">
+                        {loyaltyCards.length === 0 ? (
+                            <EmptyState
+                                title="No loyalty cards yet"
+                                description="Join a business's loyalty card from its page and collect a stamp every visit."
+                                href="/businesses"
+                                linkLabel="Find businesses"
+                            />
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {[...loyaltyCards].sort(byNextReward).slice(0, 6).map((card) => (
+                                    <LoyaltyCardTile key={card.id} card={card} />
+                                ))}
+                            </div>
                         )}
                     </div>
                 </section>

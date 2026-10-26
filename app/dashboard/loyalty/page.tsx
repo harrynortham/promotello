@@ -15,26 +15,14 @@ import { qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 
+import { getLoyaltyCards } from "./cards";
+
 export const metadata: Metadata = {
     title: "My loyalty cards",
 };
 
 type PageProps = {
     searchParams: Promise<{ joined?: string }>;
-};
-
-type CardRow = {
-    id: string;
-    card_code: string;
-    stamps: number;
-    rewards_redeemed: number;
-    loyalty_programs: {
-        id: string;
-        stamps_required: number;
-        reward: string;
-        is_active: boolean;
-        businesses: { id: string; slug: string; name: string; logo_url: string | null } | { id: string; slug: string; name: string; logo_url: string | null }[] | null;
-    } | null;
 };
 
 function LoadingState() {
@@ -65,22 +53,8 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
         redirect("/login?next=/dashboard/loyalty");
     }
 
-    const [{ data }, origin] = await Promise.all([
-        supabase
-            .from("loyalty_cards")
-            .select(
-                `
-                    id, card_code, stamps, rewards_redeemed,
-                    loyalty_programs ( id, stamps_required, reward, is_active, businesses ( id, slug, name, logo_url ) )
-                `,
-            )
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-        requestOrigin(),
-    ]);
-
-    const cards = ((data ?? []) as unknown as CardRow[]).filter((card) => card.loyalty_programs);
-    const svgs = await Promise.all(cards.map((card) => qrSvg(`${origin}/stamp/${card.card_code}`)));
+    const [cards, origin] = await Promise.all([getLoyaltyCards(user.id), requestOrigin()]);
+    const svgs = await Promise.all(cards.map((card) => qrSvg(`${origin}/stamp/${card.code}`)));
 
     return (
         <div className="text-[#17233B]">
@@ -111,15 +85,13 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                     ) : (
                         <div className="grid gap-5 md:grid-cols-2">
                             {cards.map((card, index) => {
-                                const program = card.loyalty_programs!;
-                                const business = Array.isArray(program.businesses) ? program.businesses[0] : program.businesses;
-                                const rewardReady = card.stamps >= program.stamps_required;
+                                const business = card.business;
 
                                 return (
                                     <article
                                         key={card.id}
-                                        id={program.id}
-                                        className={`overflow-hidden rounded-3xl border bg-white shadow-sm ${joined === program.id ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}`}
+                                        id={card.programId}
+                                        className={`overflow-hidden rounded-3xl border bg-white shadow-sm ${joined === card.programId ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}`}
                                     >
                                         <div className="flex items-center gap-3 bg-[#17233B] px-6 py-4 text-white">
                                             {business?.logo_url && (
@@ -130,25 +102,25 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                                     {business?.name}
                                                 </Link>
                                                 <p className="text-sm text-white/70">
-                                                    {program.stamps_required} stamps for {program.reward.charAt(0).toLowerCase() + program.reward.slice(1)}
+                                                    {card.stampsRequired} stamps for {card.reward.charAt(0).toLowerCase() + card.reward.slice(1)}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div className="p-6">
-                                            {rewardReady && (
+                                            {card.rewardReady && (
                                                 <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#FF593F]/10 px-3 py-2 text-sm font-semibold text-[#FF593F]">
                                                     <FiGift aria-hidden="true" />
                                                     Reward ready: ask staff to redeem it
                                                 </p>
                                             )}
 
-                                            <LoyaltyStamps stamps={card.stamps} required={program.stamps_required} />
+                                            <LoyaltyStamps stamps={card.stamps} required={card.stampsRequired} />
 
                                             <p className="mt-3 text-sm text-[#17233B]/70">
-                                                {card.stamps} of {program.stamps_required} stamps
-                                                {card.rewards_redeemed > 0 && ` · ${card.rewards_redeemed} redeemed`}
-                                                {!program.is_active && " · paused by the business"}
+                                                {card.stamps} of {card.stampsRequired} stamps
+                                                {card.rewardsRedeemed > 0 && ` · ${card.rewardsRedeemed} redeemed`}
+                                                {!card.active && " · paused by the business"}
                                             </p>
 
                                             <div className="mt-6 flex flex-col items-center gap-4 rounded-2xl bg-[#FFF8F0] p-5 text-center sm:flex-row sm:gap-5 sm:p-4 sm:text-left">
@@ -158,7 +130,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                                 />
                                                 <div className="min-w-0">
                                                     <p className="text-sm font-medium">Show this to staff</p>
-                                                    <p className="mt-2 font-mono text-lg font-semibold tracking-[0.2em]">{card.card_code}</p>
+                                                    <p className="mt-2 font-mono text-lg font-semibold tracking-[0.2em]">{card.code}</p>
                                                     <p className="mt-1 text-xs text-[#17233B]/70">They can scan it or type the code.</p>
                                                 </div>
                                             </div>
