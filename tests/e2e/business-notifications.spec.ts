@@ -48,8 +48,13 @@ test.describe("business notifications", () => {
             .single();
         offerId = offer!.id;
 
-        // One of twelve claimed.
-        await supabase.from("offer_redemptions").insert({ offer_id: offerId, user_id: customerUserId, redemption_code: `E2EN${Date.now()}`.slice(0, 16) });
+        // One of twelve claimed, stamped the way redeem_offer() does.
+        await supabase.from("offer_redemptions").insert({
+            offer_id: offerId,
+            user_id: customerUserId,
+            redemption_code: `E2EN${Date.now()}`.slice(0, 16),
+            redeemed_at: new Date().toISOString(),
+        });
     });
 
     test.afterEach(async () => {
