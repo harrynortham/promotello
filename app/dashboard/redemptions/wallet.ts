@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
+
 import { addressParts } from "@/lib/address";
 import { createClient } from "@/utils/supabase/server";
 
-import type { WalletRedemption } from "./redemption-list";
+import { groupVouchers, type WalletRedemption } from "./voucher-status";
 
 // The signed-in customer's vouchers: offers they claimed, and gift vouchers
 // from businesses' automations. Pass an id to load just that one. Rows are
@@ -36,6 +38,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                     expires_at,
                     terms,
                     approval_status,
+                    image_url,
                     businesses (
                         id,
                         slug,
@@ -92,6 +95,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                     expiresAt: offer.expires_at,
                     terms: offer.terms,
                     approved: offer.approval_status === "approved" && business?.approval_status === "approved",
+                    imageUrl: offer.image_url,
                 }
                 : null,
             business: business
@@ -116,6 +120,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                 expiresAt: gift.expires_at,
                 terms: "A personal gift from the business. It can't be swapped for cash.",
                 approved: true,
+                imageUrl: null,
             },
             business: business ? { id: business.id, slug: business.slug, name: business.name, address: "" } : null,
         };
@@ -124,4 +129,28 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
     const vouchers = [...giftVouchers, ...redemptions].sort((a, b) => (b.claimedAt ?? "").localeCompare(a.claimedAt ?? ""));
 
     return { vouchers, error: false };
+}
+
+// For the vouchers pages: the signed-in customer's vouchers, grouped by
+// status. Sends anyone signed out to log in and back.
+export async function getGroupedWallet(next: string) {
+    const supabase = await createClient();
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect(`/login?next=${encodeURIComponent(next)}`);
+    }
+
+    const { vouchers, error } = await getWallet(user.id);
+    const groups = groupVouchers(vouchers);
+
+    return {
+        error,
+        total: vouchers.length,
+        groups,
+        counts: { ready: groups.ready.length, used: groups.used.length, expired: groups.expired.length },
+    };
 }
