@@ -23,6 +23,8 @@ export type Email = {
     html: string;
     text: string;
     headers?: Record<string, string>;
+    // Overrides EMAIL_REPLY_TO, e.g. the sender of a contact form message.
+    replyTo?: string;
     // Shown as "<senderName> via Promotello", sent from EMAIL_FROM's address.
     // Only for emails on a business's behalf to its followers (new offers,
     // automation vouchers). Account emails come from plain "Promotello":
@@ -77,7 +79,11 @@ export async function sendEmails(emails: Email[]) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(
-                batch.map(({ senderName, ...email }) => ({ from: senderFor(from, senderName), reply_to: replyTo, ...email })),
+                batch.map(({ senderName, replyTo: emailReplyTo, ...email }) => ({
+                    from: senderFor(from, senderName),
+                    reply_to: emailReplyTo ?? replyTo,
+                    ...email,
+                })),
             ),
         });
 

@@ -1,11 +1,13 @@
 "use server";
 
 import { voucherConfirmationEmail } from "@/lib/account-emails";
+import { sendOfferStockAlert } from "@/lib/business-notifications";
 import { sendEmails } from "@/lib/email";
 import { createClient } from "@/utils/supabase/server";
 
 type VoucherRow = {
     redemption_code: string;
+    offer_id: string;
     offers: {
         title: string;
         discount: string;
@@ -28,7 +30,7 @@ export async function sendVoucherConfirmation(redemptionId: string) {
     // RLS: customers can only read their own vouchers.
     const { data: voucher } = await supabase
         .from("offer_redemptions")
-        .select("redemption_code, offers ( title, discount, expires_at, businesses ( name ) )")
+        .select("redemption_code, offer_id, offers ( title, discount, expires_at, businesses ( name ) )")
         .eq("id", redemptionId)
         .eq("user_id", user.id)
         .maybeSingle<VoucherRow>();
@@ -47,6 +49,10 @@ export async function sendVoucherConfirmation(redemptionId: string) {
             expiresAt: voucher.offers.expires_at,
         }),
     ]);
+
+    // Tell the business if this claim ran the offer low or out. Its
+    // failure mustn't affect the customer.
+    await sendOfferStockAlert(voucher.offer_id).catch((error) => console.error("Offer stock alert failed", error));
 
     // Skipped sends (sending not set up, test addresses) aren't failures.
     return { ok: failed === 0 };

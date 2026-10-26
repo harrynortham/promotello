@@ -46,10 +46,11 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `SUPABASE_SERVICE_ROLE_KEY`                                                    | Server jobs (emails, webhooks, cron) and the tests                                                                                               |
 | `NEXT_PUBLIC_SITE_URL`                                                         | Canonical links, sitemap and emails (default `https://www.promotello.com`)                                                                       |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION_ID` | Billing                                                                                                                                          |
-| `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`                                                 | Sending email. Without them nothing is sent, which keeps development safe                                                                        |
+| `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`                               | Sending email. Without them nothing is sent, which keeps development safe                                                                        |
+| `CONTACT_EMAIL`                                                                | Where contact form messages go (default support@promotello.com)                                                                                  |
 | `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                                                               |
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
-| `NEXT_PUBLIC_KEYSTATIC_STORAGE` and `KEYSTATIC_*`                             | Editing the blog on the live site through GitHub. See [docs/BLOG.md](docs/BLOG.md)                                                              |
+| `NEXT_PUBLIC_KEYSTATIC_STORAGE` and `KEYSTATIC_*`                              | Editing the blog on the live site through GitHub. See [docs/BLOG.md](docs/BLOG.md)                                                               |
 | `NEXT_PUBLIC_SENTRY_DSN`                                                       | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally)                             |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`                                                | Optional: Google Analytics outside production (it's on in production by default, behind cookie consent)                                          |
 
@@ -57,19 +58,19 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 
 ## How it's organised
 
-| Path                                                         | What's there                                                                      |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `app/(customer-marketing)/`                                  | Public site: home, offers, businesses, explore, categories, city and area pages   |
-| `app/(business)/business/(business-marketing)/`              | Pages for businesses: features, pricing, demo, waitlist, previews                 |
-| `app/(business)/business/(business-dashboard)/[businessId]/` | A business's dashboard                                                            |
-| `app/dashboard`, `app/account`                               | A customer's vouchers, loyalty cards and settings                                 |
-| `app/admin`                                                  | Platform admin                                                                    |
-| `app/api/cron/daily`                                         | Daily job: automations, setup and trial emails, monthly reports, preview clean-up |
-| `components/`                                                | App components; `components/ui/` are shadcn primitives                            |
-| `lib/`                                                       | Data loading, emails, billing, validation and other shared code                   |
+| Path                                                         | What's there                                                                                    |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `app/(customer-marketing)/`                                  | Public site: home, offers, businesses, explore, categories, city and area pages                 |
+| `app/(business)/business/(business-marketing)/`              | Pages for businesses: features, pricing, demo, waitlist, previews                               |
+| `app/(business)/business/(business-dashboard)/[businessId]/` | A business's dashboard                                                                          |
+| `app/dashboard`, `app/account`                               | A customer's vouchers, loyalty cards and settings                                               |
+| `app/admin`                                                  | Platform admin                                                                                  |
+| `app/api/cron/daily`                                         | Daily job: automations, setup and trial emails, monthly reports, preview clean-up               |
+| `components/`                                                | App components; `components/ui/` are shadcn primitives                                          |
+| `lib/`                                                       | Data loading, emails, billing, validation and other shared code                                 |
 | `content/blog/`, `keystatic.config.ts`                       | Blog posts (Markdoc) and the Keystatic editor at `/keystatic`; see [docs/BLOG.md](docs/BLOG.md) |
-| `supabase/migrations/`                                       | Database schema, one file per change                                              |
-| `tests/e2e/`                                                 | Playwright tests; `tests/global-setup.ts` seeds test users and data               |
+| `supabase/migrations/`                                       | Database schema, one file per change                                                            |
+| `tests/e2e/`                                                 | Playwright tests; `tests/global-setup.ts` seeds test users and data                             |
 
 ### Addresses
 
@@ -92,7 +93,7 @@ Two sending subdomains in Resend, so sign-in emails keep their own reputation:
 
 Mail apps that support BIMI show the Promotello logo next to emails: the logo is `public/bimi/logo.svg` (SVG Tiny PS, don't edit it casually) and the DNS record is `default._bimi.promotello.com`. Gmail and Apple Mail also need a mark certificate (VMC or CMC).
 
-Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Customer emails from a business show as "_Business_ via Promotello". Every marketing email has an unsubscribe link. The contact form uses the `send-contact-message` Supabase edge function.
+Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Customer emails from a business show as "_Business_ via Promotello". Every marketing email has an unsubscribe link. Contact form messages go to `CONTACT_EMAIL` (default support@promotello.com) with the sender as reply-to. Every email is sent from the app; there are no Supabase edge functions. Business notifications (daily summary, fully claimed and low inventory alerts) are in `lib/business-notifications.ts`.
 
 ## Tests
 
@@ -106,12 +107,7 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Events: built, and hidden until there are enough customers (`lib/features.ts`)
 - Apple and Google Wallet passes
 - Register company name and bank account for Stripe
-- Add styling to edge function emails, should these move locally to nextjs?
 - Add apple logins to register and login page, quicker than verifiying email
-- Find out why businesses or offer urls in sitemap?
-- Email authentication: add SPF, DKIM and DMARC records for promotello.com in Resend and your DNS, so welcome and offer emails don't land in spam. I can walk you through it.
-- Fix sending domains in resend so make sense to user
-- Remove confirm password field from sign up email
 - Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register.
 - Add ICO number and companny number to privacy policy and other legal pages
 - Setup google workspace to have email signature and profile photo
@@ -121,3 +117,4 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Change Vercel from hobby to paid plan
 - Secure all platform emails with unique strong passwords
 - Learn keystatic for blog posts
+- Test onboarding flow and conversion emails before launch

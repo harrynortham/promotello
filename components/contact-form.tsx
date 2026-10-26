@@ -15,10 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { email, optionalText, requiredText } from "@/lib/validation";
-import { createClient } from "@/utils/supabase/client";
+import { sendContactMessage } from "./contact-actions";
 
 // The contact form on /contact (customers) and /business/contact. Messages
-// go through the send-contact-message edge function, which rate-limits.
+// are sent by a server action (contact-actions.ts), which rate-limits.
 
 const schema = z.object({
     name: requiredText("Your name", { max: 100 }),
@@ -62,18 +62,11 @@ const copy = {
     },
 };
 
-async function failureMessage(error: unknown) {
-    if (error && typeof error === "object" && "context" in error && error.context instanceof Response) {
-        if (error.context.status === 429) {
-            return "You’ve reached the message limit. Please wait 30 minutes before trying again.";
-        }
-
-        const body = await error.context.json().catch(() => null);
-        if (typeof body?.error === "string") return body.error as string;
-    }
-
-    return "We couldn’t send your message. Please try again later.";
-}
+const failureMessages = {
+    invalid: "Check the form and try again.",
+    rate_limited: "You’ve reached the message limit. Please wait 30 minutes before trying again.",
+    failed: "We couldn’t send your message. Please try again later.",
+};
 
 export function ContactForm({ audience }: { audience: "customer" | "business" }) {
     const text = copy[audience];
@@ -104,10 +97,10 @@ export function ContactForm({ audience }: { audience: "customer" | "business" })
     async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        const { data, error } = await createClient().functions.invoke("send-contact-message", { body: values });
+        const result = await sendContactMessage({ ...values, audience }).catch(() => ({ ok: false, error: "failed" }) as const);
 
-        if (error || !data?.success) {
-            setErrorMessage(error ? await failureMessage(error) : "We couldn’t send your message. Please try again later.");
+        if (!result.ok) {
+            setErrorMessage(failureMessages[result.error]);
             return;
         }
 
