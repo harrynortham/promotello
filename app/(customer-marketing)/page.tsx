@@ -284,12 +284,12 @@ async function VisitorHome() {
                 <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#17233B]/90 via-[#17233B]/70 to-[#17233B]/20" />
 
                 <div className="mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32">
-                    <div className="max-w-2xl">
+                    <div className="max-w-2xl md:max-w-[47rem]">
                         <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
                             {place}&apos;s local offers, in one place
                         </p>
 
-                        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-6xl">
+                        <h1 className="mt-6 max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
                             Save on the places you love.
                         </h1>
 
@@ -299,7 +299,7 @@ async function VisitorHome() {
                             make your neighbourhood.
                         </p>
 
-                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_17rem] md:grid-cols-[1fr_20rem]">
+                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_15rem] md:grid-cols-[1fr_20rem]">
                             <SearchForm
                                 action="/offers"
                                 placeholder="Try coffee, haircut or pizza"
