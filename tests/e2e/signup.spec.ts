@@ -22,9 +22,10 @@ test.describe("Sign up", () => {
     test("submitting a valid form shows a confirmation or redirects to the dashboard", async ({
         page,
     }) => {
-        // Use a unique address so this test can run repeatedly without
-        // hitting Supabase's "user already registered" error.
-        const email = `e2e-signup-${Date.now()}@test.internal`;
+        // A unique address on Resend's test inbox: Supabase's confirmation
+        // email is accepted without being delivered, so it never bounces
+        // (bounces hurt the sending domain's reputation).
+        const email = `delivered+e2e-signup-${Date.now()}@resend.dev`;
 
         await page.locator("#signup-email").fill(email);
         await page.locator("#signup-password").fill("E2eTestPass1!");

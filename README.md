@@ -46,7 +46,7 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `SUPABASE_SERVICE_ROLE_KEY`                                                    | Server jobs (emails, webhooks, cron) and the tests                                                                                               |
 | `NEXT_PUBLIC_SITE_URL`                                                         | Canonical links, sitemap and emails (default `https://www.promotello.com`)                                                                       |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PORTAL_CONFIGURATION_ID` | Billing                                                                                                                                          |
-| `RESEND_API_KEY`, `EMAIL_FROM`                                                 | Sending email. Without them nothing is sent, which keeps development safe                                                                        |
+| `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`                                                 | Sending email. Without them nothing is sent, which keeps development safe                                                                        |
 | `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                                                               |
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
 | `NEXT_PUBLIC_KEYSTATIC_STORAGE` and `KEYSTATIC_*`                             | Editing the blog on the live site through GitHub. See [docs/BLOG.md](docs/BLOG.md)                                                              |
@@ -84,6 +84,11 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 - **Copy** is UK English.
 
 ## Emails
+
+Two sending subdomains in Resend, so sign-in emails keep their own reputation:
+
+- `auth.promotello.com`: Supabase's sign-in emails only (confirmations, password resets, sign-in links), from `no-reply@auth.promotello.com`, set in Supabase's SMTP settings.
+- `mail.promotello.com`: everything the app sends, from `EMAIL_FROM` (`Promotello <offers@mail.promotello.com>`). Replies go to `EMAIL_REPLY_TO` (default hello@promotello.com).
 
 Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Customer emails from a business show as "_Business_ via Promotello". Every marketing email has an unsubscribe link. The contact form uses the `send-contact-message` Supabase edge function.
 
