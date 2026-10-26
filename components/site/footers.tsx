@@ -47,7 +47,7 @@ const marketingFooters = {
             {
                 title: "Your account",
                 links: [
-                    { label: "Sign in / Register", href: "/login" },
+                    { label: "Loyalty cards", href: "/dashboard/loyalty" },
                     { label: "My vouchers", href: "/dashboard/redemptions" },
                     { label: "Help centre", href: "/help" },
                 ],
