@@ -218,7 +218,7 @@ async function CustomerDashboardContent() {
                                     return (
                                         <Link
                                             key={row.id}
-                                            href="/dashboard/redemptions"
+                                            href={`/dashboard/redemptions/${row.id}`}
                                             className="group flex overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white transition hover:shadow-md"
                                         >
                                             <div className="relative w-28 shrink-0 bg-[#FFF4E8]">
@@ -230,9 +230,15 @@ async function CustomerDashboardContent() {
                                             <div className="min-w-0 flex-1 p-4">
                                                 <p className="truncate text-sm text-[#17233B]/70">{business?.name}</p>
                                                 <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{offer.title}</p>
-                                                <p className="mt-3 inline-flex rounded-lg bg-[#17233B] px-2.5 py-1 font-mono text-sm font-semibold tracking-widest text-white">
-                                                    {row.redemption_code}
-                                                </p>
+                                                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                                                    <p className="inline-flex rounded-lg bg-[#17233B] px-2.5 py-1 font-mono text-sm font-semibold tracking-widest text-white">
+                                                        {row.redemption_code}
+                                                    </p>
+                                                    <span className="inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] group-hover:underline">
+                                                        Show QR code
+                                                        <FiArrowRight aria-hidden="true" />
+                                                    </span>
+                                                </div>
                                             </div>
                                         </Link>
                                     );
