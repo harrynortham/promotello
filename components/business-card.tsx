@@ -31,8 +31,9 @@ export function BusinessCard({ business }: { business: ListingBusiness }) {
                 )}
             </div>
 
-            <div className="relative flex flex-1 flex-col px-5 pb-5">
-                <div className="-mt-8 flex items-end justify-between gap-3">
+            {/* Not positioned, so the name's link covers the whole card. */}
+            <div className="flex flex-1 flex-col px-5 pb-5">
+                <div className="relative -mt-8 flex items-end justify-between gap-3">
                     {business.logoUrl ? (
                         <Image
                             src={business.logoUrl}
