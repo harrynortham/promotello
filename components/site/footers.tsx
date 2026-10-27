@@ -180,6 +180,7 @@ const appFooters = {
         label: "Customer",
         links: [
             { label: "My vouchers", href: "/dashboard/redemptions" },
+            { label: "Loyalty cards", href: "/dashboard/loyalty" },
             { label: "Help centre", href: "/help" },
             { label: "Contact support", href: "/contact" },
         ],
