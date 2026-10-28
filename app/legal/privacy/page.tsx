@@ -446,7 +446,7 @@ export default function PrivacyPage() {
         <LegalDocument
             title="Privacy policy"
             description="How we handle personal information when you visit or use Promotello."
-            updatedAt="25 October 2026"
+            updatedAt="28 October 2026"
             version="1.0"
             summary={summary}
             sections={sections}

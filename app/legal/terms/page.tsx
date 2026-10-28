@@ -260,7 +260,7 @@ export default function TermsPage() {
         <LegalDocument
             title="Terms of service"
             description="The terms that apply when you use Promotello, as a customer or a business."
-            updatedAt="25 October 2026"
+            updatedAt="28 October 2026"
             version="1.0"
             summary={summary}
             sections={sections}

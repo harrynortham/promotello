@@ -1,21 +1,22 @@
-// Who runs Promotello, for the privacy policy and terms. UK law requires a
-// company's registered name, number and office address on its website:
-// add the number once the company is incorporated.
+// Who runs Promotello. UK law (the Companies Act trading disclosures)
+// requires a company's registered name, number, place of registration and
+// registered office on its website and in its business emails.
 export const company = {
-  name: "Promotello",
-  number: "",
-  address: "71-75 Shelton Street, Covent Garden, London, WC2H 9JQ",
+  name: "Promotello Ltd",
+  number: "17546946",
+  registeredIn: "England and Wales",
+  incorporated: "2026-10-27",
+  address: "71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom",
   email: "hello@promotello.com",
 };
 
-// "Promotello Ltd (company number 12345678), 71-75 Shelton Street, …",
-// or without the number until there is one.
+// For legal pages: "Promotello Ltd, a company registered in England and
+// Wales (company number 17546946), whose registered office is at …".
 export function companyLine() {
-  if (!company.name || !company.address) {
-    return "the company that owns Promotello (registered details to follow)";
-  }
+  return `${company.name}, a company registered in ${company.registeredIn} (company number ${company.number}), whose registered office is at ${company.address}`;
+}
 
-  return company.number
-    ? `${company.name} (company number ${company.number}), ${company.address}`
-    : `${company.name}, ${company.address}`;
+// The short disclosure for footers on the site and in emails.
+export function companyDisclosure() {
+  return `${company.name}, registered in ${company.registeredIn}, company number ${company.number}. Registered office: ${company.address}.`;
 }
