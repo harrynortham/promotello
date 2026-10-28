@@ -1,4 +1,5 @@
-import { emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -62,6 +63,7 @@ ${emailLogoRow()}
 <a href="${analyticsUrl}" style="display:inline-block;margin-top:24px;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">See full analytics</a>
 </td></tr></table>
 <p style="max-width:560px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">Your monthly report from Promotello, sent to business owners on Growth.</p>
+${emailCompanyFooter(560)}
 </td></tr></table></body></html>`;
 
     const text = [
@@ -75,6 +77,8 @@ ${emailLogoRow()}
         "",
         `Followers: ${report.figures.followers}`,
         `Full analytics: ${analyticsUrl}`,
+        "",
+        companyDisclosure(),
     ].join("\n");
 
     return { to, subject: `Your ${monthName} on Promotello`, html, text };

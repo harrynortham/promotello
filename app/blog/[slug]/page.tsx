@@ -8,6 +8,7 @@ import { PostBody } from "@/components/blog/post-body";
 import { PostCard } from "@/components/blog/post-card";
 import { formatPostDate, getPost, getPosts, type Post } from "@/lib/blog";
 import { absoluteUrl, jsonLd, siteName } from "@/lib/site";
+import { company } from "@/lib/legal";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -71,6 +72,7 @@ function structuredData(post: Post) {
         publisher: {
             "@type": "Organization",
             name: siteName,
+            legalName: company.name,
             url: absoluteUrl("/"),
             logo: { "@type": "ImageObject", url: absoluteUrl("/brand/promotello-horizontal-primary.svg") },
         },

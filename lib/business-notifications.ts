@@ -1,4 +1,5 @@
-import { brandedEmail, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { brandedEmail, emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -63,6 +64,7 @@ ${rows}
 <a href="${redemptionsUrl}" style="display:inline-block;margin-top:24px;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">See redemptions</a>
 </td></tr></table>
 <p style="max-width:560px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">You're getting this because the daily summary is on for ${e(summary.business_name)}.<br><a href="${settingsUrl}" style="color:#6b7387">Notification settings</a></p>
+${emailCompanyFooter(560)}
 </td></tr></table></body></html>`;
 
     const text = [
@@ -73,6 +75,8 @@ ${rows}
         "",
         `See redemptions: ${redemptionsUrl}`,
         `Notification settings: ${settingsUrl}`,
+        "",
+        companyDisclosure(),
     ].join("\n");
 
     return { to, subject: `${summary.business_name}: ${headline.replace(/\.$/, "")}`, html, text };

@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 
+import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 
 // Sends email through Resend. Needs RESEND_API_KEY and EMAIL_FROM (a sender
@@ -117,6 +118,12 @@ export function escapeHtml(value: string) {
         .replace(/'/g, "&#39;");
 }
 
+// The company's registered details, at the foot of every email: UK law
+// requires them in business emails.
+export function emailCompanyFooter(width = 520) {
+    return `<p style="max-width:${width}px;margin:12px auto 0;font-size:11px;line-height:1.6;color:#8a91a3">${escapeHtml(companyDisclosure())}</p>`;
+}
+
 // A simple branded email: heading, paragraphs and one button. Text is
 // escaped here, so pass plain strings.
 export function brandedEmail({
@@ -153,6 +160,7 @@ ${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:15px;line-height
 </td></tr>
 </table>
 <p style="max-width:520px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">${e(footer)}${footerLinks.length ? "<br>" + footerLinks.map((link) => `<a href="${e(link.url)}" style="color:#6b7387">${e(link.label)}</a>`).join(" · ") : ""}</p>
+${emailCompanyFooter()}
 </td></tr></table>
 </body></html>`;
 
@@ -164,6 +172,8 @@ ${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:15px;line-height
         "",
         footer,
         ...footerLinks.map((link) => `${link.label}: ${link.url}`),
+        "",
+        companyDisclosure(),
     ].join("\n");
 
     return { html, text };

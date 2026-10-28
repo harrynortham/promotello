@@ -101,20 +101,31 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
+- Associate business costs to the business account (supabase/vercel), top up accordingly in the beginning (add google workspace there)
+- Create a new Stripe account with United Kingdom as the country (the first was set up as Gibraltar, which can't be changed). Add Promotello Ltd's legal name, company number and registered address so they show on receipts and invoices
+- Set up a sandbox on the new Stripe account, run `scripts/stripe-setup.mjs` against it, and update the `STRIPE_*` keys in `.env.local` and Vercel Preview. Then delete the old Gibraltar sandbox and close that account
+- Stripe custom email domain: add `billing.promotello.com` in Settings → Customer emails, add its DNS records, send a test email, and set the support email in Public details to support@promotello.com
 - Take Stripe live: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md)
-- - Supabase paid plan (about $25 a month): it gives daily backups. Today, one bad mistake could lose every account with no way back.
+- Supabase paid plan (about $25 a month): it gives daily backups. Today, one bad mistake could lose every account with no way back.
 - Set up BIMI so the logo shows in mail apps
 - Events: built, and hidden until there are enough customers (`lib/features.ts`)
 - Apple and Google Wallet passes
-- Register company name and bank account for Stripe
+- Register bank account for Stripe
 - Add apple logins to register and login page, quicker than verifiying email
-- Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register.
-- Add ICO number and companny number to privacy policy and other legal pages
-- Setup google workspace to have email signature and profile photo
-- Add Instagram, TikTok, X and YouTube to google search console
+- Do we need it? Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register.
+- Add ICO number to privacy policy and other legal pages (company number done: `lib/legal.ts`)
+- Add YouTube to google search console
+- Supabase sign-in email templates (Authentication → Emails → Templates): add the company line to the bottom of each, as in the app's emails
 - Move analytics to hello@promotello.com account
-- Not receiving welcome emails, tested new account creation via google auth
+- Test receiving welcome emails, tested new account creation via google auth
 - Change Vercel from hobby to paid plan
 - Secure all platform emails with unique strong passwords
 - Learn keystatic for blog posts
 - Test onboarding flow and conversion emails before launch
+- Transfer youtube channel to hello@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
+- Add social media posts as per marketing launch POSTS.md / once stripe and business accounts all setup and tested
+- Add email signatures everywhere, use same format as 1stformations with social links and disclaimer. Include the company line (UK law): Promotello Ltd, registered in England and Wales, company number 17546946. Registered office: 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom.
+- Add API so that users can generate and buy stickers of their QR codes like Printful: a well-documented REST API, kiss-cut stickers, and printing in the UK. It’s probably the quickest to get working.
+- Update UI on login and register on mobile, button below the fold.
+- Do we have QR code download image that business can display to get loyalty card / user signs up and is in their account
+- Make al payments come from wise account, phone number, vercel, supabase, 1st formations, google apps

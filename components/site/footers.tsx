@@ -12,6 +12,7 @@ import "react-social-icons/instagram";
 import "react-social-icons/tiktok";
 
 import { Button } from "@/components/ui/button";
+import { company, companyDisclosure } from "@/lib/legal";
 
 type FooterLink = { label: string; href: string; external?: boolean };
 
@@ -166,8 +167,9 @@ export function MarketingFooter({ variant }: { variant: keyof typeof marketingFo
                     ))}
                 </div>
 
-                <div className="mt-10 border-t border-background/20 pt-6 text-xs text-background/60">
-                    &copy; 2026 Promotello. All rights reserved.
+                <div className="mt-10 space-y-2 border-t border-background/20 pt-6 text-xs leading-5 text-background/60">
+                    <p>&copy; 2026 {company.name}. All rights reserved.</p>
+                    <p>{companyDisclosure()}</p>
                 </div>
             </div>
         </footer>
@@ -264,9 +266,10 @@ export function AppFooter({ variant }: { variant: keyof typeof appFooters }) {
                 </div>
 
                 <div className="mt-7 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs text-muted-foreground">
-                        &copy; 2026 Promotello. All rights reserved.
-                    </p>
+                    <div className="space-y-1 text-xs leading-5 text-muted-foreground">
+                        <p>&copy; 2026 {company.name}. All rights reserved.</p>
+                        <p>{companyDisclosure()}</p>
+                    </div>
 
                     <nav aria-label={`${config.label} legal information`}>
                         <ul className="flex flex-wrap gap-x-5 gap-y-3">

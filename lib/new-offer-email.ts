@@ -1,4 +1,5 @@
-import { emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -48,6 +49,7 @@ ${until ? `<p style="margin:12px 0 0;font-size:13px;color:#6b7387">Available unt
 You're getting this because you follow ${e(business)} on Promotello.<br>
 <a href="${unsubscribeUrl}" style="color:#6b7387">Unsubscribe from ${e(business)}</a> · <a href="${settingsUrl}" style="color:#6b7387">Email settings</a>
 </p>
+${emailCompanyFooter()}
 </td></tr></table>
 </body></html>`;
 
@@ -62,6 +64,8 @@ You're getting this because you follow ${e(business)} on Promotello.<br>
         "",
         `You're getting this because you follow ${business} on Promotello.`,
         `Unsubscribe: ${unsubscribeUrl}`,
+        "",
+        companyDisclosure(),
     ]
         .filter((line, index, lines) => line !== "" || lines[index - 1] !== "")
         .join("\n");
