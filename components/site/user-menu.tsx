@@ -106,7 +106,7 @@ export function UserMenu({
                         type="button"
                         variant="ghost"
                         aria-label={`Open account menu for ${user.displayName}`}
-                        className="h-auto gap-3 rounded-full px-2 py-1.5"
+                        className="h-auto cursor-pointer gap-3 rounded-full px-2 py-1.5"
                     />
                 }
             >

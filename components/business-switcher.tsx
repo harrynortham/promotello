@@ -42,7 +42,7 @@ export function BusinessSwitcher({
                 render={
                     <Button
                         variant="outline"
-                        className="w-full justify-between"
+                        className="w-full cursor-pointer justify-between"
                     />
                 }
             >
