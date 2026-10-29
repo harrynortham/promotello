@@ -91,6 +91,67 @@ test.describe("business setup and trial emails", () => {
         expect(lifecycleEmail({ ...welcome, hasPro: false, approved: true }, "a@b.c")!.text).not.toContain("as soon as you're live");
     });
 
+    test("free businesses get one email at a time, with a day off in between", async () => {
+        await admin().from("businesses").update({ created_at: daysAgo(8) }).eq("id", businessId);
+        const backdate = (days: number) =>
+            admin().from("business_lifecycle_sends").update({ sent_at: daysAgo(days) }).eq("business_id", businessId);
+
+        // Several are due, so they come in schedule order.
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["setup_nudge_1"]);
+        // Nothing the next day.
+        await backdate(1);
+        expect(await claim(businessId)).toEqual([]);
+
+        await backdate(3);
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["loyalty_pitch"]);
+        await backdate(3);
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["setup_nudge_2"]);
+        await backdate(3);
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["founding_places"]);
+    });
+
+    test("businesses that have subscribed aren't pitched the trial", async () => {
+        await admin().from("businesses").update({ created_at: daysAgo(8) }).eq("id", businessId);
+        await admin().from("subscriptions").insert({
+            business_id: businessId,
+            stripe_subscription_id: `sub_e2e_pitch_${Date.now()}`,
+            stripe_customer_id: `cus_e2e_pitch_${Date.now()}`,
+            status: "canceled",
+        });
+
+        // Only the setup nudges: no loyalty pitch or founding places.
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["setup_nudge_1"]);
+        await admin().from("business_lifecycle_sends").update({ sent_at: daysAgo(3) }).eq("business_id", businessId);
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["setup_nudge_2"]);
+        await admin().from("business_lifecycle_sends").update({ sent_at: daysAgo(3) }).eq("business_id", businessId);
+        expect(await claim(businessId)).toEqual([]);
+    });
+
+    test("the conversion emails", async () => {
+        const [welcome] = await claim(businessId);
+        const due = (kind: LifecycleDue["kind"], details: Partial<LifecycleDue["details"]> = {}) =>
+            ({ ...welcome, kind, hasPro: false, approved: true, details: { ...welcome.details, ...details } });
+
+        const pitch = lifecycleEmail(due("loyalty_pitch"), "a@b.c")!;
+        expect(pitch.subject).toMatch(/^A loyalty card for E2E Lifecycle .*, free for 30 days$/);
+        expect(pitch.text).toContain(`/business/${businessId}/billing`);
+        expect(pitch.text).toContain("Turn off setup tips");
+
+        const founding = lifecycleEmail(due("founding_places"), "a@b.c", { foundingPlacesLeft: 12 })!;
+        expect(founding.text).toContain("There are 12 places left.");
+        expect(lifecycleEmail(due("founding_places"), "a@b.c", { foundingPlacesLeft: 0 })!.text).not.toContain("founding");
+
+        const results = lifecycleEmail(due("results", { views: 40, claims: 3 }), "a@b.c")!;
+        expect(results.text).toContain("3 vouchers claimed, 40 page views");
+        const quiet = lifecycleEmail(due("results", { has_poster: false }), "a@b.c")!;
+        expect(quiet.text).toContain(`/business/${businessId}/qr`);
+
+        const checkIn = lifecycleEmail(due("check_in"), "a@b.c")!;
+        expect(checkIn.senderName).toBe("Harry");
+        expect(checkIn.text).toContain("Just reply to this email");
+        expect(checkIn.html).toContain("17546946");
+    });
+
     test("businesses that signed up long ago get no setup emails", async () => {
         await admin().from("businesses").update({ created_at: daysAgo(40) }).eq("id", businessId);
         expect(await claim(businessId)).toEqual([]);
@@ -106,8 +167,8 @@ test.describe("business setup and trial emails", () => {
             trial_end: new Date(Date.now() + 4 * 86_400_000).toISOString(),
         });
 
-        const [notice] = await claim(businessId);
-        expect(notice.kind).toBe("trial_ending");
+        const notice = (await claim(businessId)).find((due) => due.kind === "trial_ending")!;
+        expect(notice).toBeDefined();
         const email = lifecycleEmail(notice, notice.emails[0])!;
         expect(email.subject).toMatch(/^Your Promotello trial ends on \d+ \w+$/);
         expect(email.text).toContain("carries on automatically");
