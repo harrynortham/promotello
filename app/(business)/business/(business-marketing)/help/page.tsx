@@ -141,7 +141,7 @@ const guides: HelpGuide[] = [
             "No QR code? Find the customer’s code on your Redemptions page instead.",
         ],
         note:
-            "You’ll see a warning if the voucher was already used, the promotion has ended, or it’s outside its set hours. Gift vouchers from automations (codes starting with G) work the same way.",
+            "You’ll see a warning if the voucher was already used, the promotion has ended, or it’s outside its set hours. Reward vouchers from automations (codes starting with G) work the same way.",
     },
     {
         id: "unused-claims",
@@ -324,10 +324,10 @@ const guides: HelpGuide[] = [
         steps: [
             "Open your business and choose Automations.",
             "Write the reward for each automation, like A free coffee.",
-            "Choose how long the gift voucher lasts, and for win-back, how long since their last visit.",
+            "Choose how long the reward voucher lasts, and for win-back, how long since their last visit.",
             "Tick Send this automatically and save.",
         ],
-        note: "Automations go to followers only, once a day. Gift vouchers are redeemed by scanning, like any voucher.",
+        note: "Automations go to followers only, once a day. Reward vouchers are redeemed by scanning, like any voucher.",
     },
     {
         id: "quiet-hours",

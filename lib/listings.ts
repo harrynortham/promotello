@@ -36,6 +36,8 @@ export type ListingOffer = {
         logoUrl: string | null;
         area: string | null;
         cityId: string | null;
+        // One of the sample businesses that show how Promotello works.
+        isSample: boolean;
     };
 };
 
@@ -52,6 +54,8 @@ export type ListingBusiness = {
     createdAt: string;
     offerCount: number;
     coverImageUrl: string | null;
+    // One of the sample businesses that show how Promotello works.
+    isSample: boolean;
     topOffer: { slug: string; title: string; discount: string } | null;
 };
 
@@ -97,7 +101,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                 expires_at, created_at, image_url, category, category_id,
                 redemption_count, max_redemptions,
                 businesses!inner (
-                    id, slug, name, logo_url,
+                    id, slug, name, logo_url, is_sample,
                     business_locations ( region, city, city_id )
                 )
             `,
@@ -137,6 +141,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                     logoUrl: business.logo_url,
                     area: areaOf(business.business_locations),
                     cityId: cityIdOf(business.business_locations),
+                    isSample: business.is_sample,
                 },
             },
         ];
@@ -152,7 +157,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         .from("businesses")
         .select(
             `
-                id, slug, name, description, logo_url, category, category_id, created_at,
+                id, slug, name, description, logo_url, category, category_id, created_at, is_sample,
                 business_locations ( region, city, city_id ),
                 offers ( slug, title, discount, image_url, created_at )
             `,
@@ -183,6 +188,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
             createdAt: row.created_at,
             offerCount: offers.length,
             coverImageUrl: offers.find((offer) => offer.image_url)?.image_url ?? null,
+            isSample: row.is_sample,
             topOffer: latest
                 ? { slug: latest.slug, title: latest.title, discount: latest.discount }
                 : null,

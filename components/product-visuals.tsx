@@ -295,7 +295,7 @@ export function NewOfferEmail() {
 export function BirthdayEmail() {
     return (
         <EmailShell
-            label="An automatic birthday email with a gift voucher"
+            label="An automatic birthday email with a reward voucher"
             from={`${business} via Promotello`}
             subject={`Happy birthday from ${business}`}
         >

@@ -14,6 +14,7 @@ import {
     FiUsers,
 } from "react-icons/fi";
 
+import { ExampleNotice } from "@/components/example-badge";
 import { SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,7 @@ async function OfferContent({ params }: OfferPageProps) {
                     name,
                     logo_url,
                     approval_status,
+                    is_sample,
                     business_locations (
                         name,
                         address_line_1,
@@ -317,6 +319,12 @@ async function OfferContent({ params }: OfferPageProps) {
                     <span className="truncate text-[#17233B]/80">{business.name}</span>
                 </nav>
 
+                {business.is_sample && (
+                    <div className="mt-4">
+                        <ExampleNotice what="offer" />
+                    </div>
+                )}
+
                 <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
                     <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-[#FFF4E8] sm:aspect-[16/10] lg:aspect-[4/3]">
                         {offer.image_url ? (
@@ -391,23 +399,32 @@ async function OfferContent({ params }: OfferPageProps) {
                             })}
                         </ul>
 
-                        <RedeemButton
-                            key={offer.id}
-                            offerId={offer.id}
-                            isSignedIn={Boolean(user)}
-                            isFullyClaimed={isFullyClaimed}
-                            isExpired={isExpired}
-                            initialRedemption={existingResult.data}
-                            returnPath={`/offers/${offer.slug}`}
-                        />
+                        {business.is_sample ? (
+                            <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-center text-sm text-[#17233B]/75">
+                                Example offers can&apos;t be claimed.{" "}
+                                <Link href="/offers" className="font-medium text-[#FF593F] underline underline-offset-4">
+                                    Browse real offers
+                                </Link>
+                            </p>
+                        ) : (
+                            <RedeemButton
+                                key={offer.id}
+                                offerId={offer.id}
+                                isSignedIn={Boolean(user)}
+                                isFullyClaimed={isFullyClaimed}
+                                isExpired={isExpired}
+                                initialRedemption={existingResult.data}
+                                returnPath={`/offers/${offer.slug}`}
+                            />
+                        )}
 
-                        {!existingResult.data && !isExpired && !isFullyClaimed && (
+                        {!business.is_sample && !existingResult.data && !isExpired && !isFullyClaimed && (
                             <p className="mt-4 text-center text-xs leading-5 text-[#17233B]/70">
                                 Free to claim. Show your code when you pay.
                             </p>
                         )}
 
-                        {!isExpired && (
+                        {!isExpired && !business.is_sample && (
                             <ShareOfferButton
                                 url={shareLink(`/offers/${offer.slug}`)}
                                 text={offerShareCaption({ title: offer.title, discount: offer.discount, businessName: business.name })}
@@ -499,6 +516,7 @@ async function OfferContent({ params }: OfferPageProps) {
                                     availability={item.availability}
                                     imageUrl={item.imageUrl}
                                     expiresAt={item.expiresAt}
+                                    example={item.business.isSample}
                                 />
                             ))}
                         </div>
@@ -527,6 +545,7 @@ async function OfferContent({ params }: OfferPageProps) {
                                     imageUrl={item.imageUrl}
                                     expiresAt={item.expiresAt}
                                     area={item.business.area}
+                                    example={item.business.isSample}
                                 />
                             ))}
                         </div>

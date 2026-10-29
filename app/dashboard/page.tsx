@@ -232,6 +232,7 @@ async function CustomerDashboardContent() {
                                     availability={offer.availability}
                                     business={offer.business.name}
                                     businessLogoUrl={offer.business.logoUrl}
+                                    example={offer.business.isSample}
                                     imageUrl={offer.imageUrl}
                                     expiresAt={offer.expiresAt}
                                     area={offer.business.area}
