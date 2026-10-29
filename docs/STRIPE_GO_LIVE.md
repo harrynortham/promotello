@@ -2,12 +2,7 @@
 
 Billing has been live since 29 October 2026 on Promotello Ltd's UK Stripe account. The account's sandbox is used locally (`.env.local`) and on Vercel Preview; the live keys are on Vercel Production. Both were set up with `scripts/stripe-setup.mjs`.
 
-The first account was set up with Gibraltar as the business location, and an account's country can't be changed, which is why billing moved to a new UK account. The Gibraltar account isn't used any more.
-
-## Still to do
-
-1. **Emails from billing.promotello.com.** Stripe can send receipts and payment emails from your own domain instead of stripe.com. In the UK account: Settings → Emails → Your email domain, add `billing.promotello.com`, and add the DNS records it shows (a TXT record, a Mail-From CNAME and the DKIM CNAMEs). The existing DMARC record on promotello.com already allows it. Send a test email, and set the support email in Public details to support@promotello.com.
-2. **Close the Gibraltar account** once nothing uses its keys.
+The first account was set up with Gibraltar as the business location, and an account's country can't be changed, which is why billing moved to a new UK account.
 
 ## Things to know
 
@@ -15,7 +10,8 @@ The first account was set up with Gibraltar as the business location, and an acc
 - **The restricted live key** (`rk_live_…`) needs write access to Customers, Checkout Sessions, Customer Portal and Subscriptions (switching between Pro and Growth updates the subscription), and read access to Products, Prices, Invoices and Charges. Invoice Payments has no separate permission; Invoices covers it. If Stripe calls fail in production with permission errors, check the key first.
 - **Cancelling in the billing portal** sets `cancel_at` on the subscription, not `cancel_at_period_end`. The webhook handles both.
 - **Webhooks locally:** run `stripe listen --api-key <sandbox secret key> --forward-to localhost:3000/api/stripe/webhook` and use the `whsec_…` it prints as `STRIPE_WEBHOOK_SECRET`.
-- **Alerts:** turn on dispute email notifications in Stripe (Settings → Communication preferences). Refunds, disputes and fraud warnings also appear at `/admin/billing`.
+- **Billing emails** come from `billing.promotello.com` (Settings → Emails → Your email domain), with support@promotello.com as the support email.
+- **Alerts:** dispute email notifications are on in Stripe (Settings → Communication preferences). Refunds, disputes and fraud warnings also appear at `/admin/billing`.
 
 ## Setting up an account
 
