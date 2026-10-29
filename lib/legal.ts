@@ -7,7 +7,10 @@ export const company = {
   registeredIn: "England and Wales",
   incorporated: "2026-10-27",
   address: "71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom",
+  // General enquiries, shown on the contact pages.
   email: "hello@promotello.com",
+  // Account, billing and refund help.
+  supportEmail: "support@promotello.com",
 };
 
 // For legal pages: "Promotello Ltd, a company registered in England and

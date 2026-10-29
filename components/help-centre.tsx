@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { company } from "@/lib/legal";
 
 export type HelpGuide = {
     id: string;
@@ -351,6 +352,13 @@ export default function HelpCentre({
                         Contact support
                         <FiArrowRight aria-hidden="true" />
                     </Button>
+
+                    <p className="mt-4 text-sm text-[#17233B]/70">
+                        Or email{" "}
+                        <a href={`mailto:${company.supportEmail}`} className="font-medium underline underline-offset-4">
+                            {company.supportEmail}
+                        </a>
+                    </p>
 
                     <p className="mt-6 text-sm text-[#17233B]/65">
                         <Link

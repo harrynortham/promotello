@@ -23,6 +23,13 @@ const legalLinks: FooterLink[] = [
     { label: "Cookie settings", href: "/legal/cookies#choices" },
 ];
 
+// Businesses are the ones who pay, so their footer also has the refund policy.
+const businessLegalLinks: FooterLink[] = [
+    ...legalLinks.slice(0, 2),
+    { label: "Refunds and cancellation", href: "/legal/refunds" },
+    ...legalLinks.slice(2),
+];
+
 const socialLinks = [
     { label: "X", network: "x", url: "https://x.com/promotello" },
     { label: "Facebook", network: "facebook", url: "https://www.facebook.com/promotello/" },
@@ -95,7 +102,7 @@ const marketingFooters = {
                     { label: "Contact", href: "/business/contact" },
                 ],
             },
-            { title: "Legal", links: legalLinks },
+            { title: "Legal", links: businessLegalLinks },
         ],
     },
 } satisfies Record<string, { homeHref: string; tagline: string; groups: { title: string; links: FooterLink[] }[] }>;
