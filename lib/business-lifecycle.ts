@@ -430,3 +430,34 @@ export async function sendTrialStartedEmail(stripeSubscriptionId: string) {
 
     return sendEmails(((emails ?? []) as string[]).map((to) => trialStartedEmail(business, details, to)));
 }
+
+// A day after someone signs up as a business without adding one (see
+// claim_business_signup_reminders). Sent once.
+export function businessSignupReminderEmail({ to, fullName }: { to: string; fullName: string | null }): Email {
+    const firstName = fullName?.trim().split(/\s+/)[0] || null;
+    const { html, text } = brandedEmail({
+        eyebrow: "Finish setting up",
+        title: firstName ? `${firstName}, your business is one step away` : "Your business is one step away",
+        paragraphs: [
+            "You've created your Promotello account, but haven't added your business yet. It takes a couple of minutes: your business name, what you do and where you are.",
+            "Then you can post your first offer, get a QR poster for your counter and start bringing in new customers. The Free plan costs nothing, for as long as you like.",
+            `If you'd like a hand, just reply to this email.`,
+        ],
+        action: { label: "Add my business", url: absoluteUrl("/onboarding") },
+        footer: "You're getting this because you signed up for a Promotello business account. This is the only reminder we'll send.",
+    });
+
+    return { to, subject: "Add your business to Promotello", html, text };
+}
+
+export async function sendBusinessSignupReminders() {
+    const { data, error } = await createAdminClient().rpc("claim_business_signup_reminders");
+
+    if (error) {
+        throw error;
+    }
+
+    const due = (data ?? []) as { email: string; full_name: string | null }[];
+
+    return sendEmails(due.map((row) => businessSignupReminderEmail({ to: row.email, fullName: row.full_name })));
+}

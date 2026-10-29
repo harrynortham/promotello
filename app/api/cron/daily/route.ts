@@ -1,5 +1,5 @@
 import { runAutomations } from "@/lib/automations";
-import { sendLifecycleEmails } from "@/lib/business-lifecycle";
+import { sendBusinessSignupReminders, sendLifecycleEmails } from "@/lib/business-lifecycle";
 import { sendDailySummaries } from "@/lib/business-notifications";
 import { submitRecentPosts } from "@/lib/indexnow";
 import { sendMonthlyReports } from "@/lib/monthly-report";
@@ -15,6 +15,11 @@ export async function GET(request: Request) {
 
     const automations = await runAutomations();
     const lifecycle = await sendLifecycleEmails();
+    // Logged, not thrown, so one failing job doesn't stop the rest.
+    const signupReminders = await sendBusinessSignupReminders().catch((error) => {
+        console.error("Daily job: business sign-up reminders failed", error);
+        return null;
+    });
     const dailySummaries = await sendDailySummaries();
     const { data: expiredPreviews } = await createAdminClient().rpc("delete_expired_business_previews");
     const indexNow = await submitRecentPosts().catch(() => ({ submitted: 0 }));
@@ -23,5 +28,5 @@ export async function GET(request: Request) {
     const ukDay = Number(new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone: "Europe/London" }).format(new Date()));
     const reports = ukDay === 1 ? await sendMonthlyReports() : null;
 
-    return Response.json({ automations, lifecycle, dailySummaries, expiredPreviews, indexNow, reports });
+    return Response.json({ automations, lifecycle, signupReminders, dailySummaries, expiredPreviews, indexNow, reports });
 }
