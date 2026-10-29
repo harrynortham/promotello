@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { sendLifecycleEmails } from "@/lib/business-lifecycle";
+import { alertNewBusiness } from "@/lib/business-review-emails";
 import { createClient } from "@/utils/supabase/server";
 
 // The signed-in visitor becomes the owner of the previewed business.
@@ -24,7 +25,12 @@ export async function claimPreview(formData: FormData) {
         redirect(`/business/preview/${token}?error=${encodeURIComponent(error?.message ?? "We couldn't claim this business.")}`);
     }
 
-    await sendLifecycleEmails(businessId).catch(() => undefined);
+    const { due } = await sendLifecycleEmails(businessId).catch(() => ({ due: 0 }));
+
+    // It stays hidden until an admin approves it, so let them know.
+    if (due > 0 && user.email) {
+        await alertNewBusiness(businessId, user.email, true).catch(() => undefined);
+    }
 
     redirect(`/business/${businessId}?welcome=1`);
 }

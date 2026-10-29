@@ -26,6 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/client";
 
+import { notifyBusinessReviewed } from "./actions";
+
 type Business = {
     id: string;
     name: string;
@@ -175,6 +177,10 @@ export default function AdminBusinessesPage() {
             setActiveBusinessId("");
             return;
         }
+
+        await notifyBusinessReviewed(businessId, decision).catch((notifyError) =>
+            console.error("Could not email the business", notifyError),
+        );
 
         setReviewAction(null);
         await loadBusinesses(search, page);
