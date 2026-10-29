@@ -253,7 +253,10 @@ async function syncSubscription(
       // Growth prices' lookup keys start with "growth" (see lib/billing.ts).
       tier: item?.price.lookup_key?.startsWith("growth") ? "growth" : "pro",
       current_period_end: toTimestamp(item?.current_period_end),
-      cancel_at_period_end: subscription.cancel_at_period_end,
+      // The portal cancels by setting cancel_at to the period end and
+      // leaves cancel_at_period_end false.
+      cancel_at_period_end:
+        subscription.cancel_at_period_end || subscription.cancel_at !== null,
       trial_end: toTimestamp(subscription.trial_end),
       canceled_at: toTimestamp(subscription.canceled_at),
       updated_at: new Date().toISOString(),
