@@ -95,3 +95,22 @@ export function voucherConfirmationEmail({
 
     return { to, subject: `Your voucher: ${discount} at ${businessName}`, html, text };
 }
+
+// Once, on a customer's first sign-in: after confirming their email, or
+// straight away with Google or Apple. Businesses get the business welcome
+// from onboarding instead (lib/business-lifecycle.ts).
+export function accountWelcomeEmail({ to, firstName }: { to: string; firstName: string | null }): Email {
+    const { html, text } = brandedEmail({
+        eyebrow: "Welcome to Promotello",
+        title: firstName ? `Welcome, ${firstName}` : "Welcome to Promotello",
+        paragraphs: [
+            "Your account is ready. Promotello is free for you: find offers from independent places near you, claim them in a tap and show your voucher at the till.",
+            "Follow the places you like to hear about their new offers first, and collect stamps on their loyalty cards every time you visit.",
+            "Everything you claim and collect is kept in your account, under My vouchers and Loyalty cards.",
+        ],
+        action: { label: "Find offers near you", url: absoluteUrl("/offers") },
+        footer: "You're getting this because you created a Promotello account.",
+    });
+
+    return { to, subject: "Welcome to Promotello", html, text };
+}

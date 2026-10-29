@@ -1,6 +1,10 @@
-import { NextResponse } from "next/server";
+import type { User } from "@supabase/supabase-js";
+import { after, NextResponse } from "next/server";
 
+import { accountWelcomeEmail } from "@/lib/account-emails";
+import { sendEmails } from "@/lib/email";
 import { safeNextPath } from "@/lib/redirects";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 const allowedDestinations = new Set([
@@ -28,9 +32,16 @@ export async function GET(request: Request) {
     try {
       const supabase = await createClient();
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
+        // Business sign-ups get the business welcome after onboarding, and
+        // invited team members are joining a business, not browsing offers.
+        if (!businessFlow && !next.startsWith("/invite/")) {
+          const user = data.user;
+          after(() => welcomeNewCustomer(user));
+        }
+
         return NextResponse.redirect(new URL(next, requestUrl.origin));
       }
     } catch {
@@ -58,4 +69,38 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.redirect(loginUrl);
+}
+
+// Accounts older than this when they first come through here signed up
+// before the welcome email existed, so they don't get one.
+const NEW_ACCOUNT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+async function welcomeNewCustomer(user: User) {
+  if (
+    !user.email ||
+    user.app_metadata?.welcomed_at ||
+    Date.now() - new Date(user.created_at).getTime() > NEW_ACCOUNT_WINDOW_MS
+  ) {
+    return;
+  }
+
+  try {
+    // Recorded before sending, so later sign-ins don't send it again.
+    // app_metadata merges, and users can't edit it themselves.
+    const { error } = await createAdminClient().auth.admin.updateUserById(user.id, {
+      app_metadata: { welcomed_at: new Date().toISOString() },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    const name =
+      user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.user_metadata?.given_name;
+    const firstName = typeof name === "string" ? name.trim().split(/\s+/)[0] || null : null;
+
+    await sendEmails([accountWelcomeEmail({ to: user.email, firstName })]);
+  } catch (error) {
+    console.error("Auth callback: welcome email failed", error);
+  }
 }
