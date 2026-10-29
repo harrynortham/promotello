@@ -64,10 +64,7 @@ async function CategoryGrid() {
 
                             <div className="absolute bottom-0 left-0 flex w-full items-end justify-between gap-4 p-6 text-white">
                                 <h2 className="text-3xl font-semibold tracking-tight">
-                                    <Link
-                                        href={`/categories/${group.slug}`}
-                                        className="after:absolute after:inset-0 focus-visible:outline-none"
-                                    >
+                                    <Link href={`/categories/${group.slug}`} className="hover:underline">
                                         {group.name}
                                     </Link>
                                 </h2>
@@ -77,6 +74,15 @@ async function CategoryGrid() {
                                 </span>
                             </div>
                         </div>
+
+                        {/* The whole tile opens the category. The name above is the
+                            link for keyboards and screen readers. */}
+                        <Link
+                            href={`/categories/${group.slug}`}
+                            aria-hidden="true"
+                            tabIndex={-1}
+                            className="absolute inset-0"
+                        />
 
                         <div className="flex flex-1 flex-col p-6">
                             {group.description && (
