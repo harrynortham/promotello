@@ -26,7 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { notifyFollowersOfApprovedOffer } from "./actions";
+import { notifyBusinessOfOfferReview, notifyFollowersOfApprovedOffer } from "./actions";
 
 type Offer = {
     id: string;
@@ -187,6 +187,10 @@ export default function AdminOffersPage() {
                 console.error("Could not email followers", notifyError),
             );
         }
+
+        await notifyBusinessOfOfferReview(offerId, decision).catch((notifyError) =>
+            console.error("Could not email the business", notifyError),
+        );
 
         setReviewAction(null);
         await loadOffers(search, page);

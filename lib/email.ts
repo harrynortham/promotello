@@ -18,6 +18,9 @@ function setting(value: string | undefined) {
 
 const replyTo = setting(process.env.EMAIL_REPLY_TO) ?? "hello@promotello.com";
 
+// Where contact-form messages and new sign-up alerts go.
+export const contactInbox = setting(process.env.CONTACT_EMAIL) ?? "support@promotello.com";
+
 export type Email = {
     to: string;
     subject: string;
@@ -46,7 +49,7 @@ function senderFor(from: string, senderName?: string) {
 }
 
 // Addresses that can never receive mail (test accounts, reserved domains).
-function isDeliverable(address: string) {
+export function isDeliverable(address: string) {
     return !/@([^@]+\.)?(test\.internal|internal|test|example|invalid|localhost)$|@example\.(com|org|net)$/i.test(address);
 }
 

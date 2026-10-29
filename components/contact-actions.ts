@@ -3,15 +3,13 @@
 import { createHash } from "crypto";
 import { z } from "zod";
 
-import { brandedEmail, sendEmails } from "@/lib/email";
+import { brandedEmail, contactInbox, sendEmails } from "@/lib/email";
 import { email, optionalText, requiredText } from "@/lib/validation";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Messages from the contact forms (/contact and /business/contact), sent
 // to the support inbox with the sender as reply-to, so you can just hit
 // Reply. Limited to 3 per email address per 30 minutes.
-
-const CONTACT_INBOX = process.env.CONTACT_EMAIL?.trim() || "support@promotello.com";
 
 const schema = z.object({
     audience: z.enum(["customer", "business"]),
@@ -68,7 +66,7 @@ export async function sendContactMessage(input: ContactInput): Promise<ContactRe
 
     const { sent, failed } = await sendEmails([
         {
-            to: CONTACT_INBOX,
+            to: contactInbox,
             subject: `${values.audience === "business" ? "Business enquiry" : "Contact"}: ${values.subject}`,
             html,
             text,

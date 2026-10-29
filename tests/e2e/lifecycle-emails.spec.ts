@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
 import { lifecycleEmail, type LifecycleDue } from "../../lib/business-lifecycle";
+import { businessReviewedEmail, newBusinessAlertEmail, offerReviewedEmail } from "../../lib/business-review-emails";
 import { STATE_PATH } from "../global-setup";
 
 // The setup and trial emails: what's due when, and that each is sent once.
@@ -66,6 +67,30 @@ test.describe("business setup and trial emails", () => {
         expect(lifecycleEmail({ ...nudge, details: { ...nudge.details, has_offer: true, has_loyalty: true, has_poster: true } }, "a@b.c")).toBeNull();
     });
 
+    test("the loyalty step offers a free business the Pro trial, and goes straight to loyalty on Pro", async () => {
+        await admin().from("businesses").update({ created_at: daysAgo(3) }).eq("id", businessId);
+
+        const [claimed] = await claim(businessId);
+        expect(claimed.kind).toBe("setup_nudge_1");
+        // With the offer done, the loyalty card is next.
+        const nudge = { ...claimed, details: { ...claimed.details, has_offer: true } };
+
+        const free = lifecycleEmail({ ...nudge, hasPro: false, approved: true }, "a@b.c")!;
+        expect(free.subject).toMatch(/^Start a loyalty card with a free Pro trial/);
+        expect(free.text).toContain(`/business/${businessId}/billing`);
+
+        const pro = lifecycleEmail({ ...nudge, hasPro: true, approved: true }, "a@b.c")!;
+        expect(pro.subject).toMatch(/^Set up your loyalty card/);
+        expect(pro.text).toContain(`/business/${businessId}/loyalty`);
+    });
+
+    test("the welcome email explains approval only while the business is waiting", async () => {
+        const [welcome] = await claim(businessId);
+
+        expect(lifecycleEmail({ ...welcome, hasPro: false, approved: false }, "a@b.c")!.text).toContain("we'll email you as soon as you're live");
+        expect(lifecycleEmail({ ...welcome, hasPro: false, approved: true }, "a@b.c")!.text).not.toContain("as soon as you're live");
+    });
+
     test("businesses that signed up long ago get no setup emails", async () => {
         await admin().from("businesses").update({ created_at: daysAgo(40) }).eq("id", businessId);
         expect(await claim(businessId)).toEqual([]);
@@ -87,5 +112,31 @@ test.describe("business setup and trial emails", () => {
         expect(email.subject).toMatch(/^Your Promotello trial ends on \d+ \w+$/);
         expect(email.text).toContain("carries on automatically");
         expect(await claim(businessId)).toEqual([]);
+    });
+});
+
+test.describe("approval emails", () => {
+    const business = { id: "b1", name: "Harbour Grind", slug: "harbour-grind" };
+    const offer = { id: "o1", title: "Free pastry with any coffee", slug: "free-pastry", business: { id: "b1", name: "Harbour Grind" } };
+
+    test("a business hears when it's live, or what to do if it wasn't approved", () => {
+        const live = businessReviewedEmail(business, "approved", "a@b.c");
+        expect(live.subject).toBe("Harbour Grind is live on Promotello");
+        expect(live.text).toContain("/businesses/harbour-grind");
+
+        const rejected = businessReviewedEmail(business, "rejected", "a@b.c");
+        expect(rejected.text).toContain("Reply to this email");
+    });
+
+    test("a business hears about each offer decision", () => {
+        expect(offerReviewedEmail(offer, "approved", "a@b.c").text).toContain("/offers/free-pastry");
+        expect(offerReviewedEmail(offer, "rejected", "a@b.c").text).toContain("/business/b1/offers");
+    });
+
+    test("the inbox hears about each new business", () => {
+        const alert = newBusinessAlertEmail({ name: "Harbour Grind", category: "Cafe", city: "Bristol" }, "owner@b.c", false);
+        expect(alert.subject).toBe("New business: Harbour Grind");
+        expect(alert.text).toContain("Harbour Grind (Cafe, Bristol) just signed up");
+        expect(alert.text).toContain("owner@b.c");
     });
 });
