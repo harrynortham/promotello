@@ -1,0 +1,925 @@
+<title>Promotello Brand Book</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an ink cover, then a two-column book — sticky chapter rail on the left, chapters on the right.
+   Deliberately single-theme: the book shows the brand on its own cream ground in every viewer theme. */
+:root{
+  color-scheme: light;
+  --coral:#FF593F; --coral-deep:#C93A24; --coral-tint:#FFE0D5;
+  --ink:#17233B; --ink-70:#5D6576; --ink-45:#949AA6; --ink-12:#DDDCD9;
+  --cream:#FFF8F0; --paper:#FFFFFF; --cream-2:#F7EDE2;
+  --ok:#1F7A55; --ok-bg:#DDF0E6; --no:#B42318; --no-bg:#FCE4E1; --warn:#8A5A00; --warn-bg:#FBEFD3;
+  --f-sans:"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r-sm:.5rem; --r:.625rem; --r-lg:1rem; --r-xl:1.5rem;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--cream);color:var(--ink);font-family:var(--f-sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;text-wrap:balance;letter-spacing:-.02em;line-height:1.1}
+p{margin:0}
+a{color:var(--ink);text-decoration-color:var(--coral);text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--coral);outline-offset:3px;border-radius:4px}
+.mono{font-family:var(--f-mono)}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-70)}
+.lede{font-size:1.1875rem;line-height:1.6;color:var(--ink);max-width:62ch}
+.body{max-width:65ch;color:var(--ink-70)}
+.body strong{color:var(--ink)}
+svg.logo{display:block;width:100%;height:auto}
+
+/* ---------- Cover ---------- */
+.cover{background:var(--ink);color:var(--cream);padding-block:clamp(28px,5vw,56px) clamp(40px,7vw,88px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative;overflow:hidden}
+.cover-in{max-width:1200px;margin:0 auto;display:grid;gap:clamp(40px,7vw,96px)}
+.cover-top{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cover .eyebrow{color:#AEB4C0}
+.cover-logo{max-width:780px;--sym:var(--coral);--wm:var(--cream)}
+.cover-foot{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;align-items:end}
+.cover-foot h1{font-size:clamp(2.5rem,6.4vw,5rem);font-weight:800;letter-spacing:-.04em}
+.cover-foot h1 span{color:var(--coral)}
+.cover-foot p{color:#C9CDD5;max-width:44ch}
+.cover-toc{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 20px;font-size:.9375rem}
+.cover-toc a{color:var(--cream);text-decoration:none;display:flex;gap:10px;padding:4px 0;border-bottom:1px solid rgba(255,248,240,.14)}
+.cover-toc a:hover{color:var(--coral)}
+.cover-toc .n{font-family:var(--f-mono);font-size:.75rem;color:var(--coral);padding-top:3px}
+.cover-sym{position:absolute;right:-60px;bottom:-120px;width:420px;color:rgba(255,89,63,.07);pointer-events:none}
+@media (max-width:640px){.cover-sym{display:none}}
+
+/* ---------- Book layout ---------- */
+.book{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 96px}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:48px}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.rail a{display:flex;gap:10px;padding:7px 10px;border-radius:var(--r-sm);text-decoration:none;color:var(--ink-70);font-size:.875rem;font-weight:500}
+.rail a .n{font-family:var(--f-mono);font-size:.6875rem;padding-top:3px;color:var(--ink-45)}
+.rail a:hover{color:var(--ink);background:var(--cream-2)}
+.rail a.on{color:var(--ink);background:var(--paper);box-shadow:0 0 0 1px var(--ink-12)}
+.rail a.on .n{color:var(--coral)}
+.rail-sym{width:28px;color:var(--coral);margin:0 0 20px 10px}
+@media (max-width:1000px){.book{grid-template-columns:minmax(0,1fr);gap:0}.rail{display:none}}
+
+.chapter{padding-top:72px;display:grid;gap:40px;scroll-margin-top:16px}
+.chapter + .chapter{border-top:1px solid var(--ink-12);margin-top:72px}
+.ch-head{display:grid;gap:14px}
+.ch-num{font-family:var(--f-mono);font-size:.8125rem;color:var(--coral);letter-spacing:.08em}
+.ch-head h2{font-size:clamp(2rem,4.4vw,3.25rem);font-weight:800;letter-spacing:-.035em}
+.sub{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+.chapter,.ch-head{grid-template-columns:minmax(0,1fr)}
+main{min-width:0}
+.sub > h3{font-size:1.375rem;font-weight:700;letter-spacing:-.02em}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:20px}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:16px}
+.cell{min-width:0}
+
+/* plates: framed specimens */
+.plate{border-radius:var(--r-lg);display:grid;place-items:center;padding:clamp(24px,5vw,56px);min-height:200px;position:relative}
+.plate.cream{background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink-12)}
+.plate.ink{background:var(--ink)}
+.plate.coral{background:var(--coral)}
+.plate.photo{background:
+  radial-gradient(120% 90% at 20% 10%, #C98B5E 0%, transparent 55%),
+  radial-gradient(90% 80% at 85% 90%, #5E7B5A 0%, transparent 60%),
+  linear-gradient(135deg,#8E6A4C,#3C4A3A)}
+.cap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:.875rem}
+.cap b{font-weight:600}
+.cap span{font-family:var(--f-mono);font-size:.75rem;color:var(--ink-70);padding-top:2px}
+
+/* ---------- 01 Brand ---------- */
+.statement{font-size:clamp(1.75rem,3.6vw,2.75rem);font-weight:700;letter-spacing:-.03em;line-height:1.15;max-width:22ch}
+.statement em{font-style:normal;color:var(--coral)}
+.sides{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+.side{border-radius:var(--r-lg);padding:28px;display:grid;gap:14px;align-content:start}
+.side.c{background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink-12)}
+.side.b{background:var(--ink);color:var(--cream)}
+.side.b .eyebrow{color:#AEB4C0}
+.side h4{font-size:1.5rem;font-weight:700}
+.side p{color:inherit;opacity:.82}
+.side ul{margin:0;padding-left:1.1rem;display:grid;gap:4px}
+.side li::marker{color:var(--coral)}
+.values{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:0;border-top:2px solid var(--ink)}
+.value{padding:20px 20px 20px 0;display:grid;gap:8px;align-content:start;border-bottom:1px solid var(--ink-12)}
+.value h4{font-size:1.125rem;font-weight:700}
+.value p{color:var(--ink-70);font-size:.9375rem}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px;counter-reset:s}
+.step{background:var(--paper);border-radius:var(--r-lg);padding:20px;box-shadow:inset 0 0 0 1px var(--ink-12);display:grid;gap:6px}
+.step .k{font-family:var(--f-mono);font-size:.75rem;color:var(--coral)}
+.step b{font-size:1.0625rem}
+.step p{font-size:.9375rem;color:var(--ink-70)}
+
+/* ---------- 02 Logo ---------- */
+.concept{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:40px;align-items:center}
+@media (max-width:700px){.concept{grid-template-columns:minmax(0,1fr)}}
+.concept-sym{color:var(--coral);max-width:260px}
+.anatomy{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.anatomy li{display:grid;grid-template-columns:28px 1fr;gap:12px;font-size:.9375rem;color:var(--ink-70)}
+.anatomy li b{color:var(--ink);display:block}
+.dot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:.75rem;background:var(--ink);color:var(--cream)}
+.lockup-h{width:min(100%,560px)}
+.lockup-s{width:min(100%,280px)}
+.lockup-sym{width:min(100%,120px)}
+.lockup-w{width:min(100%,420px)}
+.misuse{position:relative}
+.misuse .plate{min-height:150px;padding:28px}
+.misuse .x{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:var(--no);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.875rem;line-height:1}
+.min-row{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end}
+.min-row figure{margin:0;display:grid;gap:10px;justify-items:start}
+.min-row figcaption{font-size:.8125rem;color:var(--ink-70)}
+.min-row figcaption b{color:var(--ink);font-family:var(--f-mono);font-weight:500}
+
+/* ---------- 03 Colour ---------- */
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:20px}
+.sw{border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--ink-12);background:var(--paper)}
+.sw-chip{height:180px;padding:20px;display:flex;align-items:flex-end;font-size:1.75rem;font-weight:800;letter-spacing:-.03em}
+.sw-data{padding:16px 20px 20px;display:grid;gap:8px}
+.sw-data p{font-size:.875rem;color:var(--ink-70)}
+.kv{display:grid;grid-template-columns:56px 1fr auto;gap:6px 10px;font-family:var(--f-mono);font-size:.8125rem;align-items:center}
+.kv dt{color:var(--ink-45);margin:0}
+.kv dd{margin:0}
+.copy{font:inherit;font-family:var(--f-sans);font-size:.75rem;font-weight:600;border:1px solid var(--ink-12);background:var(--cream);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.copy:hover{border-color:var(--ink)}
+.ratio{display:flex;height:72px;border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--ink-12)}
+.ratio div{display:flex;align-items:flex-end;padding:10px 14px;font-family:var(--f-mono);font-size:.75rem}
+.support{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:14px}
+.sp{display:grid;gap:8px}
+.sp i{display:block;height:64px;border-radius:var(--r);box-shadow:inset 0 0 0 1px rgba(23,35,59,.08)}
+.sp b{font-size:.9375rem}
+.sp span{font-family:var(--f-mono);font-size:.75rem;color:var(--ink-70)}
+.sp p{font-size:.8125rem;color:var(--ink-70)}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r-lg);box-shadow:inset 0 0 0 1px var(--ink-12);background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:.9375rem}
+th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--ink-12);vertical-align:middle}
+th{font-family:var(--f-mono);font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-70);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.875rem}
+.pair{display:inline-flex;align-items:center;justify-content:center;width:64px;height:36px;border-radius:var(--r-sm);font-weight:700;box-shadow:inset 0 0 0 1px rgba(23,35,59,.08)}
+.pill{display:inline-block;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.no{background:var(--no-bg);color:var(--no)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+
+/* ---------- 04 Type ---------- */
+.specimen{background:var(--paper);border-radius:var(--r-xl);box-shadow:inset 0 0 0 1px var(--ink-12);padding:clamp(24px,4vw,48px);display:grid;gap:28px}
+.spec-big{font-size:clamp(4rem,12vw,9rem);font-weight:800;letter-spacing:-.05em;line-height:.9}
+.spec-big span{color:var(--coral)}
+.weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:16px;border-top:1px solid var(--ink-12);padding-top:20px}
+.weights div{display:grid;gap:2px}
+.weights b{font-size:1.75rem;letter-spacing:-.02em;line-height:1.2}
+.weights span{font-family:var(--f-mono);font-size:.75rem;color:var(--ink-70)}
+.glyphs{font-size:1.25rem;letter-spacing:.02em;color:var(--ink-70);word-break:break-all}
+.scale{display:grid;gap:0;border-top:2px solid var(--ink)}
+.scale-row{display:grid;grid-template-columns:120px minmax(0,1fr) 170px;gap:20px;align-items:baseline;padding:18px 0;border-bottom:1px solid var(--ink-12)}
+.scale-row .t{font-family:var(--f-mono);font-size:.75rem;color:var(--ink-70)}
+.scale-row .m{font-family:var(--f-mono);font-size:.75rem;color:var(--ink-45);text-align:right}
+@media (max-width:640px){.scale-row{grid-template-columns:minmax(0,1fr)}.scale-row .m{text-align:left}}
+.mono-spec{background:var(--ink);color:var(--cream);border-radius:var(--r-xl);padding:clamp(24px,4vw,40px);display:grid;gap:16px}
+.mono-spec .code{font-family:var(--f-mono);font-size:clamp(1.75rem,5vw,3rem);letter-spacing:.12em;color:var(--coral)}
+.mono-spec p{color:#C9CDD5;max-width:60ch}
+.rules{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px 28px}
+.rules li{display:grid;grid-template-columns:18px 1fr;gap:10px;font-size:.9375rem;color:var(--ink-70)}
+.rules li::before{content:"";width:8px;height:8px;margin-top:8px;border-radius:2px;background:var(--coral)}
+.rules b{color:var(--ink)}
+
+/* ---------- 05 Voice ---------- */
+.traits{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+.trait{background:var(--paper);border-radius:var(--r-lg);box-shadow:inset 0 0 0 1px var(--ink-12);padding:24px;display:grid;gap:14px;align-content:start}
+.trait h4{font-size:1.25rem;font-weight:700}
+.trait > p{color:var(--ink-70);font-size:.9375rem}
+.say{display:grid;gap:8px;font-size:.9375rem}
+.say div{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:10px 12px;border-radius:var(--r-sm)}
+.say .y{background:var(--ok-bg)}
+.say .n{background:var(--no-bg)}
+.say em{font-style:normal;font-family:var(--f-mono);font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;padding-top:3px}
+.say .y em{color:var(--ok)}
+.say .n em{color:var(--no)}
+.say .n span{color:var(--ink-70);text-decoration:line-through;text-decoration-color:rgba(180,35,24,.45)}
+.audience{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0;border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--ink-12)}
+.audience > div{padding:24px;display:grid;gap:12px;align-content:start}
+.audience .cu{background:var(--paper)}
+.audience .bu{background:var(--cream-2)}
+.audience q{font-size:1.25rem;font-weight:700;letter-spacing:-.015em;line-height:1.3;quotes:none}
+.audience p{font-size:.9375rem;color:var(--ink-70)}
+
+/* ---------- 06 Product ---------- */
+.ui-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{font:inherit;font-weight:700;border:0;border-radius:var(--r);padding:12px 20px;cursor:pointer;line-height:1.2}
+.btn.primary{background:var(--coral);color:#fff;font-size:1.1875rem}
+.btn.primary-ink{background:var(--coral);color:var(--ink);font-size:1rem}
+.btn.dark{background:var(--ink);color:var(--cream);font-size:1rem}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);font-size:1rem}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.875rem;font-weight:600;padding:7px 14px;border-radius:999px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink-12)}
+.chip.on{background:var(--ink);color:var(--cream);box-shadow:none}
+.chip.tag{background:var(--coral-tint);color:var(--coral-deep);box-shadow:none;font-size:.75rem;padding:4px 10px}
+.mockups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px;align-items:start}
+.offer{background:var(--paper);border-radius:var(--r-xl);overflow:hidden;box-shadow:0 1px 0 var(--ink-12),0 12px 32px -18px rgba(23,35,59,.35)}
+.offer-img{height:150px;background:
+  radial-gradient(70% 90% at 30% 30%,#E8B98F 0%,transparent 60%),
+  radial-gradient(60% 70% at 80% 80%,#9C5B3A 0%,transparent 65%),
+  linear-gradient(135deg,#D9A57A,#7E4A30);position:relative}
+.offer-img .chip.tag{position:absolute;left:14px;top:14px;background:var(--cream)}
+.offer-b{padding:18px;display:grid;gap:8px}
+.offer-b .biz{font-size:.8125rem;color:var(--ink-70);display:flex;gap:6px;align-items:center}
+.offer-b h4{font-size:1.375rem;font-weight:800;letter-spacing:-.025em}
+.offer-b .meta{display:flex;justify-content:space-between;gap:8px;font-size:.8125rem;color:var(--ink-70);font-variant-numeric:tabular-nums}
+.offer-b .meta b{color:var(--coral-deep)}
+.voucher{background:var(--ink);color:var(--cream);border-radius:var(--r-xl);padding:22px;display:grid;gap:16px;justify-items:center;text-align:center;position:relative}
+.voucher .sym{width:22px;color:var(--coral);justify-self:start}
+.voucher .qr{background:var(--cream);padding:12px;border-radius:var(--r);width:180px;max-width:100%}
+.voucher .qr svg{display:block;width:100%;height:auto}
+.voucher h4{font-size:1.25rem;font-weight:700}
+.voucher .code{font-family:var(--f-mono);letter-spacing:.14em;color:var(--coral);font-size:1.125rem}
+.voucher small{color:#AEB4C0;font-size:.8125rem}
+.perf{width:100%;border-top:2px dashed rgba(255,248,240,.2)}
+.stamp{background:var(--paper);border-radius:var(--r-xl);padding:22px;box-shadow:0 1px 0 var(--ink-12),0 12px 32px -18px rgba(23,35,59,.35);display:grid;gap:16px}
+.stamp-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.stamp-h h4{font-size:1.125rem;font-weight:700}
+.stamp-h span{font-family:var(--f-mono);font-size:.8125rem;color:var(--ink-70)}
+.dots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.dots i{aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ink-12);display:grid;place-items:center;max-width:100%}
+.dots i.f{background:var(--coral);box-shadow:none;color:var(--cream)}
+.dots i.f svg{width:46%}
+.dots i.g{box-shadow:inset 0 0 0 2px var(--coral);color:var(--coral);font-size:.6875rem;font-weight:800}
+.stamp p{font-size:.875rem;color:var(--ink-70)}
+.spec-list{display:grid;gap:10px;font-size:.875rem;color:var(--ink-70)}
+.spec-list b{color:var(--ink)}
+.radii{display:flex;flex-wrap:wrap;gap:16px}
+.radii div{display:grid;gap:6px;justify-items:center;font-family:var(--f-mono);font-size:.75rem;color:var(--ink-70)}
+.radii i{width:72px;height:72px;background:var(--paper);box-shadow:inset 0 0 0 2px var(--ink)}
+.callout{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--warn-bg);border-radius:var(--r-lg);padding:18px 20px;font-size:.9375rem}
+.callout b{color:var(--ink)}
+.callout .ic{width:28px;height:28px;border-radius:50%;background:var(--warn);color:#fff;display:grid;place-items:center;font-weight:800}
+
+/* ---------- 07 Applications ---------- */
+.apps{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px}
+.apps > .poster-cell{grid-column:span 5}
+.apps > .right{grid-column:span 7;display:grid;gap:24px;align-content:start}
+@media (max-width:860px){.apps > .poster-cell,.apps > .right{grid-column:1 / -1}}
+.poster{aspect-ratio:210/297;max-width:100%;background:var(--ink);color:var(--cream);border-radius:6px;padding:9% 9% 7%;display:flex;flex-direction:column;gap:5%;box-shadow:0 30px 60px -30px rgba(23,35,59,.55);container-type:inline-size}
+.poster .p-top{display:flex;justify-content:space-between;align-items:center}
+.poster .p-top svg{width:42%}
+.poster .p-tag{font-family:var(--f-mono);font-size:3.2cqw;letter-spacing:.12em;text-transform:uppercase;color:#AEB4C0}
+.poster h4{font-size:11.5cqw;font-weight:800;letter-spacing:-.045em;line-height:.95}
+.poster h4 span{color:var(--coral)}
+.poster .p-qr{background:var(--cream);border-radius:4cqw;padding:5cqw;width:56%;margin-top:auto}
+.poster .p-qr svg{width:100%;height:auto;display:block}
+.poster .p-foot{display:flex;justify-content:space-between;gap:8px;font-size:3.4cqw;color:#C9CDD5}
+.poster .p-foot b{color:var(--cream)}
+.social-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:24px}
+.social{aspect-ratio:1;border-radius:var(--r-lg);background:var(--coral);color:var(--ink);padding:9%;display:flex;flex-direction:column;justify-content:space-between;container-type:inline-size;overflow:hidden;position:relative}
+.social .s-big{font-size:15cqw;font-weight:800;letter-spacing:-.05em;line-height:.92}
+.social .s-small{font-size:5cqw;font-weight:600}
+.social .s-logo{width:48%;--sym:var(--ink);--wm:var(--ink)}
+.social.s2{background:var(--cream-2);color:var(--ink)}
+.social.s2 .s-big span{color:var(--coral)}
+.social.s2 .s-logo{--sym:var(--coral);--wm:var(--ink)}
+.phone{background:linear-gradient(160deg,#2C3B5A,#17233B 60%);border-radius:var(--r-xl);padding:28px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px 14px;align-content:start}
+.phone .ico{display:grid;gap:6px;justify-items:center;font-size:.6875rem;color:#E4E7EC}
+.phone .ico i{width:100%;max-width:60px;aspect-ratio:1;border-radius:22%;background:rgba(255,255,255,.12);display:block}
+.phone .ico.me i{background:var(--coral);display:grid;place-items:center;color:var(--cream)}
+.phone .ico.me i svg{width:58%}
+.email{background:var(--paper);border-radius:var(--r-lg);box-shadow:inset 0 0 0 1px var(--ink-12);overflow:hidden}
+.email-h{padding:12px 18px;border-bottom:1px solid var(--ink-12);font-size:.8125rem;color:var(--ink-70);display:grid;gap:2px}
+.email-h b{color:var(--ink)}
+.email-b{padding:24px 22px;display:grid;gap:14px;max-width:460px}
+.email-b .lg{width:150px;--sym:var(--coral);--wm:var(--ink)}
+.email-b h4{font-size:1.375rem;font-weight:800;letter-spacing:-.02em}
+.email-b p{font-size:.9375rem;color:var(--ink-70)}
+.email-b small{font-size:.75rem;color:var(--ink-45)}
+
+/* ---------- 08 Files ---------- */
+.files td:first-child{font-family:var(--f-mono);font-size:.8125rem;white-space:nowrap}
+.tokens{background:var(--ink);color:#E4E7EC;border-radius:var(--r-lg);padding:20px 22px;font-family:var(--f-mono);font-size:.8125rem;line-height:1.7;overflow-x:auto;margin:0;position:relative}
+.tokens .k{color:#8FA3C7}.tokens .v{color:var(--coral)}
+.tokens-wrap{position:relative}
+.tokens-wrap .copy{position:absolute;top:12px;right:12px;background:rgba(255,248,240,.1);color:var(--cream);border-color:rgba(255,248,240,.2)}
+
+footer.end{background:var(--ink);color:#AEB4C0;padding-block:40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+footer.end > div{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;gap:16px 40px;justify-content:space-between;align-items:center;font-size:.875rem}
+footer.end svg{width:150px;--sym:var(--coral);--wm:var(--cream)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:10px 16px;border-radius:999px;font-size:.875rem;font-weight:600}
+</style>
+
+<!-- Logo geometry, taken from the approved vector masters (horizontal primary). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="sym" viewBox="0 0 340 370"><path transform="translate(-88 -98)" fill="currentColor" fill-rule="evenodd" d="M238 210 L238 169 C238 140 257 119 283 129 L343 155 C378 172 399 191 399 222 L399 305 C399 331 383 347 355 359 L238 399 L238 336 C238 310 258 296 284 284 L307 273 C334 260 334 249 307 235 Z M118 440 L118 313 C118 283 138 264 164 249 C187 236 213 226 238 219 L238 286 C238 307 224 318 202 330 C179 343 169 352 169 371 L169 397 C169 421 146 440 118 440 Z"/></symbol>
+    <symbol id="word" viewBox="0 0 1085 266"><path transform="translate(-393 -175)" fill="currentColor" fill-rule="evenodd" d="M419 414 L419 311 C419 277.31 446.31 250 480 250 C513.69 250 541 277.31 541 311 C541 344.69 513.69 372 480 372 C470 372 463 370 455 366 L455 382 C455 400 440 414 423 414 Z M455 311 A25 25 0 1 0 505 311 A25 25 0 1 0 455 311 Z M547 370 L547 311 C547 276 569 250 598 250 L624 250 L624 267 C624 280 615 286 603 286 L593 286 C586 286 583 294 583 306 L583 370 Z M 620.0 311 A 60.5 60.5 0 1 0 741.0 311 A 60.5 60.5 0 1 0 620.0 311 Z M 655.5 311 A 25 25 0 1 0 705.5 311 A 25 25 0 1 0 655.5 311 Z M746 370 L746 309 C746 275 765 250 793 250 C806 250 818 254 826.5 262 C837 254 850 250 863 250 C891 250 907 273 907 307 L907 370 L871 370 L871 306 C871 293 865 286 857.5 286 C850 286 844.5 293 844.5 306 L844.5 370 L808.5 370 L808.5 306 C808.5 293 802.5 286 795 286 C787 286 782 294 782 306 L782 370 Z M 911.0 311 A 60.5 60.5 0 1 0 1032.0 311 A 60.5 60.5 0 1 0 911.0 311 Z M 946.5 311 A 25 25 0 1 0 996.5 311 A 25 25 0 1 0 946.5 311 Z M1035 227 L1062 208 C1070 220 1072 232 1072 250 L1094 250 C1104 250 1109 255 1109 265 L1109 275 C1109 282 1103 286 1094 286 L1072 286 L1072 311 C1072 330 1085 338 1109 338 L1109 372 L1095 372 C1058 372 1035 351 1035 313 Z M1232 300 C1227 270 1205 250 1172 250 C1138.31 250 1111 277.31 1111 311 C1111 344.69 1138.31 372 1172 372 C1201 372 1225 352 1232 321 L1195 321 C1189 330 1180 334 1171 334 C1161 334 1153 330 1148 323 C1180 317 1210 308 1232 300 Z M1147 292 C1148 280 1158 272 1170 272 C1180 272 1188 277 1193 283 Z M1239 370 L1239 239 C1239 217 1254 204 1275 204 L1275 370 Z M1285 370 L1285 239 C1285 217 1300 204 1321 204 L1321 370 Z M 1328 311 A 61 61 0 1 0 1450 311 A 61 61 0 1 0 1328 311 Z M 1364 311 A 25 25 0 1 0 1414 311 A 25 25 0 1 0 1364 311 Z"/></symbol>
+    <symbol id="lockup" viewBox="0 0 1406 374">
+      <path transform="translate(-80 -96)" style="fill:var(--sym,#FF593F)" fill-rule="evenodd" d="M238 210 L238 169 C238 140 257 119 283 129 L343 155 C378 172 399 191 399 222 L399 305 C399 331 383 347 355 359 L238 399 L238 336 C238 310 258 296 284 284 L307 273 C334 260 334 249 307 235 Z M118 440 L118 313 C118 283 138 264 164 249 C187 236 213 226 238 219 L238 286 C238 307 224 318 202 330 C179 343 169 352 169 371 L169 397 C169 421 146 440 118 440 Z"/>
+      <path transform="translate(-80 -96)" style="fill:var(--wm,#17233B)" fill-rule="evenodd" d="M419 414 L419 311 C419 277.31 446.31 250 480 250 C513.69 250 541 277.31 541 311 C541 344.69 513.69 372 480 372 C470 372 463 370 455 366 L455 382 C455 400 440 414 423 414 Z M455 311 A25 25 0 1 0 505 311 A25 25 0 1 0 455 311 Z M547 370 L547 311 C547 276 569 250 598 250 L624 250 L624 267 C624 280 615 286 603 286 L593 286 C586 286 583 294 583 306 L583 370 Z M 620.0 311 A 60.5 60.5 0 1 0 741.0 311 A 60.5 60.5 0 1 0 620.0 311 Z M 655.5 311 A 25 25 0 1 0 705.5 311 A 25 25 0 1 0 655.5 311 Z M746 370 L746 309 C746 275 765 250 793 250 C806 250 818 254 826.5 262 C837 254 850 250 863 250 C891 250 907 273 907 307 L907 370 L871 370 L871 306 C871 293 865 286 857.5 286 C850 286 844.5 293 844.5 306 L844.5 370 L808.5 370 L808.5 306 C808.5 293 802.5 286 795 286 C787 286 782 294 782 306 L782 370 Z M 911.0 311 A 60.5 60.5 0 1 0 1032.0 311 A 60.5 60.5 0 1 0 911.0 311 Z M 946.5 311 A 25 25 0 1 0 996.5 311 A 25 25 0 1 0 946.5 311 Z M1035 227 L1062 208 C1070 220 1072 232 1072 250 L1094 250 C1104 250 1109 255 1109 265 L1109 275 C1109 282 1103 286 1094 286 L1072 286 L1072 311 C1072 330 1085 338 1109 338 L1109 372 L1095 372 C1058 372 1035 351 1035 313 Z M1232 300 C1227 270 1205 250 1172 250 C1138.31 250 1111 277.31 1111 311 C1111 344.69 1138.31 372 1172 372 C1201 372 1225 352 1232 321 L1195 321 C1189 330 1180 334 1171 334 C1161 334 1153 330 1148 323 C1180 317 1210 308 1232 300 Z M1147 292 C1148 280 1158 272 1170 272 C1180 272 1188 277 1193 283 Z M1239 370 L1239 239 C1239 217 1254 204 1275 204 L1275 370 Z M1285 370 L1285 239 C1285 217 1300 204 1321 204 L1321 370 Z M 1328 311 A 61 61 0 1 0 1450 311 A 61 61 0 1 0 1328 311 Z M 1364 311 A 25 25 0 1 0 1414 311 A 25 25 0 1 0 1364 311 Z"/>
+    </symbol>
+    <symbol id="stacked" viewBox="0 0 1090 645">
+      <path transform="translate(282 -96)" style="fill:var(--sym,#FF593F)" fill-rule="evenodd" d="M238 210 L238 169 C238 140 257 119 283 129 L343 155 C378 172 399 191 399 222 L399 305 C399 331 383 347 355 359 L238 399 L238 336 C238 310 258 296 284 284 L307 273 C334 260 334 249 307 235 Z M118 440 L118 313 C118 283 138 264 164 249 C187 236 213 226 238 219 L238 286 C238 307 224 318 202 330 C179 343 169 352 169 371 L169 397 C169 421 146 440 118 440 Z"/>
+      <path transform="translate(-391 195)" style="fill:var(--wm,#17233B)" fill-rule="evenodd" d="M419 414 L419 311 C419 277.31 446.31 250 480 250 C513.69 250 541 277.31 541 311 C541 344.69 513.69 372 480 372 C470 372 463 370 455 366 L455 382 C455 400 440 414 423 414 Z M455 311 A25 25 0 1 0 505 311 A25 25 0 1 0 455 311 Z M547 370 L547 311 C547 276 569 250 598 250 L624 250 L624 267 C624 280 615 286 603 286 L593 286 C586 286 583 294 583 306 L583 370 Z M 620.0 311 A 60.5 60.5 0 1 0 741.0 311 A 60.5 60.5 0 1 0 620.0 311 Z M 655.5 311 A 25 25 0 1 0 705.5 311 A 25 25 0 1 0 655.5 311 Z M746 370 L746 309 C746 275 765 250 793 250 C806 250 818 254 826.5 262 C837 254 850 250 863 250 C891 250 907 273 907 307 L907 370 L871 370 L871 306 C871 293 865 286 857.5 286 C850 286 844.5 293 844.5 306 L844.5 370 L808.5 370 L808.5 306 C808.5 293 802.5 286 795 286 C787 286 782 294 782 306 L782 370 Z M 911.0 311 A 60.5 60.5 0 1 0 1032.0 311 A 60.5 60.5 0 1 0 911.0 311 Z M 946.5 311 A 25 25 0 1 0 996.5 311 A 25 25 0 1 0 946.5 311 Z M1035 227 L1062 208 C1070 220 1072 232 1072 250 L1094 250 C1104 250 1109 255 1109 265 L1109 275 C1109 282 1103 286 1094 286 L1072 286 L1072 311 C1072 330 1085 338 1109 338 L1109 372 L1095 372 C1058 372 1035 351 1035 313 Z M1232 300 C1227 270 1205 250 1172 250 C1138.31 250 1111 277.31 1111 311 C1111 344.69 1138.31 372 1172 372 C1201 372 1225 352 1232 321 L1195 321 C1189 330 1180 334 1171 334 C1161 334 1153 330 1148 323 C1180 317 1210 308 1232 300 Z M1147 292 C1148 280 1158 272 1170 272 C1180 272 1188 277 1193 283 Z M1239 370 L1239 239 C1239 217 1254 204 1275 204 L1275 370 Z M1285 370 L1285 239 C1285 217 1300 204 1321 204 L1321 370 Z M 1328 311 A 61 61 0 1 0 1450 311 A 61 61 0 1 0 1328 311 Z M 1364 311 A 25 25 0 1 0 1414 311 A 25 25 0 1 0 1364 311 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="cover" id="top">
+  <svg class="cover-sym" viewBox="0 0 340 370" aria-hidden="true"><use href="#sym"/></svg>
+  <div class="cover-in">
+    <div class="cover-top">
+      <span class="eyebrow">Brand book · Edition 1.0</span>
+      <span class="eyebrow">October 2026 · Promotello Ltd</span>
+    </div>
+    <svg class="logo cover-logo" viewBox="0 0 1406 374" role="img" aria-label="Promotello"><use href="#lockup"/></svg>
+    <div class="cover-foot">
+      <div style="display:grid;gap:16px">
+        <h1>How Promotello looks, sounds and shows up<span>.</span></h1>
+        <p>The rules for our logo, colour, type and voice, so every poster, screen and email feels like it came from the same local friend.</p>
+      </div>
+      <ol class="cover-toc">
+        <li><a href="#brand"><span class="n">01</span>The brand</a></li>
+        <li><a href="#logo"><span class="n">02</span>Logo</a></li>
+        <li><a href="#colour"><span class="n">03</span>Colour</a></li>
+        <li><a href="#type"><span class="n">04</span>Typography</a></li>
+        <li><a href="#voice"><span class="n">05</span>Voice</a></li>
+        <li><a href="#product"><span class="n">06</span>In the product</a></li>
+        <li><a href="#applications"><span class="n">07</span>Applications</a></li>
+        <li><a href="#files"><span class="n">08</span>Files &amp; tokens</a></li>
+      </ol>
+    </div>
+  </div>
+</header>
+
+<div class="book">
+  <nav class="rail" aria-label="Chapters">
+    <svg class="rail-sym" viewBox="0 0 340 370" aria-hidden="true"><use href="#sym"/></svg>
+    <ol>
+      <li><a href="#brand"><span class="n">01</span>The brand</a></li>
+      <li><a href="#logo"><span class="n">02</span>Logo</a></li>
+      <li><a href="#colour"><span class="n">03</span>Colour</a></li>
+      <li><a href="#type"><span class="n">04</span>Typography</a></li>
+      <li><a href="#voice"><span class="n">05</span>Voice</a></li>
+      <li><a href="#product"><span class="n">06</span>In the product</a></li>
+      <li><a href="#applications"><span class="n">07</span>Applications</a></li>
+      <li><a href="#files"><span class="n">08</span>Files &amp; tokens</a></li>
+    </ol>
+  </nav>
+
+  <main>
+  <!-- 01 -->
+  <section class="chapter" id="brand">
+    <div class="ch-head">
+      <span class="ch-num">01 — THE BRAND</span>
+      <h2>A reason to visit, and a reason to come back.</h2>
+    </div>
+    <p class="statement">Promotello helps independent businesses turn <em>first-time visitors</em> into <em>regulars</em>.</p>
+    <p class="lede">We give local cafés, shops, barbers, studios and stays simple tools to get noticed and bring people back: a directory profile, offers people claim on their phone, stamp cards that live in a pocket that never gets lost, and QR posters for the window. For customers, it's Bristol's local offers in one place.</p>
+
+    <div class="sub">
+      <h3>Two audiences, one brand</h3>
+      <div class="sides">
+        <div class="side c">
+          <span class="eyebrow">Customers · promotello.com</span>
+          <h4>Save on the places you love.</h4>
+          <p>Locals who like independent places and a good deal. They browse by neighbourhood and category, claim an offer in seconds and show a code at the till. No app to download.</p>
+          <ul><li>Find something good on their doorstep</li><li>Keep vouchers and stamp cards on their phone</li><li>Hear first when favourite places post something new</li></ul>
+        </div>
+        <div class="side b">
+          <span class="eyebrow">Businesses · promotello.com/business</span>
+          <h4>Turn first-time visitors into regulars.</h4>
+          <p>Owners of small, independent businesses whose customers could come back. Busy, practical, wary of contracts and hardware. Setup takes about 15 minutes.</p>
+          <ul><li>Promotions redeemed at the till with a personal QR voucher</li><li>Loyalty cards stamped with staff's own phone</li><li>Follower emails and results they can see</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>What we stand for</h3>
+      <div class="values">
+        <div class="value"><h4>Local first</h4><p>We name streets and neighbourhoods. Gloucester Road, Southville, Stokes Croft. Independent businesses are the heroes, never us.</p></div>
+        <div class="value"><h4>Simple at the till</h4><p>No hardware, no customer app, no contract. If it takes a busy barista more than a few seconds, it's too complicated.</p></div>
+        <div class="value"><h4>Earned attention</h4><p>Only people who choose to follow a business hear from it. Every email has an unsubscribe link. We never buy reach with spam.</p></div>
+        <div class="value"><h4>Fair and clear</h4><p>Start free, upgrade when it's working. Prices are shown in pounds, plainly. Offers state their terms up front.</p></div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>The promise in three steps</h3>
+      <p class="body">This sequence is how customers learn the product. Use these exact step names wherever the flow is explained.</p>
+      <div class="steps">
+        <div class="step"><span class="k">Step 1</span><b>Find an offer</b><p>Browse deals from independent cafés, shops and studios nearby.</p></div>
+        <div class="step"><span class="k">Step 2</span><b>Claim your code</b><p>Sign in and the code is saved to your account.</p></div>
+        <div class="step"><span class="k">Step 3</span><b>Show it in store</b><p>Show the code when you pay and the business applies the discount.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="chapter" id="logo">
+    <div class="ch-head">
+      <span class="ch-num">02 — LOGO</span>
+      <h2>The coral folded p.</h2>
+      <p class="lede">Our logo pairs a coral symbol with custom ink lettering. It was approved as the default identity on 10 October 2026. Always use the supplied files and never retype the wordmark in a font.</p>
+    </div>
+
+    <div class="concept">
+      <svg class="concept-sym" viewBox="0 0 340 370" role="img" aria-label="Promotello symbol"><use href="#sym"/></svg>
+      <ul class="anatomy">
+        <li><span class="dot">1</span><span><b>Two folded strips</b>A lowercase p built from two ribbon-like pieces that overlap, like a voucher folded in half or a ticket ready to tear.</span></li>
+        <li><span class="dot">2</span><span><b>A forward lean</b>The bowl tilts right and opens, suggesting a door swinging open or a flag pointing the way in.</span></li>
+        <li><span class="dot">3</span><span><b>Round, friendly lettering</b>The wordmark's geometric o's and tall double l give it warmth. The t's sloped cap echoes the angle of the fold.</span></li>
+      </ul>
+    </div>
+
+    <div class="sub">
+      <h3>Lockups</h3>
+      <p class="body">The <strong>horizontal primary</strong> is the default for headers, emails and business materials. Use the <strong>stacked</strong> lockup for narrow spaces and the <strong>symbol</strong> on its own for tiny placements, avatars and favicons.</p>
+      <div class="grid-2">
+        <div class="cell"><div class="plate cream" style="min-height:240px"><svg class="logo lockup-h" viewBox="0 0 1406 374" role="img" aria-label="Horizontal primary"><use href="#lockup"/></svg></div><div class="cap"><b>Horizontal primary</b><span>horizontal-primary.svg</span></div></div>
+        <div class="cell"><div class="plate ink" style="min-height:240px;--sym:var(--coral);--wm:var(--cream)"><svg class="logo lockup-h" viewBox="0 0 1406 374" role="img" aria-label="Horizontal reversed"><use href="#lockup"/></svg></div><div class="cap"><b>Horizontal reversed</b><span>horizontal-reversed.svg</span></div></div>
+      </div>
+      <div class="grid-3">
+        <div class="cell"><div class="plate cream" style="min-height:220px"><svg class="logo lockup-s" viewBox="0 0 1090 645" role="img" aria-label="Stacked"><use href="#stacked"/></svg></div><div class="cap"><b>Stacked</b><span>stacked-primary.svg</span></div></div>
+        <div class="cell"><div class="plate cream" style="min-height:220px;color:var(--coral)"><svg class="logo lockup-sym" viewBox="0 0 340 370" role="img" aria-label="Symbol"><use href="#sym"/></svg></div><div class="cap"><b>Symbol</b><span>symbol-coral.svg</span></div></div>
+        <div class="cell"><div class="plate cream" style="min-height:220px"><svg viewBox="0 0 512 512" style="width:120px;display:block" role="img" aria-label="App icon"><rect width="512" height="512" rx="112" fill="#FF593F"/><svg x="86" y="71" width="340" height="370" viewBox="0 0 340 370" style="color:#FFF8F0"><use href="#sym"/></svg></svg></div><div class="cap"><b>App icon</b><span>app-icon-coral.svg</span></div></div>
+      </div>
+      <div class="grid-3">
+        <div class="cell"><div class="plate cream" style="min-height:120px;color:var(--ink)"><svg class="logo lockup-w" viewBox="0 0 1085 266" role="img" aria-label="Wordmark"><use href="#word"/></svg></div><div class="cap"><b>Wordmark only</b><span>wordmark-ink.svg</span></div></div>
+        <div class="cell"><div class="plate coral" style="min-height:120px;--sym:var(--ink);--wm:var(--ink)"><svg class="logo lockup-w" viewBox="0 0 1406 374" role="img" aria-label="One colour on coral"><use href="#lockup"/></svg></div><div class="cap"><b>One colour ink</b><span>horizontal-black.svg</span></div></div>
+        <div class="cell"><div class="plate photo" style="min-height:120px;--sym:#fff;--wm:#fff"><svg class="logo lockup-w" viewBox="0 0 1406 374" role="img" aria-label="One colour white on photo"><use href="#lockup"/></svg></div><div class="cap"><b>One colour white</b><span>horizontal-white.svg</span></div></div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Clear space</h3>
+      <p class="body">Keep a margin of at least <strong>half the height of the wordmark's o</strong> on every side. Nothing else (text, edges, other logos, QR codes) enters that zone. The o travels with the logo, so the rule scales automatically.</p>
+      <div class="plate cream" style="padding:clamp(16px,4vw,40px)">
+        <svg viewBox="-110 -110 1626 594" style="width:100%;max-width:820px;display:block" role="img" aria-label="Clear space diagram">
+          <rect x="-22.5" y="-37.5" width="1453" height="442" fill="#FFE0D5" opacity=".55"/>
+          <rect x="38" y="23" width="1332" height="321" fill="#FFF8F0"/>
+          <rect x="-22.5" y="-37.5" width="1453" height="442" fill="none" stroke="#FF593F" stroke-width="3" stroke-dasharray="14 10"/>
+          <rect x="38" y="23" width="1332" height="321" fill="none" stroke="#17233B" stroke-opacity=".25" stroke-width="2"/>
+          <use href="#lockup" x="0" y="0" width="1406" height="374"/>
+          <g fill="none" stroke="#C93A24" stroke-width="3">
+            <circle cx="-22.5" cy="-37.5" r="0"/>
+            <line x1="-22.5" y1="183" x2="38" y2="183"/><line x1="-22.5" y1="168" x2="-22.5" y2="198"/><line x1="38" y1="168" x2="38" y2="198"/>
+            <line x1="700" y1="-37.5" x2="700" y2="23"/><line x1="685" y1="-37.5" x2="715" y2="-37.5"/><line x1="685" y1="23" x2="715" y2="23"/>
+          </g>
+          <text x="8" y="160" font-family="Geist Mono, monospace" font-size="30" fill="#C93A24" text-anchor="middle">x</text>
+          <text x="738" y="-2" font-family="Geist Mono, monospace" font-size="30" fill="#C93A24">x</text>
+          <g transform="translate(1010 445)">
+            <circle cx="0" cy="0" r="30" fill="none" stroke="#17233B" stroke-width="12"/>
+            <text x="54" y="11" font-family="Geist Mono, monospace" font-size="30" fill="#17233B">x = ½ × height of o</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Minimum size</h3>
+      <p class="body">Judge legibility at the size the logo will actually render. Below these sizes, switch to the symbol on its own.</p>
+      <div class="min-row">
+        <figure><svg viewBox="0 0 1406 374" style="width:120px" role="img" aria-label="Horizontal at 120px"><use href="#lockup"/></svg><figcaption><b>120 px</b> / 30 mm wide · horizontal</figcaption></figure>
+        <figure><svg viewBox="0 0 1090 645" style="width:72px" role="img" aria-label="Stacked at 72px"><use href="#stacked"/></svg><figcaption><b>72 px</b> / 18 mm wide · stacked</figcaption></figure>
+        <figure><svg viewBox="0 0 340 370" style="width:16px;color:var(--coral)" role="img" aria-label="Symbol at 16px"><use href="#sym"/></svg><figcaption><b>16 px</b> / 5 mm · symbol (favicon)</figcaption></figure>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Don't</h3>
+      <div class="grid-3">
+        <div class="cell misuse"><div class="plate cream"><svg class="logo" viewBox="0 0 1406 374" style="width:80%;transform:scaleX(1.35) scaleY(.75)" aria-hidden="true"><use href="#lockup"/></svg></div><span class="x">✕</span><div class="cap"><b>Stretch or squash it</b></div></div>
+        <div class="cell misuse"><div class="plate cream" style="--sym:#3B82F6;--wm:#7C3AED"><svg class="logo" viewBox="0 0 1406 374" style="width:80%" aria-hidden="true"><use href="#lockup"/></svg></div><span class="x">✕</span><div class="cap"><b>Recolour it</b></div></div>
+        <div class="cell misuse"><div class="plate cream"><svg class="logo" viewBox="0 0 1406 374" style="width:80%;transform:rotate(-12deg)" aria-hidden="true"><use href="#lockup"/></svg></div><span class="x">✕</span><div class="cap"><b>Rotate or tilt it</b></div></div>
+        <div class="cell misuse"><div class="plate cream"><div style="display:flex;align-items:center;gap:14px;width:80%"><svg viewBox="0 0 340 370" style="width:46px;color:var(--coral);flex:none" aria-hidden="true"><use href="#sym"/></svg><span style="font-family:Georgia,serif;font-size:2rem;font-weight:700;color:var(--ink)">Promotello</span></div></div><span class="x">✕</span><div class="cap"><b>Retype the wordmark in a font</b></div></div>
+        <div class="cell misuse"><div class="plate coral" style="--sym:var(--coral);--wm:var(--ink)"><svg class="logo" viewBox="0 0 1406 374" style="width:80%" aria-hidden="true"><use href="#lockup"/></svg></div><span class="x">✕</span><div class="cap"><b>Put the coral symbol on coral</b></div></div>
+        <div class="cell misuse"><div class="plate photo"><svg class="logo" viewBox="0 0 1406 374" style="width:80%;filter:drop-shadow(6px 8px 4px rgba(0,0,0,.6))" aria-hidden="true"><use href="#lockup"/></svg></div><span class="x">✕</span><div class="cap"><b>Add shadows, or use two colours on a busy photo</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="chapter" id="colour">
+    <div class="ch-head">
+      <span class="ch-num">03 — COLOUR</span>
+      <h2>Coral on cream, grounded by ink.</h2>
+      <p class="lede">Three colours carry the brand. Cream is the room, ink is the voice, and coral is the thing you notice: the offer, the button, the stamp.</p>
+    </div>
+
+    <div class="swatches">
+      <div class="sw"><div class="sw-chip" style="background:var(--coral);color:var(--ink)">Coral</div>
+        <div class="sw-data"><dl class="kv"><dt>HEX</dt><dd>#FF593F</dd><dd><button class="copy" data-copy="#FF593F">Copy</button></dd><dt>RGB</dt><dd>255 89 63</dd><dd></dd><dt>CMYK</dt><dd>0 65 75 0</dd><dd></dd></dl><p>Primary action, symbol, highlights. Use it sparingly so it keeps its pull.</p></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--ink);color:var(--cream)">Ink</div>
+        <div class="sw-data"><dl class="kv"><dt>HEX</dt><dd>#17233B</dd><dd><button class="copy" data-copy="#17233B">Copy</button></dd><dt>RGB</dt><dd>23 35 59</dd><dd></dd><dt>CMYK</dt><dd>61 41 0 77</dd><dd></dd></dl><p>Text, wordmark, dark panels, posters. Our black. Use it instead of pure black.</p></div></div>
+      <div class="sw"><div class="sw-chip" style="background:var(--cream);color:var(--ink);box-shadow:inset 0 -1px 0 var(--ink-12)">Cream</div>
+        <div class="sw-data"><dl class="kv"><dt>HEX</dt><dd>#FFF8F0</dd><dd><button class="copy" data-copy="#FFF8F0">Copy</button></dd><dt>RGB</dt><dd>255 248 240</dd><dd></dd><dt>CMYK</dt><dd>0 3 6 0</dd><dd></dd></dl><p>Page background. Warmer than white, like a café menu. White is reserved for cards on top of it.</p></div></div>
+    </div>
+    <p class="body" style="font-size:.875rem">CMYK values are a starting point. Coral is a bright colour that prints dull on uncoated stock, so ask for a proof before any print run.</p>
+
+    <div class="sub">
+      <h3>Proportion</h3>
+      <p class="body">Most layouts should land close to this balance. If coral starts to cover more than a tenth of a screen or poster, something else should be ink.</p>
+      <div class="ratio" role="img" aria-label="Cream 60%, ink 30%, coral 10%">
+        <div style="flex:60;background:var(--cream)">Cream 60%</div>
+        <div style="flex:30;background:var(--ink);color:var(--cream)">Ink 30%</div>
+        <div style="flex:10;background:var(--coral);color:var(--ink)">10%</div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Supporting colours</h3>
+      <p class="body">For interface work only. They never appear in the logo.</p>
+      <div class="support">
+        <div class="sp"><i style="background:var(--coral-deep)"></i><b>Coral deep</b><span>#C93A24</span><p>Coral text and links on cream or white. Passes AA.</p></div>
+        <div class="sp"><i style="background:var(--coral-tint)"></i><b>Coral tint</b><span>#FFE0D5</span><p>Tags, “Ending soon” chips, highlights.</p></div>
+        <div class="sp"><i style="background:var(--paper)"></i><b>White</b><span>#FFFFFF</span><p>Cards and inputs sitting on cream.</p></div>
+        <div class="sp"><i style="background:var(--ink-70)"></i><b>Ink 70</b><span>#5D6576</span><p>Secondary text, captions, metadata.</p></div>
+        <div class="sp"><i style="background:var(--ink-12)"></i><b>Ink 12</b><span>#DDDCD9</span><p>Hairlines, borders, dividers.</p></div>
+        <div class="sp"><i style="background:var(--ok)"></i><b>Redeemed green</b><span>#1F7A55</span><p>Success states only: redeemed, stamped, paid.</p></div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Contrast</h3>
+      <p class="body">Measured against WCAG 2.2. AA needs 4.5:1 for body text and 3:1 for large text (24 px, or 19 px bold).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Pair</th><th>Text on background</th><th>Ratio</th><th>Body text</th><th>Large text</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pair" style="background:var(--cream);color:var(--ink)">Aa</span></td><td>Ink on cream</td><td class="num">14.9:1</td><td><span class="pill ok">AAA</span></td><td><span class="pill ok">AAA</span></td></tr>
+            <tr><td><span class="pair" style="background:var(--ink);color:var(--cream)">Aa</span></td><td>Cream on ink</td><td class="num">14.9:1</td><td><span class="pill ok">AAA</span></td><td><span class="pill ok">AAA</span></td></tr>
+            <tr><td><span class="pair" style="background:var(--coral);color:var(--ink)">Aa</span></td><td>Ink on coral</td><td class="num">5.0:1</td><td><span class="pill ok">AA</span></td><td><span class="pill ok">AAA</span></td></tr>
+            <tr><td><span class="pair" style="background:var(--ink);color:var(--coral)">Aa</span></td><td>Coral on ink</td><td class="num">5.0:1</td><td><span class="pill ok">AA</span></td><td><span class="pill ok">AAA</span></td></tr>
+            <tr><td><span class="pair" style="background:var(--cream);color:var(--coral-deep)">Aa</span></td><td>Coral deep on cream</td><td class="num">4.9:1</td><td><span class="pill ok">AA</span></td><td><span class="pill ok">AAA</span></td></tr>
+            <tr><td><span class="pair" style="background:var(--coral);color:#fff">Aa</span></td><td>White on coral</td><td class="num">3.1:1</td><td><span class="pill no">Fails</span></td><td><span class="pill warn">AA large only</span></td></tr>
+            <tr><td><span class="pair" style="background:var(--cream);color:var(--coral)">Aa</span></td><td>Coral on cream</td><td class="num">3.0:1</td><td><span class="pill no">Fails</span></td><td><span class="pill no">Borderline</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="chapter" id="type">
+    <div class="ch-head">
+      <span class="ch-num">04 — TYPOGRAPHY</span>
+      <h2>One friendly family, one for codes.</h2>
+      <p class="lede">Plus Jakarta Sans does almost everything. It's open, geometric and warm, close in spirit to the wordmark without imitating it. Geist Mono is kept for codes, prices in tables and small labels.</p>
+    </div>
+
+    <div class="specimen">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span class="eyebrow">Primary typeface</span><span class="eyebrow">Google Fonts · free licence</span></div>
+      <div class="spec-big">Plus Jakarta<span>.</span></div>
+      <p class="glyphs">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz &nbsp;0123456789 £ € % &amp; @ é ç</p>
+      <div class="weights">
+        <div><b style="font-weight:400">Regular</b><span>400 · body</span></div>
+        <div><b style="font-weight:500">Medium</b><span>500 · UI, links</span></div>
+        <div><b style="font-weight:600">Semibold</b><span>600 · subheads</span></div>
+        <div><b style="font-weight:700">Bold</b><span>700 · headings, buttons</span></div>
+        <div><b style="font-weight:800">ExtraBold</b><span>800 · display, offers</span></div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Type scale</h3>
+      <div class="scale">
+        <div class="scale-row"><span class="t">Display</span><span style="font-size:clamp(2.25rem,5vw,3.5rem);font-weight:800;letter-spacing:-.04em;line-height:1">Free pastry</span><span class="m">56 / 1.0 · 800 · −4%</span></div>
+        <div class="scale-row"><span class="t">H1</span><span style="font-size:clamp(1.75rem,4vw,2.5rem);font-weight:800;letter-spacing:-.03em;line-height:1.1">Bristol's local offers</span><span class="m">40 / 1.1 · 800 · −3%</span></div>
+        <div class="scale-row"><span class="t">H2</span><span style="font-size:1.75rem;font-weight:700;letter-spacing:-.02em;line-height:1.2">Businesses worth knowing</span><span class="m">28 / 1.2 · 700 · −2%</span></div>
+        <div class="scale-row"><span class="t">H3</span><span style="font-size:1.25rem;font-weight:700;line-height:1.3">Show it in store</span><span class="m">20 / 1.3 · 700</span></div>
+        <div class="scale-row"><span class="t">Body large</span><span style="font-size:1.0625rem;line-height:1.8">Customers get a personal QR voucher that staff scan once at the till.</span><span class="m">17 / 1.8 · 400</span></div>
+        <div class="scale-row"><span class="t">Body</span><span style="font-size:1rem;line-height:1.6">Set a stamp goal and reward. Staff stamp cards with their own phone camera.</span><span class="m">16 / 1.6 · 400</span></div>
+        <div class="scale-row"><span class="t">Small</span><span style="font-size:.875rem;color:var(--ink-70)">Ends Sunday 2 November · 14 claimed</span><span class="m">14 / 1.5 · 400–500</span></div>
+        <div class="scale-row"><span class="t">Label</span><span class="eyebrow" style="color:var(--ink)">Fresh offers</span><span class="m">Mono 12 · caps · +14%</span></div>
+      </div>
+    </div>
+
+    <div class="mono-spec">
+      <span class="eyebrow" style="color:#AEB4C0">Secondary typeface · Geist Mono</span>
+      <span class="code">PRM-7K4Q-2B</span>
+      <p>Used where people read character by character: voucher codes, redemption IDs, eyebrow labels and tabular figures. Codes are set in capitals with wide tracking so staff can read them aloud at a busy till.</p>
+    </div>
+
+    <div class="sub">
+      <h3>Setting type</h3>
+      <ul class="rules">
+        <li><span><b>Sentence case everywhere.</b> Headlines, buttons and navigation. Never Title Case.</span></li>
+        <li><span><b>Tight headlines, loose body.</b> Negative tracking on 28 px and above; line height 1.6–1.8 on paragraphs.</span></li>
+        <li><span><b>Keep lines short.</b> About 65 characters for reading text.</span></li>
+        <li><span><b>The offer is the headline.</b> “Free pastry” in ExtraBold beats a clever line about mornings.</span></li>
+        <li><span><b>Fallback stack.</b> Arial, then the system sans, as already set in the app.</span></li>
+        <li><span><b>The logo is lettering, not type.</b> Never set “promotello” in Jakarta as a stand-in for the wordmark.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="chapter" id="voice">
+    <div class="ch-head">
+      <span class="ch-num">05 — VOICE</span>
+      <h2>Sounds like the friendly regular behind the counter.</h2>
+      <p class="lede">We write like a local who knows the good places and the people who run them. Warm, plain and specific. British English, short sentences, a little humour when it earns its place.</p>
+    </div>
+
+    <div class="traits">
+      <div class="trait">
+        <h4>Local, not corporate</h4>
+        <p>Name the place, the street, the thing. Talk about people, not “users” or “merchants”.</p>
+        <div class="say">
+          <div class="y"><em>Say</em><span>Find something good on your doorstep.</span></div>
+          <div class="n"><em>Not</em><span>Discover hyperlocal savings opportunities.</span></div>
+        </div>
+      </div>
+      <div class="trait">
+        <h4>Plain and specific</h4>
+        <p>Lead with what someone gets. Numbers beat adjectives. Say what happens next.</p>
+        <div class="say">
+          <div class="y"><em>Say</em><span>20% off sourdough loaves. Ends Sunday.</span></div>
+          <div class="n"><em>Not</em><span>Amazing savings on artisan bakes, for a limited time!!</span></div>
+        </div>
+      </div>
+      <div class="trait">
+        <h4>Encouraging, never pushy</h4>
+        <p>Owners are busy and sceptical of marketing tools. Reassure with facts about time, cost and effort.</p>
+        <div class="say">
+          <div class="y"><em>Say</em><span>Start free. Upgrade when it's working.</span></div>
+          <div class="n"><em>Not</em><span>Supercharge your growth with our all-in-one platform.</span></div>
+        </div>
+      </div>
+      <div class="trait">
+        <h4>Light, with a wink</h4>
+        <p>One small observation from real life is enough. Never at the expense of clarity.</p>
+        <div class="say">
+          <div class="y"><em>Say</em><span>A stamp card that never gets lost in a coat pocket.</span></div>
+          <div class="n"><em>Not</em><span>Loyalty, reimagined for the digital age.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Adjusting for each audience</h3>
+      <div class="audience">
+        <div class="cu"><span class="eyebrow">To customers</span><q>Save on the places you love.</q><p>Short, upbeat, about the treat. Focus on discovery and the moment at the till. Words: <i>offer, claim, your code, vouchers, near you</i>.</p></div>
+        <div class="bu"><span class="eyebrow">To businesses</span><q>Promotions people claim in seconds and redeem at your till.</q><p>Practical, direct, about outcomes. Answer “how long, how much, what do my staff do”. Words: <i>promotion, followers, regulars, results, setup</i>.</p></div>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Words we use</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>We say</th><th>We avoid</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><b>Offer</b> (to customers), <b>promotion</b> (to businesses)</td><td>Deal of the day, coupon blast</td><td>Matches the product on each side of the site.</td></tr>
+            <tr><td><b>Claim</b> an offer, <b>redeem</b> at the till</td><td>Activate, unlock, convert</td><td>Describes what a person actually does.</td></tr>
+            <tr><td><b>Customers</b>, <b>regulars</b>, <b>followers</b></td><td>Users, consumers, leads</td><td>These are people walking through a door.</td></tr>
+            <tr><td><b>Loyalty card</b>, <b>stamp card</b></td><td>Rewards programme, points scheme</td><td>Everyone already knows how a stamp card works.</td></tr>
+            <tr><td><b>Independent</b>, <b>local</b></td><td>SMB, merchant, vendor</td><td>The language owners use about themselves.</td></tr>
+            <tr><td><b>Till</b>, <b>in store</b>, <b>café</b>, <b>neighbourhood</b></td><td>POS, checkout, cafe, neighborhood</td><td>British English, always.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub">
+      <h3>Mechanics</h3>
+      <ul class="rules">
+        <li><span><b>Prices:</b> £24/month, £0, £10 off. Pound sign first, no “.00”.</span></li>
+        <li><span><b>Discounts:</b> “20% off”, “Free pastry”, “2 for 1”. The value goes first.</span></li>
+        <li><span><b>Dates:</b> “Ends Sunday 2 November”. Days and months spelled out, no ordinals.</span></li>
+        <li><span><b>Punctuation:</b> One exclamation mark at most, and rarely. No ALL CAPS shouting.</span></li>
+        <li><span><b>Buttons:</b> Verb first, two or three words. “Claim this offer”, “Start free”, “List your business”.</span></li>
+        <li><span><b>Emoji:</b> Fine in social captions written for a business. Never in the interface or headlines.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="chapter" id="product">
+    <div class="ch-head">
+      <span class="ch-num">06 — IN THE PRODUCT</span>
+      <h2>Small pieces, used the same way everywhere.</h2>
+      <p class="lede">The interface is built on cream with white cards and ink text. Coral marks the single most important action on a screen.</p>
+    </div>
+
+    <div class="sub">
+      <h3>Buttons and chips</h3>
+      <div class="ui-row">
+        <button class="btn primary" type="button">Claim this offer</button>
+        <button class="btn primary-ink" type="button">Start free</button>
+        <button class="btn dark" type="button">Open your dashboard</button>
+        <button class="btn ghost" type="button">Try the demo</button>
+      </div>
+      <div class="ui-row">
+        <span class="chip on">Food &amp; drink</span><span class="chip">Things to do</span><span class="chip">Shopping</span><span class="chip">Health &amp; beauty</span><span class="chip tag">Ending soon</span><span class="chip tag">New</span>
+      </div>
+      <div class="callout"><span class="ic">!</span><span><b>White text on coral only passes contrast at 19 px bold or larger.</b> The current site sets white labels on coral buttons. Either make button labels 19 px bold (as in “Claim this offer” above) or switch smaller buttons to ink text on coral (as in “Start free”), which passes at any size.</span></div>
+    </div>
+
+    <div class="sub">
+      <h3>Signature components</h3>
+      <div class="mockups">
+        <div>
+          <div class="offer">
+            <div class="offer-img"><span class="chip tag">Ending soon</span></div>
+            <div class="offer-b">
+              <span class="biz">Larder &amp; Loaf · Gloucester Road</span>
+              <h4>Free pastry with any coffee</h4>
+              <div class="meta"><span>Ends Sunday 2 November</span><b>14 left</b></div>
+              <button class="btn dark" type="button" style="margin-top:6px;width:100%">Claim this offer</button>
+            </div>
+          </div>
+          <div class="cap"><b>Offer card</b><span>radius 24 · white on cream</span></div>
+        </div>
+        <div>
+          <div class="voucher">
+            <svg class="sym" viewBox="0 0 340 370" aria-hidden="true"><use href="#sym"/></svg>
+            <h4>Free pastry with any coffee</h4>
+            <div class="qr" id="qr1"></div>
+            <span class="code">PRM-7K4Q-2B</span>
+            <div class="perf"></div>
+            <small>Show this at the till. Staff scan it once.</small>
+          </div>
+          <div class="cap"><b>Voucher</b><span>ink ground · mono code</span></div>
+        </div>
+        <div>
+          <div class="stamp">
+            <div class="stamp-h"><h4>Coffee card</h4><span>7 / 10</span></div>
+            <div class="dots" id="dots"></div>
+            <p>Three more coffees and the next one's on us.</p>
+          </div>
+          <div class="cap"><b>Stamp card</b><span>stamp = symbol</span></div>
+        </div>
+      </div>
+      <p class="body" style="font-size:.875rem">Illustrative mock-ups. The business name and QR pattern are examples, not real data.</p>
+    </div>
+
+    <div class="sub">
+      <h3>Shape and spacing</h3>
+      <div class="grid-2">
+        <div class="radii">
+          <div><i style="border-radius:8px"></i>8 · inputs</div>
+          <div><i style="border-radius:10px"></i>10 · buttons</div>
+          <div><i style="border-radius:16px"></i>16 · images</div>
+          <div><i style="border-radius:24px"></i>24 · cards</div>
+          <div><i style="border-radius:999px"></i>pill · chips</div>
+        </div>
+        <div class="spec-list">
+          <p><b>Base radius 10 px</b> (the app's <span class="mono">--radius: 0.625rem</span>). Larger objects get rounder.</p>
+          <p><b>4 px spacing grid.</b> Common steps are 8, 12, 16, 24, 40 and 72.</p>
+          <p><b>Icons:</b> Lucide line icons, 1.5–2 px stroke, ink or Ink 70. Never coral unless active.</p>
+          <p><b>Photography:</b> real local places, warm natural light, people's hands and products over posed faces. No stock-photo handshakes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section class="chapter" id="applications">
+    <div class="ch-head">
+      <span class="ch-num">07 — APPLICATIONS</span>
+      <h2>On the window, in the feed, on the home screen.</h2>
+    </div>
+
+    <div class="apps">
+      <div class="poster-cell">
+        <div class="poster">
+          <div class="p-top"><svg viewBox="0 0 1406 374" style="--sym:var(--coral);--wm:var(--cream)" role="img" aria-label="Promotello"><use href="#lockup"/></svg><span class="p-tag">Window poster · A4</span></div>
+          <h4>Scan for today's <span>offer</span>.</h4>
+          <div class="p-qr" id="qr2"></div>
+          <div class="p-foot"><span><b>Larder &amp; Loaf</b><br>Gloucester Road</span><span style="text-align:right">No app needed<br>promotello.com</span></div>
+        </div>
+        <div class="cap"><b>QR window poster</b><span>A4 · ink ground</span></div>
+      </div>
+      <div class="right">
+        <div class="social-row">
+          <div>
+            <div class="social"><span class="s-small">New on Promotello</span><span class="s-big">20% off sourdough.</span><svg class="s-logo" viewBox="0 0 1406 374" aria-hidden="true"><use href="#lockup"/></svg></div>
+            <div class="cap"><b>Offer post</b><span>1080 × 1080</span></div>
+          </div>
+          <div>
+            <div class="social s2"><span class="s-small">Explore Bristol</span><span class="s-big">Find something good on your <span>doorstep.</span></span><svg class="s-logo" viewBox="0 0 1406 374" aria-hidden="true"><use href="#lockup"/></svg></div>
+            <div class="cap"><b>Brand post</b><span>1080 × 1080</span></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="email">
+              <div class="email-h"><span><b>Larder &amp; Loaf via Promotello</b></span><span>New offer: Free pastry with any coffee</span></div>
+              <div class="email-b">
+                <svg class="logo lg" viewBox="0 0 1406 374" aria-hidden="true"><use href="#lockup"/></svg>
+                <h4>Free pastry with any coffee</h4>
+                <p>You follow Larder &amp; Loaf, so you're hearing first. Claim it before Sunday.</p>
+                <button class="btn primary" type="button" style="justify-self:start">Claim this offer</button>
+                <small>You're getting this because you follow Larder &amp; Loaf. Unsubscribe.</small>
+              </div>
+            </div>
+            <div class="cap"><b>Follower email</b><span>logo 150 px wide</span></div>
+          </div>
+          <div>
+            <div class="phone">
+              <div class="ico"><i></i>Maps</div><div class="ico"><i></i>Photos</div><div class="ico me"><i><svg viewBox="0 0 340 370" aria-hidden="true"><use href="#sym"/></svg></i>Promotello</div><div class="ico"><i></i>Mail</div>
+              <div class="ico"><i></i>Wallet</div><div class="ico"><i></i>Camera</div><div class="ico"><i></i>Notes</div><div class="ico"><i></i>Music</div>
+            </div>
+            <div class="cap"><b>App icon</b><span>coral tile, cream symbol</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section class="chapter" id="files">
+    <div class="ch-head">
+      <span class="ch-num">08 — FILES &amp; TOKENS</span>
+      <h2>Which file to reach for.</h2>
+      <p class="lede">Everything lives in the promotello-brand-pack folder. SVGs scale to any size; PNG logos are exported at 2×.</p>
+    </div>
+    <div class="tbl-wrap files">
+      <table>
+        <thead><tr><th>File</th><th>Use it for</th></tr></thead>
+        <tbody>
+          <tr><td>svg/promotello-horizontal-primary.svg</td><td>The master logo. Headers, emails, documents, business materials.</td></tr>
+          <tr><td>svg/promotello-horizontal-reversed.svg</td><td>Dark backgrounds. Coral symbol with cream wordmark, transparent.</td></tr>
+          <tr><td>svg/…-on-cream.svg · …-on-ink.svg</td><td>When you need the background built in (slides, profile banners).</td></tr>
+          <tr><td>svg/promotello-stacked-*.svg</td><td>Narrow or square spaces.</td></tr>
+          <tr><td>svg/promotello-symbol-*.svg</td><td>Avatars, stamps, watermarks, anything tiny.</td></tr>
+          <tr><td>svg/promotello-wordmark-*.svg</td><td>When the symbol already appears nearby on the same surface.</td></tr>
+          <tr><td>…-black · …-white · …-coral</td><td>One-colour printing, engraving, single-colour vinyl.</td></tr>
+          <tr><td>png/icons/app-icon-*.png</td><td>App stores and PWA. Opaque squares: let the platform round the corners.</td></tr>
+          <tr><td>png/icons/app-icon-maskable-*.png</td><td>Android adaptive icons, with extra safe space for cropping.</td></tr>
+          <tr><td>web/favicon.svg · favicon.ico</td><td>Browser tabs. Copy to the site's public root with site.webmanifest.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sub">
+      <h3>Design tokens</h3>
+      <p class="body">These match <span class="mono">app/globals.css</span>. The core three already exist as variables; the rest are proposed additions so components can stop hard-coding hex values.</p>
+      <div class="tokens-wrap">
+        <button class="copy" type="button" data-copy-el="tok">Copy</button>
+<pre class="tokens" id="tok"><span class="k">--promotello-coral</span>: <span class="v">#FF593F</span>;
+<span class="k">--promotello-ink</span>: <span class="v">#17233B</span>;
+<span class="k">--promotello-cream</span>: <span class="v">#FFF8F0</span>;
+<span class="k">--promotello-coral-deep</span>: <span class="v">#C93A24</span>;  /* proposed */
+<span class="k">--promotello-coral-tint</span>: <span class="v">#FFE0D5</span>;  /* proposed */
+<span class="k">--promotello-ink-70</span>: <span class="v">#5D6576</span>;      /* proposed */
+<span class="k">--promotello-ink-12</span>: <span class="v">#DDDCD9</span>;      /* proposed */
+<span class="k">--radius</span>: <span class="v">0.625rem</span>;
+<span class="k">--font-sans</span>: <span class="v">"Plus Jakarta Sans", Arial, sans-serif</span>;
+<span class="k">--font-mono</span>: <span class="v">"Geist Mono", ui-monospace, monospace</span>;</pre>
+      </div>
+    </div>
+  </section>
+  </main>
+</div>
+
+<footer class="end"><div>
+  <svg viewBox="0 0 1406 374" role="img" aria-label="Promotello"><use href="#lockup"/></svg>
+  <span>Promotello brand book · Edition 1.0 · October 2026</span>
+  <a href="#top" style="color:var(--cream)">Back to top</a>
+</div></footer>
+<div class="toast" id="toast" hidden>Copied</div>
+
+<script>
+(function(){
+  // Illustrative QR-style pattern (not a scannable code)
+  function qr(seed){
+    var n=25, cells=[], s=seed;
+    function rnd(){ s=(s*9301+49297)%233280; return s/233280; }
+    function finder(x,y){ return '<rect x="'+x+'" y="'+y+'" width="7" height="7" fill="#17233B"/><rect x="'+(x+1)+'" y="'+(y+1)+'" width="5" height="5" fill="#FFF8F0"/><rect x="'+(x+2)+'" y="'+(y+2)+'" width="3" height="3" fill="#17233B"/>'; }
+    function inF(x,y){ return (x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9); }
+    for(var y=0;y<n;y++)for(var x=0;x<n;x++){ if(inF(x,y))continue; if(rnd()>.52)cells.push('<rect x="'+x+'" y="'+y+'" width="1" height="1"/>'); }
+    var c='<g transform="translate(9.5 9.5)"><rect x="-3.2" y="-3.2" width="6.4" height="6.4" rx="1.2" fill="#FFF8F0"/></g>';
+    var sym='<svg x="10.3" y="10.2" width="4.4" height="4.8" viewBox="0 0 340 370"><use href="#sym" style="color:#FF593F"/></svg>';
+    return '<svg viewBox="0 0 '+n+' '+n+'" shape-rendering="crispEdges" role="img" aria-label="Example QR code"><g fill="#17233B">'+cells.join('')+'</g>'+finder(0,0)+finder(n-7,0)+finder(0,n-7)+'<rect x="9" y="9" width="7" height="7" rx="1.5" fill="#FFF8F0"/>'+sym+'</svg>';
+  }
+  var q1=document.getElementById('qr1'), q2=document.getElementById('qr2');
+  if(q1) q1.innerHTML=qr(42);
+  if(q2) q2.innerHTML=qr(7);
+
+  // Stamp card
+  var d=document.getElementById('dots'), h='';
+  for(var i=0;i<10;i++){
+    if(i<7) h+='<i class="f"><svg viewBox="0 0 340 370" aria-hidden="true"><use href="#sym"/></svg></i>';
+    else if(i===9) h+='<i class="g">FREE</i>';
+    else h+='<i></i>';
+  }
+  if(d) d.innerHTML=h;
+
+  // Copy buttons
+  var toast=document.getElementById('toast'), t;
+  function show(msg){ toast.textContent=msg; toast.hidden=false; clearTimeout(t); t=setTimeout(function(){toast.hidden=true;},1400); }
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('[data-copy],[data-copy-el]'); if(!b) return;
+    var txt=b.dataset.copy || (document.getElementById(b.dataset.copyEl)||{}).innerText || '';
+    try{
+      navigator.clipboard.writeText(txt).then(function(){show('Copied '+(b.dataset.copy||'tokens'));},function(){show('Select the text to copy');});
+    }catch(err){ show('Select the text to copy'); }
+  });
+
+  // Highlight the current chapter in the rail
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(en){ if(en.isIntersecting){ links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href')==='#'+en.target.id); }); } });
+    },{rootMargin:'-30% 0px -60% 0px'});
+    document.querySelectorAll('.chapter').forEach(function(s){io.observe(s);});
+  }
+})();
+</script>
