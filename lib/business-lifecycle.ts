@@ -368,3 +368,65 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
 
     return { due: due.length, sent };
 }
+
+// Straight after a business starts its free trial (from the Stripe
+// webhook): what it's unlocked and the first thing to set up.
+export function trialStartedEmail(
+    business: { id: string; name: string },
+    { tier, trialEnd, hasLoyalty }: { tier: "pro" | "growth"; trialEnd: string; hasLoyalty: boolean },
+    to: string,
+): Email {
+    const plan = tier === "growth" ? "Growth" : "Pro";
+    const base = `/business/${business.id}`;
+    const unlocked = [
+        "Unlocked: a digital loyalty card, unlimited live offers that go live as soon as you post them, Google review requests after each visit, and an email to your followers whenever you post a new offer.",
+        ...(tier === "growth"
+            ? ["With Growth you also get welcome, birthday and win-back emails that run themselves, quiet-hours offers and a monthly value report."]
+            : []),
+    ];
+
+    const { html, text } = brandedEmail({
+        eyebrow: "Your free trial",
+        title: `${business.name} is on ${plan}`,
+        paragraphs: [
+            `Your ${plan} trial runs until ${formatDate(trialEnd)}. You won't be charged before then, and you can cancel any time from Billing.`,
+            ...unlocked,
+            hasLoyalty
+                ? "Your loyalty card is ready. Put your QR poster by the till so customers can join, and stamp their card each visit."
+                : "Start with your loyalty card: choose a reward, like a free coffee after nine, then put your QR poster by the till so customers can join.",
+        ],
+        action: hasLoyalty
+            ? { label: "Get your poster", url: absoluteUrl(`${base}/qr`) }
+            : { label: "Set up your loyalty card", url: absoluteUrl(`${base}/loyalty`) },
+        footer: `You're getting this because ${business.name} started a Promotello free trial.`,
+    });
+
+    return { to, subject: `Your ${plan} trial has started`, html, text };
+}
+
+export async function sendTrialStartedEmail(stripeSubscriptionId: string) {
+    const admin = createAdminClient();
+    const { data: subscription } = await admin
+        .from("subscriptions")
+        .select("status, tier, trial_end, businesses ( id, name )")
+        .eq("stripe_subscription_id", stripeSubscriptionId)
+        .maybeSingle();
+
+    const business = Array.isArray(subscription?.businesses) ? subscription.businesses[0] : subscription?.businesses;
+
+    if (!subscription || !business || subscription.status !== "trialing" || !subscription.trial_end) {
+        return { sent: 0 };
+    }
+
+    const [{ data: emails }, { count: loyaltyPrograms }] = await Promise.all([
+        admin.rpc("business_manager_emails", { requested_business_id: business.id }),
+        admin.from("loyalty_programs").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("is_active", true),
+    ]);
+    const details = {
+        tier: subscription.tier === "growth" ? "growth" as const : "pro" as const,
+        trialEnd: subscription.trial_end,
+        hasLoyalty: (loyaltyPrograms ?? 0) > 0,
+    };
+
+    return sendEmails(((emails ?? []) as string[]).map((to) => trialStartedEmail(business, details, to)));
+}
