@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
-import { lifecycleEmail, type LifecycleDue } from "../../lib/business-lifecycle";
+import { lifecycleEmail, sendTrialStartedEmail, trialStartedEmail, type LifecycleDue } from "../../lib/business-lifecycle";
 import { businessReviewedEmail, newBusinessAlertEmail, offerReviewedEmail } from "../../lib/business-review-emails";
 import { STATE_PATH } from "../global-setup";
 
@@ -150,6 +150,33 @@ test.describe("business setup and trial emails", () => {
         expect(checkIn.senderName).toBe("Harry");
         expect(checkIn.text).toContain("Just reply to this email");
         expect(checkIn.html).toContain("17546946");
+    });
+
+    test("starting a trial sends what's unlocked, once Stripe confirms it", async () => {
+        const subscriptionId = `sub_e2e_started_${Date.now()}`;
+        await admin().from("subscriptions").insert({
+            business_id: businessId,
+            stripe_subscription_id: subscriptionId,
+            stripe_customer_id: `cus_e2e_started_${Date.now()}`,
+            status: "trialing",
+            trial_end: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+        });
+
+        // One email for the owner (a test address, so built but not sent).
+        expect(await sendTrialStartedEmail(subscriptionId)).toMatchObject({ skipped: 1 });
+        expect(await sendTrialStartedEmail("sub_unknown")).toEqual({ sent: 0 });
+
+        const business = { id: businessId, name: "Harbour Grind" };
+        const pro = trialStartedEmail(business, { tier: "pro", trialEnd: "2026-12-01T12:00:00Z", hasLoyalty: false }, "a@b.c");
+        expect(pro.subject).toBe("Your Pro trial has started");
+        expect(pro.text).toContain("runs until 1 December");
+        expect(pro.text).toContain(`/business/${businessId}/loyalty`);
+        expect(pro.text).not.toContain("With Growth");
+
+        const growth = trialStartedEmail(business, { tier: "growth", trialEnd: "2026-12-01T12:00:00Z", hasLoyalty: true }, "a@b.c");
+        expect(growth.subject).toBe("Your Growth trial has started");
+        expect(growth.text).toContain("With Growth");
+        expect(growth.text).toContain(`/business/${businessId}/qr`);
     });
 
     test("businesses that signed up long ago get no setup emails", async () => {

@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { sendTrialStartedEmail } from "@/lib/business-lifecycle";
 import { createStripeClient } from "@/utils/stripe/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -77,7 +78,18 @@ async function handleEvent(
       break;
     }
 
-    case "customer.subscription.created":
+    case "customer.subscription.created": {
+      await syncSubscription(stripe, supabase, event.data.object.id);
+
+      // Never fails the event: a retry would send the email again.
+      if (event.data.object.status === "trialing") {
+        await sendTrialStartedEmail(event.data.object.id).catch((error) =>
+          console.error("Stripe webhook: trial started email failed", error),
+        );
+      }
+      break;
+    }
+
     case "customer.subscription.updated":
     case "customer.subscription.deleted":
       await syncSubscription(stripe, supabase, event.data.object.id);
