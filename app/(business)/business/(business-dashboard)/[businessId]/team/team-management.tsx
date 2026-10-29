@@ -275,7 +275,7 @@ export default function TeamManagement({
         <div className="text-[#17233B]">
             <div className="mx-auto max-w-5xl">
                 <Button
-                    render={<Link href="/business/dashboard" />}
+                    render={<Link href={`/business/${businessId}`} />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"
