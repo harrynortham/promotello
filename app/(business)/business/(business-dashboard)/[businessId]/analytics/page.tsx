@@ -249,7 +249,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     </div>
 
                     <Button
-                        render={<Link href="/business/dashboard" />}
+                        render={<Link href={`/business/${businessId}`} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"

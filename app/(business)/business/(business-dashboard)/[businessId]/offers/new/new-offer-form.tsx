@@ -148,7 +148,7 @@ export default function NewOfferForm({
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <Button
-                                render={<Link href="/business/dashboard" />}
+                                render={<Link href={`/business/${businessId}`} />}
                                 nativeButton={false}
                                 variant="outline"
                             >
@@ -173,7 +173,7 @@ export default function NewOfferForm({
         <div className="text-[#17233B]">
             <div className="mx-auto max-w-2xl">
                 <Button
-                    render={<Link href="/business/dashboard" />}
+                    render={<Link href={`/business/${businessId}`} />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"
