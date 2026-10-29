@@ -103,7 +103,6 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 - Secure all platform emails with unique strong passwords, add all to apple keychain
 - Create business plan as per 1stformations document.
-- Create brand book with colors fonts / logos etc.
 - Create marketing plan
 - Create cashflow forecast
 - Save all documents to google drive
