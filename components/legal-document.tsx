@@ -31,6 +31,7 @@ const policies = [
     { label: "Privacy", href: "/legal/privacy" },
     { label: "Terms", href: "/legal/terms" },
     { label: "Cookies", href: "/legal/cookies" },
+    { label: "Refunds", href: "/legal/refunds" },
 ];
 
 export function LegalDocument({

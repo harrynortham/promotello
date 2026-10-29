@@ -16,6 +16,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { company } from "@/lib/legal";
 
 export default function BusinessContactPage() {
     return (
@@ -92,6 +93,22 @@ export default function BusinessContactPage() {
                                 </p>
                             </div>
                         ))}
+                    </div>
+
+                    <div className="rounded-2xl border p-5">
+                        <p className="font-medium">Prefer email?</p>
+
+                        <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                            Write to us at{" "}
+                            <a href={`mailto:${company.email}`} className="font-medium text-foreground underline underline-offset-4">
+                                {company.email}
+                            </a>
+                            . For help with your account or billing, email{" "}
+                            <a href={`mailto:${company.supportEmail}`} className="font-medium text-foreground underline underline-offset-4">
+                                {company.supportEmail}
+                            </a>
+                            .
+                        </p>
                     </div>
 
                     <Card className="rounded-3xl bg-muted/30 shadow-none">

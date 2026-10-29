@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import {
     plans,
     type PlanKey,
 } from "@/lib/billing";
+import { company } from "@/lib/legal";
 import { createClient } from "@/utils/supabase/server";
 import { changePlan, openBillingPortal, startCheckout } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
@@ -274,7 +276,16 @@ async function CurrentPlan({
 
                 <p className="text-sm text-[#17233B]/70">
                     Update your card, download invoices or cancel in the
-                    secure Stripe billing portal.
+                    secure Stripe billing portal. Questions about a payment?
+                    Email{" "}
+                    <a href={`mailto:${company.supportEmail}`} className="underline underline-offset-4">
+                        {company.supportEmail}
+                    </a>
+                    , or read our{" "}
+                    <Link href="/legal/refunds" className="underline underline-offset-4">
+                        refund and cancellation policy
+                    </Link>
+                    .
                 </p>
             </CardContent>
         </Card>
