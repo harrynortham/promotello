@@ -140,7 +140,8 @@ export function brandedEmail({
     eyebrow: string;
     title: string;
     paragraphs: string[];
-    action: { label: string; url: string };
+    // Left out for notices with nothing to click.
+    action?: { label: string; url: string };
     footer: string;
     // e.g. unsubscribe and settings links under the footer text.
     footerLinks?: { label: string; url: string }[];
@@ -157,10 +158,10 @@ ${emailLogoRow()}
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.25">${e(title)}</h1>
 ${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(text)}</p>`).join("\n")}
 </td></tr>
-<tr><td style="padding:20px 28px 28px">
+${action ? `<tr><td style="padding:20px 28px 28px">
 <a href="${e(action.url)}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${e(action.label)}</a>
 <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#6b7387;word-break:break-all">Or open this link: ${e(action.url)}</p>
-</td></tr>
+</td></tr>` : `<tr><td style="padding:0 0 28px"></td></tr>`}
 </table>
 <p style="max-width:520px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">${e(footer)}${footerLinks.length ? "<br>" + footerLinks.map((link) => `<a href="${e(link.url)}" style="color:#6b7387">${e(link.label)}</a>`).join(" · ") : ""}</p>
 ${emailCompanyFooter()}
@@ -171,8 +172,7 @@ ${emailCompanyFooter()}
         title,
         "",
         ...paragraphs.flatMap((p) => [p, ""]),
-        `${action.label}: ${action.url}`,
-        "",
+        ...(action ? [`${action.label}: ${action.url}`, ""] : []),
         footer,
         ...footerLinks.map((link) => `${link.label}: ${link.url}`),
         "",
