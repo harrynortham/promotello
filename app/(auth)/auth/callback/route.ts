@@ -35,10 +35,14 @@ export async function GET(request: Request) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
+        const user = data.user;
+
         // Business sign-ups get the business welcome after onboarding, and
-        // invited team members are joining a business, not browsing offers.
-        if (!businessFlow && !next.startsWith("/invite/")) {
-          const user = data.user;
+        // are marked so the daily job can remind them if they never get
+        // there. Invited team members are joining a business, so neither.
+        if (businessFlow) {
+          after(() => markBusinessSignUp(user));
+        } else if (!next.startsWith("/invite/")) {
           after(() => welcomeNewCustomer(user));
         }
 
@@ -72,15 +76,31 @@ export async function GET(request: Request) {
 }
 
 // Accounts older than this when they first come through here signed up
-// before the welcome email existed, so they don't get one.
+// before these emails existed, so they're left alone.
 const NEW_ACCOUNT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+function isNewAccount(user: User) {
+  return Date.now() - new Date(user.created_at).getTime() <= NEW_ACCOUNT_WINDOW_MS;
+}
+
+// Read by claim_business_signup_reminders(): business accounts that
+// haven't created a business a day later get one reminder.
+async function markBusinessSignUp(user: User) {
+  if (user.app_metadata?.business_signup_at || !isNewAccount(user)) {
+    return;
+  }
+
+  const { error } = await createAdminClient().auth.admin.updateUserById(user.id, {
+    app_metadata: { business_signup_at: new Date().toISOString() },
+  });
+
+  if (error) {
+    console.error("Auth callback: marking business sign-up failed", error);
+  }
+}
+
 async function welcomeNewCustomer(user: User) {
-  if (
-    !user.email ||
-    user.app_metadata?.welcomed_at ||
-    Date.now() - new Date(user.created_at).getTime() > NEW_ACCOUNT_WINDOW_MS
-  ) {
+  if (!user.email || user.app_metadata?.welcomed_at || !isNewAccount(user)) {
     return;
   }
 
