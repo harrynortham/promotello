@@ -1,14 +1,26 @@
-import { PRO_SUBSCRIPTION_STATUSES, TRIAL_DAYS } from "@/lib/billing";
-import { brandedEmail, sendEmails, type Email } from "@/lib/email";
+import { FOUNDING_MEMBER_LIMIT, PRO_SUBSCRIPTION_STATUSES, TRIAL_DAYS, countFoundingMembers, plans } from "@/lib/billing";
+import { brandedEmail, emailCompanyFooter, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
 
-// Emails that guide a new business through setup and its free trial, in
-// place of an in-person setup visit. The database decides what's due
+// Emails that guide a new business through setup, on to a free Pro trial
+// and through it, in place of an in-person setup visit. The database decides what's due
 // (claim_business_lifecycle_emails) and records each send, so running
 // this twice never emails anyone twice.
 
-export type LifecycleKind = "welcome" | "setup_nudge_1" | "setup_nudge_2" | "trial_ending";
+export type LifecycleKind =
+    | "welcome"
+    | "setup_nudge_1"
+    | "setup_nudge_2"
+    | "trial_ending"
+    | "loyalty_pitch"
+    | "founding_places"
+    | "results"
+    | "check_in";
+
+// Who the personal check-in email comes from.
+const FOUNDER = { name: "Harry", title: "Founder, Promotello" };
 
 export type LifecycleDue = {
     business_id: string;
@@ -92,12 +104,27 @@ function plural(count: number, one: string, many: string) {
     return `${count} ${count === 1 ? one : many}`;
 }
 
+// What it's had through Promotello, e.g. ["3 customer visits", "12 page views"].
+function resultsList(d: LifecycleDue["details"]) {
+    return [
+        d.visits > 0 && plural(d.visits, "customer visit", "customer visits"),
+        d.loyalty_members > 0 && plural(d.loyalty_members, "loyalty card member", "loyalty card members"),
+        d.followers > 0 && plural(d.followers, "follower", "followers"),
+        d.claims > 0 && plural(d.claims, "voucher claimed", "vouchers claimed"),
+        d.qr_scans > 0 && plural(d.qr_scans, "poster scan", "poster scans"),
+        d.views > 0 && plural(d.views, "page view", "page views"),
+    ].filter(Boolean) as string[];
+}
+
+const trialTerms = `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`;
+
 const tipsFooter = {
-    footer: "You're getting this because you run a business on Promotello. We'll only send a few setup tips.",
+    footer: "You're getting this because you run a business on Promotello. We'll only send a few tips while you get started.",
     footerLinks: [{ label: "Turn off setup tips", url: absoluteUrl("/account/notifications") }],
 };
 
-export function lifecycleEmail(due: LifecycleDue, to: string): Email | null {
+// foundingPlacesLeft: founding member places still open, or null if unknown.
+export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLeft = null }: { foundingPlacesLeft?: number | null } = {}): Email | null {
     const name = due.business_name;
     const dashboard = absoluteUrl(`/business/${due.business_id}`);
     const missing = missingSteps(due);
@@ -147,14 +174,7 @@ export function lifecycleEmail(due: LifecycleDue, to: string): Email | null {
     if (due.kind === "trial_ending" && due.details.trial_end) {
         const d = due.details;
         const trialEnd = formatDate(due.details.trial_end);
-        const results = [
-            d.visits > 0 && plural(d.visits, "customer visit", "customer visits"),
-            d.loyalty_members > 0 && plural(d.loyalty_members, "loyalty card member", "loyalty card members"),
-            d.followers > 0 && plural(d.followers, "follower", "followers"),
-            d.claims > 0 && plural(d.claims, "voucher claimed", "vouchers claimed"),
-            d.qr_scans > 0 && plural(d.qr_scans, "poster scan", "poster scans"),
-            d.views > 0 && plural(d.views, "page view", "page views"),
-        ].filter(Boolean) as string[];
+        const results = resultsList(d);
 
         const { html, text } = brandedEmail({
             eyebrow: "Your free trial",
@@ -172,7 +192,141 @@ export function lifecycleEmail(due: LifecycleDue, to: string): Email | null {
         return { to, subject: `Your Promotello trial ends on ${trialEnd}`, html, text };
     }
 
+    const billing = absoluteUrl(`/business/${due.business_id}/billing`);
+    const tryPro = { label: `Try Pro free for ${TRIAL_DAYS} days`, url: billing };
+
+    if (due.kind === "loyalty_pitch") {
+        const { html, text } = brandedEmail({
+            eyebrow: "Loyalty cards",
+            title: `Turn ${name}'s first-time visitors into regulars`,
+            paragraphs: [
+                "Paper stamp cards get lost, forgotten and put through the wash. A Promotello loyalty card lives on your customers' phones, so they always have it with them.",
+                "You choose the reward, like a free coffee after nine. Customers join by scanning your QR poster, and you or your staff stamp their card at the till. When they reach the reward, they show their card and you hand it over.",
+                `Loyalty cards are part of Pro. ${trialTerms}`,
+            ],
+            action: tryPro,
+            ...tipsFooter,
+        });
+
+        return { to, subject: `A loyalty card for ${name}, free for ${TRIAL_DAYS} days`, html, text };
+    }
+
+    if (due.kind === "founding_places") {
+        const proAdds = "Pro adds a digital loyalty card, unlimited live offers that go live as soon as you post them, Google review requests after each visit, and an email to your followers whenever you post a new offer.";
+        const founding = plans.pro_founding_monthly.price;
+
+        const { html, text } = foundingPlacesLeft && foundingPlacesLeft > 0
+            ? brandedEmail({
+                eyebrow: "Founding members",
+                title: `Lock in ${founding} a month for ${name}, for life`,
+                paragraphs: [
+                    `The first ${FOUNDING_MEMBER_LIMIT} businesses on Pro pay ${founding} a month for as long as they stay, instead of ${plans.pro_monthly.price}. ${foundingPlacesLeft === 1 ? "There's 1 place left." : `There are ${foundingPlacesLeft} places left.`}`,
+                    proAdds,
+                    trialTerms,
+                ],
+                action: { label: "Claim a founding place", url: billing },
+                ...tipsFooter,
+            })
+            : brandedEmail({
+                eyebrow: "Promotello Pro",
+                title: `What Pro adds for ${name}`,
+                paragraphs: [proAdds, trialTerms],
+                action: tryPro,
+                ...tipsFooter,
+            });
+
+        return {
+            to,
+            subject: foundingPlacesLeft && foundingPlacesLeft > 0
+                ? `${founding} a month for life: founding member places for ${name}`
+                : `What Pro adds for ${name}`,
+            html,
+            text,
+        };
+    }
+
+    if (due.kind === "results") {
+        const d = due.details;
+        const results = resultsList(d);
+
+        if (results.length > 0) {
+            const { html, text } = brandedEmail({
+                eyebrow: "Your first two weeks",
+                title: `How ${name} is doing on Promotello`,
+                paragraphs: [
+                    `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`,
+                    "Pro helps bring those customers back: they join your loyalty card and return for their next stamp, and your followers hear about every new offer.",
+                    trialTerms,
+                ],
+                action: tryPro,
+                ...tipsFooter,
+            });
+
+            return { to, subject: `${name}'s first two weeks on Promotello`, html, text };
+        }
+
+        const { html, text } = brandedEmail({
+            eyebrow: "Your first customers",
+            title: `Getting ${name}'s first customers`,
+            paragraphs: [
+                "No customers have come through Promotello yet, which is normal in the first couple of weeks.",
+                d.has_poster
+                    ? "The quickest way to change that is to mention your offer at the till and keep your QR poster where people wait or pay, so they can scan it there and then."
+                    : "The quickest way to change that is your QR poster. Put it in your window or by the till, so customers can scan your offer while they're there.",
+            ],
+            action: d.has_poster
+                ? { label: "Open your dashboard", url: dashboard }
+                : { label: "Get your poster", url: absoluteUrl(`/business/${due.business_id}/qr`) },
+            ...tipsFooter,
+        });
+
+        return { to, subject: `Getting ${name}'s first customers`, html, text };
+    }
+
+    if (due.kind === "check_in") {
+        return personalEmail({
+            to,
+            subject: "Anything I can help with?",
+            paragraphs: [
+                "Hi,",
+                `I'm ${FOUNDER.name}, and I started Promotello. I noticed ${name} isn't quite set up yet, so I wanted to check in.`,
+                "Is anything getting in the way? If something's confusing, or Promotello isn't right for you, I'd really like to know. Just reply to this email, I read every one.",
+                `If you'd like to pick up where you left off, your dashboard shows what's left: ${dashboard}`,
+            ],
+        });
+    }
+
     return null;
+}
+
+// A plain note from a person rather than a branded email, for the
+// check-in. Replies go to the usual reply-to inbox.
+function personalEmail({ to, subject, paragraphs }: { to: string; subject: string; paragraphs: string[] }): Email {
+    const e = escapeHtml;
+    const signature = [FOUNDER.name, FOUNDER.title];
+    const settings = absoluteUrl("/account/notifications");
+    const linked = (text: string) => e(text).replace(/(https:\/\/[^\s]+)/g, '<a href="$1" style="color:#FF593F">$1</a>');
+
+    const html = `<!doctype html>
+<html><body style="margin:0;padding:24px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B;font-size:15px;line-height:1.6">
+<div style="max-width:520px">
+${paragraphs.map((text) => `<p style="margin:0 0 14px">${linked(text)}</p>`).join("\n")}
+<p style="margin:0 0 14px">${signature.map(e).join("<br>")}</p>
+<p style="margin:24px 0 0;font-size:12px;color:#6b7387">You're getting this because you run a business on Promotello. <a href="${e(settings)}" style="color:#6b7387">Turn off setup tips</a></p>
+</div>
+${emailCompanyFooter()}
+</body></html>`;
+
+    const text = [
+        ...paragraphs.flatMap((p) => [p, ""]),
+        ...signature,
+        "",
+        `You're getting this because you run a business on Promotello. Turn off setup tips: ${settings}`,
+        "",
+        companyDisclosure(),
+    ].join("\n");
+
+    return { to, subject, html, text, senderName: FOUNDER.name };
 }
 
 async function withPlanAndApproval(claimed: Omit<LifecycleDue, "hasPro" | "approved">[]): Promise<LifecycleDue[]> {
@@ -204,8 +358,11 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
 
     const claimed = (data ?? []) as Omit<LifecycleDue, "hasPro" | "approved">[];
     const due = await withPlanAndApproval(claimed);
+    const foundingPlacesLeft = due.some((item) => item.kind === "founding_places")
+        ? await countFoundingMembers().then((taken) => FOUNDING_MEMBER_LIMIT - taken).catch(() => null)
+        : null;
     const emails = due.flatMap((item) =>
-        item.emails.map((to) => lifecycleEmail(item, to)).filter((email): email is Email => email !== null),
+        item.emails.map((to) => lifecycleEmail(item, to, { foundingPlacesLeft })).filter((email): email is Email => email !== null),
     );
     const { sent } = await sendEmails(emails);
 
