@@ -145,7 +145,8 @@ function LoginContent() {
 
                                 <AlertDescription>
                                     It may have expired or already been used.
-                                    Try signing in below. If you were resetting
+                                    If you&apos;ve already confirmed your email,
+                                    just sign in below. If you were resetting
                                     your password, request a new reset link.
                                 </AlertDescription>
                             </Alert>

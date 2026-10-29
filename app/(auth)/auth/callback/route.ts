@@ -53,16 +53,23 @@ export async function GET(request: Request) {
     }
   }
 
+  // A link opened again, e.g. a confirmation clicked twice, fails, but the
+  // first click may already have signed this browser in.
+  try {
+    const {
+      data: { user },
+    } = await (await createClient()).auth.getUser();
+
+    if (user) {
+      return NextResponse.redirect(new URL(next, requestUrl.origin));
+    }
+  } catch {
+    // Not signed in: carry on to the sign-in page.
+  }
+
   const loginUrl = new URL("/login", requestUrl.origin);
 
-  // Google or Apple sign-in that was cancelled or refused comes back with
-  // an error and no code; anything else is an email link that failed.
-  loginUrl.searchParams.set(
-    "error",
-    requestUrl.searchParams.has("error_description") || requestUrl.searchParams.has("error")
-      ? "oauth"
-      : "link",
-  );
+  loginUrl.searchParams.set("error", isOAuthFailure(requestUrl.searchParams) ? "oauth" : "link");
 
   if (next !== "/dashboard" && !businessFlow) {
     loginUrl.searchParams.set("next", next);
@@ -73,6 +80,20 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.redirect(loginUrl);
+}
+
+// Google or Apple sign-in that was cancelled or refused comes back with an
+// error and no code. Email links that have expired or were already used
+// come back with an error too, but Supabase marks those as otp_expired.
+function isOAuthFailure(params: URLSearchParams) {
+  if (!params.has("error") && !params.has("error_description")) {
+    return false;
+  }
+
+  return (
+    params.get("error_code") !== "otp_expired" &&
+    !/email link/i.test(params.get("error_description") ?? "")
+  );
 }
 
 // Accounts older than this when they first come through here signed up
