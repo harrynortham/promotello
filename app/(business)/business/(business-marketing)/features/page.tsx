@@ -190,7 +190,7 @@ export default async function FeaturesPage() {
                 reverse
                 eyebrow="Automations · Growth"
                 title="Welcome, birthday and win-back emails that run themselves."
-                body="Switch each one on once. Promotello sends it to the right followers at the right time, with a personal gift voucher your staff redeem like any other."
+                body="Switch each one on once. Promotello sends it to the right followers at the right time, with a personal reward voucher your staff redeem like any other."
                 points={[
                     "Welcome: a thank-you for every new follower",
                     "Birthday: a treat on the day, every year",

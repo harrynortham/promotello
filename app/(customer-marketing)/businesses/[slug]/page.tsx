@@ -33,6 +33,7 @@ import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
+import { ExampleNotice } from "@/components/example-badge";
 import { FollowButton } from "@/components/follow-button";
 import { MapEmbed } from "@/components/map-embed";
 import { PageViewTracker } from "@/components/page-view-tracker";
@@ -180,6 +181,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 website_url,
                 contact_email,
                 approval_status,
+                is_sample,
                 business_locations (
                     name,
                     address_line_1,
@@ -394,6 +396,8 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                     <FiArrowLeft aria-hidden="true" />
                     {cityPage ? `Businesses in ${cityPage.name}` : "All businesses"}
                 </Button>
+
+                {business.is_sample && <ExampleNotice what="business" />}
 
                 {/* Business identity */}
                 <section
@@ -618,6 +622,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                             businessLogoUrl={business.logo_url}
                                             imageUrl={offer.image_url}
                                             expiresAt={offer.expires_at}
+                                            example={business.is_sample}
                                         />
                                     ))}
                                 </div>

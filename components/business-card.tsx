@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiMapPin } from "react-icons/fi";
 
+import { ExampleBadge } from "@/components/example-badge";
 import type { ListingBusiness } from "@/lib/listings";
 import { businessPath } from "@/lib/slugs";
 
@@ -20,6 +21,8 @@ export function BusinessCard({ business }: { business: ListingBusiness }) {
                 ) : (
                     <div className="h-full bg-gradient-to-br from-[#17233B] via-[#24345A] to-[#FF593F]/60" />
                 )}
+
+                {business.isSample && <ExampleBadge className="absolute left-3 top-3" />}
 
                 {business.offerCount > 0 && (
                     <span className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#17233B] shadow-sm">

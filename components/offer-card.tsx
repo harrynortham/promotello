@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiClock, FiMapPin } from "react-icons/fi";
 
+import { ExampleBadge } from "@/components/example-badge";
+
 type OfferCardProps = {
     slug: string;
     discount: string;
@@ -15,6 +17,8 @@ type OfferCardProps = {
     expiresAt?: string;
     area?: string | null;
     category?: string | null;
+    // A sample offer: labelled so it isn't mistaken for a real one.
+    example?: boolean;
 };
 
 function daysLeft(expiresAt: string) {
@@ -47,6 +51,7 @@ export function OfferCard({
     expiresAt,
     area,
     category,
+    example = false,
 }: OfferCardProps) {
     const endingSoon = expiresAt !== undefined && daysLeft(expiresAt) <= 14;
 
@@ -79,6 +84,8 @@ export function OfferCard({
                         {endsLabel(expiresAt)}
                     </span>
                 )}
+
+                {example && <ExampleBadge className="absolute bottom-3 left-3" />}
             </div>
 
             <div className="flex flex-1 flex-col p-5">

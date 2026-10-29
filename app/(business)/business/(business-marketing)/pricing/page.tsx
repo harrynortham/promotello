@@ -128,7 +128,7 @@ const questions = [
     {
         question: "What's the difference between Pro and Growth?",
         answer:
-            "Pro has everything to bring customers back: unlimited promotions, a loyalty card, QR posters, follower emails and review prompts. Growth adds marketing that runs itself: welcome, birthday and win-back emails with gift vouchers, quiet-hours promotions and a monthly value report. You can switch between them any time.",
+            "Pro has everything to bring customers back: unlimited promotions, a loyalty card, QR posters, follower emails and review prompts. Growth adds marketing that runs itself: welcome, birthday and win-back emails with reward vouchers, quiet-hours promotions and a monthly value report. You can switch between them any time.",
     },
     {
         question: "Is VAT included?",

@@ -125,7 +125,7 @@ const sections = [
             {
                 question: "What are automations?",
                 answer:
-                    "On Growth, welcome, birthday and win-back emails go to your followers automatically, each with a personal gift voucher your staff redeem like any other. You choose the reward and switch each one on once.",
+                    "On Growth, welcome, birthday and win-back emails go to your followers automatically, each with a personal reward voucher your staff redeem like any other. You choose the reward and switch each one on once.",
             },
             {
                 question: "How do Google review prompts work?",
