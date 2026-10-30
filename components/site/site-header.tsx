@@ -9,7 +9,7 @@ import { FiMenu } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from "./use-current-user";
-import { UserMenu } from "./user-menu";
+import { UserMenu, type AccountArea } from "./user-menu";
 
 export type HeaderLink = { label: string; href: string };
 
@@ -29,6 +29,8 @@ export type SiteHeaderProps = {
     collapseBelow?: "md" | "lg";
     signOutRedirect?: string;
     variant?: "marketing" | "app";
+    // Which account links the avatar menu shows.
+    accountArea?: AccountArea;
 };
 
 const breakpoints = {
@@ -60,6 +62,7 @@ function HeaderContent({
     collapseBelow = "md",
     signOutRedirect = "/",
     variant = "marketing",
+    accountArea = "customer",
 }: SiteHeaderProps) {
     const pathname = usePathname();
     const { user, isLoading } = useCurrentUser();
@@ -112,7 +115,7 @@ function HeaderContent({
                     {isLoading ? (
                         <div className="h-10 w-10 animate-pulse rounded-full bg-muted sm:w-28" />
                     ) : user ? (
-                        <UserMenu user={user} signOutRedirect={signOutRedirect} />
+                        <UserMenu user={user} signOutRedirect={signOutRedirect} area={accountArea} />
                     ) : (
                         <div className={`hidden items-center gap-2 ${bp.show}`}>
                             {signedOutActions.map((action) => (
