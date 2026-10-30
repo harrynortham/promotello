@@ -22,6 +22,7 @@ type BusinessLayoutProps = {
 type Business = {
     id: string;
     name: string;
+    logo_url: string | null;
     approval_status: string;
 };
 
@@ -83,6 +84,7 @@ async function BusinessLayoutContent({
                 businesses (
                     id,
                     name,
+                    logo_url,
                     approval_status
                 )
             `,
@@ -139,6 +141,7 @@ async function BusinessLayoutContent({
                     <BusinessMobileNav
                         businessId={businessId}
                         businessName={currentBusiness.name}
+                        businessLogoUrl={currentBusiness.logo_url}
                         approvalStatus={currentBusiness.approval_status}
                         canManage={canManage}
                         businesses={businesses}

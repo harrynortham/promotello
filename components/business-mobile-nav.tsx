@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FiPlus } from "react-icons/fi";
 
@@ -23,6 +24,7 @@ type Business = {
 type BusinessMobileNavProps = {
     businessId: string;
     businessName: string;
+    businessLogoUrl?: string | null;
     approvalStatus: string;
     canManage: boolean;
     businesses?: Business[];
@@ -31,6 +33,7 @@ type BusinessMobileNavProps = {
 export function BusinessMobileNav({
     businessId,
     businessName,
+    businessLogoUrl,
     approvalStatus,
     canManage,
     businesses = [],
@@ -100,11 +103,27 @@ export function BusinessMobileNav({
                 side="right"
                 className="w-[min(22rem,90vw)]"
             >
-                <SheetHeader>
-                    <SheetTitle>{businessName}</SheetTitle>
+                {/* Right padding keeps the name clear of the close button. */}
+                <SheetHeader className="pr-12">
+                    <div className="flex min-w-0 items-center gap-3">
+                        {businessLogoUrl ? (
+                            <Image
+                                src={businessLogoUrl}
+                                alt=""
+                                width={40}
+                                height={40}
+                                className="size-10 shrink-0 rounded-xl border border-[#17233B]/10 object-cover"
+                            />
+                        ) : (
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] font-semibold text-[#FF593F]">
+                                {businessName.charAt(0).toUpperCase()}
+                            </span>
+                        )}
+                        <SheetTitle className="truncate">{businessName}</SheetTitle>
+                    </div>
                 </SheetHeader>
 
-                <div className="mt-6 space-y-5">
+                <div className="space-y-5 overflow-y-auto px-4 pb-6">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Current business
