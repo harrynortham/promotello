@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState, type MouseEvent } from "react";
 import { FiPlus } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,13 @@ export function BusinessMobileNav({
     canManage,
     businesses = [],
 }: BusinessMobileNavProps) {
+    const [open, setOpen] = useState(false);
+
+    // Any link in the menu closes it, so the new page isn't hidden behind it.
+    function closeOnLink(event: MouseEvent<HTMLDivElement>) {
+        if ((event.target as HTMLElement).closest("a")) setOpen(false);
+    }
+
     const links = [
         {
             label: "Overview",
@@ -86,7 +94,7 @@ export function BusinessMobileNav({
     ];
 
     return (
-        <Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
                 render={
                     <Button
@@ -123,7 +131,7 @@ export function BusinessMobileNav({
                     </div>
                 </SheetHeader>
 
-                <div className="space-y-5 overflow-y-auto px-4 pb-6">
+                <div className="space-y-5 overflow-y-auto px-4 pb-6" onClick={closeOnLink}>
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                             Current business
