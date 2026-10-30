@@ -454,7 +454,9 @@ async function PlanOptions({
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                     <CardTitle className="text-2xl">{card.name}</CardTitle>
                                     {isFounding && (
-                                        <Badge className="bg-[#FF593F] text-[#17233B]">Founding price</Badge>
+                                        <Badge variant="outline" className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]">
+                                            Founding price
+                                        </Badge>
                                     )}
                                 </div>
                                 <p className="text-sm text-[#17233B]/65">{card.tagline}</p>
