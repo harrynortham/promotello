@@ -48,7 +48,7 @@ test.describe("business forms", () => {
         await expect(page.getByRole("heading", { name: "Your business" })).toBeVisible();
     });
 
-    test("editing a business saves its details and hours", async ({ page }) => {
+    test("editing a business saves its details", async ({ page }) => {
         const { businessId } = state();
         const description = `Edited by the forms test ${Date.now()}`;
 
@@ -61,21 +61,54 @@ test.describe("business forms", () => {
         await page.locator("#website").fill("example.com");
         await page.locator("#category option").nth(1).waitFor({ state: "attached" });
         await page.locator("#category").selectOption({ index: 1 });
-        await page.getByLabel("Monday closes").fill("18:30");
         await page.getByRole("button", { name: "Save changes" }).click();
         await expect(page.getByText("Business details saved successfully.")).toBeVisible({ timeout: 10_000 });
 
         const supabase = admin();
         const { data: business } = await supabase.from("businesses").select("description, website_url").eq("id", businessId).single();
         expect(business).toEqual({ description, website_url: "https://example.com" });
+    });
 
-        const { data: monday } = await supabase
+    test("opening hours start unset and save once every day is chosen", async ({ page }) => {
+        const { businessId } = state();
+        const supabase = admin();
+        await supabase.from("business_hours").delete().eq("business_id", businessId);
+
+        await page.goto(`/business/${businessId}/hours`);
+        await expect(page.getByText("Not set yet")).toHaveCount(7);
+
+        // Nothing chosen yet, so saving asks for every day.
+        await page.getByRole("button", { name: "Save hours" }).click();
+        await expect(page.getByText("Choose open or closed.").first()).toBeVisible();
+
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        for (const day of weekdays) {
+            await page.getByRole("group", { name: `${day} open or closed` }).getByRole("button", { name: "Open" }).click();
+            // An opened day starts at 9am to 5pm.
+            await expect(page.getByLabel(`${day} opens`)).toHaveValue("09:00");
+            await expect(page.getByLabel(`${day} closes`)).toHaveValue("17:00");
+            await page.getByLabel(`${day} closes`).fill("18:30");
+        }
+        await page.getByRole("group", { name: "Sunday open or closed" }).getByRole("button", { name: "Closed" }).click();
+
+        // Closing before opening is caught, matching the database rule.
+        await page.getByLabel("Monday closes").fill("08:00");
+        await page.getByRole("button", { name: "Save hours" }).click();
+        await expect(page.getByText("The closing time must be after the opening time.")).toBeVisible();
+
+        await page.getByLabel("Monday closes").fill("18:30");
+        await page.getByRole("button", { name: "Save hours" }).click();
+        await page.waitForURL(new RegExp(`/business/${businessId}$`), { timeout: 10_000 });
+
+        const { data: rows } = await supabase
             .from("business_hours")
-            .select("closes_at")
+            .select("day_of_week, is_closed, opens_at, closes_at")
             .eq("business_id", businessId)
-            .eq("day_of_week", 1)
-            .single();
-        expect(monday!.closes_at).toMatch(/^18:30/);
+            .order("day_of_week");
+        expect(rows).toHaveLength(7);
+        expect(rows![0]).toMatchObject({ day_of_week: 0, is_closed: true, opens_at: null });
+        expect(rows![1].closes_at).toMatch(/^18:30/);
+        expect(rows![6].opens_at).toMatch(/^09:00/);
     });
 
     test("editing a promotion validates and saves it", async ({ page }) => {

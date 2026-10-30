@@ -264,7 +264,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     label: "Set your opening hours",
                     description: "Shown on your profile so nobody turns up to a closed door.",
                     completed: Boolean(hours?.length),
-                    href: `${base}/edit`,
+                    href: `${base}/hours`,
                     action: "Set hours",
                 },
                 {
