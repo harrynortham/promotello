@@ -71,7 +71,7 @@ const statusClasses: Record<OfferStatus, string> = {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <Skeleton className="h-9 w-44 rounded-md" />
 
                 <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -222,17 +222,8 @@ async function OffersContent({ params }: PageProps) {
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-5xl">
-                <Button
-                    render={<Link href={`/business/${businessId}`} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to dashboard
-                </Button>
-
-                <header className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Offers

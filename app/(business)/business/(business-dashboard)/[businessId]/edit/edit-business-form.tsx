@@ -176,7 +176,7 @@ export default function EditBusinessForm({
     if (isLoading) {
         return (
             <div>
-                <div className="mx-auto max-w-2xl">
+                <div>
                     <div className="h-96 animate-pulse rounded-xl bg-white" />
                 </div>
             </div>
@@ -186,7 +186,7 @@ export default function EditBusinessForm({
     if (!loaded) {
         return (
             <div>
-                <Card className="mx-auto max-w-2xl border-red-200">
+                <Card className="border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
                             <AlertTitle>Business unavailable</AlertTitle>
@@ -295,17 +295,8 @@ function BusinessForm({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-3xl">
-                <Button
-                    render={<Link href={`/business/${businessId}`} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to dashboard
-                </Button>
-
-                <div className="mt-8">
+            <div>
+                <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Business settings
                     </p>

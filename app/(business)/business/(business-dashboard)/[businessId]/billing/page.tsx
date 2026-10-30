@@ -76,7 +76,7 @@ function formatDate(value: string | null) {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-3xl">
+            <div>
                 <Skeleton className="h-5 w-40 rounded-md" />
                 <Skeleton className="mt-3 h-12 w-64 rounded-md" />
                 <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
@@ -138,7 +138,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-3xl">
+            <div>
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Business settings

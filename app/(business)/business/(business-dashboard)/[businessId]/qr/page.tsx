@@ -40,7 +40,7 @@ const errorMessages: Record<string, string> = {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <Skeleton className="h-10 w-64 rounded-md" />
                 <Skeleton className="mt-8 h-40 rounded-2xl" />
                 <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -134,7 +134,7 @@ async function QrContent({ params, searchParams }: PageProps) {
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                     QR posters
                 </p>

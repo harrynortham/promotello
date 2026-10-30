@@ -75,7 +75,7 @@ export default function RedemptionList({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-4xl">
+            <div>
                 <Link
                     href={`/business/${businessId}/offers`}
                     className="text-sm font-semibold text-[#FF593F]"

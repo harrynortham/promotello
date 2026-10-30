@@ -15,7 +15,7 @@ type PageProps = {
 
 function LoadingState() {
     return (
-        <div className="mx-auto max-w-xl">
+        <div>
             <Skeleton className="h-9 w-44 rounded-md" />
             <Skeleton className="mt-8 h-12 w-64 rounded-md" />
             <Skeleton className="mt-10 h-80 w-full rounded-xl" />
@@ -64,7 +64,7 @@ async function CoverContent({ params, searchParams }: PageProps) {
             businessId={businessId}
             businessName={business.name}
             imageUrl={business.cover_image_url}
-            returnTo={fromEdit ? { href: `/business/${businessId}/edit`, label: "Back to edit business" } : undefined}
+            returnTo={fromEdit ? `/business/${businessId}/edit` : undefined}
         />
     );
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Area } from "react-easy-crop";
 import { FiImage, FiUpload } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FieldError } from "@/components/field-error";
@@ -49,11 +49,12 @@ export function BusinessImageForm({
     businessId: string;
     businessName: string;
     imageUrl: string | null;
-    returnTo?: { href: string; label: string };
+    // Where Back and saving go: Edit business when they came from there.
+    returnTo?: string;
 }) {
     const config = KINDS[kind];
     const router = useRouter();
-    const back = returnTo ?? { href: `/business/${businessId}`, label: "Back to dashboard" };
+    const back = returnTo ?? `/business/${businessId}`;
     const inputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export function BusinessImageForm({
 
     function done() {
         // Back where they came from: the setup steps tick this off.
-        router.push(back.href);
+        router.push(back);
         router.refresh();
     }
 
@@ -147,15 +148,8 @@ export function BusinessImageForm({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-xl">
-                <Button
-                    render={<Link href={back.href} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← {back.label}
-                </Button>
+            <div>
+                <BackButton href={back} />
 
                 <div className="mt-8">
                     <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>

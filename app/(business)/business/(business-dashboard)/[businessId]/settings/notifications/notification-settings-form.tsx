@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 import {
@@ -103,17 +102,8 @@ export default function NotificationSettingsForm({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-2xl">
-                <Button
-                    render={<Link href={`/business/${businessId}`} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to dashboard
-                </Button>
-
-                <div className="mt-8">
+            <div>
+                <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Business settings
                     </p>

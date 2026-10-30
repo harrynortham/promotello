@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 import {
@@ -273,17 +272,8 @@ export default function TeamManagement({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-5xl">
-                <Button
-                    render={<Link href={`/business/${businessId}`} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to dashboard
-                </Button>
-
-                <header className="mt-8">
+            <div>
+                <header>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Team management
                     </p>
