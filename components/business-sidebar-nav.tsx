@@ -100,16 +100,6 @@ export function BusinessSidebarNav({
                 );
             })}
 
-            <div className="pt-4">
-                <Button
-                    render={<Link href="/business/dashboard" />}
-                    nativeButton={false}
-                    variant="outline"
-                    className="w-full"
-                >
-                    All businesses
-                </Button>
-            </div>
         </nav>
     );
 }

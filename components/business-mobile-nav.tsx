@@ -176,21 +176,12 @@ export function BusinessMobileNav({
                     <Separator />
 
                     <Button
-                        render={<Link href="/business/dashboard" />}
-                        nativeButton={false}
-                        variant="outline"
-                        className="w-full"
-                    >
-                        All businesses
-                    </Button>
-
-                    <Button
                         render={<Link href="/dashboard" />}
                         nativeButton={false}
                         variant="outline"
                         className="w-full"
                     >
-                        Customer area
+                        Go to dashboard
                     </Button>
                 </div>
             </SheetContent>
