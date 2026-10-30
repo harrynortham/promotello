@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FiPlus } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -175,14 +176,29 @@ export function BusinessMobileNav({
 
                     <Separator />
 
-                    <Button
-                        render={<Link href="/dashboard" />}
-                        nativeButton={false}
-                        variant="outline"
-                        className="w-full"
-                    >
-                        Go to dashboard
-                    </Button>
+                    <div className="space-y-2">
+                        {/* With one business, the dashboard is its overview. */}
+                        {businesses.length > 1 && (
+                            <Button
+                                render={<Link href="/business/dashboard" />}
+                                nativeButton={false}
+                                variant="outline"
+                                className="w-full"
+                            >
+                                Go to dashboard
+                            </Button>
+                        )}
+
+                        <Button
+                            render={<Link href="/onboarding" />}
+                            nativeButton={false}
+                            variant="ghost"
+                            className="w-full"
+                        >
+                            <FiPlus aria-hidden="true" />
+                            Add a business
+                        </Button>
+                    </div>
                 </div>
             </SheetContent>
         </Sheet>

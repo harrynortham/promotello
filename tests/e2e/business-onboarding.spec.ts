@@ -30,7 +30,7 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await page.locator('button[type="submit"]').click();
 
         // No business yet: one clear next step.
-        await expect(page.getByRole("heading", { name: /Let's get your business on Promotello, Jo/ })).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByRole("heading", { name: /Welcome, Jo/ })).toBeVisible({ timeout: 15_000 });
         await page.getByRole("button", { name: "Add your business" }).click();
 
         // Step 1: the basics. Continue is blocked until the name is filled in.
