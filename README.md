@@ -102,10 +102,8 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 ## Still to do
 
 - Secure all platform emails with unique strong passwords, add all to apple keychain
-- Create business plan as per 1stformations document.
-- Create marketing plan
-- Create cashflow forecast
-- Save all documents to google drive
+- need way to generate poster to stick in window, sent to each sign up business using that website with the API printing
+- add social icons to email signature
 - Transfer youtube channel to hello@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
 - Add social media posts as per marketing launch POSTS.md / once business accounts are all set up and tested
 - Fix login / register pages on mobile for all to be above the fold (buttons for example)
@@ -129,8 +127,28 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Stripe managed payments requires VAT ID which we dont have and wont have until over 85k threshold, then we can enable. We may do sooner but not needed for now the VAT. You're unlikely to want it back. If you pass the £90k VAT threshold, the usual route is to register for VAT yourself and turn on Stripe Tax, which is far cheaper than Managed. Payments' extra fee of about 3.5%. Stripe wouldn't need to become the seller.
 - Set up BIMI so the logo shows in mail apps
 - Events: built, and hidden until there are enough customers (`lib/features.ts`)
-- Apple and Google Wallet passes
 - Add apple logins to register and login page, quicker than verifiying email
 - Do we need it? Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register. Add ICO number to privacy policy and other legal pages (company number done: `lib/legal.ts`)
 - Add API so that users can generate and buy stickers of their QR codes like Printful: a well-documented REST API, kiss-cut stickers, and printing in the UK. It’s probably the quickest to get working.
 - Do we have QR code download image that business can display to get loyalty card / user signs up and is in their account
+
+### App improvements
+
+From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them. Start with 1 and 2 together: a guest card goes straight into the Wallet.
+
+1. Apple and Google Wallet passes. Apply for an Apple Developer account and a Google Wallet issuer account first, as approval takes time
+2. Join a loyalty card without an account: name plus email or phone creates a guest card, claimed into a full account later
+3. Card design (colours, logo, stamp icon) and multi-stamp (several stamps in one scan, with a cap)
+4. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
+5. Customer list, segments (lapsed, VIP) and CSV export with consent flags
+6. Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
+7. Double-stamp days, reusing the quiet-hours schedules
+8. Surprise rewards and scratch-to-win
+9. Customer refer-a-friend
+10. Wallet push messages and location alerts (needs 1)
+
+Smaller gaps:
+
+- Business profiles: photo gallery and social links
+- Offer types beyond a discount
+- Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate
