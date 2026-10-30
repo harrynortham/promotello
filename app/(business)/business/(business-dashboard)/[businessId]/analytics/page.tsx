@@ -37,7 +37,7 @@ type RedemptionRow = {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <div className="flex items-end justify-between">
                     <div>
                         <Skeleton className="h-5 w-40 rounded-md" />
@@ -232,7 +232,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -248,14 +248,6 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         </p>
                     </div>
 
-                    <Button
-                        render={<Link href={`/business/${businessId}`} />}
-                        nativeButton={false}
-                        variant="outline"
-                        size="sm"
-                    >
-                        ← Business dashboard
-                    </Button>
                 </div>
 
                 {analytics && <PeriodSummary analytics={analytics as BusinessAnalytics} />}

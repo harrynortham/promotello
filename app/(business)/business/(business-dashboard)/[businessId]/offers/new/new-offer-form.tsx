@@ -17,6 +17,7 @@ import {
 } from "@/components/offer-fields";
 import { scheduleFromForm } from "@/components/offer-schedule-fields";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -152,7 +153,7 @@ export default function NewOfferForm({
                                 nativeButton={false}
                                 variant="outline"
                             >
-                                Back to dashboard
+                                Go to overview
                             </Button>
 
                             <Button
@@ -171,15 +172,8 @@ export default function NewOfferForm({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-2xl">
-                <Button
-                    render={<Link href={`/business/${businessId}`} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to dashboard
-                </Button>
+            <div>
+                <BackButton href={`/business/${businessId}/offers`} />
 
                 <div className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -197,7 +191,7 @@ export default function NewOfferForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 border-[#17233B]/10">
+                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle>Offer details</CardTitle>
                     </CardHeader>

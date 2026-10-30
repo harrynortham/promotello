@@ -16,7 +16,7 @@ type PageProps = {
 
 function LoadingState() {
     return (
-        <div className="mx-auto max-w-2xl">
+        <div>
             <Skeleton className="h-9 w-44 rounded-md" />
             <Skeleton className="mt-8 h-12 w-72 rounded-md" />
             <Skeleton className="mt-10 h-[28rem] w-full rounded-xl" />
@@ -65,7 +65,7 @@ async function HoursContent({ params, searchParams }: PageProps) {
             businessName={business.name}
             initialDays={hoursToValues((hours ?? []) as HoursRow[])}
             isFirstTime={!hours?.length}
-            returnTo={fromEdit ? { href: `/business/${businessId}/edit`, label: "Back to edit business" } : undefined}
+            returnTo={fromEdit ? `/business/${businessId}/edit` : undefined}
         />
     );
 }

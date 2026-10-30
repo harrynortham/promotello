@@ -124,7 +124,7 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
 
 function LoadingState() {
     return (
-        <div className="mx-auto max-w-3xl">
+        <div>
             <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
             <div className="mt-6 h-96 animate-pulse rounded-2xl bg-slate-100" />
         </div>

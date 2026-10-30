@@ -15,7 +15,7 @@ type PageProps = {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-4xl">
+            <div>
                 <Skeleton className="h-9 w-44 rounded-md" />
 
                 <div className="mt-8">

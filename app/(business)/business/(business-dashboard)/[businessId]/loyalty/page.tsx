@@ -43,7 +43,7 @@ function weekAgo() {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <Skeleton className="h-10 w-64 rounded-md" />
                 <Skeleton className="mt-8 h-64 rounded-2xl" />
             </div>
@@ -182,7 +182,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                     Loyalty card
                 </p>

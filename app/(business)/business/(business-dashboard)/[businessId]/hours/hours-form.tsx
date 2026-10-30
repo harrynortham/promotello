@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +7,7 @@ import { useForm, useWatch, type Control, type UseFormRegister, type UseFormSetV
 import { z } from "zod";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FieldError, invalidProps } from "@/components/field-error";
@@ -133,10 +133,11 @@ export default function HoursForm({
     businessName: string;
     initialDays: DayValues[];
     isFirstTime: boolean;
-    returnTo?: { href: string; label: string };
+    // Where Back and saving go: Edit business when they came from there.
+    returnTo?: string;
 }) {
     const router = useRouter();
-    const back = returnTo ?? { href: `/business/${businessId}`, label: "Back to dashboard" };
+    const back = returnTo ?? `/business/${businessId}`;
     const [errorMessage, setErrorMessage] = useState("");
 
     const {
@@ -171,21 +172,14 @@ export default function HoursForm({
         }
 
         // Back where they came from: the setup steps tick this one off.
-        router.push(back.href);
+        router.push(back);
         router.refresh();
     }
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-2xl">
-                <Button
-                    render={<Link href={back.href} />}
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← {back.label}
-                </Button>
+            <div>
+                <BackButton href={back} />
 
                 <div className="mt-8">
                     <h1 className="text-4xl font-semibold tracking-tight">
@@ -198,7 +192,7 @@ export default function HoursForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 border-[#17233B]/10">
+                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
                     <CardContent className="p-4 sm:p-8">
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
                             <ul className="space-y-3">

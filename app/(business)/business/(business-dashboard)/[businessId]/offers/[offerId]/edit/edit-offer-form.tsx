@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +22,7 @@ import {
     type OfferInput,
     type OfferValues,
 } from "@/components/offer-fields";
+import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -227,7 +227,7 @@ export default function EditOfferForm({
     if (isLoading) {
         return (
             <div>
-                <div className="mx-auto max-w-2xl">
+                <div>
                     <div className="h-10 animate-pulse rounded-md bg-white" />
                     <div className="mt-6 h-96 animate-pulse rounded-xl bg-white" />
                 </div>
@@ -238,7 +238,7 @@ export default function EditOfferForm({
     if (!offer) {
         return (
             <div>
-                <Card className="mx-auto max-w-2xl border-red-200">
+                <Card className="max-w-3xl border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
                             <AlertTitle>Offer unavailable</AlertTitle>
@@ -254,17 +254,8 @@ export default function EditOfferForm({
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-2xl">
-                <Button
-                    render={
-                        <Link href={`/business/${businessId}/offers`} />
-                    }
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    ← Back to offers
-                </Button>
+            <div>
+                <BackButton href={`/business/${businessId}/offers`} />
 
                 <div className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -292,7 +283,7 @@ export default function EditOfferForm({
                     )}
                 </div>
 
-                <Card className="mt-8 border-[#17233B]/10">
+                <Card className="mt-8 max-w-3xl border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle>Redemption usage</CardTitle>
                     </CardHeader>

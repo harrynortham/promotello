@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { FiCamera } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
@@ -81,7 +80,7 @@ async function markRedemptionUsed(formData: FormData) {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <div className="flex items-end justify-between">
                     <div>
                         <Skeleton className="h-5 w-40 rounded-md" />
@@ -168,15 +167,15 @@ async function RedemptionsContent({ params }: PageProps) {
 
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div>
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="text-sm font-medium text-[#FF593F]">
-                            Business redemptions
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            {business.name}
                         </p>
 
-                        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#17233B]">
-                            {business.name}
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Redemptions
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
@@ -184,14 +183,6 @@ async function RedemptionsContent({ params }: PageProps) {
                         </p>
                     </div>
 
-                    <Button
-                        render={<Link href={`/business/${businessId}/offers`} />}
-                        nativeButton={false}
-                        variant="outline"
-                        size="sm"
-                    >
-                        Back to offers
-                    </Button>
                 </div>
 
                 <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
