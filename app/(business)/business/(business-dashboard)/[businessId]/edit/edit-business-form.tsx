@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -18,13 +18,13 @@ import Image from "next/image";
 import { FiUpload } from "react-icons/fi";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
+import { WEEK, formatHour, type HoursRow } from "@/lib/business-hours";
 import type { CityOption } from "@/lib/locations";
 import {
     locationShape,
@@ -63,46 +63,7 @@ type Location = {
     country_code: string;
 };
 
-type BusinessHour = {
-    day_of_week: number;
-    is_closed: boolean;
-    opens_at: string | null;
-    closes_at: string | null;
-};
-
-type DayHours = {
-    isClosed: boolean;
-    opensAt: string;
-    closesAt: string;
-};
-
-const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-];
-
-function createDefaultHours(): DayHours[] {
-    return days.map(() => ({
-        isClosed: false,
-        opensAt: "09:00",
-        closesAt: "17:00",
-    }));
-}
-
 const reviewLink = /^https:\/\/(g\.page|maps\.app\.goo\.gl|(www\.|search\.)?google\.[a-z.]+)\//;
-
-const hoursSchema = z
-    .object({ isClosed: z.boolean(), opensAt: z.string(), closesAt: z.string() })
-    // Overnight hours (6pm to 2am) are fine; the same time twice isn't.
-    .refine((day) => day.isClosed || (day.opensAt && day.closesAt && day.opensAt !== day.closesAt), {
-        message: "Choose different opening and closing times.",
-        path: ["closesAt"],
-    });
 
 const businessShape = {
     businessName: requiredText("The business name", { min: 2, max: 160 }),
@@ -114,7 +75,6 @@ const businessShape = {
         .string()
         .trim()
         .refine((value) => !value || reviewLink.test(value), "Paste the review link from your Google Business Profile."),
-    hours: z.array(hoursSchema).length(7),
 };
 
 const locationFieldsShape = {
@@ -149,7 +109,7 @@ export default function EditBusinessForm({
     const [loaded, setLoaded] = useState<{
         business: Business;
         location: Location | null;
-        hours: DayHours[];
+        hours: HoursRow[];
     } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
@@ -201,19 +161,7 @@ export default function EditBusinessForm({
                 return;
             }
 
-            const loadedHours = createDefaultHours();
-
-            for (const item of (hoursResult.data ?? []) as BusinessHour[]) {
-                if (item.day_of_week >= 0 && item.day_of_week <= 6) {
-                    loadedHours[item.day_of_week] = {
-                        isClosed: item.is_closed,
-                        opensAt: item.opens_at?.slice(0, 5) ?? "09:00",
-                        closesAt: item.closes_at?.slice(0, 5) ?? "17:00",
-                    };
-                }
-            }
-
-            setLoaded({ business: businessData, location: locationResult.data, hours: loadedHours });
+            setLoaded({ business: businessData, location: locationResult.data, hours: (hoursResult.data ?? []) as HoursRow[] });
             setIsLoading(false);
         }
 
@@ -255,70 +203,6 @@ export default function EditBusinessForm({
     return <BusinessForm businessId={businessId} cities={cities} {...loaded} />;
 }
 
-function HoursRow({
-    index,
-    day,
-    control,
-    register,
-    error,
-}: {
-    index: number;
-    day: string;
-    control: ReturnType<typeof useForm<Values, unknown, Output>>["control"];
-    register: ReturnType<typeof useForm<Values, unknown, Output>>["register"];
-    error?: string;
-}) {
-    const isClosed = useWatch({ control, name: `hours.${index}.isClosed` });
-
-    return (
-        <Card className="border-[#17233B]/10 shadow-none">
-            <CardContent className="p-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                        <Controller
-                            control={control}
-                            name={`hours.${index}.isClosed`}
-                            render={({ field }) => (
-                                <Checkbox
-                                    id={`open-${index}`}
-                                    checked={!field.value}
-                                    onCheckedChange={(checked) => field.onChange(checked !== true)}
-                                />
-                            )}
-                        />
-
-                        <Label htmlFor={`open-${index}`}>{day}</Label>
-                    </div>
-
-                    {isClosed ? (
-                        <span className="text-sm text-[#17233B]/70">Closed</span>
-                    ) : (
-                        <div className="flex items-center gap-3">
-                            <Input
-                                type="time"
-                                aria-label={`${day} opens`}
-                                className="w-auto"
-                                {...register(`hours.${index}.opensAt`)}
-                            />
-
-                            <span className="text-sm text-[#17233B]/65">to</span>
-
-                            <Input
-                                type="time"
-                                aria-label={`${day} closes`}
-                                className="w-auto"
-                                {...register(`hours.${index}.closesAt`)}
-                                {...invalidProps(`hours-${index}-error`, error ? { message: error } : undefined)}
-                            />
-                        </div>
-                    )}
-                </div>
-                <FieldError id={`hours-${index}-error`} message={error} />
-            </CardContent>
-        </Card>
-    );
-}
-
 function BusinessForm({
     businessId,
     cities,
@@ -330,7 +214,7 @@ function BusinessForm({
     cities: CityOption[];
     business: Business;
     location: Location | null;
-    hours: DayHours[];
+    hours: HoursRow[];
 }) {
     const router = useRouter();
 
@@ -341,7 +225,6 @@ function BusinessForm({
     const {
         register,
         handleSubmit,
-        control,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<Values, unknown, Output>({
         resolver: location ? zodResolver(withLocation(cities)) : zodResolver(withoutLocation),
@@ -352,7 +235,6 @@ function BusinessForm({
             website: business.website_url ?? "",
             contactEmail: business.contact_email ?? "",
             googleReviewUrl: business.google_review_url ?? "",
-            hours,
             locationName: location?.name ?? "",
             addressLine1: location?.address_line_1 ?? "",
             addressLine2: location?.address_line_2 ?? "",
@@ -404,25 +286,6 @@ function BusinessForm({
                 setErrorMessage(locationError.message);
                 return;
             }
-        }
-
-        const hoursRows = values.hours.map((day, dayOfWeek) => ({
-            business_id: businessId,
-            day_of_week: dayOfWeek,
-            is_closed: day.isClosed,
-            opens_at: day.isClosed ? null : day.opensAt,
-            closes_at: day.isClosed ? null : day.closesAt,
-        }));
-
-        const { error: hoursError } = await supabase
-            .from("business_hours")
-            .upsert(hoursRows, {
-                onConflict: "business_id,day_of_week",
-            });
-
-        if (hoursError) {
-            setErrorMessage(hoursError.message);
-            return;
         }
 
         setSaved(true);
@@ -636,29 +499,52 @@ function BusinessForm({
 
                             <Separator />
 
+                            {/* Hours have their own page and save on their own. */}
                             <section className="space-y-5">
-                                <div>
-                                    <h2 className="text-xl font-semibold">
-                                        Opening hours
-                                    </h2>
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <h2 className="text-xl font-semibold">
+                                            Opening hours
+                                        </h2>
 
-                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
-                                        Set the hours customers can visit your business.
+                                        <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
+                                            Saved on their own page, so save any other changes here first.
+                                        </p>
+                                    </div>
+
+                                    <Button
+                                        render={<Link href={`/business/${businessId}/hours?from=edit`} />}
+                                        nativeButton={false}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        {hours.length ? "Change hours" : "Set hours"}
+                                    </Button>
+                                </div>
+
+                                {hours.length ? (
+                                    <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[8rem_1fr]">
+                                        {WEEK.map(({ dayOfWeek, name }) => {
+                                            const day = hours.find((row) => row.day_of_week === dayOfWeek);
+                                            return (
+                                                <div key={dayOfWeek} className="contents">
+                                                    <dt className="font-medium">{name}</dt>
+                                                    <dd className="text-[#17233B]/70">
+                                                        {!day
+                                                            ? "Not set"
+                                                            : day.is_closed || !day.opens_at || !day.closes_at
+                                                                ? "Closed"
+                                                                : `${formatHour(day.opens_at)} to ${formatHour(day.closes_at)}`}
+                                                    </dd>
+                                                </div>
+                                            );
+                                        })}
+                                    </dl>
+                                ) : (
+                                    <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-sm text-[#17233B]/70">
+                                        Not set yet.
                                     </p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {days.map((day, index) => (
-                                        <HoursRow
-                                            key={day}
-                                            index={index}
-                                            day={day}
-                                            control={control}
-                                            register={register}
-                                            error={errors.hours?.[index]?.closesAt?.message}
-                                        />
-                                    ))}
-                                </div>
+                                )}
                             </section>
 
                             {errorMessage && (
