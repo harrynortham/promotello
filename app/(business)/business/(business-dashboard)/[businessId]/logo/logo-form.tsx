@@ -18,12 +18,15 @@ export default function LogoForm({
     businessId,
     businessName,
     logoUrl,
+    returnTo,
 }: {
     businessId: string;
     businessName: string;
     logoUrl: string | null;
+    returnTo?: { href: string; label: string };
 }) {
     const router = useRouter();
+    const back = returnTo ?? { href: `/business/${businessId}`, label: "Back to dashboard" };
     const inputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -91,8 +94,8 @@ export default function LogoForm({
             return;
         }
 
-        // Back to the setup steps, with this one ticked off.
-        router.push(`/business/${businessId}`);
+        // Back where they came from: the setup steps tick this one off.
+        router.push(back.href);
         router.refresh();
     }
 
@@ -100,12 +103,12 @@ export default function LogoForm({
         <div className="text-[#17233B]">
             <div className="mx-auto max-w-xl">
                 <Button
-                    render={<Link href={`/business/${businessId}`} />}
+                    render={<Link href={back.href} />}
                     nativeButton={false}
                     variant="outline"
                     size="sm"
                 >
-                    ← Back to dashboard
+                    ← {back.label}
                 </Button>
 
                 <div className="mt-8">

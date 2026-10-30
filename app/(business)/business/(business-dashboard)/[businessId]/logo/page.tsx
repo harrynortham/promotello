@@ -10,6 +10,7 @@ type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
+    searchParams: Promise<{ from?: string }>;
 };
 
 function LoadingState() {
@@ -23,10 +24,12 @@ function LoadingState() {
 }
 
 // Just the logo, for the "Add your logo" setup step. Everything else is on /edit.
-async function LogoContent({ params }: PageProps) {
+async function LogoContent({ params, searchParams }: PageProps) {
     await connection();
 
     const { businessId } = await params;
+    // Back to Edit business when that's where they came from, otherwise the overview.
+    const fromEdit = (await searchParams).from === "edit";
     const supabase = await createClient();
 
     const {
@@ -55,13 +58,20 @@ async function LogoContent({ params }: PageProps) {
         notFound();
     }
 
-    return <LogoForm businessId={businessId} businessName={business.name} logoUrl={business.logo_url} />;
+    return (
+        <LogoForm
+            businessId={businessId}
+            businessName={business.name}
+            logoUrl={business.logo_url}
+            returnTo={fromEdit ? { href: `/business/${businessId}/edit`, label: "Back to edit business" } : undefined}
+        />
+    );
 }
 
-export default function LogoPage({ params }: PageProps) {
+export default function LogoPage({ params, searchParams }: PageProps) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <LogoContent params={params} />
+            <LogoContent params={params} searchParams={searchParams} />
         </Suspense>
     );
 }

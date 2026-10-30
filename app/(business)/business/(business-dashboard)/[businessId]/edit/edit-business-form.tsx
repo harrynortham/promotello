@@ -15,6 +15,7 @@ import {
 import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { FiUpload } from "react-icons/fi";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,7 +25,6 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
-import { LOGO_ACCEPT, logoFileError, uploadLogo } from "@/lib/business-logo";
 import type { CityOption } from "@/lib/locations";
 import {
     locationShape,
@@ -334,8 +334,7 @@ function BusinessForm({
 }) {
     const router = useRouter();
 
-    const [business, setBusiness] = useState(initialBusiness);
-    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const business = initialBusiness;
     const [saved, setSaved] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -343,7 +342,6 @@ function BusinessForm({
         register,
         handleSubmit,
         control,
-        setError,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<Values, unknown, Output>({
         resolver: location ? zodResolver(withLocation(cities)) : zodResolver(withoutLocation),
@@ -370,26 +368,6 @@ function BusinessForm({
 
         const supabase = createClient();
 
-        let logoUrl = business.logo_url;
-
-        if (logoFile) {
-            const fileError = logoFileError(logoFile);
-
-            if (fileError) {
-                setError("root.logo", { message: fileError });
-                return;
-            }
-
-            const upload = await uploadLogo(supabase, businessId, logoFile);
-
-            if ("error" in upload) {
-                setErrorMessage(upload.error ?? "The logo couldn't be uploaded.");
-                return;
-            }
-
-            logoUrl = upload.url;
-        }
-
         const { error: businessError } = await supabase
             .from("businesses")
             .update({
@@ -399,7 +377,6 @@ function BusinessForm({
                 website_url: values.website || null,
                 contact_email: values.contactEmail || null,
                 google_review_url: values.googleReviewUrl || null,
-                logo_url: logoUrl,
             })
             .eq("id", businessId);
 
@@ -448,8 +425,6 @@ function BusinessForm({
             return;
         }
 
-        setBusiness((current) => ({ ...current, logo_url: logoUrl }));
-        setLogoFile(null);
         setSaved(true);
         router.refresh();
     }
@@ -494,33 +469,37 @@ function BusinessForm({
                                     </p>
                                 </div>
 
-                                {business.logo_url && (
-                                    <Image
-                                        src={business.logo_url}
-                                        alt={`${business.name} logo`}
-                                        width={96}
-                                        height={96}
-                                        className="h-24 w-24 rounded-xl object-cover"
-                                    />
-                                )}
+                                {/* The logo has its own page, with cropping, and saves on its own. */}
+                                <div className="flex items-center gap-4">
+                                    {business.logo_url ? (
+                                        <Image
+                                            src={business.logo_url}
+                                            alt={`${business.name} logo`}
+                                            width={64}
+                                            height={64}
+                                            className="size-16 rounded-2xl border border-[#17233B]/10 object-cover"
+                                        />
+                                    ) : (
+                                        <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-dashed border-[#17233B]/20 bg-[#FFF8F0] text-2xl font-semibold text-[#17233B]/40">
+                                            {business.name.charAt(0).toUpperCase()}
+                                        </span>
+                                    )}
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="logo">Business logo</Label>
-
-                                    <Input
-                                        id="logo"
-                                        name="logo"
-                                        type="file"
-                                        accept={LOGO_ACCEPT}
-                                        onChange={(event) =>
-                                            setLogoFile(event.target.files?.[0] ?? null)
-                                        }
-                                    />
-
-                                    <FieldError id="logo-error" message={errors.root?.logo?.message} />
-                                    <p className="text-xs text-[#17233B]/65">
-                                        Use a PNG, JPG or WebP image under 5MB.
-                                    </p>
+                                    <div className="min-w-0 space-y-1.5">
+                                        <p className="text-sm font-medium">Business logo</p>
+                                        <Button
+                                            render={<Link href={`/business/${businessId}/logo?from=edit`} />}
+                                            nativeButton={false}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            <FiUpload aria-hidden="true" />
+                                            {business.logo_url ? "Change logo" : "Add logo"}
+                                        </Button>
+                                        <p className="text-xs text-[#17233B]/65">
+                                            Saved on its own page, so save any other changes here first.
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
