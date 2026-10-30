@@ -80,7 +80,7 @@ export function BusinessRecentActivity({
 
                         <p className="mt-2 text-sm text-[#17233B]/70">
                             Customer activity will appear here once someone
-                            redeems one of your promotions.
+                            redeems one of your offers.
                         </p>
                     </div>
                 ) : (
@@ -91,7 +91,7 @@ export function BusinessRecentActivity({
                                     <div className="min-w-0">
                                         <p className="truncate font-semibold text-[#17233B]">
                                             {redemption.offer?.title ??
-                                                "Promotion"}
+                                                "Offer"}
                                         </p>
 
                                         <p className="mt-1 text-sm text-[#17233B]/70">

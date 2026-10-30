@@ -127,7 +127,7 @@ export default function EditOfferForm({
             if (!current) return;
 
             if (error || !data) {
-                setErrorMessage("We couldn't load this promotion.");
+                setErrorMessage("We couldn't load this offer.");
             } else {
                 const loaded = data as Offer;
                 setOffer(loaded);
@@ -241,9 +241,9 @@ export default function EditOfferForm({
                 <Card className="mx-auto max-w-2xl border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
-                            <AlertTitle>Promotion unavailable</AlertTitle>
+                            <AlertTitle>Offer unavailable</AlertTitle>
                             <AlertDescription>
-                                {errorMessage || "Promotion not found."}
+                                {errorMessage || "Offer not found."}
                             </AlertDescription>
                         </Alert>
                     </CardContent>
@@ -263,16 +263,16 @@ export default function EditOfferForm({
                     variant="outline"
                     size="sm"
                 >
-                    ← Back to promotions
+                    ← Back to offers
                 </Button>
 
                 <div className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Promotion management
+                        Offer management
                     </p>
 
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Edit promotion
+                        Edit offer
                     </h1>
 
                     <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -285,7 +285,7 @@ export default function EditOfferForm({
 
                     {offer.approval_status === "approved" && (
                         <p className="mt-3 text-sm text-[#17233B]/70">
-                            Changing the wording, terms or image sends a live promotion
+                            Changing the wording, terms or image sends a live offer
                             back to our team for a quick check, unless your business is
                             on Pro.
                         </p>
@@ -312,14 +312,14 @@ export default function EditOfferForm({
 
                 <Card className="mt-6 border-[#17233B]/10">
                     <CardHeader>
-                        <CardTitle>Promotion details</CardTitle>
+                        <CardTitle>Offer details</CardTitle>
                     </CardHeader>
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
                             {offer.image_url && !removeImage && (
                                 <div className="space-y-3">
-                                    <Label>Current promotion image</Label>
+                                    <Label>Current offer image</Label>
 
                                     <div className="relative h-52 w-full overflow-hidden rounded-xl">
                                         <Image
@@ -335,8 +335,8 @@ export default function EditOfferForm({
                             <div className="space-y-2">
                                 <Label htmlFor="image">
                                     {offer.image_url
-                                        ? "Replace promotion image"
-                                        : "Add promotion image"}
+                                        ? "Replace offer image"
+                                        : "Add offer image"}
                                 </Label>
 
                                 <Input
@@ -416,7 +416,7 @@ export default function EditOfferForm({
                                     variant="destructive"
                                     size="lg"
                                 >
-                                    Delete promotion
+                                    Delete offer
                                 </Button>
                             </div>
                         </form>
@@ -429,10 +429,10 @@ export default function EditOfferForm({
                 >
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Delete this promotion?</DialogTitle>
+                            <DialogTitle>Delete this offer?</DialogTitle>
 
                             <DialogDescription>
-                                This action cannot be undone. The promotion and its details
+                                This action cannot be undone. The offer and its details
                                 will be permanently deleted.
                             </DialogDescription>
                         </DialogHeader>
@@ -453,7 +453,7 @@ export default function EditOfferForm({
                                 onClick={handleDelete}
                                 disabled={isDeleting}
                             >
-                                {isDeleting ? "Deleting…" : "Delete promotion"}
+                                {isDeleting ? "Deleting…" : "Delete offer"}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

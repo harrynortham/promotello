@@ -106,7 +106,7 @@ export function VoucherCard({
                         )}
 
                         <CardTitle className="mt-2 text-2xl leading-tight">
-                            {offer?.title ?? "Promotion details unavailable"}
+                            {offer?.title ?? "Offer details unavailable"}
                         </CardTitle>
 
                         {offer?.discount && (
@@ -162,7 +162,7 @@ export function VoucherCard({
                             "The business has marked this voucher as used."}
 
                         {status === "expired" &&
-                            "The promotion’s published expiry date has passed."}
+                            "The offer’s published expiry date has passed."}
 
                         {status === "unavailable" &&
                             "We can’t confirm current availability. Contact the business or support before visiting."}
@@ -214,7 +214,7 @@ export function VoucherCard({
                     ) : offer?.expiresAt ? (
                         <div>
                             <p className="text-muted-foreground">
-                                Promotion expires
+                                Offer expires
                             </p>
 
                             <p className="mt-1 font-medium">

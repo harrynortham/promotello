@@ -10,11 +10,11 @@ test("business owner can create a new offer", async ({ page }) => {
     await page.goto(`/business/${businessId}/offers/new`);
 
     // Fill all required fields.
-    await page.locator("#title").fill("E2E New Promotion");
+    await page.locator("#title").fill("E2E New Offer");
     await page.locator("#category").selectOption({ label: "Cafés & coffee" });
     await page.locator("#discount").fill("15% off");
     await page.locator("#description").fill(
-        "A promotion created by the automated E2E test suite.",
+        "An offer created by the automated E2E test suite.",
     );
     await page.locator("#expiresAt").fill("2030-12-31");
     await page.locator("#terms").fill("Valid during automated tests only. One per customer.");
@@ -22,7 +22,7 @@ test("business owner can create a new offer", async ({ page }) => {
     await page.locator('button[type="submit"]').click();
 
     // The test business is approved and on Pro, so the offer goes live at once.
-    await expect(page.getByText("Your promotion is live")).toBeVisible({
+    await expect(page.getByText("Your offer is live")).toBeVisible({
         timeout: 10_000,
     });
 });

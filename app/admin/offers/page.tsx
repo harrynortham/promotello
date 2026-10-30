@@ -203,11 +203,11 @@ export default function AdminOffersPage() {
 
                 <header>
                     <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                        Promotion approvals
+                        Offer approvals
                     </h1>
 
                     <p className="mt-3 text-[#17233B]/65">
-                        Review promotions submitted by businesses.
+                        Review offers submitted by businesses.
                     </p>
                 </header>
 
@@ -223,7 +223,7 @@ export default function AdminOffersPage() {
                         >
                             <div className="flex-1 space-y-2">
                                 <Label htmlFor="search">
-                                    Search promotions
+                                    Search offers
                                 </Label>
 
                                 <Input
@@ -243,7 +243,7 @@ export default function AdminOffersPage() {
 
                 {errorMessage && (
                     <Alert variant="destructive" className="mt-8">
-                        <AlertTitle>Unable to load promotions</AlertTitle>
+                        <AlertTitle>Unable to load offers</AlertTitle>
 
                         <AlertDescription>{errorMessage}</AlertDescription>
                     </Alert>
@@ -287,10 +287,10 @@ export default function AdminOffersPage() {
                     </div>
                 ) : offers.length === 0 ? (
                     <Alert className="mt-10 border-[#17233B]/10 bg-white">
-                        <AlertTitle>No promotions need review</AlertTitle>
+                        <AlertTitle>No offers need review</AlertTitle>
 
                         <AlertDescription>
-                            No pending promotions matched your search.
+                            No pending offers matched your search.
                         </AlertDescription>
                     </Alert>
                 ) : (
@@ -446,14 +446,14 @@ export default function AdminOffersPage() {
                     <DialogHeader>
                         <DialogTitle>
                             {reviewAction?.decision === "approved"
-                                ? "Approve this promotion?"
-                                : "Reject this promotion?"}
+                                ? "Approve this offer?"
+                                : "Reject this offer?"}
                         </DialogTitle>
 
                         <DialogDescription>
                             {reviewAction?.decision === "approved"
-                                ? "This promotion will become eligible to appear publicly."
-                                : "This promotion will not appear publicly to customers."}
+                                ? "This offer will become eligible to appear publicly."
+                                : "This offer will not appear publicly to customers."}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -487,8 +487,8 @@ export default function AdminOffersPage() {
                             {activeOfferId !== ""
                                 ? "Saving…"
                                 : reviewAction?.decision === "approved"
-                                    ? "Approve promotion"
-                                    : "Reject promotion"}
+                                    ? "Approve offer"
+                                    : "Reject offer"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

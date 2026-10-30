@@ -291,7 +291,7 @@ async function BusinessDashboardContent() {
                 id: `${business.id}-approval`,
                 title: `${business.name} is awaiting approval`,
                 description:
-                    "Your business must be approved before its promotions appear publicly.",
+                    "Your business must be approved before its offers appear publicly.",
                 href: `/business/${business.id}/edit`,
             });
         }
@@ -309,10 +309,10 @@ async function BusinessDashboardContent() {
         if (business.pendingOffers > 0) {
             items.push({
                 id: `${business.id}-pending-offers`,
-                title: `${business.pendingOffers} promotion${business.pendingOffers === 1 ? "" : "s"
+                title: `${business.pendingOffers} offer${business.pendingOffers === 1 ? "" : "s"
                     } awaiting approval`,
                 description:
-                    "Review your pending promotions while they are being assessed.",
+                    "Review your pending offers while they are being assessed.",
                 href: `/business/${business.id}/offers`,
             });
         }
@@ -369,7 +369,7 @@ async function BusinessDashboardContent() {
                     </h1>
 
                     <p className="mt-4 max-w-2xl leading-7 text-white/70">
-                        Manage your businesses, publish promotions, and keep
+                        Manage your businesses, publish offers, and keep
                         track of customer activity from one place.
                     </p>
 
@@ -418,7 +418,7 @@ async function BusinessDashboardContent() {
                     <Card>
                         <CardHeader className="pb-3">
                             <CardDescription>
-                                Active promotions
+                                Active offers
                             </CardDescription>
                             <CardTitle className="text-3xl">
                                 {totalActiveOffers}
@@ -427,7 +427,7 @@ async function BusinessDashboardContent() {
 
                         <CardContent>
                             <p className="text-sm text-[#17233B]/70">
-                                Currently visible promotions
+                                Currently visible offers
                             </p>
                         </CardContent>
                     </Card>
@@ -457,7 +457,7 @@ async function BusinessDashboardContent() {
 
                         <CardContent>
                             <p className="text-sm text-[#17233B]/70">
-                                Pending businesses or promotions
+                                Pending businesses or offers
                             </p>
                         </CardContent>
                     </Card>
@@ -492,7 +492,7 @@ async function BusinessDashboardContent() {
 
                             <CardDescription>
                                 Add your business profile to start publishing
-                                promotions on Promotello.
+                                offers on Promotello.
                             </CardDescription>
                         </CardHeader>
 
@@ -544,7 +544,7 @@ async function BusinessDashboardContent() {
 
                                             <AlertDescription>
                                                 Your business must be approved
-                                                before its promotions appear
+                                                before its offers appear
                                                 publicly.
                                             </AlertDescription>
                                         </Alert>
@@ -557,7 +557,7 @@ async function BusinessDashboardContent() {
                                             </p>
 
                                             <p className="mt-1 text-xs text-[#17233B]/70">
-                                                Active promotions
+                                                Active offers
                                             </p>
                                         </div>
 
@@ -605,7 +605,7 @@ async function BusinessDashboardContent() {
                                             nativeButton={false}
                                             variant="outline"
                                         >
-                                            View promotions
+                                            View offers
                                         </Button>
                                     </div>
                                 </CardContent>

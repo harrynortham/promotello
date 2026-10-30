@@ -41,10 +41,10 @@ const copy = {
         prefix: "consumer-contact",
         emailPlaceholder: "you@example.com",
         subjectLabel: "What’s your message about?",
-        subjectPlaceholder: "My account, a promotion, feedback…",
+        subjectPlaceholder: "My account, an offer, feedback…",
         messagePlaceholder: "Tell us what happened or how we can help.",
         messageHint:
-            "Include the business or promotion name if relevant. Please don’t send passwords, payment details, or redemption codes.",
+            "Include the business or offer name if relevant. Please don’t send passwords, payment details, or redemption codes.",
         privacy: "We’ll use your details to respond to your enquiry.",
         successTitle: "Thanks for reaching out.",
         successText: "Your message has been sent. We’ll review it and reply by email.",

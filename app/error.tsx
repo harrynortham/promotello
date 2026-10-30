@@ -168,7 +168,7 @@ export default function ErrorPage({
                             </p>
 
                             <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
-                                Discover promotions and local favourites.
+                                Discover offers and local favourites.
                             </p>
                         </div>
 

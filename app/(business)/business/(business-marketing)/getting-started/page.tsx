@@ -24,14 +24,14 @@ import {
 export const metadata: Metadata = {
     title: { absolute: "Getting Started | Promotello for Business" },
     description:
-        "Get set up on Promotello: your business page, first promotion, loyalty card and QR poster, and how your team scans at the till.",
+        "Get set up on Promotello: your business page, first offer, loyalty card and QR poster, and how your team scans at the till.",
 };
 
 const preparationItems = [
     "Your business name and a short description",
     "Your logo",
     "Your address and opening hours",
-    "An idea for your first promotion",
+    "An idea for your first offer",
     "A loyalty reward, like a free coffee after nine",
     "Your Google review link, if you have one",
 ];
@@ -56,7 +56,7 @@ const steps = [
     {
         number: "02",
         icon: FiGift,
-        title: "Create your first promotion",
+        title: "Create your first offer",
         description:
             "Give people a reason to try you. Customers claim it on their phone and get their own voucher.",
         tasks: [
@@ -65,7 +65,7 @@ const steps = [
             "Set a claim limit you can comfortably honour",
             "On Pro, it goes live as soon as your business is approved",
         ],
-        tip: "Start with something you can easily fulfil. You can always try a different promotion next.",
+        tip: "Start with something you can easily fulfil. You can always try a different offer next.",
         href: "/business/dashboard",
         action: "Open your dashboard",
     },
@@ -89,7 +89,7 @@ const steps = [
         icon: FiGrid,
         title: "Print your QR poster",
         description:
-            "Put a poster where customers will see it, so they can follow you, join your card or claim your promotion.",
+            "Put a poster where customers will see it, so they can follow you, join your card or claim your offer.",
         tasks: [
             "Create a poster for each spot: window, till or tables",
             "Print it at A4 or A5",
@@ -122,7 +122,7 @@ const steps = [
             "Customers show their phone at the till, your team scans it, and that's it.",
         tasks: [
             "Scan the voucher or loyalty card",
-            "Apply the promotion or add the stamp",
+            "Apply the offer or add the stamp",
             "If a voucher was already used or has ended, you'll see a warning",
             "Watch your results build up in Analytics",
         ],
@@ -176,7 +176,7 @@ export default function BusinessGettingStartedPage() {
 
                         <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                             Six steps from signing up to welcoming your first
-                            customers: your page, a promotion, a loyalty card,
+                            customers: your page, an offer, a loyalty card,
                             a QR poster and a team that knows how to scan.
                         </p>
 
@@ -338,7 +338,7 @@ export default function BusinessGettingStartedPage() {
 
                         <p className="mt-5 text-lg leading-8 text-white/70">
                             Answer these four questions before creating your
-                            promotion.
+                            offer.
                         </p>
                     </div>
 

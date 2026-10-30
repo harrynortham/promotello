@@ -80,7 +80,7 @@ export default function NewOfferForm({
         } = await supabase.auth.getUser();
 
         if (userError || !user) {
-            setErrorMessage("Please sign in before creating a promotion.");
+            setErrorMessage("Please sign in before creating an offer.");
             return;
         }
 
@@ -109,7 +109,7 @@ export default function NewOfferForm({
         }).select("id").single();
 
         if (error || !inserted) {
-            setErrorMessage(error?.message ?? "We couldn't create the promotion.");
+            setErrorMessage(error?.message ?? "We couldn't create the offer.");
             return;
         }
 
@@ -131,19 +131,19 @@ export default function NewOfferForm({
                         </div>
 
                         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                            {createdOffer === "live" ? "Promotion live" : "Promotion submitted"}
+                            {createdOffer === "live" ? "Offer live" : "Offer submitted"}
                         </p>
 
                         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
                             {createdOffer === "live"
-                                ? "Your promotion is live"
-                                : "Your promotion is pending approval"}
+                                ? "Your offer is live"
+                                : "Your offer is pending approval"}
                         </h1>
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
-                                ? "Customers can see and claim it now, and your followers are getting an email about it. Share it from your promotions list to reach even more people."
-                                : "Once approved, it will become visible to customers. Pro businesses' promotions go live straight away."}
+                                ? "Customers can see and claim it now, and your followers are getting an email about it. Share it from your offers list to reach even more people."
+                                : "Once approved, it will become visible to customers. Pro businesses' offers go live straight away."}
                         </p>
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -183,15 +183,15 @@ export default function NewOfferForm({
 
                 <div className="mt-8">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        New promotion
+                        New offer
                     </p>
 
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Create a promotion
+                        Create an offer
                     </h1>
 
                     <p className="mt-4 leading-7 text-[#17233B]/65">
-                        Once your business is approved and on Pro, promotions go live
+                        Once your business is approved and on Pro, offers go live
                         as soon as you create them. Otherwise our team reviews them
                         first.
                     </p>
@@ -199,13 +199,13 @@ export default function NewOfferForm({
 
                 <Card className="mt-10 border-[#17233B]/10">
                     <CardHeader>
-                        <CardTitle>Promotion details</CardTitle>
+                        <CardTitle>Offer details</CardTitle>
                     </CardHeader>
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
                             <div className="space-y-2">
-                                <Label htmlFor="image">Promotion image</Label>
+                                <Label htmlFor="image">Offer image</Label>
 
                                 <Input
                                     id="image"
@@ -236,7 +236,7 @@ export default function NewOfferForm({
 
                             {errorMessage && (
                                 <Alert variant="destructive">
-                                    <AlertTitle>Unable to create promotion</AlertTitle>
+                                    <AlertTitle>Unable to create offer</AlertTitle>
 
                                     <AlertDescription>
                                         {errorMessage}
@@ -252,8 +252,8 @@ export default function NewOfferForm({
                                 className="w-full"
                             >
                                 {isSubmitting
-                                    ? "Submitting promotion…"
-                                    : "Submit promotion"}
+                                    ? "Submitting offer…"
+                                    : "Submit offer"}
                             </Button>
                         </form>
                     </CardContent>

@@ -206,7 +206,7 @@ async function OffersContent({ params }: PageProps) {
 
     const typedOffers = (offers ?? []) as Offer[];
 
-    // Views per promotion for the share panel (last 30 days).
+    // Views per offer for the share panel (last 30 days).
     const { data: viewRows } = await supabase.rpc("offer_view_counts", { requested_business_id: businessId });
     const viewsByOffer = new Map(
         ((viewRows ?? []) as { offer_id: string; views: number; shared_views: number }[]).map((row) => [
@@ -235,15 +235,15 @@ async function OffersContent({ params }: PageProps) {
                 <header className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                            Promotions
+                            Offers
                         </p>
 
                         <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                            {business?.name ?? "Business promotions"}
+                            {business?.name ?? "Business offers"}
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            Manage promotions submitted by this business.
+                            Manage offers submitted by this business.
                         </p>
                     </div>
 
@@ -256,7 +256,7 @@ async function OffersContent({ params }: PageProps) {
                             variant="default"
                             size="sm"
                         >
-                            Create promotion
+                            Create offer
                         </Button>
                     )}
                 </header>
@@ -289,23 +289,23 @@ async function OffersContent({ params }: PageProps) {
 
                 {error ? (
                     <Alert variant="destructive" className="mt-10">
-                        <AlertTitle>Unable to load promotions</AlertTitle>
+                        <AlertTitle>Unable to load offers</AlertTitle>
 
                         <AlertDescription>
-                            We couldn’t load your promotions. Please refresh and try again.
+                            We couldn’t load your offers. Please refresh and try again.
                         </AlertDescription>
                     </Alert>
                 ) : typedOffers.length === 0 ? (
                     <Card className="mt-10 border-[#17233B]/10 text-center">
                         <CardContent className="p-10 sm:p-14">
                             <h2 className="text-2xl font-semibold">
-                                No promotions yet
+                                No offers yet
                             </h2>
 
                             <p className="mx-auto mt-3 max-w-md leading-7 text-[#17233B]/65">
                                 {canManageOffers
-                                    ? "Create your first promotion and submit it for approval."
-                                    : "This business has not created any promotions yet."}
+                                    ? "Create your first offer and submit it for approval."
+                                    : "This business has not created any offers yet."}
                             </p>
 
                             {canManageOffers && (
@@ -318,7 +318,7 @@ async function OffersContent({ params }: PageProps) {
                                     size="sm"
                                     className="mt-7"
                                 >
-                                    Create promotion
+                                    Create offer
                                 </Button>
                             )}
                         </CardContent>
@@ -440,7 +440,7 @@ async function OffersContent({ params }: PageProps) {
                                                 variant="outline"
                                                 size="sm"
                                             >
-                                                View promotion
+                                                View offer
                                             </Button>
 
                                             {offer.approval_status === "approved" && (
@@ -471,7 +471,7 @@ async function OffersContent({ params }: PageProps) {
                                                     variant="default"
                                                     size="sm"
                                                 >
-                                                    Edit promotion
+                                                    Edit offer
                                                 </Button>
                                             )}
                                         </div>

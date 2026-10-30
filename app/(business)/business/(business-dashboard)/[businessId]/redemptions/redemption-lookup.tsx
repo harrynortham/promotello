@@ -132,7 +132,7 @@ export default function RedemptionLookup({
 
             {redemption && (
                 <div className="mt-6 rounded-2xl border border-[#17233B]/10 p-5">
-                    <p className="text-sm text-[#17233B]/70">Promotion</p>
+                    <p className="text-sm text-[#17233B]/70">Offer</p>
 
                     <p className="mt-1 text-lg font-semibold">
                         {Array.isArray(redemption.offers)

@@ -50,7 +50,7 @@ const steps = [
         number: "01",
         title: "Find something you like",
         description:
-            "Browse promotions, explore categories, or get to know a local business.",
+            "Browse offers, explore categories, or get to know a local business.",
     },
     {
         number: "02",
@@ -290,7 +290,7 @@ export default function AboutPage() {
 
                     <p className="mt-6 text-sm leading-6 text-white/60">
                         Some offers require a booking or apply only at
-                        certain times. Always check the promotion details
+                        certain times. Always check the offer details
                         before visiting.
                     </p>
                 </div>
@@ -313,7 +313,7 @@ export default function AboutPage() {
                     </p>
 
                     <p className="mt-5 leading-7 text-muted-foreground">
-                        Business and promotion approval forms part of our
+                        Business and offer approval forms part of our
                         publishing process. The participating business
                         provides the deal, so its published terms help you
                         know what to expect.
@@ -330,7 +330,7 @@ export default function AboutPage() {
                     <CardContent>
                         <ul className="space-y-5">
                             {[
-                                "What the promotion includes",
+                                "What the offer includes",
                                 "Where and when you can use it",
                                 "Whether you need to book ahead",
                                 "The expiry date and any exclusions",

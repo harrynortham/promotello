@@ -17,7 +17,7 @@ const baseLinks = [
         path: "",
     },
     {
-        label: "Promotions",
+        label: "Offers",
         path: "/offers",
     },
     {

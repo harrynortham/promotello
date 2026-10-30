@@ -208,7 +208,7 @@ const sampleDays = Array.from({ length: 30 }, (_, index) => ({
 export function DashboardScreen({ className = "" }: { className?: string }) {
     const nav = [
         { icon: FiHome, label: "Overview", active: true },
-        { icon: FiGift, label: "Promotions" },
+        { icon: FiGift, label: "Offers" },
         { icon: FiGrid, label: "QR posters" },
         { icon: FiHeart, label: "Loyalty card" },
         { icon: FiBell, label: "Automations" },
@@ -439,12 +439,12 @@ export function StoryImagePreview() {
 }
 
 // ---------------------------------------------------------------------------
-// Claiming a promotion
+// Claiming an offer
 // ---------------------------------------------------------------------------
 
 export function OfferClaimScreen() {
     return (
-        <PhoneFrame label="A customer claiming a promotion on their phone">
+        <PhoneFrame label="A customer claiming an offer on their phone">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
                 <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="220px" className="object-cover" />
                 <span className="absolute left-2 top-2 rounded-full bg-[#FF593F] px-2.5 py-0.5 text-[11px] font-semibold text-white">Free pastry</span>
@@ -465,10 +465,10 @@ export function OfferClaimScreen() {
 // Photos and sharing
 // ---------------------------------------------------------------------------
 
-// A WhatsApp chat with the promotion's link preview: photo, deal, business.
+// A WhatsApp chat with the offer's link preview: photo, deal, business.
 export function WhatsAppShareScreen() {
     return (
-        <PhoneFrame label="A promotion shared in a WhatsApp group, with its link preview">
+        <PhoneFrame label="An offer shared in a WhatsApp group, with its link preview">
             <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#075E54] px-4 py-3 text-white">
                 <span className="flex size-7 items-center justify-center rounded-full bg-white/20 text-[11px] font-semibold">GR</span>
                 <span>
@@ -499,7 +499,7 @@ export function WhatsAppShareScreen() {
 // The square image businesses download for Instagram and Facebook posts.
 export function SquarePostPreview({ className = "" }: { className?: string }) {
     return (
-        <figure aria-label="A square Instagram post made from a promotion" className={`relative aspect-square w-60 overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/25 ${className}`}>
+        <figure aria-label="A square Instagram post made from an offer" className={`relative aspect-square w-60 overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/25 ${className}`}>
             <Image src="/images/marketing/pastry-counter.jpg" alt="" fill sizes="240px" className="object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-b from-transparent via-[#17233B]/30 to-[#17233B]/95 p-4 text-[#FFF8F0]">
                 <p className="text-[9px] uppercase tracking-[0.18em] text-[#FF8F7D]">{business}</p>

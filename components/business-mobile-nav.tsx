@@ -40,7 +40,7 @@ export function BusinessMobileNav({
             href: `/business/${businessId}`,
         },
         {
-            label: "Promotions",
+            label: "Offers",
             href: `/business/${businessId}/offers`,
         },
         {

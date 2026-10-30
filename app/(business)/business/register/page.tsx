@@ -30,7 +30,7 @@ import { email, password, requiredText } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
 
 const benefits = [
-    "Create promotions on your terms",
+    "Create offers on your terms",
     "Choose your claim limits and expiry dates",
     "Manage customer codes with your team",
 ];
@@ -203,7 +203,7 @@ export default function BusinessRegisterPage() {
                                 <p className="mt-4 leading-7 text-muted-foreground">
                                     Create your personal login first. Then
                                     we’ll help you add your business and
-                                    prepare your first promotion.
+                                    prepare your first offer.
                                 </p>
 
                                 <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
@@ -494,7 +494,7 @@ export default function BusinessRegisterPage() {
                             </p>
 
                             <p className="mt-3 text-sm leading-7 text-white/65">
-                                From discovering your promotion to enjoying
+                                From discovering your offer to enjoying
                                 it in person.
                             </p>
 

@@ -244,7 +244,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            See the customers your promotions bring in.
+                            See the customers your offers bring in.
                         </p>
                     </div>
 
@@ -266,7 +266,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                     <Card className="border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-[#17233B]/70">
-                                Active promotions
+                                Active offers
                             </CardTitle>
                         </CardHeader>
 
@@ -362,19 +362,19 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                 <Card className="mt-8 border-[#17233B]/10">
                     <CardHeader>
                         <p className="text-sm font-medium text-[#FF593F]">
-                            Promotion performance
+                            Offer performance
                         </p>
 
-                        <CardTitle>Your promotions</CardTitle>
+                        <CardTitle>Your offers</CardTitle>
                     </CardHeader>
 
                     <CardContent>
                         {offerStats.length === 0 ? (
                             <Alert>
-                                <AlertTitle>No promotion data yet</AlertTitle>
+                                <AlertTitle>No offer data yet</AlertTitle>
 
                                 <AlertDescription>
-                                    Create a promotion to start tracking its performance.
+                                    Create an offer to start tracking its performance.
                                 </AlertDescription>
                             </Alert>
                         ) : (
@@ -475,7 +475,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                             variant="default"
                             size="sm"
                         >
-                            Create promotion
+                            Create offer
                         </Button>
 
                         <Button
@@ -499,7 +499,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                             variant="outline"
                             size="sm"
                         >
-                            Manage promotions
+                            Manage offers
                         </Button>
                     </CardContent>
                 </Card>

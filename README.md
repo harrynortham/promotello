@@ -112,7 +112,7 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Learn keystatic for blog posts, create three more posts and add image to each
 - Remove for business from header
 
-- make business dashboard more visual when creating business or promotion. Currently user sees nothing but a form
+- make business dashboard more visual when creating business or offer. Currently user sees nothing but a form
 - image cropping tool component to be shared wherever user needs to add an image.
 - Update UI on login and register on mobile, button below the fold.
 

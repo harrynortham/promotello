@@ -53,7 +53,7 @@ export function BusinessRecentRedemptions({
                         <CardTitle>Recent redemptions</CardTitle>
 
                         <CardDescription>
-                            The latest customers using your promotions.
+                            The latest customers using your offers.
                         </CardDescription>
                     </div>
 
@@ -81,7 +81,7 @@ export function BusinessRecentRedemptions({
 
                         <p className="mt-2 text-sm text-[#17233B]/70">
                             Customer activity will appear here when someone
-                            redeems a promotion.
+                            redeems an offer.
                         </p>
                     </div>
                 ) : (
@@ -92,7 +92,7 @@ export function BusinessRecentRedemptions({
                                     <div>
                                         <p className="font-semibold">
                                             {redemption.offer?.title ??
-                                                "Promotion"}
+                                                "Offer"}
                                         </p>
 
                                         <p className="mt-1 text-sm text-[#17233B]/70">

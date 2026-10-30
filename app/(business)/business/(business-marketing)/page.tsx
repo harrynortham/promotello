@@ -52,7 +52,7 @@ export const metadata: Metadata = {
 
 const loop = [
     { icon: FiGrid, title: "Get noticed", body: "A QR poster in your window and a page in the Promotello directory." },
-    { icon: FiGift, title: "Bring them in", body: "A promotion worth trying, shared everywhere and claimed on their phone in seconds." },
+    { icon: FiGift, title: "Bring them in", body: "An offer worth trying, shared everywhere and claimed on their phone in seconds." },
     { icon: FiAward, title: "Bring them back", body: "A loyalty card on their phone, and automatic reasons to return." },
     { icon: FiBarChart2, title: "See it working", body: "Visits, followers and scans every month, compared with the last." },
 ];
@@ -109,7 +109,7 @@ export default async function BusinessPage() {
                             <span className="text-[#FF593F]">regulars.</span>
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
-                            Promotions customers claim on their phone and digital loyalty cards that bring them
+                            Offers customers claim on their phone and digital loyalty cards that bring them
                             back, plus QR posters and follower emails. It works from day one with your own
                             customers. No hardware, no contract.
                         </p>
@@ -206,14 +206,14 @@ export default async function BusinessPage() {
 
             <FeatureSection
                 tinted
-                eyebrow="Promotions"
-                title="Promotions people claim in seconds and redeem at your till."
-                body="Create a promotion in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it on your page, in the Promotello directory or through your QR poster, claim it on their phone, and get their own voucher."
+                eyebrow="Offers"
+                title="Offers people claim in seconds and redeem at your till."
+                body="Create an offer in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it on your page, in the Promotello directory or through your QR poster, claim it on their phone, and get their own voucher."
                 points={[
                     "You choose the deal, the terms, the end date and how many can be claimed",
                     "Each customer gets a personal voucher with a QR code",
                     "Staff scan it at the till, and it can't be used twice",
-                    "See claims and redemptions for every promotion",
+                    "See claims and redemptions for every offer",
                 ]}
                 visual={
                     <div className="flex items-start gap-4">
@@ -268,8 +268,8 @@ export default async function BusinessPage() {
             <FeatureSection
                 reverse
                 eyebrow="Followers"
-                title="Every new promotion lands in your followers' inboxes."
-                body="Customers follow you from your page or your poster. On Pro, a new promotion goes live straight away and everyone who follows you gets an email about it, with your name as the sender."
+                title="Every new offer lands in your followers' inboxes."
+                body="Customers follow you from your page or your poster. On Pro, a new offer goes live straight away and everyone who follows you gets an email about it, with your name as the sender."
                 points={[
                     "Nothing to write: the emails send themselves",
                     "Every email has an unsubscribe link",
@@ -291,13 +291,13 @@ export default async function BusinessPage() {
             <FeatureSection
                 tinted
                 eyebrow="Sharing"
-                title="Every promotion is ready to share."
-                body="One tap sends a promotion to WhatsApp, Facebook or X with a link preview showing your photo and the deal. Download ready-made images for Instagram stories and posts, copy a suggested caption, and see how many people came from your shares."
+                title="Every offer is ready to share."
+                body="One tap sends an offer to WhatsApp, Facebook or X with a link preview showing your photo and the deal. Download ready-made images for Instagram stories and posts, copy a suggested caption, and see how many people came from your shares."
                 points={[
                     "Link previews with your photo, deal and business name",
                     "Story and square post images for Instagram and Facebook",
                     "A suggested caption, ready to copy",
-                    "Customers can share your promotions with friends too",
+                    "Customers can share your offers with friends too",
                     "Views from shared links counted in your analytics",
                 ]}
                 visual={

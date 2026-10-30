@@ -35,11 +35,11 @@ export const metadata: Metadata = {
 
 const freeFeatures = [
     "Business profile with location, opening hours and contact details",
-    `${FREE_LIVE_OFFER_LIMIT} live promotion at a time`,
-    "Promotion images, claim limits and expiry dates",
+    `${FREE_LIVE_OFFER_LIMIT} live offer at a time`,
+    "Offer images, claim limits and expiry dates",
     "Customer redemption codes, with scan-to-redeem at the till",
     "1 printable QR poster with scan tracking",
-    "Promotion performance reporting",
+    "Offer performance reporting",
     "Team access for your colleagues",
 ];
 
@@ -53,12 +53,12 @@ const growthFeatures = [
 
 const proFeatures = [
     "Everything in Free",
-    "Unlimited live promotions",
+    "Unlimited live offers",
     "Digital loyalty stamp cards, stamped by your staff",
     "A QR poster for every spot, with scans compared",
     "Google review prompts after a visit",
     "Followers emailed whenever you post a new offer",
-    "Paused promotions come back as soon as you upgrade",
+    "Paused offers come back as soon as you upgrade",
 ];
 
 const principles = [
@@ -66,7 +66,7 @@ const principles = [
         icon: FiSliders,
         title: "Control the commitment",
         description:
-            "Set your own promotion terms and claim limits. Choose offers that make sense for your margins and capacity.",
+            "Set your own offer terms and claim limits. Choose offers that make sense for your margins and capacity.",
     },
     {
         icon: FiUsers,
@@ -91,14 +91,14 @@ const questions = [
         answer: `The first ${FOUNDING_MEMBER_LIMIT} businesses to join Pro pay ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, for as long as they stay subscribed. It includes everything in Pro, now and as Pro grows.`,
     },
     {
-        question: "What counts as a live promotion?",
+        question: "What counts as a live offer?",
         answer:
-            "A promotion is live while it is waiting for approval or approved, and hasn't reached its expiry date. Expired promotions don't count, so on the Free plan you can publish a new one as soon as your current one ends.",
+            "An offer is live while it is waiting for approval or approved, and hasn't reached its expiry date. Expired offers don't count, so on the Free plan you can publish a new one as soon as your current one ends.",
     },
     {
         question: "What happens if I cancel?",
         answer:
-            "You keep your plan until the end of the period you've paid for, then move to the Free plan. Your newest live promotion stays up and the rest are paused and hidden from customers. Nothing is deleted, and paused promotions come back if you subscribe again.",
+            "You keep your plan until the end of the period you've paid for, then move to the Free plan. Your newest live offer stays up and the rest are paused and hidden from customers. Nothing is deleted, and paused offers come back if you subscribe again.",
     },
     {
         question: "What counts as a business?",
@@ -106,9 +106,9 @@ const questions = [
             "A business is a separate business profile managed in Promotello. You can access multiple profiles from one account. Contact us if you manage several brands or locations so we can discuss the right setup.",
     },
     {
-        question: "Do I pay for every promotion or customer claim?",
+        question: "Do I pay for every offer or customer claim?",
         answer:
-            "No. There are no per-promotion or per-claim fees on any plan. The cost of fulfilling your promotion remains your responsibility.",
+            "No. There are no per-offer or per-claim fees on any plan. The cost of fulfilling your offer remains your responsibility.",
     },
     {
         question: "Does a subscription guarantee customers?",
@@ -116,19 +116,19 @@ const questions = [
             "No. Results depend on your offer, location and customers. Promotello gives you the tools and shows you what they bring in, so you can judge whether it's worth it.",
     },
     {
-        question: "Can I limit a promotion?",
+        question: "Can I limit an offer?",
         answer:
             "Yes. You can set an optional total claim limit, an expiry date, and clear terms explaining when and how customers can use the offer.",
     },
     {
-        question: "Will my promotions appear immediately?",
+        question: "Will my offers appear immediately?",
         answer:
-            "Our team checks every new business first. Once yours is approved, promotions on Pro and Growth go live as soon as you create them. On the Free plan, each promotion is reviewed before it appears.",
+            "Our team checks every new business first. Once yours is approved, offers on Pro and Growth go live as soon as you create them. On the Free plan, each offer is reviewed before it appears.",
     },
     {
         question: "What's the difference between Pro and Growth?",
         answer:
-            "Pro has everything to bring customers back: unlimited promotions, a loyalty card, QR posters, follower emails and review prompts. Growth adds marketing that runs itself: welcome, birthday and win-back emails with reward vouchers, quiet-hours promotions and a monthly value report. You can switch between them any time.",
+            "Pro has everything to bring customers back: unlimited offers, a loyalty card, QR posters, follower emails and review prompts. Growth adds marketing that runs itself: welcome, birthday and win-back emails with reward vouchers, quiet-hours offers and a monthly value report. You can switch between them any time.",
     },
     {
         question: "Is VAT included?",
@@ -208,8 +208,8 @@ export default function BusinessPricingPage() {
 
                         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                             Put your business on the map with a free profile
-                            and your first promotion. Go Pro to run as many
-                            promotions as you like.
+                            and your first offer. Go Pro to run as many
+                            offers as you like.
                         </p>
                     </div>
 
@@ -257,7 +257,7 @@ export default function BusinessPricingPage() {
 
                                 <CardDescription className="mt-2 text-base leading-7">
                                     Everything you need to get your first
-                                    promotion in front of local customers.
+                                    offer in front of local customers.
                                 </CardDescription>
 
                                 <div className="pt-7">
@@ -535,7 +535,7 @@ export default function BusinessPricingPage() {
 
                         <p className="mt-5 text-lg leading-8 text-[#17233B]/70">
                             Set up your business profile and your first
-                            promotion in a few minutes. It&apos;s free to start.
+                            offer in a few minutes. It&apos;s free to start.
                         </p>
 
                         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

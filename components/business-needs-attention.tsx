@@ -23,7 +23,7 @@ export function BusinessNeedsAttention({
                 <AlertTitle>Everything looks good</AlertTitle>
 
                 <AlertDescription>
-                    There are no outstanding business or promotion issues
+                    There are no outstanding business or offer issues
                     requiring your attention.
                 </AlertDescription>
             </Alert>
@@ -42,7 +42,7 @@ export function BusinessNeedsAttention({
                 </h2>
 
                 <p className="mt-2 text-sm text-[#17233B]/70">
-                    Resolve these items to keep your businesses and promotions
+                    Resolve these items to keep your businesses and offers
                     performing well.
                 </p>
             </div>

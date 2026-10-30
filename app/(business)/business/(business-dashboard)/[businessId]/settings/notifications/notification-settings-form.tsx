@@ -163,7 +163,7 @@ export default function NotificationSettingsForm({
                                 </Label>
 
                                 <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
-                                    Receive an email when a limited promotion has no
+                                    Receive an email when a limited offer has no
                                     redemptions remaining.
                                 </p>
                             </div>
@@ -190,7 +190,7 @@ export default function NotificationSettingsForm({
                                     </Label>
 
                                     <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
-                                        Receive an email when a limited promotion reaches
+                                        Receive an email when a limited offer reaches
                                         the threshold below.
                                     </p>
                                 </div>

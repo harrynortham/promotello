@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 const links = [
     { label: "Overview", href: "/admin", icon: FiBarChart2 },
     { label: "Businesses", href: "/admin/businesses", icon: FiBriefcase, count: "businesses" },
-    { label: "Promotions", href: "/admin/offers", icon: FiGift, count: "offers" },
+    { label: "Offers", href: "/admin/offers", icon: FiGift, count: "offers" },
     { label: "Categories", href: "/admin/categories", icon: FiTag },
     { label: "Previews", href: "/admin/previews", icon: FiSend },
     { label: "Cities and areas", href: "/admin/cities", icon: FiMapPin },

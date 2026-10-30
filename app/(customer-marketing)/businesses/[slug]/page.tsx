@@ -495,8 +495,8 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                             />
                                             {promotionCount} current{" "}
                                             {promotionCount === 1
-                                                ? "promotion"
-                                                : "promotions"}
+                                                ? "offer"
+                                                : "offers"}
                                         </span>
                                     )}
                                 </div>
@@ -504,10 +504,10 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
                             <div className="flex shrink-0 flex-wrap gap-2">
                                 <Button
-                                    render={<Link href="#promotions" />}
+                                    render={<Link href="#offers" />}
                                     nativeButton={false}
                                 >
-                                    View promotions
+                                    View offers
                                 </Button>
 
                                 {!isPreview && (
@@ -552,7 +552,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             <CardContent>
                                 <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
                                     {business.description ||
-                                        "Discover this business and explore its latest promotions on Promotello."}
+                                        "Discover this business and explore its latest offers on Promotello."}
                                 </p>
                             </CardContent>
                         </Card>
@@ -583,17 +583,17 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                         )}
 
                         <section
-                            id="promotions"
-                            aria-labelledby="promotions-heading"
+                            id="offers"
+                            aria-labelledby="offers-heading"
                             className="scroll-mt-28"
                         >
                             <div className="mb-5 flex items-center justify-between gap-4">
                                 <div>
                                     <h2
-                                        id="promotions-heading"
+                                        id="offers-heading"
                                         className="text-2xl font-semibold tracking-tight"
                                     >
-                                        Current promotions
+                                        Current offers
                                     </h2>
 
                                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -615,7 +615,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             {offersError ? (
                                 <Alert variant="destructive">
                                     <AlertTitle>
-                                        Promotions couldn’t be loaded
+                                        Offers couldn’t be loaded
                                     </AlertTitle>
                                     <AlertDescription>
                                         Please refresh the page and try again.
@@ -655,7 +655,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                         </h3>
 
                                         <p className="mx-auto mt-2 max-w-sm text-sm leading-7 text-muted-foreground">
-                                            Check back for new promotions
+                                            Check back for new offers
                                             from this business.
                                         </p>
 
@@ -793,7 +793,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                     </dl>
 
                                     <p className="mt-5 border-t pt-4 text-xs leading-6 text-muted-foreground">
-                                        Promotion availability may differ
+                                        Offer availability may differ
                                         from opening hours. Check the offer
                                         details before visiting.
                                     </p>
