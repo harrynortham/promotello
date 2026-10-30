@@ -186,7 +186,7 @@ export default function EditBusinessForm({
     if (!loaded) {
         return (
             <div>
-                <Card className="max-w-3xl border-red-200">
+                <Card className="border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
                             <AlertTitle>Business unavailable</AlertTitle>
@@ -310,7 +310,7 @@ function BusinessForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
+                <Card className="mt-10 border-[#17233B]/10">
                     <CardContent className="p-6 sm:p-10">
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-10">
                             <section className="space-y-5">

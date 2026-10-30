@@ -191,7 +191,7 @@ export default function NewOfferForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
+                <Card className="mt-10 border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle>Offer details</CardTitle>
                     </CardHeader>

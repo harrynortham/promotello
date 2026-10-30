@@ -192,7 +192,7 @@ export default function HoursForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
+                <Card className="mt-10 border-[#17233B]/10">
                     <CardContent className="p-4 sm:p-8">
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
                             <ul className="space-y-3">

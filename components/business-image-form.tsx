@@ -156,7 +156,7 @@ export function BusinessImageForm({
                     <p className="mt-3 text-[#17233B]/65">{config.intro(businessName)}</p>
                 </div>
 
-                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
+                <Card className="mt-10 border-[#17233B]/10">
                     <CardContent className="p-6 sm:p-10">
                         <input
                             ref={inputRef}

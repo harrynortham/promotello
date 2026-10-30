@@ -117,7 +117,7 @@ export default function NotificationSettingsForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 max-w-3xl border-[#17233B]/10">
+                <Card className="mt-10 border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle>Email notifications</CardTitle>
                     </CardHeader>

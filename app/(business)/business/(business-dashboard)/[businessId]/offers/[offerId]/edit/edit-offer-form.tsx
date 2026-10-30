@@ -238,7 +238,7 @@ export default function EditOfferForm({
     if (!offer) {
         return (
             <div>
-                <Card className="max-w-3xl border-red-200">
+                <Card className="border-red-200">
                     <CardContent className="p-8">
                         <Alert variant="destructive">
                             <AlertTitle>Offer unavailable</AlertTitle>
@@ -283,7 +283,7 @@ export default function EditOfferForm({
                     )}
                 </div>
 
-                <Card className="mt-8 max-w-3xl border-[#17233B]/10">
+                <Card className="mt-8 border-[#17233B]/10">
                     <CardHeader>
                         <CardTitle>Redemption usage</CardTitle>
                     </CardHeader>
