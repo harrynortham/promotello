@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
@@ -330,9 +331,36 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         Business overview
                     </Badge>
 
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        {business.name}
-                    </h1>
+                    <div className="mt-3 flex items-center gap-4">
+                        {business.logo_url ? (
+                            <Link
+                                href={`/business/${businessId}/logo`}
+                                aria-label="Change your logo"
+                                className="shrink-0"
+                            >
+                                <Image
+                                    src={business.logo_url}
+                                    alt=""
+                                    width={64}
+                                    height={64}
+                                    className="size-16 rounded-2xl border border-[#17233B]/10 bg-white object-cover shadow-sm"
+                                />
+                            </Link>
+                        ) : (
+                            // Until there's a logo, the initial stands in and leads to adding one.
+                            <Link
+                                href={`/business/${businessId}/logo`}
+                                aria-label="Add your logo"
+                                className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-dashed border-[#FF593F]/40 bg-[#FFF4E8] text-2xl font-semibold text-[#FF593F] transition hover:border-[#FF593F]"
+                            >
+                                {business.name.charAt(0).toUpperCase()}
+                            </Link>
+                        )}
+
+                        <h1 className="text-4xl font-semibold tracking-tight">
+                            {business.name}
+                        </h1>
+                    </div>
 
                     <p className="mt-3 max-w-2xl text-[#17233B]/65">
                         Monitor your business activity and manage everything
