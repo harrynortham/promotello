@@ -48,3 +48,8 @@ next-env.d.ts
 # local tooling
 /supabase/.temp
 /.claude/settings.local.json
+
+# private business documents (finances, business plan): keep out of this public repo
+/docs/*.docx
+/docs/*.xlsx
+/docs/CASHFLOW_FORECAST_BRIEF.md
