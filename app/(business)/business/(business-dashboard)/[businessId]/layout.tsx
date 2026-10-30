@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessMobileNav } from "@/components/business-mobile-nav";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessSwitcher } from "@/components/business-switcher";
+import { approvalLabel } from "@/lib/business-status";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
@@ -22,6 +23,7 @@ type BusinessLayoutProps = {
 type Business = {
     id: string;
     name: string;
+    logo_url: string | null;
     approval_status: string;
 };
 
@@ -83,6 +85,7 @@ async function BusinessLayoutContent({
                 businesses (
                     id,
                     name,
+                    logo_url,
                     approval_status
                 )
             `,
@@ -139,6 +142,7 @@ async function BusinessLayoutContent({
                     <BusinessMobileNav
                         businessId={businessId}
                         businessName={currentBusiness.name}
+                        businessLogoUrl={currentBusiness.logo_url}
                         approvalStatus={currentBusiness.approval_status}
                         canManage={canManage}
                         businesses={businesses}
@@ -158,11 +162,8 @@ async function BusinessLayoutContent({
                             {currentBusiness.name}
                         </h2>
 
-                        <Badge
-                            variant="outline"
-                            className="mt-3 capitalize"
-                        >
-                            {currentBusiness.approval_status}
+                        <Badge variant="outline" className="mt-3">
+                            {approvalLabel(currentBusiness.approval_status)}
                         </Badge>
 
                         <Separator className="my-5" />

@@ -8,6 +8,7 @@ import { FiArrowRight, FiPlus } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { approvalLabel } from "@/lib/business-status";
 import { createClient } from "@/utils/supabase/server";
 
 type Business = {
@@ -42,19 +43,17 @@ function LoadingState() {
     );
 }
 
-const statuses: Record<string, { label: string; className: string; note?: string }> = {
-    approved: { label: "Live", className: "bg-emerald-50 text-emerald-800" },
+const statuses: Record<string, { className: string; note?: string }> = {
+    approved: { className: "bg-emerald-50 text-emerald-800" },
     pending: {
-        label: "Waiting for approval",
         className: "bg-amber-50 text-amber-800",
         note: "You can finish setting up while our team checks it.",
     },
     rejected: {
-        label: "Needs changes",
         className: "bg-red-50 text-red-800",
         note: "Update your details so we can approve it.",
     },
-    suspended: { label: "Suspended", className: "bg-red-50 text-red-800" },
+    suspended: { className: "bg-red-50 text-red-800" },
 };
 
 function BusinessCard({ business }: { business: BusinessSummary }) {
@@ -86,7 +85,7 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
                         </Link>
                     </h2>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
-                        {status.label}
+                        {approvalLabel(business.approval_status)}
                     </span>
                 </div>
 
