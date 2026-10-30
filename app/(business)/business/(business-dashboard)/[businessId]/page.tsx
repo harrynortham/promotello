@@ -324,12 +324,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         <div className="space-y-8">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <Badge
-                        variant="outline"
-                        className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]"
-                    >
-                        Business overview
-                    </Badge>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Overview
+                    </p>
 
                     <div className="mt-3 flex items-center gap-4">
                         {business.logo_url ? (
