@@ -60,9 +60,20 @@ function DayRow({
     // After a failed save, check each change straight away so errors clear.
     revalidate: boolean;
 }) {
-    const status = useWatch({ control, name: `days.${index}.status` });
-    const choose = (next: DayValues["status"]) =>
-        setValue(`days.${index}.status`, next, { shouldDirty: true, shouldValidate: revalidate });
+    const [status, opensAt, closesAt] = useWatch({
+        control,
+        name: [`days.${index}.status`, `days.${index}.opensAt`, `days.${index}.closesAt`],
+    });
+
+    function choose(next: DayValues["status"]) {
+        const options = { shouldDirty: true, shouldValidate: revalidate };
+        // Opening a day starts at 9am to 5pm, ready to adjust.
+        if (next === "open") {
+            if (!opensAt) setValue(`days.${index}.opensAt`, "09:00", options);
+            if (!closesAt) setValue(`days.${index}.closesAt`, "17:00", options);
+        }
+        setValue(`days.${index}.status`, next, options);
+    }
     const error = errors?.status?.message ?? errors?.closesAt?.message;
 
     return (

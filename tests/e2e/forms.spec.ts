@@ -84,7 +84,9 @@ test.describe("business forms", () => {
         const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         for (const day of weekdays) {
             await page.getByRole("group", { name: `${day} open or closed` }).getByRole("button", { name: "Open" }).click();
-            await page.getByLabel(`${day} opens`).fill("09:00");
+            // An opened day starts at 9am to 5pm.
+            await expect(page.getByLabel(`${day} opens`)).toHaveValue("09:00");
+            await expect(page.getByLabel(`${day} closes`)).toHaveValue("17:00");
             await page.getByLabel(`${day} closes`).fill("18:30");
         }
         await page.getByRole("group", { name: "Sunday open or closed" }).getByRole("button", { name: "Closed" }).click();
