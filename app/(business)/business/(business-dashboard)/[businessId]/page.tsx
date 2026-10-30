@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
+import { FiEye } from "react-icons/fi";
 
 import {
     BusinessOnboardingChecklist,
@@ -21,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
+import { businessPath } from "@/lib/slugs";
 import { createClient } from "@/utils/supabase/server";
 
 type PageProps = {
@@ -101,6 +103,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         .select(
             `
                 id,
+                slug,
                 name,
                 category,
                 description,
@@ -337,14 +340,17 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </p>
                 </div>
 
+                {/* Opens the public page; before approval only the team can see it, as a preview. */}
                 <Button
                     render={
-                        <Link href={`/business/${businessId}/offers/new`} />
+                        <a href={businessPath(business)} target="_blank" rel="noopener noreferrer" />
                     }
                     nativeButton={false}
+                    variant="outline"
                     size="sm"
                 >
-                    Create promotion
+                    <FiEye aria-hidden="true" />
+                    {business.approval_status === "approved" ? "View your page" : "Preview your page"}
                 </Button>
             </div>
 

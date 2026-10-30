@@ -34,6 +34,7 @@ import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 import { ExampleNotice } from "@/components/example-badge";
+import { PreviewNotice } from "@/components/preview-notice";
 import { FollowButton } from "@/components/follow-button";
 import { MapEmbed } from "@/components/map-embed";
 import { PageViewTracker } from "@/components/page-view-tracker";
@@ -121,7 +122,13 @@ export async function generateMetadata({
         .maybeSingle();
 
     if (!business) {
-        return { title: "Business not found", robots: { index: false } };
+        // Its own team can preview a business before it's approved.
+        const { data: own } = await (await createClient())
+            .from("businesses")
+            .select("name")
+            .eq("slug", slug)
+            .maybeSingle();
+        return { title: own?.name ?? "Business not found", robots: { index: false } };
     }
 
     const location = Array.isArray(business.business_locations)
@@ -198,8 +205,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 )
             `,
         )
+        // No approval filter: RLS only returns an unapproved business to its
+        // own team (and platform admins), who see it as a preview.
         .eq("slug", slug)
-        .eq("approval_status", "approved")
         .maybeSingle();
 
     if (businessError) {
@@ -214,6 +222,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     }
 
     const businessId = business.id;
+    const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
 
     // Active loyalty card, and the visitor's progress on it if they've joined.
@@ -275,7 +284,8 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             `,
         )
         .eq("business_id", businessId)
-        .eq("approval_status", "approved")
+        // A preview also shows offers still waiting for approval.
+        .in("approval_status", isPreview ? ["approved", "pending"] : ["approved"])
         .gte("expires_at", today)
         .is("plan_paused_at", null)
         .order("created_at", { ascending: false });
@@ -398,6 +408,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 </Button>
 
                 {business.is_sample && <ExampleNotice what="business" />}
+                {isPreview && <PreviewNotice what="business" />}
 
                 {/* Business identity */}
                 <section
@@ -499,11 +510,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                     View promotions
                                 </Button>
 
-                                <FollowButton
-                                    businessId={business.id}
-                                    initialFollowing={Boolean(follow)}
-                                    isSignedIn={Boolean(viewer)}
-                                />
+                                {!isPreview && (
+                                    <FollowButton
+                                        businessId={business.id}
+                                        initialFollowing={Boolean(follow)}
+                                        isSignedIn={Boolean(viewer)}
+                                    />
+                                )}
 
                                 {directionsUrl && (
                                     <Button
@@ -552,6 +565,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 card={loyaltyCard}
                                 isSignedIn={Boolean(viewer)}
                                 unavailable={loyaltyStatus === "unavailable"}
+                                preview={isPreview}
                             />
                         )}
 

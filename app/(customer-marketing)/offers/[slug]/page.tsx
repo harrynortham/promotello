@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 
 import { ExampleNotice } from "@/components/example-badge";
+import { PreviewNotice } from "@/components/preview-notice";
 import { SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,13 @@ export async function generateMetadata({
         .maybeSingle();
 
     if (!offer) {
-        return { title: "Offer not found", robots: { index: false } };
+        // Its business's team can preview an offer before it's approved.
+        const { data: own } = await (await createClient())
+            .from("offers")
+            .select("title")
+            .eq("slug", slug)
+            .maybeSingle();
+        return { title: own?.title ?? "Offer not found", robots: { index: false } };
     }
 
     const business = Array.isArray(offer.businesses)
@@ -143,6 +150,7 @@ async function OfferContent({ params }: OfferPageProps) {
                 category_id,
                 max_redemptions,
                 redemption_count,
+                approval_status,
                 businesses!inner (
                     id,
                     slug,
@@ -160,10 +168,10 @@ async function OfferContent({ params }: OfferPageProps) {
                 )
             `,
         )
+        // No approval filters: RLS only returns an unapproved offer or business to
+        // the business's own team (and platform admins), who see it as a preview.
         .eq("slug", slug)
-        .eq("approval_status", "approved")
         .is("plan_paused_at", null)
-        .eq("businesses.approval_status", "approved")
         .maybeSingle();
 
     if (offerError) {
@@ -184,6 +192,8 @@ async function OfferContent({ params }: OfferPageProps) {
     if (!business) {
         notFound();
     }
+
+    const isPreview = offer.approval_status !== "approved" || business.approval_status !== "approved";
 
     const locations = business.business_locations;
     const location = Array.isArray(locations) ? locations[0] : locations;
@@ -325,6 +335,12 @@ async function OfferContent({ params }: OfferPageProps) {
                     </div>
                 )}
 
+                {isPreview && (
+                    <div className="mt-4">
+                        <PreviewNotice what="offer" />
+                    </div>
+                )}
+
                 <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
                     <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-[#FFF4E8] sm:aspect-[16/10] lg:aspect-[4/3]">
                         {offer.image_url ? (
@@ -399,7 +415,11 @@ async function OfferContent({ params }: OfferPageProps) {
                             })}
                         </ul>
 
-                        {business.is_sample ? (
+                        {isPreview ? (
+                            <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-center text-sm text-[#17233B]/75">
+                                Customers can claim this once it&apos;s live.
+                            </p>
+                        ) : business.is_sample ? (
                             <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-center text-sm text-[#17233B]/75">
                                 Example offers can&apos;t be claimed.{" "}
                                 <Link href="/offers" className="font-medium text-[#FF593F] underline underline-offset-4">
@@ -418,13 +438,13 @@ async function OfferContent({ params }: OfferPageProps) {
                             />
                         )}
 
-                        {!business.is_sample && !existingResult.data && !isExpired && !isFullyClaimed && (
+                        {!isPreview && !business.is_sample && !existingResult.data && !isExpired && !isFullyClaimed && (
                             <p className="mt-4 text-center text-xs leading-5 text-[#17233B]/70">
                                 Free to claim. Show your code when you pay.
                             </p>
                         )}
 
-                        {!isExpired && !business.is_sample && (
+                        {!isPreview && !isExpired && !business.is_sample && (
                             <ShareOfferButton
                                 url={shareLink(`/offers/${offer.slug}`)}
                                 text={offerShareCaption({ title: offer.title, discount: offer.discount, businessName: business.name })}
