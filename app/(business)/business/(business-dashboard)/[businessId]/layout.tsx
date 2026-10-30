@@ -181,7 +181,7 @@ async function BusinessLayoutContent({
                             size="sm"
                             className="w-full"
                         >
-                            Customer area
+                            Go to dashboard
                         </Button>
                     </div>
                 </aside>
