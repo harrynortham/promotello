@@ -81,19 +81,20 @@ test.describe("business forms", () => {
         await page.getByRole("button", { name: "Save hours" }).click();
         await expect(page.getByText("Choose open or closed.").first()).toBeVisible();
 
-        const monday = page.getByRole("group", { name: "Monday open or closed" });
-        await monday.getByRole("button", { name: "Open" }).click();
-        await page.getByLabel("Monday opens").fill("09:00");
-        await page.getByLabel("Monday closes").fill("08:00");
-        await page.getByRole("button", { name: "Copy to all days" }).first().click();
-        await page.getByRole("group", { name: "Sunday open or closed" }).getByRole("button", { name: "Closed" }).click();
-
-        await page.getByRole("button", { name: "Save hours" }).click();
-        await expect(page.getByText("The closing time must be after the opening time.").first()).toBeVisible();
-
-        for (const day of ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]) {
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        for (const day of weekdays) {
+            await page.getByRole("group", { name: `${day} open or closed` }).getByRole("button", { name: "Open" }).click();
+            await page.getByLabel(`${day} opens`).fill("09:00");
             await page.getByLabel(`${day} closes`).fill("18:30");
         }
+        await page.getByRole("group", { name: "Sunday open or closed" }).getByRole("button", { name: "Closed" }).click();
+
+        // Closing before opening is caught, matching the database rule.
+        await page.getByLabel("Monday closes").fill("08:00");
+        await page.getByRole("button", { name: "Save hours" }).click();
+        await expect(page.getByText("The closing time must be after the opening time.")).toBeVisible();
+
+        await page.getByLabel("Monday closes").fill("18:30");
         await page.getByRole("button", { name: "Save hours" }).click();
         await page.waitForURL(new RegExp(`/business/${businessId}$`), { timeout: 10_000 });
 

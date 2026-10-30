@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
-import { FiCopy } from "react-icons/fi";
 import { z } from "zod";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -51,7 +50,6 @@ function DayRow({
     setValue,
     errors,
     revalidate,
-    onCopyToAll,
 }: {
     index: number;
     name: string;
@@ -61,7 +59,6 @@ function DayRow({
     errors?: { status?: { message?: string }; closesAt?: { message?: string } };
     // After a failed save, check each change straight away so errors clear.
     revalidate: boolean;
-    onCopyToAll: () => void;
 }) {
     const status = useWatch({ control, name: `days.${index}.status` });
     const choose = (next: DayValues["status"]) =>
@@ -105,18 +102,8 @@ function DayRow({
                 </div>
             )}
 
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="mt-2">
                 <FieldError id={`day-${index}-error`} message={error} />
-                {status && (
-                    <button
-                        type="button"
-                        onClick={onCopyToAll}
-                        className="ml-auto inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-[#17233B]/65 hover:text-[#17233B]"
-                    >
-                        <FiCopy aria-hidden="true" />
-                        Copy to all days
-                    </button>
-                )}
             </div>
         </li>
     );
@@ -144,19 +131,11 @@ export default function HoursForm({
         handleSubmit,
         control,
         setValue,
-        getValues,
         formState: { errors, isSubmitting, isSubmitted },
     } = useForm<Values>({
         resolver: zodResolver(schema),
         defaultValues: { days: initialDays },
     });
-
-    function copyToAll(from: number) {
-        const day = getValues(`days.${from}`);
-        WEEK.forEach((_, index) => {
-            if (index !== from) setValue(`days.${index}`, { ...day }, { shouldDirty: true, shouldValidate: isSubmitted });
-        });
-    }
 
     async function onSubmit(values: Values) {
         setErrorMessage("");
@@ -202,7 +181,7 @@ export default function HoursForm({
 
                     <p className="mt-3 text-[#17233B]/65">
                         Shown on {businessName}&apos;s page so nobody turns up to a closed door. Choose open
-                        or closed for each day, then copy a day to the rest of the week to save time.
+                        or closed for each day.
                     </p>
                 </div>
 
@@ -220,7 +199,6 @@ export default function HoursForm({
                                         setValue={setValue}
                                         errors={errors.days?.[index]}
                                         revalidate={isSubmitted}
-                                        onCopyToAll={() => copyToAll(index)}
                                     />
                                 ))}
                             </ul>
