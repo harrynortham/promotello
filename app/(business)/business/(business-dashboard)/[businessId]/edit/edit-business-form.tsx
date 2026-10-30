@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
+import { LOGO_ACCEPT, logoFileError, uploadLogo } from "@/lib/business-logo";
 import type { CityOption } from "@/lib/locations";
 import {
     locationShape,
@@ -254,19 +255,6 @@ export default function EditBusinessForm({
     return <BusinessForm businessId={businessId} cities={cities} {...loaded} />;
 }
 
-async function uploadLogo(supabase: ReturnType<typeof createClient>, businessId: string, file: File) {
-    const extension = file.name.split(".").pop() ?? "jpg";
-    const path = `${businessId}/logo-${Date.now()}.${extension}`;
-
-    const { error } = await supabase.storage
-        .from("business-logos")
-        .upload(path, file, { upsert: true, contentType: file.type });
-
-    if (error) return { error: error.message };
-
-    return { url: supabase.storage.from("business-logos").getPublicUrl(path).data.publicUrl };
-}
-
 function HoursRow({
     index,
     day,
@@ -385,15 +373,10 @@ function BusinessForm({
         let logoUrl = business.logo_url;
 
         if (logoFile) {
-            const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+            const fileError = logoFileError(logoFile);
 
-            if (!allowedTypes.includes(logoFile.type)) {
-                setError("root.logo", { message: "Please upload a PNG, JPG or WebP image." });
-                return;
-            }
-
-            if (logoFile.size > 5 * 1024 * 1024) {
-                setError("root.logo", { message: "The logo must be smaller than 5MB." });
+            if (fileError) {
+                setError("root.logo", { message: fileError });
                 return;
             }
 
@@ -528,7 +511,7 @@ function BusinessForm({
                                         id="logo"
                                         name="logo"
                                         type="file"
-                                        accept="image/png,image/jpeg,image/webp"
+                                        accept={LOGO_ACCEPT}
                                         onChange={(event) =>
                                             setLogoFile(event.target.files?.[0] ?? null)
                                         }

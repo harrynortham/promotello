@@ -239,7 +239,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     label: "Add your logo",
                     description: "Customers recognise you faster on offers and posters.",
                     completed: Boolean(business.logo_url),
-                    href: `${base}/edit`,
+                    href: `${base}/logo`,
                     action: "Add logo",
                 },
                 {
