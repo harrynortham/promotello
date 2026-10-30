@@ -79,6 +79,7 @@ export function BusinessAppHeader() {
             homeHref="/business/dashboard"
             links={[]}
             variant="app"
+            accountArea="business"
             signOutRedirect="/login"
             signedOutActions={[
                 { label: "Sign in", href: "/login?next=/business/dashboard", primary: true },

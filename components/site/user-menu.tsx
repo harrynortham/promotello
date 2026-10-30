@@ -18,13 +18,23 @@ import { createClient } from "@/utils/supabase/client";
 import { UserAvatar } from "./user-avatar";
 
 // The same account links everywhere, so users always know where to find them.
-export const accountLinks = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "My vouchers", href: "/dashboard/redemptions" },
-    { label: "Loyalty cards", href: "/dashboard/loyalty" },
-    { label: "Business dashboard", href: "/business/dashboard" },
-    { label: "Account settings", href: "/account" },
-];
+const accountLinks = {
+    customer: [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "My vouchers", href: "/dashboard/redemptions" },
+        { label: "Loyalty cards", href: "/dashboard/loyalty" },
+        { label: "Business dashboard", href: "/business/dashboard" },
+        { label: "Account settings", href: "/account" },
+    ],
+    // In the business dashboard, the customer side is one link, not three.
+    business: [
+        { label: "Business dashboard", href: "/business/dashboard" },
+        { label: "Customer area", href: "/dashboard" },
+        { label: "Account settings", href: "/account" },
+    ],
+};
+
+export type AccountArea = keyof typeof accountLinks;
 
 // Platform admins also get a link to /admin. The check runs once per menu
 // and only grants a link: /admin itself enforces access.
@@ -91,8 +101,10 @@ function UserSummary({ user, size }: { user: UserProfile; size: number }) {
 export function UserMenu({
     user,
     signOutRedirect = "/",
+    area = "customer",
 }: {
     user: UserProfile;
+    area?: AccountArea;
     signOutRedirect?: string;
 }) {
     const { signOut, isSigningOut, error } = useSignOut(signOutRedirect);
@@ -130,7 +142,7 @@ export function UserMenu({
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup>
-                    {accountLinks.map((link) => (
+                    {accountLinks[area].map((link) => (
                         <DropdownMenuItem key={link.href} render={<Link href={link.href} />}>
                             {link.label}
                         </DropdownMenuItem>
