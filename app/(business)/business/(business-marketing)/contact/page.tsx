@@ -40,7 +40,7 @@ export default function BusinessContactPage() {
                     </h1>
 
                     <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                        Exploring Promotello? Planning your first promotion?
+                        Exploring Promotello? Planning your first offer?
                         Tell us what you have in mind. We’ll help you
                         understand whether it’s a good fit for your business.
                     </p>
@@ -62,7 +62,7 @@ export default function BusinessContactPage() {
                         </h2>
 
                         <p className="mt-4 leading-7 text-muted-foreground">
-                            You don’t need a finished promotion or a perfect
+                            You don’t need a finished offer or a perfect
                             plan. Share a little about your business and what
                             you would like to achieve.
                         </p>
@@ -118,7 +118,7 @@ export default function BusinessContactPage() {
                             </CardTitle>
 
                             <CardDescription className="leading-6">
-                                Our FAQs cover promotions, claims, team
+                                Our FAQs cover offers, claims, team
                                 access, and joining.
                             </CardDescription>
                         </CardHeader>

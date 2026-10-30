@@ -23,7 +23,7 @@ export function teamInvitationEmail({
         paragraphs: [
             `${inviterName} has invited you to join ${businessName} as ${role === "admin" ? "an admin" : "a team member"}.`,
             role === "admin"
-                ? "Admins can manage promotions, redeem vouchers and stamp loyalty cards."
+                ? "Admins can manage offers, redeem vouchers and stamp loyalty cards."
                 : "Team members can redeem vouchers and stamp loyalty cards at the till.",
             "Sign in or create an account with this email address to accept. The invitation lasts 7 days.",
         ],
@@ -48,7 +48,7 @@ export function handOverEmail({
         title: `${businessName} is set up on Promotello`,
         paragraphs: [
             `We've set up ${businessName} on Promotello for you. Accept to become its owner and take it from here.`,
-            "You'll manage promotions, loyalty cards, QR posters and your team, and can start your free Pro trial whenever you're ready.",
+            "You'll manage offers, loyalty cards, QR posters and your team, and can start your free Pro trial whenever you're ready.",
             "Sign in or create an account with this email address to accept. The link lasts 14 days.",
         ],
         action: { label: "Take over my business", url: absoluteUrl(`/invite/${token}`) },

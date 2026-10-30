@@ -153,7 +153,7 @@ export default function HelpCentre({
 
                             <CardDescription className="leading-7">
                                 Follow our getting started guide to prepare
-                                your business and your first promotion.
+                                your business and your first offer.
                             </CardDescription>
                         </CardHeader>
 

@@ -16,7 +16,7 @@ const destinations = [
         icon: FiCompass,
     },
     {
-        title: "Browse promotions",
+        title: "Browse offers",
         description: "Discover something worth making plans for.",
         href: "/offers",
         icon: FiGift,

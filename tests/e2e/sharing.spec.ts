@@ -9,7 +9,7 @@ const admin = () =>
         auth: { autoRefreshToken: false, persistSession: false },
     });
 
-test("businesses can share a promotion from their promotions list", async ({ browser, request }) => {
+test("businesses can share an offer from their offers list", async ({ browser, request }) => {
     const { businessId, claimOfferSlug } = state();
     const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
 
@@ -17,10 +17,10 @@ test("businesses can share a promotion from their promotions list", async ({ bro
     await page.getByRole("button", { name: "Share" }).first().click();
 
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("heading", { name: "Share this promotion" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Share this offer" })).toBeVisible();
     await expect(dialog.locator("code").first()).toContainText("?ref=share");
     await expect(dialog.locator("a[href^=\"https://wa.me/\"]")).toBeVisible();
-    await expect(dialog.getByText(/views of this promotion/)).toBeVisible();
+    await expect(dialog.getByText(/views of this offer/)).toBeVisible();
 
     for (const image of ["story-image", "post-image"]) {
         const response = await request.get(`/offers/${claimOfferSlug}/${image}`);

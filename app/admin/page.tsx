@@ -234,12 +234,12 @@ async function OverviewContent() {
                     <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
                         <FiCheckCircle aria-hidden="true" />
                         <AlertTitle>All caught up</AlertTitle>
-                        <AlertDescription>No businesses, promotions or billing alerts are waiting.</AlertDescription>
+                        <AlertDescription>No businesses, offers or billing alerts are waiting.</AlertDescription>
                     </Alert>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-3">
                         <AttentionLink href="/admin/businesses" icon={<FiBriefcase />} count={businesses.pending} label="Businesses to review" />
-                        <AttentionLink href="/admin/offers" icon={<FiGift />} count={metrics.pending_offers} label="Promotions to review" />
+                        <AttentionLink href="/admin/offers" icon={<FiGift />} count={metrics.pending_offers} label="Offers to review" />
                         <AttentionLink href="/admin/billing" icon={<FiAlertTriangle />} count={metrics.open_billing_alerts} label="Billing alerts" />
                     </div>
                 )}

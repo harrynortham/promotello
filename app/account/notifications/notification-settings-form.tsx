@@ -65,7 +65,7 @@ const preferences = [
         key: "local_deals_enabled",
         title: "Deals & discoveries",
         description:
-            "Optional emails about promotions, businesses, and places to explore.",
+            "Optional emails about offers, businesses, and places to explore.",
         icon: FiGift,
     },
     {
@@ -370,7 +370,7 @@ export default function NotificationSettingsForm({
                     </CardTitle>
 
                     <CardDescription className="leading-7">
-                        Daily business summaries and promotion availability
+                        Daily business summaries and offer availability
                         alerts are managed separately for each business.
                     </CardDescription>
                 </CardHeader>

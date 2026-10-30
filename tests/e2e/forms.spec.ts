@@ -111,7 +111,7 @@ test.describe("business forms", () => {
         expect(rows![6].opens_at).toMatch(/^09:00/);
     });
 
-    test("editing a promotion validates and saves it", async ({ page }) => {
+    test("editing an offer validates and saves it", async ({ page }) => {
         const { businessId, businessUserId } = state();
         const supabase = admin();
         const { data: offer } = await supabase

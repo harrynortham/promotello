@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
     title: { absolute: "Frequently Asked Questions | Promotello for Business" },
     description:
-        "Answers about promotions, vouchers, loyalty cards, QR posters, follower emails, automations, your team and pricing.",
+        "Answers about offers, vouchers, loyalty cards, QR posters, follower emails, automations, your team and pricing.",
 };
 
 const sections = [
@@ -19,7 +19,7 @@ const sections = [
             {
                 question: "What is Promotello?",
                 answer:
-                    "Promotello helps independent businesses turn first-time visitors into regulars. You get promotions customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place. Your business also gets a page in the Promotello directory.",
+                    "Promotello helps independent businesses turn first-time visitors into regulars. You get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place. Your business also gets a page in the Promotello directory.",
             },
             {
                 question: "Is it right for my business?",
@@ -29,7 +29,7 @@ const sections = [
             {
                 question: "How long does it take to set up?",
                 answer:
-                    "About 15 minutes. Add your business details, opening hours and logo, create a promotion or loyalty card, and print your QR poster. Our team checks each new business before it appears publicly.",
+                    "About 15 minutes. Add your business details, opening hours and logo, create an offer or loyalty card, and print your QR poster. Our team checks each new business before it appears publicly.",
             },
             {
                 question: "Do I or my customers need to download an app?",
@@ -45,7 +45,7 @@ const sections = [
     },
     {
         id: "promotions",
-        title: "Promotions and vouchers",
+        title: "Offers and vouchers",
         description: "Creating offers and redeeming them at the till.",
         questions: [
             {
@@ -54,9 +54,9 @@ const sections = [
                     "No. Plenty of businesses offer an extra instead, like a free pastry with a coffee, a bundle, or an introductory treatment. Choose something that suits your margins.",
             },
             {
-                question: "How do customers claim a promotion?",
+                question: "How do customers claim an offer?",
                 answer:
-                    "They find it on your page, in the Promotello directory or by scanning your poster, then tap to claim it. They get their own voucher with a QR code and a short code, kept in their account. Each customer can claim each promotion once.",
+                    "They find it on your page, in the Promotello directory or by scanning your poster, then tap to claim it. They get their own voucher with a QR code and a short code, kept in their account. Each customer can claim each offer once.",
             },
             {
                 question: "How do my staff redeem a voucher?",
@@ -69,14 +69,14 @@ const sections = [
                     "Yes. Set a claim limit and an end date. Once the limit is reached, nobody else can claim it.",
             },
             {
-                question: "Does my promotion go live straight away?",
+                question: "Does my offer go live straight away?",
                 answer:
-                    "Once your business has been approved, promotions on Pro and Growth go live as soon as you create them, and your followers are emailed. On the Free plan, our team reviews each promotion first.",
+                    "Once your business has been approved, offers on Pro and Growth go live as soon as you create them, and your followers are emailed. On the Free plan, our team reviews each offer first.",
             },
             {
-                question: "Can a promotion only work at certain times?",
+                question: "Can an offer only work at certain times?",
                 answer:
-                    "Yes, on Growth. Quiet-hours promotions only work on the days and times you choose, such as Monday to Thursday, 2pm to 4pm. Customers can claim them any time, but staff can only redeem them in the window.",
+                    "Yes, on Growth. Quiet-hours offers only work on the days and times you choose, such as Monday to Thursday, 2pm to 4pm. Customers can claim them any time, but staff can only redeem them in the window.",
             },
         ],
     },
@@ -98,7 +98,7 @@ const sections = [
             {
                 question: "What are QR posters?",
                 answer:
-                    "Printable A4 and A5 posters for your window, till or tables. Scanning one takes people to your page, where they can follow you, join your loyalty card or claim a promotion. Each poster counts its own scans, so you can see which spots work. Free includes one poster; Pro and Growth have no limit.",
+                    "Printable A4 and A5 posters for your window, till or tables. Scanning one takes people to your page, where they can follow you, join your loyalty card or claim an offer. Each poster counts its own scans, so you can see which spots work. Free includes one poster; Pro and Growth have no limit.",
             },
         ],
     },
@@ -110,7 +110,7 @@ const sections = [
             {
                 question: "What does following my business do?",
                 answer:
-                    "Customers who follow you get an email whenever you post a new promotion (on Pro and Growth). The emails send themselves, with your business name as the sender.",
+                    "Customers who follow you get an email whenever you post a new offer (on Pro and Growth). The emails send themselves, with your business name as the sender.",
             },
             {
                 question: "Can I see who follows me?",
@@ -142,7 +142,7 @@ const sections = [
             {
                 question: "Can my staff help?",
                 answer:
-                    "Yes. Invite them by email from the Team page. Members can scan vouchers and stamp loyalty cards; admins can also create promotions and manage settings. There's no charge per team member.",
+                    "Yes. Invite them by email from the Team page. Members can scan vouchers and stamp loyalty cards; admins can also create offers and manage settings. There's no charge per team member.",
             },
             {
                 question: "Can I manage more than one business?",
@@ -157,7 +157,7 @@ const sections = [
             {
                 question: "How do I see whether it's working?",
                 answer:
-                    "Analytics shows the last 30 days against the 30 before: page and promotion views, claims, vouchers used, QR scans, loyalty stamps and review clicks. On Growth, owners also get a monthly report by email.",
+                    "Analytics shows the last 30 days against the 30 before: page and offer views, claims, vouchers used, QR scans, loyalty stamps and review clicks. On Growth, owners also get a monthly report by email.",
             },
         ],
     },
@@ -169,7 +169,7 @@ const sections = [
             {
                 question: "How much does Promotello cost?",
                 answer:
-                    "Free costs nothing and includes your page, 1 live promotion and 1 QR poster. Pro is £24 a month (or £240 a year) and Growth is £39 a month (or £390 a year). The first 50 businesses can get Pro for £19 a month, locked for life.",
+                    "Free costs nothing and includes your page, 1 live offer and 1 QR poster. Pro is £24 a month (or £240 a year) and Growth is £39 a month (or £390 a year). The first 50 businesses can get Pro for £19 a month, locked for life.",
             },
             {
                 question: "How does the free trial work?",
@@ -179,12 +179,12 @@ const sections = [
             {
                 question: "Are there fees per claim or per customer?",
                 answer:
-                    "No. You pay your plan and nothing else. You do cover the cost of whatever your promotions give away.",
+                    "No. You pay your plan and nothing else. You do cover the cost of whatever your offers give away.",
             },
             {
                 question: "Can I switch plans or cancel?",
                 answer:
-                    "Yes, any time from your Billing page. If you cancel, you keep your plan until the end of the period you've paid for, then move to Free: your newest live promotion stays up and the rest are paused, not deleted.",
+                    "Yes, any time from your Billing page. If you cancel, you keep your plan until the end of the period you've paid for, then move to Free: your newest live offer stays up and the rest are paused, not deleted.",
             },
         ],
     },
@@ -213,7 +213,7 @@ export default function BusinessFaqPage() {
 
                         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                             Everything businesses ask before getting started:
-                            promotions, loyalty cards, emails, your team and
+                            offers, loyalty cards, emails, your team and
                             pricing.
                         </p>
 

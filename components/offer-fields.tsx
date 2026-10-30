@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatSchedule, scheduleFrom, type OfferSchedule } from "@/lib/schedule";
 import { optionalText, requiredText } from "@/lib/validation";
 
-// The fields, rules and image upload shared by the new and edit promotion
+// The fields, rules and image upload shared by the new and edit offer
 // forms. The quiet-hours schedule is its own widget (OfferScheduleFields)
 // and is read from the submitted form with scheduleFromForm().
 
@@ -31,7 +31,7 @@ export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}
         availability: optionalText("Availability", 160),
         expiresAt: z
             .string()
-            .min(1, "Choose when the promotion ends.")
+            .min(1, "Choose when the offer ends.")
             .refine((value) => allowPastExpiry || value >= todayInUk(), "Choose today or a later date."),
         maxRedemptions: z
             .string()
@@ -118,7 +118,7 @@ export function OfferFields({
         <>
             <div className="space-y-2">
                 <Label htmlFor="title">
-                    Promotion title <Required />
+                    Offer title <Required />
                 </Label>
                 <Input
                     id="title"

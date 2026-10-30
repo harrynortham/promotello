@@ -37,10 +37,10 @@ export default function RedemptionList({
 
     function getOfferTitle(redemption: Redemption) {
         if (Array.isArray(redemption.offers)) {
-            return redemption.offers[0]?.title ?? "Unknown promotion";
+            return redemption.offers[0]?.title ?? "Unknown offer";
         }
 
-        return redemption.offers?.title ?? "Unknown promotion";
+        return redemption.offers?.title ?? "Unknown offer";
     }
 
     async function markAsUsed(redemptionId: string) {
@@ -80,7 +80,7 @@ export default function RedemptionList({
                     href={`/business/${businessId}/offers`}
                     className="text-sm font-semibold text-[#FF593F]"
                 >
-                    ← Back to promotions
+                    ← Back to offers
                 </Link>
 
                 <header className="mt-8">

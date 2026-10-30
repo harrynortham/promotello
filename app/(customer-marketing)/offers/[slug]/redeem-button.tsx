@@ -185,7 +185,7 @@ export default function RedeemButton({
         const statusLabel = isUsed
             ? "Already used"
             : isExpired
-                ? "Promotion expired"
+                ? "Offer expired"
                 : "Your claimed voucher";
 
         return (
@@ -248,7 +248,7 @@ export default function RedeemButton({
     if (isExpired) {
         return (
             <Alert className="mt-6 border-amber-200 bg-amber-50 text-amber-800">
-                <AlertTitle>This promotion has expired</AlertTitle>
+                <AlertTitle>This offer has expired</AlertTitle>
 
                 <AlertDescription>
                     New claims are no longer available.

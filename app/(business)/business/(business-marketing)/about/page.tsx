@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 export const metadata = {
     title: { absolute: "About Promotello for Businesses" },
     description:
-        "Promotello helps independent businesses turn first-time visitors into regulars with promotions, loyalty cards, QR posters and follower emails.",
+        "Promotello helps independent businesses turn first-time visitors into regulars with offers, loyalty cards, QR posters and follower emails.",
 };
 
 const principles = [
@@ -21,7 +21,7 @@ const principles = [
         number: "01",
         title: "Simple to understand",
         description:
-            "Your promotion should be clear to customers and easy for your team to manage. We focus on practical tools rather than unnecessary complexity.",
+            "Your offer should be clear to customers and easy for your team to manage. We focus on practical tools rather than unnecessary complexity.",
     },
     {
         number: "02",
@@ -33,7 +33,7 @@ const principles = [
         number: "03",
         title: "Honest by design",
         description:
-            "We want businesses to understand what they are paying for, how promotions perform, and where the platform can genuinely help.",
+            "We want businesses to understand what they are paying for, how offers perform, and where the platform can genuinely help.",
     },
 ];
 
@@ -41,12 +41,12 @@ const features = [
     {
         title: "Bring people in",
         description:
-            "Promotions customers claim on their phone, QR posters for your window and till, and a page in the Promotello directory.",
+            "Offers customers claim on their phone, QR posters for your window and till, and a page in the Promotello directory.",
     },
     {
         title: "Bring them back",
         description:
-            "A digital loyalty card, emails to your followers about every new promotion, and on Growth, welcome, birthday and win-back rewards that send themselves.",
+            "A digital loyalty card, emails to your followers about every new offer, and on Growth, welcome, birthday and win-back rewards that send themselves.",
     },
     {
         title: "See what it's worth",
@@ -128,7 +128,7 @@ export default function About() {
 
                         <p>
                             Promotello works from day one with the customers you
-                            already have: a promotion to try, a loyalty card on
+                            already have: an offer to try, a loyalty card on
                             their phone, a poster that turns passers-by into
                             followers, and emails that keep you in mind. Your
                             staff need nothing but their own phones.
@@ -213,11 +213,11 @@ export default function About() {
                     </p>
 
                     <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#17233B] sm:text-4xl">
-                        Start free with one promotion.
+                        Start free with one offer.
                     </h2>
 
                     <p className="mx-auto mt-4 max-w-2xl leading-7 text-[#17233B]/70">
-                        Set up your page, create a promotion and print your
+                        Set up your page, create an offer and print your
                         QR poster. Upgrade when you can see it working.
                     </p>
 

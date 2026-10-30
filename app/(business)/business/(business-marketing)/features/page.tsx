@@ -215,7 +215,7 @@ export default async function FeaturesPage() {
                 eyebrow="Results"
                 title="See exactly what Promotello brings in."
                 body="Analytics shows the last 30 days against the 30 before: page and offer views, claims, vouchers used, QR scans, loyalty stamps and review clicks. On Growth, a summary arrives by email on the 1st."
-                points={["A daily views chart", "Every promotion's claims and redemptions", "A monthly value report on Growth"]}
+                points={["A daily views chart", "Every offer's claims and redemptions", "A monthly value report on Growth"]}
                 visual={<MonthlyReportEmail />}
             />
 
@@ -223,8 +223,8 @@ export default async function FeaturesPage() {
                 id="sharing"
                 tinted
                 eyebrow="Sharing"
-                title="Share every promotion in a tap."
-                body="Each promotion has a share panel: send it to WhatsApp, Facebook or X with a link preview showing your photo and the deal, download images sized for Instagram stories and posts, and copy a suggested caption. Customers can share your promotions with friends from the promotion page too."
+                title="Share every offer in a tap."
+                body="Each offer has a share panel: send it to WhatsApp, Facebook or X with a link preview showing your photo and the deal, download images sized for Instagram stories and posts, and copy a suggested caption. Customers can share your offers with friends from the offer page too."
                 points={[
                     "Link previews with your photo, deal and business name",
                     "Story (9:16) and square post images",

@@ -180,7 +180,7 @@ async function RedemptionsContent({ params }: PageProps) {
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            Check customer codes and mark promotions as used.
+                            Check customer codes and mark offers as used.
                         </p>
                     </div>
 
@@ -190,7 +190,7 @@ async function RedemptionsContent({ params }: PageProps) {
                         variant="outline"
                         size="sm"
                     >
-                        Back to promotions
+                        Back to offers
                     </Button>
                 </div>
 
@@ -210,7 +210,7 @@ async function RedemptionsContent({ params }: PageProps) {
 
                         <AlertDescription>
                             Customer redemptions will appear here when customers claim your
-                            promotions.
+                            offers.
                         </AlertDescription>
                     </Alert>
                 ) : (
@@ -228,7 +228,7 @@ async function RedemptionsContent({ params }: PageProps) {
                                         <div>
                                             <div className="flex flex-wrap items-center gap-3">
                                                 <CardTitle className="text-xl text-[#17233B]">
-                                                    {offer?.title ?? "Promotion"}
+                                                    {offer?.title ?? "Offer"}
                                                 </CardTitle>
 
                                                 <Badge

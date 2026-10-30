@@ -57,7 +57,7 @@ export function DeleteAccount({ outcomes }: { outcomes: DeletionOutcome[] }) {
             {deleted.length > 0 && (
                 <p className="rounded-xl bg-destructive/5 p-4 text-sm leading-6">
                     These businesses only you run will also be deleted, with their
-                    promotions, loyalty cards and QR posters:{" "}
+                    offers, loyalty cards and QR posters:{" "}
                     <strong>{deleted.map((item) => item.business_name).join(", ")}</strong>.
                 </p>
             )}

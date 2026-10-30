@@ -103,9 +103,9 @@ export function PeriodSummary({ analytics }: { analytics: BusinessAnalytics }) {
                         icon={<FiEye />}
                         label="Page views"
                         metric={views}
-                        hint={`Visits to your business and promotion pages, ${(totals.shared_views ?? empty).current} from shared links.`}
+                        hint={`Visits to your business and offer pages, ${(totals.shared_views ?? empty).current} from shared links.`}
                     />
-                    <Tile icon={<FiTag />} label="Vouchers claimed" metric={claims} hint="Customers who saved one of your promotions." />
+                    <Tile icon={<FiTag />} label="Vouchers claimed" metric={claims} hint="Customers who saved one of your offers." />
                     <Tile icon={<FiCheckCircle />} label="Vouchers used" metric={used} hint="Claims your staff marked as used in store." />
                     <Tile icon={<FiGrid />} label="QR poster scans" metric={totals.qr_scans ?? empty} hint="Scans of your printed QR posters." />
                     <Tile icon={<FiAward />} label="Loyalty stamps" metric={totals.loyalty_stamps ?? empty} hint="Stamps given on digital loyalty cards." />

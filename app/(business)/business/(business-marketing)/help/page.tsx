@@ -7,7 +7,7 @@ import HelpCentre, {
 export const metadata: Metadata = {
     title: "Business Help Centre",
     description:
-        "Practical guides to promotions, vouchers, loyalty cards, QR posters, followers, automations, your team and billing.",
+        "Practical guides to offers, vouchers, loyalty cards, QR posters, followers, automations, your team and billing.",
 };
 
 const guides: HelpGuide[] = [
@@ -24,7 +24,7 @@ const guides: HelpGuide[] = [
             "Check the approval status shown in your business overview.",
         ],
         note:
-            "Your business must be approved before its promotions can appear publicly.",
+            "Your business must be approved before its offers can appear publicly.",
         link: {
             label: "Add a business",
             href: "/onboarding",
@@ -64,18 +64,18 @@ const guides: HelpGuide[] = [
     },
     {
         id: "create-promotion",
-        category: "Promotions",
-        title: "Create a promotion",
+        category: "Offers",
+        title: "Create an offer",
         description: "Prepare an offer customers can understand.",
         steps: [
-            "Open Manage business and choose Promotions.",
-            "Choose Create promotion.",
+            "Open Manage business and choose Offers.",
+            "Choose Create offer.",
             "Add a title, description, image, and offer details.",
             "Set availability, expiry, terms, and an optional total claim limit.",
-            "Submit the promotion and check its approval status.",
+            "Submit the offer and check its approval status.",
         ],
         note:
-            "Owners and business admins can create promotions. Both the business and promotion must be approved for public visibility.",
+            "Owners and business admins can create offers. Both the business and offer must be approved for public visibility.",
         link: {
             label: "Open business dashboard",
             href: "/business/dashboard",
@@ -83,11 +83,11 @@ const guides: HelpGuide[] = [
     },
     {
         id: "claim-limits",
-        category: "Promotions",
-        title: "Understand promotion claim limits",
-        description: "Choose how many customers can claim a promotion.",
+        category: "Offers",
+        title: "Understand offer claim limits",
+        description: "Choose how many customers can claim an offer.",
         steps: [
-            "Set an optional total claim limit when creating or editing the promotion.",
+            "Set an optional total claim limit when creating or editing the offer.",
             "Choose a limit your stock, staffing, and capacity can accommodate.",
             "Follow the recorded claim count and remaining availability.",
             "Further claims stop when the configured limit is reached.",
@@ -97,13 +97,13 @@ const guides: HelpGuide[] = [
     },
     {
         id: "approval",
-        category: "Promotions",
-        title: "Check why a promotion is not public",
+        category: "Offers",
+        title: "Check why an offer is not public",
         description: "Review approval and availability before contacting support.",
         steps: [
             "Check that the business is approved.",
-            "Check that the promotion is approved.",
-            "Check the promotion has not expired.",
+            "Check that the offer is approved.",
+            "Check the offer has not expired.",
             "Review any feedback and correct the information requested.",
             "Contact support if the status or visibility still looks incorrect.",
         ],
@@ -116,12 +116,12 @@ const guides: HelpGuide[] = [
     },
     {
         id: "edit-promotion",
-        category: "Promotions",
-        title: "Edit a promotion",
+        category: "Offers",
+        title: "Edit an offer",
         description: "Keep your offer information accurate.",
         steps: [
-            "Open your business and choose Promotions.",
-            "Find the promotion and choose Edit promotion.",
+            "Open your business and choose Offers.",
+            "Find the offer and choose Edit offer.",
             "Update the relevant details and save.",
             "Check its approval status after saving.",
         ],
@@ -136,12 +136,12 @@ const guides: HelpGuide[] = [
         steps: [
             "Sign in to Promotello on your phone with your business account.",
             "Point your phone camera at the QR code on the customer’s voucher and open the link.",
-            "Check the promotion shown matches what the customer is asking for.",
+            "Check the offer shown matches what the customer is asking for.",
             "Tap Mark as used, then give them the deal.",
             "No QR code? Find the customer’s code on your Redemptions page instead.",
         ],
         note:
-            "You’ll see a warning if the voucher was already used, the promotion has ended, or it’s outside its set hours. Reward vouchers from automations (codes starting with G) work the same way.",
+            "You’ll see a warning if the voucher was already used, the offer has ended, or it’s outside its set hours. Reward vouchers from automations (codes starting with G) work the same way.",
     },
     {
         id: "unused-claims",
@@ -152,7 +152,7 @@ const guides: HelpGuide[] = [
             "Treat a claim as a customer receiving a redemption code.",
             "Treat a used redemption as a code your team has marked as fulfilled.",
             "Leave codes unused when the customer has not received the deal.",
-            "Compare claims and used redemptions when reviewing promotion activity.",
+            "Compare claims and used redemptions when reviewing offer activity.",
         ],
         note:
             "Do not mark unused codes as used to clear the list. An unused code is not proof of a visit or a sale.",
@@ -166,8 +166,8 @@ const guides: HelpGuide[] = [
             "Confirm you are viewing the correct business.",
             "Check the code carefully against the customer’s screen.",
             "Review whether the code has already been marked as used.",
-            "Check the promotion’s expiry and terms.",
-            "Contact support with the promotion name and a description of the issue if you cannot resolve it.",
+            "Check the offer’s expiry and terms.",
+            "Contact support with the offer name and a description of the issue if you cannot resolve it.",
         ],
         note:
             "Do not ask a customer to claim from another account to work around a code problem.",
@@ -198,7 +198,7 @@ const guides: HelpGuide[] = [
         description: "Give each colleague the access they need.",
         steps: [
             "Owners manage team access and invitations.",
-            "Owners and business admins can manage business details and promotions.",
+            "Owners and business admins can manage business details and offers.",
             "Team members can view customer redemptions and mark codes as used.",
             "Ask the owner to review your role if an expected management link is missing.",
         ],
@@ -209,11 +209,11 @@ const guides: HelpGuide[] = [
         id: "business-emails",
         category: "Notifications & reporting",
         title: "Choose business email notifications",
-        description: "Manage summaries and promotion availability updates.",
+        description: "Manage summaries and offer availability updates.",
         steps: [
             "As an owner or business admin, open the relevant business.",
             "Choose Notifications.",
-            "Set preferences for daily summaries, fully claimed promotions, and low inventory.",
+            "Set preferences for daily summaries, fully claimed offers, and low inventory.",
             "Adjust the low-inventory threshold if needed and save.",
         ],
         note:
@@ -222,11 +222,11 @@ const guides: HelpGuide[] = [
     {
         id: "performance",
         category: "Notifications & reporting",
-        title: "Review promotion activity",
+        title: "Review offer activity",
         description: "Use your dashboard to understand the response.",
         steps: [
-            "Open the individual business overview to see promotion metrics.",
-            "Review the performance and claim counts for your promotions.",
+            "Open the individual business overview to see offer metrics.",
+            "Review the performance and claim counts for your offers.",
             "Open Redemptions to check which codes have been marked as used.",
             "Use the Analytics page for the reporting available to your role.",
         ],
@@ -296,10 +296,10 @@ const guides: HelpGuide[] = [
         id: "followers",
         category: "Followers and emails",
         title: "How followers and offer emails work",
-        description: "Customers who follow you hear about new promotions.",
+        description: "Customers who follow you hear about new offers.",
         steps: [
-            "Customers follow you from your page, a promotion page or your QR poster.",
-            "On Pro and Growth, each new promotion is emailed to your followers when it goes live.",
+            "Customers follow you from your page, an offer page or your QR poster.",
+            "On Pro and Growth, each new offer is emailed to your followers when it goes live.",
             "Your follower count is shown in Analytics.",
         ],
         note: "You see how many followers you have, but not who they are. Every email has an unsubscribe link.",
@@ -332,10 +332,10 @@ const guides: HelpGuide[] = [
     {
         id: "quiet-hours",
         category: "Growth",
-        title: "Make a quiet-hours promotion",
-        description: "A promotion that only works at set times.",
+        title: "Make a quiet-hours offer",
+        description: "An offer that only works at set times.",
         steps: [
-            "Create or edit a promotion.",
+            "Create or edit an offer.",
             "Tick Only on set days and times.",
             "Choose the days, and the start and end times.",
             "Save. Customers can claim it any time but only use it in that window.",
@@ -376,7 +376,7 @@ export default function BusinessHelpPage() {
         <HelpCentre
             audience="Business help centre"
             title="Let’s keep your business moving."
-            description="Practical guides for promotions, loyalty cards, QR posters, scanning at the till, automations and more."
+            description="Practical guides for offers, loyalty cards, QR posters, scanning at the till, automations and more."
             searchPlaceholder="Search scanning, loyalty, posters, billing…"
             guides={guides}
             contactHref="/business/contact"

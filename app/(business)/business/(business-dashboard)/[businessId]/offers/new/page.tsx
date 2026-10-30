@@ -113,7 +113,7 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
                             nativeButton={false}
                             variant="outline"
                         >
-                            Back to promotions
+                            Back to offers
                         </Button>
                     </div>
                 </CardContent>

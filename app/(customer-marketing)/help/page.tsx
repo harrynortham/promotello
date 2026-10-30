@@ -7,7 +7,7 @@ import HelpCentre, {
 export const metadata: Metadata = {
     title: "Help Centre",
     description:
-        "Help with finding offers, claiming promotions, using redemption codes, and managing your Promotello account.",
+        "Help with finding offers, claiming offers, using redemption codes, and managing your Promotello account.",
 };
 
 const guides: HelpGuide[] = [
@@ -17,8 +17,8 @@ const guides: HelpGuide[] = [
         title: "Find an offer you’ll enjoy",
         description: "Search, browse categories, and discover businesses.",
         steps: [
-            "Open Explore to browse available promotions.",
-            "Search for a promotion or business, or choose a category.",
+            "Open Explore to browse available offers.",
+            "Search for an offer or business, or choose a category.",
             "Use the sorting options to view newest, popular, or expiring offers.",
             "Open an offer to read its full details before claiming.",
         ],
@@ -34,7 +34,7 @@ const guides: HelpGuide[] = [
         description: "Find its location, opening hours, and contact details.",
         steps: [
             "Open the business directory and find the business.",
-            "Visit its profile to read about it and view available promotions.",
+            "Visit its profile to read about it and view available offers.",
             "Check its published address and opening hours.",
             "Use the website or contact details for booking questions or specific requirements.",
         ],
@@ -48,19 +48,19 @@ const guides: HelpGuide[] = [
     {
         id: "claim-an-offer",
         category: "Claims & vouchers",
-        title: "Claim a promotion",
+        title: "Claim an offer",
         description: "Get a redemption code for an available offer.",
         steps: [
-            "Open the promotion and read what is included.",
+            "Open the offer and read what is included.",
             "Check the availability, expiry date, and terms.",
             "Sign in to your account if needed.",
             "Select “Get this deal” and wait for confirmation.",
             "Keep your code available for your visit.",
         ],
         note:
-            "Claiming a promotion does not book an appointment or table. Follow any booking instructions in the offer.",
+            "Claiming an offer does not book an appointment or table. Follow any booking instructions in the offer.",
         link: {
-            label: "Browse promotions",
+            label: "Browse offers",
             href: "/offers",
         },
     },
@@ -68,12 +68,12 @@ const guides: HelpGuide[] = [
         id: "find-your-code",
         category: "Claims & vouchers",
         title: "Find a code you’ve already claimed",
-        description: "Access your claimed promotions from your dashboard.",
+        description: "Access your claimed offers from your dashboard.",
         steps: [
-            "Sign in with the account you used to claim the promotion.",
+            "Sign in with the account you used to claim the offer.",
             "Open your customer dashboard.",
             "Go to My vouchers or My redemptions.",
-            "Find the promotion and display its redemption code.",
+            "Find the offer and display its redemption code.",
         ],
         note:
             "If a confirmation email didn’t arrive, check your account records before trying to claim again.",
@@ -85,7 +85,7 @@ const guides: HelpGuide[] = [
     {
         id: "use-your-code",
         category: "Claims & vouchers",
-        title: "Use your promotion at the business",
+        title: "Use your offer at the business",
         description: "Know what to do when you arrive.",
         steps: [
             "Check the offer is within its expiry date and applies to your visit.",
@@ -102,10 +102,10 @@ const guides: HelpGuide[] = [
         title: "Get help with a redemption",
         description: "What to check if your code cannot be used.",
         steps: [
-            "Check the promotion’s expiry, availability, and conditions.",
+            "Check the offer’s expiry, availability, and conditions.",
             "Check whether the redemption is already marked as used.",
             "Ask the business to check the code against its redemption records.",
-            "If the issue remains, contact Promotello with the business name, promotion title, and a description of the problem.",
+            "If the issue remains, contact Promotello with the business name, offer title, and a description of the problem.",
         ],
         note:
             "If you think a code was marked as used incorrectly, do not try to create another account to claim again. Ask the business or contact support.",

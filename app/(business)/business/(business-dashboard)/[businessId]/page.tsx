@@ -424,7 +424,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/70">
-                            Total promotions
+                            Total offers
                         </CardTitle>
                     </CardHeader>
 
@@ -438,7 +438,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/70">
-                            Approved promotions
+                            Approved offers
                         </CardTitle>
                     </CardHeader>
 
@@ -481,11 +481,11 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             {lowInventoryOffers.length > 0 && (
                 <Alert className="border-orange-200 bg-orange-50 text-orange-800">
                     <AlertTitle>
-                        Promotions nearing their limits
+                        Offers nearing their limits
                     </AlertTitle>
 
                     <AlertDescription>
-                        {lowInventoryOffers.length} promotion
+                        {lowInventoryOffers.length} offer
                         {lowInventoryOffers.length === 1 ? "" : "s"} has
                         limited redemptions remaining.
                     </AlertDescription>
@@ -494,16 +494,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Promotion performance</CardTitle>
+                    <CardTitle>Offer performance</CardTitle>
                 </CardHeader>
 
                 <CardContent>
                     {offers.length === 0 ? (
                         <Alert>
-                            <AlertTitle>No promotions yet</AlertTitle>
+                            <AlertTitle>No offers yet</AlertTitle>
 
                             <AlertDescription>
-                                Create your first promotion to start reaching
+                                Create your first offer to start reaching
                                 customers.
                             </AlertDescription>
 
@@ -517,7 +517,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                 size="sm"
                                 className="mt-5"
                             >
-                                Create promotion
+                                Create offer
                             </Button>
                         </Alert>
                     ) : (
@@ -623,7 +623,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         variant="outline"
                         size="sm"
                     >
-                        Manage promotions
+                        Manage offers
                     </Button>
 
                     <Button

@@ -195,7 +195,7 @@ export default function SignupPage() {
 
                                 <p className="mt-4 leading-7 text-muted-foreground">
                                     Create your Promotello account to claim
-                                    promotions and keep your vouchers together.
+                                    offers and keep your vouchers together.
                                 </p>
 
                                 <SocialSignIn next={nextPath} />

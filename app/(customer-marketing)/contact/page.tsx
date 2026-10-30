@@ -23,9 +23,9 @@ import { company } from "@/lib/legal";
 const topics = [
     {
         icon: FiGift,
-        title: "A question about a promotion?",
+        title: "A question about an offer?",
         description:
-            "Include the promotion name and business so we can understand which offer you mean.",
+            "Include the offer name and business so we can understand which offer you mean.",
     },
     {
         icon: FiHelpCircle,
@@ -150,7 +150,7 @@ export default function ContactPage() {
 
                         <p className="mt-2 text-sm leading-7 text-muted-foreground">
                             Use our business contact page for joining,
-                            promotions, and business account enquiries.
+                            offers, and business account enquiries.
                         </p>
 
                         <Button

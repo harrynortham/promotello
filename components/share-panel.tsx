@@ -51,7 +51,7 @@ function useCopy() {
     return { copied, copy };
 }
 
-// Share a promotion: its link, a suggested caption, one-tap links to each
+// Share an offer: its link, a suggested caption, one-tap links to each
 // network, and ready-made images for Instagram and Facebook.
 export function SharePanel({ title, url, caption, images, stats, triggerLabel = "Share" }: SharePanelProps) {
     const { copied, copy } = useCopy();
@@ -91,7 +91,7 @@ export function SharePanel({ title, url, caption, images, stats, triggerLabel = 
 
             <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Share this promotion</DialogTitle>
+                    <DialogTitle>Share this offer</DialogTitle>
                     <DialogDescription>{title}</DialogDescription>
                 </DialogHeader>
 
@@ -184,7 +184,7 @@ export function SharePanel({ title, url, caption, images, stats, triggerLabel = 
 
                     {stats && (
                         <p className="rounded-md bg-[#FF593F]/5 px-3 py-2 text-sm">
-                            Last 30 days: <strong>{stats.views}</strong> views of this promotion,{" "}
+                            Last 30 days: <strong>{stats.views}</strong> views of this offer,{" "}
                             <strong>{stats.sharedViews}</strong> from shared links.
                         </p>
                     )}
