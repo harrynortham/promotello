@@ -18,6 +18,8 @@ type LoyaltyCalloutProps = {
     card: { stamps: number } | null;
     isSignedIn: boolean;
     unavailable?: boolean;
+    // The business's team previewing its page before approval: nothing to join yet.
+    preview?: boolean;
 };
 
 // Loyalty card offer on a business profile: join, or see your progress.
@@ -28,6 +30,7 @@ export function LoyaltyCallout({
     card,
     isSignedIn,
     unavailable,
+    preview,
 }: LoyaltyCalloutProps) {
     const reward = program.reward.charAt(0).toLowerCase() + program.reward.slice(1);
 
@@ -63,7 +66,11 @@ export function LoyaltyCallout({
                     )}
                 </div>
 
-                {card ? (
+                {preview ? (
+                    <p className="shrink-0 text-sm text-white/70">
+                        Customers can join once you&apos;re live.
+                    </p>
+                ) : card ? (
                     <Button
                         render={<Link href="/dashboard/loyalty" />}
                         nativeButton={false}
