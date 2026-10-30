@@ -157,7 +157,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         .from("businesses")
         .select(
             `
-                id, slug, name, description, logo_url, category, category_id, created_at, is_sample,
+                id, slug, name, description, logo_url, cover_image_url, category, category_id, created_at, is_sample,
                 business_locations ( region, city, city_id ),
                 offers ( slug, title, discount, image_url, created_at )
             `,
@@ -187,7 +187,8 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
             cityId: cityIdOf(row.business_locations),
             createdAt: row.created_at,
             offerCount: offers.length,
-            coverImageUrl: offers.find((offer) => offer.image_url)?.image_url ?? null,
+            // Its own cover photo, or else its newest offer photo.
+            coverImageUrl: row.cover_image_url ?? offers.find((offer) => offer.image_url)?.image_url ?? null,
             isSample: row.is_sample,
             topOffer: latest
                 ? { slug: latest.slug, title: latest.title, discount: latest.discount }

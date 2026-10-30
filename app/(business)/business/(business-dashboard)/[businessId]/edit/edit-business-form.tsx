@@ -49,6 +49,7 @@ type Business = {
     website_url: string | null;
     contact_email: string | null;
     logo_url: string | null;
+    cover_image_url: string | null;
     google_review_url: string | null;
 };
 
@@ -126,7 +127,7 @@ export default function EditBusinessForm({
                     supabase
                         .from("businesses")
                         .select(
-                            "name, category, category_id, description, website_url, contact_email, logo_url, google_review_url",
+                            "name, category, category_id, description, website_url, contact_email, logo_url, cover_image_url, google_review_url",
                         )
                         .eq("id", businessId)
                         .single(),
@@ -361,6 +362,37 @@ function BusinessForm({
                                         </Button>
                                         <p className="text-xs text-[#17233B]/65">
                                             Saved on its own page, so save any other changes here first.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* So is the cover photo. */}
+                                <div className="flex items-center gap-4">
+                                    <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl border border-dashed border-[#17233B]/20 bg-[#FFF8F0]">
+                                        {business.cover_image_url && (
+                                            <Image
+                                                src={business.cover_image_url}
+                                                alt={`${business.name} cover photo`}
+                                                fill
+                                                sizes="112px"
+                                                className="object-cover"
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="min-w-0 space-y-1.5">
+                                        <p className="text-sm font-medium">Cover photo</p>
+                                        <Button
+                                            render={<Link href={`/business/${businessId}/cover?from=edit`} />}
+                                            nativeButton={false}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            <FiUpload aria-hidden="true" />
+                                            {business.cover_image_url ? "Change cover photo" : "Add cover photo"}
+                                        </Button>
+                                        <p className="text-xs text-[#17233B]/65">
+                                            The big photo at the top of your page. Without one, your newest offer photo is used.
                                         </p>
                                     </div>
                                 </div>

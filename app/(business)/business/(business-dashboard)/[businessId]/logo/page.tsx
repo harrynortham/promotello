@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
-import LogoForm from "./logo-form";
+import { BusinessImageForm } from "@/components/business-image-form";
 
 type PageProps = {
     params: Promise<{
@@ -59,10 +59,11 @@ async function LogoContent({ params, searchParams }: PageProps) {
     }
 
     return (
-        <LogoForm
+        <BusinessImageForm
+            kind="logo"
             businessId={businessId}
             businessName={business.name}
-            logoUrl={business.logo_url}
+            imageUrl={business.logo_url}
             returnTo={fromEdit ? { href: `/business/${businessId}/edit`, label: "Back to edit business" } : undefined}
         />
     );
