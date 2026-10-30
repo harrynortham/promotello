@@ -11,38 +11,43 @@ const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.1;
 
 // Drag to reposition and zoom (slider, buttons, scroll or pinch) an image
-// before it's saved. Zooming out below 1 leaves space around a wide logo
-// instead of cutting it off. Pass the crop to cropImage() when saving.
+// before it's saved. With allowSpace, zooming out below 1 leaves space around
+// a wide logo instead of cutting it off; without it (photos) the image always
+// fills the frame. Pass the crop to cropImage() when saving.
 export function ImageCropper({
     src,
     aspect = 1,
     round = false,
+    allowSpace = true,
     onCropChange,
 }: {
     src: string;
     aspect?: number;
     round?: boolean;
+    allowSpace?: boolean;
     onCropChange: (area: Area) => void;
 }) {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
+    const minZoom = allowSpace ? MIN_ZOOM : 1;
 
-    const changeZoom = (next: number) => setZoom(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number(next.toFixed(2)))));
+    const changeZoom = (next: number) => setZoom(Math.min(MAX_ZOOM, Math.max(minZoom, Number(next.toFixed(2)))));
 
     return (
         <div className="space-y-4">
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#17233B]">
+            {/* A wide crop gets a wider frame, so it isn't a thin strip. */}
+            <div className={`relative w-full overflow-hidden rounded-2xl bg-[#17233B] ${aspect > 1 ? "aspect-[4/3]" : "aspect-square"}`}>
                 <Cropper
                     image={src}
                     crop={crop}
                     zoom={zoom}
-                    minZoom={MIN_ZOOM}
+                    minZoom={minZoom}
                     maxZoom={MAX_ZOOM}
                     zoomSpeed={0.2}
                     aspect={aspect}
                     cropShape={round ? "round" : "rect"}
-                    restrictPosition={false}
-                    objectFit="contain"
+                    restrictPosition={!allowSpace}
+                    objectFit={allowSpace ? "contain" : "cover"}
                     onCropChange={setCrop}
                     onZoomChange={changeZoom}
                     onCropComplete={(_, pixels) => onCropChange(pixels)}
@@ -56,7 +61,7 @@ export function ImageCropper({
                     size="icon"
                     aria-label="Zoom out"
                     onClick={() => changeZoom(zoom - ZOOM_STEP)}
-                    disabled={zoom <= MIN_ZOOM}
+                    disabled={zoom <= minZoom}
                 >
                     <FiMinus aria-hidden="true" />
                 </Button>
@@ -64,7 +69,7 @@ export function ImageCropper({
                 <input
                     type="range"
                     aria-label="Zoom"
-                    min={MIN_ZOOM}
+                    min={minZoom}
                     max={MAX_ZOOM}
                     step={0.01}
                     value={zoom}
@@ -85,7 +90,9 @@ export function ImageCropper({
             </div>
 
             <p className="text-center text-xs text-[#17233B]/65">
-                Drag to reposition. Zoom in to trim the edges, or out to fit the whole image.
+                {allowSpace
+                    ? "Drag to reposition. Zoom in to trim the edges, or out to fit the whole image."
+                    : "Drag to reposition, and zoom in to focus on the best part."}
             </p>
         </div>
     );

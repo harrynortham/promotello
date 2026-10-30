@@ -183,6 +183,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 slug,
                 name,
                 logo_url,
+                cover_image_url,
                 category,
                 description,
                 website_url,
@@ -315,9 +316,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
     const promotionCount = offers?.length ?? 0;
 
-    // Newest offer photo doubles as the profile's cover image.
+    // The business's own cover photo, or else its newest offer photo.
     const coverImageUrl =
-        offers?.find((offer) => offer.image_url)?.image_url ?? null;
+        business.cover_image_url ?? offers?.find((offer) => offer.image_url)?.image_url ?? null;
     const placeName = [location?.region, location?.city]
         .filter((part, index, parts) => part && parts.indexOf(part) === index)
         .join(", ");
@@ -448,7 +449,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                         alt={`${business.name} logo`}
                                         width={112}
                                         height={112}
-                                        className="h-full w-full object-contain p-2"
+                                        className="h-full w-full rounded-xl object-cover"
                                     />
                                 ) : (
                                     <span className="flex h-full w-full items-center justify-center bg-[#FFF4E8] text-3xl font-semibold">

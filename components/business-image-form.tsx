@@ -11,20 +11,47 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FieldError } from "@/components/field-error";
 import { ImageCropper, cropImage } from "@/components/image-cropper";
-import { LOGO_ACCEPT, logoFileError, uploadLogo } from "@/lib/business-logo";
+import { IMAGE_ACCEPT, imageFileError, uploadBusinessImage, type BusinessImageKind } from "@/lib/business-images";
 import { createClient } from "@/utils/supabase/client";
 
-export default function LogoForm({
+const KINDS = {
+    logo: {
+        column: "logo_url",
+        name: "logo",
+        aspect: 1,
+        // A wide logo can sit in the square with space around it.
+        allowSpace: true,
+        maxSize: 1024,
+        intro: (business: string) =>
+            `It shows on your page, your offers and your loyalty card, so customers recognise ${business}.`,
+        hint: "PNG, JPG or WebP. You can zoom and reposition it next.",
+    },
+    cover: {
+        column: "cover_image_url",
+        name: "cover photo",
+        aspect: 16 / 9,
+        allowSpace: false,
+        maxSize: 1600,
+        intro: (business: string) =>
+            `The big photo at the top of ${business}'s page and on its card in the directory. Your shop front, counter or best dish works well.`,
+        hint: "A landscape JPG, PNG or WebP photo. You can zoom and reposition it next.",
+    },
+} as const;
+
+export function BusinessImageForm({
+    kind,
     businessId,
     businessName,
-    logoUrl,
+    imageUrl,
     returnTo,
 }: {
+    kind: BusinessImageKind;
     businessId: string;
     businessName: string;
-    logoUrl: string | null;
+    imageUrl: string | null;
     returnTo?: { href: string; label: string };
 }) {
+    const config = KINDS[kind];
     const router = useRouter();
     const back = returnTo ?? { href: `/business/${businessId}`, label: "Back to dashboard" };
     const inputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +73,7 @@ export default function LogoForm({
         if (!chosen) return;
 
         setErrorMessage("");
-        const problem = logoFileError(chosen);
+        const problem = imageFileError(chosen);
         setFileError(problem ?? "");
         if (problem) return;
 
@@ -62,6 +89,20 @@ export default function LogoForm({
         setErrorMessage("");
     }
 
+    async function saveUrl(url: string | null) {
+        const { error } = await createClient()
+            .from("businesses")
+            .update({ [config.column]: url })
+            .eq("id", businessId);
+        if (error) throw new Error(error.message);
+    }
+
+    function done() {
+        // Back where they came from: the setup steps tick this off.
+        router.push(back.href);
+        router.refresh();
+    }
+
     async function save(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (!file || !previewUrl || !cropArea) return;
@@ -70,34 +111,39 @@ export default function LogoForm({
         setErrorMessage("");
 
         try {
-            // JPEGs stay JPEG; PNG and WebP keep any transparency.
-            const type = file.type === "image/jpeg" ? "image/jpeg" : file.type;
-            const blob = await cropImage(previewUrl, cropArea, { type, maxSize: 1024 });
-            const cropped = new File([blob], file.name, { type });
-
-            const supabase = createClient();
-            const upload = await uploadLogo(supabase, businessId, cropped);
+            // Photos become JPEG to keep them small; a logo keeps PNG or WebP transparency.
+            const type = kind === "cover" || file.type === "image/jpeg" ? "image/jpeg" : file.type;
+            const blob = await cropImage(previewUrl, cropArea, { type, maxSize: config.maxSize });
+            const upload = await uploadBusinessImage(createClient(), businessId, kind, new File([blob], file.name, { type }));
 
             if ("error" in upload) {
-                throw new Error(upload.error ?? "The logo couldn't be uploaded.");
+                throw new Error(upload.error ?? `The ${config.name} couldn't be uploaded.`);
             }
 
-            const { error } = await supabase
-                .from("businesses")
-                .update({ logo_url: upload.url })
-                .eq("id", businessId);
-
-            if (error) throw new Error(error.message);
+            await saveUrl(upload.url);
         } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : "The logo couldn't be saved.");
+            setErrorMessage(error instanceof Error ? error.message : `The ${config.name} couldn't be saved.`);
             setIsSaving(false);
             return;
         }
 
-        // Back where they came from: the setup steps tick this one off.
-        router.push(back.href);
-        router.refresh();
+        done();
     }
+
+    async function remove() {
+        setIsSaving(true);
+        setErrorMessage("");
+        try {
+            await saveUrl(null);
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : `The ${config.name} couldn't be removed.`);
+            setIsSaving(false);
+            return;
+        }
+        done();
+    }
+
+    const title = `${imageUrl ? "Change" : "Add"} your ${config.name}`;
 
     return (
         <div className="text-[#17233B]">
@@ -112,23 +158,17 @@ export default function LogoForm({
                 </Button>
 
                 <div className="mt-8">
-                    <h1 className="text-4xl font-semibold tracking-tight">
-                        {logoUrl ? "Change your logo" : "Add your logo"}
-                    </h1>
-
-                    <p className="mt-3 text-[#17233B]/65">
-                        It shows on your page, your offers and your loyalty card, so customers
-                        recognise {businessName}.
-                    </p>
+                    <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>
+                    <p className="mt-3 text-[#17233B]/65">{config.intro(businessName)}</p>
                 </div>
 
                 <Card className="mt-10 border-[#17233B]/10">
                     <CardContent className="p-6 sm:p-10">
                         <input
                             ref={inputRef}
-                            id="logo"
+                            id={kind}
                             type="file"
-                            accept={LOGO_ACCEPT}
+                            accept={IMAGE_ACCEPT}
                             className="sr-only"
                             tabIndex={-1}
                             aria-hidden="true"
@@ -137,11 +177,16 @@ export default function LogoForm({
 
                         {file && previewUrl ? (
                             <form onSubmit={save} noValidate className="space-y-6">
-                                <ImageCropper src={previewUrl} onCropChange={setCropArea} />
+                                <ImageCropper
+                                    src={previewUrl}
+                                    aspect={config.aspect}
+                                    allowSpace={config.allowSpace}
+                                    onCropChange={setCropArea}
+                                />
 
                                 {errorMessage && (
                                     <Alert variant="destructive">
-                                        <AlertTitle>Unable to save your logo</AlertTitle>
+                                        <AlertTitle>Unable to save your {config.name}</AlertTitle>
                                         <AlertDescription>{errorMessage}</AlertDescription>
                                     </Alert>
                                 )}
@@ -159,7 +204,7 @@ export default function LogoForm({
                                     </Button>
 
                                     <Button type="submit" size="lg" className="sm:flex-1" disabled={isSaving || !cropArea}>
-                                        {isSaving ? "Saving logo…" : "Save logo"}
+                                        {isSaving ? `Saving ${config.name}…` : `Save ${config.name}`}
                                     </Button>
                                 </div>
 
@@ -174,31 +219,51 @@ export default function LogoForm({
                             </form>
                         ) : (
                             <div className="flex flex-col items-center gap-6 text-center">
-                                <div className="flex size-32 items-center justify-center overflow-hidden rounded-2xl border border-[#17233B]/10 bg-[#FFF8F0]">
-                                    {logoUrl ? (
+                                <div
+                                    className={`flex items-center justify-center overflow-hidden rounded-2xl border border-[#17233B]/10 bg-[#FFF8F0] ${kind === "cover" ? "aspect-video w-full" : "size-32"}`}
+                                >
+                                    {imageUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={logoUrl} alt={`${businessName} logo`} className="size-full object-cover" />
+                                        <img src={imageUrl} alt={`${businessName} ${config.name}`} className="size-full object-cover" />
                                     ) : (
                                         <FiImage aria-hidden="true" className="size-10 text-[#17233B]/30" />
                                     )}
                                 </div>
+
+                                {errorMessage && (
+                                    <Alert variant="destructive" className="text-left">
+                                        <AlertTitle>Unable to remove your {config.name}</AlertTitle>
+                                        <AlertDescription>{errorMessage}</AlertDescription>
+                                    </Alert>
+                                )}
 
                                 <div className="space-y-2">
                                     <Button
                                         type="button"
                                         size="lg"
                                         onClick={() => inputRef.current?.click()}
-                                        aria-describedby={fileError ? "logo-error logo-hint" : "logo-hint"}
+                                        aria-describedby={fileError ? `${kind}-error ${kind}-hint` : `${kind}-hint`}
                                     >
                                         <FiUpload aria-hidden="true" />
                                         Upload from device
                                     </Button>
 
-                                    <FieldError id="logo-error" message={fileError || undefined} />
-                                    <p id="logo-hint" className="text-xs text-[#17233B]/65">
-                                        PNG, JPG or WebP under 5MB. You can zoom and reposition it next.
+                                    <FieldError id={`${kind}-error`} message={fileError || undefined} />
+                                    <p id={`${kind}-hint`} className="text-xs text-[#17233B]/65">
+                                        {config.hint}
                                     </p>
                                 </div>
+
+                                {imageUrl && kind === "cover" && (
+                                    <button
+                                        type="button"
+                                        onClick={remove}
+                                        disabled={isSaving}
+                                        className="cursor-pointer text-sm text-[#17233B]/65 underline-offset-4 hover:underline"
+                                    >
+                                        {isSaving ? "Removing…" : "Remove cover photo"}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </CardContent>
