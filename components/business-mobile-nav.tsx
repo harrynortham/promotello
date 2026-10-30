@@ -176,7 +176,7 @@ export function BusinessMobileNav({
                     <Separator />
 
                     <Button
-                        render={<Link href="/dashboard" />}
+                        render={<Link href="/business/dashboard" />}
                         nativeButton={false}
                         variant="outline"
                         className="w-full"

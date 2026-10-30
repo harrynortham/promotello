@@ -175,7 +175,7 @@ async function BusinessLayoutContent({
                         <Separator className="my-5" />
 
                         <Button
-                            render={<Link href="/dashboard" />}
+                            render={<Link href="/business/dashboard" />}
                             nativeButton={false}
                             variant="outline"
                             size="sm"
