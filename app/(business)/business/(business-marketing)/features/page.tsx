@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FiCheck, FiMinus } from "react-icons/fi";
 
 import { Eyebrow, FeatureSection, FinalCta, PrimaryActions } from "@/components/business-marketing";
+import { PlanComparison } from "@/components/plan-comparison";
 import {
     BirthdayEmail,
     DashboardScreen,
@@ -37,37 +37,6 @@ const sections = [
     { id: "results", label: "Results" },
     { id: "sharing", label: "Sharing" },
 ];
-
-type Availability = boolean | string;
-
-const comparison: { feature: string; free: Availability; pro: Availability; growth: Availability }[] = [
-    { feature: "Business page in the Promotello directory", free: true, pro: true, growth: true },
-    { feature: "Live offers", free: "1", pro: "Unlimited", growth: "Unlimited" },
-    { feature: "Offers live without waiting for review", free: false, pro: true, growth: true },
-    { feature: "Scan-to-redeem vouchers", free: true, pro: true, growth: true },
-    { feature: "QR posters with scan counts", free: "1", pro: "Unlimited", growth: "Unlimited" },
-    { feature: "Team members for your staff", free: true, pro: true, growth: true },
-    { feature: "Digital loyalty card", free: false, pro: true, growth: true },
-    { feature: "Followers emailed every new offer", free: false, pro: true, growth: true },
-    { feature: "Google review prompts", free: false, pro: true, growth: true },
-    { feature: "Share links, Instagram images and captions", free: true, pro: true, growth: true },
-    { feature: "30-day analytics", free: true, pro: true, growth: true },
-    { feature: "Welcome, birthday and win-back automations", free: false, pro: false, growth: true },
-    { feature: "Quiet-hours offers", free: false, pro: false, growth: true },
-    { feature: "Monthly value report by email", free: false, pro: false, growth: true },
-];
-
-function Cell({ value }: { value: Availability }) {
-    if (value === true) {
-        return <FiCheck aria-label="Included" className="mx-auto text-[#FF593F]" />;
-    }
-
-    if (value === false) {
-        return <FiMinus aria-label="Not included" className="mx-auto text-[#17233B]/25" />;
-    }
-
-    return <span className="text-xs font-medium sm:text-sm">{value === "Unlimited" ? "No limit" : value}</span>;
-}
 
 export default async function FeaturesPage() {
     const posterQr = await qrSvg("https://www.promotello.com/business/demo");
@@ -251,26 +220,7 @@ export default async function FeaturesPage() {
                 </p>
 
                 <div className="mt-8 overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="border-b border-[#17233B]/10 text-sm">
-                                <th className="px-3 py-4 text-sm font-medium text-[#17233B]/70 sm:px-5">Feature</th>
-                                <th className="w-14 px-1 py-4 text-center font-semibold sm:w-24 sm:px-5">Free</th>
-                                <th className="w-14 px-1 py-4 text-center font-semibold text-[#C2341F] sm:w-24 sm:px-5">Pro</th>
-                                <th className="w-16 px-1 py-4 text-center font-semibold sm:w-24 sm:px-5">Growth</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {comparison.map((row) => (
-                                <tr key={row.feature} className="border-b border-[#17233B]/5 last:border-0">
-                                    <td className="px-3 py-3 text-sm sm:px-5">{row.feature}</td>
-                                    <td className="px-1 py-3 text-center sm:px-5"><Cell value={row.free} /></td>
-                                    <td className="bg-[#FF593F]/[0.03] px-1 py-3 text-center sm:px-5"><Cell value={row.pro} /></td>
-                                    <td className="px-1 py-3 text-center sm:px-5"><Cell value={row.growth} /></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <PlanComparison />
                 </div>
             </section>
 

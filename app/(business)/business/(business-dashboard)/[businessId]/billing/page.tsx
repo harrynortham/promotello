@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { FiCheck } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +16,11 @@ import {
     countFoundingMembers,
     planKeyForPriceId,
     plans,
+    tierForPlan,
     type PlanKey,
 } from "@/lib/billing";
+import { planAdds } from "@/lib/plan-features";
+import { PlanComparison } from "@/components/plan-comparison";
 import { company } from "@/lib/legal";
 import { createClient } from "@/utils/supabase/server";
 import { changePlan, openBillingPortal, startCheckout } from "./actions";
@@ -237,6 +241,7 @@ async function CurrentPlan({
     }
 
     return (
+        <>
         <Card className="mt-10 border-[#17233B]/10">
             <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -289,16 +294,36 @@ async function CurrentPlan({
                 </p>
             </CardContent>
         </Card>
+
+        {planKey && <ComparePlans current={tierForPlan(planKey)} />}
+        </>
     );
 }
 
-const growthFeatures = [
-    "Everything in Pro",
-    "Welcome, birthday and win-back emails that run themselves",
-    "Quiet-hours offers that repeat on the days and times you choose",
-    "A monthly value report in your inbox",
-    "Instagram story images for your offers",
-];
+function PlusList({ items }: { items: string[] }) {
+    return (
+        <ul className="space-y-2.5 text-sm">
+            {items.map((item) => (
+                <li key={item} className="flex gap-2.5">
+                    <FiCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#FF593F]" />
+                    <span>{item}</span>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+function ComparePlans({ current }: { current: "free" | "pro" | "growth" }) {
+    return (
+        <section className="mt-12">
+            <h2 className="text-xl font-semibold">Compare plans</h2>
+            <p className="mt-2 text-sm text-[#17233B]/65">Everything each plan includes, side by side.</p>
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">
+                <PlanComparison highlight={current === "growth" ? "growth" : "pro"} current={current} />
+            </div>
+        </section>
+    );
+}
 
 function ChangePlan({ businessId, currentPlan }: { businessId: string; currentPlan: PlanKey | null }) {
     const isGrowth = currentPlan?.startsWith("growth") ?? false;
@@ -310,11 +335,10 @@ function ChangePlan({ businessId, currentPlan }: { businessId: string; currentPl
         <div className="rounded-xl border border-[#17233B]/10 p-4">
             <p className="font-semibold">{isGrowth ? "Change plan" : "Upgrade to Growth"}</p>
             {!isGrowth && (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#17233B]/65">
-                    {growthFeatures.slice(1).map((feature) => (
-                        <li key={feature}>{feature}</li>
-                    ))}
-                </ul>
+                <div className="mt-3">
+                    <p className="mb-2 text-sm text-[#17233B]/65">Everything in Pro, plus:</p>
+                    <PlusList items={planAdds("growth")} />
+                </div>
             )}
             {currentPlan === "pro_founding_monthly" && (
                 <p className="mt-2 text-sm text-amber-800">
@@ -336,6 +360,33 @@ function ChangePlan({ businessId, currentPlan }: { businessId: string; currentPl
     );
 }
 
+function CheckoutButton({
+    businessId,
+    plan,
+    primary,
+    children,
+}: {
+    businessId: string;
+    plan: PlanKey;
+    primary?: boolean;
+    children: React.ReactNode;
+}) {
+    return (
+        <form action={startCheckout}>
+            <input type="hidden" name="businessId" value={businessId} />
+            <input type="hidden" name="plan" value={plan} />
+            <SubmitButton
+                pendingLabel="Redirecting…"
+                variant={primary ? "default" : "outline"}
+                className={primary ? "h-11 w-full text-base" : "w-full"}
+            >
+                {children}
+            </SubmitButton>
+        </form>
+    );
+}
+
+// Pro and Growth side by side: the price, what each adds, and the buttons.
 async function PlanOptions({
     businessId,
     trialEligible,
@@ -347,170 +398,108 @@ async function PlanOptions({
         FOUNDING_MEMBER_LIMIT - (await countFoundingMembers()),
         0,
     );
+    const proMonthly: PlanKey = foundingLeft > 0 ? "pro_founding_monthly" : "pro_monthly";
+    const start = trialEligible ? "Start free trial" : "Choose";
 
-    const proOptions: PlanKey[] = [
-        ...(foundingLeft > 0 ? (["pro_founding_monthly"] as const) : []),
-        "pro_monthly",
-        "pro_yearly",
+    const cards: {
+        tier: "pro" | "growth";
+        name: string;
+        tagline: string;
+        monthly: PlanKey;
+        yearly: PlanKey;
+        plusLabel: string;
+    }[] = [
+        {
+            tier: "pro",
+            name: "Pro",
+            tagline: "Bring customers back with a loyalty card, followers and review prompts.",
+            monthly: proMonthly,
+            yearly: "pro_yearly",
+            plusLabel: "Everything in Free, plus:",
+        },
+        {
+            tier: "growth",
+            name: "Growth",
+            tagline: "Everything in Pro, with marketing that runs itself.",
+            monthly: "growth_monthly",
+            yearly: "growth_yearly",
+            plusLabel: "Everything in Pro, plus:",
+        },
     ];
-    const growthOptions: PlanKey[] = ["growth_monthly", "growth_yearly"];
 
     return (
         <div className="mt-10">
             <h2 className="text-xl font-semibold">Choose a plan</h2>
 
             <p className="mt-2 text-[#17233B]/65">
-                You&apos;re on the Free plan, which includes{" "}
-                {FREE_LIVE_OFFER_LIMIT} live offer. Pro adds unlimited offers,
-                loyalty cards and follower emails; Growth adds automations on top.
-            </p>
-
-            <p className="mt-2 text-[#17233B]/65">
+                You&apos;re on the Free plan: your business page and{" "}
+                {FREE_LIVE_OFFER_LIMIT} live offer.{" "}
                 {trialEligible
-                    ? `Every plan starts with a ${TRIAL_DAYS}-day free trial. We'll ask for a card, but won't charge it until the trial ends.`
+                    ? `Pro and Growth start with a ${TRIAL_DAYS}-day free trial. We'll ask for a card, but won't charge it until the trial ends, and you can cancel any time.`
                     : "Pick a plan to reactivate your subscription."}
             </p>
 
-            <h3 className="mt-8 text-lg font-semibold">Pro</h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                {proOptions.map((key) => {
-                    const plan = plans[key];
-                    const isFounding = key === "pro_founding_monthly";
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+                {cards.map((card) => {
+                    const monthly = plans[card.monthly];
+                    const yearly = plans[card.yearly];
+                    const isFounding = card.monthly === "pro_founding_monthly";
 
                     return (
                         <Card
-                            key={key}
-                            className={
-                                isFounding
-                                    ? "border-2 border-[#FF593F]"
-                                    : "border-[#17233B]/10"
-                            }
+                            key={card.tier}
+                            className={`flex flex-col ${isFounding ? "border-2 border-[#FF593F]" : "border-[#17233B]/10"}`}
                         >
                             <CardHeader>
-                                <CardTitle className="text-base">
-                                    {plan.name}
-                                </CardTitle>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <CardTitle className="text-2xl">{card.name}</CardTitle>
+                                    {isFounding && (
+                                        <Badge variant="outline" className="border-[#FF593F]/30 bg-[#FF593F]/10 text-[#FF593F]">
+                                            Founding price
+                                        </Badge>
+                                    )}
+                                </div>
+                                <p className="text-sm text-[#17233B]/65">{card.tagline}</p>
                             </CardHeader>
 
-                            <CardContent className="flex h-full flex-col gap-4">
-                                <p className="text-3xl font-semibold">
-                                    {plan.price}
-                                    <span className="text-base font-normal text-[#17233B]/70">
-                                        {" "}
-                                        / {plan.interval}
-                                    </span>
-                                </p>
-
-                                {plan.note && (
-                                    <p className="text-sm font-medium text-[#FF593F]">
-                                        {plan.note}
+                            <CardContent className="flex flex-1 flex-col gap-5">
+                                <div>
+                                    <p className="text-4xl font-semibold tracking-tight">
+                                        {monthly.price}
+                                        <span className="text-base font-normal text-[#17233B]/70"> / month</span>
                                     </p>
-                                )}
+                                    {isFounding ? (
+                                        <p className="mt-1 text-sm text-[#17233B]/70">
+                                            Locked for life. Usually {plans.pro_monthly.price}.{" "}
+                                            {foundingLeft} of {FOUNDING_MEMBER_LIMIT} founding places left.
+                                        </p>
+                                    ) : (
+                                        <p className="mt-1 text-sm text-[#17233B]/70">
+                                            Or {yearly.price} a year, {yearly.note?.toLowerCase()}.
+                                        </p>
+                                    )}
+                                </div>
 
-                                {isFounding && (
-                                    <p className="text-sm text-[#17233B]/65">
-                                        {foundingLeft} of {FOUNDING_MEMBER_LIMIT}{" "}
-                                        founding places left
-                                    </p>
-                                )}
+                                <div>
+                                    <p className="mb-3 text-sm font-medium">{card.plusLabel}</p>
+                                    <PlusList items={planAdds(card.tier)} />
+                                </div>
 
-                                <form action={startCheckout} className="mt-auto">
-                                    <input
-                                        type="hidden"
-                                        name="businessId"
-                                        value={businessId}
-                                    />
-                                    <input type="hidden" name="plan" value={key} />
-                                    <SubmitButton
-                                        pendingLabel="Redirecting…"
-                                        variant={isFounding ? "default" : "outline"}
-                                        className={
-                                            isFounding
-                                                ? "w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-                                                : "w-full"
-                                        }
-                                    >
-                                        {trialEligible ? "Start free trial" : "Choose plan"}
-                                    </SubmitButton>
-                                </form>
+                                <div className="mt-auto space-y-2 pt-2">
+                                    <CheckoutButton businessId={businessId} plan={card.monthly} primary>
+                                        {start} · {monthly.price}/month
+                                    </CheckoutButton>
+                                    <CheckoutButton businessId={businessId} plan={card.yearly}>
+                                        {trialEligible ? "Or start yearly" : "Or choose yearly"} · {yearly.price}/year
+                                    </CheckoutButton>
+                                </div>
                             </CardContent>
                         </Card>
                     );
                 })}
             </div>
 
-            <h3 className="mt-10 text-lg font-semibold">Growth</h3>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#17233B]/65">
-                {growthFeatures.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                ))}
-            </ul>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {growthOptions.map((key) => {
-                    const plan = plans[key];
-                    const isFounding = key === "pro_founding_monthly";
-
-                    return (
-                        <Card
-                            key={key}
-                            className={
-                                isFounding
-                                    ? "border-2 border-[#FF593F]"
-                                    : "border-[#17233B]/10"
-                            }
-                        >
-                            <CardHeader>
-                                <CardTitle className="text-base">
-                                    {plan.name}
-                                </CardTitle>
-                            </CardHeader>
-
-                            <CardContent className="flex h-full flex-col gap-4">
-                                <p className="text-3xl font-semibold">
-                                    {plan.price}
-                                    <span className="text-base font-normal text-[#17233B]/70">
-                                        {" "}
-                                        / {plan.interval}
-                                    </span>
-                                </p>
-
-                                {plan.note && (
-                                    <p className="text-sm font-medium text-[#FF593F]">
-                                        {plan.note}
-                                    </p>
-                                )}
-
-                                {isFounding && (
-                                    <p className="text-sm text-[#17233B]/65">
-                                        {foundingLeft} of {FOUNDING_MEMBER_LIMIT}{" "}
-                                        founding places left
-                                    </p>
-                                )}
-
-                                <form action={startCheckout} className="mt-auto">
-                                    <input
-                                        type="hidden"
-                                        name="businessId"
-                                        value={businessId}
-                                    />
-                                    <input type="hidden" name="plan" value={key} />
-                                    <SubmitButton
-                                        pendingLabel="Redirecting…"
-                                        variant={isFounding ? "default" : "outline"}
-                                        className={
-                                            isFounding
-                                                ? "w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-                                                : "w-full"
-                                        }
-                                    >
-                                        {trialEligible ? "Start free trial" : "Choose plan"}
-                                    </SubmitButton>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
+            <ComparePlans current="free" />
         </div>
     );
 }
