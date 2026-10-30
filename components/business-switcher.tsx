@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { FiPlus } from "react-icons/fi";
 
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -65,6 +67,13 @@ export function BusinessSwitcher({
                         </DropdownMenuItem>
                     );
                 })}
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem render={<Link href="/onboarding" />}>
+                    <FiPlus aria-hidden="true" />
+                    Add a business
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
     );

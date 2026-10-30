@@ -172,17 +172,22 @@ async function BusinessLayoutContent({
                             canManage={canManage}
                         />
 
-                        <Separator className="my-5" />
+                        {/* With one business, the dashboard is this overview. */}
+                        {businesses.length > 1 && (
+                            <>
+                                <Separator className="my-5" />
 
-                        <Button
-                            render={<Link href="/business/dashboard" />}
-                            nativeButton={false}
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                        >
-                            Go to dashboard
-                        </Button>
+                                <Button
+                                    render={<Link href="/business/dashboard" />}
+                                    nativeButton={false}
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                >
+                                    Go to dashboard
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </aside>
 

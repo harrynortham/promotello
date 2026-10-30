@@ -22,7 +22,8 @@ type BusinessSummary = Business & {
     redemptions: number;
 };
 
-// Most people have one business, so the page is built around a single card.
+// Only people with no business or several see this page; one business goes
+// straight to its overview.
 function Page({ children }: { children: React.ReactNode }) {
     return (
         <main className="min-h-screen bg-[#FFF8F0] px-6 py-12 text-[#17233B] sm:py-16">
@@ -207,6 +208,12 @@ async function BusinessDashboardContent() {
         return <NewBusinessWelcome firstName={firstName} />;
     }
 
+    // Most people have one business: its overview is their dashboard. Adding
+    // another is in the business switcher.
+    if (businesses.length === 1) {
+        redirect(`/business/${businesses[0].id}`);
+    }
+
     const today = new Date().toISOString().slice(0, 10);
 
     const summaries: BusinessSummary[] = await Promise.all(
@@ -234,7 +241,7 @@ async function BusinessDashboardContent() {
                 {firstName ? `Good to see you, ${firstName}` : "Good to see you"}
             </h1>
             <p className="mt-3 text-[#17233B]/65">
-                {summaries.length === 1 ? "Open your business to pick up where you left off." : "Choose a business to manage."}
+                Choose a business to manage.
             </p>
 
             <ul className="mt-10 space-y-4">
