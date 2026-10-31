@@ -263,3 +263,13 @@
     border-color: rgb(23 35 59 / 0.1);
   }
 }
+
+/* Rows that scroll sideways (filter pills) without showing a scrollbar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+}
+
+/* Older Safari and Chrome ignore scrollbar-width. */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

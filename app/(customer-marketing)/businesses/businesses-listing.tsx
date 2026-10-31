@@ -72,7 +72,7 @@ async function Directory({ city, searchParams }: ListingProps) {
 
     return (
         <>
-            <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+            <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                 {/* Areas live in a drawer behind Filter, not a second row of pills. */}
                 {areas.length > 1 && (
                     <FilterDrawer

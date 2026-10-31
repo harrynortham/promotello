@@ -98,7 +98,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
     return (
         <>
             <div className="mt-5 space-y-4 sm:mt-8">
-                <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                     {/* Sort order and area live in a drawer behind Filter. */}
                     <FilterDrawer
                         sections={[
@@ -148,7 +148,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
 
                 {/* Subcategories narrow the chosen category, so they stay as pills. */}
                 {selectedGroup && selectedGroup.subcategories.length > 0 && (
-                    <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                    <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                         <FilterChip
                             href={hrefWith(base, current, { category: selectedGroup.slug })}
                             active={params.category === selectedGroup.slug}
