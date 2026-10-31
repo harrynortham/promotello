@@ -13,9 +13,6 @@ const customerLinks: HeaderLink[] = [
     ...(EVENTS_ENABLED ? [{ label: "Events", href: "/events" }] : []),
 ];
 
-// The public header also leads to the business site, where the paid plans are.
-const customerMarketingLinks: HeaderLink[] = [...customerLinks, { label: "For business", href: "/business" }];
-
 const businessLinks: HeaderLink[] = [
     { label: "How it works", href: "/business/how-it-works" },
     { label: "Features", href: "/business/features" },
@@ -29,7 +26,7 @@ export function CustomerHeader() {
     return (
         <SiteHeader
             homeHref="/"
-            links={customerMarketingLinks}
+            links={customerLinks}
             collapseBelow="lg"
             signedOutActions={[
                 { label: "Sign up", href: "/signup" },
