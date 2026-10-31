@@ -11,6 +11,7 @@ import {
     SearchForm,
     hrefWith,
 } from "@/components/listing-ui";
+import { AreaFilterDrawer } from "@/components/area-filter-drawer";
 import { LocationSearch } from "@/components/location-search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLiveCities, placeName, type City } from "@/lib/cities";
@@ -71,48 +72,38 @@ async function Directory({ city, searchParams }: ListingProps) {
 
     return (
         <>
-            <div className="space-y-4">
-                <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-                    <FilterChip
-                        href={hrefWith(base, params, { category: null })}
-                        active={!params.category}
-                    >
-                        All businesses
-                    </FilterChip>
-
-                    {groups.map((group) => (
-                        <FilterChip
-                            key={group.id}
-                            href={hrefWith(base, params, { category: group.slug })}
-                            active={params.category === group.slug}
-                        >
-                            {group.name}
-                        </FilterChip>
-                    ))}
-                </div>
-
+            <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                {/* Areas live in a drawer behind Filter, not a second row of pills. */}
                 {areas.length > 1 && (
-                    <div className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-                        <span className="shrink-0 text-sm font-medium text-[#17233B]/70">Area:</span>
-
-                        <FilterChip
-                            href={hrefWith(base, params, { area: null })}
-                            active={!params.area}
-                        >
-                            All {place}
-                        </FilterChip>
-
-                        {areas.map((area) => (
-                            <FilterChip
-                                key={area.name}
-                                href={hrefWith(base, params, { area: area.name })}
-                                active={params.area === area.name}
-                            >
-                                {area.name}
-                            </FilterChip>
-                        ))}
-                    </div>
+                    <AreaFilterDrawer
+                        place={place}
+                        options={[
+                            { label: `All of ${place}`, href: hrefWith(base, params, { area: null }), active: !params.area },
+                            ...areas.map((area) => ({
+                                label: area.name,
+                                href: hrefWith(base, params, { area: area.name }),
+                                active: params.area === area.name,
+                            })),
+                        ]}
+                    />
                 )}
+
+                <FilterChip
+                    href={hrefWith(base, params, { category: null })}
+                    active={!params.category}
+                >
+                    All businesses
+                </FilterChip>
+
+                {groups.map((group) => (
+                    <FilterChip
+                        key={group.id}
+                        href={hrefWith(base, params, { category: group.slug })}
+                        active={params.category === group.slug}
+                    >
+                        {group.name}
+                    </FilterChip>
+                ))}
             </div>
 
             <p className="mt-8 border-t border-[#17233B]/10 pt-6 text-sm text-[#17233B]/65">
