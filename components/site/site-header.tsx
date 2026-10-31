@@ -9,9 +9,11 @@ import { FiMenu } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from "./use-current-user";
+import { navIcons, type NavIconName } from "./nav-icons";
 import { UserMenu, type AccountArea } from "./user-menu";
 
-export type HeaderLink = { label: string; href: string };
+// With an icon, a link shows it above its label (beside it in the mobile menu).
+export type HeaderLink = { label: string; href: string; icon?: NavIconName };
 
 export type HeaderAction = {
     label: string;
@@ -95,19 +97,39 @@ function HeaderContent({
                         aria-label="Primary navigation"
                         className={`absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 ${bp.show}`}
                     >
-                        {links.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                aria-current={isActive(link.href) ? "page" : undefined}
-                                className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${isActive(link.href)
-                                    ? "bg-[#FF593F]/10 text-[#17233B]"
-                                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                                    }`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
+                        {links.map((link) => {
+                            const Icon = link.icon ? navIcons[link.icon] : null;
+                            const active = isActive(link.href);
+
+                            return Icon ? (
+                                // Icon above the label, with a bar under the current page.
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    aria-current={active ? "page" : undefined}
+                                    className={`group relative flex flex-col items-center gap-1 px-3 pb-2 pt-1 text-xs font-medium transition-colors ${active ? "text-[#17233B]" : "text-[#17233B]/60 hover:text-[#17233B]"}`}
+                                >
+                                    <Icon className="size-7 transition-transform duration-200 group-hover:scale-110" />
+                                    {link.label}
+                                    <span
+                                        aria-hidden="true"
+                                        className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-[#17233B] transition-opacity ${active ? "opacity-100" : "opacity-0"}`}
+                                    />
+                                </Link>
+                            ) : (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    aria-current={active ? "page" : undefined}
+                                    className={`rounded-full px-3 py-2 text-sm font-medium transition-colors ${active
+                                        ? "bg-[#FF593F]/10 text-[#17233B]"
+                                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                        }`}
+                                >
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
                     </nav>
                 )}
 
@@ -161,20 +183,25 @@ function HeaderContent({
                                 </SheetHeader>
 
                                 <nav aria-label="Mobile navigation" className="flex flex-1 flex-col overflow-y-auto px-3 py-4">
-                                    {links.map((link) => (
-                                        <Link
-                                            key={link.href}
-                                            href={link.href}
-                                            aria-current={isActive(link.href) ? "page" : undefined}
-                                            onClick={() => setIsMenuOpen(false)}
-                                            className={`block rounded-xl px-3 py-3 text-base font-medium ${isActive(link.href)
-                                                ? "bg-[#FF593F]/10 text-[#17233B]"
-                                                : "text-slate-700 hover:bg-slate-50"
-                                                }`}
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    ))}
+                                    {links.map((link) => {
+                                        const Icon = link.icon ? navIcons[link.icon] : null;
+
+                                        return (
+                                            <Link
+                                                key={link.href}
+                                                href={link.href}
+                                                aria-current={isActive(link.href) ? "page" : undefined}
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className={`flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium ${isActive(link.href)
+                                                    ? "bg-[#FF593F]/10 text-[#17233B]"
+                                                    : "text-slate-700 hover:bg-slate-50"
+                                                    }`}
+                                            >
+                                                {Icon && <Icon className="size-7 shrink-0" />}
+                                                {link.label}
+                                            </Link>
+                                        );
+                                    })}
 
                                     {!user && !isLoading && signedOutActions.length > 0 && (
                                         <div className="mt-auto space-y-3 border-t border-border px-2 pt-5">
