@@ -5,7 +5,6 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { FiArrowRight } from "react-icons/fi";
 
-import { SearchForm } from "@/components/listing-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isInCategory } from "@/lib/categories";
 import { placeName } from "@/lib/cities";
@@ -138,10 +137,6 @@ export default async function CategoriesPage() {
                     From a morning coffee to a night away, explore offers from
                     {place}&apos;s independent businesses by the things you enjoy.
                 </p>
-
-                <div className="mx-auto mt-8 max-w-xl text-left">
-                    <SearchForm action="/offers" placeholder="Or search every offer" size="lg" />
-                </div>
             </section>
 
             <section className="mx-auto max-w-7xl px-6 sm:px-10">
