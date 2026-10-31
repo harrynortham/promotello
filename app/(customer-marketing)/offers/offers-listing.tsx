@@ -169,13 +169,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                 )}
             </div>
 
-            <p className="mt-5 border-t border-[#17233B]/10 pt-5 text-sm text-[#17233B]/65 sm:mt-8 sm:pt-6">
-                <span className="font-semibold text-[#17233B]">{results.length}</span>{" "}
-                {results.length === 1 ? "offer" : "offers"}
-                {params.search && <> matching &ldquo;{params.search}&rdquo;</>}
-            </p>
-
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-8">
                 {results.length === 0 ? (
                     <EmptyState
                         title="No offers match"
