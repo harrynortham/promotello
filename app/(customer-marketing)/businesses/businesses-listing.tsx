@@ -13,8 +13,9 @@ import {
 } from "@/components/listing-ui";
 import { FilterDrawer } from "@/components/filter-drawer";
 import { LocationSearch } from "@/components/location-search";
+import { SearchLauncher } from "@/components/search-launcher";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getLiveCities, placeName, type City } from "@/lib/cities";
+import { getLiveCities, placeName, type City, type Place } from "@/lib/cities";
 import {
     areasFrom,
     filterBusinesses,
@@ -110,13 +111,8 @@ async function Directory({ city, searchParams }: ListingProps) {
                 ))}
             </div>
 
-            <p className="mt-8 border-t border-[#17233B]/10 pt-6 text-sm text-[#17233B]/65">
-                <span className="font-semibold text-[#17233B]">{results.length}</span>{" "}
-                {results.length === 1 ? "business" : "businesses"}
-                {params.search && <> matching &ldquo;{params.search}&rdquo;</>}
-            </p>
 
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-8">
                 {results.length === 0 ? (
                     <EmptyState
                         title="No businesses match"
@@ -139,6 +135,29 @@ async function Directory({ city, searchParams }: ListingProps) {
     );
 }
 
+// The phone search pill: what's being searched, and where, at a glance.
+async function DirectoryLauncher({ city, searchParams, places }: ListingProps & { places: Place[] }) {
+    const [params, groups, place] = await Promise.all([searchParams, getCategories(), placeName(city)]);
+    const category = groups.find((group) => group.slug === params.category);
+
+    return (
+        <SearchLauncher
+            title={params.search ? `\u201c${params.search}\u201d` : "Search businesses"}
+            summary={`${place} · ${category?.name ?? "Any category"}`}
+            heading="Search businesses"
+        >
+            <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">What</p>
+                <DirectorySearch city={city} searchParams={searchParams} />
+            </div>
+            <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">Where</p>
+                <LocationSearch places={places} basePath="/businesses" current={city} size="lg" />
+            </div>
+        </SearchLauncher>
+    );
+}
+
 async function DirectorySearch({ city, searchParams }: ListingProps) {
     const params = await searchParams;
 
@@ -158,23 +177,30 @@ export async function BusinessesListing({ city, searchParams }: ListingProps) {
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
+            {/* Phones get a compact heading and one search pill, so businesses start near the top. */}
             <section className="border-b border-[#17233B]/10 bg-white">
-                <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 sm:px-10 sm:py-16 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div className="mx-auto grid max-w-7xl gap-10 px-6 pb-5 pt-4 sm:px-10 sm:py-16 lg:grid-cols-[1fr_auto] lg:items-end">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                        <p className="hidden text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F] sm:block">
                             Business directory
                         </p>
 
-                        <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+                        <h1 className="text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
                             {place}&apos;s independents
                         </h1>
 
-                        <p className="mt-3 max-w-2xl text-lg text-[#17233B]/65">
+                        <p className="mt-3 hidden max-w-2xl text-lg text-[#17233B]/65 sm:block">
                             Cafés, shops, studios and stays run by people who
                             live and work in the city.
                         </p>
 
-                        <div className="mt-8 grid max-w-3xl gap-3 sm:grid-cols-[1fr_16rem]">
+                        <div className="mt-4 sm:hidden">
+                            <Suspense fallback={<Skeleton className="h-[3.75rem] rounded-full" />}>
+                                <DirectoryLauncher city={city} searchParams={searchParams} places={places} />
+                            </Suspense>
+                        </div>
+
+                        <div className="mt-8 hidden max-w-3xl gap-3 sm:grid sm:grid-cols-[1fr_16rem]">
                             <Suspense fallback={<Skeleton className="h-16 rounded-2xl" />}>
                                 <DirectorySearch city={city} searchParams={searchParams} />
                             </Suspense>
@@ -198,7 +224,7 @@ export async function BusinessesListing({ city, searchParams }: ListingProps) {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-7xl px-6 pt-10 sm:px-10">
+            <section className="mx-auto max-w-7xl px-6 pt-5 sm:px-10 sm:pt-10">
                 <Suspense fallback={<DirectoryLoading />}>
                     <Directory city={city} searchParams={searchParams} />
                 </Suspense>

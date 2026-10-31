@@ -18,10 +18,13 @@ import {
 export function SearchLauncher({
     title,
     summary,
+    heading,
     children,
 }: {
     title: string;
     summary: string;
+    // The panel's title, such as "Search offers".
+    heading: string;
     children: React.ReactNode;
 }) {
     const [open, setOpen] = useState(false);
@@ -47,7 +50,7 @@ export function SearchLauncher({
             <DrawerContent>
                 <div className="mx-auto w-full max-w-md">
                     <DrawerHeader className="text-left">
-                        <DrawerTitle className="text-lg font-semibold">Search offers</DrawerTitle>
+                        <DrawerTitle className="text-lg font-semibold">{heading}</DrawerTitle>
                     </DrawerHeader>
 
                     {/* Room below for the place suggestions to open into. */}

@@ -217,6 +217,7 @@ async function OffersLauncher({ city, searchParams, places }: ListingProps & { p
         <SearchLauncher
             title={params.search ? `“${params.search}”` : "Search offers"}
             summary={`${place} · ${category?.name ?? "Any category"}`}
+            heading="Search offers"
         >
             <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">What</p>
