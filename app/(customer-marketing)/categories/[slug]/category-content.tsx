@@ -185,7 +185,7 @@ export async function CategoryContent({
                 </div>
 
                 {group.subcategories.length > 0 && (
-                    <div className="-mx-6 mt-8 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                    <div className="-mx-6 mt-8 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                         <FilterChip href={path} active={!subcategory}>
                             All {group.name.toLowerCase()}
                         </FilterChip>

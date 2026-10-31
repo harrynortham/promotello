@@ -6,15 +6,12 @@ import { SiteHeader, type HeaderLink } from "./site-header";
 // One header component, configured per area of the site.
 
 const customerLinks: HeaderLink[] = [
-    { label: "Explore", href: "/explore" },
-    { label: "Offers", href: "/offers" },
-    { label: "Categories", href: "/categories" },
-    { label: "Businesses", href: "/businesses" },
-    ...(EVENTS_ENABLED ? [{ label: "Events", href: "/events" }] : []),
+    { label: "Explore", href: "/explore", icon: "explore" },
+    { label: "Offers", href: "/offers", icon: "offers" },
+    { label: "Categories", href: "/categories", icon: "categories" },
+    { label: "Businesses", href: "/businesses", icon: "businesses" },
+    ...(EVENTS_ENABLED ? [{ label: "Events", href: "/events", icon: "events" as const }] : []),
 ];
-
-// The public header also leads to the business site, where the paid plans are.
-const customerMarketingLinks: HeaderLink[] = [...customerLinks, { label: "For business", href: "/business" }];
 
 const businessLinks: HeaderLink[] = [
     { label: "How it works", href: "/business/how-it-works" },
@@ -29,7 +26,7 @@ export function CustomerHeader() {
     return (
         <SiteHeader
             homeHref="/"
-            links={customerMarketingLinks}
+            links={customerLinks}
             collapseBelow="lg"
             signedOutActions={[
                 { label: "Sign up", href: "/signup" },

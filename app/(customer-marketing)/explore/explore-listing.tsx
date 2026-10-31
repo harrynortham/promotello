@@ -143,7 +143,7 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
 
     return (
         <>
-            <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+            <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                 <FilterChip href={base} active={!selected}>
                     All neighbourhoods
                 </FilterChip>
