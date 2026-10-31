@@ -8,6 +8,7 @@ import {
     SearchForm,
     hrefWith,
 } from "@/components/listing-ui";
+import { FilterDrawer } from "@/components/filter-drawer";
 import { OfferCard } from "@/components/offer-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LocationSearch } from "@/components/location-search";
@@ -97,6 +98,35 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
         <>
             <div className="mt-8 space-y-4">
                 <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                    {/* Sort order and area live in a drawer behind Filter. */}
+                    <FilterDrawer
+                        sections={[
+                            {
+                                title: "Sort by",
+                                options: sortOptions.map((option) => ({
+                                    label: option.label,
+                                    href: hrefWith(base, current, { sort: option.value === "newest" ? null : option.value }),
+                                    active: sort === option.value,
+                                })),
+                            },
+                            ...(areas.length > 1
+                                ? [
+                                    {
+                                        title: "Area",
+                                        options: [
+                                            { label: `All of ${place}`, href: hrefWith(base, current, { area: null }), active: !params.area },
+                                            ...areas.map((area) => ({
+                                                label: area.name,
+                                                href: hrefWith(base, current, { area: area.name }),
+                                                active: params.area === area.name,
+                                            })),
+                                        ],
+                                    },
+                                ]
+                                : []),
+                        ]}
+                    />
+
                     <FilterChip
                         href={hrefWith(base, current, { category: null })}
                         active={!params.category}
@@ -115,6 +145,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                     ))}
                 </div>
 
+                {/* Subcategories narrow the chosen category, so they stay as pills. */}
                 {selectedGroup && selectedGroup.subcategories.length > 0 && (
                     <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                         <FilterChip
@@ -135,53 +166,13 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                         ))}
                     </div>
                 )}
-
-                {areas.length > 1 && (
-                    <div className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-                        <span className="shrink-0 text-sm font-medium text-[#17233B]/70">Area:</span>
-
-                        <FilterChip
-                            href={hrefWith(base, current, { area: null })}
-                            active={!params.area}
-                        >
-                            All {place}
-                        </FilterChip>
-
-                        {areas.map((area) => (
-                            <FilterChip
-                                key={area.name}
-                                href={hrefWith(base, current, { area: area.name })}
-                                active={params.area === area.name}
-                            >
-                                {area.name}
-                            </FilterChip>
-                        ))}
-                    </div>
-                )}
             </div>
 
-            <div className="mt-8 flex flex-col gap-3 border-t border-[#17233B]/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-[#17233B]/65">
-                    <span className="font-semibold text-[#17233B]">{results.length}</span>{" "}
-                    {results.length === 1 ? "offer" : "offers"}
-                    {params.search && <> matching &ldquo;{params.search}&rdquo;</>}
-                </p>
-
-                <div className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
-                    <span className="shrink-0 text-sm text-[#17233B]/70">Sort:</span>
-                    {sortOptions.map((option) => (
-                        <FilterChip
-                            key={option.value}
-                            href={hrefWith(base, current, {
-                                sort: option.value === "newest" ? null : option.value,
-                            })}
-                            active={sort === option.value}
-                        >
-                            {option.label}
-                        </FilterChip>
-                    ))}
-                </div>
-            </div>
+            <p className="mt-8 border-t border-[#17233B]/10 pt-6 text-sm text-[#17233B]/65">
+                <span className="font-semibold text-[#17233B]">{results.length}</span>{" "}
+                {results.length === 1 ? "offer" : "offers"}
+                {params.search && <> matching &ldquo;{params.search}&rdquo;</>}
+            </p>
 
             <div className="mt-6">
                 {results.length === 0 ? (

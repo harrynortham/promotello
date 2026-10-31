@@ -11,7 +11,7 @@ import {
     SearchForm,
     hrefWith,
 } from "@/components/listing-ui";
-import { AreaFilterDrawer } from "@/components/area-filter-drawer";
+import { FilterDrawer } from "@/components/filter-drawer";
 import { LocationSearch } from "@/components/location-search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLiveCities, placeName, type City } from "@/lib/cities";
@@ -75,15 +75,19 @@ async function Directory({ city, searchParams }: ListingProps) {
             <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                 {/* Areas live in a drawer behind Filter, not a second row of pills. */}
                 {areas.length > 1 && (
-                    <AreaFilterDrawer
-                        place={place}
-                        options={[
-                            { label: `All of ${place}`, href: hrefWith(base, params, { area: null }), active: !params.area },
-                            ...areas.map((area) => ({
-                                label: area.name,
-                                href: hrefWith(base, params, { area: area.name }),
-                                active: params.area === area.name,
-                            })),
+                    <FilterDrawer
+                        sections={[
+                            {
+                                title: "Area",
+                                options: [
+                                    { label: `All of ${place}`, href: hrefWith(base, params, { area: null }), active: !params.area },
+                                    ...areas.map((area) => ({
+                                        label: area.name,
+                                        href: hrefWith(base, params, { area: area.name }),
+                                        active: params.area === area.name,
+                                    })),
+                                ],
+                            },
                         ]}
                     />
                 )}
