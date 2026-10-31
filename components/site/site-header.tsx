@@ -12,7 +12,7 @@ import { useCurrentUser } from "./use-current-user";
 import { navIcons, type NavIconName } from "./nav-icons";
 import { UserMenu, type AccountArea } from "./user-menu";
 
-// With an icon, a link shows it above its label (beside it in the mobile menu).
+// With an icon, a link shows it to the left of its label.
 export type HeaderLink = { label: string; href: string; icon?: NavIconName };
 
 export type HeaderAction = {
@@ -102,18 +102,18 @@ function HeaderContent({
                             const active = isActive(link.href);
 
                             return Icon ? (
-                                // Icon above the label, with a bar under the current page.
+                                // Icon beside the label, with a bar under the current page.
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     aria-current={active ? "page" : undefined}
-                                    className={`group relative flex flex-col items-center gap-1 px-3 pb-2 pt-1 text-xs font-medium transition-colors ${active ? "text-[#17233B]" : "text-[#17233B]/60 hover:text-[#17233B]"}`}
+                                    className={`group relative flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${active ? "text-[#17233B]" : "text-[#17233B]/60 hover:text-[#17233B]"}`}
                                 >
-                                    <Icon className="size-7 transition-transform duration-200 group-hover:scale-110" />
+                                    <Icon className="size-6 transition-transform duration-200 group-hover:scale-110" />
                                     {link.label}
                                     <span
                                         aria-hidden="true"
-                                        className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-[#17233B] transition-opacity ${active ? "opacity-100" : "opacity-0"}`}
+                                        className={`absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[#17233B] transition-opacity ${active ? "opacity-100" : "opacity-0"}`}
                                     />
                                 </Link>
                             ) : (
