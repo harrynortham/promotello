@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-    FiArrowRight,
-    FiCheck,
-    FiAward,
-    FiCheckCircle,
-    FiGift,
-    FiGrid,
-    FiMapPin,
-    FiUsers,
-} from "react-icons/fi";
+import { FiArrowRight, FiCheck } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    LoyaltySetUpArt,
+    OfferListedArt,
+    OfferWriteArt,
+    QrPrintArt,
+    RedeemMarkArt,
+    RedeemScanArt,
+} from "@/components/step-art";
 import {
     Card,
     CardContent,
@@ -39,7 +38,7 @@ const preparationItems = [
 const steps = [
     {
         number: "01",
-        icon: FiMapPin,
+        art: OfferListedArt,
         title: "Set up your business",
         description:
             "Give customers what they need to find you and plan a visit. It takes about 15 minutes.",
@@ -55,7 +54,7 @@ const steps = [
     },
     {
         number: "02",
-        icon: FiGift,
+        art: OfferWriteArt,
         title: "Create your first offer",
         description:
             "Give people a reason to try you. Customers claim it on their phone and get their own voucher.",
@@ -63,7 +62,7 @@ const steps = [
             "Say exactly what the customer gets",
             "Add an image, an end date and any conditions",
             "Set a claim limit you can comfortably honour",
-            "On Pro, it goes live as soon as your business is approved",
+            "Our team reviews it, usually the same day, then it goes live",
         ],
         tip: "Start with something you can easily fulfil. You can always try a different offer next.",
         href: "/business/dashboard",
@@ -71,7 +70,7 @@ const steps = [
     },
     {
         number: "03",
-        icon: FiAward,
+        art: LoyaltySetUpArt,
         title: "Start a loyalty card",
         description:
             "Turn a first visit into a habit with a digital stamp card customers keep on their phone.",
@@ -86,7 +85,7 @@ const steps = [
     },
     {
         number: "04",
-        icon: FiGrid,
+        art: QrPrintArt,
         title: "Print your QR poster",
         description:
             "Put a poster where customers will see it, so they can follow you, join your card or claim your offer.",
@@ -101,7 +100,7 @@ const steps = [
     },
     {
         number: "05",
-        icon: FiUsers,
+        art: RedeemScanArt,
         title: "Show your team how to scan",
         description:
             "Staff redeem vouchers and stamp cards with their own phone's camera. No card reader needed.",
@@ -116,7 +115,7 @@ const steps = [
     },
     {
         number: "06",
-        icon: FiCheckCircle,
+        art: RedeemMarkArt,
         title: "Welcome your first customers",
         description:
             "Customers show their phone at the till, your team scans it, and that's it.",
@@ -251,22 +250,21 @@ export default function BusinessGettingStartedPage() {
             >
                 <ol className="space-y-6">
                     {steps.map((step) => {
-                        const Icon = step.icon;
+                        const Art = step.art;
 
                         return (
                             <li key={step.number}>
                                 <Card className="rounded-3xl shadow-none">
                                     <CardContent className="p-6 sm:p-9">
-                                        <div className="grid gap-6 sm:grid-cols-[4rem_1fr] sm:gap-8">
-                                            <div className="flex items-center gap-4 sm:block">
-                                                <span className="flex size-14 items-center justify-center rounded-2xl bg-[#FF593F]/10 text-lg font-semibold text-[#FF593F]">
+                                        <div className="grid gap-6 sm:grid-cols-[4.5rem_1fr] sm:gap-8">
+                                            <div className="flex items-center gap-5 sm:block">
+                                                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-sm font-semibold text-[#FF593F] sm:mx-auto">
                                                     {step.number}
                                                 </span>
 
-                                                <Icon
-                                                    aria-hidden="true"
-                                                    className="size-6 text-muted-foreground sm:mx-auto sm:mt-5"
-                                                />
+                                                <span className="block shrink-0 sm:mt-6 sm:flex sm:justify-center">
+                                                    <Art />
+                                                </span>
                                             </div>
 
                                             <div>

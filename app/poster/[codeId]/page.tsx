@@ -48,7 +48,7 @@ async function Poster({ params, searchParams }: PageProps) {
         .from("qr_codes")
         .select(
             `
-                id, code, label, offer_id, business_id,
+                id, code, label, offer_id, business_id, poster_colour, poster_eyebrow, poster_headline,
                 businesses ( name, logo_url, category, business_locations ( region, city ) )
             `,
         )
@@ -107,6 +107,9 @@ async function Poster({ params, searchParams }: PageProps) {
                     offer={offer}
                     qrMarkup={svg}
                     link={link}
+                    colour={qr.poster_colour}
+                    eyebrow={qr.poster_eyebrow}
+                    headline={qr.poster_headline}
                     className="shadow-2xl print:shadow-none"
                 />
             </div>

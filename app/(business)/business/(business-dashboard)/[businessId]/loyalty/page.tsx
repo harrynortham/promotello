@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard, setLoyaltyProgramActive } from "./actions";
+import { CardDesign } from "./card-design";
 import { LoyaltyHowItWorks } from "./how-it-works";
 import { LoyaltyCardBuilder, ProgramSettingsForm } from "./program-form";
 
@@ -35,6 +36,8 @@ type Program = {
     reward: string;
     terms: string | null;
     is_active: boolean;
+    card_colour: string | null;
+    stamp_icon: string | null;
 };
 
 const errorMessages: Record<string, string> = {
@@ -89,7 +92,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, stamps_required, reward, terms, is_active")
+            .select("id, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
             .eq("business_id", businessId)
             .order("is_active", { ascending: false })
             .order("created_at", { ascending: false })
@@ -151,7 +154,21 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         </p>
                     </div>
 
-                    <div className="shrink-0">
+                    <div className="flex shrink-0 flex-wrap gap-3">
+                        {program && canManage && (
+                            <CardDesign
+                                businessId={businessId}
+                                programId={program.id}
+                                businessName={business?.name ?? "Your business"}
+                                businessLogoUrl={business?.logo_url ?? null}
+                                stampsRequired={program.stamps_required}
+                                reward={program.reward}
+                                terms={program.terms}
+                                colour={program.card_colour}
+                                stampIcon={program.stamp_icon}
+                            />
+                        )}
+
                         <LoyaltyHowItWorks />
                     </div>
                 </div>
@@ -233,7 +250,13 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                         Collect {program.stamps_required} stamps, get {program.reward.charAt(0).toLowerCase() + program.reward.slice(1)}
                                     </p>
                                     <div className="mt-5">
-                                        <LoyaltyStamps stamps={Math.min(3, program.stamps_required - 1)} required={program.stamps_required} size="sm" />
+                                        <LoyaltyStamps
+                                            stamps={Math.min(3, program.stamps_required - 1)}
+                                            required={program.stamps_required}
+                                            size="sm"
+                                            colour={program.card_colour}
+                                            icon={program.stamp_icon}
+                                        />
                                     </div>
                                 </CardContent>
                             </Card>

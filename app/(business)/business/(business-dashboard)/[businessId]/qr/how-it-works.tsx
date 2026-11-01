@@ -7,6 +7,7 @@ import {
     QrGlyph,
     StepFrame,
 } from "@/components/how-it-works-dialog";
+import { QrPrintArt } from "@/components/step-art";
 
 function CreateArt() {
     return (
@@ -15,20 +16,6 @@ function CreateArt() {
             <QrGlyph x={24} y={20} scale={0.95} />
             <circle cx="52" cy="50" r="11" fill={CORAL} />
             <path d="M52 45v10M47 50h10" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
-        </StepFrame>
-    );
-}
-
-function PrintArt() {
-    return (
-        <StepFrame>
-            <rect x="16" y="34" width="40" height="20" rx="5" fill={INK} />
-            <rect x="24" y="12" width="24" height="26" rx="4" fill="#FFFFFF" stroke={INK} strokeOpacity="0.15" />
-            <rect x="28" y="17" width="10" height="2.6" rx="1.3" fill={CORAL} />
-            <QrGlyph x={29} y={22} scale={0.52} />
-            <rect x="22" y="44" width="28" height="18" rx="4" fill="#FFFFFF" stroke={INK} strokeWidth="2" />
-            <rect x="27" y="50" width="18" height="2.4" rx="1.2" fill={INK} fillOpacity="0.25" />
-            <rect x="27" y="55" width="12" height="2.4" rx="1.2" fill={INK} fillOpacity="0.25" />
         </StepFrame>
     );
 }
@@ -83,7 +70,7 @@ const steps = [
         body: "Name it for the spot it will live in, like Front window, and choose whether it opens your business page or one offer.",
     },
     {
-        art: <PrintArt />,
+        art: <QrPrintArt />,
         title: "Print the poster",
         body: "Every code comes with a ready-made A4 or A5 poster carrying your logo and your newest offer. Print it, or save it as a PDF.",
     },

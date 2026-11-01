@@ -5,10 +5,17 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 
+// Kept as plain lists so this server file does not pull in the palette's
+// React-facing helpers.
+const CARD_COLOUR_NAMES = ["navy", "coral", "forest", "plum", "ocean", "charcoal"];
+const STAMP_ICON_NAMES = ["check", "star", "heart", "coffee", "gift"];
+
 function readProgramFields(formData: FormData) {
     const stampsRequired = Number(formData.get("stampsRequired"));
     const reward = String(formData.get("reward") ?? "").trim();
     const terms = String(formData.get("terms") ?? "").trim();
+    const cardColour = String(formData.get("cardColour") ?? "navy");
+    const stampIcon = String(formData.get("stampIcon") ?? "check");
 
     const valid =
         Number.isInteger(stampsRequired) &&
@@ -16,9 +23,19 @@ function readProgramFields(formData: FormData) {
         stampsRequired <= 20 &&
         reward.length >= 2 &&
         reward.length <= 80 &&
-        terms.length <= 500;
+        terms.length <= 500 &&
+        CARD_COLOUR_NAMES.includes(cardColour) &&
+        STAMP_ICON_NAMES.includes(stampIcon);
 
-    return valid ? { stamps_required: stampsRequired, reward, terms: terms || null } : null;
+    return valid
+        ? {
+            stamps_required: stampsRequired,
+            reward,
+            terms: terms || null,
+            card_colour: cardColour,
+            stamp_icon: stampIcon,
+        }
+        : null;
 }
 
 export async function saveLoyaltyProgram(formData: FormData) {
@@ -77,4 +94,33 @@ export async function lookUpLoyaltyCard(formData: FormData) {
     }
 
     redirect(`/stamp/${code}`);
+}
+
+// Saves just the look of the card. Returns the problem instead of
+// redirecting, so the design dialog can stay open and say what went wrong.
+export async function saveLoyaltyDesign(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const programId = String(formData.get("programId") ?? "");
+    const cardColour = String(formData.get("cardColour") ?? "");
+    const stampIcon = String(formData.get("stampIcon") ?? "");
+
+    if (!CARD_COLOUR_NAMES.includes(cardColour) || !STAMP_ICON_NAMES.includes(stampIcon)) {
+        return { error: "That card design isn't available. Please choose another." };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from("loyalty_programs")
+        .update({ card_colour: cardColour, stamp_icon: stampIcon })
+        .eq("id", programId)
+        .eq("business_id", businessId);
+
+    if (error) {
+        return { error: "We couldn't save the card design. Please try again." };
+    }
+
+    revalidatePath(`/business/${businessId}/loyalty`);
+
+    return { error: null };
 }

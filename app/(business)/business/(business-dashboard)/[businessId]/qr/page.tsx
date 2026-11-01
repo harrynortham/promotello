@@ -2,23 +2,19 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { FiExternalLink, FiPrinter } from "react-icons/fi";
+import { FiExternalLink, FiPlus, FiPrinter } from "react-icons/fi";
 
-import { QrPoster } from "@/components/qr-poster";
-import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
-import { archiveQrCode, createQrCode } from "./actions";
+import { DeleteQrCode } from "./delete-qr-code";
 import { QrHowItWorks } from "./how-it-works";
-import { PosterSizeSelect } from "./poster-size-select";
+import { PosterDesigner } from "./poster-designer";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
@@ -37,7 +33,7 @@ const errorMessages: Record<string, string> = {
     label: "Give the code a name between 2 and 60 characters, like “Front window”.",
     limit: "The Free plan includes 1 QR code. Upgrade to Pro for a code in every spot.",
     create: "We couldn't create that code. Please try again.",
-    archive: "We couldn't archive that code. Please try again.",
+    delete: "We couldn't delete that code. Please try again.",
 };
 
 function LoadingState() {
@@ -149,7 +145,6 @@ async function QrContent({ params, searchParams }: PageProps) {
     const headlineOffer = offers?.[0] ?? null;
     const previewLink = business?.slug ? `${origin}/businesses/${business.slug}` : origin;
     const previewSvg = await qrSvg(previewLink);
-    const previewWidth = posterSize === "a5" ? 181 : 256;
 
     return (
         <div className="text-[#17233B]">
@@ -207,70 +202,22 @@ async function QrContent({ params, searchParams }: PageProps) {
                 )}
 
                 {canManage && !atFreeLimit && (
-                    <Card className="mt-8 border-[#17233B]/10">
+                    <Card id="create-qr" className="mt-8 scroll-mt-8 border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle>Create a QR code</CardTitle>
                         </CardHeader>
-                        <CardContent className="flex flex-col gap-8 lg:flex-row lg:items-start">
-                            <form action={createQrCode} className="flex-1 space-y-5">
-                                <input type="hidden" name="businessId" value={businessId} />
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="qr-label">Where will it go?</Label>
-                                    <Input id="qr-label" name="label" required minLength={2} maxLength={60} placeholder="Front window" />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="qr-target">What should it open?</Label>
-                                    <select
-                                        id="qr-target"
-                                        name="target"
-                                        defaultValue="business"
-                                        className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
-                                    >
-                                        <option value="business">Your business page</option>
-                                        {(offers ?? []).map((offer) => (
-                                            <option key={offer.id} value={offer.id}>
-                                                Offer: {offer.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <PosterSizeSelect size={posterSize} />
-
-                                <SubmitButton size="lg" pendingLabel="Creating…" className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto">
-                                    Create QR code
-                                </SubmitButton>
-                            </form>
-
-                                <div className="w-full shrink-0 lg:w-64">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
-                                        What gets printed
-                                    </p>
-
-                                    <div
-                                        className="mt-3 overflow-hidden rounded-xl border border-[#17233B]/10 shadow-sm"
-                                        style={{ width: previewWidth }}
-                                    >
-                                        <QrPoster
-                                            width={`${previewWidth}px`}
-                                            height={`${Math.round(previewWidth * (297 / 210))}px`}
-                                            fontSize={16 * (previewWidth / 794)}
-                                            businessName={business?.name ?? "Your business"}
-                                            place={location?.region || location?.city}
-                                            logoUrl={business?.logo_url}
-                                            offer={headlineOffer}
-                                            qrMarkup={previewSvg}
-                                            link={previewLink}
-                                        />
-                                    </div>
-
-                                    <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
-                                        Ready to print. Your logo and newest
-                                        offer fill in automatically.
-                                    </p>
-                                </div>
+                        <CardContent>
+                            <PosterDesigner
+                                businessId={businessId}
+                                businessName={business?.name ?? "Your business"}
+                                place={location?.region || location?.city}
+                                logoUrl={business?.logo_url}
+                                offer={headlineOffer}
+                                offers={offers ?? []}
+                                previewSvg={previewSvg}
+                                previewLink={previewLink}
+                                size={posterSize}
+                            />
                         </CardContent>
                     </Card>
                 )}
@@ -338,13 +285,11 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                     </Button>
 
                                                     {canManage && (
-                                                        <form action={archiveQrCode}>
-                                                            <input type="hidden" name="businessId" value={businessId} />
-                                                            <input type="hidden" name="codeId" value={code.id} />
-                                                            <Button type="submit" variant="outline" size="sm">
-                                                                Archive
-                                                            </Button>
-                                                        </form>
+                                                        <DeleteQrCode
+                                                            businessId={businessId}
+                                                            codeId={code.id}
+                                                            label={code.label}
+                                                        />
                                                     )}
                                                 </div>
                                             </div>
@@ -352,6 +297,58 @@ async function QrContent({ params, searchParams }: PageProps) {
                                     </Card>
                                 );
                             })}
+
+                            {canManage && (
+                                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
+                                    <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+                                        <FiPlus aria-hidden="true" className="size-5" />
+                                    </span>
+
+                                    {atFreeLimit ? (
+                                        <>
+                                            <h2 className="mt-4 text-lg font-semibold">
+                                                Add another QR code
+                                            </h2>
+
+                                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
+                                                The Free plan includes one code. Pro gives
+                                                you a code for every spot, so you can see
+                                                which placement brings people in.
+                                            </p>
+
+                                            <Button
+                                                render={<Link href={`/business/${businessId}/billing`} />}
+                                                nativeButton={false}
+                                                size="lg"
+                                                className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                            >
+                                                Upgrade to Pro
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h2 className="mt-4 text-lg font-semibold">
+                                                Add another QR code
+                                            </h2>
+
+                                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
+                                                One per spot: your window, the till, the
+                                                tables. Each one counts its own scans.
+                                            </p>
+
+                                            <Button
+                                                render={<Link href="#create-qr" />}
+                                                nativeButton={false}
+                                                variant="outline"
+                                                size="lg"
+                                                className="mt-5"
+                                            >
+                                                Create a QR code
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>

@@ -91,9 +91,9 @@ async function CustomerDashboardContent() {
         null;
 
     const stats = [
-        { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: statusPages.ready.href },
-        { icon: FiCheckCircle, label: "Vouchers used", value: used.length, href: statusPages.used.href },
-        { icon: FiStar, label: "Loyalty cards", value: loyaltyCards.length, href: "/dashboard/loyalty" },
+        { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: statusPages.ready.href, action: "View vouchers" },
+        { icon: FiCheckCircle, label: "Vouchers used", value: used.length, href: statusPages.used.href, action: "View history" },
+        { icon: FiStar, label: "Loyalty cards", value: loyaltyCards.length, href: "/dashboard/loyalty", action: "View cards" },
     ];
 
     return (
@@ -123,12 +123,26 @@ async function CustomerDashboardContent() {
                         const Icon = stat.icon;
 
                         return (
-                            <Link key={stat.label} href={stat.href} className="flex items-center justify-between rounded-xl border border-[#17233B]/10 bg-white p-5 transition hover:border-[#17233B]/25 hover:shadow-sm">
-                                <div>
-                                    <p className="text-sm text-[#17233B]/70">{stat.label}</p>
-                                    <p className="mt-1 text-3xl font-semibold">{stat.value}</p>
+                            <Link
+                                key={stat.label}
+                                href={stat.href}
+                                className="group flex flex-col rounded-xl border border-[#17233B]/10 bg-white p-5 transition hover:border-[#FF593F]/40 hover:shadow-sm"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm text-[#17233B]/70">{stat.label}</p>
+                                        <p className="mt-1 text-3xl font-semibold">{stat.value}</p>
+                                    </div>
+                                    <Icon aria-hidden="true" className="size-6 shrink-0 text-[#FF593F]" />
                                 </div>
-                                <Icon aria-hidden="true" className="size-6 text-[#FF593F]" />
+
+                                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] underline-offset-4 group-hover:underline">
+                                    {stat.action}
+                                    <FiArrowRight
+                                        aria-hidden="true"
+                                        className="size-4 transition-transform group-hover:translate-x-0.5"
+                                    />
+                                </span>
                             </Link>
                         );
                     })}

@@ -188,7 +188,7 @@ function Offers() {
     return (
         <Panel
             title="Offers that go out to your followers"
-            description="Create an offer in a minute and choose how many people can claim it. On Pro it goes live straight away, and everyone who follows you gets an email."
+            description="Create an offer in a minute and choose how many people can claim it. Once it passes review it goes live, and everyone who follows you gets an email."
         >
             <div className="overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">
                 <table className="w-full min-w-[34rem] text-left text-sm">

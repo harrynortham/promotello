@@ -1,0 +1,168 @@
+"use client";
+
+import { useState } from "react";
+
+import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
+import { QrPoster } from "@/components/qr-poster";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    DEFAULT_STAMP_ICON,
+    cardColourName,
+    type CardColour,
+} from "@/lib/loyalty-design";
+import { createQrCode } from "./actions";
+import { PosterSizeSelect } from "./poster-size-select";
+
+// A4 is 794px wide at 96dpi; A5 is 70.5% of it, so the preview shrinks
+// with the real sheet.
+const PREVIEW_WIDTH = { a4: 256, a5: 181 };
+
+// The create form and the poster it will print, side by side, so the
+// colour and the words can be seen before the code exists.
+export function PosterDesigner({
+    businessId,
+    businessName,
+    place,
+    logoUrl,
+    offer,
+    offers,
+    previewSvg,
+    previewLink,
+    size,
+}: {
+    businessId: string;
+    businessName: string;
+    place?: string | null;
+    logoUrl?: string | null;
+    // The newest live offer, which the poster falls back to.
+    offer: { discount: string; title: string } | null;
+    offers: { id: string; title: string }[];
+    previewSvg: string;
+    previewLink: string;
+    size: "a4" | "a5";
+}) {
+    const [colour, setColour] = useState<CardColour>(cardColourName(null));
+    const [eyebrow, setEyebrow] = useState("");
+    const [headline, setHeadline] = useState("");
+
+    const width = PREVIEW_WIDTH[size];
+
+    return (
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+            <form action={createQrCode} className="flex-1 space-y-5">
+                <input type="hidden" name="businessId" value={businessId} />
+
+                <div className="space-y-2">
+                    <Label htmlFor="qr-label">Where will it go?</Label>
+                    <Input
+                        id="qr-label"
+                        name="label"
+                        required
+                        minLength={2}
+                        maxLength={60}
+                        placeholder="Front window"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="qr-target">What should it open?</Label>
+                    <select
+                        id="qr-target"
+                        name="target"
+                        defaultValue="business"
+                        className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                    >
+                        <option value="business">Your business page</option>
+                        {offers.map((option) => (
+                            <option key={option.id} value={option.id}>
+                                Offer: {option.title}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <PosterSizeSelect size={size} />
+
+                <LoyaltyDesignPicker
+                    colour={colour}
+                    icon={DEFAULT_STAMP_ICON}
+                    onColour={setColour}
+                    onIcon={() => undefined}
+                    showStamps={false}
+                    colourLabel="Poster colour"
+                />
+
+                <div className="space-y-2">
+                    <Label htmlFor="poster-eyebrow">Small line</Label>
+                    <Input
+                        id="poster-eyebrow"
+                        name="posterEyebrow"
+                        maxLength={40}
+                        value={eyebrow}
+                        onChange={(event) => setEyebrow(event.target.value)}
+                        placeholder={offer ? "Exclusive offer" : "Scan for offers"}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="poster-headline">Headline</Label>
+                    <Input
+                        id="poster-headline"
+                        name="posterHeadline"
+                        maxLength={90}
+                        value={headline}
+                        onChange={(event) => setHeadline(event.target.value)}
+                        placeholder={
+                            offer ? offer.discount : `See what's on at ${businessName}`
+                        }
+                    />
+                    <p className="text-xs leading-5 text-[#17233B]/65">
+                        Leave both empty and the poster uses your newest offer.
+                    </p>
+                </div>
+
+                <input type="hidden" name="posterColour" value={colour} />
+
+                <SubmitButton
+                    size="lg"
+                    pendingLabel="Creating…"
+                    className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto"
+                >
+                    Create QR code
+                </SubmitButton>
+            </form>
+
+            <div className="w-full shrink-0 lg:w-64">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                    What gets printed
+                </p>
+
+                <div
+                    className="mt-3 overflow-hidden rounded-xl border border-[#17233B]/10 shadow-sm"
+                    style={{ width }}
+                >
+                    <QrPoster
+                        width={`${width}px`}
+                        height={`${Math.round(width * (297 / 210))}px`}
+                        fontSize={16 * (width / 794)}
+                        businessName={businessName}
+                        place={place}
+                        logoUrl={logoUrl}
+                        offer={offer}
+                        qrMarkup={previewSvg}
+                        link={previewLink}
+                        colour={colour}
+                        eyebrow={eyebrow}
+                        headline={headline}
+                    />
+                </div>
+
+                <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
+                    Ready to print. Your logo fills in automatically.
+                </p>
+            </div>
+        </div>
+    );
+}

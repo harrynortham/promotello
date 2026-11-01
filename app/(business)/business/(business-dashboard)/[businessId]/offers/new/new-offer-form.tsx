@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 
 import { ImagePicker } from "@/components/image-picker";
 import { OfferCard } from "@/components/offer-card";
+import { OffersHowItWorks } from "../how-it-works";
 import {
     OfferFields,
     imageProblem,
@@ -47,7 +49,12 @@ export default function NewOfferForm({
     // The cropped image, shown in the preview before it's uploaded.
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const [categoryNames, setCategoryNames] = useState<Map<string, string>>(new Map());
-    const [createdOffer, setCreatedOffer] = useState<"live" | "pending" | null>(null);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    const created = searchParams.get("created");
+    const createdOffer = created === "live" || created === "pending" ? created : null;
     const [errorMessage, setErrorMessage] = useState("");
 
     const {
@@ -160,7 +167,7 @@ export default function NewOfferForm({
         reset();
         setImageFile(null);
         setImagePreviewUrl(null);
-        setCreatedOffer(live ? "live" : "pending");
+        router.replace(`${pathname}?created=${live ? "live" : "pending"}`, { scroll: false });
     }
 
     if (createdOffer) {
@@ -185,24 +192,24 @@ export default function NewOfferForm({
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
                                 ? "Customers can see and claim it now, and your followers are getting an email about it. Share it from your offers list to reach even more people."
-                                : "Once approved, it will become visible to customers. Pro businesses' offers go live straight away."}
+                                : "Our team reads it before customers see it, usually the same day. We will email you as soon as it is approved, and your followers are told about it then."}
                         </p>
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <Button
                                 size="lg"
-                                render={<Link href={`/business/${businessId}`} />}
+                                render={<Link href={`/business/${businessId}/offers`} />}
                                 nativeButton={false}
                                 variant="outline"
                             >
-                                Go to overview
+                                {createdOffer === "live" ? "View your offers" : "View pending"}
                             </Button>
 
                             <Button
                                 size="lg"
                                 type="button"
                                 variant="default"
-                                onClick={() => setCreatedOffer(null)}
+                                onClick={() => router.replace(pathname, { scroll: false })}
                             >
                                 Create another
                             </Button>
@@ -218,20 +225,26 @@ export default function NewOfferForm({
             <div>
                 <BackButton href={`/business/${businessId}/offers`} />
 
-                <div className="mt-8">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        New offer
-                    </p>
+                <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            New offer
+                        </p>
 
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Create an offer
-                    </h1>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Create an offer
+                        </h1>
 
-                    <p className="mt-4 leading-7 text-[#17233B]/65">
-                        Once your business is approved and on Pro, offers go live
-                        as soon as you create them. Otherwise our team reviews them
-                        first.
-                    </p>
+                        <p className="mt-4 max-w-2xl leading-7 text-[#17233B]/65">
+                            Our team reads every offer before customers see it,
+                            usually the same day. You will get an email when
+                            yours is approved.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0">
+                        <OffersHowItWorks />
+                    </div>
                 </div>
 
                 <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">

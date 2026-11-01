@@ -18,14 +18,28 @@ async function requireUser() {
     return { supabase, user };
 }
 
+// Kept here so this server file does not pull in the palette's React side.
+const POSTER_COLOURS = ["navy", "coral", "forest", "plum", "ocean", "charcoal"];
+
 export async function createQrCode(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     const label = String(formData.get("label") ?? "").trim();
     const target = String(formData.get("target") ?? "business");
+    const posterColour = String(formData.get("posterColour") ?? "navy");
+    const posterEyebrow = String(formData.get("posterEyebrow") ?? "").trim();
+    const posterHeadline = String(formData.get("posterHeadline") ?? "").trim();
     const page = `/business/${businessId}/qr`;
 
     if (label.length < 2 || label.length > 60) {
         redirect(`${page}?error=label`);
+    }
+
+    if (
+        !POSTER_COLOURS.includes(posterColour) ||
+        posterEyebrow.length > 40 ||
+        posterHeadline.length > 90
+    ) {
+        redirect(`${page}?error=create`);
     }
 
     const { supabase, user } = await requireUser();
@@ -36,6 +50,10 @@ export async function createQrCode(formData: FormData) {
         business_id: businessId,
         label,
         offer_id: target === "business" ? null : target,
+        poster_colour: posterColour,
+        // Empty means the poster works the words out from the offer.
+        poster_eyebrow: posterEyebrow || null,
+        poster_headline: posterHeadline || null,
         created_by: user.id,
     });
 
@@ -47,7 +65,7 @@ export async function createQrCode(formData: FormData) {
     redirect(`${page}?created=1`);
 }
 
-export async function archiveQrCode(formData: FormData) {
+export async function deleteQrCode(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     const codeId = String(formData.get("codeId") ?? "");
     const { supabase } = await requireUser();
@@ -59,7 +77,7 @@ export async function archiveQrCode(formData: FormData) {
         .eq("business_id", businessId);
 
     if (error) {
-        redirect(`/business/${businessId}/qr?error=archive`);
+        redirect(`/business/${businessId}/qr?error=delete`);
     }
 
     revalidatePath(`/business/${businessId}/qr`);

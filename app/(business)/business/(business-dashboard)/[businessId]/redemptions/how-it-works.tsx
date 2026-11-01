@@ -7,6 +7,7 @@ import {
     QrGlyph,
     StepFrame,
 } from "@/components/how-it-works-dialog";
+import { RedeemMarkArt, RedeemScanArt } from "@/components/step-art";
 
 function ClaimArt() {
     return (
@@ -35,36 +36,6 @@ function ShowArt() {
     );
 }
 
-function ScanArt() {
-    return (
-        <StepFrame>
-            <rect x="11" y="22" width="26" height="28" rx="4" fill="#FFFFFF" stroke={INK} strokeOpacity="0.2" />
-            <QrGlyph x={16} y={27} scale={0.56} />
-            <rect x="40" y="12" width="24" height="44" rx="7" fill="#FFFFFF" stroke={INK} strokeWidth="2.4" />
-            <rect x="48" y="16" width="8" height="2" rx="1" fill={INK} fillOpacity="0.3" />
-            <g stroke={CORAL} strokeWidth="2.2" strokeLinecap="round" fill="none">
-                <path d="M45 31v-3a2 2 0 0 1 2-2h3" />
-                <path d="M59 31v-3a2 2 0 0 0-2-2h-3" />
-                <path d="M45 41v3a2 2 0 0 0 2 2h3" />
-                <path d="M59 41v3a2 2 0 0 1-2 2h-3" />
-            </g>
-            <rect x="44" y="35" width="16" height="2.4" rx="1.2" fill={CORAL} />
-        </StepFrame>
-    );
-}
-
-function MarkArt() {
-    return (
-        <StepFrame>
-            <rect x="14" y="18" width="44" height="36" rx="6" fill="#FFFFFF" stroke={INK} strokeOpacity="0.15" />
-            <rect x="21" y="26" width="22" height="3" rx="1.5" fill={INK} fillOpacity="0.3" />
-            <rect x="21" y="34" width="14" height="3" rx="1.5" fill={INK} fillOpacity="0.2" />
-            <circle cx="46" cy="44" r="13" fill={CORAL} />
-            <path d="M40 44.5l4 4 8-9" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </StepFrame>
-    );
-}
-
 function OnceArt() {
     return (
         <StepFrame>
@@ -89,12 +60,12 @@ const steps = [
         body: "It is saved in their Promotello account with its own ten-character code and a QR code, ready to show at the till.",
     },
     {
-        art: <ScanArt />,
+        art: <RedeemScanArt />,
         title: "You scan it",
         body: "Point your phone camera at the QR on their voucher. It opens that voucher for you, with the offer and whether it is still valid.",
     },
     {
-        art: <MarkArt />,
+        art: <RedeemMarkArt />,
         title: "Mark it used",
         body: "One tap records the redemption. No camera to hand? Find the offer on this page and mark it used from its card.",
     },

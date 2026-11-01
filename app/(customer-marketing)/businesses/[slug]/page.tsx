@@ -230,7 +230,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     const [{ data: loyaltyProgram }, { data: { user: viewer } }] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, stamps_required, reward, terms")
+            .select("id, stamps_required, reward, terms, card_colour, stamp_icon")
             .eq("business_id", businessId)
             .eq("is_active", true)
             .maybeSingle(),

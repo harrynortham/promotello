@@ -7,29 +7,7 @@ import {
     QrGlyph,
     StepFrame,
 } from "@/components/how-it-works-dialog";
-
-function SetUpArt() {
-    return (
-        <StepFrame>
-            <rect x="14" y="18" width="44" height="36" rx="6" fill="#FFFFFF" stroke={INK} strokeOpacity="0.15" />
-            <rect x="14" y="18" width="44" height="11" rx="6" fill={INK} />
-            <rect x="20" y="22" width="18" height="3" rx="1.5" fill="#FFFFFF" fillOpacity="0.6" />
-            {[0, 1, 2, 3].map((index) => (
-                <circle
-                    key={index}
-                    cx={23 + index * 9}
-                    cy={41}
-                    r="4.2"
-                    fill={index === 0 ? CORAL : "none"}
-                    stroke={index === 0 ? CORAL : INK}
-                    strokeOpacity={index === 0 ? 1 : 0.25}
-                    strokeWidth="1.8"
-                />
-            ))}
-            <rect x="20" y="49" width="20" height="2.6" rx="1.3" fill={INK} fillOpacity="0.2" />
-        </StepFrame>
-    );
-}
+import { LoyaltySetUpArt } from "@/components/step-art";
 
 function JoinArt() {
     return (
@@ -99,7 +77,7 @@ function RewardArt() {
 
 const steps = [
     {
-        art: <SetUpArt />,
+        art: <LoyaltySetUpArt />,
         title: "Set up the card",
         body: "Choose how many stamps it takes and what the reward is. The preview beside the form is the card your customers will carry.",
     },

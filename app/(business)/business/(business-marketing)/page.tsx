@@ -269,7 +269,7 @@ export default async function BusinessPage() {
                 reverse
                 eyebrow="Followers"
                 title="Every new offer lands in your followers' inboxes."
-                body="Customers follow you from your page or your poster. On Pro, a new offer goes live straight away and everyone who follows you gets an email about it, with your name as the sender."
+                body="Customers follow you from your page or your poster. When a new offer passes review, everyone who follows you gets an email about it, with your name as the sender."
                 points={[
                     "Nothing to write: the emails send themselves",
                     "Every email has an unsubscribe link",

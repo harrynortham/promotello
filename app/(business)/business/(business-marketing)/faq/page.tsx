@@ -69,9 +69,9 @@ const sections = [
                     "Yes. Set a claim limit and an end date. Once the limit is reached, nobody else can claim it.",
             },
             {
-                question: "Does my offer go live straight away?",
+                question: "How soon does my offer go live?",
                 answer:
-                    "Once your business has been approved, offers on Pro and Growth go live as soon as you create them, and your followers are emailed. On the Free plan, our team reviews each offer first.",
+                    "Our team reads every offer before it appears, whatever plan you are on, usually the same day. As soon as it is approved it goes live and your followers are emailed.",
             },
             {
                 question: "Can an offer only work at certain times?",

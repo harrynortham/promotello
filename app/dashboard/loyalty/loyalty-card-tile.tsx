@@ -31,7 +31,13 @@ export function LoyaltyCardTile({ card }: { card: CustomerLoyaltyCard }) {
                 </p>
 
                 <div className="mt-3">
-                    <LoyaltyStamps stamps={card.stamps} required={card.stampsRequired} size="sm" />
+                    <LoyaltyStamps
+                        stamps={card.stamps}
+                        required={card.stampsRequired}
+                        size="sm"
+                        colour={card.cardColour}
+                        icon={card.stampIcon}
+                    />
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">

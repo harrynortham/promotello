@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
-import { FiEye } from "react-icons/fi";
+import { FiExternalLink } from "react-icons/fi";
 
 import {
     BusinessOnboardingChecklist,
@@ -322,7 +322,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                         Overview
@@ -365,18 +365,20 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </p>
                 </div>
 
-                {/* Opens the public page; before approval only the team can see it, as a preview. */}
-                <Button
-                    render={
-                        <a href={businessPath(business)} target="_blank" rel="noopener noreferrer" />
-                    }
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                >
-                    <FiEye aria-hidden="true" />
-                    {business.approval_status === "approved" ? "View your page" : "Preview your page"}
-                </Button>
+                {/* Opens the public page; before approval only the team can see it. */}
+                <div className="shrink-0">
+                    <Button
+                        render={
+                            <a href={businessPath(business)} target="_blank" rel="noopener noreferrer" />
+                        }
+                        nativeButton={false}
+                        variant="outline"
+                        size="lg"
+                    >
+                        <FiExternalLink aria-hidden="true" />
+                        View profile page
+                    </Button>
+                </div>
             </div>
 
             {isWelcome && (

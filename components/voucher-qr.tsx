@@ -3,6 +3,8 @@
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 
+import { brandQrSvg } from "@/lib/qr";
+
 // QR code for a claimed voucher. Staff scan it with their phone camera to
 // open /redeem/<code> and mark the voucher used.
 export function VoucherQr({ code, className = "" }: { code: string; className?: string }) {
@@ -11,11 +13,11 @@ export function VoucherQr({ code, className = "" }: { code: string; className?: 
     useEffect(() => {
         QRCode.toString(`${window.location.origin}/redeem/${code}`, {
             type: "svg",
-            errorCorrectionLevel: "M",
+            errorCorrectionLevel: "H",
             margin: 1,
             color: { dark: "#17233B", light: "#FFFFFF" },
         })
-            .then(setSvg)
+            .then((markup) => setSvg(brandQrSvg(markup)))
             .catch(() => setSvg(""));
     }, [code]);
 

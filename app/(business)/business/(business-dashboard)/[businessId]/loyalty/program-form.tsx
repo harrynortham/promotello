@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
 import { StampQr } from "@/components/stamp-qr";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    cardColourName,
+    stampIcon as readStampIcon,
+    type CardColour,
+    type StampIcon,
+} from "@/lib/loyalty-design";
 import { saveLoyaltyProgram } from "./actions";
 
 export type Program = {
@@ -19,6 +26,8 @@ export type Program = {
     reward: string;
     terms: string | null;
     is_active: boolean;
+    card_colour: string | null;
+    stamp_icon: string | null;
 };
 
 // A sample code, so the preview carries a real QR like the live card.
@@ -33,6 +42,10 @@ export function ProgramFields({
     setReward,
     terms,
     setTerms,
+    colour,
+    setColour,
+    icon,
+    setIcon,
 }: {
     businessId: string;
     program: Program | null;
@@ -42,6 +55,10 @@ export function ProgramFields({
     setReward: (value: string) => void;
     terms: string;
     setTerms: (value: string) => void;
+    colour: CardColour;
+    setColour: (value: CardColour) => void;
+    icon: StampIcon;
+    setIcon: (value: StampIcon) => void;
 }) {
     return (
         <>
@@ -93,6 +110,20 @@ export function ProgramFields({
                     placeholder="One stamp per visit when you spend £3 or more."
                 />
             </div>
+
+            <div className="space-y-3">
+                <p className="text-sm font-medium">How the card looks</p>
+
+                <LoyaltyDesignPicker
+                    colour={colour}
+                    icon={icon}
+                    onColour={setColour}
+                    onIcon={setIcon}
+                />
+            </div>
+
+            <input type="hidden" name="cardColour" value={colour} />
+            <input type="hidden" name="stampIcon" value={icon} />
         </>
     );
 }
@@ -117,6 +148,8 @@ export function LoyaltyCardBuilder({
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
+    const [colour, setColour] = useState<CardColour>(cardColourName(program?.card_colour));
+    const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     const fields = (
         <ProgramFields
@@ -128,6 +161,10 @@ export function LoyaltyCardBuilder({
             setReward={setReward}
             terms={terms}
             setTerms={setTerms}
+            colour={colour}
+            setColour={setColour}
+            icon={icon}
+            setIcon={setIcon}
         />
     );
 
@@ -200,6 +237,8 @@ export function LoyaltyCardBuilder({
                         terms={terms}
                         code={SAMPLE_CODE}
                         qr={<StampQr code={SAMPLE_CODE} />}
+                        colour={colour}
+                        stampIcon={icon}
                         className="border-[#17233B]/10"
                     />
                 </div>
@@ -227,6 +266,8 @@ export function ProgramSettingsForm({
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
+    const [colour, setColour] = useState<CardColour>(cardColourName(program?.card_colour));
+    const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     return (
         <form action={saveLoyaltyProgram} className="space-y-5">
@@ -239,6 +280,10 @@ export function ProgramSettingsForm({
                 setReward={setReward}
                 terms={terms}
                 setTerms={setTerms}
+                colour={colour}
+                setColour={setColour}
+                icon={icon}
+                setIcon={setIcon}
             />
 
             <SubmitButton

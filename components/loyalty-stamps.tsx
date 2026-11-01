@@ -1,4 +1,18 @@
-import { FiCheck, FiGift } from "react-icons/fi";
+import { FiCheck, FiCoffee, FiGift, FiHeart, FiStar } from "react-icons/fi";
+
+import {
+    cardColour,
+    stampIcon,
+    type StampIcon,
+} from "@/lib/loyalty-design";
+
+const icons: Record<StampIcon, typeof FiCheck> = {
+    check: FiCheck,
+    star: FiStar,
+    heart: FiHeart,
+    coffee: FiCoffee,
+    gift: FiGift,
+};
 
 // A stamp card: one circle per stamp, the last one marked as the reward.
 // Extra stamps beyond a full card (an unclaimed reward plus progress on
@@ -7,12 +21,19 @@ export function LoyaltyStamps({
     stamps,
     required,
     size = "md",
+    colour,
+    icon: chosenIcon,
 }: {
     stamps: number;
     required: number;
     size?: "sm" | "md" | "lg";
+    // The business's chosen look; both fall back to the original card.
+    colour?: string | null;
+    icon?: string | null;
 }) {
     const filled = Math.min(stamps, required);
+    const accent = cardColour(colour).stamp;
+    const StampIconComponent = icons[stampIcon(chosenIcon)];
     const dimension = { sm: "size-7", md: "size-10", lg: "size-12" }[size];
     const icon = { sm: "size-3.5", md: "size-5", lg: "size-6" }[size];
 
@@ -29,17 +50,24 @@ export function LoyaltyStamps({
                 return (
                     <span
                         key={index}
+                        style={
+                            isFilled
+                                ? { borderColor: accent, backgroundColor: accent }
+                                : isReward
+                                    ? { borderColor: `${accent}80`, backgroundColor: `${accent}0d`, color: accent }
+                                    : undefined
+                        }
                         className={`flex ${dimension} items-center justify-center rounded-full border-2 transition ${isFilled
-                            ? "border-[#FF593F] bg-[#FF593F] text-white"
+                            ? "text-white"
                             : isReward
-                                ? "border-dashed border-[#FF593F]/50 bg-[#FF593F]/5 text-[#FF593F]"
+                                ? "border-dashed"
                                 : "border-dashed border-[#17233B]/20 bg-white text-transparent"
                             }`}
                     >
                         {isReward ? (
                             <FiGift aria-hidden="true" className={icon} />
                         ) : (
-                            <FiCheck aria-hidden="true" className={icon} />
+                            <StampIconComponent aria-hidden="true" className={icon} />
                         )}
                     </span>
                 );
