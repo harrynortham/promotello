@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -12,15 +12,16 @@ import {
     AlertDescription,
     AlertTitle,
 } from "@/components/ui/alert";
+import { BusinessCard } from "@/components/business-card";
 import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { FiUpload } from "react-icons/fi";
+import { FiExternalLink, FiUpload } from "react-icons/fi";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
@@ -34,6 +35,8 @@ import {
     postcodeInCity,
     requiredText,
 } from "@/lib/validation";
+import { getCategoryGroups } from "@/lib/categories";
+import type { ListingBusiness } from "@/lib/listings";
 import { createClient } from "@/utils/supabase/client";
 
 type EditBusinessFormProps = {
@@ -43,6 +46,7 @@ type EditBusinessFormProps = {
 
 type Business = {
     name: string;
+    slug: string | null;
     category: string;
     category_id: string | null;
     description: string | null;
@@ -127,7 +131,7 @@ export default function EditBusinessForm({
                     supabase
                         .from("businesses")
                         .select(
-                            "name, category, category_id, description, website_url, contact_email, logo_url, cover_image_url, google_review_url",
+                            "name, slug, category, category_id, description, website_url, contact_email, logo_url, cover_image_url, google_review_url",
                         )
                         .eq("id", businessId)
                         .single(),
@@ -222,10 +226,12 @@ function BusinessForm({
     const business = initialBusiness;
     const [saved, setSaved] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [categoryNames, setCategoryNames] = useState<Map<string, string>>(new Map());
 
     const {
         register,
         handleSubmit,
+        control,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<Values, unknown, Output>({
         resolver: location ? zodResolver(withLocation(cities)) : zodResolver(withoutLocation),
@@ -244,6 +250,50 @@ function BusinessForm({
             postalCode: location?.postal_code ?? "",
         },
     });
+
+    // The category field holds an id; the preview card shows its name.
+    useEffect(() => {
+        getCategoryGroups(createClient())
+            .then((groups) =>
+                setCategoryNames(
+                    new Map(
+                        groups.flatMap((group) => [
+                            [group.id, group.name] as const,
+                            ...group.subcategories.map((sub) => [sub.id, sub.name] as const),
+                        ]),
+                    ),
+                ),
+            )
+            .catch(() => undefined);
+    }, []);
+
+    const draft = useWatch({ control });
+
+    const preview: ListingBusiness = {
+        id: businessId,
+        slug: business.slug ?? "",
+        name: draft.businessName?.trim() || business.name,
+        description: draft.description?.trim() || null,
+        logoUrl: business.logo_url,
+        categoryId: draft.category ?? null,
+        categoryName: categoryNames.get(draft.category ?? "") ?? business.category ?? "",
+        area: draft.region?.trim() || draft.city?.trim() || null,
+        cityId: null,
+        createdAt: new Date().toISOString(),
+        offerCount: 0,
+        coverImageUrl: business.cover_image_url,
+        isSample: false,
+        topOffer: null,
+    };
+
+    const errorsByTab = {
+        profile: ["businessName", "category", "description", "website", "contactEmail", "googleReviewUrl"],
+        location: ["locationName", "addressLine1", "addressLine2", "city", "region", "postalCode"],
+    } as const;
+
+    function tabHasError(tab: keyof typeof errorsByTab) {
+        return errorsByTab[tab].some((field) => field in errors);
+    }
 
     async function onSubmit(values: Output) {
         setSaved(false);
@@ -296,33 +346,79 @@ function BusinessForm({
     return (
         <div className="text-[#17233B]">
             <div>
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Business settings
-                    </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Business settings
+                        </p>
 
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Business profile
-                    </h1>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Business profile
+                        </h1>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Keep your business information up to date.
-                    </p>
+                        <p className="mt-3 text-[#17233B]/65">
+                            Keep your business information up to date.
+                        </p>
+                    </div>
+
+                    {business.slug && (
+                        <div className="shrink-0">
+                            <Button
+                                render={
+                                    <Link
+                                        href={`/businesses/${business.slug}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    />
+                                }
+                                nativeButton={false}
+                                variant="outline"
+                                size="lg"
+                            >
+                                <FiExternalLink aria-hidden="true" />
+                                View profile page
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
-                <Card className="mt-10 border-[#17233B]/10">
-                    <CardContent className="p-6 sm:p-10">
-                        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-10">
-                            <section className="space-y-5">
-                                <div>
-                                    <h2 className="text-xl font-semibold">
-                                        Business details
-                                    </h2>
+                <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
+                    <Card className="border-[#17233B]/10">
+                        <CardContent className="p-6 sm:p-8">
+                            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-8">
+                                <Tabs defaultValue="profile">
+                                    <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-full bg-[#17233B]/5 p-1">
+                                        <TabsTrigger value="profile" className="flex-none rounded-full px-4 py-2 data-active:bg-white data-active:shadow-sm">
+                                            Profile
+                                            {tabHasError("profile") && (
+                                                <span aria-hidden="true" className="size-1.5 rounded-full bg-destructive" />
+                                            )}
+                                        </TabsTrigger>
 
-                                    <p className="mt-1 text-sm text-[#17233B]/70">
-                                        Information customers will see on your business profile.
-                                    </p>
-                                </div>
+                                        <TabsTrigger value="photos" className="flex-none rounded-full px-4 py-2 data-active:bg-white data-active:shadow-sm">
+                                            Photos
+                                        </TabsTrigger>
+
+                                        {location && (
+                                            <TabsTrigger value="location" className="flex-none rounded-full px-4 py-2 data-active:bg-white data-active:shadow-sm">
+                                                Location
+                                                {tabHasError("location") && (
+                                                    <span aria-hidden="true" className="size-1.5 rounded-full bg-destructive" />
+                                                )}
+                                            </TabsTrigger>
+                                        )}
+
+                                        <TabsTrigger value="hours" className="flex-none rounded-full px-4 py-2 data-active:bg-white data-active:shadow-sm">
+                                            Hours
+                                        </TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="photos" keepMounted className="mt-6 space-y-6">
+                                        <p className="text-sm leading-6 text-[#17233B]/70">
+                                            Your logo and cover photo are cropped and
+                                            saved on their own pages, so save any other
+                                            changes here first.
+                                        </p>
 
                                 {/* The logo has its own page, with cropping, and saves on its own. */}
                                 <div className="flex items-center gap-4">
@@ -388,6 +484,9 @@ function BusinessForm({
                                     </div>
                                 </div>
 
+                                    </TabsContent>
+
+                                    <TabsContent value="profile" keepMounted className="mt-6 space-y-5">
                                 <div className="space-y-2">
                                     <Label htmlFor="businessName">Business name</Label>
 
@@ -467,21 +566,13 @@ function BusinessForm({
                                         recently visited are asked to leave you a review.
                                     </p>
                                 </div>
-                            </section>
+                                    </TabsContent>
 
-                            <Separator />
-
-                            {location && (
-                                <section className="space-y-5">
-                                    <div>
-                                        <h2 className="text-xl font-semibold">
-                                            Main location
-                                        </h2>
-
-                                        <p className="mt-1 text-sm text-[#17233B]/70">
-                                            This location appears on your public business profile.
-                                        </p>
-                                    </div>
+                                    {location && (
+                                        <TabsContent value="location" keepMounted className="mt-6 space-y-5">
+                                            <p className="text-sm leading-6 text-[#17233B]/70">
+                                                This location appears on your public business profile.
+                                            </p>
 
                                     <div className="space-y-2">
                                         <Label htmlFor="locationName">Location name</Label>
@@ -517,20 +608,14 @@ function BusinessForm({
                                         fields={{ city: register("city"), region: register("region"), postalCode: register("postalCode") }}
                                         errors={errors}
                                     />
-                                </section>
-                            )}
+                                        </TabsContent>
+                                    )}
 
-                            <Separator />
-
-                            {/* Hours have their own page and save on their own. */}
-                            <section className="space-y-5">
+                                    {/* Hours have their own page and save on their own. */}
+                                    <TabsContent value="hours" keepMounted className="mt-6 space-y-5">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div>
-                                        <h2 className="text-xl font-semibold">
-                                            Opening hours
-                                        </h2>
-
-                                        <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
+                                        <p className="text-sm leading-6 text-[#17233B]/65">
                                             Saved on their own page, so save any other changes here first.
                                         </p>
                                     </div>
@@ -568,7 +653,8 @@ function BusinessForm({
                                         Not set yet.
                                     </p>
                                 )}
-                            </section>
+                                    </TabsContent>
+                                </Tabs>
 
                             {errorMessage && (
                                 <Alert variant="destructive">
@@ -602,6 +688,24 @@ function BusinessForm({
                         </form>
                     </CardContent>
                 </Card>
+
+                    <aside className="lg:sticky lg:top-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                            How customers see you
+                        </p>
+
+                        {/* Not a link: it's the card from the directory. */}
+                        <div className="pointer-events-none mt-3">
+                            <BusinessCard business={preview} />
+                        </div>
+
+                        <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
+                            Your card in the Promotello directory. It updates as
+                            you type; the logo and cover photo save on their own
+                            pages.
+                        </p>
+                    </aside>
+                </div>
             </div>
         </div>
     );
