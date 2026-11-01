@@ -97,6 +97,8 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                         rewardsRedeemed={card.rewardsRedeemed}
                                         active={card.active}
                                         terms={card.terms}
+                                        colour={card.cardColour}
+                                        stampIcon={card.stampIcon}
                                         code={card.code}
                                         qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: svgs[index] }} />}
                                         className={joined === card.programId ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}

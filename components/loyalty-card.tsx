@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { FiGift } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { cardColour } from "@/lib/loyalty-design";
 
 // A customer's stamp card: the one on /dashboard/loyalty, and the preview
 // a business sees while setting theirs up. Both render this, so what the
@@ -19,6 +20,8 @@ export function LoyaltyCard({
     terms,
     code,
     qr,
+    colour,
+    stampIcon,
     className = "",
     id,
 }: {
@@ -34,6 +37,9 @@ export function LoyaltyCard({
     terms?: string | null;
     code: string;
     qr: ReactNode;
+    // The business's chosen look, from its loyalty programme.
+    colour?: string | null;
+    stampIcon?: string | null;
     className?: string;
     id?: string;
 }) {
@@ -41,13 +47,17 @@ export function LoyaltyCard({
         ? reward.trim().charAt(0).toLowerCase() + reward.trim().slice(1)
         : "your reward";
     const rewardReady = stamps >= stampsRequired;
+    const theme = cardColour(colour);
 
     return (
         <article
             id={id}
             className={`overflow-hidden rounded-xl border bg-white shadow-sm ${className}`}
         >
-            <div className="flex items-center gap-3 bg-[#17233B] px-6 py-4 text-white">
+            <div
+                className="flex items-center gap-3 px-6 py-4 text-white"
+                style={{ backgroundColor: theme.header }}
+            >
                 {logoUrl ? (
                     <Image src={logoUrl} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
                 ) : (
@@ -73,13 +83,21 @@ export function LoyaltyCard({
 
             <div className="p-6">
                 {rewardReady && (
-                    <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#FF593F]/10 px-3 py-2 text-sm font-semibold text-[#FF593F]">
+                    <p
+                        className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold"
+                        style={{ backgroundColor: `${theme.stamp}1a`, color: theme.stamp }}
+                    >
                         <FiGift aria-hidden="true" />
                         Reward ready: ask staff to redeem it
                     </p>
                 )}
 
-                <LoyaltyStamps stamps={stamps} required={stampsRequired} />
+                <LoyaltyStamps
+                    stamps={stamps}
+                    required={stampsRequired}
+                    colour={colour}
+                    icon={stampIcon}
+                />
 
                 <p className="mt-3 text-sm text-[#17233B]/70">
                     {stamps} of {stampsRequired} stamps

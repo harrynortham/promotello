@@ -3,14 +3,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessMobileNav } from "@/components/business-mobile-nav";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessSwitcher } from "@/components/business-switcher";
-import { approvalLabel } from "@/lib/business-status";
+import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
@@ -162,9 +161,10 @@ async function BusinessLayoutContent({
                             {currentBusiness.name}
                         </h2>
 
-                        <Badge variant="outline" className="mt-3">
-                            {approvalLabel(currentBusiness.approval_status)}
-                        </Badge>
+                        <BusinessStatusBadge
+                            status={currentBusiness.approval_status}
+                            className="mt-3"
+                        />
 
                         <Separator className="my-5" />
 

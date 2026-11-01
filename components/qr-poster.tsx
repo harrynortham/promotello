@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { cardColour } from "@/lib/loyalty-design";
+
 // The printable QR poster (app/poster/[codeId]), also shown small on the
 // QR page so a business can see what it is about to make. Everything is
 // sized in em from the root font size, so one design covers A4, A5 and a
@@ -14,6 +16,9 @@ export function QrPoster({
     offer,
     qrMarkup,
     link,
+    colour,
+    eyebrow,
+    headline,
     className = "",
 }: {
     width: string;
@@ -27,14 +32,28 @@ export function QrPoster({
     offer?: { discount: string; title: string } | null;
     qrMarkup: string;
     link: string;
+    // The business's chosen poster colour, falling back to navy.
+    colour?: string | null;
+    // Words the business wrote; empty means work them out from the offer.
+    eyebrow?: string | null;
+    headline?: string | null;
     className?: string;
 }) {
+    const theme = cardColour(colour);
+    const pill = eyebrow?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
+    const title = headline?.trim() || (offer ? offer.discount : `See what's on at ${businessName}`);
+    // A written headline is usually a sentence, so it needs smaller type.
+    const titleSize = headline?.trim() ? "3.4em" : offer ? "5.4em" : "3.8em";
+
     return (
         <article
             className={`relative flex flex-col overflow-hidden bg-[#FFF8F0] text-[#17233B] ${className}`}
             style={{ width, height, fontSize: `${fontSize}px` }}
         >
-            <header className="flex items-center gap-[1em] bg-[#17233B] px-[2.5em] py-[1.8em] text-white">
+            <header
+                className="flex items-center gap-[1em] px-[2.5em] py-[1.8em] text-white"
+                style={{ backgroundColor: theme.header }}
+            >
                 {logoUrl && (
                     <Image
                         src={logoUrl}
@@ -54,12 +73,15 @@ export function QrPoster({
             </header>
 
             <div className="flex flex-1 flex-col items-center justify-center px-[2.5em] py-[1.5em] text-center">
-                <p className="rounded-full bg-[#FF593F] px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em] text-white" style={{ fontSize: "0.95em" }}>
-                    {offer ? "Exclusive offer" : "Scan for offers"}
+                <p
+                    className="rounded-full px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em] text-white"
+                    style={{ fontSize: "0.95em", backgroundColor: theme.stamp }}
+                >
+                    {pill}
                 </p>
 
-                <h1 className="mt-[0.5em] font-semibold tracking-tight" style={{ fontSize: offer ? "5.4em" : "3.8em", lineHeight: 1 }}>
-                    {offer ? offer.discount : `See what's on at ${businessName}`}
+                <h1 className="mt-[0.5em] font-semibold tracking-tight" style={{ fontSize: titleSize, lineHeight: 1.05 }}>
+                    {title}
                 </h1>
 
                 {offer && (

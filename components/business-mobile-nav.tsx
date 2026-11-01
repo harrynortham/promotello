@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState, type MouseEvent } from "react";
 import { FiPlus } from "react-icons/fi";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
-import { approvalLabel } from "@/lib/business-status";
+import { BusinessStatusBadge } from "@/components/business-status-badge";
 
 type Business = {
     id: string;
@@ -84,9 +83,10 @@ export function BusinessMobileNav({
                         )}
                         <div className="min-w-0">
                             <SheetTitle className="truncate">{businessName}</SheetTitle>
-                            <Badge variant="outline" className="mt-1">
-                                {approvalLabel(approvalStatus)}
-                            </Badge>
+                            <BusinessStatusBadge
+                                status={approvalStatus}
+                                className="mt-1"
+                            />
                         </div>
                     </div>
                 </SheetHeader>

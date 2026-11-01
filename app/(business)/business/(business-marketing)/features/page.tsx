@@ -125,7 +125,7 @@ export default async function FeaturesPage() {
                 points={[
                     "Claim limits, expiry dates and clear terms",
                     "One voucher per customer per offer",
-                    "On Pro, offers go live straight away",
+                    "Run several offers at once",
                 ]}
                 visual={<VoucherScreen />}
             />

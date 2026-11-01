@@ -122,7 +122,7 @@ const questions = [
     {
         question: "Will my offers appear immediately?",
         answer:
-            "Our team checks every new business first. Once yours is approved, offers on Pro and Growth go live as soon as you create them. On the Free plan, each offer is reviewed before it appears.",
+            "Our team checks every new business first, then reads each offer before it appears, on every plan. Reviews are usually done the same day.",
     },
     {
         question: "What's the difference between Pro and Growth?",

@@ -13,6 +13,8 @@ type CardRow = {
         stamps_required: number;
         reward: string;
         terms: string | null;
+        card_colour: string | null;
+        stamp_icon: string | null;
         is_active: boolean;
         businesses: CardBusiness | CardBusiness[] | null;
     } | null;
@@ -29,6 +31,8 @@ export type CustomerLoyaltyCard = {
     stampsRequired: number;
     reward: string;
     terms: string | null;
+    cardColour: string | null;
+    stampIcon: string | null;
     active: boolean;
     rewardReady: boolean;
     business: CardBusiness | null;
@@ -42,7 +46,7 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
         .select(
             `
                 id, card_code, stamps, rewards_redeemed,
-                loyalty_programs ( id, stamps_required, reward, terms, is_active, businesses ( id, slug, name, logo_url ) )
+                loyalty_programs ( id, stamps_required, reward, terms, card_colour, stamp_icon, is_active, businesses ( id, slug, name, logo_url ) )
             `,
         )
         .eq("user_id", userId)
@@ -64,6 +68,8 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
             stampsRequired: program.stamps_required,
             reward: program.reward,
             terms: program.terms,
+            cardColour: program.card_colour,
+            stampIcon: program.stamp_icon,
             active: program.is_active,
             rewardReady: card.stamps >= program.stamps_required,
             business: Array.isArray(program.businesses) ? program.businesses[0] ?? null : program.businesses,

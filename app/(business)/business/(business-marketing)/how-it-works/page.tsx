@@ -128,7 +128,7 @@ export default async function HowItWorksPage() {
                 body="Pick a reward that suits your margins: a free pastry with a coffee, two for one on quiet afternoons, or a free coffee after nine stamps."
                 points={[
                     "Set claim limits and an end date",
-                    "On Pro, offers go live straight away",
+                    "Run several offers at once",
                     "Share it to WhatsApp, Facebook and Instagram in a tap",
                 ]}
                 visual={

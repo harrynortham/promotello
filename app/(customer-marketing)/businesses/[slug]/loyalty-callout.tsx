@@ -13,6 +13,8 @@ type LoyaltyCalloutProps = {
         id: string;
         stamps_required: number;
         reward: string;
+        card_colour?: string | null;
+        stamp_icon?: string | null;
         terms: string | null;
     };
     card: { stamps: number } | null;
@@ -56,7 +58,13 @@ export function LoyaltyCallout({
                     {program.terms && <p className="mt-2 max-w-md text-xs text-white/55">{program.terms}</p>}
 
                     <div className="mt-5 [&_span]:border-white/25">
-                        <LoyaltyStamps stamps={card?.stamps ?? 0} required={program.stamps_required} size="sm" />
+                        <LoyaltyStamps
+                            stamps={card?.stamps ?? 0}
+                            required={program.stamps_required}
+                            size="sm"
+                            colour={program.card_colour}
+                            icon={program.stamp_icon}
+                        />
                     </div>
 
                     {unavailable && (

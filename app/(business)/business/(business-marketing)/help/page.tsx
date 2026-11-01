@@ -299,7 +299,7 @@ const guides: HelpGuide[] = [
         description: "Customers who follow you hear about new offers.",
         steps: [
             "Customers follow you from your page, an offer page or your QR poster.",
-            "On Pro and Growth, each new offer is emailed to your followers when it goes live.",
+            "On Pro and Growth, each new offer is emailed to your followers once it is approved and goes live.",
             "Your follower count is shown in Analytics.",
         ],
         note: "You see how many followers you have, but not who they are. Every email has an unsubscribe link.",

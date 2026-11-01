@@ -212,7 +212,7 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
     }
 
     if (due.kind === "founding_places") {
-        const proAdds = "Pro adds a digital loyalty card, unlimited live offers that go live as soon as you post them, Google review requests after each visit, and an email to your followers whenever you post a new offer.";
+        const proAdds = "Pro adds a digital loyalty card, as many live offers as you like, Google review requests after each visit, and an email to your followers whenever a new offer of yours goes live.";
         const founding = plans.pro_founding_monthly.price;
 
         const { html, text } = foundingPlacesLeft && foundingPlacesLeft > 0
@@ -379,7 +379,7 @@ export function trialStartedEmail(
     const plan = tier === "growth" ? "Growth" : "Pro";
     const base = `/business/${business.id}`;
     const unlocked = [
-        "Unlocked: a digital loyalty card, unlimited live offers that go live as soon as you post them, Google review requests after each visit, and an email to your followers whenever you post a new offer.",
+        "Unlocked: a digital loyalty card, as many live offers as you like, Google review requests after each visit, and an email to your followers whenever a new offer of yours goes live.",
         ...(tier === "growth"
             ? ["With Growth you also get welcome, birthday and win-back emails that run themselves, quiet-hours offers and a monthly value report."]
             : []),

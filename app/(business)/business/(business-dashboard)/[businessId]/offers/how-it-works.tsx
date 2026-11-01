@@ -7,19 +7,7 @@ import {
     QrGlyph,
     StepFrame,
 } from "@/components/how-it-works-dialog";
-
-function WriteArt() {
-    return (
-        <StepFrame>
-            <rect x="16" y="14" width="40" height="44" rx="6" fill="#FFFFFF" stroke={INK} strokeOpacity="0.15" />
-            <rect x="16" y="14" width="40" height="16" rx="6" fill={CORAL} fillOpacity="0.18" />
-            <rect x="22" y="19" width="16" height="6" rx="3" fill={CORAL} />
-            <rect x="22" y="36" width="28" height="3" rx="1.5" fill={INK} fillOpacity="0.3" />
-            <rect x="22" y="43" width="22" height="3" rx="1.5" fill={INK} fillOpacity="0.2" />
-            <rect x="22" y="50" width="12" height="3" rx="1.5" fill={INK} fillOpacity="0.2" />
-        </StepFrame>
-    );
-}
+import { OfferListedArt, OfferWriteArt } from "@/components/step-art";
 
 function ReviewArt() {
     return (
@@ -30,21 +18,6 @@ function ReviewArt() {
             <rect x="21" y="35" width="18" height="3" rx="1.5" fill={INK} fillOpacity="0.2" />
             <circle cx="48" cy="46" r="13" fill={CORAL} />
             <path d="M42 46.5l4 4 8-9" stroke="#FFFFFF" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </StepFrame>
-    );
-}
-
-function ListedArt() {
-    return (
-        <StepFrame>
-            <rect x="21" y="10" width="30" height="52" rx="7" fill="#FFFFFF" stroke={INK} strokeWidth="2.4" />
-            <rect x="32" y="14" width="8" height="2" rx="1" fill={INK} fillOpacity="0.3" />
-            <rect x="26" y="21" width="20" height="14" rx="3" fill={CORAL} fillOpacity="0.2" />
-            <rect x="29" y="25" width="9" height="4" rx="2" fill={CORAL} />
-            <rect x="26" y="39" width="20" height="8" rx="3" fill={INK} fillOpacity="0.08" />
-            <rect x="29" y="42" width="10" height="2.4" rx="1.2" fill={INK} fillOpacity="0.35" />
-            <rect x="26" y="50" width="20" height="8" rx="3" fill={INK} fillOpacity="0.08" />
-            <rect x="29" y="53" width="13" height="2.4" rx="1.2" fill={INK} fillOpacity="0.35" />
         </StepFrame>
     );
 }
@@ -82,17 +55,17 @@ function RedeemArt() {
 
 const steps = [
     {
-        art: <WriteArt />,
+        art: <OfferWriteArt />,
         title: "Write the offer",
         body: "A title, the discount, when it ends and a photo. The preview beside the form shows exactly how it will look to customers.",
     },
     {
         art: <ReviewArt />,
         title: "We check it over",
-        body: "New offers are reviewed before they go out, usually the same day. On Pro, your offers go live the moment you create them.",
+        body: "Every offer is read by our team before customers see it, usually the same day. It keeps the directory worth browsing, so your offer sits in good company.",
     },
     {
-        art: <ListedArt />,
+        art: <OfferListedArt />,
         title: "It goes live",
         body: "Your offer appears on your business page and in the Promotello directory, where people nearby are browsing for something to try.",
     },

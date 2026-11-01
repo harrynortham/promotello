@@ -18,12 +18,15 @@ type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
+    searchParams: Promise<{
+        created?: string;
+    }>;
 };
 
-async function NewOfferPageContent({ params }: PageProps) {
+async function NewOfferPageContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const { businessId } = await params;
+    const [{ businessId }, { created }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
 
     const {
@@ -51,16 +54,27 @@ async function NewOfferPageContent({ params }: PageProps) {
         redirect(`/business/${businessId}/offers`);
     }
 
-    if (!(await businessHasPro(supabase, businessId))) {
+    if (!created && !(await businessHasPro(supabase, businessId))) {
         const { data: offers } = await supabase
             .from("offers")
             .select("approval_status, expires_at, plan_paused_at")
             .eq("business_id", businessId);
 
-        const liveOffers = (offers ?? []).filter(isLiveOffer).length;
+        const liveOffers = (offers ?? []).filter(isLiveOffer);
 
-        if (liveOffers >= FREE_LIVE_OFFER_LIMIT) {
-            return <OfferLimitReached businessId={businessId} />;
+        if (liveOffers.length >= FREE_LIVE_OFFER_LIMIT) {
+            // An offer waiting for approval already uses the slot, so say
+            // that rather than talking about live offers expiring.
+            const awaitingApproval = liveOffers.every(
+                (offer) => offer.approval_status === "pending",
+            );
+
+            return (
+                <OfferLimitReached
+                    businessId={businessId}
+                    awaitingApproval={awaitingApproval}
+                />
+            );
         }
     }
 
@@ -83,7 +97,13 @@ async function NewOfferPageContent({ params }: PageProps) {
     );
 }
 
-function OfferLimitReached({ businessId }: { businessId: string }) {
+function OfferLimitReached({
+    businessId,
+    awaitingApproval,
+}: {
+    businessId: string;
+    awaitingApproval: boolean;
+}) {
     return (
         <div className="flex items-center justify-center text-[#17233B]">
             <Card className="w-full max-w-lg border-[#17233B]/10 text-center">
@@ -93,13 +113,15 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
                     </p>
 
                     <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-                        You&apos;ve reached your live offer limit
+                        {awaitingApproval
+                            ? "Your offer slot is in use"
+                            : "You've reached your live offer limit"}
                     </h1>
 
                     <p className="mt-4 leading-7 text-[#17233B]/65">
-                        The Free plan includes {FREE_LIVE_OFFER_LIMIT} live
-                        offer. Upgrade to Pro for unlimited offers, or wait for
-                        your current offer to expire.
+                        {awaitingApproval
+                            ? `The Free plan covers ${FREE_LIVE_OFFER_LIMIT} offer at a time, and the one waiting for approval already counts. Upgrade to Pro for unlimited offers, or delete that offer to write a different one.`
+                            : `The Free plan includes ${FREE_LIVE_OFFER_LIMIT} live offer. Upgrade to Pro for unlimited offers, or wait for your current offer to expire.`}
                     </p>
 
                     <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { FiPlus } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -14,7 +15,11 @@ import {
     businessHasPro,
     isLiveOffer,
 } from "@/lib/billing";
-import { OfferCard } from "@/components/offer-card";
+import {
+    OfferListedArt,
+    OfferWriteArt,
+    RedeemMarkArt,
+} from "@/components/step-art";
 import { OffersHowItWorks } from "./how-it-works";
 import { SharePanel } from "@/components/share-panel";
 import { offerShareCaption, shareLink } from "@/lib/share";
@@ -57,31 +62,25 @@ type Membership = {
     businesses: BusinessSummary | BusinessSummary[] | null;
 };
 
-// Shown in the empty state, on the business's own card, so they can see
-// what they are about to create. The dates are relative so the card's
-// "Ends in …" badge reads naturally.
-const exampleOffers = [
+// What happens once an offer exists, for the empty state. Deliberately
+// not sample offer cards: those read as offers the business already has.
+const offerJourney = [
     {
-        discount: "20% off",
-        title: "20% off your first visit",
-        description:
-            "New customers get a fifth off everything on the menu, any day of the week.",
-        availability: "Available Monday to Friday",
-        endsInDays: 10,
+        art: <OfferWriteArt />,
+        title: "You write it",
+        body: "A title, the discount and when it ends. The preview beside the form shows how it will look as you type.",
     },
     {
-        discount: "2 for 1",
-        title: "Two coffees for the price of one",
-        description:
-            "Bring a friend and share a morning brew before eleven.",
-        availability: "Available before 11am",
-        endsInDays: 24,
+        art: <OfferListedArt />,
+        title: "Customers find it",
+        body: "Once approved it appears on your business page and in the Promotello directory, where people nearby are browsing.",
+    },
+    {
+        art: <RedeemMarkArt />,
+        title: "You redeem it",
+        body: "Claiming saves a voucher to their phone. Scan it at the till and it is marked used, so it can't be claimed twice.",
     },
 ];
-
-function inDays(days: number) {
-    return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
-}
 
 const statusLabels: Record<OfferStatus, string> = {
     pending: "Pending approval",
@@ -245,6 +244,10 @@ async function OffersContent({ params }: PageProps) {
     );
     const hasPro = await businessHasPro(supabase, businessId);
     const liveOfferCount = typedOffers.filter(isLiveOffer).length;
+    // On Free the one offer slot may already be taken, in which case the
+    // way forward is Pro rather than another Create offer button.
+    const canCreateOffer =
+        canManageOffers && (hasPro || liveOfferCount < FREE_LIVE_OFFER_LIMIT);
     const pausedOfferCount = typedOffers.filter(
         (offer) => offer.plan_paused_at !== null,
     ).length;
@@ -302,62 +305,61 @@ async function OffersContent({ params }: PageProps) {
                         </AlertDescription>
                     </Alert>
                 ) : typedOffers.length === 0 ? (
-                    <Card className="mt-10 border-[#17233B]/10 text-center">
-                        <CardContent className="p-10 sm:p-14">
-                            <h2 className="text-2xl font-semibold">
-                                No offers yet
-                            </h2>
+                    <>
+                        <div className="mt-10 rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
+                            <h2 className="text-xl font-semibold">No offers yet</h2>
 
-                            <p className="mx-auto mt-3 max-w-md leading-7 text-[#17233B]/65">
+                            <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
                                 {canManageOffers
                                     ? "Create your first offer and submit it for approval."
                                     : "This business has not created any offers yet."}
                             </p>
 
                             {canManageOffers && (
-                                <>
-                                    <Button
-                                        render={
-                                            <Link href={`/business/${businessId}/offers/new`} />
-                                        }
-                                        nativeButton={false}
-                                        variant="default"
-                                        size="lg"
-                                        className="mt-7"
-                                    >
-                                        Create offer
-                                    </Button>
-
-                                    <p className="mt-12 text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
-                                        How customers will see it
-                                    </p>
-
-                                    {/* Not links: they stand in for the real thing. */}
-                                    <div className="pointer-events-none mx-auto mt-5 grid max-w-3xl gap-5 text-left sm:grid-cols-2">
-                                        {exampleOffers.map((example) => (
-                                            <OfferCard
-                                                key={example.title}
-                                                slug=""
-                                                discount={example.discount}
-                                                title={example.title}
-                                                description={example.description}
-                                                availability={example.availability}
-                                                expiresAt={inDays(example.endsInDays)}
-                                                business={business?.name ?? "Your business"}
-                                                businessLogoUrl={business?.logo_url}
-                                                example
-                                            />
-                                        ))}
-                                    </div>
-
-                                </>
+                                <Button
+                                    render={
+                                        <Link href={`/business/${businessId}/offers/new`} />
+                                    }
+                                    nativeButton={false}
+                                    variant="default"
+                                    size="lg"
+                                    className="mt-7"
+                                >
+                                    Create offer
+                                </Button>
                             )}
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <section className="mt-10 space-y-5">
+                        </div>
+
                         {canManageOffers && (
-                            <div className="flex justify-end">
+                            <section className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                                <h3 className="text-lg font-semibold">
+                                    What happens after you create one
+                                </h3>
+
+                                <ol className="mt-6 grid gap-8 sm:grid-cols-3">
+                                    {offerJourney.map((step, index) => (
+                                        <li key={step.title}>
+                                            {step.art}
+
+                                            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                                                Step {index + 1}
+                                            </p>
+
+                                            <p className="mt-1 font-semibold">{step.title}</p>
+
+                                            <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
+                                                {step.body}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </section>
+                        )}
+                    </>
+                ) : (
+                    <section className="mt-10">
+                        {canCreateOffer && (
+                            <div className="mb-5 flex justify-end">
                                 <Button
                                     render={
                                         <Link href={`/business/${businessId}/offers/new`} />
@@ -371,6 +373,7 @@ async function OffersContent({ params }: PageProps) {
                             </div>
                         )}
 
+                        <div className="grid gap-5 xl:grid-cols-2">
                         {typedOffers.map((offer) => {
                             const remainingRedemptions =
                                 offer.max_redemptions === null
@@ -525,6 +528,64 @@ async function OffersContent({ params }: PageProps) {
                                 </Card>
                             );
                         })}
+
+                        {canManageOffers && (
+                            <div className="flex h-full min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
+                                <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+                                    <FiPlus aria-hidden="true" className="size-5" />
+                                </span>
+
+                                {canCreateOffer ? (
+                                    <>
+                                        <h2 className="mt-4 text-lg font-semibold">
+                                            Add another offer
+                                        </h2>
+
+                                        <p className="mt-2 max-w-sm text-sm leading-6 text-[#17233B]/65">
+                                            Run as many as you like at once. A
+                                            second offer gives people another
+                                            reason to choose you.
+                                        </p>
+
+                                        <Button
+                                            render={
+                                                <Link href={`/business/${businessId}/offers/new`} />
+                                            }
+                                            nativeButton={false}
+                                            size="lg"
+                                            className="mt-5"
+                                        >
+                                            Create offer
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h2 className="mt-4 text-lg font-semibold">
+                                            Add another offer
+                                        </h2>
+
+                                        <p className="mt-2 max-w-sm text-sm leading-6 text-[#17233B]/65">
+                                            The Free plan covers {FREE_LIVE_OFFER_LIMIT}{" "}
+                                            offer at a time. Pro lets you run
+                                            several together, so you can test
+                                            which one brings people in.
+                                        </p>
+
+                                        <Button
+                                            render={
+                                                <Link href={`/business/${businessId}/billing`} />
+                                            }
+                                            nativeButton={false}
+                                            size="lg"
+                                            className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                        >
+                                            Upgrade to Pro
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                        </div>
                     </section>
                 )}
             </div>
