@@ -28,6 +28,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { UserAvatar } from "@/components/site/user-avatar";
+import { initialsFor } from "@/lib/user-profile";
 import { createClient } from "@/utils/supabase/client";
 import { handOverBusiness, inviteTeamMember, type InviteResult } from "./actions";
 
@@ -350,7 +352,10 @@ export default function TeamManagement({
 
                                 <Select name="role" defaultValue="member">
                                     <SelectTrigger id="role">
-                                        <SelectValue placeholder="Select a role" />
+                                        <SelectValue
+                                            placeholder="Select a role"
+                                            className="capitalize"
+                                        />
                                     </SelectTrigger>
 
                                     <SelectContent>
@@ -361,6 +366,7 @@ export default function TeamManagement({
                             </div>
 
                             <Button
+                                size="lg"
                                 type="submit"
                                 disabled={isSubmitting}
                                 variant="default"
@@ -387,19 +393,25 @@ export default function TeamManagement({
                             members.map((member) => (
                                 <div key={member.user_id}>
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="font-medium">
-                                                {member.email ?? "Email unavailable"}
-                                            </p>
+                                        <div className="flex items-center gap-3">
+                                            <UserAvatar
+                                                initials={initialsFor("", member.email ?? "")}
+                                            />
 
-                                            <Badge
-                                                variant="outline"
-                                                className={`mt-2 capitalize ${roleBadgeClass(
-                                                    member.role,
-                                                )}`}
-                                            >
-                                                {member.role}
-                                            </Badge>
+                                            <div>
+                                                <p className="font-medium">
+                                                    {member.email ?? "Email unavailable"}
+                                                </p>
+
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`mt-2 capitalize ${roleBadgeClass(
+                                                        member.role,
+                                                    )}`}
+                                                >
+                                                    {member.role}
+                                                </Badge>
+                                            </div>
                                         </div>
 
                                         {member.role !== "owner" && (
@@ -415,7 +427,7 @@ export default function TeamManagement({
                                                     disabled={activeId === member.user_id}
                                                 >
                                                     <SelectTrigger className="w-32">
-                                                        <SelectValue />
+                                                        <SelectValue className="capitalize" />
                                                     </SelectTrigger>
 
                                                     <SelectContent>
@@ -534,7 +546,7 @@ export default function TeamManagement({
                                 />
                             </div>
 
-                            <Button type="submit" disabled={isHandingOver}>
+                            <Button size="lg" type="submit" disabled={isHandingOver}>
                                 {isHandingOver ? "Creating link…" : "Send hand-over"}
                             </Button>
                         </form>
@@ -566,6 +578,7 @@ export default function TeamManagement({
 
                         <DialogFooter>
                             <Button
+                                size="lg"
                                 type="button"
                                 variant="outline"
                                 onClick={() => setConfirmationAction(null)}
@@ -575,6 +588,7 @@ export default function TeamManagement({
                             </Button>
 
                             <Button
+                                size="lg"
                                 type="button"
                                 variant="destructive"
                                 onClick={confirmAction}

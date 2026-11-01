@@ -138,7 +138,7 @@ export default function HelpCentre({
                                     setSearch(event.target.value)
                                 }
                                 placeholder={searchPlaceholder}
-                                className="h-12 bg-background pl-12"
+                                className="bg-background pl-12"
                             />
                         </div>
                     </div>

@@ -202,7 +202,6 @@ export default function ForgotPasswordPage() {
                                             maxLength={254}
                                             placeholder="you@example.com"
                                             readOnly={isSubmitting}
-                                            className="h-12"
                                             {...register("email")}
                                             {...invalidProps("reset-email-error", errors.email)}
                                         />

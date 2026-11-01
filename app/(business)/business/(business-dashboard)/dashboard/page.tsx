@@ -250,6 +250,7 @@ async function BusinessDashboardContent() {
             </ul>
 
             <Button
+                size="lg"
                 render={<Link href="/onboarding" />}
                 nativeButton={false}
                 variant="ghost"

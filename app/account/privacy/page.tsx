@@ -169,6 +169,7 @@ export default function AccountPrivacyPage() {
                     </p>
 
                     <Button
+                        size="lg"
                         render={<Link href="/contact" />}
                         nativeButton={false}
                         variant="outline"

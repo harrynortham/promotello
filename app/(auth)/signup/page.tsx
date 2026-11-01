@@ -8,12 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
-    FiArrowRight,
     FiCheckCircle,
     FiEye,
     FiEyeOff,
-    FiLock,
-    FiMail,
     FiUserPlus,
 } from "react-icons/fi";
 
@@ -118,7 +115,6 @@ export default function SignupPage() {
                             size="sm"
                         >
                             Sign in
-                            <FiArrowRight aria-hidden="true" />
                         </Button> */}
                     </div>
 
@@ -165,7 +161,6 @@ export default function SignupPage() {
                                     className="mt-7"
                                 >
                                     Continue to sign in
-                                    <FiArrowRight aria-hidden="true" />
                                 </Button>
 
                                 <p className="mt-6 text-sm leading-7 text-muted-foreground">
@@ -189,8 +184,8 @@ export default function SignupPage() {
                                     />
                                 </span> */}
 
-                                <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
-                                    Make yourself at home.
+                                <h1 className="mt-6 text-2xl font-semibold tracking-tight text-nowrap sm:text-4xl">
+                                    Welcome to Promotello
                                 </h1>
 
                                 <p className="mt-4 leading-7 text-muted-foreground">
@@ -207,14 +202,7 @@ export default function SignupPage() {
                                     aria-busy={isSubmitting}
                                 >
                                     <div className="space-y-2">
-                                        <Label
-                                            htmlFor="signup-email"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiMail
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
+                                        <Label htmlFor="signup-email">
                                             Email address
                                         </Label>
 
@@ -225,7 +213,6 @@ export default function SignupPage() {
                                             placeholder="you@example.com"
                                             maxLength={254}
                                             readOnly={isSubmitting}
-                                            className="h-12"
                                             {...register("email")}
                                             {...invalidProps("signup-email-error", errors.email)}
                                         />
@@ -234,14 +221,7 @@ export default function SignupPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label
-                                            htmlFor="signup-password"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiLock
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
+                                        <Label htmlFor="signup-password">
                                             Password
                                         </Label>
 
@@ -256,10 +236,9 @@ export default function SignupPage() {
                                                 autoComplete="new-password"
                                                 placeholder="Create a password"
                                                 readOnly={isSubmitting}
-                                                aria-describedby="signup-password-help"
-                                                className="h-12 pr-12"
+                                                className="pr-12"
                                                 {...register("password")}
-                                                aria-invalid={errors.password ? true : undefined}
+                                                {...invalidProps("signup-password-error", errors.password)}
                                             />
 
                                             <Button
@@ -288,16 +267,8 @@ export default function SignupPage() {
                                             </Button>
                                         </div>
 
-                                        <p
-                                            id="signup-password-help"
-                                            className={`text-xs leading-6 ${errors.password ? "text-destructive" : "text-muted-foreground"}`}
-                                            role={errors.password ? "alert" : undefined}
-                                        >
-                                            {errors.password?.message ??
-                                                "Use at least 8 characters and choose a unique password."}
-                                        </p>
+                                        <FieldError id="signup-password-error" message={errors.password?.message} />
                                     </div>
-
 
                                     {errorMessage && (
                                         <Alert variant="destructive">
@@ -311,26 +282,6 @@ export default function SignupPage() {
                                         </Alert>
                                     )}
 
-                                    <p className="text-xs leading-6 text-muted-foreground">
-                                        By creating an account, you agree to
-                                        our{" "}
-                                        <Link
-                                            href="/legal/terms"
-                                            className="text-foreground underline underline-offset-4"
-                                        >
-                                            Terms of Service
-                                        </Link>
-                                        . Read our{" "}
-                                        <Link
-                                            href="/legal/privacy"
-                                            className="text-foreground underline underline-offset-4"
-                                        >
-                                            Privacy Policy
-                                        </Link>{" "}
-                                        to understand how we handle your
-                                        information.
-                                    </p>
-
                                     <Button
                                         type="submit"
                                         size="lg"
@@ -340,11 +291,10 @@ export default function SignupPage() {
                                         {isSubmitting
                                             ? "Creating your account…"
                                             : "Create account"}
-                                        <FiArrowRight aria-hidden="true" />
                                     </Button>
                                 </form>
 
-                                <div className="mt-8 border-t pt-6">
+                                <div className="mt-8">
                                     <p className="text-center text-sm leading-7 text-muted-foreground">
                                         Already have an account?{" "}
                                         <Link
@@ -355,32 +305,29 @@ export default function SignupPage() {
                                         </Link>
                                     </p>
                                 </div>
+
+                                <p className="mt-6 border-t pt-6 text-xs leading-6 text-muted-foreground">
+                                    By creating an account, you agree to
+                                    our{" "}
+                                    <Link
+                                        href="/legal/terms"
+                                        className="text-foreground underline underline-offset-4"
+                                    >
+                                        Terms of Service
+                                    </Link>
+                                    . Read our{" "}
+                                    <Link
+                                        href="/legal/privacy"
+                                        className="text-foreground underline underline-offset-4"
+                                    >
+                                        Privacy Policy
+                                    </Link>{" "}
+                                    to understand how we handle your
+                                    information.
+                                </p>
                             </>
                         )}
                     </div>
-
-                    <nav
-                        aria-label="Registration support and policies"
-                        className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground"
-                    >
-                        <Link href="/contact" className="hover:underline">
-                            Need help?
-                        </Link>
-
-                        <Link
-                            href="/legal/privacy"
-                            className="hover:underline"
-                        >
-                            Privacy
-                        </Link>
-
-                        <Link
-                            href="/legal/terms"
-                            className="hover:underline"
-                        >
-                            Terms
-                        </Link>
-                    </nav>
                 </section>
 
                 <aside

@@ -162,7 +162,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
                                 <Label htmlFor="event-description">Description</Label>
                                 <Textarea id="event-description" name="description" rows={4} maxLength={2000} />
                             </div>
-                            <SubmitButton pendingLabel="Adding…">Add event</SubmitButton>
+                            <SubmitButton size="lg" pendingLabel="Adding…">Add event</SubmitButton>
                         </form>
                     </CardContent>
                 </Card>
@@ -204,7 +204,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
                                         <form action={deleteEvent}>
                                             <input type="hidden" name="businessId" value={businessId} />
                                             <input type="hidden" name="eventId" value={event.id} />
-                                            <SubmitButton variant="outline" pendingLabel="Removing…">
+                                            <SubmitButton size="lg" variant="outline" pendingLabel="Removing…">
                                                 <FiTrash2 aria-hidden="true" />
                                                 Remove
                                             </SubmitButton>

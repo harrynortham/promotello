@@ -80,7 +80,7 @@ export function DeleteAccount({ outcomes }: { outcomes: DeletionOutcome[] }) {
                     </p>
                 )}
 
-                <Button type="submit" variant="destructive" disabled={blockers.length > 0 || pending}>
+                <Button size="lg" type="submit" variant="destructive" disabled={blockers.length > 0 || pending}>
                     {pending ? "Deleting…" : "Delete my account"}
                 </Button>
             </form>

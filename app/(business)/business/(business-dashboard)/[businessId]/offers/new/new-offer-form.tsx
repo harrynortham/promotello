@@ -149,6 +149,7 @@ export default function NewOfferForm({
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <Button
+                                size="lg"
                                 render={<Link href={`/business/${businessId}`} />}
                                 nativeButton={false}
                                 variant="outline"
@@ -157,6 +158,7 @@ export default function NewOfferForm({
                             </Button>
 
                             <Button
+                                size="lg"
                                 type="button"
                                 variant="default"
                                 onClick={() => setCreatedOffer(null)}

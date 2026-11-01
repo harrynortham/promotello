@@ -324,6 +324,7 @@ export default function NotificationSettingsForm({
                             </p>
 
                             <Button
+                                size="lg"
                                 type="submit"
                                 disabled={isSaving || !hasChanges}
                             >

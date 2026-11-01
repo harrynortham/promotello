@@ -206,7 +206,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
                 {!current && customer && (
                     <form action={openBillingPortal} className="mt-6">
                         <input type="hidden" name="businessId" value={businessId} />
-                        <SubmitButton variant="outline" pendingLabel="Opening…">
+                        <SubmitButton size="lg" variant="outline" pendingLabel="Opening…">
                             View past invoices
                         </SubmitButton>
                     </form>
@@ -272,6 +272,7 @@ async function CurrentPlan({
                 <form action={openBillingPortal}>
                     <input type="hidden" name="businessId" value={businessId} />
                     <SubmitButton
+                        size="lg"
                         pendingLabel="Opening…"
                         className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                     >
@@ -350,7 +351,7 @@ function ChangePlan({ businessId, currentPlan }: { businessId: string; currentPl
                     <form key={key} action={changePlan}>
                         <input type="hidden" name="businessId" value={businessId} />
                         <input type="hidden" name="plan" value={key} />
-                        <SubmitButton variant="outline" pendingLabel="Switching…">
+                        <SubmitButton size="lg" variant="outline" pendingLabel="Switching…">
                             {plans[key].name} · {plans[key].price}/{plans[key].interval}
                         </SubmitButton>
                     </form>
@@ -376,6 +377,7 @@ function CheckoutButton({
             <input type="hidden" name="businessId" value={businessId} />
             <input type="hidden" name="plan" value={plan} />
             <SubmitButton
+                size="lg"
                 pendingLabel="Redirecting…"
                 variant={primary ? "default" : "outline"}
                 className={primary ? "h-11 w-full text-base" : "w-full"}

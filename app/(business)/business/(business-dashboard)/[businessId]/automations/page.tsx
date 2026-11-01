@@ -151,7 +151,7 @@ function AutomationCard({
                         <p className="text-sm text-[#17233B]/70">
                             Last 30 days: {stats.issued} sent · {stats.used} used
                         </p>
-                        <SubmitButton pendingLabel="Saving…" variant="outline">
+                        <SubmitButton size="lg" pendingLabel="Saving…" variant="outline">
                             Save
                         </SubmitButton>
                     </div>

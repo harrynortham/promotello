@@ -200,7 +200,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                         id="qr-target"
                                         name="target"
                                         defaultValue="business"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                        className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm"
                                     >
                                         <option value="business">Your business page</option>
                                         {(offers ?? []).map((offer) => (
@@ -211,7 +211,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                     </select>
                                 </div>
 
-                                <SubmitButton pendingLabel="Creating…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+                                <SubmitButton size="lg" pendingLabel="Creating…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
                                     Create QR code
                                 </SubmitButton>
                             </form>

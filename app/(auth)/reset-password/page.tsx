@@ -178,10 +178,10 @@ export default function ResetPasswordPage() {
                                 className="space-y-5"
                             >
                                 <Skeleton className="size-12 rounded-2xl" />
-                                <Skeleton className="h-10 w-3/4" />
+                                <Skeleton className="w-3/4" />
                                 <Skeleton className="h-6 w-full" />
-                                <Skeleton className="h-12 w-full" />
-                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="w-full" />
+                                <Skeleton className="w-full" />
 
                                 <p className="text-sm text-muted-foreground">
                                     Checking your session…
@@ -272,7 +272,7 @@ export default function ResetPasswordPage() {
                                                 placeholder="Create a new password"
                                                 readOnly={isSubmitting}
                                                 aria-describedby="password-help"
-                                                className="h-12 pr-12"
+                                                className="pr-12"
                                                 {...register("password")}
                                                 aria-invalid={errors.password ? true : undefined}
                                             />
@@ -335,7 +335,6 @@ export default function ResetPasswordPage() {
                                             autoComplete="new-password"
                                             placeholder="Enter your new password again"
                                             readOnly={isSubmitting}
-                                            className="h-12"
                                             {...register("confirmPassword")}
                                             {...invalidProps("reset-confirm-error", errors.confirmPassword)}
                                         />

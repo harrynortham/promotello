@@ -37,7 +37,7 @@ export function WalletHeader({ title, description }: { title: string; descriptio
                 <p className="mt-2 max-w-xl text-[#17233B]/65">{description}</p>
             </div>
 
-            <Button render={<Link href="/offers" />} nativeButton={false} variant="outline" className="w-fit shrink-0">
+            <Button size="lg" render={<Link href="/offers" />} nativeButton={false} variant="outline" className="w-fit shrink-0">
                 Find more offers
                 <FiArrowRight aria-hidden="true" />
             </Button>
@@ -147,7 +147,7 @@ export function WalletEmpty({ title, description }: { title: string; description
             <FiGift aria-hidden="true" className="mx-auto size-8 text-[#FF593F]" />
             <h2 className="mt-4 text-xl font-semibold">{title}</h2>
             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">{description}</p>
-            <Button render={<Link href="/offers" />} nativeButton={false} className="mt-6">
+            <Button size="lg" render={<Link href="/offers" />} nativeButton={false} className="mt-6">
                 Browse offers
                 <FiArrowRight aria-hidden="true" />
             </Button>

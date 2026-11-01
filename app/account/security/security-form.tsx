@@ -348,7 +348,7 @@ export default function SecurityForm({
                         </div>
 
                         <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5">
-                            <Button type="submit" disabled={isBusy}>
+                            <Button size="lg" type="submit" disabled={isBusy}>
                                 {busyForm === "password"
                                     ? "Saving password…"
                                     : hasPassword
@@ -464,7 +464,7 @@ export default function SecurityForm({
                         </div>
 
                         <div className="border-t pt-5">
-                            <Button type="submit" disabled={isBusy}>
+                            <Button size="lg" type="submit" disabled={isBusy}>
                                 {busyForm === "email"
                                     ? "Requesting change…"
                                     : "Update email address"}

@@ -351,6 +351,7 @@ export default function ProfileForm({
                         <div>
                             <div className="flex flex-wrap gap-3">
                                 <Button
+                                    size="lg"
                                     type="button"
                                     variant="outline"
                                     disabled={isBusy}
@@ -368,6 +369,7 @@ export default function ProfileForm({
 
                                 {avatarPath && (
                                     <Button
+                                        size="lg"
                                         type="button"
                                         variant="ghost"
                                         disabled={isBusy}
@@ -461,7 +463,7 @@ export default function ProfileForm({
                                     aria-label="Birthday day"
                                     {...register("birthDay")}
                                     {...invalidProps("profile-birthday-error", errors.birthDay)}
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    className="h-12 rounded-md border border-input bg-background px-3 text-sm"
                                 >
                                     <option value="">Day</option>
                                     {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
@@ -471,7 +473,7 @@ export default function ProfileForm({
                                 <select
                                     aria-label="Birthday month"
                                     {...register("birthMonth")}
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    className="h-12 rounded-md border border-input bg-background px-3 text-sm"
                                 >
                                     <option value="">Month</option>
                                     {monthNames.map((month, index) => (
@@ -509,7 +511,7 @@ export default function ProfileForm({
                         </div>
 
                         <div className="border-t pt-6">
-                            <Button type="submit" disabled={isBusy}>
+                            <Button size="lg" type="submit" disabled={isBusy}>
                                 {isSaving
                                     ? "Saving changes…"
                                     : "Save changes"}

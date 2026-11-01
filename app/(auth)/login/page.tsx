@@ -8,11 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
-    FiArrowRight,
     FiEye,
     FiEyeOff,
     FiLock,
-    FiMail,
 } from "react-icons/fi";
 
 import {
@@ -116,7 +114,6 @@ function LoginContent() {
                             size="sm"
                         >
                             Create an account
-                            <FiArrowRight aria-hidden="true" />
                         </Button> */}
                     </div>
 
@@ -128,14 +125,9 @@ function LoginContent() {
                             />
                         </span> */}
 
-                        <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
-                            Welcome back.
+                        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-nowrap sm:text-4xl">
+                            Log in to Promotello.
                         </h1>
-
-                        <p className="mt-4 leading-7 text-muted-foreground">
-                            Enter your details to sign in to your Promotello
-                            account.
-                        </p>
 
                         {hasCallbackError && (
                             <Alert className="mt-6">
@@ -175,14 +167,7 @@ function LoginContent() {
                             aria-busy={isSubmitting}
                         >
                             <div className="space-y-2">
-                                <Label
-                                    htmlFor="login-email"
-                                    className="flex items-center gap-2"
-                                >
-                                    <FiMail
-                                        aria-hidden="true"
-                                        className="size-4 text-muted-foreground"
-                                    />
+                                <Label htmlFor="login-email">
                                     Email address
                                 </Label>
 
@@ -192,7 +177,6 @@ function LoginContent() {
                                     autoComplete="username"
                                     placeholder="you@example.com"
                                     readOnly={isSubmitting}
-                                    className="h-12"
                                     {...register("email")}
                                     {...invalidProps("login-email-error", errors.email)}
                                 />
@@ -201,14 +185,7 @@ function LoginContent() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label
-                                    htmlFor="login-password"
-                                    className="flex items-center gap-2"
-                                >
-                                    <FiLock
-                                        aria-hidden="true"
-                                        className="size-4 text-muted-foreground"
-                                    />
+                                <Label htmlFor="login-password">
                                     Password
                                 </Label>
 
@@ -223,7 +200,7 @@ function LoginContent() {
                                         autoComplete="current-password"
                                         placeholder="Your password"
                                         readOnly={isSubmitting}
-                                        className="h-12 pr-12"
+                                        className="pr-12"
                                         {...register("password")}
                                         {...invalidProps("login-password-error", errors.password)}
                                     />
@@ -255,15 +232,6 @@ function LoginContent() {
                                 </div>
 
                                 <FieldError id="login-password-error" message={errors.password?.message} />
-
-                                <div className="text-right">
-                                    <Link
-                                        href="/forgot-password"
-                                        className="text-xs font-medium underline-offset-4 hover:underline"
-                                    >
-                                        Forgot password?
-                                    </Link>
-                                </div>
                             </div>
 
                             {errorMessage && (
@@ -284,12 +252,20 @@ function LoginContent() {
                                 size="lg"
                                 className="w-full"
                             >
-                                {isSubmitting ? "Signing in…" : "Sign in"}
-                                <FiArrowRight aria-hidden="true" />
+                                {isSubmitting ? "Logging in…" : "Log in"}
                             </Button>
+
+                            <div className="text-center">
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-xs font-medium underline-offset-4 hover:underline"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                         </form>
 
-                        <div className="mt-8 border-t pt-6">
+                        <div className="mt-6 border-t pt-6">
                             <p className="text-center text-sm leading-7 text-muted-foreground">
                                 Don’t have an account?{" "}
                                 <Link
@@ -301,29 +277,6 @@ function LoginContent() {
                             </p>
                         </div>
                     </div>
-
-                    <nav
-                        aria-label="Sign-in support and policies"
-                        className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground"
-                    >
-                        <Link href="/contact" className="hover:underline">
-                            Need help?
-                        </Link>
-
-                        <Link
-                            href="/legal/privacy"
-                            className="hover:underline"
-                        >
-                            Privacy
-                        </Link>
-
-                        <Link
-                            href="/legal/terms"
-                            className="hover:underline"
-                        >
-                            Terms
-                        </Link>
-                    </nav>
                 </section>
 
                 <aside
@@ -363,11 +316,11 @@ function LoginLoading() {
                     className="w-full max-w-md space-y-5"
                 >
                     <Skeleton className="size-12 rounded-2xl" />
-                    <Skeleton className="h-12 w-3/4" />
+                    <Skeleton className="w-3/4" />
                     <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="w-full" />
+                    <Skeleton className="w-full" />
+                    <Skeleton className="w-full" />
                 </div>
             </div>
 

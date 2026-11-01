@@ -72,7 +72,7 @@ function ProgramForm({
                         id="stamps-required"
                         name="stampsRequired"
                         defaultValue={program?.stamps_required ?? 8}
-                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm"
                     >
                         {Array.from({ length: 18 }, (_, index) => index + 3).map((count) => (
                             <option key={count} value={count}>
@@ -108,7 +108,7 @@ function ProgramForm({
                 />
             </div>
 
-            <SubmitButton pendingLabel="Saving…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+            <SubmitButton size="lg" pendingLabel="Saving…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
                 {submitLabel}
             </SubmitButton>
         </form>
@@ -282,7 +282,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             className="font-mono uppercase"
                                             autoComplete="off"
                                         />
-                                        <SubmitButton pendingLabel="Finding…">Find card</SubmitButton>
+                                        <SubmitButton size="lg" pendingLabel="Finding…">Find card</SubmitButton>
                                     </form>
 
                                     <dl className="mt-8 grid grid-cols-3 gap-3 text-center">
