@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -9,16 +8,25 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
-import { lookUpLoyaltyCard, saveLoyaltyProgram, setLoyaltyProgramActive } from "./actions";
+import { lookUpLoyaltyCard, setLoyaltyProgramActive } from "./actions";
+import { LoyaltyHowItWorks } from "./how-it-works";
+import { LoyaltyCardBuilder, ProgramSettingsForm } from "./program-form";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
     searchParams: Promise<{ error?: string; saved?: string }>;
+};
+
+type LoyaltyCardRow = {
+    id: string;
+    card_code: string;
+    stamps: number;
+    rewards_redeemed: number;
+    created_at: string;
+    last_stamped_at: string | null;
 };
 
 type Program = {
@@ -44,74 +52,10 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <Skeleton className="h-10 w-64 rounded-md" />
-                <Skeleton className="mt-8 h-64 rounded-2xl" />
+                <Skeleton className="h-10 w-64 rounded-lg" />
+                <Skeleton className="mt-8 h-64 rounded-xl" />
             </div>
         </div>
-    );
-}
-
-function ProgramForm({
-    businessId,
-    program,
-    submitLabel,
-}: {
-    businessId: string;
-    program: Program | null;
-    submitLabel: string;
-}) {
-    return (
-        <form action={saveLoyaltyProgram} className="space-y-5">
-            <input type="hidden" name="businessId" value={businessId} />
-            {program && <input type="hidden" name="programId" value={program.id} />}
-
-            <div className="grid gap-5 sm:grid-cols-[160px_1fr]">
-                <div className="space-y-2">
-                    <Label htmlFor="stamps-required">Stamps needed</Label>
-                    <select
-                        id="stamps-required"
-                        name="stampsRequired"
-                        defaultValue={program?.stamps_required ?? 8}
-                        className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    >
-                        {Array.from({ length: 18 }, (_, index) => index + 3).map((count) => (
-                            <option key={count} value={count}>
-                                {count} stamps
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="reward">Reward</Label>
-                    <Input
-                        id="reward"
-                        name="reward"
-                        required
-                        minLength={2}
-                        maxLength={80}
-                        defaultValue={program?.reward}
-                        placeholder="A free coffee of your choice"
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="terms">Terms (optional)</Label>
-                <Textarea
-                    id="terms"
-                    name="terms"
-                    maxLength={500}
-                    rows={3}
-                    defaultValue={program?.terms ?? ""}
-                    placeholder="One stamp per visit when you spend £3 or more."
-                />
-            </div>
-
-            <SubmitButton size="lg" pendingLabel="Saving…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
-                {submitLabel}
-            </SubmitButton>
-        </form>
     );
 }
 
@@ -142,7 +86,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
     const canManage = ["owner", "admin"].includes(membership.role);
 
-    const [{ data: programs }, hasPro] = await Promise.all([
+    const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
         supabase
             .from("loyalty_programs")
             .select("id, stamps_required, reward, terms, is_active")
@@ -150,18 +94,27 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
             .order("is_active", { ascending: false })
             .order("created_at", { ascending: false })
             .limit(1),
+        supabase
+            .from("businesses")
+            .select("name, logo_url")
+            .eq("id", businessId)
+            .maybeSingle(),
         businessHasPro(supabase, businessId),
     ]);
 
     const program = (programs?.[0] ?? null) as Program | null;
 
     let stats = { members: 0, stampsThisWeek: 0, rewards: 0 };
+    let cardList: LoyaltyCardRow[] = [];
 
     if (program) {
         const { data: cards } = await supabase
             .from("loyalty_cards")
-            .select("id, rewards_redeemed")
-            .eq("program_id", program.id);
+            .select("id, card_code, stamps, rewards_redeemed, created_at, last_stamped_at")
+            .eq("program_id", program.id)
+            .order("created_at", { ascending: false });
+
+        cardList = (cards ?? []) as LoyaltyCardRow[];
 
         const cardIds = (cards ?? []).map((card) => card.id);
         const { count } = cardIds.length
@@ -183,17 +136,25 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     return (
         <div className="text-[#17233B]">
             <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                    Loyalty card
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                    Reward your regulars
-                </h1>
-                <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                    A digital stamp card customers keep on their phone. Staff
-                    scan the customer&apos;s card to add a stamp, so nobody can
-                    stamp their own.
-                </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Loyalty card
+                        </p>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Reward your regulars
+                        </h1>
+                        <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                            A digital stamp card customers keep on their phone.
+                            Staff scan the customer&apos;s card to add a stamp,
+                            so nobody can stamp their own.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0">
+                        <LoyaltyHowItWorks />
+                    </div>
+                </div>
 
                 {error && errorMessages[error] && (
                     <Alert variant="destructive" className="mt-8">
@@ -210,54 +171,17 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                 )}
 
                 {!program ? (
-                    hasPro ? (
-                        canManage ? (
-                            <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-                                <Card className="border-[#17233B]/10">
-                                    <CardHeader>
-                                        <CardTitle>Set up your stamp card</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ProgramForm businessId={businessId} program={null} submitLabel="Start loyalty card" />
-                                    </CardContent>
-                                </Card>
-
-                                <Card className="h-fit border-[#17233B]/10 bg-[#17233B] text-white">
-                                    <CardContent className="p-6">
-                                        <p className="text-sm text-white/70">Customers see</p>
-                                        <p className="mt-2 text-xl font-semibold">Collect 8 stamps, get your reward</p>
-                                        <div className="mt-5">
-                                            <LoyaltyStamps stamps={3} required={8} size="sm" />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        ) : (
-                            <p className="mt-8 text-[#17233B]/65">Ask a business owner or admin to set up the loyalty card.</p>
-                        )
+                    canManage ? (
+                        <LoyaltyCardBuilder
+                            businessId={businessId}
+                            businessName={business?.name ?? "Your business"}
+                            businessLogoUrl={business?.logo_url ?? null}
+                            program={null}
+                            submitLabel="Start loyalty card"
+                            locked={!hasPro}
+                        />
                     ) : (
-                        <Card className="mt-8 border-[#FF593F]/30">
-                            <CardContent className="flex flex-col gap-6 p-8 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Pro feature</p>
-                                    <h2 className="mt-2 text-2xl font-semibold">Turn first visits into regulars</h2>
-                                    <p className="mt-2 max-w-lg text-[#17233B]/65">
-                                        Digital stamp cards are included in Pro, with a 30-day free trial.
-                                    </p>
-                                    <div className="mt-5">
-                                        <LoyaltyStamps stamps={5} required={8} size="sm" />
-                                    </div>
-                                </div>
-                                <Button
-                                    render={<Link href={`/business/${businessId}/billing`} />}
-                                    nativeButton={false}
-                                    size="lg"
-                                    className="shrink-0 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-                                >
-                                    Start free trial
-                                </Button>
-                            </CardContent>
-                        </Card>
+                        <p className="mt-8 text-[#17233B]/65">Ask a business owner or admin to set up the loyalty card.</p>
                     )
                 ) : (
                     <>
@@ -331,7 +255,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <ProgramForm businessId={businessId} program={program} submitLabel="Save changes" />
+                                    <ProgramSettingsForm businessId={businessId} program={program} submitLabel="Save changes" />
                                     <p className="mt-4 text-xs text-[#17233B]/70">
                                         Changing the number of stamps applies to everyone&apos;s card straight away.
                                     </p>
@@ -339,6 +263,70 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             </Card>
                         )}
                     </>
+                )}
+
+                {cardList.length === 0 ? (
+                    <div className="mt-6 rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
+                        <h2 className="text-xl font-semibold">No loyalty cards yet</h2>
+                        <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
+                            Cards appear here as customers join from your business page.
+                        </p>
+                    </div>
+                ) : (
+                    <Card className="mt-6 border-[#17233B]/10">
+                        <CardHeader>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <CardTitle>Loyalty cards</CardTitle>
+
+                                <p className="text-sm text-[#17233B]/65">
+                                    {cardList.length} {cardList.length === 1 ? "card" : "cards"}
+                                </p>
+                            </div>
+                        </CardHeader>
+
+                        <CardContent>
+                            <ul className="divide-y divide-[#17233B]/10">
+                                {cardList.map((card) => {
+                                    const complete = card.stamps >= (program?.stamps_required ?? 0);
+
+                                    return (
+                                        <li
+                                            key={card.id}
+                                            className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
+                                        >
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <span className="font-mono text-sm font-semibold tracking-[0.15em]">
+                                                    {card.card_code}
+                                                </span>
+
+                                                {complete && (
+                                                    <span className="rounded-full bg-[#FF593F]/10 px-2.5 py-0.5 text-xs font-semibold text-[#FF593F]">
+                                                        Reward ready
+                                                    </span>
+                                                )}
+
+                                                {card.rewards_redeemed > 0 && (
+                                                    <span className="text-xs text-[#17233B]/60">
+                                                        {card.rewards_redeemed} redeemed
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#17233B]/65">
+                                                <span className="font-medium text-[#17233B]">
+                                                    {card.stamps} of {program?.stamps_required} stamps
+                                                </span>
+
+                                                <span className="text-xs">
+                                                    Joined {new Date(card.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         </div>

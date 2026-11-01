@@ -14,7 +14,7 @@ export function LoyaltyCardTile({ card }: { card: CustomerLoyaltyCard }) {
     return (
         <Link
             href={`/dashboard/loyalty#${card.programId}`}
-            className="group flex overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white transition hover:shadow-md"
+            className="group flex overflow-hidden rounded-xl border border-[#17233B]/10 bg-white transition hover:shadow-md"
         >
             <div className="relative flex w-24 shrink-0 items-center justify-center bg-[#FFF4E8] sm:w-28">
                 {card.business?.logo_url ? (

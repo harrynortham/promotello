@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/utils/supabase/client";
+import { NotificationsHowItWorks } from "./how-it-works";
 
 type NotificationSettings = {
     daily_summary_enabled: boolean;
@@ -103,18 +104,24 @@ export default function NotificationSettingsForm({
     return (
         <div className="text-[#17233B]">
             <div>
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Business settings
-                    </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Business settings
+                        </p>
 
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Notifications
-                    </h1>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Notifications
+                        </h1>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Choose which notifications {businessName} receives.
-                    </p>
+                        <p className="mt-3 text-[#17233B]/65">
+                            Choose which notifications {businessName} receives.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0">
+                        <NotificationsHowItWorks />
+                    </div>
                 </div>
 
                 <Card className="mt-10 border-[#17233B]/10">

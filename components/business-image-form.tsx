@@ -214,7 +214,7 @@ export function BusinessImageForm({
                         ) : (
                             <div className="flex flex-col items-center gap-6 text-center">
                                 <div
-                                    className={`flex items-center justify-center overflow-hidden rounded-2xl border border-[#17233B]/10 bg-[#FFF8F0] ${kind === "cover" ? "aspect-video w-full" : "size-32"}`}
+                                    className={`flex items-center justify-center overflow-hidden rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] ${kind === "cover" ? "aspect-video w-full" : "size-32"}`}
                                 >
                                     {imageUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element

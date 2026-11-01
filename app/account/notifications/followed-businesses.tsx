@@ -64,7 +64,7 @@ export function FollowedBusinesses({ follows: initialFollows }: { follows: Follo
     }
 
     return (
-        <Card className="rounded-2xl shadow-none">
+        <Card className="rounded-xl shadow-none">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <FiHeart aria-hidden="true" className="size-5 text-muted-foreground" />

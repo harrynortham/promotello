@@ -239,7 +239,7 @@ export default function EventsPage(props: PageProps) {
             fallback={
                 <div className="space-y-6">
                     <Skeleton className="h-10 w-48" />
-                    <Skeleton className="h-64 rounded-2xl" />
+                    <Skeleton className="h-64 rounded-xl" />
                 </div>
             }
         >

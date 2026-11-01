@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
-import { FieldError } from "@/components/field-error";
+import { ImagePicker } from "@/components/image-picker";
+import { OfferCard } from "@/components/offer-card";
 import {
     OfferFields,
     imageProblem,
@@ -20,14 +21,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { getCategoryGroups } from "@/lib/categories";
 import { createClient } from "@/utils/supabase/client";
 import { announceNewOffer } from "./actions";
 
 type NewOfferFormProps = {
     businessId: string;
+    businessName: string;
+    businessLogoUrl: string | null;
     defaultCategoryId: string | null;
     canSchedule: boolean;
 };
@@ -36,10 +38,15 @@ const schema = offerSchema();
 
 export default function NewOfferForm({
     businessId,
+    businessName,
+    businessLogoUrl,
     defaultCategoryId,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
+    // The cropped image, shown in the preview before it's uploaded.
+    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    const [categoryNames, setCategoryNames] = useState<Map<string, string>>(new Map());
     const [createdOffer, setCreatedOffer] = useState<"live" | "pending" | null>(null);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -48,6 +55,7 @@ export default function NewOfferForm({
         handleSubmit,
         reset,
         setError,
+        control,
         formState: { errors, isSubmitting },
     } = useForm<OfferInput, unknown, OfferValues>({
         resolver: zodResolver(schema),
@@ -62,6 +70,38 @@ export default function NewOfferForm({
             terms: "",
         },
     });
+
+    // The category's name for the preview; the field itself stores its id.
+    useEffect(() => {
+        getCategoryGroups(createClient())
+            .then((groups) =>
+                setCategoryNames(
+                    new Map(
+                        groups.flatMap((group) => [
+                            [group.id, group.name] as const,
+                            ...group.subcategories.map(
+                                (sub) => [sub.id, sub.name] as const,
+                            ),
+                        ]),
+                    ),
+                ),
+            )
+            .catch(() => undefined);
+    }, []);
+
+    const draft = useWatch({ control });
+
+    // Placeholders keep the card readable before the fields are filled in.
+    const preview = {
+        discount: draft.discount?.trim() || "Your discount",
+        title: draft.title?.trim() || "Your offer title",
+        description:
+            draft.description?.trim() ||
+            "Your description shows here, so customers know what they get.",
+        availability: draft.availability?.trim() || "Available now",
+        expiresAt: draft.expiresAt || undefined,
+        category: draft.category ? categoryNames.get(draft.category) : undefined,
+    };
 
     async function onSubmit(values: OfferValues, event?: React.BaseSyntheticEvent) {
         setErrorMessage("");
@@ -119,6 +159,7 @@ export default function NewOfferForm({
 
         reset();
         setImageFile(null);
+        setImagePreviewUrl(null);
         setCreatedOffer(live ? "live" : "pending");
     }
 
@@ -193,31 +234,28 @@ export default function NewOfferForm({
                     </p>
                 </div>
 
-                <Card className="mt-10 border-[#17233B]/10">
+                <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                <Card className="order-2 border-[#17233B]/10 lg:order-1">
                     <CardHeader>
                         <CardTitle>Offer details</CardTitle>
                     </CardHeader>
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
-                            <div className="space-y-2">
-                                <Label htmlFor="image">Offer image</Label>
-
-                                <Input
-                                    id="image"
-                                    name="image"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    onChange={(event) =>
-                                        setImageFile(event.target.files?.[0] ?? null)
-                                    }
-                                />
-
-                                <FieldError id="image-error" message={errors.root?.image?.message} />
-                                <p className="text-xs text-[#17233B]/65">
-                                    Optional. Use a JPG, PNG or WebP image under 5MB.
-                                </p>
-                            </div>
+                            <ImagePicker
+                                id="image"
+                                label="Offer image"
+                                hint="Optional. A landscape JPG, PNG or WebP photo. You can zoom and reposition it next."
+                                aspect={16 / 10}
+                                maxSize={1600}
+                                convertToJpeg
+                                disabled={isSubmitting}
+                                error={errors.root?.image?.message}
+                                onChange={(file, previewUrl) => {
+                                    setImageFile(file);
+                                    setImagePreviewUrl(previewUrl);
+                                }}
+                            />
 
                             <Separator />
 
@@ -254,6 +292,37 @@ export default function NewOfferForm({
                         </form>
                     </CardContent>
                 </Card>
+
+                <aside className="order-1 lg:order-2 lg:sticky lg:top-8">
+                    <div className="rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                            Preview
+                        </p>
+
+                        {/* Not a link: it's the real card customers see. */}
+                        <div className="mt-3 pointer-events-none">
+                            <OfferCard
+                                slug=""
+                                discount={preview.discount}
+                                title={preview.title}
+                                description={preview.description}
+                                availability={preview.availability}
+                                expiresAt={preview.expiresAt}
+                                category={preview.category}
+                                business={businessName}
+                                businessLogoUrl={businessLogoUrl}
+                                imageUrl={imagePreviewUrl}
+                                rawImage
+                            />
+                        </div>
+
+                        <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
+                            How your offer will look to customers as they
+                            browse. It updates as you type.
+                        </p>
+                    </div>
+                </aside>
+                </div>
             </div>
         </div>
     );

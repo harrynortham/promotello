@@ -74,7 +74,7 @@ export function BusinessRecentRedemptions({
 
             <CardContent>
                 {redemptions.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-[#17233B]/15 p-6 text-center">
+                    <div className="rounded-xl border border-dashed border-[#17233B]/15 p-6 text-center">
                         <p className="font-medium">
                             No redemptions yet
                         </p>

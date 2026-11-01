@@ -261,7 +261,7 @@ export default function SecurityForm({
                 </p>
             </div>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
                         <FiLock
@@ -369,7 +369,7 @@ export default function SecurityForm({
                 </CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
                         <FiMail

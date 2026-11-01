@@ -213,7 +213,7 @@ export default function NotificationSettingsForm({
                 </p>
             </div>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FiMail
@@ -339,7 +339,7 @@ export default function NotificationSettingsForm({
 
             {followedBusinesses}
 
-            <Card className="rounded-2xl bg-muted/30 shadow-none">
+            <Card className="rounded-xl bg-muted/30 shadow-none">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <FiShield
@@ -364,7 +364,7 @@ export default function NotificationSettingsForm({
                 </CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <CardTitle className="text-lg">
                         Business notifications

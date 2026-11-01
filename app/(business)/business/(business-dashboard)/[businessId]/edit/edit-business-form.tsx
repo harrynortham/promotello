@@ -302,7 +302,7 @@ function BusinessForm({
                     </p>
 
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Edit business
+                        Business profile
                     </h1>
 
                     <p className="mt-3 text-[#17233B]/65">
@@ -332,10 +332,10 @@ function BusinessForm({
                                             alt={`${business.name} logo`}
                                             width={64}
                                             height={64}
-                                            className="size-16 rounded-2xl border border-[#17233B]/10 object-cover"
+                                            className="size-16 rounded-xl border border-[#17233B]/10 object-cover"
                                         />
                                     ) : (
-                                        <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-dashed border-[#17233B]/20 bg-[#FFF8F0] text-2xl font-semibold text-[#17233B]/40">
+                                        <span className="flex size-16 shrink-0 items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-[#FFF8F0] text-2xl font-semibold text-[#17233B]/40">
                                             {business.name.charAt(0).toUpperCase()}
                                         </span>
                                     )}

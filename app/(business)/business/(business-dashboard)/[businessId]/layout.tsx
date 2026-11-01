@@ -33,8 +33,8 @@ function BusinessLayoutLoading() {
             <div className="mx-auto flex max-w-7xl gap-8 px-6 py-8">
                 <aside className="hidden w-64 shrink-0 lg:block">
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-5">
-                        <Skeleton className="h-10 w-full rounded-md" />
-                        <Skeleton className="mt-5 h-8 w-48 rounded-md" />
+                        <Skeleton className="h-10 w-full rounded-lg" />
+                        <Skeleton className="mt-5 h-8 w-48 rounded-lg" />
                         <Skeleton className="mt-3 h-6 w-24 rounded-full" />
 
                         <Separator className="my-5" />
@@ -43,7 +43,7 @@ function BusinessLayoutLoading() {
                             {[1, 2, 3, 4, 5].map((item) => (
                                 <Skeleton
                                     key={item}
-                                    className="h-9 w-full rounded-md"
+                                    className="h-9 w-full rounded-lg"
                                 />
                             ))}
                         </div>
@@ -51,7 +51,7 @@ function BusinessLayoutLoading() {
                 </aside>
 
                 <main className="min-w-0 flex-1">
-                    <Skeleton className="h-10 w-full rounded-md" />
+                    <Skeleton className="h-10 w-full rounded-lg" />
                     <Skeleton className="mt-8 h-96 w-full rounded-xl" />
                 </main>
             </div>

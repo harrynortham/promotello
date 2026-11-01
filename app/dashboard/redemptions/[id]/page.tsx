@@ -38,7 +38,7 @@ function LoadingState() {
     return (
         <section role="status" aria-label="Loading your voucher" className="mx-auto max-w-xl space-y-6">
             <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-[36rem] rounded-3xl" />
+            <Skeleton className="h-[36rem] rounded-xl" />
         </section>
     );
 }

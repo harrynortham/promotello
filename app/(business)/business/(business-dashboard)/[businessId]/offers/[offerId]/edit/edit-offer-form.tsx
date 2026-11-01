@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +11,7 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { FieldError } from "@/components/field-error";
+import { ImagePicker } from "@/components/image-picker";
 import {
     OfferFields,
     imageProblem,
@@ -25,7 +24,6 @@ import {
 import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -34,8 +32,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { scheduleFromForm } from "@/components/offer-schedule-fields";
 import { scheduleFrom } from "@/lib/schedule";
@@ -228,7 +224,7 @@ export default function EditOfferForm({
         return (
             <div>
                 <div>
-                    <div className="h-10 animate-pulse rounded-md bg-white" />
+                    <div className="h-10 animate-pulse rounded-lg bg-white" />
                     <div className="mt-6 h-96 animate-pulse rounded-xl bg-white" />
                 </div>
             </div>
@@ -308,65 +304,22 @@ export default function EditOfferForm({
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
-                            {offer.image_url && !removeImage && (
-                                <div className="space-y-3">
-                                    <Label>Current offer image</Label>
-
-                                    <div className="relative h-52 w-full overflow-hidden rounded-xl">
-                                        <Image
-                                            src={offer.image_url}
-                                            alt={offer.title}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <Label htmlFor="image">
-                                    {offer.image_url
-                                        ? "Replace offer image"
-                                        : "Add offer image"}
-                                </Label>
-
-                                <Input
-                                    id="image"
-                                    name="image"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    onChange={(event) => {
-                                        setImageFile(event.target.files?.[0] ?? null);
-                                        setRemoveImage(false);
-                                    }}
-                                />
-
-                                <FieldError id="image-error" message={errors.root?.image?.message} />
-                                <p className="text-xs text-[#17233B]/65">
-                                    Use a JPG, PNG or WebP image under 5MB.
-                                </p>
-                            </div>
-
-                            {offer.image_url && (
-                                <div className="flex items-center gap-3">
-                                    <Checkbox
-                                        id="removeImage"
-                                        checked={removeImage}
-                                        onCheckedChange={(checked) => {
-                                            const shouldRemove = checked === true;
-                                            setRemoveImage(shouldRemove);
-
-                                            if (shouldRemove) {
-                                                setImageFile(null);
-                                            }
-                                        }}
-                                    />
-
-                                    <Label htmlFor="removeImage">
-                                        Remove current image
-                                    </Label>
-                                </div>
-                            )}
+                            <ImagePicker
+                                id="image"
+                                label="Offer image"
+                                hint="A landscape JPG, PNG or WebP photo. You can zoom and reposition it next."
+                                aspect={16 / 10}
+                                maxSize={1600}
+                                convertToJpeg
+                                imageUrl={offer.image_url}
+                                disabled={isSaving || isDeleting}
+                                error={errors.root?.image?.message}
+                                onChange={(file) => {
+                                    setImageFile(file);
+                                    if (file) setRemoveImage(false);
+                                }}
+                                onRemove={() => setRemoveImage(true)}
+                            />
 
                             <Separator />
 

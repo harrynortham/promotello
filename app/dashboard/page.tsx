@@ -39,13 +39,13 @@ function LoadingState() {
     return (
         <div>
             <div className="mx-auto max-w-6xl">
-                <Skeleton className="h-10 w-64 rounded-md" />
+                <Skeleton className="h-10 w-64 rounded-lg" />
                 <div className="mt-8 grid gap-5 sm:grid-cols-3">
                     {[1, 2, 3].map((item) => (
-                        <Skeleton key={item} className="h-28 rounded-2xl" />
+                        <Skeleton key={item} className="h-28 rounded-xl" />
                     ))}
                 </div>
-                <Skeleton className="mt-10 h-64 rounded-2xl" />
+                <Skeleton className="mt-10 h-64 rounded-xl" />
             </div>
         </div>
     );
@@ -123,7 +123,7 @@ async function CustomerDashboardContent() {
                         const Icon = stat.icon;
 
                         return (
-                            <Link key={stat.label} href={stat.href} className="flex items-center justify-between rounded-2xl border border-[#17233B]/10 bg-white p-5 transition hover:border-[#17233B]/25 hover:shadow-sm">
+                            <Link key={stat.label} href={stat.href} className="flex items-center justify-between rounded-xl border border-[#17233B]/10 bg-white p-5 transition hover:border-[#17233B]/25 hover:shadow-sm">
                                 <div>
                                     <p className="text-sm text-[#17233B]/70">{stat.label}</p>
                                     <p className="mt-1 text-3xl font-semibold">{stat.value}</p>
@@ -139,7 +139,7 @@ async function CustomerDashboardContent() {
                         {prompts.map((prompt) => (
                             <div
                                 key={prompt.business_id}
-                                className="flex flex-col gap-4 rounded-2xl border border-[#FF593F]/30 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-4 rounded-xl border border-[#FF593F]/30 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="flex items-center gap-4">
                                     {prompt.logo_url ? (
@@ -243,7 +243,7 @@ async function CustomerDashboardContent() {
                     </section>
                 )}
 
-                <section className="mt-14 flex flex-col gap-5 rounded-3xl bg-[#17233B] p-8 text-white sm:flex-row sm:items-center sm:justify-between">
+                <section className="mt-14 flex flex-col gap-5 rounded-xl bg-[#17233B] p-8 text-white sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4">
                         <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
                             <FiBriefcase aria-hidden="true" className="size-5" />

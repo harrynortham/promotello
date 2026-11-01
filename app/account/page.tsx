@@ -113,7 +113,7 @@ async function AccountContent() {
                 </p>
             </div>
 
-            <Card className="overflow-hidden rounded-3xl shadow-none">
+            <Card className="overflow-hidden rounded-xl shadow-none">
                 <CardContent className="p-6 sm:p-8">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-4">
@@ -191,7 +191,7 @@ async function AccountContent() {
                         return (
                             <Card
                                 key={setting.href}
-                                className="flex flex-col rounded-2xl shadow-none"
+                                className="flex flex-col rounded-xl shadow-none"
                             >
                                 <CardHeader>
                                     <span className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
@@ -229,7 +229,7 @@ async function AccountContent() {
                 </div>
             </div>
 
-            <Card className="rounded-2xl bg-muted/30 shadow-none">
+            <Card className="rounded-xl bg-muted/30 shadow-none">
                 <CardContent className="p-6">
                     <h2 className="font-semibold">
                         Manage a business too?
@@ -290,13 +290,13 @@ function AccountLoading() {
                 <Skeleton className="h-5 w-full max-w-lg" />
             </div>
 
-            <Skeleton className="h-44 rounded-3xl" />
+            <Skeleton className="h-44 rounded-xl" />
 
             <div className="grid gap-5 xl:grid-cols-2">
                 {[1, 2, 3, 4].map((item) => (
                     <Skeleton
                         key={item}
-                        className="h-60 rounded-2xl"
+                        className="h-60 rounded-xl"
                     />
                 ))}
             </div>

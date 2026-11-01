@@ -37,7 +37,7 @@ const guides: HelpGuide[] = [
         description: "Manage your logo, description, location, and hours.",
         steps: [
             "Open your business dashboard and choose Manage business.",
-            "Choose Edit business from the business navigation.",
+            "Choose Business profile from the business navigation.",
             "Update the information you want customers to see.",
             "Save your changes and check the public profile.",
         ],
@@ -311,7 +311,7 @@ const guides: HelpGuide[] = [
         description: "Ask customers who just visited for a review.",
         steps: [
             "In Google Business Profile, choose Ask for reviews and copy your link.",
-            "Open your business, choose Edit business and paste it into Google review link.",
+            "Open your business, choose Business profile and paste it into Google review link.",
             "Customers who used a voucher or got a stamp in the last two weeks are asked for a review.",
         ],
         note: "Review prompts are part of Pro and Growth. Customers aren’t asked again for three months after clicking.",

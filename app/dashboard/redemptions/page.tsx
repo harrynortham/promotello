@@ -37,7 +37,7 @@ function Section({ status, items, limit }: { status: StatusFilter; items: Status
 
             <div className="mt-5">
                 {items.length === 0 ? (
-                    <p className="rounded-2xl border border-dashed border-[#17233B]/15 bg-white px-5 py-6 text-[#17233B]/65">{page.empty}</p>
+                    <p className="rounded-xl border border-dashed border-[#17233B]/15 bg-white px-5 py-6 text-[#17233B]/65">{page.empty}</p>
                 ) : (
                     <VoucherGrid items={shown} />
                 )}

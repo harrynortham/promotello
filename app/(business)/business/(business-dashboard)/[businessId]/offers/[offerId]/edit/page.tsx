@@ -16,8 +16,8 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <div className="h-10 w-64 animate-pulse rounded bg-[#17233B]/10" />
-                <div className="mt-8 h-[700px] animate-pulse rounded-3xl bg-white" />
+                <div className="h-10 w-64 animate-pulse rounded-lg bg-[#17233B]/10" />
+                <div className="mt-8 h-[700px] animate-pulse rounded-xl bg-white" />
             </div>
         </div>
     );

@@ -6,7 +6,6 @@ import { FiGift, FiHeart, FiRefreshCw } from "react-icons/fi";
 
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { automationDetails, type AutomationKind } from "@/lib/automations";
 import { businessTier } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
+import { AutomationsHowItWorks } from "./how-it-works";
 import { saveAutomation } from "./actions";
 
 type PageProps = {
@@ -209,28 +209,33 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
 
     return (
         <div className="space-y-8 text-[#17233B]">
-            <header>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Automations</h1>
-                <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                    Emails that go to your followers automatically, each with a personal reward they can use
-                    once. Staff redeem them by scanning, like any voucher.
-                </p>
+            <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Growth</p>
+                    <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Automations</h1>
+                    <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                        Emails that go to your followers automatically, each with a personal reward they can use
+                        once. Staff redeem them by scanning, like any voucher.
+                    </p>
+                </div>
+
+                <div className="shrink-0">
+                    <AutomationsHowItWorks />
+                </div>
             </header>
 
             {tier !== "growth" && (
                 <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
                     <AlertTitle>Automations are part of Growth</AlertTitle>
                     <AlertDescription>
-                        <p>Upgrade to send welcome, birthday and win-back rewards without lifting a finger.</p>
-                        <Button
-                            render={<Link href={`/business/${businessId}/billing`} />}
-                            nativeButton={false}
-                            size="sm"
-                            className="mt-3"
+                        Send welcome, birthday and win-back rewards without
+                        lifting a finger.{" "}
+                        <Link
+                            href={`/business/${businessId}/billing`}
+                            className="font-medium text-[#FF593F]"
                         >
                             See Growth
-                        </Button>
+                        </Link>
                     </AlertDescription>
                 </Alert>
             )}
@@ -270,7 +275,7 @@ export default function AutomationsPage(props: PageProps) {
             fallback={
                 <div className="space-y-6">
                     <Skeleton className="h-10 w-64" />
-                    <Skeleton className="h-64 rounded-2xl" />
+                    <Skeleton className="h-64 rounded-xl" />
                 </div>
             }
         >

@@ -96,7 +96,7 @@ export default function RedemptionLookup({
     }
 
     return (
-        <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+        <section className="mt-10 rounded-xl bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-2xl font-semibold">Check a redemption code</h2>
 
             <p className="mt-2 text-sm text-[#17233B]/65">
@@ -131,7 +131,7 @@ export default function RedemptionLookup({
             )}
 
             {redemption && (
-                <div className="mt-6 rounded-2xl border border-[#17233B]/10 p-5">
+                <div className="mt-6 rounded-xl border border-[#17233B]/10 p-5">
                     <p className="text-sm text-[#17233B]/70">Offer</p>
 
                     <p className="mt-1 text-lg font-semibold">

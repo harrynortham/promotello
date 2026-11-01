@@ -97,8 +97,8 @@ function NotificationsLoading() {
         >
             <Skeleton className="h-10 w-56" />
             <Skeleton className="h-5 w-80 max-w-full" />
-            <Skeleton className="h-96 rounded-2xl" />
-            <Skeleton className="h-40 rounded-2xl" />
+            <Skeleton className="h-96 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
         </section>
     );
 }

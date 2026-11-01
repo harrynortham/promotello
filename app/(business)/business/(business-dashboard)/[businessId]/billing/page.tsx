@@ -23,6 +23,7 @@ import { planAdds } from "@/lib/plan-features";
 import { PlanComparison } from "@/components/plan-comparison";
 import { company } from "@/lib/legal";
 import { createClient } from "@/utils/supabase/server";
+import { BillingHelp } from "./help";
 import { changePlan, openBillingPortal, startCheckout } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -77,9 +78,9 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <Skeleton className="h-5 w-40 rounded-md" />
-                <Skeleton className="mt-3 h-12 w-64 rounded-md" />
-                <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                <Skeleton className="h-5 w-40 rounded-lg" />
+                <Skeleton className="mt-3 h-12 w-64 rounded-lg" />
+                <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
                 <Skeleton className="mt-10 h-64 w-full rounded-xl" />
             </div>
         </div>
@@ -139,18 +140,24 @@ async function BillingContent({ params, searchParams }: PageProps) {
     return (
         <div className="text-[#17233B]">
             <div>
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Business settings
-                    </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Business settings
+                        </p>
 
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        Billing
-                    </h1>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Billing
+                        </h1>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Manage the Promotello subscription for {business?.name}.
-                    </p>
+                        <p className="mt-3 text-[#17233B]/65">
+                            Manage the Promotello subscription for {business?.name}.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0">
+                        <BillingHelp />
+                    </div>
                 </div>
 
                 {error && errorMessages[error] && (
@@ -319,7 +326,7 @@ function ComparePlans({ current }: { current: "free" | "pro" | "growth" }) {
         <section className="mt-12">
             <h2 className="text-xl font-semibold">Compare plans</h2>
             <p className="mt-2 text-sm text-[#17233B]/65">Everything each plan includes, side by side.</p>
-            <div className="mt-5 overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">
+            <div className="mt-5 overflow-x-auto rounded-xl border border-[#17233B]/10 bg-white">
                 <PlanComparison highlight={current === "growth" ? "growth" : "pro"} current={current} />
             </div>
         </section>

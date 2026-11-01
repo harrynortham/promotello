@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
+import { AnalyticsHowItWorks } from "./how-it-works";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PeriodSummary, type BusinessAnalytics } from "@/components/business-period-summary";
@@ -40,12 +41,12 @@ function LoadingState() {
             <div>
                 <div className="flex items-end justify-between">
                     <div>
-                        <Skeleton className="h-5 w-40 rounded-md" />
-                        <Skeleton className="mt-3 h-10 w-64 rounded-md" />
-                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                        <Skeleton className="h-5 w-40 rounded-lg" />
+                        <Skeleton className="mt-3 h-10 w-64 rounded-lg" />
+                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
                     </div>
 
-                    <Skeleton className="hidden h-9 w-40 rounded-md sm:block" />
+                    <Skeleton className="hidden h-9 w-40 rounded-lg sm:block" />
                 </div>
 
                 <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -54,31 +55,31 @@ function LoadingState() {
                             key={item}
                             className="rounded-xl border border-[#17233B]/10 bg-white p-6"
                         >
-                            <Skeleton className="h-4 w-32 rounded-md" />
-                            <Skeleton className="mt-4 h-12 w-20 rounded-md" />
+                            <Skeleton className="h-4 w-32 rounded-lg" />
+                            <Skeleton className="mt-4 h-12 w-20 rounded-lg" />
                         </div>
                     ))}
                 </div>
 
                 <div className="mt-8 rounded-xl border border-[#17233B]/10 bg-white p-6">
-                    <Skeleton className="h-6 w-48 rounded-md" />
+                    <Skeleton className="h-6 w-48 rounded-lg" />
                     <Skeleton className="mt-5 h-2 w-full rounded-full" />
-                    <Skeleton className="mt-3 h-4 w-72 rounded-md" />
+                    <Skeleton className="mt-3 h-4 w-72 rounded-lg" />
                 </div>
 
                 <div className="mt-8 rounded-xl border border-[#17233B]/10 bg-white p-6">
-                    <Skeleton className="h-6 w-64 rounded-md" />
+                    <Skeleton className="h-6 w-64 rounded-lg" />
 
                     <div className="mt-6 space-y-5">
                         {[1, 2, 3].map((item) => (
                             <div key={item}>
                                 <div className="flex items-center justify-between">
-                                    <Skeleton className="h-5 w-48 rounded-md" />
-                                    <Skeleton className="h-5 w-20 rounded-md" />
+                                    <Skeleton className="h-5 w-48 rounded-lg" />
+                                    <Skeleton className="h-5 w-20 rounded-lg" />
                                 </div>
 
                                 <Skeleton className="mt-4 h-2 w-full rounded-full" />
-                                <Skeleton className="mt-3 h-4 w-80 max-w-full rounded-md" />
+                                <Skeleton className="mt-3 h-4 w-80 max-w-full rounded-lg" />
                             </div>
                         ))}
                     </div>
@@ -233,7 +234,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
     return (
         <div className="text-[#17233B]">
             <div>
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Business analytics
@@ -248,6 +249,9 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         </p>
                     </div>
 
+                    <div className="shrink-0">
+                        <AnalyticsHowItWorks />
+                    </div>
                 </div>
 
                 {analytics && <PeriodSummary analytics={analytics as BusinessAnalytics} />}

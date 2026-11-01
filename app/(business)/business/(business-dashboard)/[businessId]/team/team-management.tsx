@@ -32,6 +32,7 @@ import { UserAvatar } from "@/components/site/user-avatar";
 import { initialsFor } from "@/lib/user-profile";
 import { createClient } from "@/utils/supabase/client";
 import { handOverBusiness, inviteTeamMember, type InviteResult } from "./actions";
+import { TeamHowItWorks } from "./how-it-works";
 
 type Member = {
     user_id: string;
@@ -275,18 +276,24 @@ export default function TeamManagement({
     return (
         <div className="text-[#17233B]">
             <div>
-                <header>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Team management
-                    </p>
+                <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Team management
+                        </p>
 
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                        {businessName} team
-                    </h1>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            {businessName} team
+                        </h1>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Invite and manage people who help run your business.
-                    </p>
+                        <p className="mt-3 text-[#17233B]/65">
+                            Invite and manage people who help run your business.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0">
+                        <TeamHowItWorks />
+                    </div>
                 </header>
 
                 <div className="mt-8 space-y-4">
@@ -309,7 +316,7 @@ export default function TeamManagement({
                                         : "We couldn't send the email, so share this link with them directly:"}
                                 </p>
                                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                                    <code className="min-w-0 flex-1 truncate rounded-md bg-white px-3 py-2 text-xs text-[#17233B]">
+                                    <code className="min-w-0 flex-1 truncate rounded-lg bg-white px-3 py-2 text-xs text-[#17233B]">
                                         {shareLink.url}
                                     </code>
                                     <Button type="button" variant="outline" size="sm" onClick={copyShareLink}>
