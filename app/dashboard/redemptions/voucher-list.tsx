@@ -94,7 +94,7 @@ export function CompactVoucher({ item }: { item: StatusedVoucher }) {
     return (
         <Link
             href={`/dashboard/redemptions/${voucher.id}`}
-            className={`group flex overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white transition hover:shadow-md ${isReady ? "" : "opacity-80 hover:opacity-100"}`}
+            className={`group flex overflow-hidden rounded-xl border border-[#17233B]/10 bg-white transition hover:shadow-md ${isReady ? "" : "opacity-80 hover:opacity-100"}`}
         >
             <div className="relative flex w-24 shrink-0 items-center justify-center bg-[#FFF4E8] sm:w-28">
                 {offer?.imageUrl ? (
@@ -143,7 +143,7 @@ export function VoucherGrid({ items }: { items: StatusedVoucher[] }) {
 
 export function WalletEmpty({ title, description }: { title: string; description: string }) {
     return (
-        <div className="rounded-3xl border border-dashed border-[#17233B]/20 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-12 text-center">
             <FiGift aria-hidden="true" className="mx-auto size-8 text-[#FF593F]" />
             <h2 className="mt-4 text-xl font-semibold">{title}</h2>
             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">{description}</p>
@@ -162,7 +162,7 @@ export function WalletLoading() {
             <Skeleton className="h-10 w-full max-w-lg rounded-full" />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((item) => (
-                    <Skeleton key={item} className="h-36 rounded-2xl" />
+                    <Skeleton key={item} className="h-36 rounded-xl" />
                 ))}
             </div>
         </section>

@@ -16,16 +16,16 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <Skeleton className="h-9 w-44 rounded-md" />
+                <Skeleton className="h-9 w-44 rounded-lg" />
 
                 <div className="mt-8">
-                    <Skeleton className="h-5 w-40 rounded-md" />
-                    <Skeleton className="mt-3 h-12 w-64 rounded-md" />
-                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                    <Skeleton className="h-5 w-40 rounded-lg" />
+                    <Skeleton className="mt-3 h-12 w-64 rounded-lg" />
+                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
                 </div>
 
                 <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-10">
-                    <Skeleton className="h-7 w-56 rounded-md" />
+                    <Skeleton className="h-7 w-56 rounded-lg" />
 
                     <div className="mt-8 space-y-7">
                         {[1, 2, 3].map((item) => (
@@ -34,15 +34,15 @@ function LoadingState() {
                                 className="flex items-start justify-between gap-6"
                             >
                                 <div className="space-y-3">
-                                    <Skeleton className="h-5 w-56 rounded-md" />
-                                    <Skeleton className="h-10 w-80 max-w-full rounded-md" />
+                                    <Skeleton className="h-5 w-56 rounded-lg" />
+                                    <Skeleton className="h-10 w-80 max-w-full rounded-lg" />
                                 </div>
 
                                 <Skeleton className="h-6 w-11 rounded-full" />
                             </div>
                         ))}
 
-                        <Skeleton className="h-10 w-40 rounded-md" />
+                        <Skeleton className="h-10 w-40 rounded-lg" />
                     </div>
                 </div>
             </div>

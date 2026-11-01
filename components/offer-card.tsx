@@ -19,6 +19,8 @@ type OfferCardProps = {
     category?: string | null;
     // A sample offer: labelled so it isn't mistaken for a real one.
     example?: boolean;
+    // For a live preview: a blob: URL can't go through next/image.
+    rawImage?: boolean;
 };
 
 function daysLeft(expiresAt: string) {
@@ -52,13 +54,21 @@ export function OfferCard({
     area,
     category,
     example = false,
+    rawImage = false,
 }: OfferCardProps) {
     const endingSoon = expiresAt !== undefined && daysLeft(expiresAt) <= 14;
 
     return (
         <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
             <div className="relative aspect-[16/10] overflow-hidden bg-[#FFF4E8]">
-                {imageUrl ? (
+                {imageUrl && rawImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={imageUrl}
+                        alt=""
+                        className="absolute inset-0 size-full object-cover"
+                    />
+                ) : imageUrl ? (
                     <Image
                         src={imageUrl}
                         alt=""

@@ -68,7 +68,7 @@ export default function AccountPrivacyPage() {
                 </p>
             </div>
 
-            <Card className="rounded-2xl bg-muted/30 shadow-none">
+            <Card className="rounded-xl bg-muted/30 shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-background">
                         <FiShield
@@ -102,7 +102,7 @@ export default function AccountPrivacyPage() {
                     return (
                         <Card
                             key={setting.href}
-                            className="flex flex-col rounded-2xl shadow-none"
+                            className="flex flex-col rounded-xl shadow-none"
                         >
                             <CardHeader>
                                 <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
@@ -139,7 +139,7 @@ export default function AccountPrivacyPage() {
                 })}
             </div>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
                         <FiDownload
@@ -180,7 +180,7 @@ export default function AccountPrivacyPage() {
                 </CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
                         <FiFileText
@@ -218,7 +218,7 @@ export default function AccountPrivacyPage() {
                 </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border-destructive/25 shadow-none">
+            <Card className="rounded-xl border-destructive/25 shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
                         <FiTrash2

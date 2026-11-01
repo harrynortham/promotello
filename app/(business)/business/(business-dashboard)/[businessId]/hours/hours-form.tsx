@@ -78,7 +78,7 @@ function DayRow({
 
     return (
         // Open days are white, closed days grey, and unset days cream.
-        <li className={`rounded-2xl border p-4 transition sm:p-5 ${error ? "border-destructive/50" : "border-[#17233B]/10"} ${status === "open" ? "bg-white" : status === "closed" ? "bg-[#17233B]/[0.06]" : "bg-[#FFF8F0]"}`}>
+        <li className={`rounded-xl border p-4 transition sm:p-5 ${error ? "border-destructive/50" : "border-[#17233B]/10"} ${status === "open" ? "bg-white" : status === "closed" ? "bg-[#17233B]/[0.06]" : "bg-[#FFF8F0]"}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p className={`font-semibold ${status === "closed" ? "text-[#17233B]/60" : ""}`}>{name}</p>

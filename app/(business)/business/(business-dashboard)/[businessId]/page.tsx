@@ -67,15 +67,15 @@ function LoadingState() {
                 <Skeleton className="mt-3 h-5 w-96 max-w-full" />
             </div>
 
-            <Skeleton className="h-64 rounded-3xl" />
+            <Skeleton className="h-64 rounded-xl" />
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((item) => (
-                    <Skeleton key={item} className="h-32 rounded-2xl" />
+                    <Skeleton key={item} className="h-32 rounded-xl" />
                 ))}
             </div>
 
-            <Skeleton className="h-64 rounded-3xl" />
+            <Skeleton className="h-64 rounded-xl" />
         </div>
     );
 }
@@ -340,7 +340,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                     alt=""
                                     width={64}
                                     height={64}
-                                    className="size-16 rounded-2xl border border-[#17233B]/10 bg-white object-cover shadow-sm"
+                                    className="size-16 rounded-xl border border-[#17233B]/10 bg-white object-cover shadow-sm"
                                 />
                             </Link>
                         ) : (
@@ -348,7 +348,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                             <Link
                                 href={`/business/${businessId}/logo`}
                                 aria-label="Add your logo"
-                                className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-dashed border-[#FF593F]/40 bg-[#FFF4E8] text-2xl font-semibold text-[#FF593F] transition hover:border-[#FF593F]"
+                                className="flex size-16 shrink-0 items-center justify-center rounded-xl border border-dashed border-[#FF593F]/40 bg-[#FFF4E8] text-2xl font-semibold text-[#FF593F] transition hover:border-[#FF593F]"
                             >
                                 {business.name.charAt(0).toUpperCase()}
                             </Link>

@@ -41,8 +41,8 @@ function SecurityLoading() {
         >
             <Skeleton className="h-10 w-56" />
             <Skeleton className="h-5 w-80 max-w-full" />
-            <Skeleton className="h-96 rounded-2xl" />
-            <Skeleton className="h-72 rounded-2xl" />
+            <Skeleton className="h-96 rounded-xl" />
+            <Skeleton className="h-72 rounded-xl" />
         </section>
     );
 }

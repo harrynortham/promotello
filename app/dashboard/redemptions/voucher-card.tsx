@@ -88,7 +88,7 @@ export function VoucherCard({
     }
 
     return (
-        <Card className="overflow-hidden rounded-3xl shadow-none">
+        <Card className="overflow-hidden rounded-xl shadow-none">
             <CardHeader>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -127,7 +127,7 @@ export function VoucherCard({
 
             <CardContent>
                 <div
-                    className={`rounded-2xl border border-dashed p-5 text-center sm:p-7 ${isReady
+                    className={`rounded-xl border border-dashed p-5 text-center sm:p-7 ${isReady
                             ? "border-[#17233B]/20 bg-[#17233B] text-white"
                             : "border-border bg-muted/40"
                         }`}

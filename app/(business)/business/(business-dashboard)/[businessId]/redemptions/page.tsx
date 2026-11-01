@@ -3,16 +3,13 @@ import { FiCamera } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
+import { ScanVoucherIllustration } from "@/components/scan-voucher-illustration";
+import { RedemptionsHowItWorks } from "./how-it-works";
 import { createClient } from "@/utils/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-} from "@/components/ui/alert";
 
 type PageProps = {
     params: Promise<{
@@ -83,12 +80,12 @@ function LoadingState() {
             <div>
                 <div className="flex items-end justify-between">
                     <div>
-                        <Skeleton className="h-5 w-40 rounded-md" />
-                        <Skeleton className="mt-3 h-10 w-72 rounded-md" />
-                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                        <Skeleton className="h-5 w-40 rounded-lg" />
+                        <Skeleton className="mt-3 h-10 w-72 rounded-lg" />
+                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
                     </div>
 
-                    <Skeleton className="hidden h-9 w-40 rounded-md sm:block" />
+                    <Skeleton className="hidden h-9 w-40 rounded-lg sm:block" />
                 </div>
 
                 <div className="mt-10 space-y-4">
@@ -99,16 +96,16 @@ function LoadingState() {
                         >
                             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                                 <div className="space-y-3">
-                                    <Skeleton className="h-7 w-56 rounded-md" />
+                                    <Skeleton className="h-7 w-56 rounded-lg" />
                                     <Skeleton className="h-4 w-24 rounded-full" />
-                                    <Skeleton className="h-4 w-40 rounded-md" />
-                                    <Skeleton className="h-4 w-32 rounded-md" />
+                                    <Skeleton className="h-4 w-40 rounded-lg" />
+                                    <Skeleton className="h-4 w-32 rounded-lg" />
                                 </div>
 
                                 <Skeleton className="h-24 w-48 rounded-xl" />
                             </div>
 
-                            <Skeleton className="mt-6 h-9 w-32 rounded-md" />
+                            <Skeleton className="mt-6 h-9 w-32 rounded-lg" />
                         </div>
                     ))}
                 </div>
@@ -168,7 +165,7 @@ async function RedemptionsContent({ params }: PageProps) {
     return (
         <div>
             <div>
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             {business.name}
@@ -183,27 +180,44 @@ async function RedemptionsContent({ params }: PageProps) {
                         </p>
                     </div>
 
+                    <div className="shrink-0">
+                        <RedemptionsHowItWorks />
+                    </div>
                 </div>
 
-                <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#17233B]/10 bg-white p-5">
-                    <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#FF593F]" />
-                    <p className="text-sm leading-6 text-[#17233B]/75">
-                        <span className="font-semibold text-[#17233B]">Quickest at the till:</span>{" "}
-                        point your phone camera at the QR code on the customer&apos;s
-                        voucher. It opens the voucher here so you can mark it used in
-                        one tap.
-                    </p>
+                <div className="mt-8 grid gap-6 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-8">
+                    <ScanVoucherIllustration className="mx-auto w-36 sm:w-40" />
+
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            Quickest at the till
+                        </p>
+
+                        <h2 className="mt-2 text-xl font-semibold text-[#17233B]">
+                            Scan the customer&apos;s voucher
+                        </h2>
+
+                        <p className="mt-2 text-sm leading-6 text-[#17233B]/70">
+                            Point your phone camera at the QR code on their
+                            voucher. It opens the voucher here, so you can mark
+                            it used in one tap.
+                        </p>
+
+                        <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-[#17233B]/55">
+                            <FiCamera aria-hidden="true" className="mt-1 size-4 shrink-0 text-[#FF593F]" />
+                            No camera to hand? Find the offer below and mark it
+                            used from its card.
+                        </p>
+                    </div>
                 </div>
 
                 {redemptions.length === 0 ? (
-                    <Alert className="mt-10 border-[#17233B]/10 bg-white">
-                        <AlertTitle>No redemptions yet</AlertTitle>
-
-                        <AlertDescription>
-                            Customer redemptions will appear here when customers claim your
-                            offers.
-                        </AlertDescription>
-                    </Alert>
+                    <div className="mt-10 rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
+                        <h2 className="text-xl font-semibold">No redemptions yet</h2>
+                        <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
+                            Customer redemptions will appear here when customers claim your offers.
+                        </p>
+                    </div>
                 ) : (
                     <section className="mt-10 space-y-4">
                         {redemptions.map((redemption) => {

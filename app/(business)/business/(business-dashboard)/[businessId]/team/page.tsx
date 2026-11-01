@@ -16,27 +16,27 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <Skeleton className="h-9 w-44 rounded-md" />
+                <Skeleton className="h-9 w-44 rounded-lg" />
 
                 <div className="mt-8">
-                    <Skeleton className="h-5 w-40 rounded-md" />
-                    <Skeleton className="mt-3 h-12 w-72 rounded-md" />
-                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                    <Skeleton className="h-5 w-40 rounded-lg" />
+                    <Skeleton className="mt-3 h-12 w-72 rounded-lg" />
+                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
                 </div>
 
                 <div className="mt-10 space-y-8">
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
-                        <Skeleton className="h-7 w-56 rounded-md" />
+                        <Skeleton className="h-7 w-56 rounded-lg" />
 
                         <div className="mt-6 space-y-5">
-                            <Skeleton className="h-10 w-full rounded-md" />
-                            <Skeleton className="h-10 w-full rounded-md" />
-                            <Skeleton className="h-10 w-40 rounded-md" />
+                            <Skeleton className="h-10 w-full rounded-lg" />
+                            <Skeleton className="h-10 w-full rounded-lg" />
+                            <Skeleton className="h-10 w-40 rounded-lg" />
                         </div>
                     </div>
 
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
-                        <Skeleton className="h-7 w-48 rounded-md" />
+                        <Skeleton className="h-7 w-48 rounded-lg" />
 
                         <div className="mt-6 space-y-4">
                             {[1, 2, 3].map((item) => (
@@ -48,12 +48,12 @@ function LoadingState() {
                                         <Skeleton className="size-9 shrink-0 rounded-full" />
 
                                         <div className="space-y-2">
-                                            <Skeleton className="h-5 w-48 rounded-md" />
+                                            <Skeleton className="h-5 w-48 rounded-lg" />
                                             <Skeleton className="h-5 w-20 rounded-full" />
                                         </div>
                                     </div>
 
-                                    <Skeleton className="h-9 w-28 rounded-md" />
+                                    <Skeleton className="h-9 w-28 rounded-lg" />
                                 </div>
                             ))}
                         </div>

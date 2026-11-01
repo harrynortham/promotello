@@ -100,13 +100,13 @@ export default function RedemptionList({
                 <RedemptionLookup businessId={businessId} />
 
                 {errorMessage && (
-                    <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700">
+                    <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
                         {errorMessage}
                     </div>
                 )}
 
                 {redemptions.length === 0 ? (
-                    <section className="mt-10 rounded-3xl bg-white p-10 text-center shadow-sm">
+                    <section className="mt-10 rounded-xl bg-white p-10 text-center shadow-sm">
                         <h2 className="text-2xl font-semibold">No redemptions yet</h2>
 
                         <p className="mt-3 text-[#17233B]/65">
@@ -118,7 +118,7 @@ export default function RedemptionList({
                         {redemptions.map((redemption) => (
                             <article
                                 key={redemption.id}
-                                className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
+                                className="rounded-xl bg-white p-6 shadow-sm sm:p-8"
                             >
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div>

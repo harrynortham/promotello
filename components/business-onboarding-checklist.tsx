@@ -33,7 +33,7 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
     const ready = completedCount === required.length;
 
     return (
-        <Card className="rounded-3xl">
+        <Card className="rounded-xl">
             <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -70,7 +70,7 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                                 return (
                                     <li
                                         key={item.id}
-                                        className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isNext
+                                        className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isNext
                                             ? "border-[#FF593F] bg-[#FF593F]/5"
                                             : "border-[#17233B]/10"
                                             }`}

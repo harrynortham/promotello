@@ -11,18 +11,15 @@ type BusinessSidebarNavProps = {
     canManage: boolean;
 };
 
+const overviewLink = {
+    label: "Overview",
+    path: "",
+};
+
 const baseLinks = [
-    {
-        label: "Overview",
-        path: "",
-    },
     {
         label: "Offers",
         path: "/offers",
-    },
-    {
-        label: "Redemptions",
-        path: "/redemptions",
     },
     {
         label: "QR posters",
@@ -35,6 +32,10 @@ const baseLinks = [
     {
         label: "Automations",
         path: "/automations",
+    },
+    {
+        label: "Redemptions",
+        path: "/redemptions",
     },
     ...(EVENTS_ENABLED ? [{ label: "Events", path: "/events" }] : []),
     {
@@ -50,16 +51,21 @@ export function BusinessSidebarNav({
     const pathname = usePathname();
 
     const links = [
+        overviewLink,
+        ...(canManage
+            ? [
+                {
+                    label: "Business profile",
+                    path: "/edit",
+                },
+            ]
+            : []),
         ...baseLinks,
         ...(canManage
             ? [
                 {
                     label: "Team",
                     path: "/team",
-                },
-                {
-                    label: "Edit business",
-                    path: "/edit",
                 },
                 {
                     label: "Notifications",

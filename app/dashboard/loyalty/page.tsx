@@ -1,14 +1,11 @@
 import { businessPath } from "@/lib/slugs";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { FiGift } from "react-icons/fi";
 
 import { EmptyState } from "@/components/listing-ui";
-import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { qrSvg } from "@/lib/qr";
@@ -29,10 +26,10 @@ function LoadingState() {
     return (
         <div>
             <div className="mx-auto max-w-5xl">
-                <Skeleton className="h-10 w-64 rounded-md" />
+                <Skeleton className="h-10 w-64 rounded-lg" />
                 <div className="mt-8 grid gap-5 md:grid-cols-2">
-                    <Skeleton className="h-96 rounded-3xl" />
-                    <Skeleton className="h-96 rounded-3xl" />
+                    <Skeleton className="h-96 rounded-xl" />
+                    <Skeleton className="h-96 rounded-xl" />
                 </div>
             </div>
         </div>
@@ -88,54 +85,22 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                 const business = card.business;
 
                                 return (
-                                    <article
+                                    <LoyaltyCard
                                         key={card.id}
                                         id={card.programId}
-                                        className={`overflow-hidden rounded-3xl border bg-white shadow-sm ${joined === card.programId ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}`}
-                                    >
-                                        <div className="flex items-center gap-3 bg-[#17233B] px-6 py-4 text-white">
-                                            {business?.logo_url && (
-                                                <Image src={business.logo_url} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
-                                            )}
-                                            <div className="min-w-0">
-                                                <Link href={business ? businessPath(business) : "/businesses"} className="block truncate font-semibold hover:underline">
-                                                    {business?.name}
-                                                </Link>
-                                                <p className="text-sm text-white/70">
-                                                    {card.stampsRequired} stamps for {card.reward.charAt(0).toLowerCase() + card.reward.slice(1)}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-6">
-                                            {card.rewardReady && (
-                                                <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#FF593F]/10 px-3 py-2 text-sm font-semibold text-[#FF593F]">
-                                                    <FiGift aria-hidden="true" />
-                                                    Reward ready: ask staff to redeem it
-                                                </p>
-                                            )}
-
-                                            <LoyaltyStamps stamps={card.stamps} required={card.stampsRequired} />
-
-                                            <p className="mt-3 text-sm text-[#17233B]/70">
-                                                {card.stamps} of {card.stampsRequired} stamps
-                                                {card.rewardsRedeemed > 0 && ` · ${card.rewardsRedeemed} redeemed`}
-                                                {!card.active && " · paused by the business"}
-                                            </p>
-
-                                            <div className="mt-6 flex flex-col items-center gap-4 rounded-2xl bg-[#FFF8F0] p-5 text-center sm:flex-row sm:gap-5 sm:p-4 sm:text-left">
-                                                <div
-                                                    className="size-52 shrink-0 rounded-xl bg-white p-2 sm:size-32 [&>svg]:h-full [&>svg]:w-full"
-                                                    dangerouslySetInnerHTML={{ __html: svgs[index] }}
-                                                />
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-medium">Show this to staff</p>
-                                                    <p className="mt-2 font-mono text-lg font-semibold tracking-[0.2em]">{card.code}</p>
-                                                    <p className="mt-1 text-xs text-[#17233B]/70">They can scan it or type the code.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </article>
+                                        businessName={business?.name ?? "Business"}
+                                        businessHref={business ? businessPath(business) : "/businesses"}
+                                        logoUrl={business?.logo_url}
+                                        stampsRequired={card.stampsRequired}
+                                        reward={card.reward}
+                                        stamps={card.stamps}
+                                        rewardsRedeemed={card.rewardsRedeemed}
+                                        active={card.active}
+                                        terms={card.terms}
+                                        code={card.code}
+                                        qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: svgs[index] }} />}
+                                        className={joined === card.programId ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}
+                                    />
                                 );
                             })}
                         </div>

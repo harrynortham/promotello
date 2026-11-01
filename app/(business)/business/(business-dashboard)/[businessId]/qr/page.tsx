@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { FiExternalLink, FiPrinter } from "react-icons/fi";
 
+import { QrPoster } from "@/components/qr-poster";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,12 @@ import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { archiveQrCode, createQrCode } from "./actions";
+import { QrHowItWorks } from "./how-it-works";
+import { PosterSizeSelect } from "./poster-size-select";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; created?: string }>;
+    searchParams: Promise<{ error?: string; created?: string; size?: string }>;
 };
 
 type QrCode = {
@@ -41,11 +44,11 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <Skeleton className="h-10 w-64 rounded-md" />
-                <Skeleton className="mt-8 h-40 rounded-2xl" />
+                <Skeleton className="h-10 w-64 rounded-lg" />
+                <Skeleton className="mt-8 h-40 rounded-xl" />
                 <div className="mt-8 grid gap-5 md:grid-cols-2">
-                    <Skeleton className="h-72 rounded-2xl" />
-                    <Skeleton className="h-72 rounded-2xl" />
+                    <Skeleton className="h-72 rounded-xl" />
+                    <Skeleton className="h-72 rounded-xl" />
                 </div>
             </div>
         </div>
@@ -65,7 +68,8 @@ function scanWindows() {
 async function QrContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, created }] = await Promise.all([params, searchParams]);
+    const [{ businessId }, { error, created, size }] = await Promise.all([params, searchParams]);
+    const posterSize = size === "a5" ? "a5" : "a4";
     const supabase = await createClient();
 
     const {
@@ -90,7 +94,7 @@ async function QrContent({ params, searchParams }: PageProps) {
     const canManage = ["owner", "admin"].includes(membership.role);
     const { since30, since7, today } = scanWindows();
 
-    const [{ data: codes }, { data: offers }, hasPro, origin] = await Promise.all([
+    const [{ data: codes }, { data: offers }, { data: business }, hasPro, origin] = await Promise.all([
         supabase
             .from("qr_codes")
             .select("id, code, label, created_at, offers ( title, discount )")
@@ -99,12 +103,17 @@ async function QrContent({ params, searchParams }: PageProps) {
             .order("created_at", { ascending: true }),
         supabase
             .from("offers")
-            .select("id, title")
+            .select("id, title, discount")
             .eq("business_id", businessId)
             .eq("approval_status", "approved")
             .gte("expires_at", today)
             .is("plan_paused_at", null)
             .order("created_at", { ascending: false }),
+        supabase
+            .from("businesses")
+            .select("name, slug, logo_url, business_locations ( region, city )")
+            .eq("id", businessId)
+            .maybeSingle(),
         businessHasPro(supabase, businessId),
         requestOrigin(),
     ]);
@@ -132,20 +141,38 @@ async function QrContent({ params, searchParams }: PageProps) {
     const svgs = await Promise.all(qrCodes.map((code) => qrSvg(qrLink(origin, code.code))));
     const atFreeLimit = !hasPro && qrCodes.length >= 1;
 
+    // The poster preview: their own branding, their newest offer, and a
+    // code that opens their page, so it is the real thing in miniature.
+    const location = Array.isArray(business?.business_locations)
+        ? business.business_locations[0]
+        : business?.business_locations;
+    const headlineOffer = offers?.[0] ?? null;
+    const previewLink = business?.slug ? `${origin}/businesses/${business.slug}` : origin;
+    const previewSvg = await qrSvg(previewLink);
+    const previewWidth = posterSize === "a5" ? 181 : 256;
+
     return (
         <div className="text-[#17233B]">
             <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                    QR posters
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                    Turn passers-by into customers
-                </h1>
-                <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                    Put a QR poster in your window, by the till or on tables.
-                    Customers scan it to see your offers, and you see how many
-                    scans each spot gets.
-                </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                            QR posters
+                        </p>
+                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                            Turn passers-by into customers
+                        </h1>
+                        <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                            Put a QR poster in your window, by the till or on
+                            tables. Customers scan it to see your offers, and
+                            you see how many scans each spot gets.
+                        </p>
+                    </div>
+
+                    <div className="shrink-0">
+                        <QrHowItWorks />
+                    </div>
+                </div>
 
                 {error && errorMessages[error] && (
                     <Alert variant="destructive" className="mt-8">
@@ -164,18 +191,17 @@ async function QrContent({ params, searchParams }: PageProps) {
                 )}
 
                 {!hasPro && (
-                    <Alert className="mt-8 border-[#FF593F]/30 bg-white">
+                    <Alert className="mt-8 border-[#FF593F]/30 bg-[#FF593F]/5">
                         <AlertTitle>Free plan · {qrCodes.length} of 1 QR code used</AlertTitle>
                         <AlertDescription>
-                            <p>Upgrade to Pro for a code in every spot, and compare which placements bring people in.</p>
-                            <Button
-                                render={<Link href={`/business/${businessId}/billing`} />}
-                                nativeButton={false}
-                                size="sm"
-                                className="mt-3 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                            Get a code in every spot, and compare which
+                            placements bring people in.{" "}
+                            <Link
+                                href={`/business/${businessId}/billing`}
+                                className="font-medium text-[#FF593F]"
                             >
                                 Upgrade to Pro
-                            </Button>
+                            </Link>
                         </AlertDescription>
                     </Alert>
                 )}
@@ -185,8 +211,8 @@ async function QrContent({ params, searchParams }: PageProps) {
                         <CardHeader>
                             <CardTitle>Create a QR code</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <form action={createQrCode} className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                        <CardContent className="flex flex-col gap-8 lg:flex-row lg:items-start">
+                            <form action={createQrCode} className="flex-1 space-y-5">
                                 <input type="hidden" name="businessId" value={businessId} />
 
                                 <div className="space-y-2">
@@ -200,7 +226,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                         id="qr-target"
                                         name="target"
                                         defaultValue="business"
-                                        className="h-12 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                        className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                                     >
                                         <option value="business">Your business page</option>
                                         {(offers ?? []).map((offer) => (
@@ -211,17 +237,47 @@ async function QrContent({ params, searchParams }: PageProps) {
                                     </select>
                                 </div>
 
-                                <SubmitButton size="lg" pendingLabel="Creating…" className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90">
+                                <PosterSizeSelect size={posterSize} />
+
+                                <SubmitButton size="lg" pendingLabel="Creating…" className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto">
                                     Create QR code
                                 </SubmitButton>
                             </form>
+
+                                <div className="w-full shrink-0 lg:w-64">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                                        What gets printed
+                                    </p>
+
+                                    <div
+                                        className="mt-3 overflow-hidden rounded-xl border border-[#17233B]/10 shadow-sm"
+                                        style={{ width: previewWidth }}
+                                    >
+                                        <QrPoster
+                                            width={`${previewWidth}px`}
+                                            height={`${Math.round(previewWidth * (297 / 210))}px`}
+                                            fontSize={16 * (previewWidth / 794)}
+                                            businessName={business?.name ?? "Your business"}
+                                            place={location?.region || location?.city}
+                                            logoUrl={business?.logo_url}
+                                            offer={headlineOffer}
+                                            qrMarkup={previewSvg}
+                                            link={previewLink}
+                                        />
+                                    </div>
+
+                                    <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
+                                        Ready to print. Your logo and newest
+                                        offer fill in automatically.
+                                    </p>
+                                </div>
                         </CardContent>
                     </Card>
                 )}
 
                 <section className="mt-10">
                     {qrCodes.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
+                        <div className="rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
                             <h2 className="text-xl font-semibold">No QR codes yet</h2>
                             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
                                 Create your first code above, print the poster and put it in your window.
@@ -273,7 +329,7 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                                                 <div className="mt-4 flex flex-wrap gap-2">
                                                     <Button
-                                                        render={<Link href={`/poster/${code.id}`} target="_blank" />}
+                                                        render={<Link href={`/poster/${code.id}?size=${posterSize}`} target="_blank" />}
                                                         nativeButton={false}
                                                         size="sm"
                                                     >

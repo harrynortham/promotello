@@ -16,7 +16,7 @@ function DashboardLoading() {
     return (
         <div className="space-y-6">
 
-            <div className="h-64 animate-pulse rounded-3xl bg-white" />
+            <div className="h-64 animate-pulse rounded-xl bg-white" />
         </div>
     );
 }

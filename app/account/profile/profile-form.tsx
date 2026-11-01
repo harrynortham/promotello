@@ -322,7 +322,7 @@ export default function ProfileForm({
                 )}
             </div>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <CardTitle>Profile photo</CardTitle>
                     <CardDescription>
@@ -399,7 +399,7 @@ export default function ProfileForm({
                 </CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-none">
+            <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <CardTitle>Personal details</CardTitle>
                     <CardDescription>
@@ -463,7 +463,7 @@ export default function ProfileForm({
                                     aria-label="Birthday day"
                                     {...register("birthDay")}
                                     {...invalidProps("profile-birthday-error", errors.birthDay)}
-                                    className="h-12 rounded-md border border-input bg-background px-3 text-sm"
+                                    className="h-12 rounded-lg border border-input bg-background px-3 text-sm"
                                 >
                                     <option value="">Day</option>
                                     {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
@@ -473,7 +473,7 @@ export default function ProfileForm({
                                 <select
                                     aria-label="Birthday month"
                                     {...register("birthMonth")}
-                                    className="h-12 rounded-md border border-input bg-background px-3 text-sm"
+                                    className="h-12 rounded-lg border border-input bg-background px-3 text-sm"
                                 >
                                     <option value="">Month</option>
                                     {monthNames.map((month, index) => (

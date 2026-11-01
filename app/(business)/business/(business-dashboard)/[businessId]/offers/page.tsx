@@ -14,6 +14,8 @@ import {
     businessHasPro,
     isLiveOffer,
 } from "@/lib/billing";
+import { OfferCard } from "@/components/offer-card";
+import { OffersHowItWorks } from "./how-it-works";
 import { SharePanel } from "@/components/share-panel";
 import { offerShareCaption, shareLink } from "@/lib/share";
 import { createClient } from "@/utils/supabase/server";
@@ -47,12 +49,39 @@ type Offer = {
 type BusinessSummary = {
     id: string;
     name: string;
+    logo_url: string | null;
 };
 
 type Membership = {
     role: "owner" | "admin" | "member";
     businesses: BusinessSummary | BusinessSummary[] | null;
 };
+
+// Shown in the empty state, on the business's own card, so they can see
+// what they are about to create. The dates are relative so the card's
+// "Ends in …" badge reads naturally.
+const exampleOffers = [
+    {
+        discount: "20% off",
+        title: "20% off your first visit",
+        description:
+            "New customers get a fifth off everything on the menu, any day of the week.",
+        availability: "Available Monday to Friday",
+        endsInDays: 10,
+    },
+    {
+        discount: "2 for 1",
+        title: "Two coffees for the price of one",
+        description:
+            "Bring a friend and share a morning brew before eleven.",
+        availability: "Available before 11am",
+        endsInDays: 24,
+    },
+];
+
+function inDays(days: number) {
+    return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+}
 
 const statusLabels: Record<OfferStatus, string> = {
     pending: "Pending approval",
@@ -72,16 +101,16 @@ function LoadingState() {
     return (
         <div>
             <div>
-                <Skeleton className="h-9 w-44 rounded-md" />
+                <Skeleton className="h-9 w-44 rounded-lg" />
 
                 <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <Skeleton className="h-5 w-32 rounded-md" />
-                        <Skeleton className="mt-3 h-12 w-72 rounded-md" />
-                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-md" />
+                        <Skeleton className="h-5 w-32 rounded-lg" />
+                        <Skeleton className="mt-3 h-12 w-72 rounded-lg" />
+                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
                     </div>
 
-                    <Skeleton className="h-9 w-40 rounded-md" />
+                    <Skeleton className="h-9 w-40 rounded-lg" />
                 </div>
 
                 <div className="mt-10 space-y-5">
@@ -95,24 +124,24 @@ function LoadingState() {
                             <div className="space-y-5 p-6 sm:p-8">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <Skeleton className="h-4 w-24 rounded-md" />
-                                        <Skeleton className="mt-3 h-8 w-64 rounded-md" />
-                                        <Skeleton className="mt-2 h-4 w-32 rounded-md" />
+                                        <Skeleton className="h-4 w-24 rounded-lg" />
+                                        <Skeleton className="mt-3 h-8 w-64 rounded-lg" />
+                                        <Skeleton className="mt-2 h-4 w-32 rounded-lg" />
                                     </div>
 
                                     <Skeleton className="h-6 w-28 rounded-full" />
                                 </div>
 
-                                <Skeleton className="h-16 w-full rounded-md" />
+                                <Skeleton className="h-16 w-full rounded-lg" />
 
                                 <div className="rounded-xl bg-[#FFF8F0] p-4">
-                                    <Skeleton className="h-5 w-56 rounded-md" />
+                                    <Skeleton className="h-5 w-56 rounded-lg" />
                                     <Skeleton className="mt-3 h-2 w-full rounded-full" />
                                 </div>
 
                                 <div className="flex gap-3">
-                                    <Skeleton className="h-9 w-32 rounded-md" />
-                                    <Skeleton className="h-9 w-32 rounded-md" />
+                                    <Skeleton className="h-9 w-32 rounded-lg" />
+                                    <Skeleton className="h-9 w-32 rounded-lg" />
                                 </div>
                             </div>
                         </div>
@@ -163,7 +192,7 @@ async function OffersContent({ params }: PageProps) {
 
     const { data: membershipData } = await supabase
         .from("business_members")
-        .select("role, businesses (id, name)")
+        .select("role, businesses (id, name, logo_url)")
         .eq("business_id", businessId)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -223,7 +252,7 @@ async function OffersContent({ params }: PageProps) {
     return (
         <div className="text-[#17233B]">
             <div>
-                <header>
+                <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Offers
@@ -237,10 +266,14 @@ async function OffersContent({ params }: PageProps) {
                             Manage offers submitted by this business.
                         </p>
                     </div>
+
+                    <div className="shrink-0">
+                        <OffersHowItWorks />
+                    </div>
                 </header>
 
                 {!hasPro && canManageOffers && (
-                    <Alert className="mt-8 border-[#FF593F]/30 bg-white">
+                    <Alert className="mt-8 border-[#FF593F]/30 bg-[#FF593F]/5">
                         <AlertTitle>
                             Free plan · {liveOfferCount} of{" "}
                             {FREE_LIVE_OFFER_LIMIT} live offer used
@@ -248,8 +281,8 @@ async function OffersContent({ params }: PageProps) {
 
                         <AlertDescription>
                             {pausedOfferCount > 0
-                                ? `${pausedOfferCount} paused ${pausedOfferCount === 1 ? "offer is" : "offers are"} hidden from customers. Upgrade to Pro to show them again and create unlimited offers.`
-                                : "Upgrade to Pro for unlimited offers."}{" "}
+                                ? `${pausedOfferCount} paused ${pausedOfferCount === 1 ? "offer is" : "offers are"} hidden from customers. Show them again, and run as many offers as you like.`
+                                : "Run as many offers as you like at once."}{" "}
                             <Link
                                 href={`/business/${businessId}/billing`}
                                 className="font-medium text-[#FF593F]"
@@ -282,17 +315,42 @@ async function OffersContent({ params }: PageProps) {
                             </p>
 
                             {canManageOffers && (
-                                <Button
-                                    render={
-                                        <Link href={`/business/${businessId}/offers/new`} />
-                                    }
-                                    nativeButton={false}
-                                    variant="default"
-                                    size="lg"
-                                    className="mt-7"
-                                >
-                                    Create offer
-                                </Button>
+                                <>
+                                    <Button
+                                        render={
+                                            <Link href={`/business/${businessId}/offers/new`} />
+                                        }
+                                        nativeButton={false}
+                                        variant="default"
+                                        size="lg"
+                                        className="mt-7"
+                                    >
+                                        Create offer
+                                    </Button>
+
+                                    <p className="mt-12 text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                                        How customers will see it
+                                    </p>
+
+                                    {/* Not links: they stand in for the real thing. */}
+                                    <div className="pointer-events-none mx-auto mt-5 grid max-w-3xl gap-5 text-left sm:grid-cols-2">
+                                        {exampleOffers.map((example) => (
+                                            <OfferCard
+                                                key={example.title}
+                                                slug=""
+                                                discount={example.discount}
+                                                title={example.title}
+                                                description={example.description}
+                                                availability={example.availability}
+                                                expiresAt={inDays(example.endsInDays)}
+                                                business={business?.name ?? "Your business"}
+                                                businessLogoUrl={business?.logo_url}
+                                                example
+                                            />
+                                        ))}
+                                    </div>
+
+                                </>
                             )}
                         </CardContent>
                     </Card>

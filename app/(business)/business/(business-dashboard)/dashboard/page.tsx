@@ -38,7 +38,7 @@ function LoadingState() {
         <Page>
             <Skeleton className="h-10 w-72" />
             <Skeleton className="mt-3 h-5 w-80 max-w-full" />
-            <Skeleton className="mt-10 h-40 rounded-3xl" />
+            <Skeleton className="mt-10 h-40 rounded-xl" />
         </Page>
     );
 }
@@ -61,17 +61,17 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
     const href = `/business/${business.id}`;
 
     return (
-        <li className="group relative flex items-center gap-4 rounded-3xl border border-[#17233B]/10 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:gap-5 sm:p-6">
+        <li className="group relative flex items-center gap-4 rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:gap-5 sm:p-6">
             {business.logo_url ? (
                 <Image
                     src={business.logo_url}
                     alt=""
                     width={64}
                     height={64}
-                    className="size-14 shrink-0 rounded-2xl border border-[#17233B]/10 object-cover sm:size-16"
+                    className="size-14 shrink-0 rounded-xl border border-[#17233B]/10 object-cover sm:size-16"
                 />
             ) : (
-                <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4E8] text-2xl font-semibold text-[#FF593F] sm:size-16">
+                <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] text-2xl font-semibold text-[#FF593F] sm:size-16">
                     {business.name.charAt(0).toUpperCase()}
                 </span>
             )}
@@ -128,7 +128,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                 Three steps to your first customers. Start free, no card needed.
             </p>
 
-            <div className="mt-10 rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
                 <ol className="space-y-5">
                     {welcomeSteps.map((step, index) => (
                         <li key={step.title} className="flex gap-4">

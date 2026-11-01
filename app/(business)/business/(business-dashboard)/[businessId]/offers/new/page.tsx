@@ -64,16 +64,19 @@ async function NewOfferPageContent({ params }: PageProps) {
         }
     }
 
-    // New offers default to the business's own category.
+    // New offers default to the business's own category; the name and logo
+    // are for the live preview card.
     const { data: business } = await supabase
         .from("businesses")
-        .select("category_id")
+        .select("name, logo_url, category_id")
         .eq("id", businessId)
         .maybeSingle();
 
     return (
         <NewOfferForm
             businessId={businessId}
+            businessName={business?.name ?? "Your business"}
+            businessLogoUrl={business?.logo_url ?? null}
             defaultCategoryId={business?.category_id ?? null}
             canSchedule={(await businessTier(supabase, businessId).catch(() => "free")) === "growth"}
         />
@@ -127,8 +130,8 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
 function LoadingState() {
     return (
         <div>
-            <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
-            <div className="mt-6 h-96 animate-pulse rounded-2xl bg-slate-100" />
+            <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
+            <div className="mt-6 h-96 animate-pulse rounded-xl bg-slate-100" />
         </div>
     );
 }

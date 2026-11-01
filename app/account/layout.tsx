@@ -27,7 +27,7 @@ function AccountLoading() {
         >
             <Skeleton className="h-9 w-48" />
             <Skeleton className="h-5 w-72 max-w-full" />
-            <Skeleton className="h-80 rounded-2xl" />
+            <Skeleton className="h-80 rounded-xl" />
         </div>
     );
 }
