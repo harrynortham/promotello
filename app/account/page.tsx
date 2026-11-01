@@ -161,6 +161,7 @@ async function AccountContent() {
                         </div>
 
                         <Button
+                            size="lg"
                             render={<Link href="/account/profile" />}
                             nativeButton={false}
                             variant="outline"
@@ -241,6 +242,7 @@ async function AccountContent() {
                     </p>
 
                     <Button
+                        size="lg"
                         render={<Link href="/business/dashboard" />}
                         nativeButton={false}
                         variant="link"
@@ -266,7 +268,7 @@ async function AccountContent() {
                 </div>
 
                 <form action={signOut}>
-                    <Button type="submit" variant="outline">
+                    <Button size="lg" type="submit" variant="outline">
                         Sign out
                     </Button>
                 </form>

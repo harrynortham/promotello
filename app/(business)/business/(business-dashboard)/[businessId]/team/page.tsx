@@ -44,9 +44,13 @@ function LoadingState() {
                                     key={item}
                                     className="flex items-center justify-between gap-4 border-b border-[#17233B]/10 pb-4"
                                 >
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-5 w-48 rounded-md" />
-                                        <Skeleton className="h-5 w-20 rounded-full" />
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="size-9 shrink-0 rounded-full" />
+
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-5 w-48 rounded-md" />
+                                            <Skeleton className="h-5 w-20 rounded-full" />
+                                        </div>
                                     </div>
 
                                     <Skeleton className="h-9 w-28 rounded-md" />

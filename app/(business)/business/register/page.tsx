@@ -14,10 +14,7 @@ import {
     FiEye,
     FiEyeOff,
     FiGift,
-    FiLock,
-    FiMail,
     FiMapPin,
-    FiUser,
 } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -111,18 +108,6 @@ export default function BusinessRegisterPage() {
                                 priority
                             />
                         </Link>
-
-                        <Button
-                            render={
-                                <Link href="/login?next=/business/dashboard" />
-                            }
-                            nativeButton={false}
-                            variant="ghost"
-                            size="sm"
-                        >
-                            Sign in
-                            <FiArrowRight aria-hidden="true" />
-                        </Button>
                     </div>
 
                     <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center py-12 lg:py-16">
@@ -195,9 +180,8 @@ export default function BusinessRegisterPage() {
                                     Promotello for business
                                 </p>
 
-                                <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                                    Your next customer starts with an
-                                    introduction.
+                                <h1 className="mt-4 text-3xl font-semibold tracking-tight text-nowrap sm:text-4xl">
+                                    Win your next customer.
                                 </h1>
 
                                 <p className="mt-4 leading-7 text-muted-foreground">
@@ -205,25 +189,6 @@ export default function BusinessRegisterPage() {
                                     we’ll help you add your business and
                                     prepare your first offer.
                                 </p>
-
-                                <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
-                                    <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                        1
-                                    </span>
-                                    <span className="font-medium text-foreground">
-                                        Create account
-                                    </span>
-
-                                    <span
-                                        aria-hidden="true"
-                                        className="h-px w-6 bg-border"
-                                    />
-
-                                    <span className="flex size-6 items-center justify-center rounded-full bg-muted">
-                                        2
-                                    </span>
-                                    <span>Add business</span>
-                                </div>
 
                                 <SocialSignIn next="/onboarding" />
 
@@ -234,14 +199,7 @@ export default function BusinessRegisterPage() {
                                     aria-busy={isSubmitting}
                                 >
                                     <div className="space-y-2">
-                                        <Label
-                                            htmlFor="register-name"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiUser
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
+                                        <Label htmlFor="register-name">
                                             Your name
                                         </Label>
 
@@ -259,14 +217,7 @@ export default function BusinessRegisterPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label
-                                            htmlFor="register-email"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiMail
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
+                                        <Label htmlFor="register-email">
                                             Email address
                                         </Label>
 
@@ -282,22 +233,10 @@ export default function BusinessRegisterPage() {
                                         />
 
                                         <FieldError id="register-email-error" message={errors.email?.message} />
-
-                                        <p className="text-xs leading-6 text-muted-foreground">
-                                            Use an address you can access.
-                                            This will be your personal login.
-                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label
-                                            htmlFor="register-password"
-                                            className="flex items-center gap-2"
-                                        >
-                                            <FiLock
-                                                aria-hidden="true"
-                                                className="size-4 text-muted-foreground"
-                                            />
+                                        <Label htmlFor="register-password">
                                             Password
                                         </Label>
 
@@ -314,7 +253,7 @@ export default function BusinessRegisterPage() {
                                                 readOnly={isSubmitting}
                                                 className="pr-12"
                                                 {...register("password")}
-                                                {...invalidProps("register-password-help", errors.password)}
+                                                {...invalidProps("register-password-error", errors.password)}
                                             />
 
                                             <Button
@@ -343,16 +282,8 @@ export default function BusinessRegisterPage() {
                                             </Button>
                                         </div>
 
-                                        <p
-                                            id="register-password-help"
-                                            className={`text-xs leading-6 ${errors.password ? "text-destructive" : "text-muted-foreground"}`}
-                                            role={errors.password ? "alert" : undefined}
-                                        >
-                                            {errors.password?.message ??
-                                                "Use at least 8 characters and choose a unique password."}
-                                        </p>
+                                        <FieldError id="register-password-error" message={errors.password?.message} />
                                     </div>
-
 
                                     {errorMessage && (
                                         <Alert variant="destructive">
@@ -367,26 +298,6 @@ export default function BusinessRegisterPage() {
                                         </Alert>
                                     )}
 
-                                    <p className="text-xs leading-6 text-muted-foreground">
-                                        By creating an account, you agree to
-                                        our{" "}
-                                        <Link
-                                            href="/legal/terms"
-                                            className="text-foreground underline underline-offset-4"
-                                        >
-                                            Terms of Service
-                                        </Link>
-                                        . Read our{" "}
-                                        <Link
-                                            href="/legal/privacy"
-                                            className="text-foreground underline underline-offset-4"
-                                        >
-                                            Privacy Policy
-                                        </Link>{" "}
-                                        to understand how we handle your
-                                        information.
-                                    </p>
-
                                     <Button
                                         type="submit"
                                         size="lg"
@@ -398,14 +309,9 @@ export default function BusinessRegisterPage() {
                                             : "Create your account"}
                                         <FiArrowRight aria-hidden="true" />
                                     </Button>
-
-                                    <p className="text-center text-xs leading-6 text-muted-foreground">
-                                        Creating an account does not start
-                                        a paid subscription.
-                                    </p>
                                 </form>
 
-                                <div className="mt-7 border-t pt-6 text-center">
+                                <div className="mt-7 text-center">
                                     <p className="text-sm text-muted-foreground">
                                         Already use Promotello?{" "}
                                         <Link
@@ -416,29 +322,28 @@ export default function BusinessRegisterPage() {
                                         </Link>
                                     </p>
                                 </div>
+
+                                <p className="mt-6 border-t pt-6 text-xs leading-6 text-muted-foreground">
+                                    By creating an account, you agree to
+                                    our{" "}
+                                    <Link
+                                        href="/legal/terms"
+                                        className="text-foreground underline underline-offset-4"
+                                    >
+                                        Terms of Service
+                                    </Link>
+                                    . Read our{" "}
+                                    <Link
+                                        href="/legal/privacy"
+                                        className="text-foreground underline underline-offset-4"
+                                    >
+                                        Privacy Policy
+                                    </Link>{" "}
+                                    to understand how we handle your
+                                    information.
+                                </p>
                             </>
                         )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-                        <Link
-                            href="/business/contact"
-                            className="hover:underline"
-                        >
-                            Need help?
-                        </Link>
-                        <Link
-                            href="/legal/privacy"
-                            className="hover:underline"
-                        >
-                            Privacy
-                        </Link>
-                        <Link
-                            href="/legal/terms"
-                            className="hover:underline"
-                        >
-                            Terms
-                        </Link>
                     </div>
                 </section>
 
@@ -470,11 +375,7 @@ export default function BusinessRegisterPage() {
                             Built around local discovery
                         </span>
 
-                        <h2 className="mt-7 text-4xl font-semibold leading-tight tracking-tight xl:text-5xl">
-                            Someone’s next favourite could be you.
-                        </h2>
-
-                        <p className="mt-5 text-lg leading-8 text-white/70">
+                        <p className="mt-7 text-lg leading-8 text-white/70">
                             Give people a reason to discover your business,
                             try something new, and walk through your door.
                         </p>

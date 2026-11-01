@@ -159,6 +159,7 @@ async function CustomerDashboardContent() {
                                 </div>
 
                                 <Button
+                                    size="lg"
                                     render={<a href={`/review/${prompt.business_id}?source=${prompt.source}`} target="_blank" rel="noreferrer" />}
                                     nativeButton={false}
                                     className="shrink-0 bg-[#17233B] text-white hover:bg-[#17233B]/90"
@@ -260,6 +261,7 @@ async function CustomerDashboardContent() {
                     </div>
 
                     <Button
+                        size="lg"
                         render={<Link href={hasBusiness ? "/business/dashboard" : "/business"} />}
                         nativeButton={false}
                         className="shrink-0 bg-white text-[#17233B] hover:bg-white/90"

@@ -430,6 +430,7 @@ export default function EditOfferForm({
 
                         <DialogFooter>
                             <Button
+                                size="lg"
                                 type="button"
                                 variant="outline"
                                 onClick={() => setIsDeleteDialogOpen(false)}
@@ -439,6 +440,7 @@ export default function EditOfferForm({
                             </Button>
 
                             <Button
+                                size="lg"
                                 type="button"
                                 variant="destructive"
                                 onClick={handleDelete}

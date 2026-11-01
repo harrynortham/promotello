@@ -101,6 +101,7 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
 
                     <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                         <Button
+                            size="lg"
                             render={<Link href={`/business/${businessId}/billing`} />}
                             nativeButton={false}
                             className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
@@ -109,6 +110,7 @@ function OfferLimitReached({ businessId }: { businessId: string }) {
                         </Button>
 
                         <Button
+                            size="lg"
                             render={<Link href={`/business/${businessId}/offers`} />}
                             nativeButton={false}
                             variant="outline"

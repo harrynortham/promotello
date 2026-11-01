@@ -8,6 +8,7 @@ type SubmitButtonProps = {
     children: React.ReactNode;
     pendingLabel: string;
     variant?: "default" | "outline";
+    size?: "default" | "sm" | "lg";
     className?: string;
     name?: string;
     value?: string;
@@ -17,6 +18,7 @@ export function SubmitButton({
     children,
     pendingLabel,
     variant = "default",
+    size,
     className,
     name,
     value,
@@ -29,6 +31,7 @@ export function SubmitButton({
             name={name}
             value={value}
             variant={variant}
+            size={size}
             disabled={pending}
             className={className}
         >

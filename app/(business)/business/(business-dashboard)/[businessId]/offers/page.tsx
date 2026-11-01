@@ -223,7 +223,7 @@ async function OffersContent({ params }: PageProps) {
     return (
         <div className="text-[#17233B]">
             <div>
-                <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                <header>
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                             Offers
@@ -237,43 +237,25 @@ async function OffersContent({ params }: PageProps) {
                             Manage offers submitted by this business.
                         </p>
                     </div>
-
-                    {canManageOffers && (
-                        <Button
-                            render={
-                                <Link href={`/business/${businessId}/offers/new`} />
-                            }
-                            nativeButton={false}
-                            variant="default"
-                            size="sm"
-                        >
-                            Create offer
-                        </Button>
-                    )}
                 </header>
 
                 {!hasPro && canManageOffers && (
                     <Alert className="mt-8 border-[#FF593F]/30 bg-white">
                         <AlertTitle>
-                            Free plan · {liveOfferCount} of {FREE_LIVE_OFFER_LIMIT} live
-                            offer used
+                            Free plan · {liveOfferCount} of{" "}
+                            {FREE_LIVE_OFFER_LIMIT} live offer used
                         </AlertTitle>
 
                         <AlertDescription>
-                            <p>
-                                {pausedOfferCount > 0
-                                    ? `${pausedOfferCount} paused ${pausedOfferCount === 1 ? "offer is" : "offers are"} hidden from customers. Upgrade to Pro to show them again and create unlimited offers.`
-                                    : "Upgrade to Pro for unlimited offers."}
-                            </p>
-
-                            <Button
-                                render={<Link href={`/business/${businessId}/billing`} />}
-                                nativeButton={false}
-                                size="sm"
-                                className="mt-3 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                            {pausedOfferCount > 0
+                                ? `${pausedOfferCount} paused ${pausedOfferCount === 1 ? "offer is" : "offers are"} hidden from customers. Upgrade to Pro to show them again and create unlimited offers.`
+                                : "Upgrade to Pro for unlimited offers."}{" "}
+                            <Link
+                                href={`/business/${businessId}/billing`}
+                                className="font-medium text-[#FF593F]"
                             >
                                 Upgrade to Pro
-                            </Button>
+                            </Link>
                         </AlertDescription>
                     </Alert>
                 )}
@@ -306,7 +288,7 @@ async function OffersContent({ params }: PageProps) {
                                     }
                                     nativeButton={false}
                                     variant="default"
-                                    size="sm"
+                                    size="lg"
                                     className="mt-7"
                                 >
                                     Create offer
@@ -316,6 +298,21 @@ async function OffersContent({ params }: PageProps) {
                     </Card>
                 ) : (
                     <section className="mt-10 space-y-5">
+                        {canManageOffers && (
+                            <div className="flex justify-end">
+                                <Button
+                                    render={
+                                        <Link href={`/business/${businessId}/offers/new`} />
+                                    }
+                                    nativeButton={false}
+                                    variant="default"
+                                    size="lg"
+                                >
+                                    Create offer
+                                </Button>
+                            </div>
+                        )}
+
                         {typedOffers.map((offer) => {
                             const remainingRedemptions =
                                 offer.max_redemptions === null

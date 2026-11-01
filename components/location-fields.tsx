@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { normalisePostcode, type CityOption } from "@/lib/locations";
 
-const selectClass = "h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
+const selectClass = "h-12 w-full rounded-md border border-input bg-background px-3 text-sm";
 
 type LocationField = "city" | "region" | "postalCode";
 

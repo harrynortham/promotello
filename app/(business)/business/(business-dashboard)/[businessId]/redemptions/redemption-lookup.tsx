@@ -112,7 +112,7 @@ export default function RedemptionLookup({
                     onChange={(event) => setCode(event.target.value.toUpperCase())}
                     required
                     placeholder="A1B2C3D4E5"
-                    className="flex-1 rounded-xl border border-[#17233B]/15 px-4 py-3 text-sm uppercase outline-none focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20"
+                    className="h-12 flex-1 rounded-xl border border-[#17233B]/15 px-4 py-3 text-sm uppercase outline-none focus:border-[#FF593F] focus:ring-2 focus:ring-[#FF593F]/20"
                 />
 
                 <button
