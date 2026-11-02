@@ -59,6 +59,7 @@ export default async function DemoPage() {
         <DemoDashboard
             analytics={await sampleAnalytics()}
             posterQr={await qrSvg("https://www.promotello.com/business/demo")}
+            stampQr={await qrSvg("https://www.promotello.com/business/demo")}
         />
     );
 }
