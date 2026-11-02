@@ -157,7 +157,9 @@ export async function generateMetadata({
             url: path,
             title: business.name,
             description,
-            images: business.logo_url ? [{ url: business.logo_url }] : undefined,
+            // No images here: naming one overrides opengraph-image.tsx, and a
+            // bare logo previews badly at 1200x630. The generated card shows
+            // the name and the loyalty card instead.
         },
     };
 }

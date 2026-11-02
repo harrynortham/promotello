@@ -34,6 +34,13 @@ export function cardColour(value: string | null | undefined) {
     return CARD_COLOURS[(value ?? "") as CardColour] ?? CARD_COLOURS[DEFAULT_CARD_COLOUR];
 }
 
+// Rewards are written as a business would title them ("A free coffee"), so
+// they need lowercasing to sit mid-sentence.
+export function rewardWording(reward: string) {
+    const trimmed = reward.trim();
+    return trimmed ? trimmed.charAt(0).toLowerCase() + trimmed.slice(1) : "your reward";
+}
+
 export function stampIcon(value: string | null | undefined): StampIcon {
     return STAMP_ICONS.includes((value ?? "") as StampIcon)
         ? (value as StampIcon)
