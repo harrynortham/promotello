@@ -49,6 +49,7 @@ export async function createPreview(formData: FormData) {
     const { error: previewError } = await supabase.from("business_previews").insert({
         business_id: businessId,
         contact_name: text(formData, "contactName").slice(0, 80) || null,
+        contact_email: text(formData, "contactEmail").slice(0, 160) || null,
         sample_offer: sampleOffer.slice(0, 80),
         sample_reward: sampleReward.slice(0, 60),
         sample_stamps: Number.isInteger(stamps) && stamps >= 3 && stamps <= 20 ? stamps : 9,
@@ -73,4 +74,75 @@ export async function deletePreview(formData: FormData) {
 
     revalidatePath("/admin/previews");
     redirect("/admin/previews");
+}
+
+const statuses = ["to_send", "sent", "replied", "not_interested"];
+
+// Where a preview has got to. Marking it sent stamps the time, which is what
+// stops a business being written to twice; moving it back clears that.
+export async function setPreviewStatus(formData: FormData) {
+    const businessId = text(formData, "businessId");
+    const status = text(formData, "status");
+
+    if (!businessId || !statuses.includes(status)) {
+        redirect("/admin/previews");
+    }
+
+    const supabase = await createClient();
+
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    if (!isAdmin) redirect("/admin");
+
+    if (status === "to_send") {
+        // Putting it back on the list forgets that it was ever sent.
+        const { error } = await supabase
+            .from("business_previews")
+            .update({ status, contacted_at: null })
+            .eq("business_id", businessId);
+
+        if (error) console.error("Preview status: could not update", error);
+    } else {
+        const { error } = await supabase
+            .from("business_previews")
+            .update({ status })
+            .eq("business_id", businessId);
+
+        if (error) console.error("Preview status: could not update", error);
+
+        // Stamped once, on the first move off the list, so a later reply
+        // doesn't rewrite when it actually went out.
+        const { error: stampError } = await supabase
+            .from("business_previews")
+            .update({ contacted_at: new Date().toISOString() })
+            .eq("business_id", businessId)
+            .is("contacted_at", null);
+
+        if (stampError) console.error("Preview status: could not stamp", stampError);
+    }
+
+    revalidatePath("/admin/previews");
+    revalidatePath(`/admin/previews/${businessId}`);
+}
+
+// A line to yourself about this one: "said come back in January".
+export async function savePreviewNotes(formData: FormData) {
+    const businessId = text(formData, "businessId");
+    const notes = text(formData, "notes").slice(0, 1000);
+
+    const supabase = await createClient();
+
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    if (!isAdmin) redirect("/admin");
+
+    const { error } = await supabase
+        .from("business_previews")
+        .update({ notes: notes || null })
+        .eq("business_id", businessId);
+
+    if (error) {
+        console.error("Preview notes: could not save", error);
+    }
+
+    revalidatePath("/admin/previews");
+    revalidatePath(`/admin/previews/${businessId}`);
 }

@@ -1,11 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
-import { FiExternalLink } from "react-icons/fi";
+import { FiChevronRight } from "react-icons/fi";
 
-import { BusinessImageForm } from "@/components/business-image-form";
 import { CategorySelect } from "@/components/category-select";
-import { CopyButton } from "@/components/copy-button";
 import { LocationFields } from "@/components/location-fields";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,68 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCityOptions } from "@/lib/locations";
-import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
-import { createPreview, deletePreview } from "./actions";
+import { createPreview } from "./actions";
+import { formatDate, previewColumns, previewPath, statusLabels, type PreviewRow } from "./preview-shared";
 
 type PageProps = { searchParams: Promise<{ created?: string; error?: string }> };
-
-type PreviewRow = {
-    business_id: string;
-    token: string;
-    contact_name: string | null;
-    created_at: string;
-    view_count: number;
-    last_viewed_at: string | null;
-    claimed_at: string | null;
-    businesses: {
-        name: string;
-        approval_status: string;
-        logo_url: string | null;
-        cover_image_url: string | null;
-        business_locations: { city: string | null; cities: { name: string } | null }[];
-    } | null;
-};
-
-function formatDate(value: string) {
-    return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" }).format(new Date(value));
-}
-
-// A message to send with the link, by email or a DM.
-function outreachMessage(preview: PreviewRow, sender: string) {
-    const name = preview.businesses?.name ?? "your business";
-    const url = absoluteUrl(`/business/preview/${preview.token}`);
-    const location = preview.businesses?.business_locations?.[0];
-    const town = location?.cities?.name ?? location?.city?.trim();
-
-    return [
-        `Hi ${preview.contact_name || "there"},`,
-        "",
-        `I run Promotello, a loyalty card and offers app for independent businesses${town ? ` in ${town}` : " near you"}. I've set up a preview of ${name} so you can see how it would look: your page, a digital loyalty card and a QR poster for your window.`,
-        "",
-        url,
-        "",
-        "It's free to claim, and the Pro plan is free for 30 days. If it's not for you, just ignore this.",
-        "",
-        sender,
-    ].join("\n");
-}
-
-function Status({ preview }: { preview: PreviewRow }) {
-    if (preview.claimed_at) {
-        return <Badge className="bg-emerald-100 text-emerald-800">Claimed {formatDate(preview.claimed_at)}</Badge>;
-    }
-
-    if (preview.view_count > 0 && preview.last_viewed_at) {
-        return (
-            <Badge className="bg-[#FF593F]/10 text-[#B93A26]">
-                Viewed {preview.view_count}× · last {formatDate(preview.last_viewed_at)}
-            </Badge>
-        );
-    }
-
-    return <Badge variant="outline">Not opened yet</Badge>;
-}
 
 async function PreviewsContent({ searchParams }: PageProps) {
     await connection();
@@ -85,17 +26,15 @@ async function PreviewsContent({ searchParams }: PageProps) {
     const { created, error } = await searchParams;
     const supabase = await createClient();
 
-    const [{ data: rows }, cities, { data: userData }] = await Promise.all([
+    const [{ data: rows }, cities] = await Promise.all([
         supabase
             .from("business_previews")
-            .select("business_id, token, contact_name, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, logo_url, cover_image_url, business_locations ( city, cities ( name ) ) )")
+            .select(previewColumns)
             .order("created_at", { ascending: false }),
         getCityOptions({ includeNotLive: true }),
-        supabase.auth.getUser(),
     ]);
 
     const previews = (rows ?? []) as unknown as PreviewRow[];
-    const sender = userData.user?.user_metadata?.full_name || "The Promotello team";
     const justCreated = previews.find((preview) => preview.business_id === created);
 
     return (
@@ -121,32 +60,18 @@ async function PreviewsContent({ searchParams }: PageProps) {
                     <AlertTitle>Preview ready for {justCreated.businesses?.name}</AlertTitle>
                     <AlertDescription>
                         <p>
-                            Add their logo and a cover photo so the preview looks like them, then send the link.
+                            Open it to add their logo and a cover photo, copy the message and send it.
                         </p>
 
-                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                            <BusinessImageForm
-                                kind="logo"
-                                businessId={justCreated.business_id}
-                                businessName={justCreated.businesses?.name ?? "this business"}
-                                imageUrl={justCreated.businesses?.logo_url ?? null}
-                                returnTo={`/admin/previews?created=${justCreated.business_id}`}
-                            />
-                            <BusinessImageForm
-                                kind="cover"
-                                businessId={justCreated.business_id}
-                                businessName={justCreated.businesses?.name ?? "this business"}
-                                imageUrl={justCreated.businesses?.cover_image_url ?? null}
-                                returnTo={`/admin/previews?created=${justCreated.business_id}`}
-                            />
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            <CopyButton text={absoluteUrl(`/business/preview/${justCreated.token}`)} label="Copy link" />
-                            <CopyButton text={outreachMessage(justCreated, sender)} label="Copy message" />
-                            <Button render={<Link href={`/business/${justCreated.business_id}/edit`} />} nativeButton={false} variant="outline" size="sm">
-                                Add logo and details
-                            </Button>
-                        </div>
+                        <Button
+                            render={<Link href={previewPath(justCreated.business_id)} />}
+                            nativeButton={false}
+                            size="sm"
+                            className="mt-3"
+                        >
+                            Open {justCreated.businesses?.name}
+                            <FiChevronRight aria-hidden="true" />
+                        </Button>
                     </AlertDescription>
                 </Alert>
             )}
@@ -161,45 +86,47 @@ async function PreviewsContent({ searchParams }: PageProps) {
                     ) : (
                         <ul className="divide-y divide-[#17233B]/5">
                             {previews.map((preview) => (
-                                <li key={preview.business_id} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-                                    <div className="min-w-0">
-                                        <p className="font-medium">
-                                            {preview.businesses?.name}
-                                            {preview.contact_name && (
-                                                <span className="font-normal text-[#17233B]/70"> · for {preview.contact_name}</span>
-                                            )}
-                                        </p>
-                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#17233B]/70">
-                                            <span>Created {formatDate(preview.created_at)}</span>
-                                            <Status preview={preview} />
+                                <li key={preview.business_id}>
+                                    <Link
+                                        href={previewPath(preview.business_id)}
+                                        className="flex items-center gap-4 py-4 transition-colors hover:bg-[#FFF8F0]"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-medium">
+                                                {preview.businesses?.name}
+                                                {preview.contact_name && (
+                                                    <span className="font-normal text-[#17233B]/70">
+                                                        {" "}
+                                                        · for {preview.contact_name}
+                                                    </span>
+                                                )}
+                                            </p>
+
+                                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#17233B]/70">
+                                                <span>Built {formatDate(preview.created_at)}</span>
+
+                                                {preview.claimed_at ? (
+                                                    <Badge className="bg-emerald-100 text-emerald-800">
+                                                        Claimed {formatDate(preview.claimed_at)}
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant={preview.status === "to_send" ? "default" : "outline"}>
+                                                        {statusLabels[preview.status] ?? preview.status}
+                                                    </Badge>
+                                                )}
+
+                                                {preview.view_count > 0 ? (
+                                                    <Badge className="bg-[#FF593F]/10 text-[#B93A26]">
+                                                        Opened {preview.view_count}×
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline">Not opened</Badge>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <CopyButton text={absoluteUrl(`/business/preview/${preview.token}`)} label="Link" />
-                                        <CopyButton text={outreachMessage(preview, sender)} label="Message" />
-                                        <Button
-                                            render={<a href={`/business/preview/${preview.token}`} target="_blank" rel="noopener noreferrer" />}
-                                            nativeButton={false}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            <FiExternalLink aria-hidden="true" />
-                                            Open
-                                        </Button>
-                                        {!preview.claimed_at && (
-                                            <>
-                                                <Button render={<Link href={`/business/${preview.business_id}/edit`} />} nativeButton={false} variant="outline" size="sm">
-                                                    Edit
-                                                </Button>
-                                                <form action={deletePreview}>
-                                                    <input type="hidden" name="businessId" value={preview.business_id} />
-                                                    <SubmitButton variant="outline" pendingLabel="Deleting…" className="h-8 text-red-700">
-                                                        Delete
-                                                    </SubmitButton>
-                                                </form>
-                                            </>
-                                        )}
-                                    </div>
+
+                                        <FiChevronRight aria-hidden="true" className="size-5 shrink-0 text-[#17233B]/40" />
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -237,6 +164,16 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                 <div className="space-y-2">
                                     <Label htmlFor="contactName">Owner&apos;s first name (optional)</Label>
                                     <Input id="contactName" name="contactName" maxLength={80} placeholder="Sam" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactEmail">Where you&apos;ll write (optional)</Label>
+                                    <Input
+                                        id="contactEmail"
+                                        name="contactEmail"
+                                        type="email"
+                                        maxLength={160}
+                                        placeholder="hello@theirshop.com"
+                                    />
                                 </div>
                             </div>
                         </div>
