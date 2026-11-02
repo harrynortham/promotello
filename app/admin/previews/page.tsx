@@ -159,22 +159,37 @@ async function PreviewsContent({ searchParams }: PageProps) {
                             Add their logo and a cover photo so the preview looks like them, then send the link.
                         </p>
 
-                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                            <BusinessImageForm
-                                kind="logo"
-                                businessId={justCreated.business_id}
-                                businessName={justCreated.businesses?.name ?? "this business"}
-                                imageUrl={justCreated.businesses?.logo_url ?? null}
-                                returnTo={`/admin/previews?created=${justCreated.business_id}`}
-                            />
-                            <BusinessImageForm
-                                kind="cover"
-                                businessId={justCreated.business_id}
-                                businessName={justCreated.businesses?.name ?? "this business"}
-                                imageUrl={justCreated.businesses?.cover_image_url ?? null}
-                                returnTo={`/admin/previews?created=${justCreated.business_id}`}
-                            />
-                        </div>
+                        {/* Each uploader is a page's worth of interface, so they
+                            stay folded away and the list of previews stays in
+                            sight. Open when there is a logo to hand. */}
+                        <details className="group mt-4 rounded-xl border border-emerald-200 bg-white/60">
+                            <summary className="cursor-pointer list-none px-4 py-2.5 text-sm font-medium text-emerald-900 marker:content-none">
+                                Add a logo and cover photo
+                                <span className="ml-1 font-normal text-emerald-900/70 group-open:hidden">
+                                    {justCreated.businesses?.logo_url || justCreated.businesses?.cover_image_url
+                                        ? "· some added"
+                                        : "· none yet"}
+                                </span>
+                            </summary>
+
+                            <div className="grid gap-4 border-t border-emerald-200 p-4 sm:grid-cols-2">
+                                <BusinessImageForm
+                                    kind="logo"
+                                    businessId={justCreated.business_id}
+                                    businessName={justCreated.businesses?.name ?? "this business"}
+                                    imageUrl={justCreated.businesses?.logo_url ?? null}
+                                    returnTo={`/admin/previews?created=${justCreated.business_id}`}
+                                />
+                                <BusinessImageForm
+                                    kind="cover"
+                                    businessId={justCreated.business_id}
+                                    businessName={justCreated.businesses?.name ?? "this business"}
+                                    imageUrl={justCreated.businesses?.cover_image_url ?? null}
+                                    returnTo={`/admin/previews?created=${justCreated.business_id}`}
+                                />
+                            </div>
+                        </details>
+
                         <div className="mt-3 flex flex-wrap gap-2">
                             <CopyButton text={absoluteUrl(`/business/preview/${justCreated.token}`)} label="Copy link" />
                             <CopyButton text={outreachMessage(justCreated, sender)} label="Copy message" />
