@@ -101,18 +101,17 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
-- From offers and loyalty card page, business should be able to share a branded post to their social media. big selling point and needs to be in the marketing pages.
 
 - Generate list businesses and emails
 - Use a crm tool to track contacted businesses
 - Create email template to send to customers first sales
-- Test what happens when lyalty card full
-- add a feedback widget to business dashboard for businesses to provide feedback and request new features. Make it visible and save feedback to DB to work on as new features.
-- add some text and link to customer slide menu logged out asking if business and to advertise.
-- social share button needs adding to offers in admin and mentioned in the business marketing copy.
-- demo in business marketing doesnt really match what we have in business dashboard. loyalty cards and oioffers and pbusiness profile
+- Test what happens when loyalty card full
+- Update the conversion emails to contain some product imagery
+- Redesign home top banner search area and also explore, need to be more simple like tripadvisor and airbnb, and also unique to businesses and offers that both look the same
+- Different poster sizes. currently only offer two sizes. we may need smaller size also
+- when customer scans qr for offers where do they land, ideally standalone page with just the offers without needing to scroll
 
-- Secure all platform emails with unique strong passwords, add all to apple keychain
+- Secure all platform emails with unique strong passwords, add all to apple keychain, log which accounts use which email address
 - need way to generate poster to stick in window, sent to each sign up business using that website with the API printing
 - add social icons to email signature
 - Transfer youtube channel to hello@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
@@ -135,6 +134,7 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Add API so that users can generate and buy stickers of their QR codes like Printful: a well-documented REST API, kiss-cut stickers, and printing in the UK. It’s probably the quickest to get working.
 - Do we have QR code download image that business can display to get loyalty card / user signs up and is in their account
 - how will seo title and metas work when more locations
+- joining a loyalty card without an account takes a name and an email. phone needs an SMS sender first, or a guest who gives only a number has no way back to their card
 - decide the email volume before outreach: a business that signs up and does nothing gets 7 emails in 21 days (welcome, setup nudge, loyalty pitch, second nudge, founding places, results, check-in). all verified working, there are just a lot of them
 - the trial terms sentence repeats word for word in the loyalty pitch, founding places and results emails, and again in the loyalty setup step
 - business chooser cards show the approval chip as plain text; `components/business-status-badge.tsx` has the clock and warning colours the sidebar uses
@@ -144,18 +144,17 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ### App improvements
 
-From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them. Start with 1 and 2 together: a guest card goes straight into the Wallet.
+From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them. Joining without an account is built, by email. A guest card should go straight into the Wallet once passes exist, so 1 finishes that thought.
 
 1. Apple and Google Wallet passes. Apply for an Apple Developer account and a Google Wallet issuer account first, as approval takes time
-2. Join a loyalty card without an account: name plus email or phone creates a guest card, claimed into a full account later
-3. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
-4. Customer list, segments (lapsed, VIP) and CSV export with consent flags
-5. Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
-6. Double-stamp days, reusing the quiet-hours schedules
-7. Surprise rewards and scratch-to-win
-8. Customer refer-a-friend
-9. Wallet push messages and location alerts (needs 1)
-10. QR poster sizes and designs + sticker request through AP
+2. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
+3. Customer list, segments (lapsed, VIP) and CSV export with consent flags
+4. Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
+5. Double-stamp days, reusing the quiet-hours schedules
+6. Surprise rewards and scratch-to-win
+7. Customer refer-a-friend
+8. Wallet push messages and location alerts (needs 1)
+9. QR poster sizes and designs + sticker request through AP
 
 Smaller gaps:
 
