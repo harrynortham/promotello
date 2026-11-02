@@ -224,10 +224,10 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         <div className="mt-6 flex justify-center">
                             <LoyaltyCardScreen
                                 businessName={preview.business_name}
+                                logoUrl={preview.logo_url}
                                 required={preview.sample_stamps}
                                 stamps={Math.max(1, preview.sample_stamps - 3)}
                                 reward={preview.sample_reward}
-                                headline={`Collect ${preview.sample_stamps} stamps for ${preview.sample_reward}`}
                             />
                         </div>
                     </div>
@@ -241,7 +241,12 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                             Print it in a minute. Every scan is counted, so you can see what&apos;s working.
                         </p>
                         <div className="mt-10 flex justify-center">
-                            <PosterVisual qrSvg={poster} businessName={preview.business_name} headline={preview.sample_offer} />
+                            <PosterVisual
+                                qrSvg={poster}
+                                businessName={preview.business_name}
+                                logoUrl={preview.logo_url}
+                                headline={preview.sample_offer}
+                            />
                         </div>
                     </div>
                 </div>

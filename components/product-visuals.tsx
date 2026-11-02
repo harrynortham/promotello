@@ -14,7 +14,9 @@ import {
 } from "react-icons/fi";
 
 import { DailyBars } from "@/components/daily-bars";
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { QrPoster } from "@/components/qr-poster";
 import { VoucherQr } from "@/components/voucher-qr";
 
 // Illustrations of the product for the business marketing pages, built from
@@ -60,33 +62,41 @@ export function BrowserFrame({ children, url, label, className = "" }: { childre
 // Customer screens
 // ---------------------------------------------------------------------------
 
+// The card a customer actually carries, in a phone. It renders through the
+// same component as the real thing, so a colour or a stamp the business can
+// choose shows here rather than being drawn once and left behind.
 export function LoyaltyCardScreen({
     stamps = 7,
     businessName = business,
     required = 10,
     reward = "a free coffee",
-    headline = "Buy 9 coffees, get the 10th free",
+    colour = "coral",
+    stampIcon = "cup",
+    logoUrl = null,
 }: {
     stamps?: number;
     businessName?: string;
     required?: number;
     reward?: string;
-    headline?: string;
+    colour?: string | null;
+    stampIcon?: string | null;
+    logoUrl?: string | null;
 }) {
     return (
         <PhoneFrame label="A customer's loyalty card on their phone">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
-            <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <p className="text-xs text-[#17233B]/70">{businessName}</p>
-                <p className="mt-0.5 font-semibold leading-snug">{headline}</p>
-                <div className="mt-3">
-                    <LoyaltyStamps stamps={stamps} required={required} size="sm" />
-                </div>
-                <p className="mt-3 text-xs text-[#17233B]/70">{required - stamps} more to {reward}</p>
-            </div>
-            <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
-                <VoucherQr code="HGCARD7Q2K" className="mx-auto w-28" />
-                <p className="mt-2 text-[11px] text-[#17233B]/70">Show this to be stamped</p>
+            <div className="mt-3">
+                <LoyaltyCard
+                    businessName={businessName}
+                    logoUrl={logoUrl}
+                    stampsRequired={required}
+                    reward={reward}
+                    stamps={stamps}
+                    code="HGCARD7Q2K"
+                    colour={colour}
+                    stampIcon={stampIcon}
+                    qr={<VoucherQr code="HGCARD7Q2K" className="h-full w-full" />}
+                />
             </div>
         </PhoneFrame>
     );
@@ -144,25 +154,37 @@ export function PosterVisual({
     className = "",
     businessName = business,
     headline = "Get a free pastry with your coffee",
+    eyebrow = "Scan for offers",
+    colour = "navy",
+    logoUrl = null,
 }: {
     qrSvg: string;
     className?: string;
     businessName?: string;
     headline?: string;
+    eyebrow?: string;
+    colour?: string | null;
+    logoUrl?: string | null;
 }) {
+    const width = 240;
+
     return (
         <figure
             aria-label="A printable QR poster for a shop window"
-            className={`w-60 rotate-[-2deg] rounded-2xl border-[6px] border-[#17233B] bg-white p-6 text-center text-[#17233B] shadow-2xl shadow-[#17233B]/20 ${className}`}
+            className={`w-60 shrink-0 rotate-[-2deg] overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/20 ${className}`}
         >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF593F]">Scan me</p>
-            <p className="mt-2 text-xl font-semibold leading-tight">{headline}</p>
-            <div
-                aria-hidden="true"
-                className="mx-auto mt-4 w-36 [&_svg]:h-auto [&_svg]:w-full"
-                dangerouslySetInnerHTML={{ __html: qrSvg }}
+            <QrPoster
+                width={`${width}px`}
+                height={`${Math.round(width * (297 / 210))}px`}
+                fontSize={16 * (width / 794)}
+                businessName={businessName}
+                logoUrl={logoUrl}
+                qrMarkup={qrSvg}
+                link="promotello.com"
+                colour={colour}
+                eyebrow={eyebrow}
+                headline={headline}
             />
-            <p className="mt-4 text-xs text-[#17233B]/70">{businessName} · on Promotello</p>
         </figure>
     );
 }
