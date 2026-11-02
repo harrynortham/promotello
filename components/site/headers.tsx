@@ -32,6 +32,11 @@ export function CustomerHeader() {
                 { label: "Sign up", href: "/signup" },
                 { label: "Log in", href: "/login", primary: true },
             ]}
+            menuFooter={{
+                text: "Run a business?",
+                label: "Put your offers on Promotello",
+                href: "/business",
+            }}
         />
     );
 }

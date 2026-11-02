@@ -63,7 +63,7 @@ const marketingFooters = {
                 title: "Promotello",
                 links: [
                     { label: "About us", href: "/about" },
-                    { label: "Promote your business", href: "/business", external: true },
+                    { label: "Promote your business", href: "/business" },
                     { label: "Contact", href: "/contact" },
                 ],
             },
