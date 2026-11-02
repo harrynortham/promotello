@@ -121,6 +121,7 @@ export async function setPreviewStatus(formData: FormData) {
     }
 
     revalidatePath("/admin/previews");
+    revalidatePath(`/admin/previews/${businessId}`);
 }
 
 // A line to yourself about this one: "said come back in January".
@@ -143,4 +144,5 @@ export async function savePreviewNotes(formData: FormData) {
     }
 
     revalidatePath("/admin/previews");
+    revalidatePath(`/admin/previews/${businessId}`);
 }
