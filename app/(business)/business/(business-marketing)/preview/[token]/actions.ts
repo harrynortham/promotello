@@ -16,7 +16,7 @@ export async function claimPreview(formData: FormData) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect(`/signup?next=${encodeURIComponent(`/business/preview/${token}`)}`);
+        redirect(`/business/register?next=${encodeURIComponent(`/business/preview/${token}`)}`);
     }
 
     const { data: businessId, error } = await supabase.rpc("claim_business_preview", { requested_token: token });

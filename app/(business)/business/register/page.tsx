@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,6 +17,8 @@ import {
     FiMapPin,
 } from "react-icons/fi";
 
+import { Skeleton } from "@/components/ui/skeleton";
+import { safeNextPath } from "@/lib/redirects";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +42,7 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
-export default function BusinessRegisterPage() {
+function BusinessRegisterForm() {
     const router = useRouter();
 
     const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +62,18 @@ export default function BusinessRegisterPage() {
 
     const isSubmitting = isSending || isRedirecting;
 
+    // Claiming a preview sends people here with ?next= pointing back at it,
+    // so they land on their own business rather than in onboarding.
+    const requestedNext = safeNextPath(useSearchParams().get("next"));
+
+    function nextPath() {
+        return requestedNext ?? "/onboarding";
+    }
+
+    const signInHref = requestedNext
+        ? `/login?next=${encodeURIComponent(requestedNext)}`
+        : "/login?next=/business/dashboard";
+
     async function onSubmit(values: Values) {
         setErrorMessage("");
 
@@ -68,7 +82,7 @@ export default function BusinessRegisterPage() {
             password: values.password,
             options: {
                 data: { full_name: values.name },
-                emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+                emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath())}`,
             },
         });
 
@@ -81,7 +95,7 @@ export default function BusinessRegisterPage() {
 
         if (data.session) {
             setIsRedirecting(true);
-            router.replace("/onboarding");
+            router.replace(nextPath());
             router.refresh();
             return;
         }
@@ -151,7 +165,7 @@ export default function BusinessRegisterPage() {
 
                                 <Button
                                     render={
-                                        <Link href="/login?next=/business/dashboard" />
+                                        <Link href={signInHref} />
                                     }
                                     nativeButton={false}
                                     size="lg"
@@ -189,7 +203,7 @@ export default function BusinessRegisterPage() {
                                     prepare your first offer.
                                 </p>
 
-                                <SocialSignIn next="/onboarding" />
+                                <SocialSignIn next={nextPath} />
 
                                 <form
                                     onSubmit={handleSubmit(onSubmit)}
@@ -314,7 +328,7 @@ export default function BusinessRegisterPage() {
                                     <p className="text-sm text-muted-foreground">
                                         Already use Promotello?{" "}
                                         <Link
-                                            href="/login?next=/business/dashboard"
+                                            href={signInHref}
                                             className="font-medium text-foreground underline underline-offset-4"
                                         >
                                             Sign in with your existing account
@@ -429,6 +443,35 @@ export default function BusinessRegisterPage() {
                         </ul>
                     </div>
                 </aside>
+            </div>
+        </main>
+    );
+}
+
+export default function BusinessRegisterPage() {
+    return (
+        <Suspense fallback={<RegisterLoading />}>
+            <BusinessRegisterForm />
+        </Suspense>
+    );
+}
+
+function RegisterLoading() {
+    return (
+        <main className="min-h-dvh bg-background">
+            <div className="grid min-h-dvh lg:grid-cols-[3fr_2fr]">
+                <div className="flex items-center justify-center px-6 py-12">
+                    <div
+                        role="status"
+                        aria-label="Loading sign up"
+                        className="w-full max-w-md space-y-5"
+                    >
+                        <Skeleton className="size-12 rounded-2xl" />
+                        <Skeleton className="w-3/4" />
+                        <Skeleton className="h-6 w-full" />
+                        <Skeleton className="w-full" />
+                    </div>
+                </div>
             </div>
         </main>
     );
