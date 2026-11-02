@@ -152,7 +152,7 @@ function Loyalty({ stampQr }: { stampQr: string }) {
                         rewardsRedeemed={3}
                         code="4F8A2C91D0"
                         colour="coral"
-                        stampIcon="cup"
+                        stampIcon="coffee"
                         qr={
                             <div
                                 aria-label="Example card code"

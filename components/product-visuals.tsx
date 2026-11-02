@@ -13,8 +13,8 @@ import {
     FiStar,
 } from "react-icons/fi";
 
+import { cardColour } from "@/lib/loyalty-design";
 import { DailyBars } from "@/components/daily-bars";
-import { LoyaltyCard } from "@/components/loyalty-card";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { QrPoster } from "@/components/qr-poster";
 import { VoucherQr } from "@/components/voucher-qr";
@@ -62,16 +62,17 @@ export function BrowserFrame({ children, url, label, className = "" }: { childre
 // Customer screens
 // ---------------------------------------------------------------------------
 
-// The card a customer actually carries, in a phone. It renders through the
-// same component as the real thing, so a colour or a stamp the business can
-// choose shows here rather than being drawn once and left behind.
+// A customer's card, at phone size. The real LoyaltyCard lays itself out
+// with viewport breakpoints and a full-size QR, which a 200px phone mock
+// cannot hold, so this keeps the card's own colour and stamp from
+// lib/loyalty-design and draws them small.
 export function LoyaltyCardScreen({
     stamps = 7,
     businessName = business,
     required = 10,
     reward = "a free coffee",
     colour = "coral",
-    stampIcon = "cup",
+    stampIcon = "coffee",
     logoUrl = null,
 }: {
     stamps?: number;
@@ -82,21 +83,42 @@ export function LoyaltyCardScreen({
     stampIcon?: string | null;
     logoUrl?: string | null;
 }) {
+    const design = cardColour(colour);
+
     return (
         <PhoneFrame label="A customer's loyalty card on their phone">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
-            <div className="mt-3">
-                <LoyaltyCard
-                    businessName={businessName}
-                    logoUrl={logoUrl}
-                    stampsRequired={required}
-                    reward={reward}
-                    stamps={stamps}
-                    code="HGCARD7Q2K"
-                    colour={colour}
-                    stampIcon={stampIcon}
-                    qr={<VoucherQr code="HGCARD7Q2K" className="h-full w-full" />}
-                />
+
+            <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div className="flex items-center gap-2 p-3 text-white" style={{ backgroundColor: design.header }}>
+                    {logoUrl ? (
+                        <Image
+                            src={logoUrl}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="size-7 shrink-0 rounded-lg bg-white object-contain"
+                        />
+                    ) : (
+                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/15 text-[11px] font-semibold">
+                            {businessName.trim().charAt(0).toUpperCase()}
+                        </span>
+                    )}
+                    <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold">{businessName}</p>
+                        <p className="text-[11px] text-white/75">{required} stamps for {reward}</p>
+                    </div>
+                </div>
+
+                <div className="p-3">
+                    <LoyaltyStamps stamps={stamps} required={required} size="sm" colour={colour} icon={stampIcon} />
+                    <p className="mt-2 text-[11px] text-[#17233B]/70">{stamps} of {required} stamps</p>
+                </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
+                <VoucherQr code="HGCARD7Q2K" className="mx-auto w-24" />
+                <p className="mt-2 text-[11px] text-[#17233B]/70">Show this to be stamped</p>
             </div>
         </PhoneFrame>
     );
