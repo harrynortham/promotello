@@ -7,31 +7,66 @@ import {
     FiAward,
     FiBarChart2,
     FiCamera,
+    FiCheckCircle,
     FiGift,
     FiGrid,
     FiHeart,
     FiHome,
+    FiShoppingBag,
     FiSmartphone,
     FiStar,
 } from "react-icons/fi";
 
+import { BusinessCard } from "@/components/business-card";
 import { PeriodSummary, type BusinessAnalytics } from "@/components/business-period-summary";
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { OfferCard } from "@/components/offer-card";
+import { QrPoster } from "@/components/qr-poster";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VoucherQr } from "@/components/voucher-qr";
 
 const business = "Harbour Grind";
 
+// The dashboard's own pages, in its own order and under its own names, so
+// someone who signs up after the demo looks for what they already saw.
 const tabs = [
     { id: "overview", label: "Overview", icon: FiHome },
-    { id: "loyalty", label: "Loyalty card", icon: FiAward },
+    { id: "profile", label: "Business profile", icon: FiShoppingBag },
+    { id: "offers", label: "Offers", icon: FiGift },
     { id: "posters", label: "QR posters", icon: FiGrid },
-    { id: "offers", label: "Offers & followers", icon: FiGift },
-    { id: "results", label: "Monthly results", icon: FiBarChart2 },
+    { id: "loyalty", label: "Loyalty card", icon: FiAward },
+    { id: "redemptions", label: "Redemptions", icon: FiCheckCircle },
+    { id: "results", label: "Analytics", icon: FiBarChart2 },
     { id: "customer", label: "What customers see", icon: FiSmartphone },
 ] as const;
+
+// The redemptions page lists what staff have marked used at the till.
+const redemptions = [
+    { offer: "Free pastry with any coffee before 10am", code: "HG7K2Q4M8P", when: "Today, 9:12am", status: "Used" },
+    { offer: "Two flat whites for £5 on Mondays", code: "HG4R8T1X5N", when: "Today, 8:47am", status: "Used" },
+    { offer: "Free pastry with any coffee before 10am", code: "HG9B3L6W2K", when: "Yesterday, 4:02pm", status: "Ready" },
+];
+
+// What the directory shows for this business, the same card the business
+// profile page puts beside the form.
+const listing = {
+    id: "demo",
+    slug: "harbour-grind-harbourside-bristol-demo",
+    name: business,
+    description: "A harbourside coffee roaster pulling espresso and serving pastries from the bakery next door.",
+    logoUrl: null,
+    categoryId: null,
+    categoryName: "Cafés & coffee",
+    area: "Harbourside",
+    cityId: null,
+    createdAt: new Date().toISOString(),
+    offerCount: 2,
+    coverImageUrl: null,
+    isSample: false,
+    topOffer: { slug: "demo", title: "Free pastry with any coffee before 10am", discount: "Free pastry" },
+};
 
 type TabId = (typeof tabs)[number]["id"];
 
@@ -101,20 +136,32 @@ function Overview() {
     );
 }
 
-function Loyalty() {
+function Loyalty({ stampQr }: { stampQr: string }) {
     return (
         <Panel
             title="A loyalty card that lives on their phone"
-            description="Set the reward once. Staff stamp cards by scanning the customer's card with their phone camera, so nobody can stamp themselves."
+            description="Choose the reward, the card colour and the stamp once. Staff stamp cards by scanning the customer's card with their phone camera, so nobody can stamp themselves."
         >
             <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-                <div className="rounded-2xl border border-[#17233B]/10 bg-white p-6">
-                    <p className="text-sm font-medium text-[#FF593F]">{business} coffee card</p>
-                    <h3 className="mt-1 text-xl font-semibold">Buy 9 coffees, get the 10th free</h3>
-                    <div className="mt-5">
-                        <LoyaltyStamps stamps={6} required={10} size="lg" />
-                    </div>
-                    <p className="mt-4 text-sm text-[#17233B]/70">Ellie&apos;s card: 6 of 10. Four more to a free coffee.</p>
+                <div>
+                    <LoyaltyCard
+                        businessName={business}
+                        stampsRequired={10}
+                        reward="a free coffee"
+                        stamps={6}
+                        rewardsRedeemed={3}
+                        code="4F8A2C91D0"
+                        colour="coral"
+                        stampIcon="coffee"
+                        qr={
+                            <div
+                                aria-label="Example card code"
+                                role="img"
+                                className="[&_svg]:h-full [&_svg]:w-full"
+                                dangerouslySetInnerHTML={{ __html: stampQr }}
+                            />
+                        }
+                    />
                 </div>
 
                 <div className="grid gap-4">
@@ -168,17 +215,116 @@ function Posters({ posterQr }: { posterQr: string }) {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border-4 border-[#17233B] bg-white p-5 text-center shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">Scan me</p>
-                    <p className="mt-1 text-lg font-semibold leading-tight">Free pastry with your coffee</p>
-                    <div
-                        className="mx-auto mt-3 w-40 [&_svg]:h-auto [&_svg]:w-full"
-                        aria-label="Example QR code"
-                        role="img"
-                        dangerouslySetInnerHTML={{ __html: posterQr }}
+                <div className="overflow-hidden rounded-xl border border-[#17233B]/10 shadow-sm">
+                    <QrPoster
+                        width="256px"
+                        height={`${Math.round(256 * (297 / 210))}px`}
+                        fontSize={16 * (256 / 794)}
+                        businessName={business}
+                        place="Front window"
+                        offer={{ discount: "Free pastry", title: "Free pastry with any coffee before 10am" }}
+                        qrMarkup={posterQr}
+                        link="promotello.com/businesses/harbour-grind"
+                        colour="coral"
+                        eyebrow="Scan for offers"
+                        headline="See what's on at Harbour Grind"
                     />
-                    <p className="mt-3 text-xs text-[#17233B]/70">{business} · on Promotello</p>
                 </div>
+            </div>
+        </Panel>
+    );
+}
+
+function BusinessProfile() {
+    return (
+        <Panel
+            title="Your page, written beside what customers see"
+            description="Four tabs: your details, photos, where you are and when you're open. The card beside them is the one the Promotello directory shows, and it changes as you type."
+        >
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+                <div className="rounded-2xl border border-[#17233B]/10 bg-white p-6">
+                    <div className="flex flex-wrap gap-2">
+                        {["Profile", "Photos", "Location", "Hours"].map((label, index) => (
+                            <span
+                                key={label}
+                                className={`rounded-full px-3 py-1 text-sm font-medium ${
+                                    index === 0 ? "bg-[#FF593F] text-white" : "bg-[#17233B]/5 text-[#17233B]/70"
+                                }`}
+                            >
+                                {label}
+                            </span>
+                        ))}
+                    </div>
+
+                    <dl className="mt-5 space-y-4 text-sm">
+                        {[
+                            ["Business name", business],
+                            ["Category", "Cafés & coffee"],
+                            ["Description", "A harbourside coffee roaster pulling espresso and serving pastries."],
+                            ["Google review link", "Set, so customers are asked after a visit"],
+                        ].map(([label, value]) => (
+                            <div key={label}>
+                                <dt className="font-medium text-[#17233B]/70">{label}</dt>
+                                <dd className="mt-1">{value}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                </div>
+
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#17233B]/50">
+                        How customers see you
+                    </p>
+                    <div className="mt-3">
+                        <BusinessCard business={listing} />
+                    </div>
+                    <p className="mt-3 text-sm text-[#17233B]/70">
+                        Your logo and cover photo go on here too, so the directory shows your place rather than a
+                        placeholder.
+                    </p>
+                </div>
+            </div>
+        </Panel>
+    );
+}
+
+function Redemptions() {
+    return (
+        <Panel
+            title="Redeeming takes seconds at the till"
+            description="Point your phone camera at the QR code on the customer's voucher. It opens here, you tap Mark as used, and it can't be used twice."
+        >
+            <div className="overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">
+                <table className="w-full min-w-[34rem] text-left text-sm">
+                    <thead className="text-[#17233B]/70">
+                        <tr className="border-b border-[#17233B]/10">
+                            <th className="px-5 py-3 font-medium">Offer</th>
+                            <th className="px-5 py-3 font-medium">Code</th>
+                            <th className="px-5 py-3 font-medium">When</th>
+                            <th className="px-5 py-3 font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {redemptions.map((row) => (
+                            <tr key={row.code} className="border-b border-[#17233B]/5 last:border-0">
+                                <td className="px-5 py-3 font-medium">{row.offer}</td>
+                                <td className="px-5 py-3 font-mono text-xs tracking-[0.12em]">{row.code}</td>
+                                <td className="px-5 py-3 text-[#17233B]/70">{row.when}</td>
+                                <td className="px-5 py-3">
+                                    <Badge variant={row.status === "Used" ? "secondary" : "outline"}>{row.status}</Badge>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#17233B] p-5 text-white">
+                <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#FF8F7D]" />
+                <p className="text-sm leading-6 text-white/80">
+                    <strong className="text-white">Already used, expired, or outside its hours?</strong> Your
+                    staff see a clear warning before they hand anything over.
+                </p>
             </div>
         </Panel>
     );
@@ -288,7 +434,7 @@ function CustomerView() {
     );
 }
 
-export function DemoDashboard({ analytics, posterQr }: { analytics: BusinessAnalytics; posterQr: string }) {
+export function DemoDashboard({ analytics, posterQr, stampQr }: { analytics: BusinessAnalytics; posterQr: string; stampQr: string }) {
     const [tab, setTab] = useState<TabId>("overview");
 
     return (
@@ -335,9 +481,11 @@ export function DemoDashboard({ analytics, posterQr }: { analytics: BusinessAnal
 
                     <div role="tabpanel" className="min-w-0">
                         {tab === "overview" && <Overview />}
-                        {tab === "loyalty" && <Loyalty />}
-                        {tab === "posters" && <Posters posterQr={posterQr} />}
+                        {tab === "profile" && <BusinessProfile />}
                         {tab === "offers" && <Offers />}
+                        {tab === "posters" && <Posters posterQr={posterQr} />}
+                        {tab === "loyalty" && <Loyalty stampQr={stampQr} />}
+                        {tab === "redemptions" && <Redemptions />}
                         {tab === "results" && (
                             <Panel
                                 title="Proof it's working"

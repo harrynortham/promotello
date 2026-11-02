@@ -13,8 +13,10 @@ import {
     FiStar,
 } from "react-icons/fi";
 
+import { cardColour } from "@/lib/loyalty-design";
 import { DailyBars } from "@/components/daily-bars";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { QrPoster } from "@/components/qr-poster";
 import { VoucherQr } from "@/components/voucher-qr";
 
 // Illustrations of the product for the business marketing pages, built from
@@ -60,32 +62,62 @@ export function BrowserFrame({ children, url, label, className = "" }: { childre
 // Customer screens
 // ---------------------------------------------------------------------------
 
+// A customer's card, at phone size. The real LoyaltyCard lays itself out
+// with viewport breakpoints and a full-size QR, which a 200px phone mock
+// cannot hold, so this keeps the card's own colour and stamp from
+// lib/loyalty-design and draws them small.
 export function LoyaltyCardScreen({
     stamps = 7,
     businessName = business,
     required = 10,
     reward = "a free coffee",
-    headline = "Buy 9 coffees, get the 10th free",
+    colour = "coral",
+    stampIcon = "coffee",
+    logoUrl = null,
 }: {
     stamps?: number;
     businessName?: string;
     required?: number;
     reward?: string;
-    headline?: string;
+    colour?: string | null;
+    stampIcon?: string | null;
+    logoUrl?: string | null;
 }) {
+    const design = cardColour(colour);
+
     return (
         <PhoneFrame label="A customer's loyalty card on their phone">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
-            <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-                <p className="text-xs text-[#17233B]/70">{businessName}</p>
-                <p className="mt-0.5 font-semibold leading-snug">{headline}</p>
-                <div className="mt-3">
-                    <LoyaltyStamps stamps={stamps} required={required} size="sm" />
+
+            <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div className="flex items-center gap-2 p-3 text-white" style={{ backgroundColor: design.header }}>
+                    {logoUrl ? (
+                        <Image
+                            src={logoUrl}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="size-7 shrink-0 rounded-lg bg-white object-contain"
+                        />
+                    ) : (
+                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/15 text-[11px] font-semibold">
+                            {businessName.trim().charAt(0).toUpperCase()}
+                        </span>
+                    )}
+                    <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold">{businessName}</p>
+                        <p className="text-[11px] text-white/75">{required} stamps for {reward}</p>
+                    </div>
                 </div>
-                <p className="mt-3 text-xs text-[#17233B]/70">{required - stamps} more to {reward}</p>
+
+                <div className="p-3">
+                    <LoyaltyStamps stamps={stamps} required={required} size="sm" colour={colour} icon={stampIcon} />
+                    <p className="mt-2 text-[11px] text-[#17233B]/70">{stamps} of {required} stamps</p>
+                </div>
             </div>
+
             <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
-                <VoucherQr code="HGCARD7Q2K" className="mx-auto w-28" />
+                <VoucherQr code="HGCARD7Q2K" className="mx-auto w-24" />
                 <p className="mt-2 text-[11px] text-[#17233B]/70">Show this to be stamped</p>
             </div>
         </PhoneFrame>
@@ -144,25 +176,37 @@ export function PosterVisual({
     className = "",
     businessName = business,
     headline = "Get a free pastry with your coffee",
+    eyebrow = "Scan for offers",
+    colour = "navy",
+    logoUrl = null,
 }: {
     qrSvg: string;
     className?: string;
     businessName?: string;
     headline?: string;
+    eyebrow?: string;
+    colour?: string | null;
+    logoUrl?: string | null;
 }) {
+    const width = 240;
+
     return (
         <figure
             aria-label="A printable QR poster for a shop window"
-            className={`w-60 rotate-[-2deg] rounded-2xl border-[6px] border-[#17233B] bg-white p-6 text-center text-[#17233B] shadow-2xl shadow-[#17233B]/20 ${className}`}
+            className={`w-60 shrink-0 rotate-[-2deg] overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/20 ${className}`}
         >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF593F]">Scan me</p>
-            <p className="mt-2 text-xl font-semibold leading-tight">{headline}</p>
-            <div
-                aria-hidden="true"
-                className="mx-auto mt-4 w-36 [&_svg]:h-auto [&_svg]:w-full"
-                dangerouslySetInnerHTML={{ __html: qrSvg }}
+            <QrPoster
+                width={`${width}px`}
+                height={`${Math.round(width * (297 / 210))}px`}
+                fontSize={16 * (width / 794)}
+                businessName={businessName}
+                logoUrl={logoUrl}
+                qrMarkup={qrSvg}
+                link="promotello.com"
+                colour={colour}
+                eyebrow={eyebrow}
+                headline={headline}
             />
-            <p className="mt-4 text-xs text-[#17233B]/70">{businessName} · on Promotello</p>
         </figure>
     );
 }
