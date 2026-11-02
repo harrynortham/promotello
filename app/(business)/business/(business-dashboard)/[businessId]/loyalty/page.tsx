@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard, setLoyaltyProgramActive } from "./actions";
+import { SharePanel } from "@/components/share-panel";
+import { loyaltyShareCaption, shareLink } from "@/lib/share";
 import { CardDesign } from "./card-design";
 import { LoyaltyHowItWorks } from "./how-it-works";
 import { LoyaltyCardBuilder, ProgramSettingsForm } from "./program-form";
@@ -99,7 +101,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
             .limit(1),
         supabase
             .from("businesses")
-            .select("name, logo_url")
+            .select("name, logo_url, slug, approval_status")
             .eq("id", businessId)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
@@ -166,6 +168,33 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                 terms={program.terms}
                                 colour={program.card_colour}
                                 stampIcon={program.stamp_icon}
+                            />
+                        )}
+
+                        {program?.is_active && business?.slug && business.approval_status === "approved" && (
+                            <SharePanel
+                                title="Share your loyalty card"
+                                url={shareLink(`/businesses/${business.slug}`)}
+                                caption={loyaltyShareCaption({
+                                    stampsRequired: program.stamps_required,
+                                    reward: program.reward,
+                                    businessName: business.name ?? "us",
+                                })}
+                                images={[
+                                    {
+                                        label: "Instagram story",
+                                        href: `/businesses/${business.slug}/story-image`,
+                                        filename: `${business.slug}-loyalty-story.png`,
+                                        aspect: "aspect-[9/16]",
+                                    },
+                                    {
+                                        label: "Post",
+                                        href: `/businesses/${business.slug}/post-image`,
+                                        filename: `${business.slug}-loyalty-post.png`,
+                                        aspect: "aspect-square",
+                                    },
+                                ]}
+                                triggerLabel="Share card"
                             />
                         )}
 

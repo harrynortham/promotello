@@ -10,6 +10,7 @@ import { BusinessMobileNav } from "@/components/business-mobile-nav";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessSwitcher } from "@/components/business-switcher";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
@@ -172,6 +173,10 @@ async function BusinessLayoutContent({
                             businessId={businessId}
                             canManage={canManage}
                         />
+
+                        <Separator className="my-5" />
+
+                        <FeedbackDialog businessId={businessId} />
 
                         {/* With one business, the dashboard is this overview. */}
                         {businesses.length > 1 && (

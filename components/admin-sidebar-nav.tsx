@@ -8,6 +8,7 @@ import {
     FiBriefcase,
     FiFileText,
     FiGift,
+    FiMessageSquare,
     FiMapPin,
     FiSend,
     FiTag,
@@ -23,6 +24,7 @@ const links = [
     { label: "Previews", href: "/admin/previews", icon: FiSend },
     { label: "Cities and areas", href: "/admin/cities", icon: FiMapPin },
     { label: "Billing alerts", href: "/admin/billing", icon: FiAlertTriangle, count: "billing" },
+    { label: "Feedback", href: "/admin/feedback", icon: FiMessageSquare, count: "feedback" },
     { label: "Audit log", href: "/admin/audit-logs", icon: FiFileText },
 ] as const;
 
@@ -30,6 +32,7 @@ export type AdminNavCounts = {
     businesses: number;
     offers: number;
     billing: number;
+    feedback: number;
 };
 
 // Sidebar for /admin, matching the account settings navigation.

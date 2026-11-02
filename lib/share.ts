@@ -1,3 +1,4 @@
+import { rewardWording } from "@/lib/loyalty-design";
 import { absoluteUrl } from "@/lib/site";
 
 // Links people share carry ?ref=share so views from them can be counted.
@@ -7,6 +8,10 @@ export function shareLink(path: string) {
 
 export function offerShareCaption(offer: { title: string; discount: string; businessName: string }) {
     return `${offer.discount} at ${offer.businessName}: ${offer.title}. Claim it free on Promotello 👇`;
+}
+
+export function loyaltyShareCaption(card: { stampsRequired: number; reward: string; businessName: string }) {
+    return `Our loyalty card is live: collect ${card.stampsRequired} stamps at ${card.businessName} and get ${rewardWording(card.reward)}. Join it free, nothing to download 👇`;
 }
 
 export type ShareTarget = {

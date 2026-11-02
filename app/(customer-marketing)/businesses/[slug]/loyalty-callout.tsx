@@ -4,7 +4,9 @@ import { FiArrowRight } from "react-icons/fi";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
-import { joinLoyaltyProgram } from "./actions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { joinLoyaltyAsGuest, joinLoyaltyProgram } from "./actions";
 
 type LoyaltyCalloutProps = {
     businessId: string;
@@ -19,7 +21,8 @@ type LoyaltyCalloutProps = {
     };
     card: { stamps: number } | null;
     isSignedIn: boolean;
-    unavailable?: boolean;
+    // Why the last attempt to join didn't work, from ?loyalty=.
+    problem?: string;
     // The business's team previewing its page before approval: nothing to join yet.
     preview?: boolean;
 };
@@ -31,9 +34,14 @@ export function LoyaltyCallout({
     program,
     card,
     isSignedIn,
-    unavailable,
+    problem,
     preview,
 }: LoyaltyCalloutProps) {
+    const problems: Record<string, string> = {
+        unavailable: "This loyalty card isn't available right now.",
+        details: "We need your name and an email address to make your card.",
+        signin: "You already have an account with that email. Log in and your card is there.",
+    };
     const reward = program.reward.charAt(0).toLowerCase() + program.reward.slice(1);
 
     return (
@@ -67,9 +75,9 @@ export function LoyaltyCallout({
                         />
                     </div>
 
-                    {unavailable && (
+                    {problem && problems[problem] && (
                         <p role="alert" className="mt-4 text-sm text-[#FFB0A3]">
-                            This loyalty card isn&apos;t available right now.
+                            {problems[problem]}
                         </p>
                     )}
                 </div>
@@ -97,14 +105,61 @@ export function LoyaltyCallout({
                         </SubmitButton>
                     </form>
                 ) : (
-                    <Button
-                        render={<Link href={`/login?next=${encodeURIComponent(`/businesses/${businessId}`)}`} />}
-                        nativeButton={false}
-                        size="lg"
-                        className="shrink-0 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                    <form
+                        action={joinLoyaltyAsGuest}
+                        className="w-full shrink-0 rounded-2xl bg-white/10 p-4 sm:w-80"
                     >
-                        Log in to join
-                    </Button>
+                        <input type="hidden" name="programId" value={program.id} />
+                        <input type="hidden" name="businessId" value={businessId} />
+
+                        <p className="text-sm font-medium text-white">Join in a few seconds</p>
+
+                        <div className="mt-3 space-y-2">
+                            <Label htmlFor="loyalty-name" className="text-xs text-white/70">
+                                Your name
+                            </Label>
+                            <Input
+                                id="loyalty-name"
+                                name="name"
+                                required
+                                maxLength={80}
+                                autoComplete="given-name"
+                                placeholder="Ellie"
+                                className="bg-white text-[#17233B]"
+                            />
+
+                            <Label htmlFor="loyalty-email" className="text-xs text-white/70">
+                                Email
+                            </Label>
+                            <Input
+                                id="loyalty-email"
+                                name="email"
+                                type="email"
+                                required
+                                autoComplete="email"
+                                placeholder="you@example.com"
+                                className="bg-white text-[#17233B]"
+                            />
+                        </div>
+
+                        <SubmitButton
+                            pendingLabel="Joining…"
+                            className="mt-3 h-11 w-full bg-[#FF593F] px-6 text-base text-white hover:bg-[#FF593F]/90"
+                        >
+                            Get my card
+                        </SubmitButton>
+
+                        <p className="mt-3 text-xs text-white/60">
+                            No app and no password. Already have an account?{" "}
+                            <Link
+                                href={`/login?next=${encodeURIComponent(`/businesses/${businessId}`)}`}
+                                className="font-medium text-white underline"
+                            >
+                                Log in
+                            </Link>
+                            .
+                        </p>
+                    </form>
                 )}
             </div>
         </section>

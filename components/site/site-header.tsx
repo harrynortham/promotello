@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
-import { FiMenu } from "react-icons/fi";
+import { FiArrowRight, FiMenu } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -33,6 +33,10 @@ export type SiteHeaderProps = {
     variant?: "marketing" | "app";
     // Which account links the avatar menu shows.
     accountArea?: AccountArea;
+    // A quiet line at the bottom of the mobile menu, for the audience this
+    // header is not built for. On customer pages that is a business owner,
+    // who otherwise has to reach the footer to find there is a business side.
+    menuFooter?: { text: string; label: string; href: string };
 };
 
 const breakpoints = {
@@ -65,6 +69,7 @@ function HeaderContent({
     signOutRedirect = "/",
     variant = "marketing",
     accountArea = "customer",
+    menuFooter,
 }: SiteHeaderProps) {
     const pathname = usePathname();
     const { user, isLoading } = useCurrentUser();
@@ -220,6 +225,24 @@ function HeaderContent({
                                                         {action.mobileLabel ?? action.label}
                                                     </Button>
                                                 ))}
+                                        </div>
+                                    )}
+
+                                    {menuFooter && (
+                                        <div
+                                            className={`border-t border-border px-3 pt-5 ${
+                                                !user && !isLoading && signedOutActions.length > 0 ? "mt-5" : "mt-auto"
+                                            }`}
+                                        >
+                                            <p className="text-sm text-slate-600">{menuFooter.text}</p>
+                                            <Link
+                                                href={menuFooter.href}
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-[#FF593F] hover:underline"
+                                            >
+                                                {menuFooter.label}
+                                                <FiArrowRight aria-hidden="true" className="size-4" />
+                                            </Link>
                                         </div>
                                     )}
                                 </nav>
