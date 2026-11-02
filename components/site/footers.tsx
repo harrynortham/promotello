@@ -16,15 +16,10 @@ import { company, companyDisclosure } from "@/lib/legal";
 
 type FooterLink = { label: string; href: string; external?: boolean };
 
-// Cookie choices are only offered to customers in the footer; businesses
-// change them on the cookie policy page.
-const cookieChoices: FooterLink = { label: "Cookie settings", href: "/legal/cookies#choices" };
-
 const legalLinks: FooterLink[] = [
     { label: "Privacy policy", href: "/legal/privacy" },
     { label: "Terms of service", href: "/legal/terms" },
     { label: "Cookie policy", href: "/legal/cookies" },
-    cookieChoices,
 ];
 
 // Businesses are the ones who pay, so their footer also has the refund policy.
@@ -284,10 +279,7 @@ export function AppFooter({ variant }: { variant: keyof typeof appFooters }) {
 
                     <nav aria-label={`${config.label} legal information`}>
                         <ul className="flex flex-wrap gap-x-5 gap-y-3">
-                            {(variant === "customer"
-                                ? legalLinks
-                                : legalLinks.filter((link) => link.href !== cookieChoices.href)
-                            ).map((link) => (
+                            {legalLinks.map((link) => (
                                 <li key={link.href}>
                                     <Link
                                         href={link.href}

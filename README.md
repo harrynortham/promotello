@@ -101,6 +101,17 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
+- From offers and loyalty card page, business should be able to share a branded post to their social media. big selling point and needs to be in the marketing pages.
+
+- Generate list businesses and emails
+- Use a crm tool to track contacted businesses
+- Create email template to send to customers first sales
+- Test what happens when lyalty card full
+- add a feedback widget to business dashboard for businesses to provide feedback and request new features. Make it visible and save feedback to DB to work on as new features.
+- add some text and link to customer slide menu logged out asking if business and to advertise.
+- social share button needs adding to offers in admin and mentioned in the business marketing copy.
+- demo in business marketing doesnt really match what we have in business dashboard. loyalty cards and oioffers and pbusiness profile
+
 - Secure all platform emails with unique strong passwords, add all to apple keychain
 - need way to generate poster to stick in window, sent to each sign up business using that website with the API printing
 - add social icons to email signature
@@ -111,14 +122,9 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Move analytics to hello@promotello.com account
 - Learn keystatic for blog posts, create three more posts and add image to each
 
-- Change Vercel from hobby to paid plan, payment from wise account
-
-
-- remove cookie settings customer footer
-
-
 - on desktop make filter show from right
 
+- Change Vercel from hobby to paid plan, payment from wise account
 - Check resend limits that its ok for launch
 
 - Stripe managed payments requires VAT ID which we dont have and wont have until over 85k threshold, then we can enable. We may do sooner but not needed for now the VAT. You're unlikely to want it back. If you pass the £90k VAT threshold, the usual route is to register for VAT yourself and turn on Stripe Tax, which is far cheaper than Managed. Payments' extra fee of about 3.5%. Stripe wouldn't need to become the seller.
