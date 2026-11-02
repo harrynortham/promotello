@@ -133,13 +133,12 @@ export default function SignupPage() {
                                 </h1>
 
                                 <p className="mt-5 leading-8 text-muted-foreground">
-                                    Check{" "}
+                                    We’ve sent a confirmation link to{" "}
                                     <span className="break-all font-medium text-foreground">
                                         {confirmationEmail}
-                                    </span>{" "}
-                                    for account confirmation instructions.
-                                    If confirmation is required, follow the
-                                    link to finish setting up your account.
+                                    </span>
+                                    . Follow it to finish setting up your
+                                    account.
                                 </p>
 
                                 <div className="mt-6 rounded-2xl border bg-muted/30 p-5">

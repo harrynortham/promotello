@@ -17,10 +17,10 @@ const guides: HelpGuide[] = [
         title: "Find an offer you’ll enjoy",
         description: "Search, browse categories, and discover businesses.",
         steps: [
-            "Open Explore to browse available offers.",
-            "Search for an offer or business, or choose a category.",
-            "Use the sorting options to view newest, popular, or expiring offers.",
-            "Open an offer to read its full details before claiming.",
+            "Open Explore to see what is on near you.",
+            "Search for an offer or a business, or pick a category.",
+            "Sort by newest, most popular, or ending soon.",
+            "Open anything that catches your eye and read the full details before you claim.",
         ],
         link: {
             label: "Explore offers",
@@ -33,13 +33,13 @@ const guides: HelpGuide[] = [
         title: "Check a business before visiting",
         description: "Find its location, opening hours, and contact details.",
         steps: [
-            "Open the business directory and find the business.",
-            "Visit its profile to read about it and view available offers.",
-            "Check its published address and opening hours.",
-            "Use the website or contact details for booking questions or specific requirements.",
+            "Find the business in the directory.",
+            "Open its page to read about it and see what it is offering.",
+            "Check the address and opening hours before you set off.",
+            "Use its website or contact details for anything you need to ask first.",
         ],
         note:
-            "If an offer requires a booking, contact the business before visiting.",
+            "If an offer needs a booking, call ahead rather than turning up.",
         link: {
             label: "Find a business",
             href: "/businesses",
@@ -51,14 +51,14 @@ const guides: HelpGuide[] = [
         title: "Claim an offer",
         description: "Get a redemption code for an available offer.",
         steps: [
-            "Open the offer and read what is included.",
-            "Check the availability, expiry date, and terms.",
-            "Sign in to your account if needed.",
-            "Select “Get this deal” and wait for confirmation.",
-            "Keep your code available for your visit.",
+            "Open the offer and read what you get.",
+            "Check when you can use it, when it ends, and any conditions.",
+            "Sign in, or create an account if you have not got one.",
+            "Choose Get this deal. Your voucher appears straight away.",
+            "Have it ready on your phone when you visit.",
         ],
         note:
-            "Claiming an offer does not book an appointment or table. Follow any booking instructions in the offer.",
+            "Claiming is not booking. If the offer says to book a table or an appointment, do that too.",
         link: {
             label: "Browse offers",
             href: "/offers",
@@ -70,13 +70,12 @@ const guides: HelpGuide[] = [
         title: "Find a code you’ve already claimed",
         description: "Access your claimed offers from your dashboard.",
         steps: [
-            "Sign in with the account you used to claim the offer.",
-            "Open your customer dashboard.",
-            "Go to My vouchers or My redemptions.",
-            "Find the offer and display its redemption code.",
+            "Sign in with the account you used to claim it.",
+            "Open My vouchers in your dashboard.",
+            "Find the offer and open it to show its QR code and short code.",
         ],
         note:
-            "If a confirmation email didn’t arrive, check your account records before trying to claim again.",
+            "No confirmation email? Check My vouchers before claiming again — the voucher is there even when the email is not.",
         link: {
             label: "Open my vouchers",
             href: "/dashboard/redemptions",
@@ -88,13 +87,13 @@ const guides: HelpGuide[] = [
         title: "Use your offer at the business",
         description: "Know what to do when you arrive.",
         steps: [
-            "Check the offer is within its expiry date and applies to your visit.",
-            "Follow any booking or availability requirements.",
-            "Show your redemption code to a member of staff.",
-            "The business checks the code and marks it as used when providing the deal.",
+            "Check the offer has not ended and applies to the visit you are making.",
+            "Follow anything it says about booking or times.",
+            "Show the voucher on your phone to a member of staff.",
+            "They scan it and mark it used as they give you the deal.",
         ],
         note:
-            "Claimed means you have a code. Used means the business has recorded that the deal was fulfilled.",
+            "Claimed means the voucher is yours. Used means the business has given you the deal.",
     },
     {
         id: "code-problem",
@@ -102,16 +101,83 @@ const guides: HelpGuide[] = [
         title: "Get help with a redemption",
         description: "What to check if your code cannot be used.",
         steps: [
-            "Check the offer’s expiry, availability, and conditions.",
-            "Check whether the redemption is already marked as used.",
-            "Ask the business to check the code against its redemption records.",
-            "If the issue remains, contact Promotello with the business name, offer title, and a description of the problem.",
+            "Check the offer has not ended, and that you are inside any days or times it sets.",
+            "Check whether the voucher is already marked as used.",
+            "Ask the business to look the code up on their side.",
+            "Still stuck? Contact us with the business name, the offer and what happened.",
         ],
         note:
-            "If you think a code was marked as used incorrectly, do not try to create another account to claim again. Ask the business or contact support.",
+            "If a voucher was marked used by mistake, ask the business or contact us. Making a second account to claim again is not the way round it.",
         link: {
             label: "Contact support",
             href: "/contact",
+        },
+    },
+    {
+        id: "join-loyalty",
+        category: "Loyalty cards",
+        title: "Join a loyalty card",
+        description: "Start collecting stamps at a business you like.",
+        steps: [
+            "Open the business\u2019s page, or scan its QR poster with your phone camera.",
+            "Choose Join the loyalty card.",
+            "Sign in, or create an account if you haven\u2019t got one yet.",
+            "Your card appears under My loyalty cards, ready for its first stamp.",
+        ],
+        note:
+            "The card lives in your Promotello account, so there is nothing to download and nothing to leave at home.",
+        link: {
+            label: "My loyalty cards",
+            href: "/dashboard/loyalty",
+        },
+    },
+    {
+        id: "collect-stamp",
+        category: "Loyalty cards",
+        title: "Collect a stamp",
+        description: "What to do at the till.",
+        steps: [
+            "Open My loyalty cards and pick the card for the business you are in.",
+            "Show the QR code on the card to a member of staff when you pay.",
+            "They scan it with their own phone and the stamp appears on your card.",
+            "If their camera will not scan it, they can type the code printed under the QR instead.",
+        ],
+        note:
+            "Only the business\u2019s team can add stamps, so nobody can stamp their own card.",
+        link: {
+            label: "My loyalty cards",
+            href: "/dashboard/loyalty",
+        },
+    },
+    {
+        id: "loyalty-reward",
+        category: "Loyalty cards",
+        title: "Claim your reward",
+        description: "What happens when the card is full.",
+        steps: [
+            "Collect the number of stamps shown on the card.",
+            "The card then says \u201cReward ready: ask staff to redeem it\u201d.",
+            "Show it to a member of staff on your next visit and they will hand the reward over.",
+            "The card starts again, so you can work towards the next one.",
+        ],
+        note:
+            "Your card keeps a count of the rewards you have had from that business.",
+    },
+    {
+        id: "loyalty-new-phone",
+        category: "Loyalty cards",
+        title: "Use your card on another phone",
+        description: "Your stamps follow your account, not your handset.",
+        steps: [
+            "Sign in with the same email address you used to join the card.",
+            "Open My loyalty cards.",
+            "Every card and every stamp is where you left it.",
+        ],
+        note:
+            "Stamps are kept against your account, so a new phone or a cleared browser does not lose them.",
+        link: {
+            label: "Sign in",
+            href: "/login",
         },
     },
     {
@@ -191,13 +257,13 @@ const guides: HelpGuide[] = [
         title: "Request your data or account deletion",
         description: "Find the right way to contact us about your privacy.",
         steps: [
-            "Open the Privacy page in your account.",
-            "Read the information about data requests or account deletion.",
-            "Contact support using your account email and explain your request.",
-            "Follow any identity verification instructions we provide.",
+            "Open Privacy in your account settings.",
+            "Read what we hold and what you can ask for.",
+            "Email support from your account address and tell us what you need.",
+            "We may ask you to confirm it is you before we act.",
         ],
         note:
-            "These requests are handled through support. If you also own a business, account deletion needs a review of business ownership and responsibilities.",
+            "If you also run a business on Promotello, hand it over or cancel its subscription first, because deleting your account affects it too.",
         link: {
             label: "Open Privacy settings",
             href: "/account/privacy",

@@ -18,9 +18,9 @@ const guides: HelpGuide[] = [
         description: "Create a profile and prepare for review.",
         steps: [
             "Create an account or sign in.",
-            "Open the business dashboard and choose Add business.",
+            "Open the business dashboard and choose Add another business.",
             "Complete the onboarding form with your business details.",
-            "After creation, open Manage business to continue setting up your profile.",
+            "After creation, choose Open to carry on setting up your profile.",
             "Check the approval status shown in your business overview.",
         ],
         note:
@@ -36,7 +36,7 @@ const guides: HelpGuide[] = [
         title: "Update your public business profile",
         description: "Manage your logo, description, location, and hours.",
         steps: [
-            "Open your business dashboard and choose Manage business.",
+            "Open your business dashboard and choose Open on the business you want.",
             "Choose Business profile from the business navigation.",
             "Update the information you want customers to see.",
             "Save your changes and check the public profile.",
@@ -55,7 +55,7 @@ const guides: HelpGuide[] = [
         description: "Move between the businesses you belong to.",
         steps: [
             "Open the business dashboard to see your business cards.",
-            "Choose Manage business for the business you want.",
+            "Choose Open on the business you want.",
             "On desktop, use the business switcher in the sidebar to change businesses.",
             "On mobile, open the business menu to find the switcher.",
         ],
@@ -68,7 +68,7 @@ const guides: HelpGuide[] = [
         title: "Create an offer",
         description: "Prepare an offer customers can understand.",
         steps: [
-            "Open Manage business and choose Offers.",
+            "Open your business and choose Offers.",
             "Choose Create offer.",
             "Add a title, description, image, and offer details.",
             "Set availability, expiry, terms, and an optional total claim limit.",
@@ -87,13 +87,13 @@ const guides: HelpGuide[] = [
         title: "Understand offer claim limits",
         description: "Choose how many customers can claim an offer.",
         steps: [
-            "Set an optional total claim limit when creating or editing the offer.",
-            "Choose a limit your stock, staffing, and capacity can accommodate.",
-            "Follow the recorded claim count and remaining availability.",
-            "Further claims stop when the configured limit is reached.",
+            "Set a total claim limit when you create or edit the offer. It is optional.",
+            "Pick a number your stock, your staff and your space can actually handle.",
+            "Watch the claim count and how many are left on your Offers page.",
+            "Once the limit is reached, nobody else can claim it.",
         ],
         note:
-            "The limit counts claims, not completed visits. A customer can claim a code without using it.",
+            "The limit counts claims, not visits. Someone can claim a voucher and never come in.",
     },
     {
         id: "approval",
@@ -101,14 +101,14 @@ const guides: HelpGuide[] = [
         title: "Check why an offer is not public",
         description: "Review approval and availability before contacting support.",
         steps: [
-            "Check that the business is approved.",
-            "Check that the offer is approved.",
-            "Check the offer has not expired.",
-            "Review any feedback and correct the information requested.",
-            "Contact support if the status or visibility still looks incorrect.",
+            "Check your business has been approved.",
+            "Check the offer itself has been approved.",
+            "Check the offer has not passed its end date.",
+            "Read any feedback we sent and change what it asks for.",
+            "Still looks wrong? Contact support and we will take a look.",
         ],
         note:
-            "Do not treat an approved status alone as proof that an offer is currently available to claim. Expiry and claim limits also matter.",
+            "Approved does not always mean claimable. An offer that has expired or hit its claim limit is still approved, but closed.",
         link: {
             label: "Contact business support",
             href: "/business/contact",
@@ -122,11 +122,11 @@ const guides: HelpGuide[] = [
         steps: [
             "Open your business and choose Offers.",
             "Find the offer and choose Edit offer.",
-            "Update the relevant details and save.",
-            "Check its approval status after saving.",
+            "Make your changes and save.",
+            "Check its approval status afterwards: editing an approved offer sends it back for review.",
         ],
         note:
-            "Before changing an offer that already has claims, consider the terms customers saw when they claimed. Contact support if you need help handling existing claims.",
+            "If people have already claimed it, remember they claimed the old terms. Contact support if you need a hand with those.",
     },
     {
         id: "validate-code",
@@ -149,13 +149,13 @@ const guides: HelpGuide[] = [
         title: "Understand unused claims",
         description: "Why claims and completed redemptions are different.",
         steps: [
-            "Treat a claim as a customer receiving a redemption code.",
-            "Treat a used redemption as a code your team has marked as fulfilled.",
-            "Leave codes unused when the customer has not received the deal.",
-            "Compare claims and used redemptions when reviewing offer activity.",
+            "A claim means someone has taken a voucher for your offer.",
+            "A used redemption means your team has scanned it and given them the deal.",
+            "Leave a voucher unused until the customer has actually had it.",
+            "Compare the two numbers to see how many claims turned into visits.",
         ],
         note:
-            "Do not mark unused codes as used to clear the list. An unused code is not proof of a visit or a sale.",
+            "Do not mark vouchers used to tidy up the list. An unused voucher is not a visit, and the gap between the two is worth knowing.",
     },
     {
         id: "redemption-problem",
@@ -163,14 +163,14 @@ const guides: HelpGuide[] = [
         title: "Resolve a code or redemption issue",
         description: "What to check when a redemption does not look right.",
         steps: [
-            "Confirm you are viewing the correct business.",
-            "Check the code carefully against the customer’s screen.",
-            "Review whether the code has already been marked as used.",
-            "Check the offer’s expiry and terms.",
-            "Contact support with the offer name and a description of the issue if you cannot resolve it.",
+            "Check you are looking at the right business.",
+            "Compare the code carefully with the customer’s screen.",
+            "Check whether it has already been marked as used.",
+            "Check the offer’s end date and terms.",
+            "Contact support with the offer name and what happened if you cannot sort it at the till.",
         ],
         note:
-            "Do not ask a customer to claim from another account to work around a code problem.",
+            "Do not ask a customer to claim again from another account to get round a problem. Contact us and we will sort it properly.",
         link: {
             label: "Contact business support",
             href: "/business/contact",
@@ -197,13 +197,13 @@ const guides: HelpGuide[] = [
         title: "Understand team permissions",
         description: "Give each colleague the access they need.",
         steps: [
-            "Owners manage team access and invitations.",
-            "Owners and business admins can manage business details and offers.",
-            "Team members can view customer redemptions and mark codes as used.",
-            "Ask the owner to review your role if an expected management link is missing.",
+            "Owners invite people and manage who has access.",
+            "Owners and admins can edit the business and its offers.",
+            "Members can see redemptions and mark vouchers as used at the till.",
+            "Missing a page you expected? Ask the owner to check your role.",
         ],
         note:
-            "Personal account settings apply to the individual user. Business membership does not grant access to another person’s password or personal account.",
+            "Being on a team never gives anyone access to someone else’s password or personal account settings.",
     },
     {
         id: "business-emails",
@@ -211,13 +211,13 @@ const guides: HelpGuide[] = [
         title: "Choose business email notifications",
         description: "Manage summaries and offer availability updates.",
         steps: [
-            "As an owner or business admin, open the relevant business.",
-            "Choose Notifications.",
-            "Set preferences for daily summaries, fully claimed offers, and low inventory.",
-            "Adjust the low-inventory threshold if needed and save.",
+            "Open your business and choose Notifications.",
+            "Switch on the daily summary, fully claimed alerts and low inventory warnings you want.",
+            "Set the low inventory threshold to suit the offer.",
+            "Save.",
         ],
         note:
-            "These settings are separate from personal email preferences under Account settings.",
+            "Owners and admins can change these. Your own personal emails are separate, under Account settings.",
     },
     {
         id: "performance",
@@ -225,13 +225,13 @@ const guides: HelpGuide[] = [
         title: "Review offer activity",
         description: "Use your dashboard to understand the response.",
         steps: [
-            "Open the individual business overview to see offer metrics.",
-            "Review the performance and claim counts for your offers.",
-            "Open Redemptions to check which codes have been marked as used.",
-            "Use the Analytics page for the reporting available to your role.",
+            "Open your business overview to see how your offers are doing.",
+            "Check the claim count on each offer.",
+            "Open Redemptions to see which vouchers your team has marked used.",
+            "Open Analytics for the last 30 days against the 30 before.",
         ],
         note:
-            "Claims and used redemptions measure different events. Neither should be described as revenue without supporting sales information.",
+            "Claims and redemptions count different things, and neither is revenue on its own. Check them against your till before drawing conclusions.",
     },
     {
         id: "personal-account",
@@ -261,6 +261,7 @@ const guides: HelpGuide[] = [
             "Open your business and choose Loyalty card.",
             "Choose how many stamps it takes, from 3 to 20.",
             "Describe the reward and add any terms.",
+            "Pick the card colour and the stamp icon. The card beside the form changes as you choose, and it is the card customers carry.",
             "Save it. Customers can now join from your page or your QR poster.",
         ],
         note: "Loyalty cards are part of Pro and Growth.",
@@ -286,9 +287,9 @@ const guides: HelpGuide[] = [
         description: "Turn passers-by into followers and customers.",
         steps: [
             "Open your business and choose QR posters.",
-            "Create a poster and name it after where it will go, like Front window.",
-            "Choose what it promotes, then print it at A4 or A5.",
-            "Check its scan count after a few days to see which spots work best.",
+            "Name it after where it will go, like Front window, and choose what it opens.",
+            "Pick a paper size and a poster colour, then write the headline and the small line that print on it.",
+            "Print it at A4 or A5, put it up, and check its scan count after a few days to see which spots work best.",
         ],
         note: "The Free plan includes one poster. Pro and Growth have no limit.",
     },

@@ -149,14 +149,14 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
         return { to, subject: `Welcome to Promotello: getting ${name} set up`, html, text };
     }
 
-    if (due.kind === "setup_nudge_1" || due.kind === "setup_nudge_2") {
+    if (due.kind === "setup_nudge_1") {
         const next = missing[0];
 
         if (!next) return null;
 
         const others = missing.slice(1).map((step) => step.label.toLowerCase());
         const { html, text } = brandedEmail({
-            eyebrow: due.kind === "setup_nudge_1" ? "Your next step" : "Almost there",
+            eyebrow: "Your next step",
             title: `${next.label} for ${name}`,
             paragraphs: [
                 next.why,
@@ -169,6 +169,37 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
         });
 
         return { to, subject: `${next.label} for ${name}`, html, text };
+    }
+
+    // A business only gets the second nudge if nothing has changed since the
+    // first, so leading with the same step would repeat that email word for
+    // word, down to the subject line. This one counts what's left instead.
+    if (due.kind === "setup_nudge_2") {
+        const next = missing[0];
+
+        if (!next) return null;
+
+        const remaining = missing.map((step) => step.label.toLowerCase());
+        const counted = remaining.length === 1 ? "One thing" : remaining.length === 2 ? "Two things" : "Three things";
+        const title = `${counted} left before customers can find ${name}`;
+        const list = remaining.length === 2
+            ? remaining.join(" and ")
+            : `${remaining.slice(0, -1).join(", ")} and ${remaining[remaining.length - 1]}`;
+
+        const { html, text } = brandedEmail({
+            eyebrow: "Still to do",
+            title,
+            paragraphs: [
+                remaining.length === 1
+                    ? `Your page is set up apart from one thing: ${remaining[0]}.`
+                    : `Your page is set up, but it stays quiet until the rest is done: ${list}.`,
+                "Each one takes a few minutes, and you can stop after any of them. New offers are read by our team before they appear, usually the same day.",
+            ],
+            action: { label: next.action, url: absoluteUrl(next.path) },
+            ...tipsFooter,
+        });
+
+        return { to, subject: title, html, text };
     }
 
     if (due.kind === "trial_ending" && due.details.trial_end) {

@@ -106,21 +106,18 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - add social icons to email signature
 - Transfer youtube channel to hello@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
 - Add social media posts as per marketing launch POSTS.md / once business accounts are all set up and tested
-- Fix login / register pages on mobile for all to be above the fold (buttons for example)
+- create a test mode project in supabase so we dont touch live d
 - Add YouTube to google search console
 - Move analytics to hello@promotello.com account
 - Learn keystatic for blog posts, create three more posts and add image to each
-- Remove for business from header
-
-- make business dashboard more visual when creating business or offer. Currently user sees nothing but a form
-- image cropping tool component to be shared wherever user needs to add an image.
-- Update UI on login and register on mobile, button below the fold.
 
 - Change Vercel from hobby to paid plan, payment from wise account
 
-- Test onboarding flow and conversion emails before launch
 
-- Create preview companies and test claiming them. Generate cold email template to send to businesses.
+- remove cookie settings customer footer
+
+
+- on desktop make filter show from right
 
 - Check resend limits that its ok for launch
 
@@ -131,6 +128,13 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - Do we need it? Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register. Add ICO number to privacy policy and other legal pages (company number done: `lib/legal.ts`)
 - Add API so that users can generate and buy stickers of their QR codes like Printful: a well-documented REST API, kiss-cut stickers, and printing in the UK. It’s probably the quickest to get working.
 - Do we have QR code download image that business can display to get loyalty card / user signs up and is in their account
+- how will seo title and metas work when more locations
+- decide the email volume before outreach: a business that signs up and does nothing gets 7 emails in 21 days (welcome, setup nudge, loyalty pitch, second nudge, founding places, results, check-in). all verified working, there are just a lot of them
+- the trial terms sentence repeats word for word in the loyalty pitch, founding places and results emails, and again in the loyalty setup step
+- business chooser cards show the approval chip as plain text; `components/business-status-badge.tsx` has the clock and warning colours the sidebar uses
+- founding places left is cached hourly on the pricing page (`cacheLife`), so tighten it as you approach 50 or the page keeps advertising places that have gone. the limit itself is enforced live at checkout, so 51 can't be sold
+- security, password and email preference guides in both help centres are still in the older formal voice, left that way on purpose
+- the customer sign-up page's “already have an account? sign in” link is a bare `/login`, so someone part-way through claiming an offer loses where they were going. the business sign-up page carries it through now
 
 ### App improvements
 
@@ -138,14 +142,14 @@ From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them. Start with 
 
 1. Apple and Google Wallet passes. Apply for an Apple Developer account and a Google Wallet issuer account first, as approval takes time
 2. Join a loyalty card without an account: name plus email or phone creates a guest card, claimed into a full account later
-3. Card design (colours, logo, stamp icon) and multi-stamp (several stamps in one scan, with a cap)
-4. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
-5. Customer list, segments (lapsed, VIP) and CSV export with consent flags
-6. Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
-7. Double-stamp days, reusing the quiet-hours schedules
-8. Surprise rewards and scratch-to-win
-9. Customer refer-a-friend
-10. Wallet push messages and location alerts (needs 1)
+3. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
+4. Customer list, segments (lapsed, VIP) and CSV export with consent flags
+5. Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
+6. Double-stamp days, reusing the quiet-hours schedules
+7. Surprise rewards and scratch-to-win
+8. Customer refer-a-friend
+9. Wallet push messages and location alerts (needs 1)
+10. QR poster sizes and designs + sticker request through AP
 
 Smaller gaps:
 
