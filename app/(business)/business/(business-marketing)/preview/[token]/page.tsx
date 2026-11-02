@@ -35,6 +35,7 @@ type Preview = {
     category: string;
     description: string | null;
     logo_url: string | null;
+    cover_image_url: string | null;
     area: string | null;
     city: string | null;
     contact_name: string | null;
@@ -61,7 +62,17 @@ function BusinessPagePreview({ preview }: { preview: Preview }) {
     return (
         <BrowserFrame url="promotello.com/businesses/…" label={`${preview.business_name}'s page on Promotello`}>
             <div className="bg-[#FFF8F0] p-5 text-[#17233B]">
-                <div className="h-20 rounded-xl bg-[#17233B]" />
+                {preview.cover_image_url ? (
+                    <Image
+                        src={preview.cover_image_url}
+                        alt=""
+                        width={480}
+                        height={160}
+                        className="h-20 w-full rounded-xl object-cover"
+                    />
+                ) : (
+                    <div className="h-20 rounded-xl bg-[#17233B]" />
+                )}
                 <div className="-mt-7 flex items-end gap-3 px-3">
                     {preview.logo_url ? (
                         <Image

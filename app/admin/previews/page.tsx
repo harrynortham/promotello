@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { FiExternalLink } from "react-icons/fi";
 
+import { BusinessImageForm } from "@/components/business-image-form";
 import { CategorySelect } from "@/components/category-select";
 import { CopyButton } from "@/components/copy-button";
 import { LocationFields } from "@/components/location-fields";
@@ -32,6 +33,8 @@ type PreviewRow = {
     businesses: {
         name: string;
         approval_status: string;
+        logo_url: string | null;
+        cover_image_url: string | null;
         business_locations: { city: string | null; cities: { name: string } | null }[];
     } | null;
 };
@@ -85,7 +88,7 @@ async function PreviewsContent({ searchParams }: PageProps) {
     const [{ data: rows }, cities, { data: userData }] = await Promise.all([
         supabase
             .from("business_previews")
-            .select("business_id, token, contact_name, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, business_locations ( city, cities ( name ) ) )")
+            .select("business_id, token, contact_name, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, logo_url, cover_image_url, business_locations ( city, cities ( name ) ) )")
             .order("created_at", { ascending: false }),
         getCityOptions({ includeNotLive: true }),
         supabase.auth.getUser(),
@@ -118,9 +121,25 @@ async function PreviewsContent({ searchParams }: PageProps) {
                     <AlertTitle>Preview ready for {justCreated.businesses?.name}</AlertTitle>
                     <AlertDescription>
                         <p>
-                            Add a logo and description from the business&apos;s dashboard to make it look its best, then
-                            send the link.
+                            Add their logo and a cover photo so the preview looks like them, then send the link.
                         </p>
+
+                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                            <BusinessImageForm
+                                kind="logo"
+                                businessId={justCreated.business_id}
+                                businessName={justCreated.businesses?.name ?? "this business"}
+                                imageUrl={justCreated.businesses?.logo_url ?? null}
+                                returnTo={`/admin/previews?created=${justCreated.business_id}`}
+                            />
+                            <BusinessImageForm
+                                kind="cover"
+                                businessId={justCreated.business_id}
+                                businessName={justCreated.businesses?.name ?? "this business"}
+                                imageUrl={justCreated.businesses?.cover_image_url ?? null}
+                                returnTo={`/admin/previews?created=${justCreated.business_id}`}
+                            />
+                        </div>
                         <div className="mt-3 flex flex-wrap gap-2">
                             <CopyButton text={absoluteUrl(`/business/preview/${justCreated.token}`)} label="Copy link" />
                             <CopyButton text={outreachMessage(justCreated, sender)} label="Copy message" />
