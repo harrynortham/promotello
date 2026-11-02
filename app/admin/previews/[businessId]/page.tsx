@@ -34,9 +34,8 @@ async function PreviewDetail({ params }: PageProps) {
     const { businessId } = await params;
     const supabase = await createClient();
 
-    const [{ data }, { data: userData }, foundingTaken] = await Promise.all([
+    const [{ data }, foundingTaken] = await Promise.all([
         supabase.from("business_previews").select(previewColumns).eq("business_id", businessId).maybeSingle(),
-        supabase.auth.getUser(),
         countFoundingMembers().catch(() => null),
     ]);
 
@@ -46,7 +45,6 @@ async function PreviewDetail({ params }: PageProps) {
         notFound();
     }
 
-    const sender = userData.user?.user_metadata?.full_name || "The Promotello team";
     const name = preview.businesses?.name ?? "This business";
     const location = preview.businesses?.business_locations?.[0];
     const where = location?.cities?.name ?? location?.city ?? null;
@@ -143,7 +141,7 @@ async function PreviewDetail({ params }: PageProps) {
 
                     <div className="flex flex-wrap gap-2">
                         <CopyButton text={outreachSubject(preview)} label="Copy subject" />
-                        <CopyButton text={outreachMessage(preview, sender, placesLeft)} label="Copy message" />
+                        <CopyButton text={outreachMessage(preview, placesLeft)} label="Copy message" />
                         <CopyButton text={link} label="Copy link" />
                         <Button
                             render={

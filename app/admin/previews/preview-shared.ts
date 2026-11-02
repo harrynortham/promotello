@@ -1,5 +1,4 @@
 import { FOUNDING_MEMBER_LIMIT, TRIAL_DAYS, plans } from "@/lib/billing";
-import { companyLine } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 
 // What a preview looks like wherever it is listed or opened.
@@ -67,7 +66,10 @@ export function outreachSubject(preview: PreviewRow) {
 // been built for them rather than with us, names the two objections that stop
 // people (an app, a card reader), and gives the founding price a number of
 // places left so there is a reason to look today.
-export function outreachMessage(preview: PreviewRow, sender: string, placesLeft: number | null) {
+//
+// It stops at the ask. The name and the Companies Act disclosure come from
+// the email signature, so putting them here would send both twice.
+export function outreachMessage(preview: PreviewRow, placesLeft: number | null) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(`/business/preview/${preview.token}`);
     const location = preview.businesses?.business_locations?.[0];
@@ -99,10 +101,5 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         `It's free to use with one offer. ${founding}`,
         "",
         `Worth a look? Claiming it takes about two minutes. If it's not for you, reply "no thanks" and I won't email again.`,
-        "",
-        sender,
-        "",
-        // The Companies Act requires these in a business email.
-        companyLine() + ".",
     ].join("\n");
 }
