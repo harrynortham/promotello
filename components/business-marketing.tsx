@@ -107,7 +107,7 @@ export const planSummaries = [
         price: plans.pro_monthly.price,
         note: "a month",
         description: "Everything to bring customers back.",
-        features: ["Unlimited offers, live instantly", "Digital loyalty cards", "QR posters for every spot", "Followers emailed every new offer", "Google review prompts"],
+        features: ["Unlimited live offers", "Digital loyalty cards", "QR posters for every spot", "Followers emailed every new offer", "Google review prompts"],
         highlight: true,
     },
     {

@@ -16,9 +16,14 @@ Supabase dashboard → **Authentication → URL Configuration**:
 
 - **Site URL:** `https://www.promotello.com`
 - **Redirect URLs:** add
-  - `https://www.promotello.com/auth/callback`
-  - `http://localhost:3000/auth/callback`
-  - `https://*-harrynortham.vercel.app/auth/callback` (Vercel previews; adjust to your team's preview domain)
+  - `https://www.promotello.com/**`
+  - `http://localhost:3000/**`
+  - `https://*-harrynortham.vercel.app/**` (Vercel previews; adjust to your team's preview domain)
+
+  Use the `/**` form, not an exact `/auth/callback` path. Matching is a glob over the
+  whole URL, and the links we send carry a query string (`/auth/callback?next=/onboarding`),
+  which an exact path never matches. When it doesn't match, Supabase falls back to the
+  Site URL and the person lands on the home page instead of where they were headed.
 
 ## 2. Google (free)
 

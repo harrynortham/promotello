@@ -129,8 +129,7 @@ export default function BusinessRegisterPage() {
                                 </h1>
 
                                 <p className="mt-5 leading-8 text-muted-foreground">
-                                    If registration requires confirmation,
-                                    you’ll receive instructions at{" "}
+                                    We’ve sent a confirmation link to{" "}
                                     <span className="break-all font-medium text-foreground">
                                         {confirmationEmail}
                                     </span>

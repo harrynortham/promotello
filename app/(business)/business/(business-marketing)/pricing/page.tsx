@@ -87,7 +87,7 @@ const questions = [
     },
     {
         question: "What is the founding member price?",
-        answer: `The first ${FOUNDING_MEMBER_LIMIT} businesses to join Pro pay ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, for as long as they stay subscribed. It includes everything in Pro, now and as Pro grows.`,
+        answer: `The first ${FOUNDING_MEMBER_LIMIT} businesses to join Pro pay ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, locked in for life. It includes everything in Pro, now and as Pro grows.`,
     },
     {
         question: "What counts as a live offer?",
@@ -220,8 +220,7 @@ export default function BusinessPricingPage() {
 
                             <p className="mt-2 text-xl font-semibold text-[#17233B]">
                                 Pro for {plans.pro_founding_monthly.price} a
-                                month, locked in for as long as you stay
-                                subscribed.
+                                month, locked in for life.
                             </p>
 
                             <p className="mt-2 text-sm text-[#17233B]/70">

@@ -14,7 +14,6 @@ type ComparisonRow = Record<PlanTier, Availability> & {
 export const planComparison: ComparisonRow[] = [
     { feature: "Business page in the Promotello directory", free: true, pro: true, growth: true },
     { feature: "Live offers", free: String(FREE_LIVE_OFFER_LIMIT), pro: "Unlimited", growth: "Unlimited", plus: "Unlimited live offers" },
-    { feature: "Offers live without waiting for review", free: false, pro: true, growth: true },
     { feature: "Scan-to-redeem vouchers", free: true, pro: true, growth: true },
     { feature: "QR posters with scan counts", free: "1", pro: "Unlimited", growth: "Unlimited", plus: "A QR poster for every spot, with scans compared" },
     { feature: "Team members for your staff", free: true, pro: true, growth: true },
