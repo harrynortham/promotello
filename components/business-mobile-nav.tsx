@@ -16,6 +16,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 type Business = {
     id: string;
@@ -130,6 +131,10 @@ export function BusinessMobileNav({
 
                     {/* The same links, order and highlight as the desktop side menu. */}
                     <BusinessSidebarNav businessId={businessId} canManage={canManage} />
+
+                    <Separator />
+
+                    <FeedbackDialog businessId={businessId} />
 
                     <Separator />
 
