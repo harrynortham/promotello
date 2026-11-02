@@ -67,9 +67,9 @@ export function outreachSubject(preview: PreviewRow) {
 // people (an app, a card reader), and gives the founding price a number of
 // places left so there is a reason to look today.
 //
-// It stops at the ask. The name and the Companies Act disclosure come from
-// the email signature, so putting them here would send both twice.
-export function outreachMessage(preview: PreviewRow, placesLeft: number | null) {
+// It signs off by name, but carries no company footer: the Companies Act
+// disclosure is in the email signature, and sending it twice reads badly.
+export function outreachMessage(preview: PreviewRow, sender: string, placesLeft: number | null) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(`/business/preview/${preview.token}`);
     const location = preview.businesses?.business_locations?.[0];
@@ -101,5 +101,7 @@ export function outreachMessage(preview: PreviewRow, placesLeft: number | null) 
         `It's free to use with one offer. ${founding}`,
         "",
         `Worth a look? Claiming it takes about two minutes. If it's not for you, reply "no thanks" and I won't email again.`,
+        "",
+        sender,
     ].join("\n");
 }
