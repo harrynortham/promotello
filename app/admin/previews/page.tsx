@@ -18,7 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getCityOptions } from "@/lib/locations";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
-import { createPreview, deletePreview } from "./actions";
+import { Textarea } from "@/components/ui/textarea";
+import { createPreview, deletePreview, savePreviewNotes, setPreviewStatus } from "./actions";
 
 type PageProps = { searchParams: Promise<{ created?: string; error?: string }> };
 
@@ -30,6 +31,10 @@ type PreviewRow = {
     view_count: number;
     last_viewed_at: string | null;
     claimed_at: string | null;
+    contact_email: string | null;
+    contacted_at: string | null;
+    status: string;
+    notes: string | null;
     businesses: {
         name: string;
         approval_status: string;
@@ -63,6 +68,36 @@ function outreachMessage(preview: PreviewRow, sender: string) {
     ].join("\n");
 }
 
+const statusLabels: Record<string, string> = {
+    to_send: "Not emailed",
+    sent: "Emailed",
+    replied: "Replied",
+    not_interested: "Not interested",
+};
+
+// What to offer next, given where it is.
+const nextStatuses: Record<string, { value: string; label: string }[]> = {
+    to_send: [{ value: "sent", label: "Mark emailed" }],
+    sent: [
+        { value: "replied", label: "Replied" },
+        { value: "not_interested", label: "Not interested" },
+        { value: "to_send", label: "Not emailed after all" },
+    ],
+    replied: [{ value: "not_interested", label: "Not interested" }],
+    not_interested: [{ value: "sent", label: "Back to emailed" }],
+};
+
+function Outreach({ preview }: { preview: PreviewRow }) {
+    if (preview.claimed_at) return null;
+
+    return (
+        <Badge variant={preview.status === "to_send" ? "default" : "outline"}>
+            {statusLabels[preview.status] ?? preview.status}
+            {preview.contacted_at && ` ${formatDate(preview.contacted_at)}`}
+        </Badge>
+    );
+}
+
 function Status({ preview }: { preview: PreviewRow }) {
     if (preview.claimed_at) {
         return <Badge className="bg-emerald-100 text-emerald-800">Claimed {formatDate(preview.claimed_at)}</Badge>;
@@ -88,7 +123,7 @@ async function PreviewsContent({ searchParams }: PageProps) {
     const [{ data: rows }, cities, { data: userData }] = await Promise.all([
         supabase
             .from("business_previews")
-            .select("business_id, token, contact_name, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, logo_url, cover_image_url, business_locations ( city, cities ( name ) ) )")
+            .select("business_id, token, contact_name, contact_email, contacted_at, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, logo_url, cover_image_url, business_locations ( city, cities ( name ) ) )")
             .order("created_at", { ascending: false }),
         getCityOptions({ includeNotLive: true }),
         supabase.auth.getUser(),
@@ -171,8 +206,28 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                         </p>
                                         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#17233B]/70">
                                             <span>Created {formatDate(preview.created_at)}</span>
+                                            <Outreach preview={preview} />
                                             <Status preview={preview} />
+                                            {preview.contact_email && <span>{preview.contact_email}</span>}
                                         </div>
+
+                                        {!preview.claimed_at && (
+                                            <form action={savePreviewNotes} className="mt-3 flex items-start gap-2">
+                                                <input type="hidden" name="businessId" value={preview.business_id} />
+                                                <Textarea
+                                                    name="notes"
+                                                    rows={1}
+                                                    maxLength={1000}
+                                                    defaultValue={preview.notes ?? ""}
+                                                    placeholder="Said come back in January…"
+                                                    aria-label={`Notes on ${preview.businesses?.name ?? "this preview"}`}
+                                                    className="min-h-9 py-1.5 text-sm"
+                                                />
+                                                <SubmitButton variant="outline" pendingLabel="Saving…" className="h-9 shrink-0">
+                                                    Save note
+                                                </SubmitButton>
+                                            </form>
+                                        )}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         <CopyButton text={absoluteUrl(`/business/preview/${preview.token}`)} label="Link" />
@@ -188,6 +243,15 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                         </Button>
                                         {!preview.claimed_at && (
                                             <>
+                                                {(nextStatuses[preview.status] ?? []).map((option) => (
+                                                    <form key={option.value} action={setPreviewStatus}>
+                                                        <input type="hidden" name="businessId" value={preview.business_id} />
+                                                        <input type="hidden" name="status" value={option.value} />
+                                                        <SubmitButton variant="outline" pendingLabel="Saving…" className="h-8">
+                                                            {option.label}
+                                                        </SubmitButton>
+                                                    </form>
+                                                ))}
                                                 <Button render={<Link href={`/business/${preview.business_id}/edit`} />} nativeButton={false} variant="outline" size="sm">
                                                     Edit
                                                 </Button>
@@ -237,6 +301,16 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                 <div className="space-y-2">
                                     <Label htmlFor="contactName">Owner&apos;s first name (optional)</Label>
                                     <Input id="contactName" name="contactName" maxLength={80} placeholder="Sam" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="contactEmail">Where you&apos;ll write (optional)</Label>
+                                    <Input
+                                        id="contactEmail"
+                                        name="contactEmail"
+                                        type="email"
+                                        maxLength={160}
+                                        placeholder="hello@theirshop.com"
+                                    />
                                 </div>
                             </div>
                         </div>
