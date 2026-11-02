@@ -1,4 +1,5 @@
 import { FOUNDING_MEMBER_LIMIT, TRIAL_DAYS, plans } from "@/lib/billing";
+import { companyLine } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 
 // What a preview looks like wherever it is listed or opened.
@@ -87,9 +88,11 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
     return [
         `Hi ${preview.contact_name || "there"},`,
         "",
-        `I've built ${name} a page on Promotello: a digital loyalty card your customers keep on their phone, a QR poster for your window, and your offers listed in the${where || " Bristol"} directory. It's already set up, so you can just look at it:`,
+        `I've built ${name} a page on Promotello, so you can look at it rather than read about it:`,
         "",
         url,
+        "",
+        `Promotello is for independent businesses in${where || " Bristol"}: a digital loyalty card your customers keep on their phone, a QR poster for your window, and your offers in a directory people search. It is built around turning a first visit into a second one.`,
         "",
         "No app for customers to download and no card reader. Your staff stamp a card by scanning it with their own phone, and you can see how many people come back because of it.",
         "",
@@ -98,6 +101,8 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         `Worth a look? Claiming it takes about two minutes. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
         sender,
-        town ? `Promotello, ${town}` : "Promotello",
+        "",
+        // The Companies Act requires these in a business email.
+        companyLine() + ".",
     ].join("\n");
 }
