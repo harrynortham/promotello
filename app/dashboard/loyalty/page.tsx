@@ -50,6 +50,10 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
         redirect("/login?next=/dashboard/loyalty");
     }
 
+    // Cards they joined as a guest with this email become theirs here. It is
+    // safe to call every time: there is usually nothing to claim.
+    await supabase.rpc("claim_guest_loyalty_cards");
+
     const [cards, origin] = await Promise.all([getLoyaltyCards(user.id), requestOrigin()]);
     const svgs = await Promise.all(cards.map((card) => qrSvg(`${origin}/stamp/${card.code}`)));
 

@@ -567,7 +567,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 program={loyaltyProgram}
                                 card={loyaltyCard}
                                 isSignedIn={Boolean(viewer)}
-                                unavailable={loyaltyStatus === "unavailable"}
+                                problem={loyaltyStatus}
                                 preview={isPreview}
                             />
                         )}
