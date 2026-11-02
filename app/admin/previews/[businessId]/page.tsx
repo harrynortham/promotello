@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { FOUNDING_MEMBER_LIMIT, countFoundingMembers } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
 import { deletePreview, savePreviewNotes, setPreviewStatus } from "../actions";
@@ -19,6 +20,7 @@ import {
     formatDate,
     nextStatuses,
     outreachMessage,
+    outreachSubject,
     previewColumns,
     statusLabels,
     type PreviewRow,
@@ -32,22 +34,24 @@ async function PreviewDetail({ params }: PageProps) {
     const { businessId } = await params;
     const supabase = await createClient();
 
-    const [{ data }, { data: userData }] = await Promise.all([
+    const [{ data }, { data: userData }, foundingTaken] = await Promise.all([
         supabase.from("business_previews").select(previewColumns).eq("business_id", businessId).maybeSingle(),
         supabase.auth.getUser(),
+        countFoundingMembers().catch(() => null),
     ]);
 
     const preview = data as unknown as PreviewRow | null;
+    const sender = userData.user?.user_metadata?.full_name || "The Promotello team";
 
     if (!preview) {
         notFound();
     }
 
-    const sender = userData.user?.user_metadata?.full_name || "The Promotello team";
     const name = preview.businesses?.name ?? "This business";
     const location = preview.businesses?.business_locations?.[0];
     const where = location?.cities?.name ?? location?.city ?? null;
     const link = absoluteUrl(`/business/preview/${preview.token}`);
+    const placesLeft = foundingTaken === null ? null : Math.max(FOUNDING_MEMBER_LIMIT - foundingTaken, 0);
 
     return (
         <div className="space-y-8">
@@ -133,13 +137,14 @@ async function PreviewDetail({ params }: PageProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-sm text-[#17233B]/70">
-                        The message is written for {preview.contact_name || "whoever opens it"}, with the link in it.
-                        Mark it emailed once it has gone, so it does not go twice.
+                        Written for {preview.contact_name || "whoever opens it"}, with the link and the founding
+                        price in it. Mark it emailed once it has gone, so it does not go twice.
                     </p>
 
                     <div className="flex flex-wrap gap-2">
+                        <CopyButton text={outreachSubject(preview)} label="Copy subject" />
+                        <CopyButton text={outreachMessage(preview, sender, placesLeft)} label="Copy message" />
                         <CopyButton text={link} label="Copy link" />
-                        <CopyButton text={outreachMessage(preview, sender)} label="Copy message" />
                         <Button
                             render={
                                 <a href={`/business/preview/${preview.token}`} target="_blank" rel="noopener noreferrer" />
