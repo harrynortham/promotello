@@ -137,14 +137,19 @@ export default async function BusinessPage() {
 
                     <div className="relative mx-auto w-full max-w-xl pb-10 lg:pb-0">
                         <DashboardScreen />
-                        <div className="absolute -bottom-6 -right-2 z-20 hidden scale-[0.82] sm:block lg:-right-10">
+
+                        {/* The same collage at every width: the card tucked into the
+                            dashboard's corner, the note on the other side. On a phone
+                            both are scaled down rather than dropped, anchored to their
+                            own corner so the three pieces keep their arrangement. */}
+                        <div className="absolute -bottom-6 -right-2 z-20 origin-bottom-right scale-[0.5] sm:scale-[0.82] lg:-right-10">
                             <LoyaltyCardScreen />
                         </div>
                         <FloatingNote
                             icon="check"
                             title="Jo claimed your free pastry offer"
                             detail="84 claimed so far · 2 min ago"
-                            className="absolute -left-4 bottom-4 z-20 hidden sm:flex lg:-left-10"
+                            className="absolute -left-4 bottom-4 z-20 origin-bottom-left scale-[0.62] sm:scale-100 lg:-left-10"
                         />
                     </div>
                 </div>
