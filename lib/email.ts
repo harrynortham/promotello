@@ -54,8 +54,58 @@ export function isDeliverable(address: string) {
 }
 
 const BATCH_SIZE = 100; // Resend's batch limit.
+const ATTEMPTS = 3;
+const BACKOFF_MS = [500, 2000];
 
-export async function sendEmails(emails: Email[]) {
+// Worth trying again: rate limits, Resend being briefly unwell, a dropped
+// connection. A 401 or a malformed From address will fail the same way
+// every time, so those are reported straight away.
+function retryable(status: number) {
+    return status === 408 || status === 429 || status >= 500;
+}
+
+async function sendBatch(apiKey: string, payload: unknown[]) {
+    let lastReason = "";
+
+    for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+        let status = 0;
+
+        try {
+            const response = await fetch("https://api.resend.com/emails/batch", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) return { ok: true as const };
+
+            status = response.status;
+            lastReason = `${status} ${(await response.text()).slice(0, 300)}`;
+
+            if (!retryable(status)) return { ok: false as const, reason: lastReason };
+        } catch (error) {
+            lastReason = error instanceof Error ? error.message : String(error);
+        }
+
+        if (attempt < ATTEMPTS) {
+            await new Promise((resolve) => setTimeout(resolve, BACKOFF_MS[attempt - 1]));
+        }
+    }
+
+    return { ok: false as const, reason: `${lastReason} (after ${ATTEMPTS} attempts)` };
+}
+
+export type SendResult = {
+    sent: number;
+    failed: number;
+    skipped: number;
+    // Who did not get their email. Callers that claimed a send before making
+    // it use this to release the claim, so the next run tries again instead
+    // of the message being lost.
+    failedTo: string[];
+};
+
+export async function sendEmails(emails: Email[]): Promise<SendResult> {
     const apiKey = process.env.RESEND_API_KEY;
     const from = setting(process.env.EMAIL_FROM);
     const deliverable = emails.filter((email) => isDeliverable(email.to));
@@ -67,42 +117,35 @@ export async function sendEmails(emails: Email[]) {
         if (deliverable.length > 0) {
             console.warn(`Email: RESEND_API_KEY or EMAIL_FROM not set, skipped ${deliverable.length} email(s)`);
         }
-        return { sent: 0, failed: 0, skipped: emails.length };
+        return { sent: 0, failed: 0, skipped: emails.length, failedTo: [] };
     }
 
     let sent = 0;
-    let failed = 0;
+    const failedTo: string[] = [];
 
     for (let i = 0; i < deliverable.length; i += BATCH_SIZE) {
         const batch = deliverable.slice(i, i + BATCH_SIZE);
 
-        const response = await fetch("https://api.resend.com/emails/batch", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(
-                batch.map(({ senderName, replyTo: emailReplyTo, ...email }) => ({
-                    from: senderFor(from, senderName),
-                    reply_to: emailReplyTo ?? replyTo,
-                    ...email,
-                })),
-            ),
-        });
+        const result = await sendBatch(
+            apiKey,
+            batch.map(({ senderName, replyTo: emailReplyTo, ...email }) => ({
+                from: senderFor(from, senderName),
+                reply_to: emailReplyTo ?? replyTo,
+                ...email,
+            })),
+        );
 
-        if (response.ok) {
+        if (result.ok) {
             sent += batch.length;
         } else {
-            failed += batch.length;
-            const reason = await response.text();
-            console.error("Email: Resend batch failed", response.status, reason);
+            failedTo.push(...batch.map((email) => email.to));
+            console.error("Email: Resend batch failed", result.reason);
             // Reported so a broken setting can't stop emails unnoticed.
-            Sentry.captureMessage(`Resend rejected ${batch.length} email(s): ${response.status} ${reason.slice(0, 300)}`, "error");
+            Sentry.captureMessage(`Resend rejected ${batch.length} email(s): ${result.reason}`, "error");
         }
     }
 
-    return { sent, failed, skipped: undeliverable };
+    return { sent, failed: failedTo.length, skipped: undeliverable, failedTo };
 }
 
 // The Promotello logo at the top of every email: a PNG (Gmail and Outlook

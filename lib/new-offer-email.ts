@@ -1,6 +1,7 @@
 import { emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
+import { releaseClaims } from "@/lib/email-claims";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type OfferForEmail = {
@@ -114,5 +115,16 @@ export async function emailFollowersAboutOffer(offerId: string) {
         return { sent: 0, failed: 0, skipped: 0 };
     }
 
-    return sendEmails(rows.map((row) => newOfferEmail(offer, row.email, row.unsubscribe_token)));
+    const result = await sendEmails(rows.map((row) => newOfferEmail(offer, row.email, row.unsubscribe_token)));
+
+    if (result.failedTo.length > 0) {
+        const lost = new Set(result.failedTo);
+        const ids = rows.filter((row) => lost.has(row.email)).map((row) => row.user_id);
+
+        await releaseClaims("New offer email", () =>
+            admin.from("offer_email_sends").delete().eq("offer_id", offerId).in("user_id", ids),
+        );
+    }
+
+    return result;
 }
