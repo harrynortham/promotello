@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
+import { Pagination } from "@/components/blog/pagination";
 import { PostCard } from "@/components/blog/post-card";
 import { Button } from "@/components/ui/button";
 import { blogCategories } from "@/keystatic.config";
 import type { PostSummary } from "@/lib/blog";
+
+export const BLOG_TITLE = "Guides for independent business owners";
+export const BLOG_INTRO =
+    "Practical ideas for getting more repeat customers, filling quiet hours and making loyalty work, written for cafés, salons, barbers and shops.";
 
 // The blog home and category pages.
 export function BlogListing({
@@ -12,11 +17,18 @@ export function BlogListing({
     category,
     title,
     intro,
+    basePath,
+    page = 1,
+    totalPages = 1,
 }: {
+    // Only the posts for this page; the pager handles the rest.
     posts: PostSummary[];
     category: string | null;
     title: string;
     intro: string;
+    basePath: string;
+    page?: number;
+    totalPages?: number;
 }) {
     return (
         <main className="flex-1 pb-24">
@@ -57,6 +69,8 @@ export function BlogListing({
                         ))}
                     </div>
                 )}
+
+                <Pagination basePath={basePath} page={page} totalPages={totalPages} />
             </section>
 
             <section className="mx-auto mt-20 max-w-7xl px-6 sm:px-10">

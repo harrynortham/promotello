@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { BlogListing } from "@/components/blog/blog-listing";
 import { blogCategories } from "@/keystatic.config";
-import { getPosts } from "@/lib/blog";
+import { getPosts, paginatePosts } from "@/lib/blog";
 
 type PageProps = { params: Promise<{ category: string }> };
 
@@ -32,13 +32,17 @@ export default async function BlogCategoryPage({ params }: PageProps) {
     }
 
     const posts = (await getPosts()).filter((post) => post.category === category.value);
+    const { pagePosts, page, totalPages } = paginatePosts(posts, 1);
 
     return (
         <BlogListing
-            posts={posts}
+            posts={pagePosts}
             category={category.value}
             title={category.label}
             intro={`Practical guides on ${category.label.toLowerCase()} for independent cafés, salons, barbers and shops.`}
+            basePath={`/blog/category/${category.value}`}
+            page={page}
+            totalPages={totalPages}
         />
     );
 }
