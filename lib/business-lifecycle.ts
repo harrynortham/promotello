@@ -119,16 +119,46 @@ function resultsList(d: LifecycleDue["details"]) {
 
 const trialTerms = `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`;
 
-const tipsFooter = {
-    footer: "You're getting this because you run a business on Promotello. We'll only send a few tips while you get started.",
-    footerLinks: [{ label: "Turn off setup tips", url: absoluteUrl("/account/notifications") }],
-};
+// The token lets someone stop these without signing in, which is what the
+// List-Unsubscribe header needs and what the visible link should offer too.
+// Without one (an older claim, or a user with no settings row yet) it falls
+// back to the preferences page.
+function optOutUrl(token?: string) {
+    return token ? absoluteUrl(`/unsubscribe/${token}`) : absoluteUrl("/account/notifications");
+}
+
+function unsubscribeHeaders(token?: string) {
+    if (!token) return undefined;
+
+    const oneClick = absoluteUrl(`/api/unsubscribe/${token}`);
+
+    return {
+        "List-Unsubscribe": `<${oneClick}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    };
+}
+
+function tipsFooter(token?: string) {
+    return {
+        footer: "You're getting this because you run a business on Promotello. We'll only send a few tips while you get started.",
+        footerLinks: [{ label: "Turn off setup tips", url: optOutUrl(token) }],
+    };
+}
 
 // foundingPlacesLeft: founding member places still open, or null if unknown.
-export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLeft = null }: { foundingPlacesLeft?: number | null } = {}): Email | null {
+export function lifecycleEmail(
+    due: LifecycleDue,
+    to: string,
+    { foundingPlacesLeft = null, unsubscribeToken }: { foundingPlacesLeft?: number | null; unsubscribeToken?: string } = {},
+): Email | null {
     const name = due.business_name;
     const dashboard = absoluteUrl(`/business/${due.business_id}`);
     const missing = missingSteps(due);
+
+    // welcome and trial_ending always send, whatever the setting says (see
+    // claim_business_lifecycle_emails). Offering an unsubscribe on those
+    // would promise something it cannot honour, so they carry none.
+    const optOutToken = due.kind === "welcome" || due.kind === "trial_ending" ? undefined : unsubscribeToken;
 
     if (due.kind === "welcome") {
         const steps = setupSteps(due.business_id, due.hasPro);
@@ -147,7 +177,7 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
             footer: "You're getting this because you just added your business to Promotello.",
         });
 
-        return { to, subject: `Welcome to Promotello: getting ${name} set up`, html, text };
+        return { to, subject: `Welcome to Promotello: getting ${name} set up`, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     if (due.kind === "setup_nudge_1") {
@@ -166,10 +196,10 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
                     : "That's the last step, and then you're ready for customers.",
             ],
             action: { label: next.action, url: absoluteUrl(next.path) },
-            ...tipsFooter,
+            ...tipsFooter(optOutToken),
         });
 
-        return { to, subject: `${next.label} for ${name}`, html, text };
+        return { to, subject: `${next.label} for ${name}`, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     // A business only gets the second nudge if nothing has changed since the
@@ -197,10 +227,10 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
                 "Each one takes a few minutes, and you can stop after any of them. New offers are read by our team before they appear, usually the same day.",
             ],
             action: { label: next.action, url: absoluteUrl(next.path) },
-            ...tipsFooter,
+            ...tipsFooter(optOutToken),
         });
 
-        return { to, subject: title, html, text };
+        return { to, subject: title, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     if (due.kind === "trial_ending" && due.details.trial_end) {
@@ -221,7 +251,7 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
             footer: "You're getting this because your business is on a Promotello free trial.",
         });
 
-        return { to, subject: `Your Promotello trial ends on ${trialEnd}`, html, text };
+        return { to, subject: `Your Promotello trial ends on ${trialEnd}`, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     const billing = absoluteUrl(`/business/${due.business_id}/billing`);
@@ -237,10 +267,10 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
                 `Loyalty cards are part of Pro. ${trialTerms}`,
             ],
             action: tryPro,
-            ...tipsFooter,
+            ...tipsFooter(optOutToken),
         });
 
-        return { to, subject: `A loyalty card for ${name}, free for ${TRIAL_DAYS} days`, html, text };
+        return { to, subject: `A loyalty card for ${name}, free for ${TRIAL_DAYS} days`, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     if (due.kind === "founding_places") {
@@ -257,14 +287,14 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
                     trialTerms,
                 ],
                 action: { label: "Claim a founding place", url: billing },
-                ...tipsFooter,
+                ...tipsFooter(optOutToken),
             })
             : brandedEmail({
                 eyebrow: "Promotello Pro",
                 title: `What Pro adds for ${name}`,
                 paragraphs: [proAdds, trialTerms],
                 action: tryPro,
-                ...tipsFooter,
+                ...tipsFooter(optOutToken),
             });
 
         return {
@@ -274,6 +304,7 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
                 : `What Pro adds for ${name}`,
             html,
             text,
+            headers: unsubscribeHeaders(optOutToken),
         };
     }
 
@@ -291,10 +322,10 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
                     trialTerms,
                 ],
                 action: tryPro,
-                ...tipsFooter,
+                ...tipsFooter(optOutToken),
             });
 
-            return { to, subject: `${name}'s first two weeks on Promotello`, html, text };
+            return { to, subject: `${name}'s first two weeks on Promotello`, html, text, headers: unsubscribeHeaders(optOutToken) };
         }
 
         const { html, text } = brandedEmail({
@@ -309,14 +340,15 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
             action: d.has_poster
                 ? { label: "Open your dashboard", url: dashboard }
                 : { label: "Get your poster", url: absoluteUrl(`/business/${due.business_id}/qr`) },
-            ...tipsFooter,
+            ...tipsFooter(optOutToken),
         });
 
-        return { to, subject: `Getting ${name}'s first customers`, html, text };
+        return { to, subject: `Getting ${name}'s first customers`, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     if (due.kind === "check_in") {
         return personalEmail({
+            unsubscribeToken: optOutToken,
             to,
             subject: "Anything I can help with?",
             paragraphs: [
@@ -333,10 +365,10 @@ export function lifecycleEmail(due: LifecycleDue, to: string, { foundingPlacesLe
 
 // A plain note from a person rather than a branded email, for the
 // check-in. Replies go to the usual reply-to inbox.
-function personalEmail({ to, subject, paragraphs }: { to: string; subject: string; paragraphs: string[] }): Email {
+function personalEmail({ to, subject, paragraphs, unsubscribeToken }: { to: string; subject: string; paragraphs: string[]; unsubscribeToken?: string }): Email {
     const e = escapeHtml;
     const signature = [FOUNDER.name, FOUNDER.title];
-    const settings = absoluteUrl("/account/notifications");
+    const settings = optOutUrl(unsubscribeToken);
     const linked = (text: string) => e(text).replace(/(https:\/\/[^\s]+)/g, '<a href="$1" style="color:#FF593F">$1</a>');
 
     const html = `<!doctype html>
@@ -358,7 +390,7 @@ ${emailCompanyFooter()}
         companyDisclosure(),
     ].join("\n");
 
-    return { to, subject, html, text, senderName: FOUNDER.name };
+    return { to, subject, html, text, senderName: FOUNDER.name, headers: unsubscribeHeaders(unsubscribeToken) };
 }
 
 async function withPlanAndApproval(claimed: Omit<LifecycleDue, "hasPro" | "approved">[]): Promise<LifecycleDue[]> {
@@ -374,6 +406,26 @@ async function withPlanAndApproval(claimed: Omit<LifecycleDue, "hasPro" | "appro
     const approved = new Set((businesses ?? []).filter((row) => row.approval_status === "approved").map((row) => row.id));
 
     return claimed.map((item) => ({ ...item, hasPro: pro.has(item.business_id), approved: approved.has(item.business_id) }));
+}
+
+// Opt-out tokens for a set of addresses, keyed by address. A failure here
+// must not stop the emails: they still carry the preferences-page link, so
+// the worst case is an opt-out that asks for a login.
+async function unsubscribeTokensFor(addresses: string[]) {
+    const unique = [...new Set(addresses)];
+
+    if (unique.length === 0) return new Map<string, string>();
+
+    const { data, error } = await createAdminClient().rpc("business_tips_tokens", { target_emails: unique });
+
+    if (error) {
+        console.error("Lifecycle emails: could not load unsubscribe tokens", error);
+        return new Map<string, string>();
+    }
+
+    const rows = (data ?? []) as { email: string; token: string }[];
+
+    return new Map(rows.map((row) => [row.email, row.token]));
 }
 
 // Sends whatever is due: every business from the daily job, or one
@@ -393,8 +445,14 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
     const foundingPlacesLeft = due.some((item) => item.kind === "founding_places")
         ? await countFoundingMembers().then((taken) => FOUNDING_MEMBER_LIMIT - taken).catch(() => null)
         : null;
+    // One opt-out token per recipient, created on demand, so the header and
+    // the footer link both work without anyone signing in.
+    const tokens = await unsubscribeTokensFor(due.flatMap((item) => item.emails));
+
     const emails = due.flatMap((item) =>
-        item.emails.map((to) => lifecycleEmail(item, to, { foundingPlacesLeft })).filter((email): email is Email => email !== null),
+        item.emails
+            .map((to) => lifecycleEmail(item, to, { foundingPlacesLeft, unsubscribeToken: tokens.get(to) }))
+            .filter((email): email is Email => email !== null),
     );
     const { sent, failedTo } = await sendEmails(emails);
 

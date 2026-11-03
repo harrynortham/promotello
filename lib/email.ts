@@ -99,6 +99,10 @@ export type SendResult = {
     sent: number;
     failed: number;
     skipped: number;
+    // Who the message actually went to. Not simply "everyone minus failedTo":
+    // with sending switched off, or for an address that can never receive,
+    // nothing is attempted and nobody is in here.
+    sentTo: string[];
     // Who did not get their email. Callers that claimed a send before making
     // it use this to release the claim, so the next run tries again instead
     // of the message being lost.
@@ -117,10 +121,10 @@ export async function sendEmails(emails: Email[]): Promise<SendResult> {
         if (deliverable.length > 0) {
             console.warn(`Email: RESEND_API_KEY or EMAIL_FROM not set, skipped ${deliverable.length} email(s)`);
         }
-        return { sent: 0, failed: 0, skipped: emails.length, failedTo: [] };
+        return { sent: 0, failed: 0, skipped: emails.length, sentTo: [], failedTo: [] };
     }
 
-    let sent = 0;
+    const sentTo: string[] = [];
     const failedTo: string[] = [];
 
     for (let i = 0; i < deliverable.length; i += BATCH_SIZE) {
@@ -136,7 +140,7 @@ export async function sendEmails(emails: Email[]): Promise<SendResult> {
         );
 
         if (result.ok) {
-            sent += batch.length;
+            sentTo.push(...batch.map((email) => email.to));
         } else {
             failedTo.push(...batch.map((email) => email.to));
             console.error("Email: Resend batch failed", result.reason);
@@ -145,7 +149,7 @@ export async function sendEmails(emails: Email[]): Promise<SendResult> {
         }
     }
 
-    return { sent, failed: failedTo.length, skipped: undeliverable, failedTo };
+    return { sent: sentTo.length, failed: failedTo.length, skipped: undeliverable, sentTo, failedTo };
 }
 
 // The Promotello logo at the top of every email: a PNG (Gmail and Outlook

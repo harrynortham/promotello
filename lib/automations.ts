@@ -109,7 +109,26 @@ export async function runAutomations(scope?: { businessId: string; userId: strin
     }
 
     const vouchers = (data ?? []) as IssuedVoucher[];
-    const { sent } = await sendEmails(vouchers.map(automationEmail));
+    const { sent, sentTo } = await sendEmails(vouchers.map(automationEmail));
+
+    // The voucher is the customer's reward, so a failed send must never
+    // delete it the way the other scheduled emails release their claim.
+    // Instead only the ones that got through are stamped; the rest come
+    // back on the next run until they expire.
+    const delivered = vouchers.filter((voucher) => sentTo.includes(voucher.email));
+
+    if (delivered.length > 0) {
+        const { error: stampError } = await createAdminClient()
+            .from("reward_vouchers")
+            .update({ emailed_at: new Date().toISOString() })
+            .in("id", delivered.map((voucher) => voucher.voucher_id));
+
+        if (stampError) {
+            // Not stamping means a second email, which is better than a
+            // reward nobody was told about, but say so.
+            console.error("Automations: could not mark vouchers as emailed", stampError);
+        }
+    }
 
     return { issued: vouchers.length, sent };
 }
