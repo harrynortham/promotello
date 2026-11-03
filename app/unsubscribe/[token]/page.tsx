@@ -47,6 +47,54 @@ async function UnsubscribeContent({ params, searchParams }: PageProps) {
         : { data: null };
     const follower = (Array.isArray(data) ? data[0] : null) as Follower | null;
 
+    // Not a follower token: it may be one from the business setup emails,
+    // which stop a different list.
+    if (!follower && isUnsubscribeToken(token)) {
+        const { data: tipsRows } = await createPublicClient().rpc("business_tips_by_token", { requested_token: token });
+        const tips = (Array.isArray(tipsRows) ? tipsRows[0] : null) as { enabled: boolean } | null;
+
+        if (tips) {
+            return (
+                <Shell>
+                    {done || !tips.enabled ? (
+                        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
+                            <FiCheckCircle aria-hidden="true" />
+                            <AlertTitle>You&apos;re unsubscribed</AlertTitle>
+                            <AlertDescription>
+                                You won&apos;t get any more setup tips. We&apos;ll still email you about your
+                                account, like when your business is approved.
+                            </AlertDescription>
+                        </Alert>
+                    ) : (
+                        <>
+                            <p className="text-sm font-medium text-[#17233B]/70">Email preferences</p>
+                            <h1 className="mt-1 text-2xl font-semibold leading-tight">Stop the setup tips?</h1>
+                            <p className="mt-3 text-[#17233B]/65">
+                                These are the few emails that help you get set up. You&apos;ll still hear from us
+                                about your account itself.
+                            </p>
+
+                            <form action={unsubscribe} className="mt-6">
+                                <input type="hidden" name="token" value={token} />
+                                <SubmitButton className="w-full" pendingLabel="Unsubscribing…">
+                                    Stop the setup tips
+                                </SubmitButton>
+                            </form>
+                        </>
+                    )}
+
+                    <p className="mt-6 text-sm text-[#17233B]/70">
+                        Changed your mind? Turn them back on in{" "}
+                        <Link href="/account/notifications" className="font-medium text-[#FF593F] hover:underline">
+                            your email settings
+                        </Link>
+                        .
+                    </p>
+                </Shell>
+            );
+        }
+    }
+
     if (!follower) {
         return (
             <Shell>
