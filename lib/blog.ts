@@ -198,6 +198,19 @@ export async function getPosts(): Promise<PostSummary[]> {
         .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
+// Six to a page: two full rows of the three-column grid.
+export const POSTS_PER_PAGE = 6;
+
+// Slices a list of posts for a page, clamping the page number so a bad or
+// out-of-range value lands on a real page rather than an empty one.
+export function paginatePosts<T>(posts: T[], requested: number) {
+    const totalPages = Math.max(1, Math.ceil(posts.length / POSTS_PER_PAGE));
+    const page = Math.min(Math.max(1, Math.floor(requested) || 1), totalPages);
+    const start = (page - 1) * POSTS_PER_PAGE;
+
+    return { pagePosts: posts.slice(start, start + POSTS_PER_PAGE), page, totalPages };
+}
+
 export function formatPostDate(value: string) {
     return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(
         new Date(`${value}T00:00:00Z`),
