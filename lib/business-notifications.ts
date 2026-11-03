@@ -1,6 +1,7 @@
 import { brandedEmail, emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
+import { releaseClaims } from "@/lib/email-claims";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Emails to a business's owners and admins about their offers, chosen in
@@ -125,7 +126,20 @@ export async function sendDailySummaries(today = new Date()) {
     }
 
     const summaries = (data ?? []) as DailySummary[];
-    const { sent } = await sendEmails(summaries.flatMap((summary) => summary.emails.map((to) => dailySummaryEmail(summary, to, "yesterday"))));
+    const { sent, failedTo } = await sendEmails(
+        summaries.flatMap((summary) => summary.emails.map((to) => dailySummaryEmail(summary, to, "yesterday"))),
+    );
+
+    if (failedTo.length > 0) {
+        await releaseClaims("Daily summaries", () =>
+            createAdminClient()
+                .from("business_notification_deliveries")
+                .delete()
+                .eq("notification_type", "daily_summary")
+                .eq("delivery_date", ukDate)
+                .in("recipient_email", failedTo),
+        );
+    }
 
     return { businesses: summaries.length, sent };
 }
@@ -140,5 +154,18 @@ export async function sendOfferStockAlert(offerId: string) {
     }
 
     const alerts = (data ?? []) as StockAlert[];
-    return sendEmails(alerts.flatMap((alert) => alert.emails.map((to) => stockAlertEmail(alert, to))));
+    const result = await sendEmails(alerts.flatMap((alert) => alert.emails.map((to) => stockAlertEmail(alert, to))));
+
+    if (result.failedTo.length > 0) {
+        await releaseClaims("Offer stock alert", () =>
+            createAdminClient()
+                .from("business_notification_deliveries")
+                .delete()
+                .eq("offer_id", offerId)
+                .in("notification_type", alerts.map((alert) => alert.kind))
+                .in("recipient_email", result.failedTo),
+        );
+    }
+
+    return result;
 }

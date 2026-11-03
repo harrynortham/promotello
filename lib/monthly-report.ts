@@ -1,6 +1,7 @@
 import { emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
+import { releaseClaims } from "@/lib/email-claims";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type Change = { current: number; previous: number };
@@ -100,9 +101,22 @@ export async function sendMonthlyReports(today = new Date()) {
     }
 
     const reports = (data ?? []) as Report[];
-    const { sent } = await sendEmails(
+    const { sent, failedTo } = await sendEmails(
         reports.flatMap((report) => report.emails.map((to) => monthlyReportEmail(report, to, monthName))),
     );
+
+    if (failedTo.length > 0) {
+        const lost = new Set(failedTo);
+        const ids = reports.filter((report) => report.emails.some((to) => lost.has(to))).map((report) => report.business_id);
+
+        await releaseClaims("Monthly reports", () =>
+            createAdminClient()
+                .from("monthly_report_sends")
+                .delete()
+                .eq("month", lastMonth.toISOString().slice(0, 10))
+                .in("business_id", ids),
+        );
+    }
 
     return { businesses: reports.length, sent };
 }

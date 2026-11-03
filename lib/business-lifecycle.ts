@@ -2,6 +2,7 @@ import { FOUNDING_MEMBER_LIMIT, PRO_SUBSCRIPTION_STATUSES, TRIAL_DAYS, countFoun
 import { brandedEmail, emailCompanyFooter, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
+import { releaseClaims } from "@/lib/email-claims";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Emails that guide a new business through setup, on to a free Pro trial
@@ -395,7 +396,22 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
     const emails = due.flatMap((item) =>
         item.emails.map((to) => lifecycleEmail(item, to, { foundingPlacesLeft })).filter((email): email is Email => email !== null),
     );
-    const { sent } = await sendEmails(emails);
+    const { sent, failedTo } = await sendEmails(emails);
+
+    if (failedTo.length > 0) {
+        const lost = new Set(failedTo);
+        const stuck = due.filter((item) => item.emails.some((to) => lost.has(to)));
+
+        for (const item of stuck) {
+            await releaseClaims("Lifecycle emails", () =>
+                createAdminClient()
+                    .from("business_lifecycle_sends")
+                    .delete()
+                    .eq("business_id", item.business_id)
+                    .eq("kind", item.kind),
+            );
+        }
+    }
 
     return { due: due.length, sent };
 }
@@ -488,7 +504,17 @@ export async function sendBusinessSignupReminders() {
         throw error;
     }
 
-    const due = (data ?? []) as { email: string; full_name: string | null }[];
+    const due = (data ?? []) as { user_id: string; email: string; full_name: string | null }[];
+    const result = await sendEmails(due.map((row) => businessSignupReminderEmail({ to: row.email, fullName: row.full_name })));
 
-    return sendEmails(due.map((row) => businessSignupReminderEmail({ to: row.email, fullName: row.full_name })));
+    if (result.failedTo.length > 0) {
+        const lost = new Set(result.failedTo);
+        const ids = due.filter((row) => lost.has(row.email)).map((row) => row.user_id);
+
+        await releaseClaims("Signup reminders", () =>
+            createAdminClient().from("business_signup_reminders").delete().in("user_id", ids),
+        );
+    }
+
+    return result;
 }
