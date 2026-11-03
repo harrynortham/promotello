@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { instagramHandle } from "./preview-shared";
 
 function text(formData: FormData, key: string) {
     return String(formData.get(key) ?? "").trim();
@@ -50,6 +51,7 @@ export async function createPreview(formData: FormData) {
         business_id: businessId,
         contact_name: text(formData, "contactName").slice(0, 80) || null,
         contact_email: text(formData, "contactEmail").slice(0, 160) || null,
+        instagram_handle: instagramHandle(text(formData, "instagramHandle")),
         sample_offer: sampleOffer.slice(0, 80),
         sample_reward: sampleReward.slice(0, 60),
         sample_stamps: Number.isInteger(stamps) && stamps >= 3 && stamps <= 20 ? stamps : 9,
@@ -141,6 +143,30 @@ export async function savePreviewNotes(formData: FormData) {
 
     if (error) {
         console.error("Preview notes: could not save", error);
+    }
+
+    revalidatePath("/admin/previews");
+    revalidatePath(`/admin/previews/${businessId}`);
+}
+
+// The account to DM. Taken as a handle, an @handle or a pasted profile link,
+// and stored bare so it can be dropped into a message link.
+export async function savePreviewInstagram(formData: FormData) {
+    const businessId = text(formData, "businessId");
+    const handle = instagramHandle(text(formData, "instagramHandle"));
+
+    const supabase = await createClient();
+
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    if (!isAdmin) redirect("/admin");
+
+    const { error } = await supabase
+        .from("business_previews")
+        .update({ instagram_handle: handle })
+        .eq("business_id", businessId);
+
+    if (error) {
+        console.error("Preview Instagram: could not save", error);
     }
 
     revalidatePath("/admin/previews");
