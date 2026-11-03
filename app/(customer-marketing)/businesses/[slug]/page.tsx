@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, permanentRedirect } from "next/navigation";
 import {
-    FiArrowLeft,
     FiArrowUpRight,
     FiClock,
     FiGift,
@@ -33,7 +32,8 @@ import { addressParts, directionsUrl as directionsUrlFor } from "@/lib/address";
 import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
-import { ExampleNotice } from "@/components/example-badge";
+import { CoverBackLink, CoverExampleBadge } from "@/components/cover-badges";
+import { ReadMore } from "@/components/read-more";
 import { PreviewNotice } from "@/components/preview-notice";
 import { FollowButton } from "@/components/follow-button";
 import { MapEmbed } from "@/components/map-embed";
@@ -306,6 +306,21 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         )
         : [];
 
+    // Seven identical rows say less than one line does. Only collapsed when
+    // every day of the week is there, open, and shares the same hours.
+    const sameEveryDay = (() => {
+        if (hours.length !== 7 || hours.some((day) => day.is_closed || !day.opens_at || !day.closes_at)) {
+            return null;
+        }
+
+        const first = `${formatTime(hours[0].opens_at!)} – ${formatTime(hours[0].closes_at!)}`;
+        const allMatch = hours.every(
+            (day) => `${formatTime(day.opens_at!)} – ${formatTime(day.closes_at!)}` === first,
+        );
+
+        return allMatch ? first : null;
+    })();
+
     const addressLines = addressParts(location);
     const fullAddress = addressLines.join(", ");
     const directionsUrl = directionsUrlFor(addressLines);
@@ -399,18 +414,6 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             <PageViewTracker businessId={business.id} />
 
             <div className="mx-auto max-w-6xl">
-                <Button
-                    render={<Link href={directoryPath} />}
-                    nativeButton={false}
-                    variant="ghost"
-                    size="sm"
-                    className="mb-6"
-                >
-                    <FiArrowLeft aria-hidden="true" />
-                    {cityPage ? `Businesses in ${cityPage.name}` : "All businesses"}
-                </Button>
-
-                {business.is_sample && <ExampleNotice what="business" />}
                 {isPreview && <PreviewNotice what="business" />}
 
                 {/* Business identity */}
@@ -419,9 +422,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                     className="overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm"
                 >
                     <div
-                        aria-hidden="true"
                         className={`relative overflow-hidden bg-[#17233B] ${coverImageUrl ? "h-44 sm:h-64" : "h-24 sm:h-28"}`}
                     >
+                        <CoverBackLink
+                            href={directoryPath}
+                            label={cityPage ? cityPage.name : "All businesses"}
+                            city={cityPage ? cityPage.name : "your area"}
+                        />
+
+                        {business.is_sample && <CoverExampleBadge />}
+
                         {coverImageUrl ? (
                             <>
                                 <Image
@@ -432,13 +442,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                     sizes="(min-width: 1280px) 1200px, 100vw"
                                     className="object-cover"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#17233B]/50 to-transparent" />
+                                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#17233B]/50 to-transparent" />
                             </>
                         ) : (
-                            <>
+                            <div aria-hidden="true">
                                 <div className="absolute -right-8 -top-24 size-64 rounded-full border-[32px] border-white/5" />
                                 <div className="absolute right-44 top-12 size-32 rounded-full bg-[#FF593F]/20" />
-                            </>
+                            </div>
                         )}
                     </div>
 
@@ -503,6 +513,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                         </span>
                                     )}
                                 </div>
+
+                                {business.description && (
+                                    <ReadMore
+                                        text={business.description}
+                                        className="mt-3 max-w-prose text-[15px] leading-relaxed text-[#17233B]/75"
+                                    />
+                                )}
                             </div>
 
                             <div className="flex shrink-0 flex-wrap gap-2">
@@ -545,21 +562,6 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                     {/* Main profile content */}
                     <div className="min-w-0 space-y-8">
-                        <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
-                            <CardHeader>
-                                <CardTitle className="text-lg">
-                                    About this business
-                                </CardTitle>
-                            </CardHeader>
-
-                            <CardContent>
-                                <p className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
-                                    {business.description ||
-                                        "Discover this business and explore its latest offers on Promotello."}
-                                </p>
-                            </CardContent>
-                        </Card>
-
                         {loyaltyProgram && (
                             <LoyaltyCallout
                                 businessId={business.id}
@@ -752,21 +754,28 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                     />
                                 </div>
                             )}
-                        </Card>
-
-                        {hours.length > 0 && (
-                            <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 text-base">
+                            {hours.length > 0 && (
+                                <section
+                                    aria-labelledby="opening-hours"
+                                    className="border-t border-[#17233B]/10 px-(--card-spacing) py-(--card-spacing)"
+                                >
+                                    <h3
+                                        id="opening-hours"
+                                        className="flex items-center gap-2 text-base font-semibold"
+                                    >
                                         <FiClock
                                             aria-hidden="true"
                                             className="size-4 text-muted-foreground"
                                         />
                                         Opening hours
-                                    </CardTitle>
-                                </CardHeader>
+                                    </h3>
 
-                                <CardContent>
+                                    <div className="mt-4">
+                                    {sameEveryDay ? (
+                                        <p className="text-sm font-medium tabular-nums">
+                                            Open daily · {sameEveryDay}
+                                        </p>
+                                    ) : (
                                     <dl className="divide-y divide-border">
                                         {hours.map((day) => (
                                             <div
@@ -794,15 +803,17 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                             </div>
                                         ))}
                                     </dl>
+                                    )}
 
                                     <p className="mt-5 border-t pt-4 text-xs leading-6 text-muted-foreground">
                                         Offer availability may differ
                                         from opening hours. Check the offer
                                         details before visiting.
                                     </p>
-                                </CardContent>
-                            </Card>
-                        )}
+                                    </div>
+                                </section>
+                            )}
+                        </Card>
 
                         {(business.website_url ||
                             business.contact_email) && (
