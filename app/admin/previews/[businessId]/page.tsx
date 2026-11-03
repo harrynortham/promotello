@@ -10,18 +10,22 @@ import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { FOUNDING_MEMBER_LIMIT, countFoundingMembers } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
-import { deletePreview, savePreviewNotes, setPreviewStatus } from "../actions";
+import { deletePreview, savePreviewInstagram, savePreviewNotes, setPreviewStatus } from "../actions";
 import {
     formatDate,
+    instagramDmUrl,
     nextStatuses,
+    outreachDm,
     outreachMessage,
     outreachSubject,
     previewColumns,
+    senderName,
     statusLabels,
     type PreviewRow,
 } from "../preview-shared";
@@ -41,7 +45,7 @@ async function PreviewDetail({ params }: PageProps) {
     ]);
 
     const preview = data as unknown as PreviewRow | null;
-    const sender = userData.user?.user_metadata?.full_name || "The Promotello team";
+    const sender = senderName(userData.user?.user_metadata?.full_name);
 
     if (!preview) {
         notFound();
@@ -141,9 +145,70 @@ async function PreviewDetail({ params }: PageProps) {
                         price in it. Mark it emailed once it has gone, so it does not go twice.
                     </p>
 
-                    <div className="flex flex-wrap gap-2">
-                        <CopyButton text={outreachSubject(preview)} label="Copy subject" />
-                        <CopyButton text={outreachMessage(preview, sender, placesLeft)} label="Copy message" />
+                    <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">By email</p>
+                        <div className="flex flex-wrap gap-2">
+                            <CopyButton text={outreachSubject(preview)} label="Copy subject" />
+                            <CopyButton text={outreachMessage(preview, sender, placesLeft)} label="Copy message" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-[#17233B]/50">
+                            On Instagram
+                        </p>
+
+                        <div className="flex flex-wrap gap-2">
+                            <CopyButton text={outreachDm(preview, sender, placesLeft)} label="Copy DM" />
+
+                            {preview.instagram_handle && (
+                                <Button
+                                    render={
+                                        <a
+                                            href={instagramDmUrl(preview.instagram_handle)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        />
+                                    }
+                                    nativeButton={false}
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    <FiExternalLink aria-hidden="true" />
+                                    Open the DM to @{preview.instagram_handle}
+                                </Button>
+                            )}
+                        </div>
+
+                        <form action={savePreviewInstagram} className="flex flex-wrap items-end gap-2">
+                            <input type="hidden" name="businessId" value={preview.business_id} />
+
+                            <div className="space-y-1.5">
+                                <label htmlFor="instagramHandle" className="text-xs text-[#17233B]/60">
+                                    Their handle
+                                </label>
+                                <Input
+                                    id="instagramHandle"
+                                    name="instagramHandle"
+                                    maxLength={120}
+                                    className="w-72"
+                                    defaultValue={preview.instagram_handle ? `@${preview.instagram_handle}` : ""}
+                                    placeholder="@theirshop or a profile link"
+                                />
+                            </div>
+
+                            <SubmitButton variant="outline" pendingLabel="Saving…" className="h-9">
+                                {preview.instagram_handle ? "Change handle" : "Save handle"}
+                            </SubmitButton>
+                        </form>
+
+                        <p className="text-xs text-[#17233B]/60">
+                            The same thing, short enough to read on a phone. A DM counts as marketing email under
+                            PECR, so a business you could not email should not be messaged either.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 border-t border-[#17233B]/10 pt-4">
                         <CopyButton text={link} label="Copy link" />
                         <Button
                             render={

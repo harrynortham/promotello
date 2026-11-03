@@ -175,6 +175,15 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                         placeholder="hello@theirshop.com"
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="instagramHandle">Instagram (optional)</Label>
+                                    <Input
+                                        id="instagramHandle"
+                                        name="instagramHandle"
+                                        maxLength={120}
+                                        placeholder="@theirshop or a profile link"
+                                    />
+                                </div>
                             </div>
                         </div>
 

@@ -6,7 +6,7 @@ Loyalty cards, offers and QR posters for independent businesses, with a local di
 - **Customers** browse by city, area and category, claim vouchers, collect stamps and follow businesses for new-offer emails.
 - **Admins** approve businesses and offers, manage cities and areas, build previews for businesses they're approaching, and watch platform metrics.
 
-Product plan and priorities: [docs/ROADMAP.md](docs/ROADMAP.md). How Stripe billing is set up: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md).
+Product plan and priorities: [docs/ROADMAP.md](docs/ROADMAP.md). How Stripe billing is set up: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md). Finding businesses and writing to them: [docs/OUTREACH.md](docs/OUTREACH.md).
 
 ## Stack
 
@@ -101,9 +101,6 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
-
-- Generate list businesses and emails
-- Use a crm tool to track contacted businesses
 - Create email template to send to customers first sales
 - Test what happens when loyalty card full
 - Update the conversion emails to contain some product imagery
@@ -124,6 +121,7 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 - on desktop make filter show from right
 
 - Change Vercel from hobby to paid plan, payment from wise account
+- create second project in supabase for dev
 - Check resend limits that its ok for launch
 
 - Stripe managed payments requires VAT ID which we dont have and wont have until over 85k threshold, then we can enable. We may do sooner but not needed for now the VAT. You're unlikely to want it back. If you pass the £90k VAT threshold, the usual route is to register for VAT yourself and turn on Stripe Tax, which is far cheaper than Managed. Payments' extra fee of about 3.5%. Stripe wouldn't need to become the seller.
