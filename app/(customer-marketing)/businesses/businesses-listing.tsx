@@ -65,17 +65,21 @@ async function Directory({ city, searchParams }: ListingProps) {
 
     const base = city ? `/businesses/${city.slug}` : "/businesses";
     const params = await searchParams;
-    const [groups, businesses, place, places] = await Promise.all([
+    const [groups, businesses, place, places, oneCity] = await Promise.all([
         getCategories(),
         getPublicBusinesses(city?.id),
         placeName(city),
         getLiveCities(),
+        placeIsOneCity(city),
     ]);
 
     // An area belongs to one city. When this isn't the city that has it — a
     // shared link, or a city remembered from an earlier visit — send them to
     // the city that does, rather than showing them an empty list.
-    if (params.area && !(city && businesses.some((business) => business.area === params.area))) {
+    //
+    // With one city live there is nothing to disambiguate, so the filter just
+    // applies where it stands; redirecting would be a wasted trip.
+    if (params.area && !(oneCity && businesses.some((business) => business.area === params.area))) {
         const everywhere = city ? await getPublicBusinesses() : businesses;
         const owners = citiesWithArea(everywhere, params.area);
         const owner = owners.length === 1 ? places.find((item) => item.id === owners[0]) : null;
@@ -100,9 +104,12 @@ async function Directory({ city, searchParams }: ListingProps) {
         <>
             <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                 {/* Areas live in a drawer behind Filter, not a second row of pills. */}
-                {/* An area belongs to a city, so areas are only offered once a
-                    city is chosen; before that the choice is which city. */}
-                {city && areas.length > 1 && (
+                {/* An area belongs to a city, so areas are offered whenever
+                    the page is one city's worth — either because a city was
+                    chosen, or because only one is live and everything here is
+                    already in it. The choice to offer first, when there are
+                    several and none picked, is which city. */}
+                {oneCity && areas.length > 1 && (
                     <FilterDrawer
                         sections={[
                             {
@@ -120,7 +127,7 @@ async function Directory({ city, searchParams }: ListingProps) {
                     />
                 )}
 
-                {!city && places.length > 1 && (
+                {!oneCity && places.length > 1 && (
                     <FilterDrawer
                         sections={[
                             {

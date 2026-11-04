@@ -38,6 +38,52 @@ async function settled(page: Page) {
         .toBe(true);
 }
 
+// Somewhere Promotello isn't, so the visitor can't be placed in a live city.
+const faraway = {
+    "x-vercel-ip-latitude": "57.4778",
+    "x-vercel-ip-longitude": "-4.2247",
+    "x-vercel-ip-city": "Inverness",
+    "x-vercel-ip-country": "GB",
+};
+
+test.describe("a visitor we can't place", () => {
+    test.use({ extraHTTPHeaders: faraway });
+
+    // With one city live, everything on the page is that city's whether or
+    // not we worked out where the visitor is — so the neighbourhoods have to
+    // be on offer either way. They weren't: the filter was hiding from
+    // anyone outside Bristol while the page said "Bristol's independents".
+    for (const path of ["/businesses", "/offers"]) {
+        test(`still gets the neighbourhoods on ${path}`, async ({ page }) => {
+            await page.goto(path);
+
+            const heading = await page.getByRole("heading", { level: 1 }).innerText();
+            test.skip(!heading.includes("Bristol"), "more than one city is live");
+
+            await page.getByRole("button", { name: "Filter" }).click();
+            const drawer = page.locator(panel);
+
+            await expect(drawer.getByText("Area", { exact: true })).toBeVisible();
+            await expect(drawer.getByRole("link", { name: "All of Bristol" })).toBeVisible();
+            await expect(drawer.getByRole("link", { name: "Clifton" })).toBeVisible();
+        });
+    }
+
+    test("and choosing one filters in place, without a detour", async ({ page }) => {
+        await page.goto("/businesses");
+        test.skip(!(await page.getByRole("heading", { level: 1 }).innerText()).includes("Bristol"), "more than one city is live");
+
+        await page.getByRole("button", { name: "Filter" }).click();
+        await page.locator(panel).getByRole("link", { name: "Clifton" }).click();
+        await page.waitForURL(/area=Clifton/);
+
+        // One city means there is no other city it could have meant, so no
+        // redirect to /businesses/bristol on the way.
+        expect(new URL(page.url()).pathname).toBe("/businesses");
+        await expect(page.locator("main article").first()).toBeVisible();
+    });
+});
+
 test.describe("on a desktop", () => {
     test.use({ viewport: { width: 1440, height: 900 } });
 
