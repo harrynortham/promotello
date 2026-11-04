@@ -180,28 +180,20 @@ test.describe("with more than one city live", () => {
         await expect(page.getByRole("heading", { level: 1 })).toContainText(cities[1]);
     });
 
-    test("a visitor we can't place is asked which city, not shown a merged heading", async ({ page }) => {
+    test("a visitor we can't place gets a heading that doesn't pretend to be a place", async ({ page }) => {
         await page.goto("/offers");
 
-        const notice = page.getByRole("complementary", { name: "Choose a city" });
-        await expect(notice).toContainText("Where are you?");
+        // Nothing is shown about where they might be — the town the address
+        // resolves to is too often wrong to put on the page.
+        await expect(page.getByRole("complementary")).toHaveCount(0);
 
-        for (const name of cities) {
-            await expect(notice.getByRole("link", { name, exact: true })).toBeVisible();
-        }
-
-        // A list of cities is not a place, so the heading doesn't name one.
+        // And a list of cities is not a place, so the heading names none.
         const heading = await page.getByRole("heading", { level: 1 }).innerText();
         expect(cities.some((name) => heading.includes(name)), heading).toBe(false);
     });
 
-    test("picking a city from the notice shows that city, and is remembered", async ({ page }) => {
-        await page.goto("/offers");
-        await page.getByRole("complementary", { name: "Choose a city" })
-            .getByRole("link", { name: cities[1], exact: true })
-            .click();
-
-        await page.waitForURL(/\/offers\/[a-z-]+$/);
+    test("the location search is the way to a city, and it is remembered", async ({ page }) => {
+        await chooseCity(page, cities[1]);
         await expect(page.getByRole("heading", { name: `Offers across ${cities[1]}` })).toBeVisible();
 
         // The header links are the same on every page, so the city has to
@@ -209,14 +201,6 @@ test.describe("with more than one city live", () => {
         await page.getByRole("banner").getByRole("link", { name: "Businesses", exact: true }).click();
         await page.waitForURL(/\/businesses$/);
         await expect(page.getByRole("heading", { level: 1 })).toContainText(cities[1]);
-    });
-
-    test("someone who asked for everywhere isn't asked again", async ({ page }) => {
-        await page.goto(`/offers/${cities[0].toLowerCase().replace(/\s+/g, "-")}`);
-        await page.getByRole("button", { name: "Show all locations" }).click();
-        await page.waitForURL(/\/offers$/);
-
-        await expect(page.getByRole("complementary", { name: "Choose a city" })).toHaveCount(0);
     });
 
     test("a list spanning cities isn't filled by whichever joined last", async ({ page }) => {

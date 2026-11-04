@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { CityNotice, VisitorLoading } from "@/components/visitor-city";
+import { VisitorLoading } from "@/components/visitor-city";
 import { getVisitorContext } from "@/lib/visitor";
 import { BusinessesListing, businessesMetadata } from "./businesses-listing";
 
@@ -18,7 +18,6 @@ async function VisitorBusinesses({ searchParams }: PageProps) {
 
     return (
         <>
-            <CityNotice visitor={visitor} basePath="/businesses" />
             <BusinessesListing city={visitor.city} searchParams={searchParams} />
         </>
     );

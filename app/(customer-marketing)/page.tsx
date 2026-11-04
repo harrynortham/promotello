@@ -24,7 +24,6 @@ import {
     offerCountsByCategory,
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
-import { CityNotice } from "@/components/visitor-city";
 import { areaPath, cityPhotosFor, getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
 import { getVisitorContext } from "@/lib/visitor";
 
@@ -294,7 +293,6 @@ async function VisitorHome() {
 
     return (
         <>
-            <CityNotice visitor={visitor} basePath="/offers" />
 
             <section className="relative isolate overflow-hidden">
                 <Image

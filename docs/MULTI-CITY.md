@@ -79,24 +79,26 @@ were in last week.
 
 ### When we don't know
 
-Steps 4 and 5 leave a visitor with no city, and that is the state to get
-right: someone in London who arrives behind a VPN is no better served by a
-page of Bristol cafés than by nothing.
+Steps 4 and 5 leave a visitor with no city, and they are simply shown every
+live city's listings. **Nothing is said to them about where they might be.**
 
-With **one** live city there is nothing to choose between, so the only thing
-worth saying is that we aren't where they are. With **several**, `CityNotice`
-asks before anything else:
+There used to be a strip above the listings naming the town their address
+resolved to — "Promotello isn't in Kingston upon Hull yet". It was removed,
+because that town is wrong often enough to be worse than silence: it comes
+from `x-vercel-ip-city`, a lookup on the address the request arrived on, and
+on a mobile network that address belongs to the carrier's gateway rather than
+the handset. A visitor in Gibraltar routed through a UK carrier was told they
+were in Hull. There is no server-side fix — the coordinates come from the
+same lookup, so they agree with the wrong answer.
 
-> **Where are you?** Promotello is in Bristol, Bath and London. Pick one to
-> see what's near you.
+The town is still read, but only to match a city's own areas (see step 3),
+where being wrong costs nothing: an unrecognised town just falls through to
+the next step. It is never shown.
 
-and, for someone we can place but can't serve:
-
-> **Promotello isn't in Manchester yet.** We're in Bristol, Bath and London —
-> pick one to look around.  *(plus the "tell me when" form)*
-
-Picking one goes to that city's page, which remembers it. Someone who
-*deliberately* chose "Everywhere" is never asked — they said what they wanted.
+Someone who wants a particular city picks it in the location search, which is
+on every listing page, and that choice is remembered. Someone who wants to be
+placed exactly uses **"Use my location"** in that search, which asks the
+browser and is accurate to the street.
 
 ### The merged list
 
@@ -131,8 +133,8 @@ of these sentences said before a second city existed.
 **And never treat a list of cities as somewhere a visitor is.** "Offers across
 Bristol, Bath and London" is true of the page and false of the reader. The
 headings on the merged pages drop the place entirely — "Offers from
-independent businesses", "Independent businesses" — and the notice above them
-asks which city they want. `placeName()` is still right for anything that
+independent businesses", "Independent businesses" — and the location search
+is how they narrow it. `placeName()` is still right for anything that
 describes the *page*, which is why the titles keep it.
 
 ### Titles and descriptions
@@ -241,10 +243,9 @@ And the two journeys that are easy to get wrong:
   city should follow you.
 - Follow `/offers?area=<an area of the other city>`. It should land you in that
   city with the filter applied, not on an empty list.
-- Open `/offers` in a fresh browser with no location headers. You should be
-  **asked which city**, the heading should name none, and the first few cards
-  should not all be from the same one.
-- Choose "Everywhere" deliberately. You should not then be asked to pick.
+- Open `/offers` in a fresh browser with no location headers. The heading
+  should name no city, nothing should claim to know where you are, and the
+  first few cards should not all be from the same city.
 
 ## Decisions worth knowing
 

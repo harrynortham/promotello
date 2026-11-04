@@ -7,7 +7,7 @@ import { FiArrowRight } from "react-icons/fi";
 
 import { LocationSearch } from "@/components/location-search";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CityNotice, VisitorLoading } from "@/components/visitor-city";
+import { VisitorLoading } from "@/components/visitor-city";
 import { isInCategory } from "@/lib/categories";
 import { getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
 import {
@@ -165,7 +165,6 @@ async function VisitorCategories() {
 
     return (
         <>
-            <CityNotice visitor={visitor} basePath="/offers" />
             <Categories city={visitor.city} />
         </>
     );
