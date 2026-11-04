@@ -5,7 +5,7 @@ import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent }
 import { createPortal } from "react-dom";
 import { FiMapPin, FiNavigation, FiX } from "react-icons/fi";
 
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ALL_LOCATIONS, rememberCity } from "@/lib/city-cookie";
 import type { Place } from "@/lib/cities";
 import { nearestCity } from "@/lib/geo";
@@ -81,15 +81,23 @@ function usePicker({
     basePath,
     current,
     citiesOnly,
+    browse = false,
 }: {
     places: Place[];
     basePath: string;
     current: { name: string } | null;
     citiesOnly: boolean;
+    // List the neighbourhoods as well as the cities when nothing is typed.
+    // On a desktop that would be an unwieldy dropdown; in a sheet it is just
+    // a list, and it means nobody has to summon a keyboard to get anywhere.
+    browse?: boolean;
 }) {
     const router = useRouter();
     const [query, setQuery] = useState("");
-    const [active, setActive] = useState(0);
+    // The highlight is for arrow keys. A sheet has none, and pre-selecting a
+    // row there just looks like something was already chosen, so it starts
+    // with nothing marked.
+    const [active, setActive] = useState(browse ? -1 : 0);
     const [message, setMessage] = useState("");
 
     const suggestions = useMemo<Suggestion[]>(() => {
@@ -110,7 +118,9 @@ function usePicker({
 
         const matches = text
             ? all.filter((item) => `${item.label} ${item.detail}`.toLowerCase().includes(text))
-            : all.filter((item) => item.detail === "City");
+            : browse
+                ? all
+                : all.filter((item) => item.detail === "City");
 
         const extras: Suggestion[] = text
             ? []
@@ -119,8 +129,10 @@ function usePicker({
                 ...(current ? [{ label: "All locations", detail: "Everywhere on Promotello", href: basePath, remember: ALL_LOCATIONS }] : []),
             ];
 
-        return [...extras, ...matches].slice(0, 9);
-    }, [places, basePath, query, current, citiesOnly]);
+        // A dropdown has to stay short enough to hang off a field; a sheet
+        // scrolls, so it can show the lot.
+        return browse ? [...extras, ...matches] : [...extras, ...matches].slice(0, 9);
+    }, [places, basePath, query, current, citiesOnly, browse]);
 
     function go(suggestion: Suggestion) {
         setQuery("");
@@ -241,13 +253,17 @@ function ClearButton({ onClear }: { onClear: () => void }) {
 // panel pinned to the viewport has to be re-measured on every scroll and
 // resize, and the soft keyboard, the address bar and scroll-into-view all
 // move the field out from under it — so the list changed height as you
-// scrolled and flipped sides as the keyboard opened. They come up from the
-// bottom instead, where there is nothing to measure and the keyboard pushes
-// the sheet rather than fighting it. Same idea as the filter drawer.
+// scrolled and flipped sides as the keyboard opened.
+//
+// They open in a dialog instead, pinned near the top of the screen. iOS
+// keeps position:fixed against the layout viewport, so a keyboard draws
+// over the bottom of the screen rather than pushing anything up: anchored
+// low, a panel vanishes under it; centred, it sits lower than it looks and
+// can still be caught. Near the top it is clear of it whatever happens.
 export function LocationSearch(props: LocationSearchProps) {
     const beside = useMediaQuery("(min-width: 1024px)");
 
-    return beside ? <AnchoredPicker {...props} /> : <SheetPicker {...props} />;
+    return beside ? <AnchoredPicker {...props} /> : <ModalPicker {...props} />;
 }
 
 function AnchoredPicker({ places, basePath, current = null, placeholder, size = "md", citiesOnly = false }: LocationSearchProps) {
@@ -359,10 +375,11 @@ function AnchoredPicker({ places, basePath, current = null, placeholder, size = 
     );
 }
 
-function SheetPicker({ places, basePath, current = null, placeholder, size = "md", citiesOnly = false }: LocationSearchProps) {
+function ModalPicker({ places, basePath, current = null, placeholder, size = "md", citiesOnly = false }: LocationSearchProps) {
     const listId = useId();
+    const panelRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
-    const { query, setQuery, active, setActive, message, suggestions, choose } = usePicker({ places, basePath, current, citiesOnly });
+    const { query, setQuery, active, setActive, message, suggestions, choose } = usePicker({ places, basePath, current, citiesOnly, browse: true });
 
     const tall = size === "lg";
     const close = () => setOpen(false);
@@ -372,17 +389,25 @@ function SheetPicker({ places, basePath, current = null, placeholder, size = "md
             <div className={fieldClasses(tall)}>
                 <FiMapPin aria-hidden="true" className="shrink-0 text-[#FF593F]" />
 
-                <Drawer open={open} onOpenChange={setOpen} showSwipeHandle>
-                    <DrawerTrigger
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger
                         aria-label="Location"
                         className={`min-w-0 flex-1 cursor-pointer truncate bg-transparent text-left outline-none focus-visible:underline ${tall ? "text-base" : "text-sm"} ${current ? "text-[#17233B]" : "text-[#17233B]/70"}`}
                     >
                         {current ? current.name : (placeholder ?? examplePlaceholder(places))}
-                    </DrawerTrigger>
+                    </DialogTrigger>
 
-                    <DrawerContent>
-                        <div className="flex min-h-0 flex-col p-4 pb-6">
-                            <DrawerTitle className="text-lg font-semibold">Where?</DrawerTitle>
+                    {/* Pinned near the top rather than centred, so a keyboard
+                        can never reach it, and tall enough to browse. */}
+                    {/* initialFocus keeps the dialog from focusing the search
+                        box, which would summon a keyboard nobody asked for.
+                        Most people are here to tap a name off the list. */}
+                    <DialogContent
+                        initialFocus={panelRef}
+                        className="top-3 flex max-h-[82dvh] -translate-y-0 flex-col gap-0 p-0 sm:max-w-md"
+                    >
+                        <div ref={panelRef} tabIndex={-1} className="flex min-h-0 flex-col p-4 outline-none">
+                            <DialogTitle className="text-lg font-semibold">Where?</DialogTitle>
 
                             <div className="mt-3 flex h-12 shrink-0 items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white px-4 focus-within:border-[#FF593F]/50">
                                 <FiMapPin aria-hidden="true" className="shrink-0 text-[#FF593F]" />
@@ -393,7 +418,6 @@ function SheetPicker({ places, basePath, current = null, placeholder, size = "md
                                     aria-expanded
                                     aria-controls={listId}
                                     aria-autocomplete="list"
-                                    autoFocus
                                     value={query}
                                     placeholder="City or neighbourhood"
                                     onChange={(event) => {
@@ -409,7 +433,7 @@ function SheetPicker({ places, basePath, current = null, placeholder, size = "md
                                     id={listId}
                                     role="listbox"
                                     aria-label="Locations"
-                                    className="mt-2 max-h-[55dvh] min-h-0 overflow-y-auto overscroll-contain text-[#17233B]"
+                                    className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain text-[#17233B]"
                                 >
                                     <Suggestions
                                         listId={listId}
@@ -426,8 +450,8 @@ function SheetPicker({ places, basePath, current = null, placeholder, size = "md
                                 </p>
                             )}
                         </div>
-                    </DrawerContent>
-                </Drawer>
+                    </DialogContent>
+                </Dialog>
 
                 {current && <ClearButton onClear={() => choose({ label: "All locations", detail: "", href: basePath, remember: ALL_LOCATIONS }, close)} />}
             </div>
