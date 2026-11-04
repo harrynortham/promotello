@@ -139,3 +139,47 @@ test.describe("on a phone", () => {
         await expect(page.locator(panel).getByRole("button", { name: "Close" })).toBeHidden();
     });
 });
+
+// The compact search pill on a phone. It used to drop a drawer down from the
+// top and reserve 60dvh of it for the place suggestions to open into; those
+// have their own panel now.
+test.describe("searching a listing on a phone", () => {
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+    for (const [path, label] of [["/offers", "Search offers"], ["/businesses", "Search businesses"]] as const) {
+        test(`${path} opens its fields in a panel clear of the keyboard`, async ({ page }) => {
+            await page.goto(path);
+            await page.getByRole("button", { name: new RegExp(label) }).first().click();
+
+            const dialog = page.getByRole("dialog");
+            await expect(dialog).toBeVisible();
+
+            // iOS draws the keyboard over the bottom of the screen rather
+            // than pushing anything up, and typing is the whole point here.
+            const top = await page.evaluate(() => Math.round(document.querySelector("[role=dialog]")!.getBoundingClientRect().y));
+            expect(top, "pinned near the top of the screen").toBeLessThan(40);
+
+            await expect(dialog.getByRole("textbox", { name: /Search/ }).or(dialog.locator("input[name=search]")).first()).toBeFocused();
+            await expect(dialog.getByRole("button", { name: "Location" })).toBeVisible();
+        });
+    }
+
+    test("the places open over it, and picking one filters the list", async ({ page }) => {
+        await page.goto("/businesses");
+        await page.getByRole("button", { name: /Search businesses/ }).first().click();
+        await page.getByRole("button", { name: "Location" }).click();
+
+        // A panel on top of a panel: the one in front is the places.
+        await expect(page.getByRole("option", { name: /Clifton/ })).toBeVisible();
+        await page.getByRole("option", { name: /Clifton/ }).click();
+
+        await page.waitForURL(/area=Clifton/);
+        // The page behind is kept around hidden after a transition, so only
+        // count what is actually on screen.
+        const showing = await page.evaluate(() =>
+            [...document.querySelectorAll("main")]
+                .filter((m) => getComputedStyle(m).display !== "none")
+                .reduce((n, m) => n + m.querySelectorAll("article").length, 0));
+        expect(showing, "only Clifton's businesses").toBeLessThan(5);
+    });
+});
