@@ -105,3 +105,50 @@ test.describe("a visitor somewhere we aren't", () => {
         await expect(page.getByRole("combobox", { name: "Location" })).toHaveAttribute("placeholder", "Bristol");
     });
 });
+
+test.describe("picking a place on a phone", () => {
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+    const sheet = "[data-slot=drawer-popup]";
+    const rect = (page: import("@playwright/test").Page) =>
+        page.evaluate((css) => {
+            const r = document.querySelector(css)!.getBoundingClientRect();
+            return { bottom: Math.round(r.y + r.height), h: Math.round(r.height), w: Math.round(r.width), vh: innerHeight, vw: innerWidth };
+        }, sheet);
+
+    for (const path of ["/", "/explore"]) {
+        test(`the choices come up from the bottom on ${path}, and stay put`, async ({ page }) => {
+            await page.goto(path);
+            await page.getByRole("button", { name: "Location" }).first().click();
+            await expect(page.locator(sheet)).toBeVisible();
+            await page.waitForTimeout(600);
+
+            const before = await rect(page);
+            expect(Math.round(before.bottom), "sitting on the bottom edge").toBe(before.vh);
+            expect(Math.round(before.w), "full width").toBe(before.vw);
+
+            // It used to hang off the field and be re-measured on every
+            // scroll and resize, so it changed height as the page moved and
+            // flipped sides when the keyboard opened.
+            await page.mouse.wheel(0, 240);
+            await page.waitForTimeout(300);
+
+            const after = await rect(page);
+            expect(after.h, "the sheet shouldn't move when the page behind it does").toBe(before.h);
+            expect(Math.round(after.bottom)).toBe(after.vh);
+        });
+    }
+
+    test("typing narrows the list, and choosing goes there", async ({ page }) => {
+        await page.goto("/explore");
+        await page.getByRole("button", { name: "Location" }).first().click();
+        await expect(page.locator(sheet)).toBeVisible();
+
+        await page.getByRole("combobox", { name: "Search locations" }).fill("clif");
+        await expect(page.getByRole("option", { name: /Clifton/ })).toBeVisible();
+
+        await page.getByRole("option", { name: /Clifton/ }).click();
+        await page.waitForURL("**/explore/bristol/clifton");
+        await expect(page.getByRole("heading", { name: "Clifton, Bristol", level: 1 })).toBeVisible();
+    });
+});
