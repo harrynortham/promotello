@@ -19,11 +19,13 @@ import {
     areasFrom,
     getLiveOffers,
     getPublicBusinesses,
+    isInArea,
+    type ListingArea,
     type ListingBusiness,
     type ListingOffer,
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
-import { areaPath, cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
+import { areaPath, cityPhotosFor, getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
 
 // Neighbourhoods to explore, in every live city (/explore) or one
 // (/explore/bristol).
@@ -56,11 +58,15 @@ function ExploreLoading() {
 function AreaCard({
     href,
     name,
+    city,
     businesses,
     offers,
 }: {
     href: string;
     name: string;
+    // Named when the page is showing more than one city, because area names
+    // repeat: Bristol and Bath both have a City Centre.
+    city: string | null;
     businesses: ListingBusiness[];
     offers: ListingOffer[];
 }) {
@@ -90,6 +96,7 @@ function AreaCard({
                         {name}
                     </h3>
                     <p className="mt-1 text-sm text-white/80">
+                        {city && <span className="font-medium text-white">{city} · </span>}
                         {businesses.length} {businesses.length === 1 ? "business" : "businesses"} ·{" "}
                         {offers.length} {offers.length === 1 ? "offer" : "offers"}
                     </p>
@@ -129,17 +136,21 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
     const areas = areasFrom(businesses);
 
     // Each area has its own page, e.g. /explore/bristol/gloucester-road.
-    const pathFor = (name: string) => {
-        const cityId = city?.id ?? businesses.find((business) => business.area === name)?.cityId;
-        const place = places.find((item) => item.id === cityId);
-        return place ? areaPath(place, name) : null;
+    // The city comes from the area itself, not from the first business with a
+    // matching name, so Bath's City Centre never links to Bristol's.
+    const pathFor = (item: ListingArea) => {
+        const place = places.find((candidate) => candidate.id === (item.cityId ?? city?.id));
+        return place ? areaPath(place, item.name) : null;
     };
 
-    // Old ?area= links go to the area's page.
-    const selectedPath = area ? pathFor(area) : null;
+    // Old ?area= links go to the area's own page. Without a city there may be
+    // one of that name in each, and then there is nowhere single to send
+    // them, so the list stays as it is.
+    const named = areas.filter((item) => item.name === area);
+    const selectedPath = named.length === 1 ? pathFor(named[0]) : null;
     if (selectedPath) permanentRedirect(selectedPath);
 
-    const selected = areas.find((item) => item.name === area)?.name ?? null;
+    const selected = named.length === 1 ? named[0] : null;
 
     return (
         <>
@@ -150,11 +161,14 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
 
                 {areas.map((item) => (
                     <FilterChip
-                        key={item.name}
-                        href={pathFor(item.name) ?? hrefWith(base, {}, { area: item.name })}
-                        active={selected === item.name}
+                        key={item.id ?? `${item.cityId}:${item.name}`}
+                        href={pathFor(item) ?? hrefWith(base, {}, { area: item.name })}
+                        active={selected?.id === item.id && selected?.name === item.name}
                     >
                         {item.name}
+                        {!city && item.cityName && (
+                            <span className="ml-1.5 text-[#17233B]/65">{item.cityName}</span>
+                        )}
                     </FilterChip>
                 ))}
             </div>
@@ -162,9 +176,9 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
             {selected ? (
                 <SelectedArea
                     offersBase={offersBase}
-                    name={selected}
-                    offers={offers.filter((offer) => offer.business.area === selected)}
-                    businesses={businesses.filter((business) => business.area === selected)}
+                    name={selected.name}
+                    offers={offers.filter((offer) => isInArea(offer.business, selected))}
+                    businesses={businesses.filter((business) => isInArea(business, selected))}
                 />
             ) : areas.length === 0 ? (
                 <div className="mt-10">
@@ -177,11 +191,12 @@ async function ExploreContent({ city, searchParams }: ListingProps) {
                 <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                     {areas.map((item) => (
                         <AreaCard
-                            key={item.name}
-                            href={pathFor(item.name) ?? hrefWith(base, {}, { area: item.name })}
+                            key={item.id ?? `${item.cityId}:${item.name}`}
+                            href={pathFor(item) ?? hrefWith(base, {}, { area: item.name })}
                             name={item.name}
-                            businesses={businesses.filter((business) => business.area === item.name)}
-                            offers={offers.filter((offer) => offer.business.area === item.name)}
+                            city={city ? null : item.cityName}
+                            businesses={businesses.filter((business) => isInArea(business, item))}
+                            offers={offers.filter((offer) => isInArea(offer.business, item))}
                         />
                     ))}
                 </div>
@@ -253,7 +268,12 @@ export function SelectedArea({
 }
 
 export async function ExploreListing({ city, searchParams }: ListingProps) {
-    const [place, places, photos] = await Promise.all([placeName(city), getLiveCities(), cityPhotosFor(city)]);
+    const [place, places, photos, oneCity] = await Promise.all([
+        placeName(city),
+        getLiveCities(),
+        cityPhotosFor(city),
+        placeIsOneCity(city),
+    ]);
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
@@ -269,7 +289,7 @@ export async function ExploreListing({ city, searchParams }: ListingProps) {
 
                 <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8A73]">
-                        Explore {place}
+                        {oneCity ? `Explore ${place}` : "Explore by neighbourhood"}
                     </p>
 
                     <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">

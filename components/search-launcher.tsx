@@ -43,7 +43,7 @@ export function SearchLauncher({
                 <FiSearch aria-hidden="true" className="size-5 shrink-0 text-[#17233B]" />
                 <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold text-[#17233B]">{title}</span>
-                    <span className="block truncate text-xs text-[#17233B]/60">{summary}</span>
+                    <span className="block truncate text-xs text-[#17233B]/65">{summary}</span>
                 </span>
             </DrawerTrigger>
 

@@ -14,7 +14,7 @@ test("businesses can share an offer from their offers list", async ({ browser, r
     const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
 
     await page.goto(`/business/${businessId}/offers`);
-    await page.getByRole("button", { name: "Share" }).first().click();
+    await page.getByRole("button", { name: "Share", exact: true }).first().click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("heading", { name: "Share this offer" })).toBeVisible();

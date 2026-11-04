@@ -308,7 +308,7 @@ export default function NewOfferForm({
 
                 <aside className="order-1 lg:order-2 lg:sticky lg:top-8">
                     <div className="rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                             Preview
                         </p>
 

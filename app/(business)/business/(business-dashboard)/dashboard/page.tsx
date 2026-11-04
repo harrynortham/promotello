@@ -133,7 +133,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                     {welcomeSteps.map((step, index) => (
                         <li key={step.title} className="flex gap-4">
                             <span
-                                className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#FF593F] text-[#17233B]" : "bg-[#17233B]/5 text-[#17233B]/60"}`}
+                                className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#FF593F] text-[#17233B]" : "bg-[#17233B]/5 text-[#17233B]/65"}`}
                             >
                                 {index + 1}
                             </span>

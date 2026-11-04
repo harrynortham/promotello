@@ -112,7 +112,7 @@ function HeaderContent({
                                     key={link.href}
                                     href={link.href}
                                     aria-current={active ? "page" : undefined}
-                                    className={`group relative flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${active ? "text-[#17233B]" : "text-[#17233B]/60 hover:text-[#17233B]"}`}
+                                    className={`group relative flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${active ? "text-[#17233B]" : "text-[#17233B]/65 hover:text-[#17233B]"}`}
                                 >
                                     <Icon className="size-6 transition-transform duration-200 group-hover:scale-110" />
                                     {link.label}

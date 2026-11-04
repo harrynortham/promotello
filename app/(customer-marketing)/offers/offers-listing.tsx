@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 
 import {
     EmptyState,
@@ -14,10 +15,12 @@ import { SearchLauncher } from "@/components/search-launcher";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LocationSearch } from "@/components/location-search";
 import { topLevelFor } from "@/lib/categories";
-import { getLiveCities, placeName, type City, type Place } from "@/lib/cities";
+import { getLiveCities, placeIsOneCity, placeName, type City, type Place } from "@/lib/cities";
 import {
     areasFrom,
+    citiesWithArea,
     filterOffers,
+    interleaveByCity,
     getCategories,
     getLiveOffers,
     parseOfferSort,
@@ -68,15 +71,41 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
 
     const base = city ? `/offers/${city.slug}` : "/offers";
     const params = await searchParams;
-    const [groups, offers, place] = await Promise.all([getCategories(), getLiveOffers(city?.id), placeName(city)]);
+    const [groups, offers, place, places] = await Promise.all([
+        getCategories(),
+        getLiveOffers(city?.id),
+        placeName(city),
+        getLiveCities(),
+    ]);
     const sort = parseOfferSort(params.sort);
 
-    const results = filterOffers(offers, groups, {
+    // An area belongs to one city, so an area filter only means something
+    // inside one. When this isn't the city that has it — a link shared from
+    // another city, or a city remembered from an earlier visit — send them to
+    // the city that does, rather than showing them an empty list.
+    if (params.area && !(city && offers.some((offer) => offer.business.area === params.area))) {
+        const everywhere = city ? await getLiveOffers() : offers;
+        const owners = citiesWithArea(everywhere.map((offer) => offer.business), params.area);
+        const owner = owners.length === 1 ? places.find((item) => item.id === owners[0]) : null;
+
+        if (owner && owner.id !== city?.id) {
+            redirect(hrefWith(`/offers/${owner.slug}`, params, {}));
+        }
+    }
+
+    const found = filterOffers(offers, groups, {
         category: params.category,
         area: params.area,
         search: params.search,
         sort,
     });
+
+    // Across cities, newest-first hands the whole first screen to whichever
+    // city joined last. "Ending soon" and "Most popular" are answers the
+    // visitor asked for, so those orders stand.
+    const results = !city && sort === "newest"
+        ? interleaveByCity(found, (offer) => offer.business.cityId)
+        : found;
 
     // The selected top-level category, or the parent of a selected subcategory.
     const selectedGroup =
@@ -89,7 +118,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
     const areas = areasFrom(
         offers
             .filter((offer) => !params.category || topLevelFor(offer.categoryId, groups)?.slug === selectedGroup?.slug)
-            .map((offer) => ({ area: offer.business.area })),
+            .map((offer) => offer.business),
     );
 
     const current = { ...params };
@@ -110,21 +139,40 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                                     active: sort === option.value,
                                 })),
                             },
-                            ...(areas.length > 1
-                                ? [
-                                    {
-                                        title: "Area",
-                                        options: [
-                                            { label: `All of ${place}`, href: hrefWith(base, current, { area: null }), active: !params.area },
-                                            ...areas.map((area) => ({
-                                                label: area.name,
-                                                href: hrefWith(base, current, { area: area.name }),
-                                                active: params.area === area.name,
-                                            })),
-                                        ],
-                                    },
-                                ]
-                                : []),
+                            // An area belongs to a city, so areas are only
+                            // offered once a city is chosen. Looking at every
+                            // city, the choice to make first is which one.
+                            ...(city
+                                ? areas.length > 1
+                                    ? [
+                                        {
+                                            title: "Area",
+                                            options: [
+                                                { label: `All of ${place}`, href: hrefWith(base, current, { area: null }), active: !params.area },
+                                                ...areas.map((area) => ({
+                                                    label: area.name,
+                                                    href: hrefWith(base, current, { area: area.name }),
+                                                    active: params.area === area.name,
+                                                })),
+                                            ],
+                                        },
+                                    ]
+                                    : []
+                                : places.length > 1
+                                    ? [
+                                        {
+                                            title: "Location",
+                                            options: [
+                                                { label: "Everywhere", href: hrefWith("/offers", current, { area: null }), active: true },
+                                                ...places.map((item) => ({
+                                                    label: item.name,
+                                                    href: hrefWith(`/offers/${item.slug}`, current, { area: null }),
+                                                    active: false,
+                                                })),
+                                            ],
+                                        },
+                                    ]
+                                    : []),
                         ]}
                     />
 
@@ -196,6 +244,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                                 imageUrl={offer.imageUrl}
                                 expiresAt={offer.expiresAt}
                                 area={offer.business.area}
+                                city={city ? null : offer.business.city}
                                 category={offer.categoryName}
                             />
                         ))}
@@ -208,7 +257,12 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
 
 // The phone search pill: what's being searched, and where, at a glance.
 async function OffersLauncher({ city, searchParams, places }: ListingProps & { places: Place[] }) {
-    const [params, groups, place] = await Promise.all([searchParams, getCategories(), placeName(city)]);
+    const [params, groups, place, oneCity] = await Promise.all([
+        searchParams,
+        getCategories(),
+        placeName(city),
+        placeIsOneCity(city),
+    ]);
     const category = groups
         .flatMap((group) => [group, ...group.subcategories])
         .find((item) => item.slug === params.category);
@@ -216,7 +270,7 @@ async function OffersLauncher({ city, searchParams, places }: ListingProps & { p
     return (
         <SearchLauncher
             title={params.search ? `“${params.search}”` : "Search offers"}
-            summary={`${place} · ${category?.name ?? "Any category"}`}
+            summary={`${oneCity ? place : "Everywhere"} · ${category?.name ?? "Any category"}`}
             heading="Search offers"
         >
             <div>
@@ -246,7 +300,7 @@ async function OffersSearch({ city, searchParams }: ListingProps) {
 }
 
 export async function OffersListing({ city, searchParams }: ListingProps) {
-    const [place, places] = await Promise.all([placeName(city), getLiveCities()]);
+    const [place, places, oneCity] = await Promise.all([placeName(city), getLiveCities(), placeIsOneCity(city)]);
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
@@ -258,7 +312,7 @@ export async function OffersListing({ city, searchParams }: ListingProps) {
                     </p>
 
                     <h1 className="text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
-                        Offers across {place}
+                        {oneCity ? `Offers across ${place}` : "Offers from independent businesses"}
                     </h1>
 
                     <p className="mt-3 hidden max-w-2xl text-lg text-[#17233B]/65 sm:block">

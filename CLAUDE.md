@@ -2,6 +2,10 @@
 
 Product roadmap and priorities: docs/ROADMAP.md (read when planning a feature)
 
+How Promotello works in more than one city: docs/MULTI-CITY.md (read before
+touching anything that groups, counts or links by area, or copy that names a
+place)
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
@@ -10,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Start dev server (Next.js with Turbopack)
 npm run build        # Production build
 npm run lint         # ESLint
+npm run test:unit    # Pure-logic tests (node --test, no browser, no database)
 npm run test:e2e     # Playwright E2E tests (requires SUPABASE_SERVICE_ROLE_KEY in .env.local)
 npm run test:e2e:ui  # Same with the Playwright interactive UI
 ```

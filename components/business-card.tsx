@@ -6,7 +6,9 @@ import { ExampleBadge } from "@/components/example-badge";
 import type { ListingBusiness } from "@/lib/listings";
 import { businessPath } from "@/lib/slugs";
 
-export function BusinessCard({ business }: { business: ListingBusiness }) {
+// `showCity` names the city under the business, for listings that show more
+// than one at a time: "Clifton" on its own doesn't say which city.
+export function BusinessCard({ business, showCity = false }: { business: ListingBusiness; showCity?: boolean }) {
     return (
         <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
             <div className="relative aspect-[16/9] overflow-hidden bg-[#17233B]">
@@ -62,10 +64,12 @@ export function BusinessCard({ business }: { business: ListingBusiness }) {
                     </Link>
                 </h3>
 
-                {business.area && (
+                {(business.area || (showCity && business.city)) && (
                     <p className="mt-1 flex items-center gap-1 text-sm text-[#17233B]/70">
                         <FiMapPin aria-hidden="true" className="size-3.5" />
-                        {business.area}
+                        {[business.area, showCity && business.city !== business.area ? business.city : null]
+                            .filter(Boolean)
+                            .join(", ")}
                     </p>
                 )}
 

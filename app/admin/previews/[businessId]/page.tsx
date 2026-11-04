@@ -184,7 +184,7 @@ async function PreviewDetail({ params }: PageProps) {
                             <input type="hidden" name="businessId" value={preview.business_id} />
 
                             <div className="space-y-1.5">
-                                <label htmlFor="instagramHandle" className="text-xs text-[#17233B]/60">
+                                <label htmlFor="instagramHandle" className="text-xs text-[#17233B]/65">
                                     Their handle
                                 </label>
                                 <Input
@@ -202,7 +202,7 @@ async function PreviewDetail({ params }: PageProps) {
                             </SubmitButton>
                         </form>
 
-                        <p className="text-xs text-[#17233B]/60">
+                        <p className="text-xs text-[#17233B]/65">
                             The same thing, short enough to read on a phone. A DM counts as marketing email under
                             PECR, so a business you could not email should not be messaged either.
                         </p>

@@ -135,7 +135,7 @@ export function PosterDesigner({
             </form>
 
             <div className="w-full shrink-0 lg:w-64">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                     What gets printed
                 </p>
 
@@ -159,7 +159,7 @@ export function PosterDesigner({
                     />
                 </div>
 
-                <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
+                <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
                     Ready to print. Your logo fills in automatically.
                 </p>
             </div>

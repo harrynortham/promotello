@@ -16,6 +16,9 @@ type OfferCardProps = {
     imageUrl?: string | null;
     expiresAt?: string;
     area?: string | null;
+    // The city, when a listing is showing more than one and "Clifton" alone
+    // wouldn't say where this is.
+    city?: string | null;
     category?: string | null;
     // A sample offer: labelled so it isn't mistaken for a real one.
     example?: boolean;
@@ -52,6 +55,7 @@ export function OfferCard({
     imageUrl,
     expiresAt,
     area,
+    city,
     category,
     example = false,
     rawImage = false,
@@ -120,12 +124,12 @@ export function OfferCard({
                                 {business}
                             </p>
 
-                            {(area || category) && (
+                            {(area || city || category) && (
                                 <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-[#17233B]/70">
-                                    {area && (
+                                    {(area || city) && (
                                         <FiMapPin aria-hidden="true" className="size-3 shrink-0" />
                                     )}
-                                    {[area, category].filter(Boolean).join(" · ")}
+                                    {[[area, city === area ? null : city].filter(Boolean).join(", "), category].filter(Boolean).join(" · ")}
                                 </p>
                             )}
                         </div>

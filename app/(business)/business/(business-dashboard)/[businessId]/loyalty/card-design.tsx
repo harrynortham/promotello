@@ -151,7 +151,7 @@ export function CardDesign({
                         </div>
 
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                                 Preview
                             </p>
 

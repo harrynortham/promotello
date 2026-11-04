@@ -1,21 +1,60 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { FiMapPin, FiNavigation, FiX } from "react-icons/fi";
 
 import { ALL_LOCATIONS, rememberCity } from "@/lib/city-cookie";
 import type { Place } from "@/lib/cities";
 import { nearestCity } from "@/lib/geo";
 
+// Where to draw the suggestion list: pinned to the field's left edge and
+// width, below it when there's room and above it when there isn't.
+type Anchor = {
+    left: number;
+    width: number;
+    top?: number;
+    bottom?: number;
+    maxHeight: number;
+};
+
+// Matches the gap the list used to get from mt-2.
+const GAP = 8;
+// Less room than this below the field and it's worth opening upwards.
+const ROOM_FOR_A_FEW = 180;
+
+function anchorFor(field: HTMLElement | null): Anchor | null {
+    if (!field) return null;
+
+    const rect = field.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom - GAP;
+    const above = rect.top - GAP;
+    const upwards = below < ROOM_FOR_A_FEW && above > below;
+    const room = upwards ? above : below;
+
+    return {
+        left: rect.left,
+        width: rect.width,
+        ...(upwards ? { bottom: window.innerHeight - rect.top + GAP } : { top: rect.bottom + GAP }),
+        // Never taller than the space it has, and never so short it can only
+        // show half a suggestion; it scrolls if it has to.
+        maxHeight: Math.min(Math.max(room, 120), window.innerHeight - GAP * 2),
+    };
+}
+
 // `remember` is what the visitor chose ("all" or a city slug); `locate`
 // marks the "Use my location" option.
 type Suggestion = { label: string; detail: string; href: string; remember?: string; locate?: boolean };
 
+// Cities only: every live city has pages behind it, while an area might be
+// one nobody has joined from yet.
 function examplePlaceholder(places: Place[]) {
-    const [first] = places;
-    if (!first) return "Where?";
-    return first.areas[0] ? `Where? Try ${first.name} or ${first.areas[0]}` : `Where? Try ${first.name}`;
+    const names = places.slice(0, 2).map((place) => place.name);
+
+    if (names.length === 0) return "Where?";
+
+    return `Where? Try ${names.join(" or ")}`;
 }
 
 type LocationSearchProps = {
@@ -28,14 +67,19 @@ type LocationSearchProps = {
     current?: { name: string } | null;
     placeholder?: string;
     size?: "md" | "lg";
+    // For pages that can show a city but not an area, like a category page.
+    // Offering neighbourhoods there would silently drop the choice.
+    citiesOnly?: boolean;
 };
 
 // A TripAdvisor-style "Where?" box: type a city or neighbourhood and pick a
 // suggestion. Clearing it goes back to every location.
-export function LocationSearch({ places, basePath, current = null, placeholder, size = "md" }: LocationSearchProps) {
+export function LocationSearch({ places, basePath, current = null, placeholder, size = "md", citiesOnly = false }: LocationSearchProps) {
     const router = useRouter();
     const listId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
+    const fieldRef = useRef<HTMLDivElement>(null);
+    const [anchor, setAnchor] = useState<Anchor | null>(null);
     const [query, setQuery] = useState("");
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(0);
@@ -45,7 +89,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
         const text = query.trim().toLowerCase();
         const all: Suggestion[] = places.flatMap((city) => [
             { label: city.name, detail: "City", href: `${basePath}/${city.slug}`, remember: city.slug },
-            ...city.areas.map((area) => ({
+            ...(citiesOnly ? [] : city.areas).map((area) => ({
                 label: area,
                 detail: city.name,
                 // Areas have their own explore pages; elsewhere they're a filter.
@@ -69,7 +113,7 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
             ];
 
         return [...extras, ...matches].slice(0, 9);
-    }, [places, basePath, query, current]);
+    }, [places, basePath, query, current, citiesOnly]);
 
     function choose(suggestion: Suggestion | undefined) {
         if (!suggestion) return;
@@ -134,11 +178,35 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
         }
     }
 
+    // The list is drawn at the end of the document rather than next to the
+    // field, so an ancestor with overflow:hidden can't cut it off — the hero
+    // sections on the home and explore pages both clip their contents.
+    // Being out of the flow, it has to be positioned by hand, and follow the
+    // field as the page scrolls or the window changes size.
+    // Runs again when the number of suggestions changes, because that is
+    // what decides whether there is room to open downwards.
+    useLayoutEffect(() => {
+        if (!open) return;
+
+        const place = () => setAnchor(anchorFor(fieldRef.current));
+
+        place();
+        // `true` catches scrolling inside any container, not just the window.
+        window.addEventListener("scroll", place, true);
+        window.addEventListener("resize", place);
+
+        return () => {
+            window.removeEventListener("scroll", place, true);
+            window.removeEventListener("resize", place);
+        };
+    }, [open, suggestions.length]);
+
     const tall = size === "lg";
 
     return (
         <div className="relative">
             <div
+                ref={fieldRef}
                 className={`flex items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white px-4 shadow-sm focus-within:border-[#FF593F]/50 ${tall ? "h-16" : "h-11"}`}
             >
                 <FiMapPin aria-hidden="true" className="shrink-0 text-[#FF593F]" />
@@ -175,12 +243,20 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
                 )}
             </div>
 
-            {open && suggestions.length > 0 && (
+            {open && suggestions.length > 0 && anchor && createPortal(
                 <ul
                     id={listId}
                     role="listbox"
                     aria-label="Locations"
-                    className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white py-1 text-[#17233B] shadow-xl"
+                    style={{
+                        position: "fixed",
+                        left: anchor.left,
+                        width: anchor.width,
+                        top: anchor.top,
+                        bottom: anchor.bottom,
+                        maxHeight: anchor.maxHeight,
+                    }}
+                    className="z-50 overflow-y-auto overscroll-contain rounded-2xl border border-[#17233B]/10 bg-white py-1 text-[#17233B] shadow-xl"
                 >
                     {suggestions.map((suggestion, index) => (
                         <li
@@ -206,7 +282,8 @@ export function LocationSearch({ places, basePath, current = null, placeholder, 
                             </span>
                         </li>
                     ))}
-                </ul>
+                </ul>,
+                document.body,
             )}
 
             {message && (

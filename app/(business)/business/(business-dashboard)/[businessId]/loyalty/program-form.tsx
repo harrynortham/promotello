@@ -223,7 +223,7 @@ export function LoyaltyCardBuilder({
             </Card>
 
             <div className="h-fit">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                     The card customers carry
                 </p>
 
@@ -243,7 +243,7 @@ export function LoyaltyCardBuilder({
                     />
                 </div>
 
-                <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
+                <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
                     An example card with sample stamps. Each customer gets
                     their own code and QR when they join.
                 </p>

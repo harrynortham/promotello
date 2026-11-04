@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { NotHereYet, VisitorLoading } from "@/components/visitor-city";
+import { CityNotice, VisitorLoading } from "@/components/visitor-city";
 import { getVisitorContext } from "@/lib/visitor";
 import { OffersListing, offersMetadata } from "./offers-listing";
 
@@ -18,7 +18,7 @@ async function VisitorOffers({ searchParams }: PageProps) {
 
     return (
         <>
-            <NotHereYet visitor={visitor} />
+            <CityNotice visitor={visitor} basePath="/offers" />
             <OffersListing city={visitor.city} searchParams={searchParams} />
         </>
     );

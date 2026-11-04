@@ -358,7 +358,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                 )}
 
                                                 {card.rewards_redeemed > 0 && (
-                                                    <span className="text-xs text-[#17233B]/60">
+                                                    <span className="text-xs text-[#17233B]/65">
                                                         {card.rewards_redeemed} redeemed
                                                     </span>
                                                 )}

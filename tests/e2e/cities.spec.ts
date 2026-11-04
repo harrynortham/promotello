@@ -53,7 +53,10 @@ test("businesses outside a live city can join the waitlist", async ({ page }) =>
 // Locally there are no Vercel location headers, so these tests send their
 // own (on Vercel, the platform sets them from the visitor's IP address).
 const bristol = { "x-vercel-ip-latitude": "51.4600", "x-vercel-ip-longitude": "-2.6000", "x-vercel-ip-city": "Bristol", "x-vercel-ip-country": "GB" };
-const london = { "x-vercel-ip-latitude": "51.5074", "x-vercel-ip-longitude": "-0.1278", "x-vercel-ip-city": "London", "x-vercel-ip-country": "GB" };
+// Somewhere Promotello will not be launching, so this stays true however many
+// cities go live. London would not: it is a plausible future city, and the
+// test would then be checking the wrong thing.
+const faraway = { "x-vercel-ip-latitude": "57.4778", "x-vercel-ip-longitude": "-4.2247", "x-vercel-ip-city": "Inverness", "x-vercel-ip-country": "GB" };
 
 test.describe("a visitor in Bristol", () => {
     test.use({ extraHTTPHeaders: bristol });
@@ -74,29 +77,33 @@ test.describe("a visitor in Bristol", () => {
     });
 });
 
-test.describe("a visitor in London", () => {
-    test.use({ extraHTTPHeaders: london });
+test.describe("a visitor somewhere we aren't", () => {
+    test.use({ extraHTTPHeaders: faraway });
 
     test("is told we're not there yet and can ask to hear when we are", async ({ page }) => {
         await page.goto("/");
         const banner = page.getByRole("complementary", { name: "Promotello near you" });
-        await expect(banner).toContainText("Promotello isn't in London yet, so you're seeing Bristol");
+        // Which places are named depends on how many are live, so the test
+        // checks that it names them at all: "your area" was what it said
+        // before, and it told a visitor nothing.
+        await expect(banner).toContainText("Promotello isn't in Inverness yet");
+        await expect(banner).not.toContainText("your area");
 
         await banner.getByRole("textbox", { name: "Email address" }).fill(`e2e-interest-${Date.now()}@test.internal`);
         await banner.getByRole("button", { name: "Tell me when" }).click();
-        await expect(banner.getByText("We'll email you when Promotello comes to London")).toBeVisible({ timeout: 10_000 });
+        await expect(banner.getByText("We'll email you when Promotello comes to Inverness")).toBeVisible({ timeout: 10_000 });
     });
 
     test("can pick Bristol, which replaces the note", async ({ page }) => {
         await page.goto("/explore");
-        await expect(page.getByText("Promotello isn't in London yet")).toBeVisible();
+        await expect(page.getByText("Promotello isn't in Inverness yet")).toBeVisible();
 
         await page.getByRole("combobox", { name: "Location" }).fill("Bristol");
         await page.getByRole("option", { name: /Bristol\s*City/ }).click();
         await page.waitForURL("**/explore/bristol");
 
         await page.goto("/offers");
-        await expect(page.getByText("Promotello isn't in London yet")).toHaveCount(0);
+        await expect(page.getByText("Promotello isn't in Inverness yet")).toHaveCount(0);
         await expect(page.getByRole("combobox", { name: "Location" })).toHaveAttribute("placeholder", "Bristol");
     });
 });
