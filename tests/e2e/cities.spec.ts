@@ -80,30 +80,28 @@ test.describe("a visitor in Bristol", () => {
 test.describe("a visitor somewhere we aren't", () => {
     test.use({ extraHTTPHeaders: faraway });
 
-    test("is told we're not there yet and can ask to hear when we are", async ({ page }) => {
-        await page.goto("/");
-        const banner = page.getByRole("complementary", { name: "Promotello near you" });
-        // Which places are named depends on how many are live, so the test
-        // checks that it names them at all: "your area" was what it said
-        // before, and it told a visitor nothing.
-        await expect(banner).toContainText("Promotello isn't in Inverness yet");
-        await expect(banner).not.toContainText("your area");
+    test("is shown the live city, and told nothing about where they are", async ({ page }) => {
+        for (const path of ["/", "/offers", "/explore"]) {
+            await page.goto(path);
 
-        await banner.getByRole("textbox", { name: "Email address" }).fill(`e2e-interest-${Date.now()}@test.internal`);
-        await banner.getByRole("button", { name: "Tell me when" }).click();
-        await expect(banner.getByText("We'll email you when Promotello comes to Inverness")).toBeVisible({ timeout: 10_000 });
+            // Nothing guesses at their location out loud. The town only ever
+            // comes from the address the request arrived on, which on a
+            // mobile network is the carrier's gateway and can name a town at
+            // the other end of the country.
+            await expect(page.getByRole("complementary"), path).toHaveCount(0);
+            await expect(page.locator("body"), path).not.toContainText("Inverness");
+            await expect(page.locator("body"), path).not.toContainText("isn't in");
+        }
     });
 
-    test("can pick Bristol, which replaces the note", async ({ page }) => {
+    test("can pick a city for themselves, and it is remembered", async ({ page }) => {
         await page.goto("/explore");
-        await expect(page.getByText("Promotello isn't in Inverness yet")).toBeVisible();
 
         await page.getByRole("combobox", { name: "Location" }).fill("Bristol");
         await page.getByRole("option", { name: /Bristol\s*City/ }).click();
         await page.waitForURL("**/explore/bristol");
 
         await page.goto("/offers");
-        await expect(page.getByText("Promotello isn't in Inverness yet")).toHaveCount(0);
         await expect(page.getByRole("combobox", { name: "Location" })).toHaveAttribute("placeholder", "Bristol");
     });
 });

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { CityNotice } from "@/components/visitor-city";
 import { getVisitorContext } from "@/lib/visitor";
 import { CategoryContent, CategoryLoading, categoryMetadata } from "./category-content";
 
@@ -21,7 +20,6 @@ async function VisitorCategory({ params, searchParams }: PageProps) {
 
     return (
         <>
-            <CityNotice visitor={visitor} basePath="/offers" />
             <div className="pt-8">
                 <CategoryContent slug={slug} city={visitor.city} searchParams={searchParams} />
             </div>

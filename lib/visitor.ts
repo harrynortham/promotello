@@ -9,8 +9,6 @@ export type VisitorContext = {
     city: Place | null;
     // How we know: their choice, their approximate location, or nothing.
     source: "chosen" | "detected" | "default";
-    // Their detected town when it's outside every live city (e.g. "London").
-    outsideTown: string | null;
 };
 
 function readNumber(value: string | null) {
@@ -28,19 +26,21 @@ export async function getVisitorContext(): Promise<VisitorContext> {
     const chosen = cookieStore.get(CITY_COOKIE)?.value;
 
     if (chosen === ALL_LOCATIONS) {
-        return { city: null, source: "chosen", outsideTown: null };
+        return { city: null, source: "chosen" };
     }
 
     const chosenCity = cities.find((city) => city.slug === chosen);
 
     if (chosenCity) {
-        return { city: chosenCity, source: "chosen", outsideTown: null };
+        return { city: chosenCity, source: "chosen" };
     }
 
-    // Vercel URL-encodes the town name.
+    // Vercel URL-encodes the town name. It is only ever used to match a
+    // city's own areas, never shown: on a mobile network the address it is
+    // derived from belongs to the carrier's gateway, so it can name a town
+    // at the other end of the country.
     const rawTown = headerStore.get("x-vercel-ip-city");
     const town = rawTown ? decodeURIComponent(rawTown) : null;
-    const country = headerStore.get("x-vercel-ip-country");
 
     const detected = cityForVisitor(
         cities,
@@ -50,12 +50,8 @@ export async function getVisitorContext(): Promise<VisitorContext> {
     );
 
     if (detected) {
-        return { city: detected, source: "detected", outsideTown: null };
+        return { city: detected, source: "detected" };
     }
 
-    return {
-        city: null,
-        source: "default",
-        outsideTown: town && (!country || country === "GB") ? town : null,
-    };
+    return { city: null, source: "default" };
 }
