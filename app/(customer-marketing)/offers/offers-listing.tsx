@@ -71,11 +71,12 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
 
     const base = city ? `/offers/${city.slug}` : "/offers";
     const params = await searchParams;
-    const [groups, offers, place, places] = await Promise.all([
+    const [groups, offers, place, places, oneCity] = await Promise.all([
         getCategories(),
         getLiveOffers(city?.id),
         placeName(city),
         getLiveCities(),
+        placeIsOneCity(city),
     ]);
     const sort = parseOfferSort(params.sort);
 
@@ -83,7 +84,10 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
     // inside one. When this isn't the city that has it — a link shared from
     // another city, or a city remembered from an earlier visit — send them to
     // the city that does, rather than showing them an empty list.
-    if (params.area && !(city && offers.some((offer) => offer.business.area === params.area))) {
+    //
+    // With one city live there is nothing to disambiguate, so the filter just
+    // applies where it stands; redirecting would be a wasted trip.
+    if (params.area && !(oneCity && offers.some((offer) => offer.business.area === params.area))) {
         const everywhere = city ? await getLiveOffers() : offers;
         const owners = citiesWithArea(everywhere.map((offer) => offer.business), params.area);
         const owner = owners.length === 1 ? places.find((item) => item.id === owners[0]) : null;
@@ -139,10 +143,11 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                                     active: sort === option.value,
                                 })),
                             },
-                            // An area belongs to a city, so areas are only
-                            // offered once a city is chosen. Looking at every
-                            // city, the choice to make first is which one.
-                            ...(city
+                            // An area belongs to a city, so areas are offered
+                            // whenever the page is one city's worth — chosen,
+                            // or the only one live. Looking at several, the
+                            // choice to make first is which one.
+                            ...(oneCity
                                 ? areas.length > 1
                                     ? [
                                         {
