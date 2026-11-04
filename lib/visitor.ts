@@ -53,9 +53,15 @@ export async function getVisitorContext(): Promise<VisitorContext> {
         return { city: detected, source: "detected", outsideTown: null };
     }
 
+    // The town only comes from the IP address, which on a mobile network
+    // belongs to the carrier's gateway rather than the handset: someone in
+    // Gibraltar routed through a UK carrier is reported as being in Hull.
+    // So it is a guess, shown as one and correctable by the visitor — and
+    // not shown at all unless the country is one we actually cover, because
+    // a missing country means the lookup had nothing to go on.
     return {
         city: null,
         source: "default",
-        outsideTown: town && (!country || country === "GB") ? town : null,
+        outsideTown: town && country === "GB" ? town : null,
     };
 }

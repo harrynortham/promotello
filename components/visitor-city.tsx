@@ -1,7 +1,10 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { CityInterestForm } from "@/components/city-interest-form";
+import { DismissibleNotice } from "@/components/dismissible-notice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NOTICE_COOKIE } from "@/lib/city-cookie";
 import { getLiveCities, listPlaces } from "@/lib/cities";
 import type { VisitorContext } from "@/lib/visitor";
 
@@ -18,6 +21,10 @@ import type { VisitorContext } from "@/lib/visitor";
 export async function CityNotice({ visitor, basePath }: { visitor: VisitorContext; basePath: string }) {
     if (visitor.city || visitor.source === "chosen") return null;
 
+    // Closed once, stays closed. Read on the server so it never flashes up
+    // and then disappears.
+    if ((await cookies()).get(NOTICE_COOKIE)) return null;
+
     const cities = await getLiveCities();
 
     if (cities.length === 0) return null;
@@ -30,24 +37,24 @@ export async function CityNotice({ visitor, basePath }: { visitor: VisitorContex
         if (!town) return null;
 
         return (
-            <Notice label="Promotello near you">
+            <DismissibleNotice label="Promotello near you">
                 <p className="text-sm">
                     <strong>Promotello isn&apos;t in {town} yet</strong>, so you&apos;re seeing {places}.
-                    Want to know when we arrive?
+                    Somewhere else? Change the town and we&apos;ll tell you when we reach you.
                 </p>
                 <CityInterestForm town={town} />
-            </Notice>
+            </DismissibleNotice>
         );
     }
 
     return (
-        <Notice label={town ? "Promotello near you" : "Choose a city"}>
+        <DismissibleNotice label={town ? "Promotello near you" : "Choose a city"}>
             <div className="min-w-0">
                 <p className="text-sm">
                     {town ? (
                         <>
                             <strong>Promotello isn&apos;t in {town} yet.</strong> We&apos;re in {places} —
-                            pick one to look around.
+                            pick one to look around, or change the town below.
                         </>
                     ) : (
                         <>
@@ -71,17 +78,7 @@ export async function CityNotice({ visitor, basePath }: { visitor: VisitorContex
             </div>
 
             {town && <CityInterestForm town={town} />}
-        </Notice>
-    );
-}
-
-function Notice({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <aside aria-label={label} className="border-b border-[#FF593F]/20 bg-[#FF593F]/10 text-[#17233B]">
-            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-4 sm:px-10 lg:flex-row lg:items-center lg:justify-between">
-                {children}
-            </div>
-        </aside>
+        </DismissibleNotice>
     );
 }
 

@@ -97,6 +97,25 @@ and, for someone we can place but can't serve:
 
 Picking one goes to that city's page, which remembers it. Someone who
 *deliberately* chose "Everywhere" is never asked — they said what they wanted.
+And the notice has a close button: shut once, it stays shut.
+
+**The town is a guess, and is shown as one.** It comes from
+`x-vercel-ip-city`, which is a lookup on the address the request arrived on.
+On a mobile network that address belongs to the carrier's gateway, not the
+handset, so it can be the other end of the country — a visitor in Gibraltar
+routed through a UK carrier was reported as being in Kingston upon Hull.
+There is no server-side fix for that: the coordinates come from the same
+lookup, so they agree with the wrong answer.
+
+Two things make it survivable. The town in the waitlist form is an **editable
+field**, prefilled with the guess, so the visitor corrects it and
+`city_interest` records where they actually are rather than where their
+carrier is — that table decides where Promotello launches next, so it has to
+be right. And the town is only named when `x-vercel-ip-country` is `GB`; no
+country at all means the lookup had nothing to go on, so nothing is claimed.
+
+Someone who wants to be placed exactly can use **"Use my location"** in the
+location search, which asks the browser and is accurate to the street.
 
 ### The merged list
 

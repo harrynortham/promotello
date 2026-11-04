@@ -80,7 +80,7 @@ test.describe("a visitor in Bristol", () => {
 test.describe("a visitor somewhere we aren't", () => {
     test.use({ extraHTTPHeaders: faraway });
 
-    test("is told we're not there yet and can ask to hear when we are", async ({ page }) => {
+    test("is told we're not there yet, and can correct the town before asking to hear", async ({ page }) => {
         await page.goto("/");
         const banner = page.getByRole("complementary", { name: "Promotello near you" });
         // Which places are named depends on how many are live, so the test
@@ -89,9 +89,43 @@ test.describe("a visitor somewhere we aren't", () => {
         await expect(banner).toContainText("Promotello isn't in Inverness yet");
         await expect(banner).not.toContainText("your area");
 
+        // The town is only a guess from the address the request came in on.
+        // On a mobile network that is the carrier's gateway, which can be the
+        // other end of the country, so it has to be correctable — otherwise
+        // the waitlist fills up with the wrong towns.
+        const town = banner.getByRole("textbox", { name: "Your town" });
+        await expect(town).toHaveValue("Inverness");
+        await town.fill("Gibraltar");
+
         await banner.getByRole("textbox", { name: "Email address" }).fill(`e2e-interest-${Date.now()}@test.internal`);
         await banner.getByRole("button", { name: "Tell me when" }).click();
-        await expect(banner.getByText("We'll email you when Promotello comes to Inverness")).toBeVisible({ timeout: 10_000 });
+        await expect(banner.getByText("We'll email you when Promotello comes to Gibraltar")).toBeVisible({ timeout: 10_000 });
+    });
+
+    test("can close the note, and it stays closed", async ({ page }) => {
+        await page.goto("/offers");
+        const banner = page.getByRole("complementary", { name: "Promotello near you" });
+
+        await banner.getByRole("button", { name: "Close" }).click();
+        await expect(banner).toHaveCount(0);
+
+        await page.goto("/businesses");
+        await expect(page.getByRole("complementary", { name: "Promotello near you" })).toHaveCount(0);
+    });
+
+    test("nothing is guessed about someone outside the UK", async ({ page }) => {
+        // Vercel reports the country alongside the town; without a country we
+        // cover, there is nothing worth telling them about their own location.
+        await page.context().setExtraHTTPHeaders({
+            "x-vercel-ip-latitude": "36.1408",
+            "x-vercel-ip-longitude": "-5.3536",
+            "x-vercel-ip-city": "Gibraltar",
+            "x-vercel-ip-country": "GI",
+        });
+        await page.goto("/offers");
+
+        await expect(page.getByRole("complementary", { name: "Promotello near you" })).toHaveCount(0);
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     });
 
     test("can pick Bristol, which replaces the note", async ({ page }) => {
