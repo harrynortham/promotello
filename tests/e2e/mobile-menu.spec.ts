@@ -12,7 +12,7 @@ test("on a phone, the menu opens as a sheet and closes after choosing a page", a
     const menu = page.getByRole("dialog");
     await expect(menu.getByRole("navigation", { name: "Mobile navigation" })).toBeVisible();
 
-    await menu.getByRole("link", { name: "Offers" }).click();
+    await menu.getByRole("link", { name: "Offers", exact: true }).click();
     await page.waitForURL("**/offers");
     await expect(page.getByRole("dialog")).toBeHidden();
 });

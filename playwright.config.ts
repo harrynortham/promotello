@@ -7,6 +7,9 @@ config({ path: ".env.local" });
 
 export default defineConfig({
     testDir: "./tests",
+    // tests/unit holds plain Node tests with no browser and no database:
+    // `npm run test:unit`.
+    testIgnore: "**/unit/**",
     fullyParallel: false,
     retries: process.env.CI ? 1 : 0,
     workers: 1,
