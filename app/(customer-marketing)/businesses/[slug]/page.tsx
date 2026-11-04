@@ -593,29 +593,19 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             aria-labelledby="offers-heading"
                             className="scroll-mt-28"
                         >
-                            <div className="mb-5 flex items-center justify-between gap-4">
-                                <div>
-                                    <h2
-                                        id="offers-heading"
-                                        className="text-2xl font-semibold tracking-tight"
-                                    >
-                                        Current offers
-                                    </h2>
+                            {/* No count beside the heading: the offers are
+                                directly below and countable. */}
+                            <div className="mb-5">
+                                <h2
+                                    id="offers-heading"
+                                    className="text-2xl font-semibold tracking-tight"
+                                >
+                                    Current offers
+                                </h2>
 
-                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                        Explore what’s on offer at{" "}
-                                        {business.name}.
-                                    </p>
-                                </div>
-
-                                {!offersError && (
-                                    <Badge
-                                        variant="outline"
-                                        className="shrink-0"
-                                    >
-                                        {promotionCount}
-                                    </Badge>
-                                )}
+                                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                    Explore what’s on offer at {business.name}.
+                                </p>
                             </div>
 
                             {offersError ? (
