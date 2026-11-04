@@ -48,3 +48,23 @@ test("Free businesses are offered loyalty cards as part of Pro", async ({ browse
     await expect(page.getByText("Turn first visits into regulars")).toBeVisible();
     await expect(page.getByRole("button", { name: "Start free trial" })).toBeVisible();
 });
+
+test("a visitor who isn't signed in is offered the card, not a form", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/businesses/${businessId}`);
+    const loyalty = page.locator("#loyalty");
+    await expect(loyalty).toBeVisible();
+
+    // The panel's job is to make the offer. Opening with two input boxes and
+    // a "Log in" link shouts louder than the thing being offered, and asks
+    // for an email address before anyone has said they want a card.
+    await expect(loyalty.locator("input[name=name], input[name=email]")).toHaveCount(0);
+    await expect(loyalty.getByRole("link", { name: "Log in" })).toHaveCount(0);
+
+    // Saying yes is what asks for the details.
+    await loyalty.getByRole("button", { name: "Get my card" }).click();
+    await expect(loyalty.locator("input[name=name]")).toBeFocused();
+    await expect(loyalty.locator("input[name=email]")).toBeVisible();
+    await expect(loyalty.getByRole("link", { name: "Log in" })).toBeVisible();
+});
