@@ -81,9 +81,9 @@ function DayRow({
         <li className={`rounded-xl border p-4 transition sm:p-5 ${error ? "border-destructive/50" : "border-[#17233B]/10"} ${status === "open" ? "bg-white" : status === "closed" ? "bg-[#17233B]/[0.06]" : "bg-[#FFF8F0]"}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <p className={`font-semibold ${status === "closed" ? "text-[#17233B]/60" : ""}`}>{name}</p>
-                    {!status && <p className="text-xs text-[#17233B]/60">Not set yet</p>}
-                    {status === "closed" && <p className="text-xs text-[#17233B]/60">Closed all day</p>}
+                    <p className={`font-semibold ${status === "closed" ? "text-[#17233B]/65" : ""}`}>{name}</p>
+                    {!status && <p className="text-xs text-[#17233B]/65">Not set yet</p>}
+                    {status === "closed" && <p className="text-xs text-[#17233B]/65">Closed all day</p>}
                 </div>
 
                 <div role="group" aria-label={`${name} open or closed`} className="inline-flex rounded-full border border-[#17233B]/15 bg-white p-1">

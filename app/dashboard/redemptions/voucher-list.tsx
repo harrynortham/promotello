@@ -109,7 +109,7 @@ export function CompactVoucher({ item }: { item: StatusedVoucher }) {
                 <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{offer?.title ?? "Offer details unavailable"}</p>
 
                 {timing && (
-                    <p className={`mt-1.5 inline-flex items-center gap-1 text-xs font-medium ${timing.urgent ? "text-amber-700" : "text-[#17233B]/60"}`}>
+                    <p className={`mt-1.5 inline-flex items-center gap-1 text-xs font-medium ${timing.urgent ? "text-amber-700" : "text-[#17233B]/65"}`}>
                         <FiClock aria-hidden="true" />
                         {timing.text}
                     </p>

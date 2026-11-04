@@ -118,7 +118,7 @@ export function LoyaltyCard({
                 </div>
 
                 {terms?.trim() && (
-                    <p className="mt-4 text-xs leading-5 text-[#17233B]/60">{terms.trim()}</p>
+                    <p className="mt-4 text-xs leading-5 text-[#17233B]/65">{terms.trim()}</p>
                 )}
             </div>
         </article>

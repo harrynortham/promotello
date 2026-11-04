@@ -35,7 +35,7 @@ export function PlanComparison({ highlight = "pro", current }: { highlight?: Pla
                             className={`w-16 px-1 py-4 text-center align-bottom font-semibold sm:w-24 sm:px-5 ${tier === highlight ? "text-[#FF593F]" : ""}`}
                         >
                             {current === tier && (
-                                <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#17233B]/60 sm:text-xs">
+                                <span className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#17233B]/65 sm:text-xs">
                                     Your plan
                                 </span>
                             )}
