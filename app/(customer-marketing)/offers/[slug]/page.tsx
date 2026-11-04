@@ -14,7 +14,7 @@ import {
     FiUsers,
 } from "react-icons/fi";
 
-import { ExampleNotice } from "@/components/example-badge";
+import { CoverExampleBadge } from "@/components/cover-badges";
 import { PreviewNotice } from "@/components/preview-notice";
 import { SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
@@ -330,12 +330,6 @@ async function OfferContent({ params }: OfferPageProps) {
                     <span className="truncate text-[#17233B]/80">{business.name}</span>
                 </nav>
 
-                {business.is_sample && (
-                    <div className="mt-4">
-                        <ExampleNotice what="offer" />
-                    </div>
-                )}
-
                 {isPreview && (
                     <div className="mt-4">
                         <PreviewNotice what="offer" />
@@ -343,7 +337,7 @@ async function OfferContent({ params }: OfferPageProps) {
                 )}
 
                 <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
-                    <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-[#FFF4E8] sm:aspect-[16/10] lg:aspect-[4/3]">
+                    <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-[#FFF4E8] sm:aspect-[16/10] lg:col-start-1 lg:row-start-1 lg:aspect-[4/3]">
                         {offer.image_url ? (
                             <Image
                                 src={offer.image_url}
@@ -359,12 +353,18 @@ async function OfferContent({ params }: OfferPageProps) {
                             </div>
                         )}
 
-                        <span className="absolute left-4 top-4 rounded-full bg-[#FF593F] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
-                            {offer.discount}
-                        </span>
+                        {/* Without a photo the discount is already the whole
+                            picture, so the corner pill would just say it twice. */}
+                        {offer.image_url && (
+                            <span className="absolute left-4 top-4 rounded-full bg-[#FF593F] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
+                                {offer.discount}
+                            </span>
+                        )}
+
+                        {business.is_sample && <CoverExampleBadge what="offer" />}
                     </div>
 
-                    <aside className="rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-7 lg:sticky lg:top-24">
+                    <aside className="rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-7 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24">
                         <Link
                             href={businessPath(business)}
                             className="group flex items-center gap-3"
@@ -417,11 +417,11 @@ async function OfferContent({ params }: OfferPageProps) {
                         </ul>
 
                         {isPreview ? (
-                            <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-center text-sm text-[#17233B]/75">
+                            <p className="mt-6 rounded-xl bg-[#FFF8F0] px-4 py-3 text-center text-sm text-[#17233B]/75">
                                 Customers can claim this once it&apos;s live.
                             </p>
                         ) : business.is_sample ? (
-                            <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-center text-sm text-[#17233B]/75">
+                            <p className="mt-6 rounded-xl bg-[#FFF8F0] px-4 py-3 text-sm leading-6 text-[#17233B]/75">
                                 Example offers can&apos;t be claimed.{" "}
                                 <Link href="/offers" className="font-medium text-[#FF593F] underline underline-offset-4">
                                     Browse real offers
@@ -452,70 +452,73 @@ async function OfferContent({ params }: OfferPageProps) {
                             />
                         )}
                     </aside>
-                </div>
 
-                <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
-                    <div className="space-y-5">
-                        <section className="rounded-3xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                    {/* What there is to read about the offer, in one card with
+                        rules between its parts rather than three that each
+                        need their own gap. */}
+                    <article className="divide-y divide-[#17233B]/10 overflow-hidden rounded-3xl border border-[#17233B]/10 bg-white lg:col-start-1 lg:row-start-2">
+                        <section className="p-6 sm:p-8">
                             <h2 className="text-lg font-semibold">About this offer</h2>
                             <p className="mt-3 whitespace-pre-line leading-7 text-[#17233B]/70">
                                 {offer.description}
                             </p>
+                        </section>
 
-                            <h2 className="mt-8 text-lg font-semibold">Terms</h2>
+                        <section className="p-6 sm:p-8">
+                            <h2 className="text-lg font-semibold">Terms</h2>
                             <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#17233B]/65">
                                 {offer.terms}
                             </p>
                         </section>
-                    </div>
 
-                    <section className="h-fit rounded-3xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
-                        <h2 className="text-lg font-semibold">Where to use it</h2>
+                        <section className="p-6 sm:p-8">
+                            <h2 className="text-lg font-semibold">Where to use it</h2>
 
-                        <p className="mt-3 font-medium">{business.name}</p>
+                            <p className="mt-3 font-medium">{business.name}</p>
 
-                        {address.length > 0 && (
-                            <address className="mt-1 not-italic text-sm leading-6 text-[#17233B]/65">
-                                {address.join(", ")}
-                            </address>
-                        )}
+                            {address.length > 0 && (
+                                <address className="mt-1 not-italic text-sm leading-6 text-[#17233B]/65">
+                                    {address.join(", ")}
+                                </address>
+                            )}
 
-                        <div className="mt-5 flex flex-wrap gap-2">
-                            {directions && (
+                            <div className="mt-5 flex flex-wrap gap-2">
+                                {directions && (
+                                    <Button
+                                        render={
+                                            <a
+                                                href={directions}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            />
+                                        }
+                                        nativeButton={false}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        <FiNavigation aria-hidden="true" />
+                                        Directions
+                                    </Button>
+                                )}
+
                                 <Button
-                                    render={
-                                        <a
-                                            href={directions}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        />
-                                    }
+                                    render={<Link href={businessPath(business)} />}
                                     nativeButton={false}
                                     variant="outline"
                                     size="sm"
                                 >
-                                    <FiNavigation aria-hidden="true" />
-                                    Directions
+                                    Opening hours and more
                                 </Button>
-                            )}
 
-                            <Button
-                                render={<Link href={businessPath(business)} />}
-                                nativeButton={false}
-                                variant="outline"
-                                size="sm"
-                            >
-                                Opening hours and more
-                            </Button>
-
-                            <FollowButton
-                                businessId={business.id}
-                                initialFollowing={Boolean(follow)}
-                                isSignedIn={Boolean(user)}
-                                size="sm"
-                            />
-                        </div>
-                    </section>
+                                <FollowButton
+                                    businessId={business.id}
+                                    initialFollowing={Boolean(follow)}
+                                    isSignedIn={Boolean(user)}
+                                    size="sm"
+                                />
+                            </div>
+                        </section>
+                    </article>
                 </div>
 
                 {moreFromBusiness.length > 0 && (
