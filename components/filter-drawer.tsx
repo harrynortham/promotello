@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
-import { FiCheck, FiSliders } from "react-icons/fi";
+import { FiCheck, FiSliders, FiX } from "react-icons/fi";
 
 import {
     Drawer,
+    DrawerClose,
     DrawerContent,
     DrawerDescription,
     DrawerHeader,
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 export type FilterOption = { label: string; href: string; active: boolean };
 
@@ -22,6 +24,12 @@ export type FilterSection = { title: string; options: FilterOption[] };
 // don't each need a row of pills. The pill shows what's chosen.
 export function FilterDrawer({ sections, description }: { sections: FilterSection[]; description?: string }) {
     const [open, setOpen] = useState(false);
+
+    // A phone has height to spare and a thumb at the bottom, so the choices
+    // come up from below. A desktop has width to spare and the pointer is
+    // already up near the Filter button, so they come in from the side and
+    // leave the results on screen beside them.
+    const beside = useMediaQuery("(min-width: 1024px)");
     const chosen = sections
         .map((section) => section.options.slice(1).find((option) => option.active)?.label)
         .filter(Boolean);
@@ -32,7 +40,7 @@ export function FilterDrawer({ sections, description }: { sections: FilterSectio
     }
 
     return (
-        <Drawer open={open} onOpenChange={setOpen} showSwipeHandle>
+        <Drawer open={open} onOpenChange={setOpen} swipeDirection={beside ? "right" : "down"} showSwipeHandle>
             <DrawerTrigger
                 className={`inline-flex max-w-64 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${chosen.length
                     ? "border-[#17233B] bg-[#17233B] text-white"
@@ -44,13 +52,24 @@ export function FilterDrawer({ sections, description }: { sections: FilterSectio
             </DrawerTrigger>
 
             <DrawerContent>
-                <div className="mx-auto w-full max-w-md">
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle className="text-lg font-semibold">Filter</DrawerTitle>
-                        {description && <DrawerDescription>{description}</DrawerDescription>}
+                <div className="mx-auto flex w-full max-w-md flex-col lg:h-full lg:max-w-none">
+                    <DrawerHeader className="flex-row items-start justify-between text-left">
+                        <span>
+                            <DrawerTitle className="text-lg font-semibold">Filter</DrawerTitle>
+                            {description && <DrawerDescription>{description}</DrawerDescription>}
+                        </span>
+
+                        {/* Beside the results there's no swiping it away, and
+                            the backdrop isn't an obvious target on a desktop. */}
+                        <DrawerClose
+                            aria-label="Close"
+                            className="hidden size-9 shrink-0 items-center justify-center rounded-full text-[#17233B]/65 transition hover:bg-[#17233B]/5 hover:text-[#17233B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F] lg:flex"
+                        >
+                            <FiX aria-hidden="true" className="size-5" />
+                        </DrawerClose>
                     </DrawerHeader>
 
-                    <div className="max-h-[65dvh] space-y-6 overflow-y-auto p-4 pb-8" onClick={closeOnLink}>
+                    <div className="max-h-[65dvh] flex-1 space-y-6 overflow-y-auto p-4 pb-8 lg:max-h-none" onClick={closeOnLink}>
                         {sections.map((section) => (
                             <section key={section.title}>
                                 <h3 className="px-4 pb-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
