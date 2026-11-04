@@ -109,23 +109,25 @@ test.describe("a visitor somewhere we aren't", () => {
 test.describe("picking a place on a phone", () => {
     test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-    const sheet = "[data-slot=drawer-popup]";
+    const panel = "[role=dialog]";
     const rect = (page: import("@playwright/test").Page) =>
         page.evaluate((css) => {
             const r = document.querySelector(css)!.getBoundingClientRect();
-            return { bottom: Math.round(r.y + r.height), h: Math.round(r.height), w: Math.round(r.width), vh: innerHeight, vw: innerWidth };
-        }, sheet);
+            return { top: Math.round(r.y), h: Math.round(r.height), vh: innerHeight };
+        }, panel);
 
     for (const path of ["/", "/explore"]) {
-        test(`the choices come up from the bottom on ${path}, and stay put`, async ({ page }) => {
+        test(`the choices open in a panel on ${path}, clear of the keyboard`, async ({ page }) => {
             await page.goto(path);
             await page.getByRole("button", { name: "Location" }).first().click();
-            await expect(page.locator(sheet)).toBeVisible();
+            await expect(page.locator(panel)).toBeVisible();
             await page.waitForTimeout(600);
 
             const before = await rect(page);
-            expect(Math.round(before.bottom), "sitting on the bottom edge").toBe(before.vh);
-            expect(Math.round(before.w), "full width").toBe(before.vw);
+            // Pinned near the top: iOS draws the keyboard over the bottom of
+            // the screen rather than pushing anything up, so anything low
+            // down can be swallowed by it.
+            expect(before.top, "pinned near the top of the screen").toBeLessThan(40);
 
             // It used to hang off the field and be re-measured on every
             // scroll and resize, so it changed height as the page moved and
@@ -134,15 +136,39 @@ test.describe("picking a place on a phone", () => {
             await page.waitForTimeout(300);
 
             const after = await rect(page);
-            expect(after.h, "the sheet shouldn't move when the page behind it does").toBe(before.h);
-            expect(Math.round(after.bottom)).toBe(after.vh);
+            expect(after.h, "the panel shouldn't move when the page behind it does").toBe(before.h);
+            expect(after.top).toBe(before.top);
         });
     }
+
+    test("opens without summoning the keyboard, and lists everywhere you can go", async ({ page }) => {
+        await page.goto("/explore");
+        await page.getByRole("button", { name: "Location" }).first().click();
+        await expect(page.locator(panel)).toBeVisible();
+
+        // iOS keeps position:fixed pinned to the layout viewport, so a
+        // keyboard draws over the bottom of the screen instead of pushing
+        // anything up. Nothing should ask for one uninvited.
+        const search = page.getByRole("combobox", { name: "Search locations" });
+        await expect(search).not.toBeFocused();
+
+        // And there should be no need to type: the neighbourhoods are listed,
+        // not hidden behind a search.
+        await expect(page.getByRole("option", { name: /Clifton/ })).toBeVisible();
+        expect(await page.getByRole("option").count(), "every place is listed").toBeGreaterThan(10);
+
+        // If someone does tap the box, it has to stay above a keyboard.
+        const room = await page.evaluate(() => {
+            const i = document.querySelector("[aria-label='Search locations']")!.getBoundingClientRect();
+            return { inputBottom: Math.round(i.bottom), vh: window.innerHeight };
+        });
+        expect(room.inputBottom, "the search box sits above where a keyboard would be").toBeLessThan(room.vh - 320);
+    });
 
     test("typing narrows the list, and choosing goes there", async ({ page }) => {
         await page.goto("/explore");
         await page.getByRole("button", { name: "Location" }).first().click();
-        await expect(page.locator(sheet)).toBeVisible();
+        await expect(page.locator(panel)).toBeVisible();
 
         await page.getByRole("combobox", { name: "Search locations" }).fill("clif");
         await expect(page.getByRole("option", { name: /Clifton/ })).toBeVisible();
