@@ -9,9 +9,17 @@ const panel = "[data-slot=drawer-popup]";
 
 type Page = import("@playwright/test").Page;
 
+// Which panel the filter opens is decided in the browser, so until the page
+// hydrates the trigger is the phone one. Waiting for the drawer's own
+// trigger is waiting for that to settle.
+async function filterTrigger(page: Page) {
+    await expect(page.locator("[data-slot=drawer-trigger]")).toBeVisible();
+    return page.getByRole("button", { name: "Filter" });
+}
+
 async function openFilter(page: Page) {
     await page.goto("/businesses/bristol");
-    await page.getByRole("button", { name: "Filter" }).click();
+    await (await filterTrigger(page)).click();
     await expect(page.locator(panel)).toBeVisible();
 }
 
@@ -60,7 +68,7 @@ test.describe("a visitor we can't place", () => {
             const heading = await page.getByRole("heading", { level: 1 }).innerText();
             test.skip(!heading.includes("Bristol"), "more than one city is live");
 
-            await page.getByRole("button", { name: "Filter" }).click();
+            await (await filterTrigger(page)).click();
             const drawer = page.locator(panel);
 
             await expect(drawer.getByText("Area", { exact: true })).toBeVisible();
@@ -73,7 +81,7 @@ test.describe("a visitor we can't place", () => {
         await page.goto("/businesses");
         test.skip(!(await page.getByRole("heading", { level: 1 }).innerText()).includes("Bristol"), "more than one city is live");
 
-        await page.getByRole("button", { name: "Filter" }).click();
+        await (await filterTrigger(page)).click();
         await page.locator(panel).getByRole("link", { name: "Clifton" }).click();
         await page.waitForURL(/area=Clifton/);
 
@@ -125,17 +133,80 @@ test.describe("on a desktop", () => {
 test.describe("on a phone", () => {
     test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-    test("the filter still comes up from the bottom", async ({ page }) => {
-        await openFilter(page);
+    test("the filter opens in the same panel as the search and the places", async ({ page }) => {
+        await page.goto("/businesses/bristol");
+        await page.getByRole("button", { name: "Filter" }).click();
 
-        await settled(page);
-        const box = await rectOf(page, panel);
+        const dialog = page.getByRole("dialog");
+        await expect(dialog).toBeVisible();
 
-        expect(Math.round(box.y + box.height), "sitting on the bottom edge").toBe(box.vh);
-        expect(Math.round(box.width), "full width").toBe(box.vw);
+        // Near the top, like every other panel on a phone: iOS draws a
+        // keyboard over the bottom of the screen rather than pushing
+        // anything up, so nothing that matters sits down there.
+        const top = await page.evaluate(() => Math.round(document.querySelector("[role=dialog]")!.getBoundingClientRect().y));
+        expect(top, "pinned near the top of the screen").toBeLessThan(40);
 
-        // No close button down here: it's swipeable, and the backdrop is a
-        // big easy target for a thumb.
-        await expect(page.locator(panel).getByRole("button", { name: "Close" })).toBeHidden();
+        await expect(dialog.getByRole("link", { name: "All of Bristol" })).toBeVisible();
+        await expect(dialog.getByRole("link", { name: "Clifton" })).toBeVisible();
+    });
+
+    test("choosing an area filters the list and closes it", async ({ page }) => {
+        await page.goto("/businesses/bristol");
+        await page.getByRole("button", { name: "Filter" }).click();
+        await page.getByRole("dialog").getByRole("link", { name: "Clifton" }).click();
+
+        await page.waitForURL(/area=Clifton/);
+        await expect(page.getByRole("dialog")).toHaveCount(0);
+
+        // The page behind is kept around hidden after a transition.
+        const showing = await page.evaluate(() =>
+            [...document.querySelectorAll("main")]
+                .filter((m) => getComputedStyle(m).display !== "none")
+                .reduce((n, m) => n + m.querySelectorAll("article").length, 0));
+        expect(showing, "only Clifton's businesses").toBeLessThan(5);
+    });
+});
+
+// The compact search pill on a phone. It used to drop a drawer down from the
+// top and reserve 60dvh of it for the place suggestions to open into; those
+// have their own panel now.
+test.describe("searching a listing on a phone", () => {
+    test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+    for (const [path, label] of [["/offers", "Search offers"], ["/businesses", "Search businesses"]] as const) {
+        test(`${path} opens its fields in a panel clear of the keyboard`, async ({ page }) => {
+            await page.goto(path);
+            await page.getByRole("button", { name: new RegExp(label) }).first().click();
+
+            const dialog = page.getByRole("dialog");
+            await expect(dialog).toBeVisible();
+
+            // iOS draws the keyboard over the bottom of the screen rather
+            // than pushing anything up, and typing is the whole point here.
+            const top = await page.evaluate(() => Math.round(document.querySelector("[role=dialog]")!.getBoundingClientRect().y));
+            expect(top, "pinned near the top of the screen").toBeLessThan(40);
+
+            await expect(dialog.getByRole("textbox", { name: /Search/ }).or(dialog.locator("input[name=search]")).first()).toBeFocused();
+            await expect(dialog.getByRole("button", { name: "Location" })).toBeVisible();
+        });
+    }
+
+    test("the places open over it, and picking one filters the list", async ({ page }) => {
+        await page.goto("/businesses");
+        await page.getByRole("button", { name: /Search businesses/ }).first().click();
+        await page.getByRole("button", { name: "Location" }).click();
+
+        // A panel on top of a panel: the one in front is the places.
+        await expect(page.getByRole("option", { name: /Clifton/ })).toBeVisible();
+        await page.getByRole("option", { name: /Clifton/ }).click();
+
+        await page.waitForURL(/area=Clifton/);
+        // The page behind is kept around hidden after a transition, so only
+        // count what is actually on screen.
+        const showing = await page.evaluate(() =>
+            [...document.querySelectorAll("main")]
+                .filter((m) => getComputedStyle(m).display !== "none")
+                .reduce((n, m) => n + m.querySelectorAll("article").length, 0));
+        expect(showing, "only Clifton's businesses").toBeLessThan(5);
     });
 });

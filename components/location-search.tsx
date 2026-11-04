@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { FiMapPin, FiNavigation, FiX } from "react-icons/fi";
@@ -93,6 +93,7 @@ function usePicker({
     browse?: boolean;
 }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [query, setQuery] = useState("");
     // The highlight is for arrow keys. A sheet has none, and pre-selecting a
     // row there just looks like something was already chosen, so it starts
@@ -143,7 +144,15 @@ function usePicker({
         }
 
         router.push(suggestion.href);
-        router.refresh();
+
+        // Only when it isn't really a navigation. Choosing "All locations"
+        // while already on /businesses goes nowhere, so nothing would
+        // re-render — but the city has just been written to the cookie and
+        // the server reads it. Refreshing alongside a real push instead
+        // re-renders the page being left, and both trees end up on screen.
+        if (suggestion.href === `${pathname}${window.location.search}`) {
+            router.refresh();
+        }
     }
 
     // Asks the browser for the visitor's position (they can say no) and
