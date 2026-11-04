@@ -16,6 +16,7 @@ import {
 import { OfferCard } from "@/components/offer-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+    areaPhoto,
     areasFrom,
     getLiveOffers,
     getPublicBusinesses,
@@ -70,7 +71,9 @@ function AreaCard({
     businesses: ListingBusiness[];
     offers: ListingOffer[];
 }) {
-    const cover = offers.find((offer) => offer.imageUrl)?.imageUrl ?? null;
+    // The same picture the area's own page uses, so the card is recognisable
+    // as the place it opens.
+    const cover = areaPhoto(businesses);
 
     return (
         <Link
@@ -284,7 +287,16 @@ export async function ExploreListing({ city, searchParams }: ListingProps) {
                     fill
                     priority
                     sizes="100vw"
-                    className="-z-10 object-cover opacity-35"
+                    className="-z-10 object-cover opacity-70"
+                />
+
+                {/* A photo from a neighbourhood can be any brightness, so the
+                    words get their own dark ground rather than relying on the
+                    picture being dark enough. The photo still reads on the
+                    right, where nothing is written. */}
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 -z-10 bg-gradient-to-r from-[#17233B] via-[#17233B]/80 to-transparent"
                 />
 
                 <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
