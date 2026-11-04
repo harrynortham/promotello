@@ -101,28 +101,46 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
-- Create email template to send to customers first sales
-- Test what happens when loyalty card full
-- Update the conversion emails to contain some product imagery
-- Redesign home top banner search area and also explore, need to be more simple like tripadvisor and airbnb, and also unique to businesses and offers that both look the same
-- Different poster sizes. currently only offer two sizes. we may need smaller size also
-- when customer scans qr for offers where do they land, ideally standalone page with just the offers without needing to scroll
+Before selling (Top priority):
 
-- Secure all platform emails with unique strong passwords, add all to apple keychain, log which accounts use which email address
-- need way to generate poster to stick in window, sent to each sign up business using that website with the API printing
-- add social icons to email signature
-- Transfer youtube channel to hello@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
-- Add social media posts as per marketing launch POSTS.md / once business accounts are all set up and tested
-- create a test mode project in supabase so we dont touch live d
-- Add YouTube to google search console
-- Move analytics to hello@promotello.com account
-- Learn keystatic for blog posts, create three more posts and add image to each
+Saw message once on mobile Promotello isn't in Kingston upon Hull yet, so you're seeing Bristol. Want to know when we arrive?. I only saw this once on my mobile device and my location is Gibraltar country. Not Kingston. where and how is it triggered and how can we fix to show correct country/city? Also an X close button there would be good to hide it.
+
+1. Style the offers page
+
+2. Nobody has scanned a QR code. I've flagged this four or five times now and it's still open. It's the product's first physical touchpoint — poster in a window, customer scans, card appears. The brand badge sits in the middle of the code at error-correction H, which should be fine, but "should" is doing a lot of work for the single interaction the whole pitch rests on. Five minutes with a phone settles it.
+
+3. ICO registration. Your own note says "before you start signing up real customers" and that's right — you're a UK data controller processing names, emails, birthdays and visit history. It's a fee and a form, not a project, but it isn't optional and the number needs adding to your privacy policy.
 
 - on desktop make filter show from right
 
-- Change Vercel from hobby to paid plan, payment from wise account
-- create second project in supabase for dev
+- are we all geared up for seo optimized on business offer and category pages?
+- Change anything i can help with? conversion email to have the signature from marketing folder
+- Add icons to shadcn dropdown menus in business and customer dashboard. style to make it look styled less like pure shadcn
+- /admin/businesses doesnt show all data for approval, should there be lonk for preview page and just show list here?
+- /admin/offers i would like to show list of offers for approval and a button to show the full offer maybe in a modal?
+- can offers be further edited once sent for approval?
+- in admin offers should we list all offer, approved and not approved with some filtering? same for /admin/businesses
+
+- Secure all social media accounts with keychain passwords and correct phone numbers / email addresses
+- 3 December Transfer youtube channel to harry@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
+- 3 December Add YouTube to google search console
+
+- currently there is no quick way for user to end their birthday. we should make a notification somehere nudging them to add it, with benefits of doing so, such as birthday gifts
+
 - Check resend limits that its ok for launch
+- create second project in supabase for dev testing
+
+- Is our cookie consent bar sufficient for GDPR
+- Test what happens when loyalty card full
+
+- Update the lifecycle emails to contain some product imagery, we are using these emails to convert user to PRO if they havent, please check they are designed to work like this
+
+- Different poster sizes. currently only offer two sizes. we may need smaller size also
+- when customer scans qr for offers where do they land, ideally standalone page with just the offers without needing to scroll
+
+- need way to generate poster to stick in window, sent to each sign up business using that website with the API printing
+
+- Create page for restricted businesses, Same as stripe doesn’t allow, Link it from site somewhere
 
 - Stripe managed payments requires VAT ID which we dont have and wont have until over 85k threshold, then we can enable. We may do sooner but not needed for now the VAT. You're unlikely to want it back. If you pass the £90k VAT threshold, the usual route is to register for VAT yourself and turn on Stripe Tax, which is far cheaper than Managed. Payments' extra fee of about 3.5%. Stripe wouldn't need to become the seller.
 - Set up BIMI so the logo shows in mail apps
@@ -159,3 +177,13 @@ Smaller gaps:
 - Business profiles: photo gallery and social links
 - Offer types beyond a discount
 - Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate
+
+## AI Video Social Media Workflow
+
+A simple workflow:
+
+Idea and script: ask an assistant like me for hooks and a 30–60 second script. The first 2 seconds matter most.
+Visuals: film yourself, generate clips (Veo, Kling or Runway), or use an avatar.
+Voice: your own, or an AI voice from ElevenLabs.
+Edit: CapCut is free and built for TikTok and Reels. Add auto-captions, since most people watch muted, plus trending audio.
+Post natively to each platform. TikTok, Instagram and YouTube all ask you to label realistic AI-generated content, so turn on the AI label when it applies.
