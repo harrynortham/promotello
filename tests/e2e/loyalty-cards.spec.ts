@@ -40,11 +40,39 @@ test("business sets up a loyalty card, customer joins, staff stamp it", async ({
     await expect(customer.getByText("1 of 5 stamps")).toBeVisible();
 });
 
-test("Free businesses are offered loyalty cards as part of Pro", async ({ browser }) => {
+test("a Free business can build a loyalty card, but publishing it needs Pro", async ({ browser }) => {
     const { freeBusinessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
 
     await page.goto(`/business/${freeBusinessId}/loyalty`);
-    await expect(page.getByText("Turn first visits into regulars")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Start free trial" })).toBeVisible();
+
+    // The card is the thing being sold, so the editor is open to everyone:
+    // a Free business can design one and see what it looks like.
+    await expect(page.getByRole("heading", { name: "Reward your regulars" })).toBeVisible();
+    await expect(page.locator("#stamps-required:visible")).toBeVisible();
+    await expect(page.locator("#reward:visible")).toBeVisible();
+
+    // Putting it in front of customers is what Pro buys.
+    await expect(page.getByText(/pro feature/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start free trial to publish" })).toBeVisible();
+});
+
+test("a visitor who isn't signed in is offered the card, not a form", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/businesses/${businessId}`);
+    const loyalty = page.locator("#loyalty");
+    await expect(loyalty).toBeVisible();
+
+    // The panel's job is to make the offer. Opening with two input boxes and
+    // a "Log in" link shouts louder than the thing being offered, and asks
+    // for an email address before anyone has said they want a card.
+    await expect(loyalty.locator("input[name=name], input[name=email]")).toHaveCount(0);
+    await expect(loyalty.getByRole("link", { name: "Log in" })).toHaveCount(0);
+
+    // Saying yes is what asks for the details.
+    await loyalty.getByRole("button", { name: "Get my card" }).click();
+    await expect(loyalty.locator("input[name=name]")).toBeFocused();
+    await expect(loyalty.locator("input[name=email]")).toBeVisible();
+    await expect(loyalty.getByRole("link", { name: "Log in" })).toBeVisible();
 });
