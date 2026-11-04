@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RememberCity } from "@/components/remember-city";
 import { areaPath, cityPhotos, getLiveCities, type Place } from "@/lib/cities";
 import { topLevelFor } from "@/lib/categories";
-import { getCategories, getLiveOffers, getPublicBusinesses } from "@/lib/listings";
+import { areaPhoto, getCategories, getLiveOffers, getPublicBusinesses } from "@/lib/listings";
 import { absoluteUrl, jsonLd, truncate } from "@/lib/site";
 import { businessPath } from "@/lib/slugs";
 import { SelectedArea } from "../../explore-listing";
@@ -109,6 +109,9 @@ async function AreaContent({ params }: PageProps) {
     const { place, name } = found;
     const { offers, businesses, allBusinesses, groups } = await areaListings(place, name);
     const photos = cityPhotos(place);
+    // The city's photo is the same on all 29 of its area pages, so a picture
+    // from this neighbourhood is used where there is one.
+    const backdrop = areaPhoto(businesses) ?? photos.feature;
     const cityPath = `/explore/${place.slug}`;
     const pageUrl = absoluteUrl(areaPath(place, name)!);
 
@@ -153,7 +156,16 @@ async function AreaContent({ params }: PageProps) {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }} />
 
             <section className="relative isolate overflow-hidden bg-[#17233B]">
-                <Image src={photos.feature} alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-35" />
+                <Image src={backdrop} alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-70" />
+
+                {/* A photo from a neighbourhood can be any brightness, so the
+                    words get their own dark ground rather than relying on the
+                    picture being dark enough. The photo still reads on the
+                    right, where nothing is written. */}
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-0 -z-10 bg-gradient-to-r from-[#17233B] via-[#17233B]/80 to-transparent"
+                />
 
                 <div className="mx-auto max-w-7xl px-6 py-14 sm:px-10 sm:py-20">
                     <Link href={cityPath} className="inline-flex items-center gap-1.5 text-sm font-medium text-white/75 hover:text-white">

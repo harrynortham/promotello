@@ -239,6 +239,20 @@ export function interleaveByCity<T>(items: T[], cityOf: (item: T) => string | nu
     return mixed;
 }
 
+// A picture to stand for a neighbourhood, taken from a business that is in
+// it. Without one, every area page falls back to the city's own photo and
+// they all look identical.
+//
+// The longest-standing business is used rather than the newest, so the
+// backdrop doesn't change each time someone new joins the street.
+// ListingBusiness.coverImageUrl already falls back to a business's newest
+// offer photo, so this finds one whether or not covers have been uploaded.
+export function areaPhoto(businesses: ListingBusiness[]) {
+    return [...businesses]
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .find((business) => business.coverImageUrl)?.coverImageUrl ?? null;
+}
+
 // Live offer count per top-level category slug.
 export function offerCountsByCategory(offers: ListingOffer[], groups: CategoryGroup[]) {
     const counts: Record<string, number> = {};

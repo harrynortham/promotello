@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import type { CategoryGroup } from "@/lib/categories";
 import {
+    areaPhoto,
     areasFrom,
     citiesWithArea,
     filterBusinesses,
@@ -203,4 +204,28 @@ test("listings with no city still come back", () => {
     const offers = [offer(nowhere, { id: "a" }), offer(places.bathCentre, { id: "b" })];
 
     assert.equal(interleaveByCity(offers, (item) => item.business.cityId).length, 2);
+});
+
+test("a neighbourhood borrows its picture from a business in it", () => {
+    const shops = [
+        business(places.bristolClifton, { id: "newest", createdAt: "2026-03-01T00:00:00.000Z", coverImageUrl: "/new.jpg" }),
+        business(places.bristolClifton, { id: "oldest", createdAt: "2026-01-01T00:00:00.000Z", coverImageUrl: "/old.jpg" }),
+    ];
+
+    // The longest-standing one, so a new arrival doesn't change the page.
+    assert.equal(areaPhoto(shops), "/old.jpg");
+});
+
+test("a business with no picture is passed over, not treated as the answer", () => {
+    const shops = [
+        business(places.bristolClifton, { id: "oldest", createdAt: "2026-01-01T00:00:00.000Z", coverImageUrl: null }),
+        business(places.bristolClifton, { id: "newer", createdAt: "2026-02-01T00:00:00.000Z", coverImageUrl: "/has-one.jpg" }),
+    ];
+
+    assert.equal(areaPhoto(shops), "/has-one.jpg");
+});
+
+test("a neighbourhood with nothing to show says so, and the caller falls back", () => {
+    assert.equal(areaPhoto([]), null);
+    assert.equal(areaPhoto([business(places.bristolClifton, { coverImageUrl: null })]), null);
 });

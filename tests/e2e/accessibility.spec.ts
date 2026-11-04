@@ -54,7 +54,10 @@ async function expectAccessible(page: Page, path: string) {
 }
 
 test.describe("signed out", () => {
-    for (const path of ["/", "/offers", "/explore/bristol", "/login", "/signup", "/business", "/business/pricing", "/business/register", "/blog", "/blog/how-to-get-more-repeat-customers"]) {
+    // /explore/bristol/clifton is here because a neighbourhood page draws its
+    // own backdrop from a business in it, so the contrast behind the heading
+    // depends on a photo nobody picked for that job.
+    for (const path of ["/", "/offers", "/explore/bristol", "/explore/bristol/clifton", "/login", "/signup", "/business", "/business/pricing", "/business/register", "/blog", "/blog/how-to-get-more-repeat-customers"]) {
         test(`${path} is accessible`, async ({ page }) => expectAccessible(page, path));
     }
 
