@@ -24,10 +24,10 @@ export function CoverBackLink({ href, label, city }: { href: string; label: stri
     );
 }
 
-// The old full-width banner explained what an example business is. As a pill
-// there is no room for that, so the explanation moves into a popover a touch
-// device can open — a title attribute alone would never be reachable.
-export function CoverExampleBadge() {
+// The old full-width banner explained what an example is. As a pill there is
+// no room for that, so the explanation moves into a popover a touch device
+// can open — a title attribute alone would never be reachable.
+export function CoverExampleBadge({ what = "business" }: { what?: "business" | "offer" }) {
     return (
         <Popover.Root>
             <Popover.Trigger
@@ -39,8 +39,9 @@ export function CoverExampleBadge() {
             <Popover.Portal>
                 <Popover.Positioner side="bottom" align="end" sideOffset={8} className="z-50">
                     <Popover.Popup className="max-w-xs rounded-2xl border border-[#17233B]/10 bg-white p-4 text-sm leading-6 text-[#17233B] shadow-lg">
-                        This is an example business, to show how Promotello works. It isn&apos;t real, so
-                        its offers can&apos;t be claimed.
+                        {what === "business"
+                            ? "This is an example business, to show how Promotello works. It isn't real, so its offers can't be claimed."
+                            : "This is an example offer, to show how Promotello works. The business isn't real, so it can't be claimed."}
                     </Popover.Popup>
                 </Popover.Positioner>
             </Popover.Portal>
