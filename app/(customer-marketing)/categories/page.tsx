@@ -5,15 +5,18 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { FiArrowRight } from "react-icons/fi";
 
+import { LocationSearch } from "@/components/location-search";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CityNotice, VisitorLoading } from "@/components/visitor-city";
 import { isInCategory } from "@/lib/categories";
-import { placeName } from "@/lib/cities";
+import { getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
 import {
     categoryImage,
     getCategories,
     getLiveOffers,
     offerCountsByCategory,
 } from "@/lib/listings";
+import { getVisitorContext } from "@/lib/visitor";
 
 export const metadata: Metadata = {
     title: "Categories",
@@ -32,11 +35,13 @@ function CategoriesLoading() {
     );
 }
 
-async function CategoryGrid() {
+async function CategoryGrid({ city }: { city: City | null }) {
     await connection();
 
-    const [groups, offers] = await Promise.all([getCategories(), getLiveOffers()]);
+    const [groups, offers] = await Promise.all([getCategories(), getLiveOffers(city?.id)]);
     const counts = offerCountsByCategory(offers, groups);
+    // Keeps the visitor in their city as they go deeper.
+    const suffix = city ? `/${city.slug}` : "";
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -63,7 +68,7 @@ async function CategoryGrid() {
 
                             <div className="absolute bottom-0 left-0 flex w-full items-end justify-between gap-4 p-6 text-white">
                                 <h2 className="text-3xl font-semibold tracking-tight">
-                                    <Link href={`/categories/${group.slug}`} className="hover:underline">
+                                    <Link href={`/categories/${group.slug}${suffix}`} className="hover:underline">
                                         {group.name}
                                     </Link>
                                 </h2>
@@ -77,7 +82,7 @@ async function CategoryGrid() {
                         {/* The whole tile opens the category. The name above is the
                             link for keyboards and screen readers. */}
                         <Link
-                            href={`/categories/${group.slug}`}
+                            href={`/categories/${group.slug}${suffix}`}
                             aria-hidden="true"
                             tabIndex={-1}
                             className="absolute inset-0"
@@ -95,7 +100,7 @@ async function CategoryGrid() {
                                     return (
                                         <Link
                                             key={sub.id}
-                                            href={`/categories/${sub.slug}`}
+                                            href={`/categories/${sub.slug}${suffix}`}
                                             className={`rounded-full border px-3 py-1.5 text-sm transition ${active
                                                 ? "border-[#17233B]/15 bg-[#FFF8F0] text-[#17233B] hover:border-[#FF593F] hover:text-[#FF593F]"
                                                 : "border-transparent bg-[#17233B]/[0.04] text-[#17233B]/65 hover:text-[#17233B]"
@@ -119,8 +124,8 @@ async function CategoryGrid() {
     );
 }
 
-export default async function CategoriesPage() {
-    const place = await placeName(null);
+async function Categories({ city }: { city: City | null }) {
+    const [place, places, oneCity] = await Promise.all([placeName(city), getLiveCities(), placeIsOneCity(city)]);
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
@@ -135,15 +140,41 @@ export default async function CategoriesPage() {
 
                 <p className="mx-auto mt-5 max-w-2xl text-lg text-[#17233B]/65">
                     From a morning coffee to a night away, explore offers from
-                    {place}&apos;s independent businesses by the things you enjoy.
+                    independent businesses{oneCity ? ` in ${place}` : ""} by the things you enjoy.
                 </p>
+
+                {places.length > 1 && (
+                    <div className="mx-auto mt-8 max-w-md text-left">
+                        <LocationSearch places={places} basePath="/offers" current={city} size="lg" />
+                    </div>
+                )}
             </section>
 
             <section className="mx-auto max-w-7xl px-6 sm:px-10">
                 <Suspense fallback={<CategoriesLoading />}>
-                    <CategoryGrid />
+                    <CategoryGrid city={city} />
                 </Suspense>
             </section>
         </main>
+    );
+}
+
+// The categories in the visitor's city: their choice, or where they are.
+async function VisitorCategories() {
+    const visitor = await getVisitorContext();
+
+    return (
+        <>
+            <CityNotice visitor={visitor} basePath="/offers" />
+            <Categories city={visitor.city} />
+        </>
+    );
+}
+
+export default function CategoriesPage() {
+    return (
+        <Suspense fallback={<VisitorLoading />}>
+            <VisitorCategories />
+        </Suspense>
     );
 }

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { RememberCity } from "@/components/remember-city";
 import { getLiveCity } from "@/lib/cities";
 import { CategoryContent, CategoryLoading, categoryMetadata } from "../category-content";
 
@@ -26,7 +27,12 @@ async function CityCategory({ params, searchParams }: PageProps) {
         notFound();
     }
 
-    return <CategoryContent slug={slug} city={city} searchParams={searchParams} />;
+    return (
+        <>
+            <RememberCity slug={city.slug} />
+            <CategoryContent slug={slug} city={city} searchParams={searchParams} />
+        </>
+    );
 }
 
 // A category or subcategory in one city, e.g. /categories/food-drink/bristol

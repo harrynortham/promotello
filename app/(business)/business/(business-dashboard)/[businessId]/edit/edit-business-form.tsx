@@ -278,6 +278,8 @@ function BusinessForm({
         categoryId: draft.category ?? null,
         categoryName: categoryNames.get(draft.category ?? "") ?? business.category ?? "",
         area: draft.region?.trim() || draft.city?.trim() || null,
+        areaId: null,
+        city: draft.city?.trim() || null,
         cityId: null,
         createdAt: new Date().toISOString(),
         offerCount: 0,
@@ -690,7 +692,7 @@ function BusinessForm({
                 </Card>
 
                     <aside className="lg:sticky lg:top-8">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/60">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                             How customers see you
                         </p>
 
@@ -699,7 +701,7 @@ function BusinessForm({
                             <BusinessCard business={preview} />
                         </div>
 
-                        <p className="mt-3 text-xs leading-5 text-[#17233B]/60">
+                        <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
                             Your card in the Promotello directory. It updates as
                             you type; the logo and cover photo save on their own
                             pages.

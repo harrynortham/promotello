@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { FiArrowRight } from "react-icons/fi";
 
 import { BusinessCard } from "@/components/business-card";
@@ -15,10 +16,12 @@ import { FilterDrawer } from "@/components/filter-drawer";
 import { LocationSearch } from "@/components/location-search";
 import { SearchLauncher } from "@/components/search-launcher";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getLiveCities, placeName, type City, type Place } from "@/lib/cities";
+import { getLiveCities, placeIsOneCity, placeName, type City, type Place } from "@/lib/cities";
 import {
     areasFrom,
+    citiesWithArea,
     filterBusinesses,
+    interleaveByCity,
     getCategories,
     getPublicBusinesses,
 } from "@/lib/listings";
@@ -62,11 +65,33 @@ async function Directory({ city, searchParams }: ListingProps) {
 
     const base = city ? `/businesses/${city.slug}` : "/businesses";
     const params = await searchParams;
-    const [groups, businesses, place] = await Promise.all([getCategories(), getPublicBusinesses(city?.id), placeName(city)]);
+    const [groups, businesses, place, places] = await Promise.all([
+        getCategories(),
+        getPublicBusinesses(city?.id),
+        placeName(city),
+        getLiveCities(),
+    ]);
 
-    const results = filterBusinesses(businesses, groups, params)
+    // An area belongs to one city. When this isn't the city that has it — a
+    // shared link, or a city remembered from an earlier visit — send them to
+    // the city that does, rather than showing them an empty list.
+    if (params.area && !(city && businesses.some((business) => business.area === params.area))) {
+        const everywhere = city ? await getPublicBusinesses() : businesses;
+        const owners = citiesWithArea(everywhere, params.area);
+        const owner = owners.length === 1 ? places.find((item) => item.id === owners[0]) : null;
+
+        if (owner && owner.id !== city?.id) {
+            redirect(hrefWith(`/businesses/${owner.slug}`, params, {}));
+        }
+    }
+
+    const found = filterBusinesses(businesses, groups, params)
         // Businesses with live offers first, then newest.
         .sort((a, b) => Number(b.offerCount > 0) - Number(a.offerCount > 0) || b.createdAt.localeCompare(a.createdAt));
+
+    // Across cities, one from each in turn, so the newest city doesn't take
+    // the whole first screen.
+    const results = city ? found : interleaveByCity(found, (business) => business.cityId);
 
     const areas = areasFrom(businesses);
     const hasFilters = Boolean(params.search || params.category || params.area);
@@ -75,7 +100,9 @@ async function Directory({ city, searchParams }: ListingProps) {
         <>
             <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                 {/* Areas live in a drawer behind Filter, not a second row of pills. */}
-                {areas.length > 1 && (
+                {/* An area belongs to a city, so areas are only offered once a
+                    city is chosen; before that the choice is which city. */}
+                {city && areas.length > 1 && (
                     <FilterDrawer
                         sections={[
                             {
@@ -86,6 +113,24 @@ async function Directory({ city, searchParams }: ListingProps) {
                                         label: area.name,
                                         href: hrefWith(base, params, { area: area.name }),
                                         active: params.area === area.name,
+                                    })),
+                                ],
+                            },
+                        ]}
+                    />
+                )}
+
+                {!city && places.length > 1 && (
+                    <FilterDrawer
+                        sections={[
+                            {
+                                title: "Location",
+                                options: [
+                                    { label: "Everywhere", href: hrefWith("/businesses", params, { area: null }), active: true },
+                                    ...places.map((item) => ({
+                                        label: item.name,
+                                        href: hrefWith(`/businesses/${item.slug}`, params, { area: null }),
+                                        active: false,
                                     })),
                                 ],
                             },
@@ -126,7 +171,7 @@ async function Directory({ city, searchParams }: ListingProps) {
                 ) : (
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                         {results.map((business) => (
-                            <BusinessCard key={business.id} business={business} />
+                            <BusinessCard key={business.id} business={business} showCity={!city} />
                         ))}
                     </div>
                 )}
@@ -137,13 +182,18 @@ async function Directory({ city, searchParams }: ListingProps) {
 
 // The phone search pill: what's being searched, and where, at a glance.
 async function DirectoryLauncher({ city, searchParams, places }: ListingProps & { places: Place[] }) {
-    const [params, groups, place] = await Promise.all([searchParams, getCategories(), placeName(city)]);
+    const [params, groups, place, oneCity] = await Promise.all([
+        searchParams,
+        getCategories(),
+        placeName(city),
+        placeIsOneCity(city),
+    ]);
     const category = groups.find((group) => group.slug === params.category);
 
     return (
         <SearchLauncher
             title={params.search ? `\u201c${params.search}\u201d` : "Search businesses"}
-            summary={`${place} · ${category?.name ?? "Any category"}`}
+            summary={`${oneCity ? place : "Everywhere"} · ${category?.name ?? "Any category"}`}
             heading="Search businesses"
         >
             <div>
@@ -173,7 +223,7 @@ async function DirectorySearch({ city, searchParams }: ListingProps) {
 }
 
 export async function BusinessesListing({ city, searchParams }: ListingProps) {
-    const [place, places] = await Promise.all([placeName(city), getLiveCities()]);
+    const [place, places, oneCity] = await Promise.all([placeName(city), getLiveCities(), placeIsOneCity(city)]);
 
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
@@ -186,12 +236,12 @@ export async function BusinessesListing({ city, searchParams }: ListingProps) {
                         </p>
 
                         <h1 className="text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
-                            {place}&apos;s independents
+                            {oneCity ? `${place}'s independents` : "Independent businesses"}
                         </h1>
 
                         <p className="mt-3 hidden max-w-2xl text-lg text-[#17233B]/65 sm:block">
                             Cafés, shops, studios and stays run by people who
-                            live and work in the city.
+                            live and work {oneCity ? "in the city" : "nearby"}.
                         </p>
 
                         <div className="mt-4 sm:hidden">

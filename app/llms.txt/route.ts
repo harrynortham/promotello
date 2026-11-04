@@ -1,6 +1,6 @@
 import { FOUNDING_MEMBER_LIMIT, FREE_LIVE_OFFER_LIMIT, TRIAL_DAYS, plans } from "@/lib/billing";
 import { getPosts } from "@/lib/blog";
-import { getLiveCities } from "@/lib/cities";
+import { getLiveCities, listPlaces } from "@/lib/cities";
 import { absoluteUrl } from "@/lib/site";
 
 // A plain-text guide to Promotello for AI assistants and LLM-powered search
@@ -14,7 +14,7 @@ export async function GET() {
 
     const text = `# Promotello
 
-> Promotello is a loyalty card, offers and QR poster platform for independent businesses in the UK${cityNames.length ? `, live in ${cityNames.join(", ")}` : ""}. Businesses use it to turn first-time visitors into regulars: customers keep a digital stamp card on their phone (no app to download), claim offers, and follow businesses for new-offer emails. Customers find businesses in a local directory.
+> Promotello is a loyalty card, offers and QR poster platform for independent businesses in the UK${cityNames.length ? `, live in ${listPlaces(cityNames)}` : ""}. Businesses use it to turn first-time visitors into regulars: customers keep a digital stamp card on their phone (no app to download), claim offers, and follow businesses for new-offer emails. Customers find businesses in a local directory.
 
 Promotello is for independent cafés, bakeries, restaurants, pubs, barbers, hair and beauty salons, gyms and studios, and independent shops. Staff stamp loyalty cards and redeem vouchers by scanning a QR code with their phone camera, so there's no card reader or till integration.
 

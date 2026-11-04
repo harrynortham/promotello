@@ -22,8 +22,10 @@ import {
     getCategories,
     getLiveOffers,
     getPublicBusinesses,
+    interleaveByCity,
 } from "@/lib/listings";
-import { placeName, type City } from "@/lib/cities";
+import { getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
+import { LocationSearch } from "@/components/location-search";
 
 type PageProps = {
     params: Promise<{ slug: string }>;
@@ -118,11 +120,13 @@ export async function CategoryContent({
     const offersBase = city ? `/offers/${city.slug}` : "/offers";
     const businessesBase = city ? `/businesses/${city.slug}` : "/businesses";
     const { sub } = await searchParams;
-    const [groups, offers, businesses, place] = await Promise.all([
+    const [groups, offers, businesses, place, places, oneCity] = await Promise.all([
         getCategories(),
         getLiveOffers(city?.id),
         getPublicBusinesses(city?.id),
         placeName(city),
+        getLiveCities(),
+        placeIsOneCity(city),
     ]);
 
     // Old ?sub= links go to the subcategory's own page.
@@ -138,8 +142,19 @@ export async function CategoryContent({
 
     const { group, subcategory } = found;
     const filterSlug = subcategory?.slug ?? group.slug;
-    const categoryOffers = filterOffers(offers, groups, { category: filterSlug });
-    const categoryBusinesses = filterBusinesses(businesses, groups, { category: filterSlug });
+    // Across cities, one from each in turn, so the newest city doesn't take
+    // the whole first screen.
+    const mix = <T,>(items: T[], cityOf: (item: T) => string | null) =>
+        city ? items : interleaveByCity(items, cityOf);
+
+    const categoryOffers = mix(
+        filterOffers(offers, groups, { category: filterSlug }),
+        (offer) => offer.business.cityId,
+    );
+    const categoryBusinesses = mix(
+        filterBusinesses(businesses, groups, { category: filterSlug }),
+        (business) => business.cityId,
+    );
     const path = categoryPath(group.slug, city);
 
     return (
@@ -166,12 +181,14 @@ export async function CategoryContent({
                         </Link>
 
                         <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-                            {subcategory ? `${subcategory.name} in ${place}` : group.name}
+                            {oneCity
+                                ? `${subcategory?.name ?? group.name} in ${place}`
+                                : (subcategory?.name ?? group.name)}
                         </h1>
 
                         <p className="mt-4 text-lg leading-8 text-white/80">
                             {subcategory
-                                ? `${subcategory.name} offers from independent businesses across ${place}.`
+                                ? `${subcategory.name} offers from independent businesses${oneCity ? ` across ${place}` : ""}.`
                                 : group.description}
                         </p>
 
@@ -181,6 +198,17 @@ export async function CategoryContent({
                             <span className="font-semibold text-white">{categoryBusinesses.length}</span>{" "}
                             {categoryBusinesses.length === 1 ? "business" : "businesses"}
                         </p>
+
+                        {places.length > 1 && (
+                            <div className="mt-6 max-w-xs">
+                                <LocationSearch
+                                    places={places}
+                                    basePath={`/categories/${filterSlug}`}
+                                    current={city}
+                                    citiesOnly
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -29,6 +29,7 @@ import { createClient } from "@/utils/supabase/server";
 
 import RedeemButton from "./redeem-button";
 import { getLiveCity } from "@/lib/cities";
+import { RememberCity } from "@/components/remember-city";
 import { OffersListing, offersMetadata } from "../offers-listing";
 import { FollowButton } from "@/components/follow-button";
 import { ShareOfferButton } from "@/components/share-offer-button";
@@ -583,7 +584,12 @@ async function OfferOrCityListing({ params, searchParams }: OfferPageProps & { s
     const city = await getLiveCity((await params).slug);
 
     if (city) {
-        return <OffersListing city={city} searchParams={searchParams} />;
+        return (
+            <>
+                <RememberCity slug={city.slug} />
+                <OffersListing city={city} searchParams={searchParams} />
+            </>
+        );
     }
 
     return <OfferContent params={params} />;

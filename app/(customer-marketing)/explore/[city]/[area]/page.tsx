@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { RememberCity } from "@/components/remember-city";
 import { areaPath, cityPhotos, getLiveCities, type Place } from "@/lib/cities";
 import { topLevelFor } from "@/lib/categories";
 import { getCategories, getLiveOffers, getPublicBusinesses } from "@/lib/listings";
@@ -148,6 +149,7 @@ async function AreaContent({ params }: PageProps) {
 
     return (
         <>
+            <RememberCity slug={place.slug} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }} />
 
             <section className="relative isolate overflow-hidden bg-[#17233B]">

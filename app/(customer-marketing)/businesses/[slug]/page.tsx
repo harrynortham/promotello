@@ -42,6 +42,7 @@ import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
+import { RememberCity } from "@/components/remember-city";
 import { businessPath, canonicalPath, offerPath } from "@/lib/slugs";
 import { BusinessesListing, businessesMetadata } from "../businesses-listing";
 
@@ -887,10 +888,13 @@ async function BusinessOrCityListing({ params, searchParams }: BusinessPageProps
 
     if (city) {
         return (
-            <BusinessesListing
-                city={city}
-                searchParams={(searchParams ?? Promise.resolve({})) as Promise<Record<string, string>>}
-            />
+            <>
+                <RememberCity slug={city.slug} />
+                <BusinessesListing
+                    city={city}
+                    searchParams={(searchParams ?? Promise.resolve({})) as Promise<Record<string, string>>}
+                />
+            </>
         );
     }
 

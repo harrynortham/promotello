@@ -60,6 +60,8 @@ const listing = {
     categoryId: null,
     categoryName: "Cafés & coffee",
     area: "Harbourside",
+    areaId: null,
+    city: "Bristol",
     cityId: null,
     createdAt: new Date().toISOString(),
     offerCount: 2,

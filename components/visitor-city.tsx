@@ -1,27 +1,85 @@
+import Link from "next/link";
+
 import { CityInterestForm } from "@/components/city-interest-form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { placeName } from "@/lib/cities";
+import { getLiveCities, listPlaces } from "@/lib/cities";
 import type { VisitorContext } from "@/lib/visitor";
 
-// Shown to visitors outside every live city: what they're seeing instead,
-// and a way to hear when we launch near them.
-export async function NotHereYet({ visitor }: { visitor: VisitorContext }) {
-    if (!visitor.outsideTown) return null;
+// Shown above the listings when we don't know which city the visitor wants:
+// they're outside every live city, or we couldn't place them at all.
+//
+// With one city there is nothing to choose between, so the only thing worth
+// saying is that we aren't where they are. With several, which one they want
+// is the first thing to settle — a merged list of three cities is no use to
+// anyone, and the city that joined most recently would fill most of it.
+//
+// Someone who deliberately chose "Everywhere" is left alone: they asked for
+// this, and being nagged to pick a city would be rude.
+export async function CityNotice({ visitor, basePath }: { visitor: VisitorContext; basePath: string }) {
+    if (visitor.city || visitor.source === "chosen") return null;
+
+    const cities = await getLiveCities();
+
+    if (cities.length === 0) return null;
 
     const town = visitor.outsideTown;
-    const place = await placeName(null);
+    const places = listPlaces(cities.map((city) => city.name));
 
-    return (
-        <aside
-            aria-label="Promotello near you"
-            className="border-b border-[#FF593F]/20 bg-[#FF593F]/10 text-[#17233B]"
-        >
-            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-4 sm:px-10 lg:flex-row lg:items-center lg:justify-between">
+    if (cities.length === 1) {
+        // Nothing to pick from, and nothing to say to someone we can't place.
+        if (!town) return null;
+
+        return (
+            <Notice label="Promotello near you">
                 <p className="text-sm">
-                    <strong>Promotello isn&apos;t in {town} yet</strong>, so you&apos;re seeing {place}.
+                    <strong>Promotello isn&apos;t in {town} yet</strong>, so you&apos;re seeing {places}.
                     Want to know when we arrive?
                 </p>
                 <CityInterestForm town={town} />
+            </Notice>
+        );
+    }
+
+    return (
+        <Notice label={town ? "Promotello near you" : "Choose a city"}>
+            <div className="min-w-0">
+                <p className="text-sm">
+                    {town ? (
+                        <>
+                            <strong>Promotello isn&apos;t in {town} yet.</strong> We&apos;re in {places} —
+                            pick one to look around.
+                        </>
+                    ) : (
+                        <>
+                            <strong>Where are you?</strong> Promotello is in {places}.
+                            Pick one to see what&apos;s near you.
+                        </>
+                    )}
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                    {cities.map((city) => (
+                        <Link
+                            key={city.id}
+                            href={`${basePath}/${city.slug}`}
+                            className="inline-flex min-h-9 items-center rounded-full bg-white px-4 text-sm font-medium text-[#17233B] shadow-sm ring-1 ring-[#17233B]/10 transition hover:ring-[#FF593F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
+                        >
+                            {city.name}
+                        </Link>
+                    ))}
+                </div>
+            </div>
+
+            {town && <CityInterestForm town={town} />}
+        </Notice>
+    );
+}
+
+function Notice({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <aside aria-label={label} className="border-b border-[#FF593F]/20 bg-[#FF593F]/10 text-[#17233B]">
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-4 sm:px-10 lg:flex-row lg:items-center lg:justify-between">
+                {children}
             </div>
         </aside>
     );

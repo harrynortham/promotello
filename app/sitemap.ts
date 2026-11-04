@@ -110,12 +110,15 @@ async function landingPaths() {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connection();
 
-    const [{ businesses, offers }, cities, landings, posts] = await Promise.all([
+    const [{ businesses, offers }, cities, landings, posts, listed] = await Promise.all([
         getPublicListings(),
         getLiveCities(),
         landingPaths(),
         getPosts(),
+        getPublicBusinesses(),
     ]);
+
+    const citiesWithContent = new Set(listed.map((business) => business.cityId));
 
     return [
         { url: absoluteUrl("/blog"), changeFrequency: "weekly" as const, priority: 0.7 },
@@ -135,8 +138,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: "weekly" as const,
             priority: 0.6,
         })),
+        // Only cities with something to show. A city switched on before its
+        // first business would otherwise put nine empty pages in front of
+        // search engines on its first day.
         ...cities.flatMap((city) =>
-            cityPaths(city.slug).map((path) => ({
+            (citiesWithContent.has(city.id) ? cityPaths(city.slug) : []).map((path) => ({
                 url: absoluteUrl(path),
                 changeFrequency: "weekly" as const,
                 priority: 0.6,

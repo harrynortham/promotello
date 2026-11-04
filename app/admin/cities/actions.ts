@@ -35,6 +35,8 @@ export async function addCity(formData: FormData) {
         is_live: false,
     });
 
+    updateTag("cities");
+
     redirect(error ? "/admin/cities?error=city" : "/admin/cities?saved=city");
 }
 

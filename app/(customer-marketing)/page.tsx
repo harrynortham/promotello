@@ -20,11 +20,12 @@ import {
     getCategories,
     getLiveOffers,
     getPublicBusinesses,
+    interleaveByCity,
     offerCountsByCategory,
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
-import { NotHereYet } from "@/components/visitor-city";
-import { areaPath, cityPhotosFor, getLiveCities, placeName, type City } from "@/lib/cities";
+import { CityNotice } from "@/components/visitor-city";
+import { areaPath, cityPhotosFor, getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
 import { getVisitorContext } from "@/lib/visitor";
 
 const steps = [
@@ -71,17 +72,35 @@ async function HomeListings({ city }: { city: City | null }) {
 
     const suffix = city ? `/${city.slug}` : "";
 
-    const areaHref = (name: string) => {
-        const cityId = businesses.find((business) => business.area === name)?.cityId;
-        const home = places.find((item) => item.id === cityId);
-        return (home && areaPath(home, name)) ?? `/explore${suffix}?area=${encodeURIComponent(name)}`;
-    };
-
     const counts = offerCountsByCategory(offers, groups);
-    const newest = offers.slice(0, 8);
+
+    // Across cities, take one from each in turn: everything is newest-first,
+    // so otherwise the city that joined last fills both strips. "Ending soon"
+    // keeps its own order, which is the point of it.
+    const mix = <T,>(items: T[], cityOf: (item: T) => string | null) =>
+        city ? items : interleaveByCity(items, cityOf);
+
+    const newest = mix(offers, (offer) => offer.business.cityId).slice(0, 8);
     const endingSoon = filterOffers(offers, groups, { sort: "ending-soon" }).slice(0, 4);
-    const featured = businesses.filter((business) => business.offerCount > 0).slice(0, 6);
-    const areas = areasFrom(businesses).slice(0, 10);
+    const featured = mix(
+        businesses.filter((business) => business.offerCount > 0),
+        (business) => business.cityId,
+    ).slice(0, 6);
+
+    // Inside a city, the places to explore are its neighbourhoods. Across
+    // every city they are the cities themselves: a list mixing Clifton with
+    // Larkhall doesn't tell anyone where either one is.
+    const destinations = city
+        ? areasFrom(businesses)
+            .slice(0, 10)
+            .map((area) => {
+                const home = places.find((item) => item.id === (area.cityId ?? city.id));
+                return {
+                    name: area.name,
+                    href: (home && areaPath(home, area.name)) ?? `/explore${suffix}?area=${encodeURIComponent(area.name)}`,
+                };
+            })
+        : places.map((item) => ({ name: item.name, href: `/explore/${item.slug}` }));
 
     return (
         <>
@@ -132,18 +151,19 @@ async function HomeListings({ city }: { city: City | null }) {
                                 imageUrl={offer.imageUrl}
                                 expiresAt={offer.expiresAt}
                                 area={offer.business.area}
+                                city={city ? null : offer.business.city}
                             />
                         ))}
                     </div>
                 </section>
             )}
 
-            {areas.length > 0 && (
+            {destinations.length > 0 && (
                 <section className="mx-auto mt-20 max-w-7xl px-6 sm:px-10">
                     <div className="grid overflow-hidden rounded-3xl bg-[#17233B] text-white lg:grid-cols-[1.1fr_0.9fr]">
                         <div className="p-8 sm:p-12">
                             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8A73]">
-                                Explore {place}
+                                {city ? `Explore ${place}` : "Choose where to look"}
                             </p>
 
                             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -151,17 +171,17 @@ async function HomeListings({ city }: { city: City | null }) {
                             </h2>
 
                             <p className="mt-4 max-w-lg text-white/70">
-                                See what independent businesses are offering in
-                                each part of {place}, from{" "}
-                                {areas.slice(0, 2).map((area) => area.name).join(" to ")}{" "}
-                                and beyond.
+                                {city
+                                    ? `See what independent businesses are offering in each part of ${place}.`
+                                    : `See what independent businesses are offering, ${destinations.length === 1 ? "in" : "city by city, across"} ${place}.`}
+
                             </p>
 
                             <div className="mt-8 flex flex-wrap gap-2">
-                                {areas.map((area) => (
+                                {destinations.map((area) => (
                                     <Link
-                                        key={area.name}
-                                        href={areaHref(area.name)}
+                                        key={area.href}
+                                        href={area.href}
                                         className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
                                     >
                                         <FiMapPin aria-hidden="true" className="size-3.5" />
@@ -208,6 +228,7 @@ async function HomeListings({ city }: { city: City | null }) {
                                 imageUrl={offer.imageUrl}
                                 expiresAt={offer.expiresAt}
                                 area={offer.business.area}
+                                city={city ? null : offer.business.city}
                             />
                         ))}
                     </div>
@@ -225,7 +246,7 @@ async function HomeListings({ city }: { city: City | null }) {
 
                     <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                         {featured.map((business) => (
-                            <BusinessCard key={business.id} business={business} />
+                            <BusinessCard key={business.id} business={business} showCity={!city} />
                         ))}
                     </div>
                 </section>
@@ -237,10 +258,11 @@ async function HomeListings({ city }: { city: City | null }) {
 async function HeroStats({ city }: { city: City | null }) {
     await connection();
 
-    const [offers, businesses, place] = await Promise.all([
+    const [offers, businesses, place, oneCity] = await Promise.all([
         getLiveOffers(city?.id),
         getPublicBusinesses(city?.id),
         placeName(city),
+        placeIsOneCity(city),
     ]);
 
     if (offers.length === 0) {
@@ -253,8 +275,8 @@ async function HeroStats({ city }: { city: City | null }) {
             from{" "}
             <span className="font-semibold text-white">
                 {businesses.length} independent businesses
-            </span>{" "}
-            across {place}
+            </span>
+            {oneCity ? ` across ${place}` : ""}
         </p>
     );
 }
@@ -263,15 +285,16 @@ async function HeroStats({ city }: { city: City | null }) {
 // they are. Elsewhere, every live city with a "not here yet" note.
 async function VisitorHome() {
     const visitor = await getVisitorContext();
-    const [place, places, photos] = await Promise.all([
+    const [place, places, photos, oneCity] = await Promise.all([
         placeName(visitor.city),
         getLiveCities(),
         cityPhotosFor(visitor.city),
+        placeIsOneCity(visitor.city),
     ]);
 
     return (
         <>
-            <NotHereYet visitor={visitor} />
+            <CityNotice visitor={visitor} basePath="/offers" />
 
             <section className="relative isolate overflow-hidden">
                 <Image
@@ -288,7 +311,7 @@ async function VisitorHome() {
                 <div className="mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32">
                     <div className="max-w-2xl md:max-w-[47rem]">
                         <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
-                            {place}&apos;s local offers, in one place
+                            {oneCity ? `${place}'s local offers, in one place` : "Local offers from independent businesses"}
                         </p>
 
                         <h1 className="mt-6 max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
