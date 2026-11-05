@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import { PAGE_SIZE } from "@/lib/listing-filters";
+import { BUSINESS_PAGE_SIZE, PAGE_SIZE } from "@/lib/listing-filters";
 
 // A listing shows a screenful at a time, and each press of Show more adds
 // another below it. The URL carries how much is showing, so the server
@@ -61,12 +61,24 @@ test("a nonsense ?show= still shows the first screenful", async ({ page }) => {
     );
 });
 
-test("a listing that fits on one screen says nothing about paging", async ({ page }) => {
+test("businesses come a screenful at a time too, a smaller one", async ({ page }) => {
     await page.goto("/businesses");
     await expect(page.locator('main [data-slot="business-card"]').first()).toBeVisible();
 
-    const total = await cardsOn(page, "business-card");
-    test.skip(total > PAGE_SIZE, "more businesses than a screenful now; the foot belongs here");
+    const foot = page.getByText(/Showing \d+ of \d+ businesses/);
 
-    await expect(page.getByText(/Showing \d+ of \d+ businesses/)).toHaveCount(0);
+    // Fewer businesses live than fill a screenful: nothing to page through,
+    // and the listing says nothing about how much of it you can see.
+    if ((await foot.count()) === 0) {
+        expect(await cardsOn(page, "business-card")).toBeLessThanOrEqual(BUSINESS_PAGE_SIZE);
+        return;
+    }
+
+    await expect(foot).toHaveText(new RegExp(`Showing ${BUSINESS_PAGE_SIZE} of \\d+ businesses`));
+    await expect.poll(() => cardsOn(page, "business-card")).toBe(BUSINESS_PAGE_SIZE);
+
+    // Its own screenful, not the offers one.
+    await page.getByRole("link", { name: /Show more businesses/ }).click();
+    await page.waitForURL(new RegExp(`show=${BUSINESS_PAGE_SIZE * 2}`));
+    await expect.poll(() => cardsOn(page, "business-card")).toBeGreaterThan(BUSINESS_PAGE_SIZE);
 });

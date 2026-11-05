@@ -23,6 +23,7 @@ import {
     citiesWithArea,
     filterBusinesses,
     interleaveByCity,
+    BUSINESS_PAGE_SIZE,
     getCategories,
     getPublicBusinesses,
     pageOf,
@@ -107,7 +108,7 @@ async function Directory({ city, searchParams }: ListingProps) {
     // Filters build on the current query, but never carry how far down the
     // list you had got: a different filter is a different list.
     const current = { ...params, show: undefined };
-    const page = pageOf(results, params.show);
+    const page = pageOf(results, params.show, BUSINESS_PAGE_SIZE);
 
     return (
         <>
@@ -195,6 +196,7 @@ async function Directory({ city, searchParams }: ListingProps) {
                 <ShowMore
                     shown={page.shown.length}
                     total={page.total}
+                    paged={page.paged}
                     nextHref={page.more ? hrefWith(base, current, { show: String(page.more) }) : null}
                     capped={page.capped}
                     noun="businesses"
