@@ -26,6 +26,12 @@ const ONE_YEAR = 60 * 60 * 24 * 365;
 
 // Google Analytics runs on the live site only (not previews or local
 // development), unless NEXT_PUBLIC_GA_MEASUREMENT_ID is set explicitly.
+//
+// Two settings on this property are promises the privacy policy makes and
+// the code can't see, confirmed on 5 November 2026: data retention is two
+// months, and Google Signals is off. Signals would make this advertising
+// as well as analytics, which is a different purpose and a different
+// question to ask. Check both before changing the property.
 const LIVE_GA_MEASUREMENT_ID = "G-J5SCQTSJTY";
 
 export const gaMeasurementId =
