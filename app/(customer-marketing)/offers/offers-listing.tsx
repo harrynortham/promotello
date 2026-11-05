@@ -266,6 +266,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                 <ShowMore
                     shown={page.shown.length}
                     total={page.total}
+                    paged={page.paged}
                     nextHref={page.more ? hrefWith(base, current, { show: String(page.more) }) : null}
                     capped={page.capped}
                     noun="offers"

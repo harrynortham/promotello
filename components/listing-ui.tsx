@@ -3,7 +3,6 @@ import Link from "next/link";
 import { FiArrowRight, FiChevronDown, FiSearch } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
-import { PAGE_SIZE } from "@/lib/listing-filters";
 
 // Small building blocks shared by the customer listing pages.
 
@@ -162,12 +161,15 @@ export function EmptyState({
 export function ShowMore({
     shown,
     total,
+    paged,
     nextHref,
     capped,
     noun,
 }: {
     shown: number;
     total: number;
+    // Whether the listing is longer than one screenful at all.
+    paged: boolean;
     // Where to see the next screenful, or null when this is all of them.
     nextHref: string | null;
     // More results than the page will render however often you press.
@@ -177,7 +179,7 @@ export function ShowMore({
 }) {
     // A listing that fits on one screenful says nothing; a longer one keeps
     // saying how much of it you have, including once you have all of it.
-    if (total <= PAGE_SIZE) {
+    if (!paged) {
         return null;
     }
 

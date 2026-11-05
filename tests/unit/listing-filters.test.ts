@@ -10,6 +10,7 @@ import {
     filterOffers,
     inArea,
     interleaveByCity,
+    BUSINESS_PAGE_SIZE,
     isInArea,
     MAX_PAGES,
     PAGE_SIZE,
@@ -279,4 +280,21 @@ test("pageOf asks for no more than there is", () => {
     assert.deepEqual(page.shown, items);
     assert.equal(page.more, null);
     assert.equal(page.capped, false);
+});
+
+test("pageOf counts in whatever screenful it is given", () => {
+    const items = Array.from({ length: 40 }, (_, index) => index);
+    const first = pageOf(items, undefined, BUSINESS_PAGE_SIZE);
+
+    assert.equal(first.shown.length, BUSINESS_PAGE_SIZE);
+    assert.equal(first.more, BUSINESS_PAGE_SIZE * 2);
+    assert.equal(first.paged, true);
+
+    // The next press adds one of its own screenfuls, not an offers-sized one.
+    const second = pageOf(items, String(first.more), BUSINESS_PAGE_SIZE);
+    assert.equal(second.shown.length, BUSINESS_PAGE_SIZE * 2);
+
+    // And a listing that fits says it is not paged.
+    assert.equal(pageOf(items.slice(0, 10), undefined, BUSINESS_PAGE_SIZE).paged, false);
+    assert.equal(pageOf(items.slice(0, 10), undefined, BUSINESS_PAGE_SIZE).more, null);
 });
