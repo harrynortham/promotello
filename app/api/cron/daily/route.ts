@@ -3,6 +3,7 @@ import { sendBusinessSignupReminders, sendLifecycleEmails } from "@/lib/business
 import { sendDailySummaries } from "@/lib/business-notifications";
 import { submitRecentPosts } from "@/lib/indexnow";
 import { sendMonthlyReports } from "@/lib/monthly-report";
+import { retryOfferAnnouncements } from "@/lib/new-offer-email";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Daily job (see vercel.json). Vercel sends CRON_SECRET as a bearer token.
@@ -21,6 +22,12 @@ export async function GET(request: Request) {
         return null;
     });
     const dailySummaries = await sendDailySummaries();
+    // After the day's own sends: if a quota was what stopped an
+    // announcement, today's quota shouldn't go on it before today's email.
+    const announcements = await retryOfferAnnouncements().catch((error) => {
+        console.error("Daily job: offer announcement retry failed", error);
+        return null;
+    });
     const { data: expiredPreviews } = await createAdminClient().rpc("delete_expired_business_previews");
     const indexNow = await submitRecentPosts().catch(() => ({ submitted: 0 }));
 
@@ -28,5 +35,5 @@ export async function GET(request: Request) {
     const ukDay = Number(new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone: "Europe/London" }).format(new Date()));
     const reports = ukDay === 1 ? await sendMonthlyReports() : null;
 
-    return Response.json({ automations, lifecycle, signupReminders, dailySummaries, expiredPreviews, indexNow, reports });
+    return Response.json({ automations, lifecycle, signupReminders, dailySummaries, announcements, expiredPreviews, indexNow, reports });
 }
