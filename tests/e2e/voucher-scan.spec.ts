@@ -38,9 +38,12 @@ test("staff scan a customer's voucher and mark it used once", async ({ browser }
     expect(claimError).toBeNull();
     const code = (claim as { redemption_code: string }).redemption_code;
 
-    // Their voucher shows a QR code for staff to scan.
+    // Their wallet lists it, and opening it shows the QR code for staff
+    // to scan. The list itself only carries the code and a way in.
     const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
     await customer.goto("/dashboard/redemptions");
+    await customer.getByRole("link", { name: /Show QR code/ }).first().click();
+    await customer.waitForURL(/\/dashboard\/redemptions\/[0-9a-f-]+$/);
     await expect(customer.getByRole("img", { name: "Voucher QR code for staff to scan" }).first()).toBeVisible();
 
     // Staff scan it: the QR opens /redeem/<code>.
