@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
-import { FiCheck, FiPlus } from "react-icons/fi";
+import { FiCheck, FiPlus, FiX } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetHeader,
     SheetTitle,
@@ -66,9 +67,9 @@ export function BusinessMobileNav({
             <SheetContent
                 side="right"
                 className="w-[min(22rem,90vw)]"
+                showCloseButton={false}
             >
-                {/* Right padding keeps the name clear of the close button. */}
-                <SheetHeader className="pr-12">
+                <SheetHeader className="flex-row items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
                         {businessLogoUrl ? (
                             <Image
@@ -91,6 +92,15 @@ export function BusinessMobileNav({
                             />
                         </div>
                     </div>
+
+                    {/* On the same line as the name, and the size of the
+                        button that opened it. */}
+                    <SheetClose
+                        aria-label="Close menu"
+                        className="-mr-1 flex size-10 shrink-0 items-center justify-center rounded-full text-[#17233B]/65 transition hover:bg-[#17233B]/5 hover:text-[#17233B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
+                    >
+                        <FiX aria-hidden="true" className="size-6" />
+                    </SheetClose>
                 </SheetHeader>
 
                 <div className="space-y-5 overflow-y-auto px-4 pb-6" onClick={closeOnLink}>
