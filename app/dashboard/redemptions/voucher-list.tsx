@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { FiArrowRight, FiClock, FiGift } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { FilterDrawer } from "@/components/filter-drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { timingLabel, type StatusedVoucher, type StatusFilter } from "./voucher-status";
@@ -28,7 +30,9 @@ export const statusPages: Record<StatusFilter, { label: string; href: string; em
     },
 };
 
-export function WalletHeader({ title, description }: { title: string; description: string }) {
+// `filter` is the Filter button, which sits beside the title where there is
+// room for it and under the description on a phone.
+export function WalletHeader({ title, description, filter }: { title: string; description: string; filter?: ReactNode }) {
     return (
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -37,52 +41,29 @@ export function WalletHeader({ title, description }: { title: string; descriptio
                 <p className="mt-2 max-w-xl text-[#17233B]/65">{description}</p>
             </div>
 
-            <Button size="lg" render={<Link href="/offers" />} nativeButton={false} variant="outline" className="w-fit shrink-0">
-                Find more offers
-                <FiArrowRight aria-hidden="true" />
-            </Button>
+            {/* Its own box, or the column stretches the button wide. */}
+            {filter && <div className="shrink-0 self-start sm:self-end">{filter}</div>}
         </div>
     );
 }
 
-export function VoucherTabs({ active, counts }: { active: StatusFilter | "all"; counts: Record<StatusFilter, number> }) {
-    const tabs = [
-        { key: "all", label: "All", href: "/dashboard/redemptions", count: null },
+// Which vouchers to show. The same Filter button as the offers and
+// businesses listings, rather than a row of pills: the customer area's own
+// row of pills sits right above this on a phone, and two rows of them read
+// as one confusing set.
+export function VoucherFilter({ active, counts }: { active: StatusFilter | "all"; counts: Record<StatusFilter, number> }) {
+    const options = [
+        // First is the default, which the Filter button reads as nothing chosen.
+        { label: "All vouchers", href: "/dashboard/redemptions", active: active === "all" },
         ...(Object.keys(statusPages) as StatusFilter[]).map((key) => ({
-            key,
             label: statusPages[key].label,
             href: statusPages[key].href,
+            active: active === key,
             count: counts[key],
         })),
     ];
 
-    return (
-        <nav aria-label="Vouchers" className="flex flex-wrap gap-2">
-            {tabs.map((tab) => {
-                const current = tab.key === active;
-
-                return (
-                    <Link
-                        key={tab.key}
-                        href={tab.href}
-                        aria-current={current ? "page" : undefined}
-                        className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                            current
-                                ? "border-[#17233B] bg-[#17233B] text-white"
-                                : "border-[#17233B]/15 bg-white text-[#17233B] hover:border-[#17233B]/40"
-                        }`}
-                    >
-                        {tab.label}
-                        {tab.count !== null && (
-                            <span className={`rounded-full px-2 py-0.5 text-xs ${current ? "bg-white/15" : "bg-[#17233B]/5"}`}>
-                                {tab.count}
-                            </span>
-                        )}
-                    </Link>
-                );
-            })}
-        </nav>
-    );
+    return <FilterDrawer sections={[{ title: "Show", options }]} description="Which of your vouchers to show." />;
 }
 
 export function CompactVoucher({ item }: { item: StatusedVoucher }) {
@@ -159,7 +140,6 @@ export function WalletLoading() {
     return (
         <section role="status" aria-label="Loading your vouchers" className="mx-auto max-w-6xl space-y-8">
             <Skeleton className="h-24 w-full max-w-md" />
-            <Skeleton className="h-10 w-full max-w-lg rounded-full" />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((item) => (
                     <Skeleton key={item} className="h-36 rounded-xl" />

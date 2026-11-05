@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 
-import { VoucherGrid, VoucherTabs, WalletEmpty, WalletError, WalletHeader, WalletLoading, statusPages } from "./voucher-list";
+import { VoucherFilter, VoucherGrid, WalletEmpty, WalletError, WalletHeader, WalletLoading, statusPages } from "./voucher-list";
 import type { StatusFilter } from "./voucher-status";
 import { getGroupedWallet } from "./wallet";
 
@@ -22,9 +22,11 @@ async function StatusVouchers({ status }: { status: StatusFilter }) {
 
     return (
         <section className="mx-auto max-w-6xl space-y-8 text-[#17233B]">
-            <WalletHeader title={page.label} description={descriptions[status]} />
-
-            <VoucherTabs active={status} counts={counts} />
+            <WalletHeader
+                title={page.label}
+                description={descriptions[status]}
+                filter={<VoucherFilter active={status} counts={counts} />}
+            />
 
             {error ? (
                 <WalletError />

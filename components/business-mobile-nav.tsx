@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
-import { FiCheck, FiGrid, FiPlus } from "react-icons/fi";
+import { FiCheck, FiPlus } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -153,19 +153,6 @@ export function BusinessMobileNav({
                     <Separator />
 
                     <div className="space-y-2">
-                        {/* With one business, the dashboard is its overview. */}
-                        {businesses.length > 1 && (
-                            <Button
-                                render={<Link href="/business/dashboard" />}
-                                nativeButton={false}
-                                variant="outline"
-                                className="w-full"
-                            >
-                                <FiGrid aria-hidden="true" />
-                                Go to dashboard
-                            </Button>
-                        )}
-
                         <Button
                             render={<Link href="/onboarding" />}
                             nativeButton={false}

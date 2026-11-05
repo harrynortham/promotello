@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { CUSTOMER_AUTH } from "../global-setup";
 
 // The filter choices live behind one pill rather than rows of them. Where
 // they open from depends on the room there is: up from the bottom on a
@@ -229,5 +230,38 @@ test.describe("searching a listing on a phone", () => {
                 .filter((m) => getComputedStyle(m).display !== "none")
                 .reduce((n, m) => n + m.querySelectorAll("article").length, 0));
         expect(showing, "only Clifton's businesses").toBeLessThan(5);
+    });
+});
+
+// The vouchers in the customer's wallet filter from the same panel. They
+// used to be a row of pills, which sat directly under the customer area's
+// own row of pills on a phone.
+test.describe("the vouchers page on a phone", () => {
+    test.use({
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+        storageState: CUSTOMER_AUTH,
+    });
+
+    test("filters from the panel, and says what is showing", async ({ page }) => {
+        await page.goto("/dashboard/redemptions");
+
+        // Nothing chosen: the button is the plain one.
+        const trigger = page.getByRole("button", { name: "Filter" });
+        await expect(trigger).toBeVisible();
+
+        await trigger.click();
+        await page.getByRole("link", { name: /^Used/ }).click();
+        await page.waitForURL("**/dashboard/redemptions/used");
+
+        await expect(page.getByRole("dialog")).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Used" })).toBeVisible();
+
+        // And back to everything.
+        await page.getByRole("button", { name: "Used" }).click();
+        await page.getByRole("link", { name: "All vouchers" }).click();
+        await page.waitForURL("**/dashboard/redemptions");
+        await expect(page.getByRole("button", { name: "Filter" })).toBeVisible();
     });
 });
