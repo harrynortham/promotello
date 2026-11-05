@@ -5,7 +5,7 @@ import { connection } from "next/server";
 import { FiArrowRight } from "react-icons/fi";
 
 
-import { VoucherGrid, VoucherTabs, WalletEmpty, WalletError, WalletHeader, WalletLoading, statusPages } from "./voucher-list";
+import { VoucherFilter, VoucherGrid, WalletEmpty, WalletError, WalletHeader, WalletLoading, statusPages } from "./voucher-list";
 import type { StatusedVoucher, StatusFilter } from "./voucher-status";
 import { getGroupedWallet } from "./wallet";
 
@@ -56,9 +56,8 @@ async function WalletOverview() {
             <WalletHeader
                 title="My vouchers"
                 description="Tap a voucher to show its QR code at the till. The ones ending soonest are first."
+                filter={<VoucherFilter active="all" counts={counts} />}
             />
-
-            <VoucherTabs active="all" counts={counts} />
 
             {error ? (
                 <WalletError />

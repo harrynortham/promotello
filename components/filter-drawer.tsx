@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/lib/use-media-query";
 
-export type FilterOption = { label: string; href: string; active: boolean };
+// A count is shown beside the label where the list has one to give,
+// such as how many vouchers are in each state.
+export type FilterOption = { label: string; href: string; active: boolean; count?: number };
 
 // Each section's first option is its default (all areas, newest first).
 export type FilterSection = { title: string; options: FilterOption[] };
@@ -58,7 +60,15 @@ function Choices({ sections, onChoose }: { sections: FilterSection[]; onChoose: 
                                         }`}
                                 >
                                     {option.label}
-                                    {option.active && <FiCheck aria-hidden="true" className="size-4 text-[#FF593F]" />}
+
+                                    <span className="flex shrink-0 items-center gap-2">
+                                        {option.count !== undefined && (
+                                            <span className="rounded-full bg-[#17233B]/5 px-2 py-0.5 text-xs text-[#17233B]/65">
+                                                {option.count}
+                                            </span>
+                                        )}
+                                        {option.active && <FiCheck aria-hidden="true" className="size-4 text-[#FF593F]" />}
+                                    </span>
                                 </Link>
                             </li>
                         ))}
