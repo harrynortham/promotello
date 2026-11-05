@@ -10,6 +10,7 @@ import {
     EmptyState,
     FilterChip,
     SearchForm,
+    ShowMore,
     hrefWith,
 } from "@/components/listing-ui";
 import { FilterDrawer } from "@/components/filter-drawer";
@@ -22,8 +23,10 @@ import {
     citiesWithArea,
     filterBusinesses,
     interleaveByCity,
+    BUSINESS_PAGE_SIZE,
     getCategories,
     getPublicBusinesses,
+    pageOf,
 } from "@/lib/listings";
 
 // The business directory, for every live city (/businesses) or one
@@ -43,6 +46,8 @@ type SearchParams = {
     search?: string;
     category?: string;
     area?: string;
+    // How many businesses to render; see pageOf.
+    show?: string;
 };
 
 type ListingProps = {
@@ -100,6 +105,11 @@ async function Directory({ city, searchParams }: ListingProps) {
     const areas = areasFrom(businesses);
     const hasFilters = Boolean(params.search || params.category || params.area);
 
+    // Filters build on the current query, but never carry how far down the
+    // list you had got: a different filter is a different list.
+    const current = { ...params, show: undefined };
+    const page = pageOf(results, params.show, BUSINESS_PAGE_SIZE);
+
     return (
         <>
             <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
@@ -115,10 +125,10 @@ async function Directory({ city, searchParams }: ListingProps) {
                             {
                                 title: "Area",
                                 options: [
-                                    { label: `All of ${place}`, href: hrefWith(base, params, { area: null }), active: !params.area },
+                                    { label: `All of ${place}`, href: hrefWith(base, current, { area: null }), active: !params.area },
                                     ...areas.map((area) => ({
                                         label: area.name,
-                                        href: hrefWith(base, params, { area: area.name }),
+                                        href: hrefWith(base, current, { area: area.name }),
                                         active: params.area === area.name,
                                     })),
                                 ],
@@ -133,10 +143,10 @@ async function Directory({ city, searchParams }: ListingProps) {
                             {
                                 title: "Location",
                                 options: [
-                                    { label: "Everywhere", href: hrefWith("/businesses", params, { area: null }), active: true },
+                                    { label: "Everywhere", href: hrefWith("/businesses", current, { area: null }), active: true },
                                     ...places.map((item) => ({
                                         label: item.name,
-                                        href: hrefWith(`/businesses/${item.slug}`, params, { area: null }),
+                                        href: hrefWith(`/businesses/${item.slug}`, current, { area: null }),
                                         active: false,
                                     })),
                                 ],
@@ -146,7 +156,7 @@ async function Directory({ city, searchParams }: ListingProps) {
                 )}
 
                 <FilterChip
-                    href={hrefWith(base, params, { category: null })}
+                    href={hrefWith(base, current, { category: null })}
                     active={!params.category}
                 >
                     All businesses
@@ -155,7 +165,7 @@ async function Directory({ city, searchParams }: ListingProps) {
                 {groups.map((group) => (
                     <FilterChip
                         key={group.id}
-                        href={hrefWith(base, params, { category: group.slug })}
+                        href={hrefWith(base, current, { category: group.slug })}
                         active={params.category === group.slug}
                     >
                         {group.name}
@@ -177,11 +187,20 @@ async function Directory({ city, searchParams }: ListingProps) {
                     />
                 ) : (
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        {results.map((business) => (
+                        {page.shown.map((business) => (
                             <BusinessCard key={business.id} business={business} showCity={!city} />
                         ))}
                     </div>
                 )}
+
+                <ShowMore
+                    shown={page.shown.length}
+                    total={page.total}
+                    paged={page.paged}
+                    nextHref={page.more ? hrefWith(base, current, { show: String(page.more) }) : null}
+                    capped={page.capped}
+                    noun="businesses"
+                />
             </div>
         </>
     );

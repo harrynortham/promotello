@@ -8,8 +8,18 @@ import { createPublicClient } from "@/utils/supabase/public";
 // anonymous client, so RLS limits it to approved businesses and live
 // (approved, unexpired, unpaused) offers: exactly what a visitor can see.
 //
-// The catalogue is small, so pages load it once (cached for a few minutes)
-// and filter in memory. Move filtering into the queries once it grows.
+// The catalogue is small — tens of rows — so pages load all of it once
+// (cached for a few minutes, shared by everyone) and filter in memory. The
+// listings only render a screenful at a time (lib/listing-filters pageOf),
+// so what grows with the catalogue is this read, not the page.
+//
+// The signal to change it is this read passing roughly a thousand rows, or
+// a city page waiting on a read of every city. Then: filter in the query —
+// city and area through business_locations, category through category_id,
+// search through a tsvector — and page with .range(). Two things here
+// depend on having everything, and would have to be answered their own way:
+// the list of areas to filter by, and the interleave that stops the newest
+// city taking the whole first screen.
 //
 // The shapes, and everything that groups or filters them, are in
 // lib/listing-filters.ts and re-exported here.

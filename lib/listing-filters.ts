@@ -271,3 +271,41 @@ export function offerCountsByCategory(offers: ListingOffer[], groups: CategoryGr
 export function categoryImage(group: Pick<CategoryGroup, "slug" | "image_url">) {
     return group.image_url ?? `/images/categories/${group.slug}.jpg`;
 }
+
+// One screenful of a listing. 24 divides by 2, 3 and 4, so the last row of
+// an offers grid is full at every breakpoint.
+export const PAGE_SIZE = 24;
+
+// Businesses come fewer at a time: the cards are half as tall again, and
+// the grid stops at three across rather than four, so 24 of them is a long
+// way to the foot of the page. 18 divides by 2 and 3.
+export const BUSINESS_PAGE_SIZE = 18;
+
+// How far "Show more" goes before a page would be too much HTML to send at
+// once. Nothing live is near it; reaching it is the sign that the listings
+// should be paged in the database rather than filtered in memory.
+export const MAX_PAGES = 10;
+
+// How much of a filtered listing to render, from ?show= in the URL.
+//
+// The number is how many results to show, not which page: each press adds
+// another screenful below the last, so nobody loses their place or has to
+// find the row they were reading again. It comes from the URL, so it is
+// rounded to whole screenfuls and held between one and the cap.
+export function pageOf<T>(items: T[], show: string | undefined, size = PAGE_SIZE) {
+    const asked = Number.parseInt(show ?? "", 10);
+    const wanted = Number.isFinite(asked) && asked > 0 ? Math.ceil(asked / size) : 1;
+    const shown = Math.min(Math.min(wanted, MAX_PAGES) * size, items.length);
+
+    return {
+        shown: items.slice(0, shown),
+        total: items.length,
+        // Whether there is more to show, and the ?show= that shows it.
+        more: items.length > shown && wanted < MAX_PAGES ? shown + size : null,
+        // More results than we will render, however many times they press.
+        capped: items.length > MAX_PAGES * size && wanted >= MAX_PAGES,
+        // Whether this listing is longer than one screenful at all. A short
+        // one says nothing about how much of it you can see.
+        paged: items.length > size,
+    };
+}
