@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type PageProps = {
-    searchParams: Promise<{ search?: string; category?: string; area?: string }>;
+    searchParams: Promise<{ search?: string; category?: string; area?: string; show?: string }>;
 };
 
 async function VisitorBusinesses({ searchParams }: PageProps) {

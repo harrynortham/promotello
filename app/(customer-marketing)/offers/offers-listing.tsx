@@ -7,6 +7,7 @@ import {
     EmptyState,
     FilterChip,
     SearchForm,
+    ShowMore,
     hrefWith,
 } from "@/components/listing-ui";
 import { FilterDrawer } from "@/components/filter-drawer";
@@ -23,6 +24,7 @@ import {
     interleaveByCity,
     getCategories,
     getLiveOffers,
+    pageOf,
     parseOfferSort,
 } from "@/lib/listings";
 
@@ -43,6 +45,8 @@ type SearchParams = {
     category?: string;
     area?: string;
     sort?: string;
+    // How many offers to render; see pageOf.
+    show?: string;
 };
 
 type ListingProps = {
@@ -125,8 +129,11 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
             .map((offer) => offer.business),
     );
 
-    const current = { ...params };
+    // Filters build on the current query, but never carry how far down the
+    // list you had got: a different filter is a different list.
+    const current = { ...params, show: undefined };
     const hasFilters = Boolean(params.search || params.category || params.area);
+    const page = pageOf(results, params.show);
 
     return (
         <>
@@ -235,7 +242,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                     />
                 ) : (
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {results.map((offer) => (
+                        {page.shown.map((offer) => (
                             <OfferCard
                                 key={offer.id}
                                 slug={offer.slug}
@@ -255,6 +262,14 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                         ))}
                     </div>
                 )}
+
+                <ShowMore
+                    shown={page.shown.length}
+                    total={page.total}
+                    nextHref={page.more ? hrefWith(base, current, { show: String(page.more) }) : null}
+                    capped={page.capped}
+                    noun="offers"
+                />
             </div>
         </>
     );
