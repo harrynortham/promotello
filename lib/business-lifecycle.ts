@@ -73,7 +73,7 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
             : {
                 key: "loyalty",
                 label: "Start a loyalty card with a free Pro trial",
-                why: `A digital stamp card turns first-time visitors into regulars. Customers join by scanning, and you stamp them at the till. Loyalty cards are part of Pro, which is free for ${TRIAL_DAYS} days: we ask for a card but don't charge it until the trial ends, and you can cancel before then.`,
+                why: `A digital stamp card turns first-time visitors into regulars. Customers join by scanning, and you stamp them at the till. Loyalty cards are part of Pro, free for ${TRIAL_DAYS} days, with the terms on the Billing page before you start.`,
                 path: `${base}/billing`,
                 action: `Try Pro free for ${TRIAL_DAYS} days`,
             },
@@ -117,7 +117,19 @@ function resultsList(d: LifecycleDue["details"]) {
     ].filter(Boolean) as string[];
 }
 
-const trialTerms = `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`;
+// A business that signs up and does nothing reads several of these within
+// three weeks, so they say the same four things in different words rather
+// than the same sentence four times: how long it's free, that a card is
+// taken at the start, that nothing is charged until it ends, and that
+// cancelling before then costs nothing. Shortening any of them to "free
+// for ${TRIAL_DAYS} days" would drop the card, which is the part people
+// mind finding out about later.
+export const trialTerms = {
+    pitch: `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`,
+    founding: `A place is held the moment you start the trial. That takes a card, though nothing leaves it for ${TRIAL_DAYS} days, and cancelling before then costs nothing.`,
+    adds: `The first ${TRIAL_DAYS} days are free. Starting takes a card, the first charge is the day the trial ends, and you can stop before it in Billing.`,
+    results: `Trying it is free for ${TRIAL_DAYS} days — a card to begin, no charge until the trial is up, and cancelling before then from your Billing page.`,
+};
 
 // The token lets someone stop these without signing in, which is what the
 // List-Unsubscribe header needs and what the visible link should offer too.
@@ -264,7 +276,7 @@ export function lifecycleEmail(
             paragraphs: [
                 "Paper stamp cards get lost, forgotten and put through the wash. A Promotello loyalty card lives on your customers' phones, so they always have it with them.",
                 "You choose the reward, like a free coffee after nine. Customers join by scanning your QR poster, and you or your staff stamp their card at the till. When they reach the reward, they show their card and you hand it over.",
-                `Loyalty cards are part of Pro. ${trialTerms}`,
+                `Loyalty cards are part of Pro. ${trialTerms.pitch}`,
             ],
             action: tryPro,
             ...tipsFooter(optOutToken),
@@ -284,7 +296,7 @@ export function lifecycleEmail(
                 paragraphs: [
                     `The first ${FOUNDING_MEMBER_LIMIT} businesses on Pro pay ${founding} a month for as long as they stay, instead of ${plans.pro_monthly.price}. ${foundingPlacesLeft === 1 ? "There's 1 place left." : `There are ${foundingPlacesLeft} places left.`}`,
                     proAdds,
-                    trialTerms,
+                    trialTerms.founding,
                 ],
                 action: { label: "Claim a founding place", url: billing },
                 ...tipsFooter(optOutToken),
@@ -292,7 +304,7 @@ export function lifecycleEmail(
             : brandedEmail({
                 eyebrow: "Promotello Pro",
                 title: `What Pro adds for ${name}`,
-                paragraphs: [proAdds, trialTerms],
+                paragraphs: [proAdds, trialTerms.adds],
                 action: tryPro,
                 ...tipsFooter(optOutToken),
             });
@@ -319,7 +331,7 @@ export function lifecycleEmail(
                 paragraphs: [
                     `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`,
                     "Pro helps bring those customers back: they join your loyalty card and return for their next stamp, and your followers hear about every new offer.",
-                    trialTerms,
+                    trialTerms.results,
                 ],
                 action: tryPro,
                 ...tipsFooter(optOutToken),
