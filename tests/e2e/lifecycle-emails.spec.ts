@@ -150,6 +150,25 @@ test.describe("business setup and trial emails", () => {
         expect(checkIn.senderName).toBe("Harry");
         expect(checkIn.text).toContain("Just reply to this email");
         expect(checkIn.html).toContain("17546946");
+
+        // Every email that asks a business to pay says what it costs.
+        // Three of them used to leave the price out entirely.
+        for (const [name, email] of [
+            ["loyalty pitch", pitch],
+            ["founding places", founding],
+            ["Pro summary", lifecycleEmail(due("founding_places"), "a@b.c", { foundingPlacesLeft: 0 })!],
+            ["results", results],
+        ] as const) {
+            expect(email.text, `${name} names a price`).toMatch(/£\d/);
+        }
+
+        // The picture is a picture of the thing being sold, and it has to
+        // survive being blocked: an absolute address and alt text that
+        // says what it showed.
+        for (const [name, email] of [["loyalty pitch", pitch], ["founding places", founding]] as const) {
+            expect(email.html, `${name} shows the card`).toContain('src="https://');
+            expect(email.html, `${name} describes it`).toMatch(/alt="A loyalty card[^"]+"/);
+        }
     });
 
     test("starting a trial sends what's unlocked, once Stripe confirms it", async () => {
