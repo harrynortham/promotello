@@ -117,7 +117,7 @@ deleted when they're done rather than ticked.
    optional: ico.org.uk/for-organisations/data-protection-fee, then add the
    number to the privacy policy and the other legal pages (company number is
    already in `lib/legal.ts`).
-3. **Check Resend's limits** are enough for launch volume.
+3. **Check Resend's limits** are enough for launch volume. 3000 a month, issue is daily limit of 100
 4. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
    card, how it looks in the customer's wallet, the offers, the directory page
    and the pricing.
@@ -200,4 +200,3 @@ Smaller gaps:
 - Business profiles: photo gallery and social links
 - Offer types beyond a discount
 - Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate
-
