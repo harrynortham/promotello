@@ -21,6 +21,14 @@ const businessLinks: HeaderLink[] = [
     { label: "Blog", href: "/blog" },
 ];
 
+// Signed in, the bottom of the menu points at your own pages. Only the
+// avatar leads there otherwise, and nothing says a photo of you is a menu.
+const yourPages = {
+    text: "Your vouchers and loyalty cards",
+    label: "Go to your dashboard",
+    href: "/dashboard",
+};
+
 // Public customer pages: /, /offers, /explore and so on.
 export function CustomerHeader() {
     return (
@@ -37,6 +45,7 @@ export function CustomerHeader() {
                 label: "Put your offers on Promotello",
                 href: "/business",
             }}
+            signedInMenuFooter={yourPages}
         />
     );
 }
@@ -70,6 +79,7 @@ export function CustomerAppHeader() {
             variant="app"
             signOutRedirect="/login"
             signedOutActions={[{ label: "Sign in", href: "/login", primary: true }]}
+            signedInMenuFooter={yourPages}
         />
     );
 }

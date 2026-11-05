@@ -15,6 +15,8 @@ import { UserMenu, type AccountArea } from "./user-menu";
 // With an icon, a link shows it to the left of its label.
 export type HeaderLink = { label: string; href: string; icon?: NavIconName };
 
+export type MenuFooter = { text: string; label: string; href: string };
+
 export type HeaderAction = {
     label: string;
     href: string;
@@ -36,7 +38,10 @@ export type SiteHeaderProps = {
     // A quiet line at the bottom of the mobile menu, for the audience this
     // header is not built for. On customer pages that is a business owner,
     // who otherwise has to reach the footer to find there is a business side.
-    menuFooter?: { text: string; label: string; href: string };
+    menuFooter?: MenuFooter;
+    // What that line says once you're signed in, when the pitch no longer
+    // fits: your own pages, which are otherwise only behind the avatar.
+    signedInMenuFooter?: MenuFooter;
 };
 
 const breakpoints = {
@@ -70,6 +75,7 @@ function HeaderContent({
     variant = "marketing",
     accountArea = "customer",
     menuFooter,
+    signedInMenuFooter,
 }: SiteHeaderProps) {
     const pathname = usePathname();
     const { user, isLoading } = useCurrentUser();
@@ -80,6 +86,12 @@ function HeaderContent({
     function isActive(href: string) {
         return pathname === href || pathname.startsWith(`${href}/`);
     }
+
+    // Who the line at the bottom of the menu is for depends on whether
+    // anyone is signed in, so it waits for that to be known rather than
+    // offering the wrong one first. Never a link to the page you're on.
+    let footer = isLoading ? undefined : user ? signedInMenuFooter : menuFooter;
+    if (footer && pathname === footer.href) footer = undefined;
 
     return (
         <header
@@ -228,19 +240,19 @@ function HeaderContent({
                                         </div>
                                     )}
 
-                                    {menuFooter && (
+                                    {footer && (
                                         <div
                                             className={`border-t border-border px-3 pt-5 ${
                                                 !user && !isLoading && signedOutActions.length > 0 ? "mt-5" : "mt-auto"
                                             }`}
                                         >
-                                            <p className="text-sm text-slate-600">{menuFooter.text}</p>
+                                            <p className="text-sm text-slate-600">{footer.text}</p>
                                             <Link
-                                                href={menuFooter.href}
+                                                href={footer.href}
                                                 onClick={() => setIsMenuOpen(false)}
                                                 className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-[#FF593F] hover:underline"
                                             >
-                                                {menuFooter.label}
+                                                {footer.label}
                                                 <FiArrowRight aria-hidden="true" className="size-4" />
                                             </Link>
                                         </div>
