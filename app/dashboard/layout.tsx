@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { AppFooter } from "@/components/site/footers";
 import { CustomerAppHeader } from "@/components/site/headers";
+import { DashboardNav } from "@/components/dashboard-nav";
 
 // Signed-in area: keep it out of search results.
 export const metadata: Metadata = {
@@ -52,6 +53,8 @@ export default function DashboardLayout({
 
             <div className="flex-1 px-6 pb-12 pt-8 sm:px-10 sm:pt-10">
                 <div className="mx-auto max-w-7xl">
+                    <DashboardNav />
+
                     <Suspense fallback={<DashboardLoading />}>
                         <DashboardShell>{children}</DashboardShell>
                     </Suspense>
