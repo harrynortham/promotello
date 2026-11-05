@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { FiExternalLink, FiPlus, FiPrinter } from "react-icons/fi";
+import { FiDownload, FiExternalLink, FiPlus, FiPrinter } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -282,6 +282,39 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                     >
                                                         <FiPrinter aria-hidden="true" />
                                                         Print poster
+                                                    </Button>
+
+                                                    {/* The code on its own, for a menu, a leaflet or a
+                                                        sticker. A plain link, so the browser saves the
+                                                        file rather than opening it. */}
+                                                    <Button
+                                                        render={
+                                                            <a
+                                                                href={`/business/${businessId}/qr/${code.id}/image`}
+                                                                download
+                                                            />
+                                                        }
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
+                                                        <FiDownload aria-hidden="true" />
+                                                        Download code
+                                                    </Button>
+
+                                                    <Button
+                                                        render={
+                                                            <a
+                                                                href={`/business/${businessId}/qr/${code.id}/image?format=svg`}
+                                                                download
+                                                            />
+                                                        }
+                                                        nativeButton={false}
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Vector file, for a print shop"
+                                                    >
+                                                        SVG
                                                     </Button>
 
                                                     {canManage && (
