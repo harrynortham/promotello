@@ -76,6 +76,7 @@ export function CustomerAppHeader() {
         <SiteHeader
             homeHref="/"
             links={customerLinks}
+            collapseBelow="lg"
             variant="app"
             signOutRedirect="/login"
             signedOutActions={[{ label: "Sign in", href: "/login", primary: true }]}

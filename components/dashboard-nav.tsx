@@ -17,7 +17,7 @@ const links = [
 // jumps when it arrives.
 export function DashboardNav() {
     return (
-        <Suspense fallback={<div aria-hidden="true" className="mb-7 h-[51px] lg:hidden" />}>
+        <Suspense fallback={<div aria-hidden="true" className="mb-7 h-[46px] lg:hidden" />}>
             <Pills />
         </Suspense>
     );
@@ -50,12 +50,10 @@ function Pills() {
     return (
         <nav aria-label="Your account pages" className="mb-7 lg:hidden">
             {/* Pulled out to the page's edges so the row scrolls past them
-                rather than stopping short inside the padding, and ruled off
-                underneath: pages like My vouchers have their own pills, and
-                these are not more of those. */}
+                rather than stopping short inside the padding. */}
             <div
                 ref={strip}
-                className="-mx-6 overflow-x-auto overscroll-x-contain border-b border-[#17233B]/10 px-6 pb-3 sm:-mx-10 sm:px-10"
+                className="-mx-6 overflow-x-auto overscroll-x-contain px-6 pb-2 sm:-mx-10 sm:px-10"
             >
                 <ul className="flex w-max gap-2">
                     {links.map((link) => {
