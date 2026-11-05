@@ -353,7 +353,16 @@ function BusinessRegisterForm() {
                                         Privacy Policy
                                     </Link>{" "}
                                     to understand how we handle your
-                                    information.
+                                    information. A few trades we can&apos;t
+                                    list, and some we list once we&apos;ve seen
+                                    a licence:{" "}
+                                    <Link
+                                        href="/legal/restricted-businesses"
+                                        className="text-foreground underline underline-offset-4"
+                                    >
+                                        restricted businesses
+                                    </Link>
+                                    .
                                 </p>
                             </>
                         )}

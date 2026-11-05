@@ -126,6 +126,12 @@ const sections: LegalSection[] = [
                     live. We can decline, pause or remove a business or offer
                     that breaks these terms, misleads customers or harms
                     Promotello&apos;s reputation, and we&apos;ll tell you why.
+                    Some trades we can&apos;t list at all, and some we list only
+                    once we&apos;ve seen a licence:{" "}
+                    <Link href="/legal/restricted-businesses">
+                        restricted and prohibited businesses
+                    </Link>{" "}
+                    says which, and which offers we won&apos;t publish.
                 </p>
                 <p>
                     You&apos;re responsible for your team: anyone you invite can

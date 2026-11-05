@@ -8,6 +8,7 @@ const policyLinks = [
     { label: "Terms of service", href: "/legal/terms" },
     { label: "Cookie policy", href: "/legal/cookies" },
     { label: "Refunds and cancellation", href: "/legal/refunds" },
+    { label: "Restricted businesses", href: "/legal/restricted-businesses" },
 ];
 
 export default function LegalLayout({

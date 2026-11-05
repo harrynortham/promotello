@@ -43,6 +43,7 @@ const staticPaths = [
     "/legal/privacy",
     "/legal/cookies",
     "/legal/refunds",
+    "/legal/restricted-businesses",
 ];
 
 // Each live city also has its own version of the listing pages.

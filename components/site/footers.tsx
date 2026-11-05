@@ -22,10 +22,12 @@ const legalLinks: FooterLink[] = [
     { label: "Cookie policy", href: "/legal/cookies" },
 ];
 
-// Businesses are the ones who pay, so their footer also has the refund policy.
+// Businesses are the ones who pay, and the ones this platform has rules
+// for, so their footer also has the refund policy and the restricted list.
 const businessLegalLinks: FooterLink[] = [
     ...legalLinks.slice(0, 2),
     { label: "Refunds and cancellation", href: "/legal/refunds" },
+    { label: "Restricted businesses", href: "/legal/restricted-businesses" },
     { label: "Cookie policy", href: "/legal/cookies" },
 ];
 
