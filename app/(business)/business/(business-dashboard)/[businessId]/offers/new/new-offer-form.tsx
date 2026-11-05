@@ -238,7 +238,15 @@ export default function NewOfferForm({
                         <p className="mt-4 max-w-2xl leading-7 text-[#17233B]/65">
                             Our team reads every offer before customers see it,
                             usually the same day. You will get an email when
-                            yours is approved.
+                            yours is approved. A few kinds of offer we
+                            can&apos;t publish:{" "}
+                            <Link
+                                href="/legal/restricted-businesses#offer-rules"
+                                className="font-medium text-[#17233B] underline underline-offset-4"
+                            >
+                                see which
+                            </Link>
+                            .
                         </p>
                     </div>
 
