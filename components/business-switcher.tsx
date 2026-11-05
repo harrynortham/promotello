@@ -14,6 +14,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { BusinessInitial } from "@/components/business-initial";
 
 type Business = {
     id: string;
@@ -25,19 +26,6 @@ type BusinessSwitcherProps = {
     currentBusinessId: string;
     businesses: Business[];
 };
-
-// The business's initial, matching the tile in the mobile menu.
-function Initial({ name, current }: { name: string; current?: boolean }) {
-    return (
-        <span
-            aria-hidden="true"
-            className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${current ? "bg-[#FF593F]/10 text-[#FF593F]" : "bg-[#17233B]/[0.06] text-[#17233B]/70"
-                }`}
-        >
-            {name.charAt(0).toUpperCase()}
-        </span>
-    );
-}
 
 export function BusinessSwitcher({
     currentBusinessId,
@@ -64,7 +52,7 @@ export function BusinessSwitcher({
                 }
             >
                 <span className="flex min-w-0 items-center gap-2.5">
-                    <Initial name={currentBusiness.name} current />
+                    <BusinessInitial name={currentBusiness.name} current />
                     <span className="truncate text-sm font-medium">{currentBusiness.name}</span>
                 </span>
 
@@ -86,7 +74,7 @@ export function BusinessSwitcher({
                                 render={<Link href={href} />}
                                 className={isCurrent ? "font-semibold text-[#17233B]" : ""}
                             >
-                                <Initial name={business.name} current={isCurrent} />
+                                <BusinessInitial name={business.name} current={isCurrent} />
                                 <span className="truncate">{business.name}</span>
 
                                 {isCurrent && (

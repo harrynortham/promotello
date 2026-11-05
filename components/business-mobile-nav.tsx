@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
-import { FiPlus } from "react-icons/fi";
+import { FiCheck, FiGrid, FiPlus } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { BusinessInitial } from "@/components/business-initial";
 
 type Business = {
     id: string;
@@ -101,27 +102,40 @@ export function BusinessMobileNav({
                                 </p>
 
                                 <div className="space-y-1">
-                                    {businesses.map((business) => (
-                                        <Button
-                                            key={business.id}
-                                            render={
-                                                <Link
-                                                    href={`/business/${business.id}`}
-                                                />
-                                            }
-                                            nativeButton={false}
-                                            variant={
-                                                business.id === businessId
-                                                    ? "secondary"
-                                                    : "ghost"
-                                            }
-                                            className="w-full justify-start"
-                                        >
-                                            <span className="truncate">
-                                                {business.name}
-                                            </span>
-                                        </Button>
-                                    ))}
+                                    {businesses.map((business) => {
+                                        const isCurrent = business.id === businessId;
+
+                                        return (
+                                            <Button
+                                                key={business.id}
+                                                render={
+                                                    <Link
+                                                        href={`/business/${business.id}`}
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                variant={isCurrent ? "secondary" : "ghost"}
+                                                className={
+                                                    isCurrent
+                                                        ? "h-11 w-full justify-start gap-3 bg-[#FF593F]/10 pl-2 font-semibold text-[#17233B] hover:bg-[#FF593F]/15"
+                                                        : "h-11 w-full justify-start gap-3 pl-2 text-[#17233B]/70 hover:bg-[#17233B]/5 hover:text-[#17233B]"
+                                                }
+                                            >
+                                                <BusinessInitial name={business.name} current={isCurrent} />
+
+                                                <span className="truncate">
+                                                    {business.name}
+                                                </span>
+
+                                                {isCurrent && (
+                                                    <FiCheck
+                                                        aria-hidden="true"
+                                                        className="ml-auto size-4 text-[#FF593F]"
+                                                    />
+                                                )}
+                                            </Button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -147,6 +161,7 @@ export function BusinessMobileNav({
                                 variant="outline"
                                 className="w-full"
                             >
+                                <FiGrid aria-hidden="true" />
                                 Go to dashboard
                             </Button>
                         )}
