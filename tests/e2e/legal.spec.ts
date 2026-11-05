@@ -61,3 +61,22 @@ test("the restricted businesses page is reachable from where it applies", async 
         page.getByRole("link", { name: /Restricted and prohibited businesses/ }),
     ).toHaveAttribute("href", "/legal/restricted-businesses");
 });
+
+// The cookie table is the thing a complaint would check first, so it has to
+// name the cookies we actually set. It reads them from the same constant
+// the site does, rather than a name typed out once and left behind.
+test("the cookie policy names the cookies Analytics actually sets", async ({ page }) => {
+    await page.goto("/legal/cookies");
+
+    const table = page.locator("main table");
+    await expect(table.getByText("_ga", { exact: true })).toBeVisible();
+    await expect(table.getByText(/^_ga_[A-Z0-9]+$/)).toBeVisible();
+
+    // The name from a property we don't report to.
+    await expect(page.locator("main")).not.toContainText("_ga_2W27LXHDWE");
+
+    // And it says what the consent cookie holds, which is the record of the
+    // choice: what, when, and which policy.
+    await expect(page.locator("main")).toContainText("promotello_consent");
+    await expect(page.locator("main")).toContainText("the day you chose");
+});

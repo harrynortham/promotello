@@ -1,18 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useConsent } from "@/components/use-consent";
+import { useConsentRecord } from "@/components/use-consent";
 import { gaMeasurementId, saveConsent } from "@/lib/consent";
 
 // Lets visitors change their analytics cookie choice at any time.
 export function CookieSettings() {
-    const consent = useConsent();
+    const record = useConsentRecord();
+    const consent = record?.choice ?? null;
 
     if (!gaMeasurementId) {
         return <p>Analytics cookies aren&apos;t used on this version of the site.</p>;
     }
 
-    if (consent === undefined) {
+    if (record === undefined) {
         return null;
     }
 
@@ -20,7 +21,10 @@ export function CookieSettings() {
         <div className="rounded-xl border bg-white p-5 text-foreground">
             <p className="text-sm">
                 Analytics cookies are currently{" "}
-                <strong>{consent === "analytics" ? "on" : "off"}</strong>.
+                <strong>{consent === "analytics" ? "on" : "off"}</strong>
+                {record?.decidedOn
+                    ? `, which is what you chose on ${new Date(record.decidedOn).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.`
+                    : "."}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-3">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CookieSettings } from "@/components/cookie-settings";
+import { analyticsCookieNames } from "@/lib/consent";
 import {
     LegalDocument,
     type LegalSection,
@@ -39,7 +40,8 @@ const essentialCookies = [
     },
     {
         name: "promotello_consent",
-        purpose: "Remembers whether you accepted or rejected analytics cookies.",
+        purpose:
+            "Remembers whether you accepted or rejected analytics cookies, the day you chose, and which version of this policy you were asked about.",
         duration: "1 year",
     },
     {
@@ -49,14 +51,18 @@ const essentialCookies = [
     },
 ];
 
+// Named after the Analytics property we report to, read from the same
+// place the site reads it, so this table can't name a cookie we don't set.
+const [visitorCookie, sessionCookie] = analyticsCookieNames;
+
 const analyticsCookies = [
     {
-        name: "_ga",
+        name: visitorCookie,
         purpose: "Google Analytics: tells visits apart so we can count visitors.",
         duration: "2 years",
     },
     {
-        name: "_ga_2W27LXHDWE",
+        name: sessionCookie,
         purpose: "Google Analytics: keeps track of the current visit.",
         duration: "2 years",
     },
@@ -174,6 +180,13 @@ const sections: LegalSection[] = [
                     at any time:
                 </p>
                 <CookieSettings />
+                <p>
+                    We keep your answer for a year, along with the date you
+                    gave it and the version of this policy you were asked
+                    about. If we ever want cookies for something new, that
+                    makes it a different question, so we ask it again rather
+                    than treat an old answer as a yes.
+                </p>
                 <p>
                     Turning analytics off stops it straight away and deletes
                     its cookies. You can also block or delete cookies in your
