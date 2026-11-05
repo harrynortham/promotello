@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { FiSearch } from "react-icons/fi";
 
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -28,11 +28,20 @@ export function SearchLauncher({
 }) {
     const [open, setOpen] = useState(false);
 
-    // Picking a place changes the path; close as the new page shows.
+    // Choosing something navigates; close as the new page shows.
+    //
+    // The whole address has to be watched, not just the path. The first
+    // choice usually moves between pages — /businesses to /businesses/bristol
+    // — but every one after that only changes the query, so watching the path
+    // alone left the panel sitting open over a page that had already changed
+    // underneath it.
     const pathname = usePathname();
-    const [shownFor, setShownFor] = useState(pathname);
-    if (pathname !== shownFor) {
-        setShownFor(pathname);
+    const query = useSearchParams().toString();
+    const address = `${pathname}?${query}`;
+
+    const [shownFor, setShownFor] = useState(address);
+    if (address !== shownFor) {
+        setShownFor(address);
         setOpen(false);
     }
 

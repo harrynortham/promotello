@@ -191,6 +191,27 @@ test.describe("searching a listing on a phone", () => {
         });
     }
 
+    test("it closes every time, not just the first", async ({ page }) => {
+        await page.goto("/businesses");
+
+        // The first choice moves between pages; every one after that only
+        // changes the query. Watching the path alone left the panel sitting
+        // open over a page that had already changed underneath it.
+        // The pill keeps its label across area choices; only a text search
+        // renames it.
+        for (const area of ["Clifton", "Harbourside", "Southville"]) {
+            await page.getByRole("button", { name: /Search businesses/ }).first().click();
+            await expect(page.getByRole("button", { name: "Location", exact: true })).toBeVisible();
+
+            await page.getByRole("button", { name: "Location", exact: true }).click();
+            await expect(page.getByRole("option", { name: new RegExp(area) }).first()).toBeVisible();
+            await page.getByRole("option", { name: new RegExp(area) }).first().click();
+
+            await page.waitForURL(new RegExp(`area=${area}`));
+            await expect(page.getByRole("dialog"), `after choosing ${area}`).toHaveCount(0);
+        }
+    });
+
     test("the places open over it, and picking one filters the list", async ({ page }) => {
         await page.goto("/businesses");
         await page.getByRole("button", { name: /Search businesses/ }).first().click();
