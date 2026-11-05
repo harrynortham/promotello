@@ -21,8 +21,9 @@ test("business owner can create a new offer", async ({ page }) => {
 
     await page.locator('button[type="submit"]').click();
 
-    // The test business is approved and on Pro, so the offer goes live at once.
-    await expect(page.getByText("Your offer is live")).toBeVisible({
+    // Every offer waits for review, whatever the business's plan.
+    // By role: Next's route announcer reads the same words out.
+    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
         timeout: 10_000,
     });
 });

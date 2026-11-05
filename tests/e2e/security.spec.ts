@@ -57,7 +57,7 @@ test("logo uploads must be images", async () => {
     expect(error).not.toBeNull();
 });
 
-test("editing an approved offer on the Free plan sends it back for review", async () => {
+test("editing an approved offer sends it back for review", async () => {
     const { businessUserId } = state();
     const supabase = admin();
 

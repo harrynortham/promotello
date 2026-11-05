@@ -68,7 +68,7 @@ test("a business set up for someone is handed over to its owner", async ({ brows
     }
 });
 
-test("offers from approved Pro businesses go live; Free ones wait for review", async () => {
+test("every offer waits for review, whatever the business's plan", async () => {
     const { businessId, businessEmail, testPassword, businessUserId } = state();
 
     const owner = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, options);
@@ -77,26 +77,27 @@ test("offers from approved Pro businesses go live; Free ones wait for review", a
     const offer = (business: string, label: string) => ({
         business_id: business,
         created_by: businessUserId,
-        slug: `e2e-auto-${label}-${Date.now()}`,
-        title: `E2E Auto ${label}`,
+        slug: `e2e-review-${label}-${Date.now()}`,
+        title: `E2E Review ${label}`,
         category: "Testing",
         discount: "5% off",
-        description: "Auto-approval test.",
+        description: "Review test.",
         availability: "Any time",
         expires_at: "2030-12-31",
         terms: "For automated tests only.",
         approval_status: "pending",
     });
 
+    // A paid plan buys more offers and more reach, not a way past review.
     const { data: pro, error: proError } = await owner.from("offers").insert(offer(businessId, "pro")).select("id").single();
     expect(proError).toBeNull();
     const { data: proRow } = await admin().from("offers").select("approval_status").eq("id", pro!.id).single();
-    expect(proRow!.approval_status).toBe("approved");
+    expect(proRow!.approval_status).toBe("pending");
 
-    // A Free business with no offers yet: its first offer waits for review.
+    // A Free business with no offers yet: the same.
     const { data: freeBusiness } = await admin()
         .from("businesses")
-        .insert({ name: "E2E Auto Free", category: "Testing", approval_status: "approved", created_by: businessUserId })
+        .insert({ name: "E2E Review Free", category: "Testing", approval_status: "approved", created_by: businessUserId })
         .select("id")
         .single();
     await admin().from("business_members").insert({ business_id: freeBusiness!.id, user_id: businessUserId, role: "owner" });
@@ -106,7 +107,13 @@ test("offers from approved Pro businesses go live; Free ones wait for review", a
     const { data: freeRow } = await admin().from("offers").select("approval_status").eq("id", free!.id).single();
     expect(freeRow!.approval_status).toBe("pending");
 
-    // Owners still can't approve their own Free offers.
+    // Nor can an owner approve an offer: not by writing one in already
+    // approved, and not by updating one afterwards.
+    const { error: insertApproved } = await owner
+        .from("offers")
+        .insert({ ...offer(businessId, "approved"), approval_status: "approved" });
+    expect(insertApproved).not.toBeNull();
+
     const { error: selfApprove } = await owner.from("offers").update({ approval_status: "approved" }).eq("id", free!.id);
     expect(selfApprove).not.toBeNull();
 
