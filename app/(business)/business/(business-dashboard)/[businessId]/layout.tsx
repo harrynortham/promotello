@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { FiGrid } from "react-icons/fi";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
@@ -190,6 +191,7 @@ async function BusinessLayoutContent({
                                     size="sm"
                                     className="w-full"
                                 >
+                                    <FiGrid aria-hidden="true" />
                                     Go to dashboard
                                 </Button>
                             </>

@@ -2,6 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+    FiAward,
+    FiBarChart2,
+    FiBell,
+    FiCalendar,
+    FiCheckCircle,
+    FiCreditCard,
+    FiHome,
+    FiPrinter,
+    FiShoppingBag,
+    FiTag,
+    FiUsers,
+    FiZap,
+} from "react-icons/fi";
+import type { IconType } from "react-icons";
 
 import { Button } from "@/components/ui/button";
 import { EVENTS_ENABLED } from "@/lib/features";
@@ -11,36 +26,45 @@ type BusinessSidebarNavProps = {
     canManage: boolean;
 };
 
-const overviewLink = {
+type SidebarLink = { label: string; path: string; icon: IconType };
+
+const overviewLink: SidebarLink = {
     label: "Overview",
     path: "",
+    icon: FiHome,
 };
 
-const baseLinks = [
+const baseLinks: SidebarLink[] = [
     {
         label: "Offers",
         path: "/offers",
+        icon: FiTag,
     },
     {
         label: "QR posters",
         path: "/qr",
+        icon: FiPrinter,
     },
     {
         label: "Loyalty card",
         path: "/loyalty",
+        icon: FiAward,
     },
     {
         label: "Automations",
         path: "/automations",
+        icon: FiZap,
     },
     {
         label: "Redemptions",
         path: "/redemptions",
+        icon: FiCheckCircle,
     },
-    ...(EVENTS_ENABLED ? [{ label: "Events", path: "/events" }] : []),
+    ...(EVENTS_ENABLED ? [{ label: "Events", path: "/events", icon: FiCalendar }] : []),
     {
         label: "Analytics",
         path: "/analytics",
+        icon: FiBarChart2,
     },
 ];
 
@@ -50,13 +74,14 @@ export function BusinessSidebarNav({
 }: BusinessSidebarNavProps) {
     const pathname = usePathname();
 
-    const links = [
+    const links: SidebarLink[] = [
         overviewLink,
         ...(canManage
             ? [
                 {
                     label: "Business profile",
                     path: "/edit",
+                    icon: FiShoppingBag,
                 },
             ]
             : []),
@@ -66,14 +91,17 @@ export function BusinessSidebarNav({
                 {
                     label: "Team",
                     path: "/team",
+                    icon: FiUsers,
                 },
                 {
                     label: "Notifications",
                     path: "/settings/notifications",
+                    icon: FiBell,
                 },
                 {
                     label: "Billing",
                     path: "/billing",
+                    icon: FiCreditCard,
                 },
             ]
             : []),
@@ -88,6 +116,7 @@ export function BusinessSidebarNav({
                         ? pathname === href
                         : pathname === href ||
                         pathname.startsWith(`${href}/`);
+                const Icon = link.icon;
 
                 return (
                     <Button
@@ -97,10 +126,16 @@ export function BusinessSidebarNav({
                         variant={isActive ? "secondary" : "ghost"}
                         className={
                             isActive
-                                ? "w-full justify-start bg-[#FF593F]/10 font-semibold text-[#17233B] hover:bg-[#FF593F]/15"
-                                : "w-full justify-start text-[#17233B]/70 hover:bg-[#17233B]/5 hover:text-[#17233B]"
+                                ? "h-9 w-full justify-start gap-3 bg-[#FF593F]/10 font-semibold text-[#17233B] hover:bg-[#FF593F]/15"
+                                : "h-9 w-full justify-start gap-3 text-[#17233B]/70 hover:bg-[#17233B]/5 hover:text-[#17233B]"
                         }
                     >
+                        {/* The label says what it is; the icon is there to
+                            find the row again at a glance. */}
+                        <Icon
+                            aria-hidden="true"
+                            className={isActive ? "size-4 text-[#FF593F]" : "size-4 text-[#17233B]/50"}
+                        />
                         {link.label}
                     </Button>
                 );
