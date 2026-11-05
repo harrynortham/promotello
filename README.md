@@ -117,11 +117,10 @@ deleted when they're done rather than ticked.
    optional: ico.org.uk/for-organisations/data-protection-fee, then add the
    number to the privacy policy and the other legal pages (company number is
    already in `lib/legal.ts`).
-3. **Check Resend's limits** are enough for launch volume. 3000 a month, issue is daily limit of 100
-4. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
+3. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
    card, how it looks in the customer's wallet, the offers, the directory page
    and the pricing.
-5. **Staff documentation on redemptions**, for the people behind the counter.
+4. **Staff documentation on redemptions**, for the people behind the counter.
 
 ### Product gaps to close before or around launch
 
@@ -158,6 +157,14 @@ deleted when they're done rather than ticked.
 
 - A second Supabase project for development, so tests stop running against the
   live database.
+- **Move Resend to Pro ($20/mo) before the daily cap bites.** The free plan is
+  3,000 emails a month *and* 100 a day, and the daily one goes first: daily
+  summaries alone are about 75 a day at 50 active businesses, one offer
+  announced to 150 followers is 150 in a burst, and the 1st of the month adds
+  every monthly report. Supabase's sign-in emails come out of the same quota,
+  since `auth.promotello.com` sends through Resend. Upgrade when daily sends
+  reach ~70, or before the first business with more than ~80 followers
+  announces an offer — whichever comes first, and both before business 50.
 - Secure every social account with keychain passwords and the right phone
   numbers and email addresses.
 - 3 December: transfer the YouTube channel to harry@promotello.com (not
