@@ -1,10 +1,7 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { FiGrid } from "react-icons/fi";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessMobileNav } from "@/components/business-mobile-nav";
@@ -178,24 +175,6 @@ async function BusinessLayoutContent({
                         <Separator className="my-5" />
 
                         <FeedbackDialog businessId={businessId} />
-
-                        {/* With one business, the dashboard is this overview. */}
-                        {businesses.length > 1 && (
-                            <>
-                                <Separator className="my-5" />
-
-                                <Button
-                                    render={<Link href="/business/dashboard" />}
-                                    nativeButton={false}
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full"
-                                >
-                                    <FiGrid aria-hidden="true" />
-                                    Go to dashboard
-                                </Button>
-                            </>
-                        )}
                     </div>
                 </aside>
 
