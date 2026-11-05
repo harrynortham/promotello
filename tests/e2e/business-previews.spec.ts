@@ -54,7 +54,10 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         // 3. The owner opens the link, signed out.
         await visitor.goto(previewPath);
         await expect(visitor.getByRole("heading", { name: `Hi Sam, here's ${name} on Promotello.` })).toBeVisible();
-        await expect(visitor.getByText("Collect 9 stamps for a free loaf")).toBeVisible();
+        // The card on the preview is LoyaltyCardScreen, which says it
+        // this way; the business page's callout says "Collect 9 stamps,
+        // get a free loaf".
+        await expect(visitor.getByText("9 stamps for a free loaf")).toBeVisible();
         await expect(visitor.getByText("Free cinnamon bun with any coffee").first()).toBeVisible();
 
         const { data: viewed } = await admin().from("business_previews").select("view_count").eq("business_id", businessId).single();

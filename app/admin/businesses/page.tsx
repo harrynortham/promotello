@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FiExternalLink } from "react-icons/fi";
 
 import {
     Alert,
@@ -30,6 +31,7 @@ import { notifyBusinessReviewed } from "./actions";
 
 type Business = {
     id: string;
+    slug: string;
     name: string;
     category: string;
     description: string | null;
@@ -109,6 +111,7 @@ export default function AdminBusinessesPage() {
             .select(
                 `
           id,
+          slug,
           name,
           category,
           description,
@@ -426,6 +429,24 @@ export default function AdminBusinessesPage() {
                                                     variant="outline"
                                                 >
                                                     Open
+                                                </Button>
+
+                                                {/* The page as it will look, before saying yes to
+                                                    it. A pending business is readable by an admin,
+                                                    and shows itself as a preview. */}
+                                                <Button
+                                                    render={
+                                                        <Link
+                                                            href={`/businesses/${business.slug}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        />
+                                                    }
+                                                    nativeButton={false}
+                                                    variant="outline"
+                                                >
+                                                    View full profile
+                                                    <FiExternalLink aria-hidden="true" />
                                                 </Button>
 
                                                 {business.approval_status === "pending" && (

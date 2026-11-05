@@ -164,18 +164,20 @@ async function Overview({ params }: PageProps) {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    {row.approval_status === "approved" && (
-                        <Button render={<Link href={businessPath(row)} target="_blank" />} nativeButton={false} variant="outline" size="sm">
-                            Public page
-                            <FiExternalLink aria-hidden="true" />
-                        </Button>
-                    )}
-
-                    <Button render={<Link href={`/business/${row.id}`} />} nativeButton={false} variant="outline" size="sm">
-                        Their dashboard
-                    </Button>
-                </div>
+                {/* Their own dashboard isn't ours to open: it is for the
+                    people who run the business, and an admin who isn't one
+                    of them is turned away at the door. The profile page is
+                    the thing worth looking at anyway, and a pending one
+                    shows itself to an admin as a preview. */}
+                <Button
+                    render={<Link href={businessPath(row)} target="_blank" rel="noreferrer" />}
+                    nativeButton={false}
+                    variant="outline"
+                    size="sm"
+                >
+                    {row.approval_status === "approved" ? "Public page" : "Preview their page"}
+                    <FiExternalLink aria-hidden="true" />
+                </Button>
             </header>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-2">

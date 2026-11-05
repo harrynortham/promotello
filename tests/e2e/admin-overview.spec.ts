@@ -81,8 +81,21 @@ test("admins can browse every business and open one", async ({ browser }) => {
             page.getByText("No businesses found").or(page.getByRole("button", { name: "Open" }).first()),
         ).toBeVisible();
 
+        // A reviewer has to be able to see what they are approving, and a
+        // business waiting for review has no public page yet — an admin
+        // sees it as a preview.
+        // Rendered as a link styled as a button, which Base UI gives
+        // role="button".
+        const profile = page.getByRole("button", { name: /View full profile/ }).first();
+        await expect(profile).toHaveAttribute("href", /^\/businesses\//);
+
         await page.goto(`/admin/businesses/${businessId}`);
         await expect(page.getByRole("heading", { name: "E2E Test Business", level: 1 })).toBeVisible();
+
+        // Not their dashboard: an admin isn't a member, so that link only
+        // ever bounced to /business/dashboard.
+        await expect(page.getByRole("button", { name: /Their dashboard/i })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: /Public page|Preview their page/ })).toBeVisible();
 
         for (const section of ["Contact", "Billing", "Activity", "Emails we have sent"]) {
             await expect(page.getByRole("heading", { name: section })).toBeVisible();
