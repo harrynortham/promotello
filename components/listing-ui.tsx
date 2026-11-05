@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FiArrowRight, FiSearch } from "react-icons/fi";
+import { FiArrowRight, FiChevronDown, FiSearch } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import { PAGE_SIZE } from "@/lib/listing-filters";
 
 // Small building blocks shared by the customer listing pages.
 
@@ -142,6 +143,69 @@ export function EmptyState({
                 >
                     {linkLabel ?? "Clear filters"}
                 </Button>
+            )}
+        </div>
+    );
+}
+
+// The foot of a listing: how much of it you're looking at, and a way to see
+// more of it.
+//
+// A link, not a button, and the page it leads to renders the longer list on
+// the server. So it works before (and without) JavaScript, the back button
+// takes you to what you were looking at, and a shared URL shows the reader
+// the same screenfuls the sender had open. `scroll={false}` keeps you where
+// you are as the new ones appear below.
+//
+// Not an endless scroll: that takes the footer away from anyone who wants
+// it, and loses your place the moment you follow a result and come back.
+export function ShowMore({
+    shown,
+    total,
+    nextHref,
+    capped,
+    noun,
+}: {
+    shown: number;
+    total: number;
+    // Where to see the next screenful, or null when this is all of them.
+    nextHref: string | null;
+    // More results than the page will render however often you press.
+    capped?: boolean;
+    // What is being listed, e.g. "offers".
+    noun: string;
+}) {
+    // A listing that fits on one screenful says nothing; a longer one keeps
+    // saying how much of it you have, including once you have all of it.
+    if (total <= PAGE_SIZE) {
+        return null;
+    }
+
+    return (
+        <div className="mt-10 flex flex-col items-center gap-4">
+            <p aria-live="polite" className="text-sm text-[#17233B]/65">
+                Showing {shown} of {total} {noun}
+            </p>
+
+            {nextHref ? (
+                // A plain link, styled as a button: it goes somewhere, and
+                // it should say "link" to a screen reader and open in a new
+                // tab if that's what someone wants.
+                <Link
+                    href={nextHref}
+                    scroll={false}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#17233B]/15 bg-white px-6 py-3 text-sm font-semibold text-[#17233B] transition hover:border-[#17233B]/40 hover:bg-[#17233B]/[0.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
+                >
+                    Show more {noun}
+                    <FiChevronDown aria-hidden="true" className="size-4" />
+                </Link>
+            ) : (
+                capped && (
+                    <p className="max-w-sm text-center text-sm text-[#17233B]/65">
+                        That is as many as we show at once. Search, or filter by
+                        category or area, to narrow it down.
+                    </p>
+                )
             )}
         </div>
     );

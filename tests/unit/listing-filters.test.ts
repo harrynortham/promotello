@@ -11,6 +11,9 @@ import {
     inArea,
     interleaveByCity,
     isInArea,
+    MAX_PAGES,
+    PAGE_SIZE,
+    pageOf,
     type ListingBusiness,
     type ListingOffer,
     type ListingPlace,
@@ -228,4 +231,52 @@ test("a business with no picture is passed over, not treated as the answer", () 
 test("a neighbourhood with nothing to show says so, and the caller falls back", () => {
     assert.equal(areaPhoto([]), null);
     assert.equal(areaPhoto([business(places.bristolClifton, { coverImageUrl: null })]), null);
+});
+
+test("pageOf shows a screenful at a time and adds up", () => {
+    const items = Array.from({ length: 60 }, (_, index) => index);
+
+    const first = pageOf(items, undefined);
+    assert.equal(first.shown.length, PAGE_SIZE);
+    assert.equal(first.total, 60);
+    assert.equal(first.more, PAGE_SIZE * 2);
+
+    const second = pageOf(items, String(first.more));
+    assert.equal(second.shown.length, PAGE_SIZE * 2);
+    assert.deepEqual(second.shown.slice(0, PAGE_SIZE), first.shown);
+    assert.equal(second.more, PAGE_SIZE * 3);
+
+    // The last press shows the rest, and offers no more.
+    const third = pageOf(items, String(second.more));
+    assert.equal(third.shown.length, 60);
+    assert.equal(third.more, null);
+    assert.equal(third.capped, false);
+});
+
+test("pageOf is not told what to do by the URL", () => {
+    const items = Array.from({ length: 500 }, (_, index) => index);
+
+    // Nonsense, negative and zero all mean the first screenful.
+    for (const show of [undefined, "", "banana", "-40", "0", "NaN"]) {
+        assert.equal(pageOf(items, show).shown.length, PAGE_SIZE, `show=${show}`);
+    }
+
+    // Half a screenful rounds up to one, never down to none.
+    assert.equal(pageOf(items, "1").shown.length, PAGE_SIZE);
+    assert.equal(pageOf(items, "25").shown.length, PAGE_SIZE * 2);
+
+    // And nobody gets the whole catalogue in one page by asking for it.
+    const greedy = pageOf(items, "999999");
+    assert.equal(greedy.shown.length, MAX_PAGES * PAGE_SIZE);
+    assert.equal(greedy.more, null);
+    assert.equal(greedy.capped, true);
+});
+
+test("pageOf asks for no more than there is", () => {
+    const items = [1, 2, 3];
+    const page = pageOf(items, undefined);
+
+    assert.deepEqual(page.shown, items);
+    assert.equal(page.more, null);
+    assert.equal(page.capped, false);
 });

@@ -10,7 +10,10 @@ import { businessPath } from "@/lib/slugs";
 // than one at a time: "Clifton" on its own doesn't say which city.
 export function BusinessCard({ business, showCity = false }: { business: ListingBusiness; showCity?: boolean }) {
     return (
-        <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+        <article
+            data-slot="business-card"
+            className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+        >
             <div className="relative aspect-[16/9] overflow-hidden bg-[#17233B]">
                 {business.coverImageUrl ? (
                     <Image

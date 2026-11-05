@@ -63,7 +63,10 @@ export function OfferCard({
     const endingSoon = expiresAt !== undefined && daysLeft(expiresAt) <= 14;
 
     return (
-        <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+        <article
+            data-slot="offer-card"
+            className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+        >
             <div className="relative aspect-[16/10] overflow-hidden bg-[#FFF4E8]">
                 {imageUrl && rawImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
