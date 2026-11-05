@@ -35,7 +35,12 @@ test.describe.serial("Growth plan", () => {
         const owner = await signedIn(businessEmail, testPassword);
         const otherDay = (londonWeekday() + 3) % 7;
 
-        const { data: offer, error } = await owner
+        // Created approved, because this is about the schedule and not the
+        // review: an owner can only write a pending offer, and a pending
+        // offer can't be claimed, so the customer below would have nothing
+        // to redeem. It used to go live on insert, back when a business on
+        // Pro skipped review.
+        const { data: offer, error } = await admin()
             .from("offers")
             .insert({
                 business_id: businessId,
@@ -48,7 +53,7 @@ test.describe.serial("Growth plan", () => {
                 availability: "Quiet hours",
                 expires_at: "2030-12-31",
                 terms: "For automated tests only.",
-                approval_status: "pending",
+                approval_status: "approved",
                 schedule_days: [otherDay],
                 schedule_start: "14:00",
                 schedule_end: "16:00",
@@ -106,15 +111,29 @@ test.describe.serial("Growth plan", () => {
             requested_user_id: customerUserId,
         });
         expect(error).toBeNull();
-        const gift = (issued as { code: string; kind: string }[]).find((row) => row.kind === "welcome");
+        const gift = (issued as { voucher_id: string; code: string; kind: string }[]).find(
+            (row) => row.kind === "welcome",
+        );
         expect(gift).toBeTruthy();
 
-        // A second run doesn't welcome them twice.
+        // A second run doesn't welcome them twice. It does hand the same
+        // voucher back, on purpose: its email hasn't gone out (a
+        // @test.internal address is never sent to), and an unsent one is
+        // offered again rather than the reward going unmentioned. What
+        // must not happen is a second reward.
         const { data: again } = await admin().rpc("issue_automation_vouchers", {
             requested_business_id: businessId,
             requested_user_id: customerUserId,
         });
-        expect(again).toEqual([]);
+        expect((again as { voucher_id: string }[]).map((row) => row.voucher_id)).toEqual([gift!.voucher_id]);
+
+        const { count: welcomes } = await admin()
+            .from("reward_vouchers")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId)
+            .eq("user_id", customerUserId)
+            .eq("kind", "welcome");
+        expect(welcomes, "one welcome, however many runs").toBe(1);
 
         // It's in their wallet...
         const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
