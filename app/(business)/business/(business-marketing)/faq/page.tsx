@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FiArrowRight } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,12 @@ const sections = [
                 question: "Is it right for my business?",
                 answer:
                     "If customers visit you in person, it should be. Cafés, restaurants, pubs, bakeries, barbers, salons, spas, gyms and studios, shops, florists, pet groomers and repair shops all use the same tools: an offer to bring people in and a reason to come back.",
+            },
+            {
+                question: "Is there any business you can't list?",
+                answer:
+                    "A few. Some trades we can't take at all, such as gambling, adult services, lending and anything unlawful. Others are welcome once we've seen the licence the law asks of them \u2014 alcohol, aesthetics, pharmacy, childcare and so on. There are also a handful of offers we can't publish whatever the business, like price promotions on tobacco.",
+                link: { label: "Restricted and prohibited businesses", href: "/legal/restricted-businesses" },
             },
             {
                 question: "How long does it take to set up?",
@@ -303,6 +310,16 @@ export default function BusinessFaqPage() {
                                             <p className="leading-7 text-muted-foreground">
                                                 {item.answer}
                                             </p>
+
+                                            {"link" in item && item.link && (
+                                                <Link
+                                                    href={item.link.href}
+                                                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#FF593F] underline-offset-4 hover:underline"
+                                                >
+                                                    {item.link.label}
+                                                    <FiArrowRight aria-hidden="true" className="size-4" />
+                                                </Link>
+                                            )}
                                         </div>
                                     </details>
                                 ))}

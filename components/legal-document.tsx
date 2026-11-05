@@ -32,6 +32,7 @@ const policies = [
     { label: "Terms", href: "/legal/terms" },
     { label: "Cookies", href: "/legal/cookies" },
     { label: "Refunds", href: "/legal/refunds" },
+    { label: "Restricted businesses", href: "/legal/restricted-businesses" },
 ];
 
 export function LegalDocument({
