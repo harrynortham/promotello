@@ -124,14 +124,6 @@ function resultsList(d: LifecycleDue["details"]) {
 // cancelling before then costs nothing. Shortening any of them to "free
 // for ${TRIAL_DAYS} days" would drop the card, which is the part people
 // mind finding out about later.
-// The card itself, in the two emails that ask someone to pay for it.
-// Shown at 464px, drawn at twice that.
-const loyaltyCardImage = {
-    src: absoluteUrl("/images/email/loyalty-card"),
-    alt: "A loyalty card on a phone: eight of nine stamps collected, one more visit to a free coffee",
-    width: 464,
-};
-
 export const trialTerms = {
     pitch: `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`,
     founding: `A place is held the moment you start the trial. That takes a card, though nothing leaves it for ${TRIAL_DAYS} days, and cancelling before then costs nothing.`,
@@ -286,7 +278,6 @@ export function lifecycleEmail(
                 "You choose the reward, like a free coffee after nine. Customers join by scanning your QR poster, and you or your staff stamp their card at the till. When they reach the reward, they show their card and you hand it over.",
                 `Loyalty cards are part of Pro, ${plans.pro_monthly.price} a month. ${trialTerms.pitch}`,
             ],
-            image: loyaltyCardImage,
             action: tryPro,
             ...tipsFooter(optOutToken),
         });
@@ -308,16 +299,14 @@ export function lifecycleEmail(
                     proAddsWithoutPrice,
                     trialTerms.founding,
                 ],
-                image: loyaltyCardImage,
-                action: { label: "Claim a founding place", url: billing },
+                    action: { label: "Claim a founding place", url: billing },
                 ...tipsFooter(optOutToken),
             })
             : brandedEmail({
                 eyebrow: "Promotello Pro",
                 title: `What Pro adds for ${name}`,
                 paragraphs: [proAdds, trialTerms.adds],
-                image: loyaltyCardImage,
-                action: tryPro,
+                    action: tryPro,
                 ...tipsFooter(optOutToken),
             });
 
