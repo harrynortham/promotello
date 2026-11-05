@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
-import { FiArrowRight, FiMenu } from "react-icons/fi";
+import { FiArrowRight, FiMenu, FiX } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from "./use-current-user";
 import { navIcons, type NavIconName } from "./nav-icons";
 import { UserMenu, type AccountArea } from "./user-menu";
@@ -187,8 +187,11 @@ function HeaderContent({
                                 <FiMenu className="size-6" aria-hidden="true" />
                             </SheetTrigger>
 
-                            <SheetContent side="right" className="w-[min(22rem,88vw)] gap-0 p-0">
-                                <SheetHeader className="border-b border-border px-5 py-4">
+                            <SheetContent side="right" className="w-[min(22rem,88vw)] gap-0 p-0" showCloseButton={false}>
+                                {/* One row: the close sits on the logo's
+                                    line, the size of the button that
+                                    opened the menu. */}
+                                <SheetHeader className="flex-row items-center justify-between border-b border-border px-5 py-4">
                                     <SheetTitle className="sr-only">Menu</SheetTitle>
                                     <Image
                                         src="/brand/promotello-horizontal-primary.svg"
@@ -197,6 +200,13 @@ function HeaderContent({
                                         height={37}
                                         className="h-auto w-32"
                                     />
+
+                                    <SheetClose
+                                        aria-label="Close menu"
+                                        className="-mr-2 flex size-10 shrink-0 items-center justify-center rounded-full text-[#17233B]/65 transition hover:bg-[#17233B]/5 hover:text-[#17233B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
+                                    >
+                                        <FiX aria-hidden="true" className="size-6" />
+                                    </SheetClose>
                                 </SheetHeader>
 
                                 <nav aria-label="Mobile navigation" className="flex flex-1 flex-col overflow-y-auto px-3 py-4">

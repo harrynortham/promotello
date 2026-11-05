@@ -112,3 +112,30 @@ test("the navigation and the account button never run into each other", async ({
         }
     }
 });
+
+// The close is the twin of the button that opened the menu: same size,
+// and on the same line as the logo rather than floating above it.
+test("the menu's close button lines up with the logo", async ({ page }) => {
+    await page.goto("/offers");
+    await page.getByRole("button", { name: "Open menu" }).click();
+
+    const lined = await page.evaluate(() => {
+        const middle = (el: Element | null) => {
+            if (!el) return null;
+            const box = el.getBoundingClientRect();
+            return { centre: box.top + box.height / 2, size: box.height };
+        };
+
+        return {
+            close: middle(document.querySelector('[data-slot="sheet-header"] [data-slot="sheet-close"]')),
+            logo: middle(document.querySelector('[data-slot="sheet-header"] img')),
+        };
+    });
+
+    expect(lined.close, "the close is in the header, not floating over it").toBeTruthy();
+    expect(Math.abs(lined.close!.centre - lined.logo!.centre), "on the logo's line").toBeLessThanOrEqual(2);
+    expect(lined.close!.size, "big enough to hit").toBeGreaterThanOrEqual(40);
+
+    await page.getByRole("button", { name: "Close menu" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+});
