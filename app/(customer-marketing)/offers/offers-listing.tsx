@@ -16,6 +16,7 @@ import { SearchLauncher } from "@/components/search-launcher";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LocationSearch } from "@/components/location-search";
 import { topLevelFor } from "@/lib/categories";
+import { absoluteUrl, jsonLd } from "@/lib/site";
 import { getLiveCities, placeIsOneCity, placeName, type City, type Place } from "@/lib/cities";
 import {
     areasFrom,
@@ -323,8 +324,28 @@ async function OffersSearch({ city, searchParams }: ListingProps) {
 export async function OffersListing({ city, searchParams }: ListingProps) {
     const [place, places, oneCity] = await Promise.all([placeName(city), getLiveCities(), placeIsOneCity(city)]);
 
+    // Offers › Bristol, so a city's listing shows its place in search
+    // results rather than looking like a page of its own.
+    const breadcrumbs = city
+        ? {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+                { name: "Offers", item: absoluteUrl("/offers") },
+                { name: city.name, item: absoluteUrl(`/offers/${city.slug}`) },
+            ].map((crumb, index) => ({ "@type": "ListItem", position: index + 1, ...crumb })),
+        }
+        : null;
+
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-24 text-[#17233B]">
+            {breadcrumbs && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }}
+                />
+            )}
+
             {/* Phones get a compact heading and one search pill, so offers start near the top. */}
             <section className="border-b border-[#17233B]/10 bg-white">
                 <div className="mx-auto max-w-7xl px-6 pb-5 pt-4 sm:px-10 sm:py-16">

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -26,6 +27,7 @@ import {
 import { LocationSearch } from "@/components/location-search";
 import { areaPath, cityPhotosFor, getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
 import { getVisitorContext } from "@/lib/visitor";
+import { absoluteUrl, jsonLd, siteDescription, siteName, socialProfiles } from "@/lib/site";
 
 const steps = [
     {
@@ -362,9 +364,49 @@ async function HeroLoading() {
     );
 }
 
+// The title and description come from the root layout; this is here for
+// the canonical, so a link carrying ?ref= or a campaign tag doesn't look
+// like a second home page.
+export const metadata: Metadata = {
+    alternates: { canonical: "/" },
+};
+
+// Who the site belongs to, and the accounts that are also us. This is the
+// page a search engine reads to tie them together.
+const organisation = {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "Organization",
+            "@id": `${absoluteUrl("/")}#organisation`,
+            name: siteName,
+            url: absoluteUrl("/"),
+            description: siteDescription,
+            logo: {
+                "@type": "ImageObject",
+                url: absoluteUrl("/brand/promotello-horizontal-primary.svg"),
+            },
+            sameAs: socialProfiles.map((profile) => profile.url),
+        },
+        {
+            "@type": "WebSite",
+            "@id": `${absoluteUrl("/")}#website`,
+            name: siteName,
+            url: absoluteUrl("/"),
+            publisher: { "@id": `${absoluteUrl("/")}#organisation` },
+            inLanguage: "en-GB",
+        },
+    ],
+};
+
 export default function HomePage() {
     return (
         <main className="bg-[#FFF8F0] pb-20 text-[#17233B]">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: jsonLd(organisation) }}
+            />
+
             <Suspense fallback={<HeroLoading />}>
                 <VisitorHome />
             </Suspense>

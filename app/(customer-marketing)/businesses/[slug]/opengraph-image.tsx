@@ -7,6 +7,12 @@ export const alt = "A business on Promotello";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+import { cityListingShareImage } from "@/lib/listing-share";
+
 export default async function BusinessOpenGraphImage({ params }: { params: Promise<{ slug: string }> }) {
-    return businessShareImage((await params).slug, "og");
+    const { slug } = await params;
+
+    // The same address serves the city listing, which is not a
+    // business and used to share as a broken image.
+    return (await cityListingShareImage(slug, "businesses", "og")) ?? businessShareImage(slug, "og");
 }
