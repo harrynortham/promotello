@@ -37,11 +37,16 @@ export function brandQrSvg(svg: string) {
 
 // QR code as an SVG string, with the brand symbol in the middle. High error
 // correction keeps it scannable if the poster gets scuffed or partly covered.
-export async function qrSvg(url: string, color = "#17233B") {
+//
+// The margin is in modules (the little squares). One is enough on our own
+// poster, where the code sits on white with room around it. A code someone
+// downloads is going somewhere we can't see — a menu, a sticker, a leaflet
+// — so it carries the four the spec asks for.
+export async function qrSvg(url: string, color = "#17233B", margin = 1) {
     const svg = await QRCode.toString(url, {
         type: "svg",
         errorCorrectionLevel: "H",
-        margin: 1,
+        margin,
         color: { dark: color, light: "#FFFFFF" },
     });
 
