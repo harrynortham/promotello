@@ -80,3 +80,35 @@ test("on a desktop the row is left to the account menu", async ({ browser }) => 
     await page.goto("/dashboard");
     await expect(page.getByRole("navigation", { name: "Your account pages" })).toBeHidden();
 });
+
+// The navigation is centred in the header and the account button sits at
+// the right, so the two can run into each other at the widths in between —
+// they did, between the menu button disappearing and the window being wide
+// enough for a name and an email beside four links.
+test("the navigation and the account button never run into each other", async ({ browser }) => {
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    for (const width of [700, 768, 820, 900, 1000, 1024, 1100, 1280, 1536]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/dashboard");
+
+        const edges = await page.evaluate(() => {
+            const onScreen = (el: Element | null) => {
+                if (!el) return null;
+                const box = el.getBoundingClientRect();
+                return getComputedStyle(el).display === "none" || box.width === 0
+                    ? null
+                    : { left: box.left, right: box.right };
+            };
+
+            return {
+                nav: onScreen(document.querySelector('nav[aria-label="Primary navigation"]')),
+                account: onScreen(document.querySelector('[aria-label^="Open account menu"]')),
+            };
+        });
+
+        if (edges.nav && edges.account) {
+            expect(edges.nav.right, `at ${width}px`).toBeLessThanOrEqual(edges.account.left);
+        }
+    }
+});
