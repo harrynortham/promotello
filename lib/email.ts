@@ -180,7 +180,6 @@ export function brandedEmail({
     eyebrow,
     title,
     paragraphs,
-    image,
     action,
     footer,
     footerLinks = [],
@@ -188,12 +187,6 @@ export function brandedEmail({
     eyebrow: string;
     title: string;
     paragraphs: string[];
-    // A picture of the thing being described, shown above the button.
-    // Plenty of people read with images turned off, so the email has to
-    // make its case without it: this is never the only place something is
-    // said. `width` is how wide it is shown, which should be half the
-    // file's own width so it stays sharp on a phone.
-    image?: { src: string; alt: string; width: number };
     // Left out for notices with nothing to click.
     action?: { label: string; url: string };
     footer: string;
@@ -212,9 +205,6 @@ ${emailLogoRow()}
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.25">${e(title)}</h1>
 ${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(text)}</p>`).join("\n")}
 </td></tr>
-${image ? `<tr><td style="padding:20px 28px 0">
-<img src="${e(image.src)}" alt="${e(image.alt)}" width="${image.width}" style="display:block;width:100%;max-width:${image.width}px;height:auto;border:0;border-radius:12px" />
-</td></tr>` : ""}
 ${action ? `<tr><td style="padding:20px 28px 28px">
 <a href="${e(action.url)}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${e(action.label)}</a>
 <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#6b7387;word-break:break-all">Or open this link: ${e(action.url)}</p>

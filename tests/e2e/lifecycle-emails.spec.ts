@@ -162,13 +162,6 @@ test.describe("business setup and trial emails", () => {
             expect(email.text, `${name} names a price`).toMatch(/£\d/);
         }
 
-        // The picture is a picture of the thing being sold, and it has to
-        // survive being blocked: an absolute address and alt text that
-        // says what it showed.
-        for (const [name, email] of [["loyalty pitch", pitch], ["founding places", founding]] as const) {
-            expect(email.html, `${name} shows the card`).toContain('src="https://');
-            expect(email.html, `${name} describes it`).toMatch(/alt="A loyalty card[^"]+"/);
-        }
     });
 
     test("starting a trial sends what's unlocked, once Stripe confirms it", async () => {
