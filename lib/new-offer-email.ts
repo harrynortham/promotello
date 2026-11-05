@@ -128,3 +128,78 @@ export async function emailFollowersAboutOffer(offerId: string) {
 
     return result;
 }
+
+// Every other scheduled email has a next run to pick a released claim back
+// up; this one didn't. An announcement is sent once, when the offer is
+// approved, so a batch Resend rejects — over the daily cap, say — released
+// its claims into nothing and the offer was never announced at all.
+//
+// This is that next run. The claim function only returns followers who
+// haven't been claimed for this offer, so nobody is told twice, and it
+// checks the offer is still live and the business still on a paid plan
+// before sending.
+//
+// One thing it changes: someone who follows a business within the window
+// gets an offer announced a day or two before they followed. That is a
+// live offer from a business they have just chosen to follow, and the
+// window keeps it recent.
+const RETRY_DAYS = 2;
+
+export async function retryOfferAnnouncements({ onlyOffer, limit = 20 }: { onlyOffer?: string; limit?: number } = {}) {
+    const admin = createAdminClient();
+    const since = new Date(Date.now() - RETRY_DAYS * 86_400_000).toISOString();
+    const today = new Date().toISOString().slice(0, 10);
+
+    // `onlyOffer` is for tests, so a run can't reach a real follower.
+    const query = admin
+        .from("offers")
+        .select("id, business_id")
+        .eq("approval_status", "approved")
+        .is("plan_paused_at", null)
+        .gte("expires_at", today)
+        .gte("updated_at", since)
+        .limit(limit);
+
+    const { data: offers, error } = await (onlyOffer ? query.eq("id", onlyOffer) : query);
+
+    if (error) {
+        console.error("Offer announcements: failed to look for unsent ones", error);
+        return { offers: 0, sent: 0 };
+    }
+
+    let announced = 0;
+    let sent = 0;
+
+    for (const offer of offers ?? []) {
+        const [followers, emailed] = await Promise.all([
+            admin
+                .from("business_followers")
+                .select("user_id", { count: "exact", head: true })
+                .eq("business_id", offer.business_id)
+                .eq("emails_enabled", true),
+            admin
+                .from("offer_email_sends")
+                .select("user_id", { count: "exact", head: true })
+                .eq("offer_id", offer.id),
+        ]);
+
+        // Everyone who could be told has been: the usual case, and cheap.
+        if ((followers.count ?? 0) <= (emailed.count ?? 0)) {
+            continue;
+        }
+
+        const result = await emailFollowersAboutOffer(offer.id);
+
+        // Counted as picked up whether or not anything left the building:
+        // an address can be skipped (a test address, a suppression) and the
+        // offer has still had its second run.
+        announced += 1;
+        sent += result.sent;
+
+        console.warn(
+            `Offer announcements: ${offer.id} had ${(followers.count ?? 0) - (emailed.count ?? 0)} follower(s) an earlier run missed, sent ${result.sent}`,
+        );
+    }
+
+    return { offers: announced, sent };
+}
