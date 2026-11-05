@@ -111,3 +111,13 @@ test("a business can download its code as an image, and nobody else can", async 
         await admin.from("qr_codes").delete().eq("id", code!.id);
     }
 });
+
+// The product shot the Pro emails carry. Hosted here because an email
+// can only show an image the recipient's client can fetch.
+test("the loyalty card picture the emails use is a real image", async ({ request }) => {
+    const image = await request.get("/images/email/loyalty-card");
+
+    expect(image.status()).toBe(200);
+    expect(image.headers()["content-type"]).toContain("image/png");
+    expect((await image.body()).length).toBeGreaterThan(10_000);
+});

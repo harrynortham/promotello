@@ -124,6 +124,14 @@ function resultsList(d: LifecycleDue["details"]) {
 // cancelling before then costs nothing. Shortening any of them to "free
 // for ${TRIAL_DAYS} days" would drop the card, which is the part people
 // mind finding out about later.
+// The card itself, in the two emails that ask someone to pay for it.
+// Shown at 464px, drawn at twice that.
+const loyaltyCardImage = {
+    src: absoluteUrl("/images/email/loyalty-card"),
+    alt: "A loyalty card on a phone: eight of nine stamps collected, one more visit to a free coffee",
+    width: 464,
+};
+
 export const trialTerms = {
     pitch: `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`,
     founding: `A place is held the moment you start the trial. That takes a card, though nothing leaves it for ${TRIAL_DAYS} days, and cancelling before then costs nothing.`,
@@ -276,8 +284,9 @@ export function lifecycleEmail(
             paragraphs: [
                 "Paper stamp cards get lost, forgotten and put through the wash. A Promotello loyalty card lives on your customers' phones, so they always have it with them.",
                 "You choose the reward, like a free coffee after nine. Customers join by scanning your QR poster, and you or your staff stamp their card at the till. When they reach the reward, they show their card and you hand it over.",
-                `Loyalty cards are part of Pro. ${trialTerms.pitch}`,
+                `Loyalty cards are part of Pro, ${plans.pro_monthly.price} a month. ${trialTerms.pitch}`,
             ],
+            image: loyaltyCardImage,
             action: tryPro,
             ...tipsFooter(optOutToken),
         });
@@ -286,7 +295,8 @@ export function lifecycleEmail(
     }
 
     if (due.kind === "founding_places") {
-        const proAdds = "Pro adds a digital loyalty card, as many live offers as you like, Google review requests after each visit, and an email to your followers whenever a new offer of yours goes live.";
+        const proAdds = `Pro adds a digital loyalty card, as many live offers as you like, Google review requests after each visit, and an email to your followers whenever a new offer of yours goes live. It's ${plans.pro_monthly.price} a month.`;
+        const proAddsWithoutPrice = proAdds.replace(` It's ${plans.pro_monthly.price} a month.`, "");
         const founding = plans.pro_founding_monthly.price;
 
         const { html, text } = foundingPlacesLeft && foundingPlacesLeft > 0
@@ -295,9 +305,10 @@ export function lifecycleEmail(
                 title: `Lock in ${founding} a month for ${name}, for life`,
                 paragraphs: [
                     `The first ${FOUNDING_MEMBER_LIMIT} businesses on Pro pay ${founding} a month for as long as they stay, instead of ${plans.pro_monthly.price}. ${foundingPlacesLeft === 1 ? "There's 1 place left." : `There are ${foundingPlacesLeft} places left.`}`,
-                    proAdds,
+                    proAddsWithoutPrice,
                     trialTerms.founding,
                 ],
+                image: loyaltyCardImage,
                 action: { label: "Claim a founding place", url: billing },
                 ...tipsFooter(optOutToken),
             })
@@ -305,6 +316,7 @@ export function lifecycleEmail(
                 eyebrow: "Promotello Pro",
                 title: `What Pro adds for ${name}`,
                 paragraphs: [proAdds, trialTerms.adds],
+                image: loyaltyCardImage,
                 action: tryPro,
                 ...tipsFooter(optOutToken),
             });
@@ -330,7 +342,7 @@ export function lifecycleEmail(
                 title: `How ${name} is doing on Promotello`,
                 paragraphs: [
                     `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`,
-                    "Pro helps bring those customers back: they join your loyalty card and return for their next stamp, and your followers hear about every new offer.",
+                    `Pro helps bring those customers back: they join your loyalty card and return for their next stamp, and your followers hear about every new offer. It's ${plans.pro_monthly.price} a month.`,
                     trialTerms.results,
                 ],
                 action: tryPro,
