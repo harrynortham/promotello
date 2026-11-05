@@ -142,7 +142,9 @@ export function UserMenu({
                     />
                 }
             >
-                <span className="hidden min-w-0 text-right sm:block">
+                {/* Only where there is room beside the navigation, which is
+                    centred: at narrower widths the avatar stands alone. */}
+                <span className="hidden min-w-0 text-right xl:block">
                     <span className="block max-w-40 truncate text-sm font-semibold text-[#17233B]">
                         {user.displayName}
                     </span>
