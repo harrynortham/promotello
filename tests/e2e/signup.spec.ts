@@ -39,3 +39,17 @@ test.describe("Sign up", () => {
         ]);
     });
 });
+
+// Someone part-way through claiming an offer who realises they already
+// have an account should land back on the offer, not the dashboard.
+test("the sign-in link keeps where you were going", async ({ page }) => {
+    await page.goto("/signup?next=%2Foffers%2Fsome-offer");
+    await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+        "href",
+        "/login?next=%2Foffers%2Fsome-offer",
+    );
+
+    // And stays a plain link when there is nowhere to go back to.
+    await page.goto("/signup");
+    await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+});

@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,7 +32,7 @@ const schema = z.object({ email, password });
 
 type Values = z.infer<typeof schema>;
 
-export default function SignupPage() {
+function SignupContent() {
     const router = useRouter();
 
     const [showPassword, setShowPassword] = useState(false);
@@ -56,6 +56,13 @@ export default function SignupPage() {
     function nextPath() {
         return safeNextPath(new URLSearchParams(window.location.search).get("next")) ?? "/dashboard";
     }
+
+    // Someone part-way through claiming an offer who finds they already
+    // have an account should still end up at the offer.
+    const requestedNext = safeNextPath(useSearchParams().get("next"));
+    const loginHref = requestedNext
+        ? `/login?next=${encodeURIComponent(requestedNext)}`
+        : "/login";
 
     async function onSubmit(values: Values) {
         setErrorMessage("");
@@ -154,7 +161,7 @@ export default function SignupPage() {
                                 </div>
 
                                 <Button
-                                    render={<Link href="/login" />}
+                                    render={<Link href={loginHref} />}
                                     nativeButton={false}
                                     size="lg"
                                     className="mt-7"
@@ -297,7 +304,7 @@ export default function SignupPage() {
                                     <p className="text-center text-sm leading-7 text-muted-foreground">
                                         Already have an account?{" "}
                                         <Link
-                                            href="/login"
+                                            href={loginHref}
                                             className="font-semibold text-foreground underline underline-offset-4"
                                         >
                                             Sign in
@@ -353,5 +360,13 @@ export default function SignupPage() {
                 </aside>
             </div>
         </main>
+    );
+}
+
+export default function SignupPage() {
+    return (
+        <Suspense>
+            <SignupContent />
+        </Suspense>
     );
 }

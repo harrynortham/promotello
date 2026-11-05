@@ -8,7 +8,7 @@ import { FiArrowRight, FiPlus } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { approvalLabel } from "@/lib/business-status";
+import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { createClient } from "@/utils/supabase/server";
 
 type Business = {
@@ -43,17 +43,13 @@ function LoadingState() {
     );
 }
 
-const statuses: Record<string, { className: string; note?: string }> = {
-    approved: { className: "bg-emerald-50 text-emerald-800" },
-    pending: {
-        className: "bg-amber-50 text-amber-800",
-        note: "You can finish setting up while our team checks it.",
-    },
-    rejected: {
-        className: "bg-red-50 text-red-800",
-        note: "Update your details so we can approve it.",
-    },
-    suspended: { className: "bg-red-50 text-red-800" },
+// What to say under the name while a business isn't live yet. The badge
+// beside it carries the status itself.
+const statuses: Record<string, { note?: string }> = {
+    approved: {},
+    pending: { note: "You can finish setting up while our team checks it." },
+    rejected: { note: "Update your details so we can approve it." },
+    suspended: {},
 };
 
 function BusinessCard({ business }: { business: BusinessSummary }) {
@@ -84,9 +80,8 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
                             {business.name}
                         </Link>
                     </h2>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>
-                        {approvalLabel(business.approval_status)}
-                    </span>
+                    {/* The same badge as the sidebar: pending wears a clock. */}
+                    <BusinessStatusBadge status={business.approval_status} />
                 </div>
 
                 <p className="mt-1 text-sm text-[#17233B]/65">

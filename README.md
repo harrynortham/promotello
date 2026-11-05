@@ -6,7 +6,7 @@ Loyalty cards, offers and QR posters for independent businesses, with a local di
 - **Customers** browse by city, area and category, claim vouchers, collect stamps and follow businesses for new-offer emails.
 - **Admins** approve businesses and offers, manage cities and areas, build previews for businesses they're approaching, and watch platform metrics.
 
-Product plan and priorities: [docs/ROADMAP.md](docs/ROADMAP.md). How Stripe billing is set up: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md). Finding businesses and writing to them: [docs/OUTREACH.md](docs/OUTREACH.md).
+Product plan and priorities: [docs/ROADMAP.md](docs/ROADMAP.md). More than one city: [docs/MULTI-CITY.md](docs/MULTI-CITY.md). How Stripe billing is set up: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md). Finding businesses and writing to them: [docs/OUTREACH.md](docs/OUTREACH.md). Making videos for social: [docs/SOCIAL-VIDEO.md](docs/SOCIAL-VIDEO.md).
 
 ## Stack
 
@@ -16,7 +16,7 @@ Product plan and priorities: [docs/ROADMAP.md](docs/ROADMAP.md). How Stripe bill
 - Stripe Billing (Checkout, Customer Portal, webhooks)
 - Resend for email; Vercel for hosting and the daily cron
 - react-hook-form and Zod for forms
-- Playwright end-to-end tests
+- Playwright end-to-end tests, and `node --test` for pure logic
 
 ## Getting started
 
@@ -31,6 +31,7 @@ npm run dev                  # http://localhost:3000
 | `npm run dev`         | Dev server (Turbopack)                               |
 | `npm run build`       | Production build                                     |
 | `npm run lint`        | ESLint                                               |
+| `npm run test:unit`   | Pure-logic tests (no browser, no database)           |
 | `npm run test:e2e`    | Playwright tests (needs `SUPABASE_SERVICE_ROLE_KEY`) |
 | `npm run test:e2e:ui` | The same, in Playwright's UI                         |
 
@@ -101,62 +102,84 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
-Before selling (Top priority):
+Roughly in the order it matters. Everything here is still open; things get
+deleted when they're done rather than ticked.
 
-Saw message once on mobile Promotello isn't in Kingston upon Hull yet, so you're seeing Bristol. Want to know when we arrive?. I only saw this once on my mobile device and my location is Gibraltar country. Not Kingston. where and how is it triggered and how can we fix to show correct country/city? Also an X close button there would be good to hide it.
+### Blocking launch
 
-1. Style the offers page
+1. **Scan a QR code with a real phone.** Flagged four or five times and still
+   open. It's the product's first physical touchpoint — poster in a window,
+   customer scans, card appears. The brand badge sits in the middle at error
+   correction H, which should be fine, but "should" is doing a lot of work for
+   the one interaction the whole pitch rests on. Five minutes settles it.
+2. **ICO registration.** A UK data controller processing names, emails,
+   birthdays and visit history. A fee and a form, not a project, but not
+   optional: ico.org.uk/for-organisations/data-protection-fee, then add the
+   number to the privacy policy and the other legal pages (company number is
+   already in `lib/legal.ts`).
+3. **Check Resend's limits** are enough for launch volume.
+4. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
+   card, how it looks in the customer's wallet, the offers, the directory page
+   and the pricing.
+5. **Staff documentation on redemptions**, for the people behind the counter.
 
-2. Nobody has scanned a QR code. I've flagged this four or five times now and it's still open. It's the product's first physical touchpoint — poster in a window, customer scans, card appears. The brand badge sits in the middle of the code at error-correction H, which should be fine, but "should" is doing a lot of work for the single interaction the whole pitch rests on. Five minutes with a phone settles it.
+### Product gaps to close before or around launch
 
-3. ICO registration. Your own note says "before you start signing up real customers" and that's right — you're a UK data controller processing names, emails, birthdays and visit history. It's a fee and a form, not a project, but it isn't optional and the number needs adding to your privacy policy.
+- Bring back the "Promotello isn't in your area yet" bar, with an email field
+  so people can be told when it arrives — a waitlist rather than a dead end.
+- What happens at onboarding when a business doesn't fit any category.
+- What a customer sees after scanning an offer QR: ideally a standalone page
+  with just that offer, no scrolling.
+- Test what happens when a loyalty card is full.
+- Joining a loyalty card without an account takes a name and an email. Phone
+  needs an SMS sender first, or a guest who gives only a number has no way back
+  to their card.
+- A QR image a business can download on its own, not only inside a poster.
+- Decide the email volume before outreach: a business that signs up and does
+  nothing gets 7 emails in 21 days (welcome, setup nudge, loyalty pitch, second
+  nudge, founding places, results, check-in). All verified working, there are
+  just a lot of them.
+- The trial terms sentence repeats word for word in the loyalty pitch, founding
+  places and results emails, and again in the loyalty setup step.
+- Lifecycle emails need product imagery, and a read-through against the job
+  they're doing: converting a Free business to Pro.
+- Conversion emails should carry the signature from the marketing folder.
 
-- on desktop make filter show from right
+### Admin tools
 
-- are we all geared up for seo optimized on business offer and category pages?
-- Change anything i can help with? conversion email to have the signature from marketing folder
-- Add icons to shadcn dropdown menus in business and customer dashboard. style to make it look styled less like pure shadcn
-- /admin/businesses doesnt show all data for approval, should there be lonk for preview page and just show list here?
-- /admin/offers i would like to show list of offers for approval and a button to show the full offer maybe in a modal?
-- can offers be further edited once sent for approval?
-- in admin offers should we list all offer, approved and not approved with some filtering? same for /admin/businesses
+- `/admin/businesses` doesn't show everything needed to approve. Either show it
+  all, or keep the list short and link to the preview page.
+- `/admin/offers`: a list for approval with a button to see the full offer,
+  perhaps in a modal.
+- Can an offer still be edited once it's been sent for approval?
+- List everything, approved and not, with filtering — both pages.
 
-- Secure all social media accounts with keychain passwords and correct phone numbers / email addresses
-- 3 December Transfer youtube channel to harry@promotello.com / cant transfer until google account out of trial. Setup youtube for user and then make manager, wait 7 days
-- 3 December Add YouTube to google search console
+### Accounts and infrastructure
 
-- currently there is no quick way for user to end their birthday. we should make a notification somehere nudging them to add it, with benefits of doing so, such as birthday gifts
+- A second Supabase project for development, so tests stop running against the
+  live database.
+- Secure every social account with keychain passwords and the right phone
+  numbers and email addresses.
+- 3 December: transfer the YouTube channel to harry@promotello.com (not
+  possible until the Google account is out of trial — set up YouTube for the
+  user, make them a manager, wait 7 days), then add YouTube to Search Console.
+- A BIMI mark certificate (VMC or CMC) so Gmail and Apple Mail show the logo.
+  The logo and the DNS record are already in place.
+- Apple sign-in on the login and register pages: quicker than verifying email.
 
-- Check resend limits that its ok for launch
-- create second project in supabase for dev testing
+### Later
 
-- Is our cookie consent bar sufficient for GDPR
-- Test what happens when loyalty card full
-
-- Update the lifecycle emails to contain some product imagery, we are using these emails to convert user to PRO if they havent, please check they are designed to work like this
-
-- Different poster sizes. currently only offer two sizes. we may need smaller size also
-- when customer scans qr for offers where do they land, ideally standalone page with just the offers without needing to scroll
-
-- need way to generate poster to stick in window, sent to each sign up business using that website with the API printing
-
-- Create page for restricted businesses, Same as stripe doesn’t allow, Link it from site somewhere
-
-- Stripe managed payments requires VAT ID which we dont have and wont have until over 85k threshold, then we can enable. We may do sooner but not needed for now the VAT. You're unlikely to want it back. If you pass the £90k VAT threshold, the usual route is to register for VAT yourself and turn on Stripe Tax, which is far cheaper than Managed. Payments' extra fee of about 3.5%. Stripe wouldn't need to become the seller.
-- Set up BIMI so the logo shows in mail apps
-- Events: built, and hidden until there are enough customers (`lib/features.ts`)
-- Add apple logins to register and login page, quicker than verifiying email
-- Do we need it? Register the company with the ICO straight away, before you start signing up real Go to ico.org.uk/for-organisations/data-protection-fee and choose Register. Add ICO number to privacy policy and other legal pages (company number done: `lib/legal.ts`)
-- Add API so that users can generate and buy stickers of their QR codes like Printful: a well-documented REST API, kiss-cut stickers, and printing in the UK. It’s probably the quickest to get working.
-- Do we have QR code download image that business can display to get loyalty card / user signs up and is in their account
-- how will seo title and metas work when more locations
-- joining a loyalty card without an account takes a name and an email. phone needs an SMS sender first, or a guest who gives only a number has no way back to their card
-- decide the email volume before outreach: a business that signs up and does nothing gets 7 emails in 21 days (welcome, setup nudge, loyalty pitch, second nudge, founding places, results, check-in). all verified working, there are just a lot of them
-- the trial terms sentence repeats word for word in the loyalty pitch, founding places and results emails, and again in the loyalty setup step
-- business chooser cards show the approval chip as plain text; `components/business-status-badge.tsx` has the clock and warning colours the sidebar uses
-- founding places left is cached hourly on the pricing page (`cacheLife`), so tighten it as you approach 50 or the page keeps advertising places that have gone. the limit itself is enforced live at checkout, so 51 can't be sold
-- security, password and email preference guides in both help centres are still in the older formal voice, left that way on purpose
-- the customer sign-up page's “already have an account? sign in” link is a bare `/login`, so someone part-way through claiming an offer loses where they were going. the business sign-up page carries it through now
+- More poster sizes, including something smaller than the two we offer.
+- Generate a window poster for every business that signs up, printed and posted
+  through an API (Printful: documented REST API, kiss-cut stickers, printed in
+  the UK), and let businesses buy sticker sheets of their own code.
+- Stripe Managed Payments needs a VAT ID we won't have until the £90k
+  threshold. At that point registering for VAT and turning on Stripe Tax is far
+  cheaper than Managed Payments' extra ~3.5%, and Stripe doesn't have to become
+  the seller. Nothing to do now.
+- Events: built and hidden until there are enough customers (`lib/features.ts`).
+- Security, password and email preference guides in both help centres are still
+  in the older formal voice. Left that way on purpose.
 
 ### App improvements
 
@@ -178,12 +201,3 @@ Smaller gaps:
 - Offer types beyond a discount
 - Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate
 
-## AI Video Social Media Workflow
-
-A simple workflow:
-
-Idea and script: ask an assistant like me for hooks and a 30–60 second script. The first 2 seconds matter most.
-Visuals: film yourself, generate clips (Veo, Kling or Runway), or use an avatar.
-Voice: your own, or an AI voice from ElevenLabs.
-Edit: CapCut is free and built for TikTok and Reels. Add auto-captions, since most people watch muted, plus trending audio.
-Post natively to each platform. TikTok, Instagram and YouTube all ask you to label realistic AI-generated content, so turn on the AI label when it applies.
