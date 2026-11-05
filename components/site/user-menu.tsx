@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import {
+    FiAward,
+    FiBriefcase,
+    FiCompass,
+    FiGrid,
+    FiLogOut,
+    FiSettings,
+    FiShield,
+    FiTag,
+} from "react-icons/fi";
+import type { IconType } from "react-icons";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,22 +28,28 @@ import type { UserProfile } from "@/lib/user-profile";
 import { createClient } from "@/utils/supabase/client";
 import { UserAvatar } from "./user-avatar";
 
-// The same account links everywhere, so users always know where to find them.
+type AccountLink = { label: string; href: string; icon: IconType };
+
+// The same account links everywhere, so users always know where to find
+// them. Each inner array is a group with a divider between: what you came
+// for first, then the other side of the marketplace, then your account.
 const accountLinks = {
     customer: [
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "My vouchers", href: "/dashboard/redemptions" },
-        { label: "Loyalty cards", href: "/dashboard/loyalty" },
-        { label: "Business dashboard", href: "/business/dashboard" },
-        { label: "Account settings", href: "/account" },
+        [
+            { label: "Dashboard", href: "/dashboard", icon: FiGrid },
+            { label: "My vouchers", href: "/dashboard/redemptions", icon: FiTag },
+            { label: "Loyalty cards", href: "/dashboard/loyalty", icon: FiAward },
+        ],
+        [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase }],
+        [{ label: "Account settings", href: "/account", icon: FiSettings }],
     ],
     // In the business dashboard, the customer side is one link, not three.
     business: [
-        { label: "Business dashboard", href: "/business/dashboard" },
-        { label: "Customer area", href: "/dashboard" },
-        { label: "Account settings", href: "/account" },
+        [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase }],
+        [{ label: "Customer area", href: "/dashboard", icon: FiCompass }],
+        [{ label: "Account settings", href: "/account", icon: FiSettings }],
     ],
-};
+} satisfies Record<string, AccountLink[][]>;
 
 export type AccountArea = keyof typeof accountLinks;
 
@@ -84,16 +101,17 @@ function useSignOut(redirectTo: string) {
     return { signOut, isSigningOut, error };
 }
 
-function UserSummary({ user, size }: { user: UserProfile; size: number }) {
+// An icon in its own tile, which picks up the brand's coral as the row is
+// hovered or keyboard-focused. Plain icons beside text read as clutter at
+// this size; a tile gives the column some rhythm.
+function MenuIcon({ icon: Icon }: { icon: IconType }) {
     return (
-        <div className="flex min-w-0 items-center gap-3">
-            <UserAvatar src={user.avatarUrl} initials={user.initials} size={size} />
-
-            <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{user.displayName}</p>
-                <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-            </div>
-        </div>
+        <span
+            aria-hidden="true"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#17233B]/[0.06] text-[#17233B]/70 transition-colors group-focus/dropdown-menu-item:bg-[#FF593F]/10 group-focus/dropdown-menu-item:text-[#FF593F]"
+        >
+            <Icon className="size-4" />
+        </span>
     );
 }
 
@@ -110,6 +128,8 @@ export function UserMenu({
     const { signOut, isSigningOut, error } = useSignOut(signOutRedirect);
     const isAdmin = useIsPlatformAdmin();
 
+    const groups = accountLinks[area];
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
@@ -118,15 +138,15 @@ export function UserMenu({
                         type="button"
                         variant="ghost"
                         aria-label={`Open account menu for ${user.displayName}`}
-                        className="h-auto cursor-pointer gap-3 rounded-full px-2 py-1.5"
+                        className="h-auto cursor-pointer gap-3 rounded-full px-2 py-1.5 data-popup-open:bg-[#17233B]/[0.06]"
                     />
                 }
             >
                 <span className="hidden min-w-0 text-right sm:block">
-                    <span className="block max-w-40 truncate text-sm font-semibold">
+                    <span className="block max-w-40 truncate text-sm font-semibold text-[#17233B]">
                         {user.displayName}
                     </span>
-                    <span className="block max-w-40 truncate text-xs text-muted-foreground">
+                    <span className="block max-w-40 truncate text-xs text-[#17233B]/65">
                         {user.email}
                     </span>
                 </span>
@@ -134,41 +154,54 @@ export function UserMenu({
                 <UserAvatar src={user.avatarUrl} initials={user.initials} />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-64 max-w-[calc(100vw-2rem)]">
-                <div className="px-2 py-3">
-                    <UserSummary user={user} size={40} />
+            <DropdownMenuContent align="end" sideOffset={8} className="w-72 max-w-[calc(100vw-2rem)]">
+                {/* Who you're signed in as, on the brand's cream so the links
+                    below it read as the list rather than more of the same. */}
+                <div className="mb-1 flex min-w-0 items-center gap-3 rounded-xl bg-[#FFF8F0] px-3 py-3">
+                    <UserAvatar src={user.avatarUrl} initials={user.initials} size={40} />
+
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[#17233B]">
+                            {user.displayName}
+                        </p>
+                        <p className="truncate text-xs text-[#17233B]/60">{user.email}</p>
+                    </div>
                 </div>
 
+                {groups.map((group, index) => (
+                    <Fragment key={group[0].href}>
+                        {index > 0 && <DropdownMenuSeparator />}
+
+                        <DropdownMenuGroup>
+                            {group.map((link) => (
+                                <DropdownMenuItem key={link.href} render={<Link href={link.href} />}>
+                                    <MenuIcon icon={link.icon} />
+                                    {link.label}
+                                </DropdownMenuItem>
+                            ))}
+
+                            {/* Admins get their link with the account ones. */}
+                            {index === groups.length - 1 && isAdmin && (
+                                <DropdownMenuItem render={<Link href="/admin" />}>
+                                    <MenuIcon icon={FiShield} />
+                                    Platform admin
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuGroup>
+                    </Fragment>
+                ))}
+
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup>
-                    {accountLinks[area].map((link) => (
-                        <DropdownMenuItem key={link.href} render={<Link href={link.href} />}>
-                            {link.label}
-                        </DropdownMenuItem>
-                    ))}
-
-                    {isAdmin && (
-                        <DropdownMenuItem render={<Link href="/admin" />}>
-                            Platform admin
-                        </DropdownMenuItem>
-                    )}
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuGroup>
-                    <DropdownMenuItem
-                        disabled={isSigningOut}
-                        onClick={signOut}
-                        className="text-destructive focus:text-destructive"
-                    >
+                    <DropdownMenuItem disabled={isSigningOut} onClick={signOut}>
+                        <MenuIcon icon={FiLogOut} />
                         {isSigningOut ? "Signing out…" : "Sign out"}
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
 
                 {error && (
-                    <p role="alert" className="px-2 pb-2 text-xs text-destructive">
+                    <p role="alert" className="px-3 pb-2 text-xs text-destructive">
                         {error}
                     </p>
                 )}
