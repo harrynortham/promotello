@@ -139,7 +139,10 @@ const questions = [
 // Refreshed at most hourly so the page stays fast and static.
 async function getFoundingPlacesLeft() {
     "use cache";
-    cacheLife("hours");
+    // Minutes, not hours: the last few founding places go quickly, and an
+    // hour-old count advertises places that have already gone. Checkout
+    // enforces the limit itself, so 51 can never be sold.
+    cacheLife("minutes");
 
     try {
         return Math.max(FOUNDING_MEMBER_LIMIT - (await countFoundingMembers()), 0);
