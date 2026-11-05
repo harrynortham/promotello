@@ -50,6 +50,38 @@ test.describe("with more than one city live", () => {
         test.skip(cities.length < 2, `only ${cities.length} city live; seed a second one to run these`);
     });
 
+    // Everything a search engine is told has to be the city's own, or the
+    // second city competes with the first for the same page.
+    test("each city's pages are their own in search, and in the sitemap", async ({ page, request }) => {
+        const sitemap = await (await request.get("/sitemap.xml")).text();
+
+        for (const name of cities) {
+            const slug = name.toLowerCase().replace(/\s+/g, "-");
+
+            for (const path of [`/offers/${slug}`, `/businesses/${slug}`, `/explore/${slug}`]) {
+                await page.goto(path);
+
+                const head = await page.evaluate(() => ({
+                    canonical: document.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
+                    title: document.title,
+                    crumbs: [...document.querySelectorAll('script[type="application/ld+json"]')]
+                        .map((node) => JSON.parse(node.textContent ?? "{}"))
+                        .filter((data) => data["@type"] === "BreadcrumbList")
+                        .flatMap((data) => data.itemListElement.map((crumb: { name: string }) => crumb.name)),
+                }));
+
+                // Its own address, not the everywhere page's.
+                expect(head.canonical, `${path} canonical`).toContain(path);
+                expect(head.title, `${path} title`).toContain(name);
+                expect(sitemap, `${path} in the sitemap`).toContain(`${path}</loc>`);
+
+                // The listings say which city they belong to.
+                if (path.startsWith("/explore")) continue;
+                expect(head.crumbs, `${path} breadcrumbs`).toContain(name);
+            }
+        }
+    });
+
     test("the listing pages name the places instead of saying 'your area'", async ({ page }) => {
         for (const path of ["/", "/offers", "/businesses", "/explore", "/categories"]) {
             await page.goto(path);

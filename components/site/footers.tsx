@@ -13,6 +13,7 @@ import "react-social-icons/tiktok";
 
 import { Button } from "@/components/ui/button";
 import { company, companyDisclosure } from "@/lib/legal";
+import { socialProfiles } from "@/lib/site";
 
 type FooterLink = { label: string; href: string; external?: boolean };
 
@@ -31,14 +32,7 @@ const businessLegalLinks: FooterLink[] = [
     { label: "Cookie policy", href: "/legal/cookies" },
 ];
 
-const socialLinks = [
-    { label: "X", network: "x", url: "https://x.com/promotello" },
-    { label: "Facebook", network: "facebook", url: "https://www.facebook.com/promotello/" },
-    { label: "YouTube", network: "youtube", url: "https://www.youtube.com/@promotello" },
-    { label: "LinkedIn", network: "linkedin", url: "https://www.linkedin.com/company/promotello/" },
-    { label: "Instagram", network: "instagram", url: "https://www.instagram.com/promotello/" },
-    { label: "TikTok", network: "tiktok", url: "https://www.tiktok.com/@promotello" },
-];
+const socialLinks = socialProfiles;
 
 const marketingFooters = {
     customer: {

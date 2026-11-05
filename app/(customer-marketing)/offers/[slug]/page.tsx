@@ -22,8 +22,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { addressParts, directionsUrl } from "@/lib/address";
 import { topLevelFor } from "@/lib/categories";
+import { getLiveCities } from "@/lib/cities";
 import { getCategories, getLiveOffers } from "@/lib/listings";
-import { truncate } from "@/lib/site";
+import { absoluteUrl, jsonLd, siteName, truncate } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
 import { createClient } from "@/utils/supabase/server";
 
@@ -87,7 +88,7 @@ export async function generateMetadata({
     const { data: offer } = await createPublicClient()
         .from("offers")
         .select(
-            "slug, title, discount, description, image_url, businesses!inner ( name, logo_url, is_sample )",
+            "slug, title, discount, description, image_url, businesses!inner ( name, logo_url, is_sample, business_locations ( city, region ) )",
         )
         .eq("slug", slug)
         .maybeSingle();
@@ -109,7 +110,20 @@ export async function generateMetadata({
     const title = business
         ? `${offer.discount} at ${business.name}: ${offer.title}`
         : `${offer.discount}: ${offer.title}`;
-    const description = truncate(offer.description);
+
+    // "Clifton, Bristol": people search for the place as much as the thing,
+    // and the business's own words don't always name it.
+    const spot = Array.isArray(business?.business_locations)
+        ? business.business_locations[0]
+        : business?.business_locations;
+    const where = [spot?.region, spot?.city]
+        .filter((part, index, parts) => part && parts.indexOf(part) === index)
+        .join(", ");
+    const description = truncate(
+        where && !offer.description.includes(where)
+            ? `${offer.description} At ${business?.name} in ${where}.`
+            : offer.description,
+    );
     const path = `/offers/${offer.slug}`;
 
     return {
@@ -304,8 +318,77 @@ async function OfferContent({ params }: OfferPageProps) {
             : []),
     ];
 
+    // What search engines and assistants are told this page is: the offer
+    // itself, sold by the business, in the place it can be used. The
+    // business's own page carries the full LocalBusiness, and the seller
+    // here points at it rather than repeating it.
+    const pageUrl = absoluteUrl(`/offers/${offer.slug}`);
+    const businessUrl = absoluteUrl(businessPath(business));
+    const cityPage = (await getLiveCities()).find((item) => item.name === location?.city) ?? null;
+
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Offer",
+        "@id": `${pageUrl}#offer`,
+        name: offer.title,
+        description: offer.description,
+        url: pageUrl,
+        image: offer.image_url ?? undefined,
+        category: offer.category ?? undefined,
+        validThrough: offer.expires_at ?? undefined,
+        availability: isFullyClaimed
+            ? "https://schema.org/SoldOut"
+            : isExpired
+                ? "https://schema.org/Discontinued"
+                : "https://schema.org/InStock",
+        // Claimed here, used in person at the business.
+        availableAtOrFrom: location
+            ? {
+                "@type": "Place",
+                name: business.name,
+                address: {
+                    "@type": "PostalAddress",
+                    streetAddress: location.address_line_1 ?? undefined,
+                    addressLocality: location.city ?? undefined,
+                    addressRegion: location.region ?? undefined,
+                    postalCode: location.postal_code ?? undefined,
+                    addressCountry: "GB",
+                },
+            }
+            : undefined,
+        areaServed: location?.city ?? undefined,
+        seller: {
+            "@type": "LocalBusiness",
+            "@id": `${businessUrl}#business`,
+            name: business.name,
+            url: businessUrl,
+            image: business.logo_url ?? undefined,
+        },
+        offeredBy: { "@type": "Organization", name: siteName, url: absoluteUrl("/") },
+    };
+
+    // Offers › Bristol › this offer, shown under the result in search.
+    const breadcrumbs = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { name: "Offers", item: absoluteUrl("/offers") },
+            ...(cityPage ? [{ name: cityPage.name, item: absoluteUrl(`/offers/${cityPage.slug}`) }] : []),
+            { name: offer.title, item: pageUrl },
+        ].map((crumb, index) => ({ "@type": "ListItem", position: index + 1, ...crumb })),
+    };
+
     return (
         <main className="min-h-screen bg-[#FFF8F0] pb-20 text-[#17233B]">
+            {/* Only for offers people can actually find: a preview is
+                noindex, and telling a crawler about it would undo that. */}
+            {!isPreview && !business.is_sample && (
+                <>
+                    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }} />
+                    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbs) }} />
+                </>
+            )}
+
             <PageViewTracker businessId={business.id} offerId={offer.id} />
             <div className="mx-auto max-w-6xl px-6 pt-5 sm:px-10 sm:pt-8">
                 <nav
