@@ -163,6 +163,65 @@ test.describe("business forms", () => {
         }
     });
 
+    // Deleting takes more than the offer: the vouchers customers are
+    // holding go with it, and the poster in the window starts pointing
+    // at the business page.
+    test("deleting an offer says what else goes with it", async ({ page }) => {
+        const { businessId, businessUserId, customerUserId } = state();
+        const supabase = admin();
+
+        const { data: picture } = await supabase
+            .from("offers")
+            .select("image_url")
+            .not("image_url", "is", null)
+            .limit(1)
+            .single();
+
+        const { data: offer } = await supabase
+            .from("offers")
+            .insert({
+                business_id: businessId,
+                created_by: businessUserId,
+                slug: crypto.randomUUID(),
+                title: "E2E Offer With Attachments",
+                category: "Testing",
+                discount: "10% off",
+                description: "An offer for the delete warning test.",
+                availability: "Available now",
+                expires_at: "2030-12-31",
+                terms: "For automated tests only.",
+                approval_status: "approved",
+                redemption_count: 0,
+                image_url: picture!.image_url,
+            })
+            .select("id")
+            .single();
+
+        const { data: code } = await supabase
+            .from("qr_codes")
+            .insert({ business_id: businessId, label: "E2E Delete Poster", offer_id: offer!.id })
+            .select("id")
+            .single();
+
+        await supabase.from("offer_redemptions").insert({ offer_id: offer!.id, user_id: customerUserId });
+
+        try {
+            await page.goto(`/business/${businessId}/offers/${offer!.id}/edit`);
+            await expect(page.locator("#title")).toHaveValue("E2E Offer With Attachments", { timeout: 20_000 });
+
+            await page.getByRole("button", { name: "Delete offer" }).click();
+
+            const dialog = page.getByRole("dialog");
+            await expect(dialog.getByText("1 customer has claimed it.")).toBeVisible();
+            await expect(dialog.getByText(/vouchers go with the offer/)).toBeVisible();
+            await expect(dialog.getByText("1 QR code points at it.")).toBeVisible();
+            await expect(dialog.getByText(/lands on your business page/)).toBeVisible();
+        } finally {
+            await supabase.from("qr_codes").delete().eq("id", code!.id);
+            await supabase.from("offers").delete().eq("id", offer!.id);
+        }
+    });
+
     test("editing an offer validates and saves it", async ({ page }) => {
         const { businessId, businessUserId } = state();
         const supabase = admin();
