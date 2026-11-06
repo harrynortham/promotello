@@ -4,8 +4,8 @@ import { createAdminClient } from "@/utils/supabase/admin";
 
 // Emails around approval: the business hears when it, or one of its
 // offers, is approved or turned down, and the Promotello inbox hears about
-// each new business waiting for approval. All use the service role, so
-// only call these after checking who's asking.
+// each new business and each offer waiting for approval. All use the
+// service role, so only call these after checking who's asking.
 
 export type ReviewDecision = "approved" | "rejected";
 
@@ -91,6 +91,58 @@ export function newBusinessAlertEmail(
     });
 
     return { to: contactInbox, subject: `New business: ${business.name}`, html, text };
+}
+
+export function newOfferAlertEmail(
+    offer: { title: string; discount: string; business: string; businessApproved: boolean },
+    submitter: string,
+): Email {
+    const { html, text } = brandedEmail({
+        eyebrow: offer.businessApproved ? "Waiting for review" : "Waiting on the business",
+        title: `${offer.business}: ${offer.title}`,
+        paragraphs: [
+            `${offer.discount}. It stays hidden from customers until it's approved.`,
+            offer.businessApproved
+                ? `From: ${submitter}`
+                : `${offer.business} is itself still waiting for approval, and an offer can't go live before its business does — so start there. From: ${submitter}`,
+        ],
+        action: {
+            label: offer.businessApproved ? "Review it" : "Review the business",
+            url: absoluteUrl(offer.businessApproved ? "/admin/offers" : "/admin/businesses"),
+        },
+        footer: "Sent to the Promotello inbox for every offer waiting for review.",
+    });
+
+    return { to: contactInbox, subject: `Offer to review: ${offer.business} — ${offer.title}`, html, text };
+}
+
+// An offer reaches nobody until it is reviewed, so the inbox hears about
+// each one — on a new offer, and on an edit that sends a live one back.
+export async function alertNewOffer(offerId: string, submitter: string) {
+    // Test sign-ups would otherwise reach the real inbox.
+    if (!isDeliverable(submitter)) return { sent: 0 };
+
+    const { data } = await createAdminClient()
+        .from("offers")
+        .select("title, discount, approval_status, businesses ( name, approval_status )")
+        .eq("id", offerId)
+        .maybeSingle();
+
+    const business = Array.isArray(data?.businesses) ? data.businesses[0] : data?.businesses;
+
+    if (!data || !business || data.approval_status !== "pending") return { sent: 0 };
+
+    return sendEmails([
+        newOfferAlertEmail(
+            {
+                title: data.title,
+                discount: data.discount,
+                business: business.name,
+                businessApproved: business.approval_status === "approved",
+            },
+            submitter,
+        ),
+    ]);
 }
 
 async function managerEmails(businessId: string) {

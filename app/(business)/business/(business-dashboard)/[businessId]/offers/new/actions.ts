@@ -2,6 +2,7 @@
 
 import { emailFollowersAboutOffer } from "@/lib/new-offer-email";
 import { createClient } from "@/utils/supabase/server";
+import { offerWaitingForReview } from "../actions";
 
 // After creating an offer. Every offer waits for an admin to approve it,
 // which is when followers are emailed, so this only reports the status.
@@ -15,6 +16,8 @@ export async function announceNewOffer(offerId: string) {
         .maybeSingle();
 
     if (offer?.approval_status !== "approved") {
+        // Waiting for review, which nobody was being told about.
+        await offerWaitingForReview(offerId);
         return { live: false, emailed: 0 };
     }
 
