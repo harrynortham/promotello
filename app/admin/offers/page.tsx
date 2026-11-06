@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FiExternalLink } from "react-icons/fi";
 
 import {
     Alert,
@@ -29,39 +30,50 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { notifyBusinessOfOfferReview, notifyFollowersOfApprovedOffer } from "./actions";
 
-type Offer = {
-    id: string;
-    title: string;
-    category: string;
-    discount: string;
-    description: string;
-    availability: string;
-    expires_at: string;
-    terms: string;
-    image_url: string | null;
-    approval_status:
-    | "pending"
-    | "approved"
-    | "rejected"
-    | "suspended";
-    businesses:
-    | Business
-    | Business[]
-    | null;
-};
+type Status = "pending" | "approved" | "rejected" | "suspended";
 
-// An offer can only be approved once its business is, so the queue has
-// to show where the business has got to.
 type Business = {
     id: string;
     name: string;
     approval_status: string;
 };
 
+type Offer = {
+    id: string;
+    slug: string;
+    title: string;
+    category: string;
+    discount: string;
+    description: string;
+    availability: string;
+    expires_at: string;
+    created_at: string;
+    terms: string;
+    image_url: string | null;
+    max_redemptions: number | null;
+    redemption_count: number;
+    approval_status: Status;
+    businesses: Business | Business[] | null;
+};
+
 type ReviewAction = {
     offerId: string;
     decision: "approved" | "rejected";
 } | null;
+
+const statusLabels: Record<Status, string> = {
+    pending: "Waiting",
+    approved: "Live",
+    rejected: "Rejected",
+    suspended: "Suspended",
+};
+
+const statusStyles: Record<Status, string> = {
+    pending: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+    approved: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+    rejected: "bg-red-100 text-red-800 hover:bg-red-100",
+    suspended: "bg-red-100 text-red-800 hover:bg-red-100",
+};
 
 const pageSize = 25;
 
@@ -73,22 +85,38 @@ function getBusinessName(offer: Offer) {
     return getBusiness(offer)?.name ?? "Unknown business";
 }
 
+function when(value: string) {
+    return new Date(value).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+}
+
 export default function AdminOffersPage() {
     const router = useRouter();
 
     const [offers, setOffers] = useState<Offer[]>([]);
+    // Waiting is the queue, in the order they arrived. Everything else is
+    // the catalogue, newest first, for looking an offer up.
+    const [tab, setTab] = useState<"pending" | "all">("pending");
+    const [status, setStatus] = useState<Status | "all">("all");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [activeOfferId, setActiveOfferId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
-    const [reviewAction, setReviewAction] =
-        useState<ReviewAction>(null);
+    const [reviewAction, setReviewAction] = useState<ReviewAction>(null);
+    // The offer being read in full, rather than scrolling past every
+    // description in the queue.
+    const [reading, setReading] = useState<Offer | null>(null);
 
     async function loadOffers(
         requestedSearch = "",
         requestedPage = 1,
+        requestedTab: "pending" | "all",
+        requestedStatus: Status | "all",
     ) {
         setIsLoading(true);
         setErrorMessage("");
@@ -103,14 +131,18 @@ export default function AdminOffersPage() {
             .select(
                 `
           id,
+          slug,
           title,
           category,
           discount,
           description,
           availability,
           expires_at,
+          created_at,
           terms,
           image_url,
+          max_redemptions,
+          redemption_count,
           approval_status,
           businesses (
             id,
@@ -120,15 +152,20 @@ export default function AdminOffersPage() {
         `,
                 { count: "exact" },
             )
-            .eq("approval_status", "pending")
-            .order("created_at", { ascending: true })
+            .order("created_at", { ascending: requestedTab === "pending" })
             .range(from, to);
 
+        if (requestedTab === "pending") {
+            query = query.eq("approval_status", "pending");
+        } else if (requestedStatus !== "all") {
+            query = query.eq("approval_status", requestedStatus);
+        }
+
         if (requestedSearch.trim()) {
-            const searchValue = requestedSearch.trim();
+            const value = requestedSearch.trim();
 
             query = query.or(
-                `title.ilike.%${searchValue}%,category.ilike.%${searchValue}%`,
+                `title.ilike.%${value}%,category.ilike.%${value}%,discount.ilike.%${value}%`,
             );
         }
 
@@ -166,7 +203,7 @@ export default function AdminOffersPage() {
                 return;
             }
 
-            await loadOffers("", 1);
+            await loadOffers("", 1, "pending", "all");
         }
 
         checkAccess();
@@ -204,50 +241,88 @@ export default function AdminOffersPage() {
         );
 
         setReviewAction(null);
-        await loadOffers(search, page);
+        setReading(null);
+        await loadOffers(search, page, tab, status);
         setActiveOfferId("");
     }
 
     return (
         <div>
             <div>
-
                 <header>
                     <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                        Offer approvals
+                        Offers
                     </h1>
 
                     <p className="mt-3 text-[#17233B]/65">
-                        Review offers submitted by businesses.
+                        {tab === "pending"
+                            ? "Offers waiting for review, oldest first."
+                            : "Every offer on Promotello, newest first."}
                     </p>
                 </header>
 
-                <Card className="mt-8 border-[#17233B]/10">
+                <div className="mt-8 flex flex-wrap gap-2">
+                    {([["pending", "Waiting for review"], ["all", "All offers"]] as const).map(([key, label]) => (
+                        <Button
+                            key={key}
+                            type="button"
+                            variant={tab === key ? "default" : "outline"}
+                            onClick={() => {
+                                setTab(key);
+                                setPage(1);
+                                loadOffers(search, 1, key, status);
+                            }}
+                        >
+                            {label}
+                        </Button>
+                    ))}
+                </div>
+
+                <Card className="mt-4 border-[#17233B]/10">
                     <CardContent className="p-6">
                         <form
-                            onSubmit={(event) => {
+                            onSubmit={(event: FormEvent<HTMLFormElement>) => {
                                 event.preventDefault();
                                 setPage(1);
-                                loadOffers(search, 1);
+                                loadOffers(search, 1, tab, status);
                             }}
                             className="flex flex-col gap-3 sm:flex-row sm:items-end"
                         >
                             <div className="flex-1 space-y-2">
-                                <Label htmlFor="search">
-                                    Search offers
-                                </Label>
+                                <Label htmlFor="search">Search offers</Label>
 
                                 <Input
                                     id="search"
                                     value={search}
                                     onChange={(event) => setSearch(event.target.value)}
-                                    placeholder="Title or category"
+                                    placeholder="Offer title, category or discount"
                                 />
                             </div>
 
-                            <Button type="submit" variant="default">
-                                Search
-                            </Button>
+                            {tab === "all" && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="status">Status</Label>
+
+                                    <select
+                                        id="status"
+                                        value={status}
+                                        onChange={(event) => {
+                                            const chosen = event.target.value as Status | "all";
+                                            setStatus(chosen);
+                                            setPage(1);
+                                            loadOffers(search, 1, tab, chosen);
+                                        }}
+                                        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm sm:w-44"
+                                    >
+                                        <option value="all">Any status</option>
+                                        {(Object.keys(statusLabels) as Status[]).map((key) => (
+                                            <option key={key} value={key}>{statusLabels[key]}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <Button type="submit">Search</Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -255,186 +330,155 @@ export default function AdminOffersPage() {
                 {errorMessage && (
                     <Alert variant="destructive" className="mt-8">
                         <AlertTitle>Unable to load offers</AlertTitle>
-
                         <AlertDescription>{errorMessage}</AlertDescription>
                     </Alert>
                 )}
 
                 {isLoading ? (
-                    <div className="mt-10 space-y-6">
+                    <div className="mt-10 space-y-4">
                         {[1, 2, 3].map((item) => (
-                            <div
-                                key={item}
-                                className="overflow-hidden rounded-xl border border-[#17233B]/10 bg-white"
-                            >
-                                <Skeleton className="h-48 w-full rounded-none" />
-
-                                <div className="space-y-5 p-6 sm:p-8">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="space-y-3">
-                                            <Skeleton className="h-4 w-32 rounded-md" />
-                                            <Skeleton className="h-8 w-64 rounded-md" />
-                                            <Skeleton className="h-4 w-40 rounded-md" />
-                                        </div>
-
-                                        <Skeleton className="h-6 w-24 rounded-full" />
+                            <div key={item} className="rounded-xl border border-[#17233B]/10 bg-white p-6">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-4 w-32 rounded-md" />
+                                        <Skeleton className="h-7 w-64 rounded-md" />
+                                        <Skeleton className="h-4 w-48 rounded-md" />
                                     </div>
 
-                                    <Skeleton className="h-16 w-full rounded-md" />
+                                    <Skeleton className="h-6 w-20 rounded-full" />
+                                </div>
 
-                                    <div className="space-y-2">
-                                        <Skeleton className="h-4 w-56 rounded-md" />
-                                        <Skeleton className="h-4 w-72 rounded-md" />
-                                        <Skeleton className="h-4 w-full rounded-md" />
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                        <Skeleton className="h-10 w-28 rounded-md" />
-                                        <Skeleton className="h-10 w-28 rounded-md" />
-                                    </div>
+                                <div className="mt-6 flex gap-3">
+                                    <Skeleton className="h-10 w-28 rounded-md" />
+                                    <Skeleton className="h-10 w-28 rounded-md" />
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : offers.length === 0 ? (
                     <Alert className="mt-10 border-[#17233B]/10 bg-white">
-                        <AlertTitle>No offers need review</AlertTitle>
+                        <AlertTitle>
+                            {tab === "pending" ? "No offers need review" : "No offers found"}
+                        </AlertTitle>
 
                         <AlertDescription>
-                            No pending offers matched your search.
+                            {tab === "pending"
+                                ? "Nothing is waiting. Try All offers to look one up."
+                                : "Nothing matched that search and status."}
                         </AlertDescription>
                     </Alert>
                 ) : (
                     <>
-                        <section className="mt-10 space-y-6">
-                            {offers.map((offer) => (
-                                <Card
-                                    key={offer.id}
-                                    // The card pads its top for text. A
-                                    // picture runs to the edge instead.
-                                    className={`overflow-hidden border-[#17233B]/10 shadow-sm ${offer.image_url ? "pt-0" : ""}`}
-                                >
-                                    {offer.image_url && (
-                                        <div className="relative aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
-                                            <Image
-                                                src={offer.image_url}
-                                                alt={offer.title}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </div>
-                                    )}
+                        {/* No photographs in the queue: a row is for deciding
+                            which offer to open, and twenty pictures make that
+                            a long scroll. The offer itself carries its photo. */}
+                        <section className="mt-10 space-y-4">
+                            {offers.map((offer) => {
+                                const business = getBusiness(offer);
+                                const businessLive = business?.approval_status === "approved";
 
-                                    <CardHeader>
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                            <div>
-                                                <p className="text-sm font-medium text-[#FF593F]">
-                                                    {getBusinessName(offer)}
-                                                </p>
+                                return (
+                                    <Card key={offer.id} className="border-[#17233B]/10 shadow-sm">
+                                        <CardHeader>
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-[#FF593F]">
+                                                        {getBusinessName(offer)}
+                                                    </p>
 
-                                                <CardTitle className="mt-1 text-2xl">
-                                                    {offer.title}
-                                                </CardTitle>
+                                                    <CardTitle className="mt-1 text-xl">
+                                                        {offer.title}
+                                                    </CardTitle>
 
-                                                <p className="mt-2 text-sm text-[#17233B]/70">
-                                                    {offer.category} · {offer.discount}
-                                                </p>
+                                                    <p className="mt-2 text-sm text-[#17233B]/70">
+                                                        {offer.discount} · {offer.category} · submitted{" "}
+                                                        {when(offer.created_at)}
+                                                    </p>
+                                                </div>
+
+                                                <Badge className={`w-fit ${statusStyles[offer.approval_status]}`}>
+                                                    {statusLabels[offer.approval_status]}
+                                                </Badge>
                                             </div>
+                                        </CardHeader>
 
-                                            <Badge
-                                                variant="outline"
-                                                className="w-fit border-amber-200 bg-amber-100 text-amber-800"
-                                            >
-                                                Pending
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
+                                        <CardContent>
+                                            {!businessLive && (
+                                                <Alert className="mb-5 border-amber-200 bg-amber-50">
+                                                    <AlertTitle>Approve the business first</AlertTitle>
 
-                                    <CardContent>
-                                        {getBusiness(offer)?.approval_status !== "approved" && (
-                                            <Alert className="mb-5 border-amber-200 bg-amber-50">
-                                                <AlertTitle>
-                                                    Approve the business first
-                                                </AlertTitle>
+                                                    <AlertDescription>
+                                                        {getBusinessName(offer)} is{" "}
+                                                        {business?.approval_status ?? "not approved"}. An offer
+                                                        stays invisible to customers until its business is
+                                                        live, so it is reviewed after the business, not
+                                                        before.{" "}
+                                                        {business && (
+                                                            <Link
+                                                                href={`/admin/businesses/${business.id}`}
+                                                                className="font-medium text-[#FF593F]"
+                                                            >
+                                                                Open the business
+                                                            </Link>
+                                                        )}
+                                                    </AlertDescription>
+                                                </Alert>
+                                            )}
 
-                                                <AlertDescription>
-                                                    {getBusinessName(offer)} is{" "}
-                                                    {getBusiness(offer)?.approval_status ?? "not approved"}.
-                                                    An offer stays invisible to customers until
-                                                    its business is live, so it is reviewed
-                                                    after the business, not before.{" "}
-                                                    {getBusiness(offer) && (
-                                                        <Link
-                                                            href={`/admin/businesses/${getBusiness(offer)!.id}`}
-                                                            className="font-medium text-[#FF593F]"
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => setReading(offer)}
+                                                >
+                                                    View offer
+                                                </Button>
+
+                                                <Button
+                                                    render={<Link href={`/admin/offers/${offer.id}`} />}
+                                                    nativeButton={false}
+                                                    variant="outline"
+                                                >
+                                                    Open
+                                                </Button>
+
+                                                {offer.approval_status === "pending" && (
+                                                    <>
+                                                        <Button
+                                                            type="button"
+                                                            disabled={activeOfferId === offer.id || !businessLive}
+                                                            onClick={() =>
+                                                                setReviewAction({
+                                                                    offerId: offer.id,
+                                                                    decision: "approved",
+                                                                })
+                                                            }
                                                         >
-                                                            Open the business
-                                                        </Link>
-                                                    )}
-                                                </AlertDescription>
-                                            </Alert>
-                                        )}
+                                                            Approve
+                                                        </Button>
 
-                                        <p className="leading-7 text-[#17233B]/65">
-                                            {offer.description}
-                                        </p>
-
-                                        <div className="mt-5 space-y-2 text-sm text-[#17233B]/70">
-                                            <p>{offer.availability}</p>
-
-                                            <p>
-                                                Expires{" "}
-                                                {new Intl.DateTimeFormat("en-GB", {
-                                                    day: "numeric",
-                                                    month: "long",
-                                                    year: "numeric",
-                                                }).format(new Date(offer.expires_at))}
-                                            </p>
-
-                                            <p>{offer.terms}</p>
-                                        </div>
-
-                                        <Separator className="my-6" />
-
-                                        <div className="flex flex-col gap-3 sm:flex-row">
-                                            {/* Rejecting stays open whatever the
-                                                business's status: turning an offer
-                                                down shouldn't need the business
-                                                approved first. */}
-                                            <Button
-                                                type="button"
-                                                disabled={
-                                                    activeOfferId === offer.id ||
-                                                    getBusiness(offer)?.approval_status !== "approved"
-                                                }
-                                                onClick={() =>
-                                                    setReviewAction({
-                                                        offerId: offer.id,
-                                                        decision: "approved",
-                                                    })
-                                                }
-                                                variant="default"
-                                            >
-                                                Approve
-                                            </Button>
-
-                                            <Button
-                                                type="button"
-                                                disabled={activeOfferId === offer.id}
-                                                onClick={() =>
-                                                    setReviewAction({
-                                                        offerId: offer.id,
-                                                        decision: "rejected",
-                                                    })
-                                                }
-                                                variant="destructive"
-                                            >
-                                                Reject
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                                        {/* Rejecting stays open whatever the
+                                                            business's status. */}
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            disabled={activeOfferId === offer.id}
+                                                            onClick={() =>
+                                                                setReviewAction({
+                                                                    offerId: offer.id,
+                                                                    decision: "rejected",
+                                                                })
+                                                            }
+                                                        >
+                                                            Reject
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </section>
 
                         <nav className="mt-8 flex items-center justify-between">
@@ -445,7 +489,7 @@ export default function AdminOffersPage() {
                                     onClick={() => {
                                         const nextPage = page - 1;
                                         setPage(nextPage);
-                                        loadOffers(search, nextPage);
+                                        loadOffers(search, nextPage, tab, status);
                                     }}
                                 >
                                     Previous
@@ -465,7 +509,7 @@ export default function AdminOffersPage() {
                                     onClick={() => {
                                         const nextPage = page + 1;
                                         setPage(nextPage);
-                                        loadOffers(search, nextPage);
+                                        loadOffers(search, nextPage, tab, status);
                                     }}
                                 >
                                     Next
@@ -477,6 +521,96 @@ export default function AdminOffersPage() {
                     </>
                 )}
             </div>
+
+            {/* The whole offer as the business submitted it, photo and all,
+                without leaving the queue. */}
+            <Dialog open={reading !== null} onOpenChange={(open) => !open && setReading(null)}>
+                <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+                    {reading && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>{reading.title}</DialogTitle>
+
+                                <DialogDescription>
+                                    {getBusinessName(reading)} · {reading.category} · {reading.discount}
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            {reading.image_url && (
+                                <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-[#FFF4E8]">
+                                    <Image
+                                        src={reading.image_url}
+                                        alt=""
+                                        fill
+                                        sizes="576px"
+                                        className="object-cover"
+                                    />
+                                </div>
+                            )}
+
+                            <p className="leading-7 text-[#17233B]/70">{reading.description}</p>
+
+                            <dl className="space-y-2 text-sm">
+                                {[
+                                    ["Availability", reading.availability],
+                                    ["Expires", when(reading.expires_at)],
+                                    [
+                                        "Limit",
+                                        reading.max_redemptions
+                                            ? `${reading.redemption_count} of ${reading.max_redemptions} claimed`
+                                            : `${reading.redemption_count} claimed, no limit`,
+                                    ],
+                                    ["Terms", reading.terms],
+                                ].map(([label, value]) => (
+                                    <div key={label} className="flex flex-wrap gap-x-3">
+                                        <dt className="text-[#17233B]/65">{label}</dt>
+                                        <dd className="flex-1 text-right font-medium">{value}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+
+                            <Separator />
+
+                            <DialogFooter>
+                                <Button
+                                    render={
+                                        <Link
+                                            href={`/offers/${reading.slug}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        />
+                                    }
+                                    nativeButton={false}
+                                    variant="outline"
+                                >
+                                    Preview the page
+                                    <FiExternalLink aria-hidden="true" />
+                                </Button>
+
+                                <Button
+                                    render={<Link href={`/admin/offers/${reading.id}`} />}
+                                    nativeButton={false}
+                                    variant="outline"
+                                >
+                                    Open everything we have
+                                </Button>
+
+                                {reading.approval_status === "pending" && (
+                                    <Button
+                                        type="button"
+                                        disabled={getBusiness(reading)?.approval_status !== "approved"}
+                                        onClick={() =>
+                                            setReviewAction({ offerId: reading.id, decision: "approved" })
+                                        }
+                                    >
+                                        Approve
+                                    </Button>
+                                )}
+                            </DialogFooter>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <Dialog
                 open={reviewAction !== null}
