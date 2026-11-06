@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { SocialSignIn } from "@/components/social-sign-in";
+import { landingAfterSignIn } from "@/lib/landing";
 import { safeNextPath } from "@/lib/redirects";
 import { email } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
@@ -43,7 +44,9 @@ function LoginContent() {
 
     const isBusinessLogin = requestedNext === "/business/dashboard";
 
-    // Return to the page that asked for sign-in, e.g. an offer being claimed.
+    // Where to go when nothing asked for a particular page. A business
+    // member is sent to their dashboard instead, which is worked out
+    // after signing in because it takes a signed-in read.
     const destination = requestedNext ?? "/dashboard";
 
     const registerHref = isBusinessLogin
@@ -76,7 +79,8 @@ function LoginContent() {
     async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        const { error } = await createClient().auth.signInWithPassword(values);
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword(values);
 
         if (error) {
             setErrorMessage(error.message || "We couldn’t sign you in. Please try again.");
@@ -84,7 +88,13 @@ function LoginContent() {
         }
 
         setIsRedirecting(true);
-        router.replace(destination);
+
+        // A page that asked for sign-in always wins: someone part-way
+        // through claiming an offer has to land back on that offer.
+        const landing =
+            requestedNext ?? (data.user ? await landingAfterSignIn(supabase, data.user) : destination);
+
+        router.replace(landing);
         router.refresh();
     }
 
