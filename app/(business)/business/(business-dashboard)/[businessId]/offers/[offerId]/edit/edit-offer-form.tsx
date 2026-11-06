@@ -206,8 +206,9 @@ export default function EditOfferForm({
             return;
         }
 
-        // Changing the wording or the picture of a live offer sends it
-        // back for review, and the queue is the only thing that knows.
+        // Changing what a live offer promises sends it back for review,
+        // and the queue is the only thing that knows. A new picture
+        // doesn't, so this often won't fire at all.
         if (saved?.approval_status === "pending" && offer.approval_status === "approved") {
             await offerWaitingForReview(offerId).catch(() => undefined);
         }
@@ -291,9 +292,10 @@ export default function EditOfferForm({
 
                     {offer.approval_status === "approved" && (
                         <p className="mt-3 text-sm text-[#17233B]/70">
-                            Changing the wording, terms or image sends a live offer
-                            back to our team for a quick check, unless your business is
-                            on Pro.
+                            Changing the headline, title, description or terms sends a
+                            live offer back to us for a quick check. A new photo, a new
+                            availability line, a later expiry date or a different claim
+                            limit are saved straight away and stay live.
                         </p>
                     )}
                 </div>

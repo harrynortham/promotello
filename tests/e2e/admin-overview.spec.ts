@@ -367,3 +367,80 @@ test("the offer catalogue filters by status", async ({ browser }) => {
         await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
     }
 });
+
+// An edit goes back for review when it changes what the offer promises,
+// and not when it changes the picture. A live offer is invisible while it
+// waits, so every needless trip back took the offer off the site and left
+// the QR poster in the window pointing at a page without it.
+test("an edit only goes back for review when it changes what is promised", async () => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+
+    const { data: picture } = await client
+        .from("offers")
+        .select("image_url")
+        .not("image_url", "is", null)
+        .limit(1)
+        .single();
+
+    const { data: offer } = await client
+        .from("offers")
+        .insert({
+            business_id: state.businessId,
+            created_by: state.businessUserId,
+            slug: `e2e-editrule-${Date.now()}`,
+            title: "E2E Edit Rule",
+            category: "Testing",
+            discount: "10% off",
+            description: "An offer for the edit rule test.",
+            availability: "Available now",
+            expires_at: "2030-12-31",
+            terms: "For automated tests only.",
+            approval_status: "approved",
+            redemption_count: 0,
+            image_url: picture!.image_url,
+        })
+        .select("id")
+        .single();
+
+    try {
+        const owner = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } },
+        );
+        await owner.auth.signInWithPassword({
+            email: state.businessEmail,
+            password: state.testPassword,
+        });
+
+        const statusNow = async () => {
+            const { data } = await client
+                .from("offers")
+                .select("approval_status")
+                .eq("id", offer!.id)
+                .single();
+            return data!.approval_status;
+        };
+
+        // A different photograph, a different availability line, a later
+        // expiry: none of them change the deal.
+        await owner.from("offers").update({ image_url: "https://example.com/new.jpg" }).eq("id", offer!.id);
+        expect(
+            await statusNow(),
+            "supabase/migrations/20261206130000_review_what_changed.sql isn't applied",
+        ).toBe("approved");
+
+        await owner.from("offers").update({ availability: "Weekends only" }).eq("id", offer!.id);
+        expect(await statusNow(), "an availability line is not a promise").toBe("approved");
+
+        await owner.from("offers").update({ expires_at: "2031-12-31" }).eq("id", offer!.id);
+        expect(await statusNow(), "a later expiry is not a promise").toBe("approved");
+
+        // The headline is.
+        await owner.from("offers").update({ discount: "90% off" }).eq("id", offer!.id);
+        expect(await statusNow(), "a rewritten headline is read by a person").toBe("pending");
+    } finally {
+        await client.from("offers").delete().eq("id", offer!.id);
+    }
+});
