@@ -87,7 +87,12 @@ export function QrPoster({
                     {pill}
                 </p>
 
-                <h1 className="mt-[0.5em] font-semibold tracking-tight" style={{ fontSize: titleSize, lineHeight: 1.05 }}>
+                {/* Balanced: a headline across a poster leaves one word
+                    stranded on the last line otherwise. */}
+                <h1
+                    className="mt-[0.5em] text-balance font-semibold tracking-tight"
+                    style={{ fontSize: titleSize, lineHeight: 1.05 }}
+                >
                     {title}
                 </h1>
 
