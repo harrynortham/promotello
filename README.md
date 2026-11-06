@@ -205,5 +205,5 @@ From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them. Joining wit
 Smaller gaps:
 
 - Business profiles: photo gallery and social links
-- Offer types beyond a discount
+- Offer types beyond a discount — scoped in [docs/OFFER-TYPES.md](docs/OFFER-TYPES.md)
 - Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate
