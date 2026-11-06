@@ -81,6 +81,11 @@ test("admins can browse every business and open one", async ({ browser }) => {
             page.getByText("No businesses found").or(page.getByRole("button", { name: "Open" }).first()),
         ).toBeVisible();
 
+        // Back to every business: the filter above may have left none on
+        // screen, which is the point of that assertion.
+        await page.getByLabel("Status").selectOption("all");
+        await expect(page.getByRole("button", { name: "Open", exact: true }).first()).toBeVisible();
+
         // A reviewer has to be able to see what they are approving, and a
         // business waiting for review has no public page yet — an admin
         // sees it as a preview.
@@ -254,5 +259,111 @@ test("an approved offer stays hidden while its business waits", async ({ page })
         await expect(page.getByRole("heading", { name: /couldn.t find that deal/ })).toBeVisible();
     } finally {
         if (businessId) await client.from("businesses").delete().eq("id", businessId);
+    }
+});
+
+// The offer queue: a row to decide from, the whole offer in a dialog,
+// and a page of everything we hold for when a business asks.
+test("the offer queue opens an offer in full, and a page of its history", async ({ browser }) => {
+    // Three admin pages in one walk, each reading several tables.
+    test.setTimeout(90_000);
+
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+    let offerId: string | undefined;
+
+    await client.from("platform_admins").insert({ user_id: state.businessUserId });
+
+    try {
+        const { data: picture } = await client
+            .from("offers")
+            .select("image_url")
+            .not("image_url", "is", null)
+            .limit(1)
+            .single();
+
+        const title = `E2E Queue Offer ${Date.now()}`;
+        const { data: offer } = await client
+            .from("offers")
+            .insert({
+                business_id: state.businessId,
+                created_by: state.businessUserId,
+                slug: `e2e-queue-${Date.now()}`,
+                title,
+                category: "Testing",
+                discount: "2 for 1 on cocktails",
+                description: "Every cocktail on the list, Monday to Thursday.",
+                availability: "Monday to Thursday, 5pm-close",
+                expires_at: "2030-12-31",
+                terms: "One per customer.",
+                approval_status: "pending",
+                redemption_count: 0,
+                image_url: picture!.image_url,
+            })
+            .select("id")
+            .single();
+        offerId = offer!.id;
+
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto("/admin/offers");
+
+        const card = page.locator('[data-slot="card"]', { hasText: title });
+        await expect(card).toBeVisible({ timeout: 15_000 });
+
+        // A row is for choosing which offer to open: no photographs in it.
+        await expect(card.locator("img")).toHaveCount(0);
+
+        // The whole offer, without leaving the queue.
+        await card.getByRole("button", { name: "View offer" }).click();
+        const dialog = page.getByRole("dialog");
+        await expect(dialog.getByRole("heading", { name: title })).toBeVisible();
+        await expect(dialog.getByText("Every cocktail on the list, Monday to Thursday.")).toBeVisible();
+        await expect(dialog.getByText("One per customer.")).toBeVisible();
+        await expect(dialog.locator("img")).toHaveCount(1);
+        // Wait for it to actually go: its backdrop swallows the click
+        // underneath while it is still closing.
+        await page.keyboard.press("Escape");
+        await expect(dialog).toBeHidden();
+
+        // And everything we hold about it.
+        // A Button rendering a Link is an <a role="button">, not a link.
+        await card.getByRole("button", { name: "Open", exact: true }).click();
+        await page.waitForURL(`**/admin/offers/${offerId}`);
+        await expect(page.getByRole("heading", { name: title })).toBeVisible();
+        await expect(page.getByText("Claimed", { exact: true })).toBeVisible();
+        await expect(page.getByText("Page views", { exact: true })).toBeVisible();
+        // The audit trail: it was created a moment ago.
+        await expect(page.getByText("Submitted", { exact: true }).first()).toBeVisible();
+    } finally {
+        if (offerId) await client.from("offers").delete().eq("id", offerId);
+        await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
+    }
+});
+
+// The other tab is the catalogue: every offer, filtered, for looking one
+// up rather than deciding on it.
+test("the offer catalogue filters by status", async ({ browser }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+
+    await client.from("platform_admins").insert({ user_id: state.businessUserId });
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto("/admin/offers");
+        await expect(page.getByRole("heading", { name: "Offers", level: 1 })).toBeVisible({ timeout: 15_000 });
+
+        await page.getByRole("button", { name: "All offers" }).click();
+        await expect(page.getByText("Every offer on Promotello, newest first.")).toBeVisible();
+
+        await page.locator("#status").selectOption("approved");
+
+        // The rows themselves: the filter panel above them is a card
+        // too, and its status menu lists every word we are checking for.
+        const rows = page.locator('section [data-slot="card"]');
+        await expect(rows.filter({ hasText: "Live" }).first()).toBeVisible({ timeout: 15_000 });
+        await expect(rows.filter({ hasText: "Waiting" })).toHaveCount(0);
+    } finally {
+        await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
     }
 });
