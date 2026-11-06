@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FiExternalLink } from "react-icons/fi";
 
 import {
     Alert,
@@ -30,6 +31,7 @@ import { notifyBusinessReviewed } from "./actions";
 
 type Business = {
     id: string;
+    slug: string;
     name: string;
     category: string;
     description: string | null;
@@ -50,6 +52,22 @@ type Business = {
     | null;
 };
 
+type Status = "pending" | "approved" | "rejected" | "suspended";
+
+const statusLabels: Record<Status, string> = {
+    pending: "Waiting",
+    approved: "Live",
+    rejected: "Rejected",
+    suspended: "Suspended",
+};
+
+const statusStyles: Record<Status, string> = {
+    pending: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+    approved: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+    rejected: "bg-red-100 text-red-800 hover:bg-red-100",
+    suspended: "bg-red-100 text-red-800 hover:bg-red-100",
+};
+
 type ReviewAction = {
     businessId: string;
     decision: "approved" | "rejected";
@@ -61,6 +79,10 @@ export default function AdminBusinessesPage() {
     const router = useRouter();
 
     const [businesses, setBusinesses] = useState<Business[]>([]);
+    // Waiting is the queue, in the order they arrived. Everything else is
+    // the directory, newest first, for looking something up.
+    const [tab, setTab] = useState<"pending" | "all">("pending");
+    const [status, setStatus] = useState<Status | "all">("all");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -73,6 +95,8 @@ export default function AdminBusinessesPage() {
     async function loadBusinesses(
         requestedSearch = "",
         requestedPage = 1,
+        requestedTab: "pending" | "all",
+        requestedStatus: Status | "all",
     ) {
         setIsLoading(true);
         setErrorMessage("");
@@ -87,6 +111,7 @@ export default function AdminBusinessesPage() {
             .select(
                 `
           id,
+          slug,
           name,
           category,
           description,
@@ -106,9 +131,14 @@ export default function AdminBusinessesPage() {
         `,
                 { count: "exact" },
             )
-            .eq("approval_status", "pending")
-            .order("created_at", { ascending: true })
+            .order("created_at", { ascending: requestedTab === "pending" })
             .range(from, to);
+
+        if (requestedTab === "pending") {
+            query = query.eq("approval_status", "pending");
+        } else if (requestedStatus !== "all") {
+            query = query.eq("approval_status", requestedStatus);
+        }
 
         if (requestedSearch.trim()) {
             const value = requestedSearch.trim();
@@ -152,7 +182,7 @@ export default function AdminBusinessesPage() {
                 return;
             }
 
-            await loadBusinesses("", 1);
+            await loadBusinesses("", 1, "pending", "all");
         }
 
         checkAccess();
@@ -183,7 +213,7 @@ export default function AdminBusinessesPage() {
         );
 
         setReviewAction(null);
-        await loadBusinesses(search, page);
+        await loadBusinesses(search, page, tab, status);
         setActiveBusinessId("");
     }
 
@@ -194,11 +224,13 @@ export default function AdminBusinessesPage() {
                 <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                            Business approvals
+                            Businesses
                         </h1>
 
                         <p className="mt-3 text-[#17233B]/65">
-                            Review businesses waiting to join Promotello.
+                            {tab === "pending"
+                                ? "Businesses waiting to join Promotello, oldest first."
+                                : "Every business on Promotello, newest first."}
                         </p>
                     </div>
 
@@ -211,13 +243,30 @@ export default function AdminBusinessesPage() {
                     </Button>
                 </header>
 
-                <Card className="mt-8 border-[#17233B]/10">
+                <div className="mt-8 flex flex-wrap gap-2">
+                    {([["pending", "Waiting for review"], ["all", "All businesses"]] as const).map(([key, label]) => (
+                        <Button
+                            key={key}
+                            type="button"
+                            variant={tab === key ? "default" : "outline"}
+                            onClick={() => {
+                                setTab(key);
+                                setPage(1);
+                                loadBusinesses(search, 1, key, status);
+                            }}
+                        >
+                            {label}
+                        </Button>
+                    ))}
+                </div>
+
+                <Card className="mt-4 border-[#17233B]/10">
                     <CardContent className="p-6">
                         <form
                             onSubmit={(event: FormEvent<HTMLFormElement>) => {
                                 event.preventDefault();
                                 setPage(1);
-                                loadBusinesses(search, 1);
+                                loadBusinesses(search, 1, tab, status);
                             }}
                             className="flex flex-col gap-3 sm:flex-row sm:items-end"
                         >
@@ -231,6 +280,29 @@ export default function AdminBusinessesPage() {
                                     placeholder="Business name or category"
                                 />
                             </div>
+
+                            {tab === "all" && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="status">Status</Label>
+
+                                    <select
+                                        id="status"
+                                        value={status}
+                                        onChange={(event) => {
+                                            const chosen = event.target.value as Status | "all";
+                                            setStatus(chosen);
+                                            setPage(1);
+                                            loadBusinesses(search, 1, tab, chosen);
+                                        }}
+                                        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm sm:w-44"
+                                    >
+                                        <option value="all">Any status</option>
+                                        {(Object.keys(statusLabels) as Status[]).map((key) => (
+                                            <option key={key} value={key}>{statusLabels[key]}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <Button type="submit">Search</Button>
                         </form>
@@ -277,10 +349,14 @@ export default function AdminBusinessesPage() {
                     </div>
                 ) : businesses.length === 0 ? (
                     <Alert className="mt-10 border-[#17233B]/10 bg-white">
-                        <AlertTitle>No businesses need review</AlertTitle>
+                        <AlertTitle>
+                            {tab === "pending" ? "No businesses need review" : "No businesses found"}
+                        </AlertTitle>
 
                         <AlertDescription>
-                            No pending businesses matched your search.
+                            {tab === "pending"
+                                ? "Nothing is waiting. Try All businesses to look one up."
+                                : "Nothing matched that search and status."}
                         </AlertDescription>
                     </Alert>
                 ) : (
@@ -319,8 +395,8 @@ export default function AdminBusinessesPage() {
                                                     </CardTitle>
                                                 </div>
 
-                                                <Badge className="w-fit bg-amber-100 text-amber-800 hover:bg-amber-100">
-                                                    Pending
+                                                <Badge className={`w-fit ${statusStyles[business.approval_status]}`}>
+                                                    {statusLabels[business.approval_status]}
                                                 </Badge>
                                             </div>
                                         </CardHeader>
@@ -348,31 +424,61 @@ export default function AdminBusinessesPage() {
 
                                             <div className="flex flex-col gap-3 sm:flex-row">
                                                 <Button
-                                                    type="button"
-                                                    disabled={activeBusinessId === business.id}
-                                                    onClick={() =>
-                                                        setReviewAction({
-                                                            businessId: business.id,
-                                                            decision: "approved",
-                                                        })
-                                                    }
+                                                    render={<Link href={`/admin/businesses/${business.id}`} />}
+                                                    nativeButton={false}
+                                                    variant="outline"
                                                 >
-                                                    Approve business
+                                                    Open
                                                 </Button>
 
+                                                {/* The page as it will look, before saying yes to
+                                                    it. A pending business is readable by an admin,
+                                                    and shows itself as a preview. */}
                                                 <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    disabled={activeBusinessId === business.id}
-                                                    onClick={() =>
-                                                        setReviewAction({
-                                                            businessId: business.id,
-                                                            decision: "rejected",
-                                                        })
+                                                    render={
+                                                        <Link
+                                                            href={`/businesses/${business.slug}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        />
                                                     }
+                                                    nativeButton={false}
+                                                    variant="outline"
                                                 >
-                                                    Reject business
+                                                    View full profile
+                                                    <FiExternalLink aria-hidden="true" />
                                                 </Button>
+
+                                                {business.approval_status === "pending" && (
+                                                    <>
+                                                        <Button
+                                                            type="button"
+                                                            disabled={activeBusinessId === business.id}
+                                                            onClick={() =>
+                                                                setReviewAction({
+                                                                    businessId: business.id,
+                                                                    decision: "approved",
+                                                                })
+                                                            }
+                                                        >
+                                                            Approve business
+                                                        </Button>
+
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            disabled={activeBusinessId === business.id}
+                                                            onClick={() =>
+                                                                setReviewAction({
+                                                                    businessId: business.id,
+                                                                    decision: "rejected",
+                                                                })
+                                                            }
+                                                        >
+                                                            Reject business
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -388,7 +494,7 @@ export default function AdminBusinessesPage() {
                                     onClick={() => {
                                         const nextPage = page - 1;
                                         setPage(nextPage);
-                                        loadBusinesses(search, nextPage);
+                                        loadBusinesses(search, nextPage, tab, status);
                                     }}
                                 >
                                     Previous
@@ -408,7 +514,7 @@ export default function AdminBusinessesPage() {
                                     onClick={() => {
                                         const nextPage = page + 1;
                                         setPage(nextPage);
-                                        loadBusinesses(search, nextPage);
+                                        loadBusinesses(search, nextPage, tab, status);
                                     }}
                                 >
                                     Next
