@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
-import { STATE_PATH } from "../global-setup";
+import { BUSINESS_AUTH, STATE_PATH } from "../global-setup";
 
 const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -123,4 +123,126 @@ test("locations must be in a live city, in a listed area, with a postcode from t
     expect(good.data).toEqual({ city: "Bristol", region: "Clifton", postal_code: "BS8 4AA" });
 
     await owner.from("business_locations").delete().eq("business_id", freeBusinessId).eq("name", "E2E location");
+});
+
+// The checklist is a thing you finish. With every step done it leaves
+// the dashboard rather than sitting there as a wall of ticks above the
+// numbers that matter.
+test("the setup checklist goes once there is nothing left to do", async ({ browser }) => {
+    test.setTimeout(120_000);
+
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const run = Date.now();
+    let businessId: string | undefined;
+
+    const { data: picture } = await admin
+        .from("businesses")
+        .select("logo_url, cover_image_url")
+        .not("cover_image_url", "is", null)
+        .limit(1)
+        .single();
+
+    const { data: area } = await admin
+        .from("areas")
+        .select("id, name, city_id, cities ( name )")
+        .limit(1)
+        .single();
+
+    const city = Array.isArray(area!.cities) ? area!.cities[0] : area!.cities;
+
+    try {
+        const { data: business } = await admin
+            .from("businesses")
+            .insert({
+                name: `E2E Finished Business ${run}`,
+                category: "Testing",
+                description: "Everything on the checklist is done.",
+                approval_status: "approved",
+                created_by: state.businessUserId,
+                logo_url: picture!.logo_url ?? picture!.cover_image_url,
+                cover_image_url: picture!.cover_image_url,
+                google_review_url: "https://g.page/r/e2e/review",
+            })
+            .select("id")
+            .single();
+        businessId = business!.id;
+
+        // Pro, so the loyalty card is allowed.
+        await admin.from("subscriptions").insert({
+            business_id: businessId,
+            stripe_subscription_id: `sub_e2e_done_${run}`,
+            stripe_customer_id: `cus_e2e_done_${run}`,
+            status: "active",
+        });
+
+        // Owner, plus a second person so "invite your team" is done.
+        await admin.from("business_members").insert([
+            { business_id: businessId, user_id: state.businessUserId, role: "owner" },
+            { business_id: businessId, user_id: state.customerUserId, role: "member" },
+        ]);
+
+        await admin.from("business_locations").insert({
+            business_id: businessId,
+            name: "Main",
+            address_line_1: "1 Test Street",
+            city: city!.name,
+            city_id: area!.city_id,
+            area_id: area!.id,
+            region: area!.name,
+            postal_code: "BS1 1AA",
+            country_code: "GB",
+        });
+
+        await admin.from("business_hours").insert(
+            [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+                business_id: businessId,
+                day_of_week: day,
+                is_closed: day === 0,
+                opens_at: day === 0 ? null : "09:00",
+                closes_at: day === 0 ? null : "17:00",
+            })),
+        );
+
+        await admin.from("offers").insert({
+            business_id: businessId,
+            created_by: state.businessUserId,
+            slug: `e2e-finished-${run}`,
+            title: "E2E Finished Offer",
+            category: "Testing",
+            discount: "10% off",
+            description: "An offer so the checklist has one.",
+            availability: "Available now",
+            expires_at: "2030-12-31",
+            terms: "For automated tests only.",
+            approval_status: "approved",
+            redemption_count: 0,
+            image_url: picture!.cover_image_url,
+        });
+
+        await admin.from("qr_codes").insert({ business_id: businessId, label: "Front window" });
+
+        const { error: loyaltyError } = await admin.from("loyalty_programs").insert({
+            business_id: businessId,
+            stamps_required: 9,
+            reward: "a free coffee",
+            is_active: true,
+        });
+        expect(loyaltyError, "the loyalty card was set up").toBeNull();
+
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/${businessId}`);
+
+        // The dashboard itself is there…
+        // The sidebar names it too, so ask for the page's own heading.
+        await expect(
+            page.getByRole("heading", { level: 1, name: `E2E Finished Business ${run}` }),
+        ).toBeVisible({ timeout: 20_000 });
+
+        // …and the checklist isn't, in any of its states.
+        await expect(page.getByText("Get your business ready")).toHaveCount(0);
+        await expect(page.getByText("What's next")).toHaveCount(0);
+        await expect(page.getByText("You're ready to go live")).toHaveCount(0);
+    } finally {
+        if (businessId) await admin.from("businesses").delete().eq("id", businessId);
+    }
 });
