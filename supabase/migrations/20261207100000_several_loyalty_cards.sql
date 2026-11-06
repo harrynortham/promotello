@@ -9,14 +9,7 @@
 -- works from the card — so what changes is the index, a name to tell
 -- cards apart by, and the screens.
 
-drop index if exists public.loyalty_programs_one_active_idx;
-
--- Still one row per business and name, so "Coffee card" can't exist
--- twice and a customer choosing between cards sees distinct names.
-create unique index if not exists loyalty_programs_name_per_business_idx
-  on public.loyalty_programs (business_id, lower(name))
-  where is_active;
-
+-- The name first: the index below is on it.
 alter table public.loyalty_programs
   add column if not exists name text not null default 'Loyalty card';
 
@@ -30,6 +23,16 @@ alter table public.loyalty_programs
 alter table public.loyalty_programs
   add constraint loyalty_programs_name_check
   check (char_length(btrim(name)) between 2 and 60);
+
+-- Safe to drop after the naming above: the index being dropped is what
+-- guarantees no business has two live cards to share a default name.
+drop index if exists public.loyalty_programs_one_active_idx;
+
+-- Still one row per business and name, so "Coffee card" can't exist
+-- twice and a customer choosing between cards sees distinct names.
+create unique index if not exists loyalty_programs_name_per_business_idx
+  on public.loyalty_programs (business_id, lower(name))
+  where is_active;
 
 -- A ceiling rather than a plan limit: nobody runs forty stamp cards, and
 -- a runaway loop should not be able to fill a business page with them.
