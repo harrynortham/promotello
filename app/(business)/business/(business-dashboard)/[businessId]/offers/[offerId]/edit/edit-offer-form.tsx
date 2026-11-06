@@ -36,12 +36,22 @@ import { Separator } from "@/components/ui/separator";
 import { scheduleFromForm } from "@/components/offer-schedule-fields";
 import { scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
-import { offerWaitingForReview } from "../../actions";
+import { offerEditWaitingForReview } from "../../actions";
 
 type EditOfferFormProps = {
     businessId: string;
     offerId: string;
     canSchedule: boolean;
+};
+
+// The four fields a person has to read before they reach customers.
+type WaitingEdit = {
+    id: string;
+    title: string;
+    description: string;
+    discount: string;
+    terms: string;
+    submitted_at: string;
 };
 
 type Offer = {
@@ -73,6 +83,9 @@ export default function EditOfferForm({
     const router = useRouter();
 
     const [offer, setOffer] = useState<Offer | null>(null);
+    // A change already sent for review. The offer below it is still the
+    // one customers see; this is what it would become.
+    const [waitingEdit, setWaitingEdit] = useState<WaitingEdit | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [removeImage, setRemoveImage] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -97,8 +110,9 @@ export default function EditOfferForm({
         async function loadOffer() {
             const supabase = createClient();
 
-            const { data, error } = await supabase
-                .from("offers")
+            const [{ data, error }, { data: pending }] = await Promise.all([
+                supabase
+                    .from("offers")
                 .select(
                     `
             title,
@@ -118,9 +132,16 @@ export default function EditOfferForm({
             schedule_end
           `,
                 )
-                .eq("id", offerId)
-                .eq("business_id", businessId)
-                .single();
+                    .eq("id", offerId)
+                    .eq("business_id", businessId)
+                    .single(),
+                supabase
+                    .from("offer_edits")
+                    .select("id, title, description, discount, terms, submitted_at")
+                    .eq("offer_id", offerId)
+                    .is("decided_at", null)
+                    .maybeSingle(),
+            ]);
 
             if (!current) return;
 
@@ -128,16 +149,23 @@ export default function EditOfferForm({
                 setErrorMessage("We couldn't load this offer.");
             } else {
                 const loaded = data as Offer;
+                const sent = (pending ?? null) as WaitingEdit | null;
+
                 setOffer(loaded);
+                setWaitingEdit(sent);
+
+                // The form shows what they last wrote, even while it is
+                // waiting, so a second save revises it rather than
+                // starting from the published words again.
                 reset({
-                    title: loaded.title,
+                    title: sent?.title ?? loaded.title,
                     category: loaded.category_id ?? "",
-                    discount: loaded.discount,
-                    description: loaded.description,
+                    discount: sent?.discount ?? loaded.discount,
+                    description: sent?.description ?? loaded.description,
                     availability: loaded.availability,
                     expiresAt: loaded.expires_at,
                     maxRedemptions: loaded.max_redemptions === null ? "" : String(loaded.max_redemptions),
-                    terms: loaded.terms,
+                    terms: sent?.terms ?? loaded.terms,
                 });
             }
 
@@ -193,24 +221,47 @@ export default function EditOfferForm({
             imageUrl = upload.url;
         }
 
-        const { data: saved, error } = await supabase
+        const row = offerRow(values, schedule);
+
+        // What the offer promises: read by a person before customers see
+        // it. On a live offer those four fields are sent as a change and
+        // the published words stay up meanwhile; everything else saves
+        // straight away.
+        const { title, discount, description, terms, ...rest } = row;
+        const isLive = offer.approval_status === "approved";
+        const rewritten =
+            title !== offer.title ||
+            discount !== offer.discount ||
+            description !== offer.description ||
+            terms !== offer.terms;
+        const asChange = isLive && rewritten;
+
+        const { error } = await supabase
             .from("offers")
-            .update({ ...offerRow(values, schedule), image_url: imageUrl })
+            .update(asChange ? { ...rest, image_url: imageUrl } : { ...row, image_url: imageUrl })
             .eq("id", offerId)
-            .eq("business_id", businessId)
-            .select("approval_status")
-            .maybeSingle();
+            .eq("business_id", businessId);
 
         if (error) {
             setErrorMessage(error.message);
             return;
         }
 
-        // Changing what a live offer promises sends it back for review,
-        // and the queue is the only thing that knows. A new picture
-        // doesn't, so this often won't fire at all.
-        if (saved?.approval_status === "pending" && offer.approval_status === "approved") {
-            await offerWaitingForReview(offerId).catch(() => undefined);
+        if (asChange) {
+            const { error: editError } = await supabase.rpc("submit_offer_edit", {
+                requested_offer_id: offerId,
+                new_title: title,
+                new_description: description,
+                new_discount: discount,
+                new_terms: terms,
+            });
+
+            if (editError) {
+                setErrorMessage(editError.message);
+                return;
+            }
+
+            await offerEditWaitingForReview(offerId).catch(() => undefined);
         }
 
         router.push(`/business/${businessId}/offers`);
@@ -292,11 +343,29 @@ export default function EditOfferForm({
 
                     {offer.approval_status === "approved" && (
                         <p className="mt-3 text-sm text-[#17233B]/70">
-                            Changing the headline, title, description or terms sends a
-                            live offer back to us for a quick check. A new photo, a new
-                            availability line, a later expiry date or a different claim
-                            limit are saved straight away and stay live.
+                            Changing the headline, title, description or terms sends the
+                            new wording to us for a quick check. Your offer stays live
+                            with the words we approved until then, so nothing you have
+                            printed stops working. A new photo, availability line,
+                            expiry date or claim limit saves straight away.
                         </p>
+                    )}
+
+                    {waitingEdit && (
+                        <Alert className="mt-4 border-amber-200 bg-amber-50">
+                            <AlertTitle>Your new wording is with us</AlertTitle>
+
+                            <AlertDescription>
+                                Sent{" "}
+                                {new Date(waitingEdit.submitted_at).toLocaleDateString("en-GB", {
+                                    day: "numeric",
+                                    month: "long",
+                                })}
+                                . Customers still see “{offer.discount} — {offer.title}”
+                                until we approve it. Saving again replaces what is
+                                waiting.
+                            </AlertDescription>
+                        </Alert>
                     )}
                 </div>
 

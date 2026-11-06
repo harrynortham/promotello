@@ -234,6 +234,16 @@ async function OffersContent({ params }: PageProps) {
 
     const typedOffers = (offers ?? []) as Offer[];
 
+    // Changes waiting to be read. The offer itself is still live with the
+    // wording we approved, which is the part a business needs told.
+    const { data: waitingEdits } = await supabase
+        .from("offer_edits")
+        .select("offer_id")
+        .is("decided_at", null)
+        .in("offer_id", typedOffers.map((offer) => offer.id));
+
+    const editWaiting = new Set((waitingEdits ?? []).map((edit) => edit.offer_id as string));
+
     // Views per offer for the share panel (last 30 days).
     const { data: viewRows } = await supabase.rpc("offer_view_counts", { requested_business_id: businessId });
     const viewsByOffer = new Map(
@@ -427,6 +437,15 @@ async function OffersContent({ params }: PageProps) {
                                                 >
                                                     {statusLabels[offer.approval_status]}
                                                 </Badge>
+
+                                                {editWaiting.has(offer.id) && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="w-fit border-amber-200 bg-amber-50 text-amber-800"
+                                                    >
+                                                        New wording waiting
+                                                    </Badge>
+                                                )}
 
                                                 {offer.plan_paused_at && (
                                                     <Badge

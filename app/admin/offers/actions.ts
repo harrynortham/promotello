@@ -1,6 +1,10 @@
 "use server";
 
-import { emailOfferReviewed, type ReviewDecision } from "@/lib/business-review-emails";
+import {
+    emailOfferEditReviewed,
+    emailOfferReviewed,
+    type ReviewDecision,
+} from "@/lib/business-review-emails";
 import { emailFollowersAboutOffer } from "@/lib/new-offer-email";
 import { createClient } from "@/utils/supabase/server";
 
@@ -27,5 +31,18 @@ export async function notifyBusinessOfOfferReview(offerId: string, decision: Rev
     }
 
     const { sent } = await emailOfferReviewed(offerId, decision);
+    return { sent };
+}
+
+// Called after an admin answers a change to a live offer.
+export async function notifyBusinessOfOfferEditReview(editId: string, decision: ReviewDecision) {
+    const supabase = await createClient();
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+
+    if (!isAdmin) {
+        return { sent: 0 };
+    }
+
+    const { sent } = await emailOfferEditReviewed(editId, decision);
     return { sent };
 }
