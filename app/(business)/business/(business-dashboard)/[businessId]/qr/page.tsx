@@ -32,6 +32,7 @@ type QrCode = {
 const errorMessages: Record<string, string> = {
     label: "Give the code a name between 2 and 60 characters, like “Front window”.",
     limit: "The Free plan includes 1 QR code. Upgrade to Pro for a code in every spot.",
+    approval: "A QR code can be made once your page is approved. We check every new business, usually the same day.",
     create: "We couldn't create that code. Please try again.",
     delete: "We couldn't delete that code. Please try again.",
 };
@@ -99,15 +100,15 @@ async function QrContent({ params, searchParams }: PageProps) {
             .order("created_at", { ascending: true }),
         supabase
             .from("offers")
-            .select("id, title, discount")
+            .select("id, title, discount, approval_status")
             .eq("business_id", businessId)
-            .eq("approval_status", "approved")
+            .in("approval_status", ["approved", "pending"])
             .gte("expires_at", today)
             .is("plan_paused_at", null)
             .order("created_at", { ascending: false }),
         supabase
             .from("businesses")
-            .select("name, slug, logo_url, business_locations ( region, city )")
+            .select("name, slug, logo_url, approval_status, business_locations ( region, city )")
             .eq("id", businessId)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
@@ -142,7 +143,12 @@ async function QrContent({ params, searchParams }: PageProps) {
     const location = Array.isArray(business?.business_locations)
         ? business.business_locations[0]
         : business?.business_locations;
-    const headlineOffer = offers?.[0] ?? null;
+    // A code can only be made once the business is live, and can only
+    // point at an offer that is. Both are shown either way, so it is
+    // clear what is coming rather than simply missing.
+    const isLive = business?.approval_status === "approved";
+    const liveOffers = (offers ?? []).filter((offer) => offer.approval_status === "approved");
+    const headlineOffer = liveOffers[0] ?? null;
     const previewLink = business?.slug ? `${origin}/businesses/${business.slug}` : origin;
     const previewSvg = await qrSvg(previewLink);
 
@@ -201,7 +207,19 @@ async function QrContent({ params, searchParams }: PageProps) {
                     </Alert>
                 )}
 
-                {canManage && !atFreeLimit && (
+                {canManage && !isLive && (
+                    <Alert className="mt-8 border-amber-200 bg-amber-50">
+                        <AlertTitle>Your page is still being checked</AlertTitle>
+                        <AlertDescription>
+                            A QR code sends people to your page, so it can be
+                            made once that page is live — usually the same
+                            day. We will email you as soon as it is, and
+                            everything here is waiting for you.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {canManage && isLive && !atFreeLimit && (
                     <Card id="create-qr" className="mt-8 scroll-mt-8 border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle>Create a QR code</CardTitle>
@@ -227,7 +245,9 @@ async function QrContent({ params, searchParams }: PageProps) {
                         <div className="rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
                             <h2 className="text-xl font-semibold">No QR codes yet</h2>
                             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
-                                Create your first code above, print the poster and put it in your window.
+                                {isLive
+                                    ? "Create your first code above, print the poster and put it in your window."
+                                    : "Once your page is approved you can create one here, print the poster and put it in your window."}
                             </p>
                         </div>
                     ) : (
@@ -331,7 +351,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 );
                             })}
 
-                            {canManage && (
+                            {canManage && isLive && (
                                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
                                     <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
                                         <FiPlus aria-hidden="true" className="size-5" />

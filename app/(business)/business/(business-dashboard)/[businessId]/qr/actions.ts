@@ -45,7 +45,8 @@ export async function createQrCode(formData: FormData) {
     const { supabase, user } = await requireUser();
 
     // RLS checks the user is an admin and the offer belongs to the business;
-    // a trigger enforces the Free plan's single code.
+    // triggers enforce the Free plan's single code (P0004) and that the
+    // business is approved (P0003).
     const { error } = await supabase.from("qr_codes").insert({
         business_id: businessId,
         label,
@@ -58,7 +59,8 @@ export async function createQrCode(formData: FormData) {
     });
 
     if (error) {
-        redirect(`${page}?error=${error.code === "P0004" ? "limit" : "create"}`);
+        const reason = { P0004: "limit", P0003: "approval" }[error.code] ?? "create";
+        redirect(`${page}?error=${reason}`);
     }
 
     revalidatePath(page);
