@@ -271,8 +271,27 @@ test.describe("business forms", () => {
             await page.getByRole("button", { name: "Save changes" }).click();
             await page.waitForURL(`**/business/${businessId}/offers`);
 
-            const { data: saved } = await supabase.from("offers").select("title, max_redemptions").eq("id", offer!.id).single();
-            expect(saved).toEqual({ title: "E2E Offer Edited", max_redemptions: 25 });
+            // The claim limit is not a promise, so it saves straight away.
+            // The title is, and this offer is live, so the new one waits
+            // while customers carry on seeing the published words.
+            const { data: saved } = await supabase
+                .from("offers")
+                .select("title, max_redemptions, approval_status")
+                .eq("id", offer!.id)
+                .single();
+            expect(saved).toEqual({
+                title: "E2E Offer To Edit",
+                max_redemptions: 25,
+                approval_status: "approved",
+            });
+
+            const { data: waiting } = await supabase
+                .from("offer_edits")
+                .select("title")
+                .eq("offer_id", offer!.id)
+                .is("decided_at", null)
+                .single();
+            expect(waiting!.title).toBe("E2E Offer Edited");
         } finally {
             await supabase.from("offers").delete().eq("id", offer!.id);
         }
