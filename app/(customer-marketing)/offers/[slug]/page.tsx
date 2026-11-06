@@ -431,9 +431,7 @@ async function OfferContent({ params }: OfferPageProps) {
                                 className="object-cover"
                             />
                         ) : (
-                            <div
-                                className={`flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] px-8 text-center font-semibold text-[#FF593F] ${offer.discount.length > 24 ? "text-3xl" : offer.discount.length > 12 ? "text-4xl" : "text-5xl"}`}
-                            >
+                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-5xl font-semibold text-[#FF593F]">
                                 {offer.discount}
                             </div>
                         )}
@@ -441,7 +439,7 @@ async function OfferContent({ params }: OfferPageProps) {
                         {/* Without a photo the discount is already the whole
                             picture, so the corner pill would just say it twice. */}
                         {offer.image_url && (
-                            <span className="absolute left-4 top-4 max-w-[70%] truncate rounded-full bg-[#FF593F] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
+                            <span className="absolute left-4 top-4 rounded-full bg-[#FF593F] px-4 py-1.5 text-base font-semibold text-white shadow-sm">
                                 {offer.discount}
                             </span>
                         )}
