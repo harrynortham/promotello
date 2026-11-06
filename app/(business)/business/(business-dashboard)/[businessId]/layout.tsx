@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import { FiExternalLink } from "react-icons/fi";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
@@ -9,6 +11,7 @@ import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessSwitcher } from "@/components/business-switcher";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { businessPath } from "@/lib/slugs";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
@@ -20,6 +23,8 @@ type BusinessLayoutProps = {
 
 type Business = {
     id: string;
+    // For the link out to the page customers see.
+    slug: string;
     name: string;
     logo_url: string | null;
     approval_status: string;
@@ -82,6 +87,7 @@ async function BusinessLayoutContent({
                 business_id,
                 businesses (
                     id,
+                    slug,
                     name,
                     logo_url,
                     approval_status
@@ -117,7 +123,7 @@ async function BusinessLayoutContent({
             })
             .filter(
                 (business): business is Business =>
-                    Boolean(business?.id && business?.name),
+                    Boolean(business?.id && business?.slug && business?.name),
             ) ?? [];
 
     const canManage =
@@ -156,8 +162,22 @@ async function BusinessLayoutContent({
 
                         <Separator className="my-5" />
 
-                        <h2 className="text-xl font-semibold text-[#17233B]">
-                            {currentBusiness.name}
+                        {/* The page customers see, a click from every
+                            dashboard page rather than only the overview.
+                            A business still waiting for approval sees its
+                            own page as a preview. */}
+                        <h2 className="flex items-start gap-1.5 text-xl font-semibold text-[#17233B]">
+                            <span className="min-w-0">{currentBusiness.name}</span>
+
+                            <Link
+                                href={businessPath(currentBusiness)}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={`Open ${currentBusiness.name}'s page in a new tab`}
+                                className="mt-1 shrink-0 rounded text-[#17233B]/55 transition hover:text-[#FF593F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
+                            >
+                                <FiExternalLink aria-hidden="true" className="size-4" />
+                            </Link>
                         </h2>
 
                         <BusinessStatusBadge
