@@ -26,7 +26,7 @@ export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}
     return z.object({
         title: requiredText("The title", { min: 2, max: 160 }),
         category: z.string().min(1, "Choose a category."),
-        discount: requiredText("The discount", { max: 100 }),
+        discount: requiredText("The offer", { max: 100 }),
         description: requiredText("The description", { min: 2, max: 5000 }),
         availability: optionalText("Availability", 160),
         expiresAt: z
@@ -147,16 +147,22 @@ export function OfferFields({
 
                 <div className="space-y-2">
                     <Label htmlFor="discount">
-                        Discount <Required />
+                        The offer <Required />
                     </Label>
                     <Input
                         id="discount"
                         maxLength={100}
-                        placeholder="20% off"
+                        placeholder="2 for 1 on cocktails"
                         {...register("discount")}
                         {...invalidProps("discount-error", errors.discount)}
                     />
                     <FieldError id="discount-error" message={errors.discount?.message} />
+                    {/* It was labelled Discount, which read as money off and
+                        nothing else. It has always been free text. */}
+                    <p className="text-xs leading-5 text-muted-foreground">
+                        A few words, shown on your offer card: 20% off, 2 for 1,
+                        free side with any main, kids eat free.
+                    </p>
                 </div>
             </div>
 
