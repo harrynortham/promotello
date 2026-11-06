@@ -14,11 +14,11 @@ const customerLinks: HeaderLink[] = [
 ];
 
 const businessLinks: HeaderLink[] = [
-    { label: "How it works", href: "/business/how-it-works" },
-    { label: "Features", href: "/business/features" },
-    { label: "Pricing", href: "/business/pricing" },
-    { label: "Demo", href: "/business/demo" },
-    { label: "Blog", href: "/blog" },
+    { label: "How it works", href: "/business/how-it-works", icon: "howItWorks" },
+    { label: "Features", href: "/business/features", icon: "features" },
+    { label: "Pricing", href: "/business/pricing", icon: "pricing" },
+    { label: "Demo", href: "/business/demo", icon: "demo" },
+    { label: "Blog", href: "/blog", icon: "blog" },
 ];
 
 // Signed in, the bottom of the menu points at your own pages. Only the
