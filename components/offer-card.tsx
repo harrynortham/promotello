@@ -84,10 +84,14 @@ export function OfferCard({
                         className="object-cover transition duration-500 group-hover:scale-105"
                     />
                 ) : (
-                    <div
-                        className={`flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] px-6 text-center font-semibold tracking-tight text-[#FF593F] ${discount.length > 24 ? "text-2xl" : discount.length > 12 ? "text-3xl" : "text-4xl"}`}
-                    >
-                        <span className="line-clamp-3">{discount}</span>
+                    // Offers now need a photo, so this is for the ones
+                    // made before that. It says the business's name
+                    // rather than repeating the discount that is already
+                    // on the pill an inch above it.
+                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] px-6 text-center">
+                        <span className="line-clamp-2 text-xl font-semibold tracking-tight text-[#FF593F]/75">
+                            {business ?? title}
+                        </span>
                     </div>
                 )}
 

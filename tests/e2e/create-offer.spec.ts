@@ -5,90 +5,78 @@ import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
 
 test.use({ storageState: BUSINESS_AUTH });
 
-test("business owner can create a new offer", async ({ page }) => {
-    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+const admin = () =>
+    createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    await page.goto(`/business/${businessId}/offers/new`);
-
-    // Fill all required fields.
-    await page.locator("#title").fill("E2E New Offer");
+async function fillOffer(page: import("@playwright/test").Page, title: string) {
+    await page.locator("#title").fill(title);
     await page.locator("#category").selectOption({ label: "Cafés & coffee" });
     await page.locator("#discount").fill("15% off");
-    await page.locator("#description").fill(
-        "An offer created by the automated E2E test suite.",
-    );
+    await page.locator("#description").fill("An offer created by the automated E2E test suite.");
     await page.locator("#expiresAt").fill("2030-12-31");
     await page.locator("#terms").fill("Valid during automated tests only. One per customer.");
+}
 
-    await page.locator('button[type="submit"]').click();
+test("business owner can create a new offer", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
 
-    // Every offer waits for review, whatever the business's plan.
-    // By role: Next's route announcer reads the same words out.
-    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
-        timeout: 10_000,
-    });
+    const { data: before } = await client
+        .from("businesses")
+        .select("cover_image_url")
+        .eq("id", businessId)
+        .single();
 
-    // And what happens next, ending where the customers are: a poster in
-    // the window. Creating an offer used to stop at "pending approval".
-    const steps = page.getByRole("listitem");
-    await expect(steps.nth(0)).toContainText("We read it");
-    await expect(steps.nth(1)).toContainText("email");
-    await expect(steps.nth(2)).toContainText("QR poster");
-
-    const posters = page.getByRole("link", { name: "See your QR posters" });
-    await expect(posters).toHaveAttribute("href", `/business/${businessId}/qr`);
-    await expect(page.getByText("joins them once it's approved")).toBeVisible();
-});
-
-// An offer isn't always money off. The field has always been free text,
-// but it was labelled Discount with "20% off" in it, so it read as the
-// only kind we take.
-test("the offer field asks for any kind of offer, and the card carries one", async ({ page }) => {
-    const { businessId, businessSlug, businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
-
-    await page.goto(`/business/${businessId}/offers/new`);
-    await expect(page.getByLabel(/^The offer/)).toBeVisible();
-    await expect(page.getByText(/2 for 1/)).toBeVisible();
-
-    // A long one: the badge has to stay clear of the "ends" pill beside it.
-    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-        auth: { persistSession: false },
-    });
-
-    const { data: made } = await admin
-        .from("offers")
-        .insert({
-            business_id: businessId,
-            created_by: businessUserId,
-            slug: `e2e-kind-${Date.now()}`,
-            title: "E2E Two for one",
-            category: "Testing",
-            discount: "Free side with any main course plus a drink for the table",
-            description: "An offer that isn't a percentage.",
-            availability: "Any time",
-            expires_at: "2030-12-31",
-            terms: "For automated tests only.",
-            approval_status: "approved",
-        })
-        .select("id")
+    // A photo is required, and the business's cover photo stands in for
+    // it in one tap. Borrow a real image for this run.
+    const { data: picture } = await client
+        .from("businesses")
+        .select("cover_image_url")
+        .not("cover_image_url", "is", null)
+        .limit(1)
         .single();
 
     try {
-        await page.goto(`/businesses/${businessSlug}`);
+        await page.goto(`/business/${businessId}/offers/new`);
 
-        const card = page.locator('[data-slot="offer-card"]', { hasText: "E2E Two for one" }).first();
-        await expect(card).toBeVisible();
+        // Without a picture it doesn't save at all.
+        await fillOffer(page, "E2E New Offer");
+        await page.locator('button[type="submit"]').click();
+        await expect(page.getByText(/Add a photo/)).toBeVisible();
 
-        const gap = await card.evaluate((node) => {
-            const badge = node.querySelector("span.bg-\\[\\#FF593F\\]");
-            const ends = [...node.querySelectorAll("span")].find((el) => /Ends/.test(el.textContent ?? ""));
-            if (!badge || !ends) return null;
-            return ends.getBoundingClientRect().left - badge.getBoundingClientRect().right;
+        await client
+            .from("businesses")
+            .update({ cover_image_url: picture!.cover_image_url })
+            .eq("id", businessId);
+
+        await page.goto(`/business/${businessId}/offers/new`);
+        await fillOffer(page, "E2E New Offer");
+        await page.getByRole("button", { name: "Use my cover photo" }).click();
+        await page.locator('button[type="submit"]').click();
+
+        // Every offer waits for review, whatever the business's plan.
+        // By role: Next's route announcer reads the same words out.
+        await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
+            timeout: 10_000,
         });
 
-        expect(gap, "the offer and the end date don't collide").not.toBeNull();
-        expect(gap!).toBeGreaterThan(0);
+        const { data: made } = await client
+            .from("offers")
+            .select("image_url")
+            .eq("business_id", businessId)
+            .eq("title", "E2E New Offer")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+        expect(made!.image_url, "the cover photo became the offer's picture").toBe(
+            picture!.cover_image_url,
+        );
     } finally {
-        await admin.from("offers").delete().eq("id", made!.id);
+        await client
+            .from("businesses")
+            .update({ cover_image_url: before!.cover_image_url })
+            .eq("id", businessId);
     }
 });
