@@ -59,3 +59,27 @@ test("an unknown business address shows the not-found page", async ({ page }) =>
         await expect(page.getByRole("heading", { name: /wasn.t the discovery you had in mind/ }), path).toBeVisible();
     }
 });
+
+// The page someone lands on when a deal has gone: it sits in the normal
+// page flow rather than filling the viewport, so on a phone the words
+// are not pushed below the fold by empty space.
+test("a missing offer gets a page that fits a phone", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/offers/this-offer-does-not-exist");
+
+    const heading = page.getByRole("heading", { name: /couldn.t find that deal/ });
+    await expect(heading).toBeVisible();
+
+    // Above the fold, with the first action reachable without scrolling.
+    const box = (await heading.boundingBox())!;
+    expect(box.y, "the headline is on the first screen").toBeLessThan(400);
+    await expect(page.getByRole("button", { name: "Browse all deals" })).toBeInViewport();
+
+    // Nothing spills sideways: the illustration is rotated and it would
+    // be easy to push the page wider than the screen.
+    const [scrollWidth, innerWidth] = await page.evaluate(() => [
+        document.documentElement.scrollWidth,
+        window.innerWidth,
+    ]);
+    expect(scrollWidth, "no sideways scroll").toBe(innerWidth);
+});
