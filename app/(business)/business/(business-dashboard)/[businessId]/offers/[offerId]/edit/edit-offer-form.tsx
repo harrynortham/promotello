@@ -59,6 +59,8 @@ type Offer = {
     category: string;
     category_id: string | null;
     discount: string;
+    kind: string;
+    kind_value: number | null;
     description: string;
     availability: string;
     expires_at: string;
@@ -102,6 +104,8 @@ export default function EditOfferForm({
         reset,
         setError,
         clearErrors,
+        watch,
+        setValue,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<OfferInput, unknown, OfferValues>({ resolver: zodResolver(schema) });
 
@@ -122,6 +126,8 @@ export default function EditOfferForm({
             category,
             category_id,
             discount,
+            kind,
+            kind_value,
             description,
             availability,
             expires_at,
@@ -173,6 +179,8 @@ export default function EditOfferForm({
                 reset({
                     title: sent?.title ?? loaded.title,
                     category: loaded.category_id ?? "",
+                    kind: (loaded.kind ?? "other") as OfferInput["kind"],
+                    kindValue: loaded.kind_value === null ? "" : String(loaded.kind_value),
                     discount: sent?.discount ?? loaded.discount,
                     description: sent?.description ?? loaded.description,
                     availability: loaded.availability,
@@ -426,6 +434,8 @@ export default function EditOfferForm({
                             <OfferFields
                                 register={register}
                                 errors={errors}
+                                watch={watch}
+                                setValue={setValue}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
                                 schedule={scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)}

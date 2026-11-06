@@ -1,6 +1,7 @@
 "use client";
 
-import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import { useEffect, useRef } from "react";
+import type { FieldErrors, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
@@ -11,6 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    OFFER_KINDS,
+    headlineFor,
+    kindTakesValue,
+    offerKindLabels,
+    offerKindValueLabels,
+} from "@/lib/offer-kinds";
 import { formatSchedule, scheduleFrom, type OfferSchedule } from "@/lib/schedule";
 import { optionalText, requiredText } from "@/lib/validation";
 
@@ -26,6 +34,15 @@ export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}
     return z.object({
         title: requiredText("The title", { min: 2, max: 160 }),
         category: z.string().min(1, "Choose a category."),
+        kind: z.enum(OFFER_KINDS, { message: "Choose what kind of offer this is." }),
+        // The number behind the kind: 20 for 20% off, 5 for £5 off or a
+        // £5 price. Required where the kind has one, because a percentage
+        // without a number can't be sorted or compared.
+        kindValue: z
+            .string()
+            .trim()
+            .refine((value) => !value || /^\d+(\.\d{1,2})?$/.test(value), "Use a number, like 20 or 7.50")
+            .transform((value) => (value ? Number(value) : null)),
         discount: requiredText("The offer", { max: 100 }),
         description: requiredText("The description", { min: 2, max: 5000 }),
         availability: optionalText("Availability", 160),
@@ -45,7 +62,15 @@ export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}
                         : "Use a number greater than zero.",
             }),
         terms: requiredText("The terms", { min: 2, max: 5000 }),
-    });
+    })
+        .refine((values) => !kindTakesValue(values.kind) || values.kindValue !== null, {
+            message: "Add the number for this kind of offer.",
+            path: ["kindValue"],
+        })
+        .refine((values) => values.kind !== "percent_off" || (values.kindValue ?? 0) <= 100, {
+            message: "A percentage off can't be more than 100.",
+            path: ["kindValue"],
+        });
 }
 
 export type OfferInput = z.input<ReturnType<typeof offerSchema>>;
@@ -59,6 +84,8 @@ export function offerRow(values: OfferValues, schedule: ReturnType<typeof schedu
     return {
         title: values.title,
         category_id: values.category,
+        kind: values.kind,
+        kind_value: kindTakesValue(values.kind) ? values.kindValue : null,
         discount: values.discount,
         description: values.description,
         availability: values.availability || (parsed ? formatSchedule(parsed) : "Available now"),
@@ -104,9 +131,13 @@ export function OfferFields({
     schedule,
     defaultCategoryId,
     minRedemptions = 0,
+    watch,
+    setValue,
 }: {
     register: UseFormRegister<OfferInput>;
     errors: FieldErrors<OfferInput>;
+    watch: UseFormWatch<OfferInput>;
+    setValue: UseFormSetValue<OfferInput>;
     businessId: string;
     canSchedule: boolean;
     schedule: OfferSchedule | null;
@@ -114,6 +145,31 @@ export function OfferFields({
     // Already claimed, when editing.
     minRedemptions?: number;
 }) {
+    const kind = watch("kind");
+    const kindValue = watch("kindValue");
+    const takesValue = kindTakesValue(kind ?? "");
+    const suggested = headlineFor(kind ?? "", kindValue ? Number(kindValue) : null);
+
+    // The headline follows the picker until someone writes their own.
+    // "20% off everything" has to be possible, so this only ever fills an
+    // empty field or replaces a suggestion it made itself.
+    const lastSuggestion = useRef("");
+
+    useEffect(() => {
+        if (!suggested) {
+            lastSuggestion.current = "";
+            return;
+        }
+
+        const current = (watch("discount") ?? "").trim();
+
+        if (current === "" || current === lastSuggestion.current) {
+            setValue("discount", suggested, { shouldValidate: current !== "" });
+        }
+
+        lastSuggestion.current = suggested;
+    }, [suggested, setValue, watch]);
+
     return (
         <>
             <div className="space-y-2">
@@ -143,6 +199,50 @@ export function OfferFields({
                         invalid={invalidProps("category-error", errors.category)}
                     />
                     <FieldError id="category-error" message={errors.category?.message} />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="kind">
+                        Kind of offer <Required />
+                    </Label>
+
+                    <div className="flex gap-3">
+                        <select
+                            id="kind"
+                            className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm"
+                            {...register("kind")}
+                            {...invalidProps("kind-error", errors.kind)}
+                        >
+                            <option value="">Choose a kind</option>
+                            {OFFER_KINDS.map((option) => (
+                                <option key={option} value={option}>
+                                    {offerKindLabels[option]}
+                                </option>
+                            ))}
+                        </select>
+
+                        {takesValue && (
+                            <Input
+                                id="kindValue"
+                                inputMode="decimal"
+                                className="w-28"
+                                aria-label={offerKindValueLabels[kind as "percent_off"] ?? "Number"}
+                                placeholder={kind === "percent_off" ? "20" : "5"}
+                                {...register("kindValue")}
+                                {...invalidProps("kind-error", errors.kindValue)}
+                            />
+                        )}
+                    </div>
+
+                    <FieldError
+                        id="kind-error"
+                        message={errors.kind?.message ?? errors.kindValue?.message}
+                    />
+
+                    <p className="text-xs leading-5 text-muted-foreground">
+                        Used to sort and filter offers, and to describe this one to
+                        Google. It fills in the line beside it, which you can change.
+                    </p>
                 </div>
 
                 <div className="space-y-2">

@@ -163,6 +163,8 @@ async function OfferContent({ params }: OfferPageProps) {
                 terms,
                 image_url,
                 category_id,
+                kind,
+                kind_value,
                 max_redemptions,
                 redemption_count,
                 approval_status,
@@ -336,6 +338,12 @@ async function OfferContent({ params }: OfferPageProps) {
         image: offer.image_url ?? undefined,
         category: offer.category ?? undefined,
         validThrough: offer.expires_at ?? undefined,
+        // Only a set price is a price. "20% off" has no price to state
+        // without knowing what it is off, and a search engine is better
+        // told nothing than told a number that isn't one.
+        ...(offer.kind === "fixed_price" && offer.kind_value !== null
+            ? { price: Number(offer.kind_value), priceCurrency: "GBP" }
+            : {}),
         availability: isFullyClaimed
             ? "https://schema.org/SoldOut"
             : isExpired

@@ -64,12 +64,17 @@ export default function NewOfferForm({
         setError,
         clearErrors,
         control,
+        watch,
+        setValue,
         formState: { errors, isSubmitting },
     } = useForm<OfferInput, unknown, OfferValues>({
         resolver: zodResolver(schema),
         defaultValues: {
             title: "",
             category: defaultCategoryId ?? "",
+            // Empty so the picker asks rather than assuming.
+            kind: "" as OfferInput["kind"],
+            kindValue: "",
             discount: "",
             description: "",
             availability: "",
@@ -326,6 +331,8 @@ export default function NewOfferForm({
                             <OfferFields
                                 register={register}
                                 errors={errors}
+                                watch={watch}
+                                setValue={setValue}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
                                 schedule={null}
