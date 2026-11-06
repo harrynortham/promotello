@@ -200,7 +200,7 @@ test("an offer waiting for approval is listed, and can't be chosen", async ({ pa
         .single();
 
     try {
-        await page.goto(`/business/${state.businessId}/qr`);
+        await page.goto(`/business/${state.businessId}/qr/new`);
         const option = page.locator(`#qr-target option[value="${offer!.id}"]`);
         await expect(option).toHaveText(`Offer: ${title} — waiting for approval`, { timeout: 10_000 });
         await expect(option).toBeDisabled();
@@ -362,7 +362,7 @@ test("the designer previews what the chosen target will print", async ({ page })
         .limit(1)
         .single();
 
-    await page.goto(`/business/${state.businessId}/qr`);
+    await page.goto(`/business/${state.businessId}/qr/new`);
 
     // It opens on the business page, so that is what is previewed.
     await expect(page.locator("#qr-target")).toHaveValue("business");
@@ -444,7 +444,7 @@ test("the description field appears only for an offer", async ({ page }) => {
         .limit(1)
         .single();
 
-    await page.goto(`/business/${state.businessId}/qr`);
+    await page.goto(`/business/${state.businessId}/qr/new`);
     await expect(page.locator("#qr-target")).toHaveValue("business");
     await expect(page.locator("#poster-description")).toHaveCount(0);
 
@@ -467,7 +467,7 @@ test("the form has no paper size, and the preview follows you down", async ({ pa
     const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
 
     await page.setViewportSize({ width: 1280, height: 760 });
-    await page.goto(`/business/${state.businessId}/qr`);
+    await page.goto(`/business/${state.businessId}/qr/new`);
     await expect(page.locator("#qr-label")).toBeVisible({ timeout: 15_000 });
 
     await expect(page.locator("#poster-size")).toHaveCount(0);
@@ -486,4 +486,64 @@ test("the form has no paper size, and the preview follows you down", async ({ pa
     expect((await label.boundingBox())!.y, "the form scrolled").toBeLessThan(start);
     expect(pinned, "the poster is still on screen").toBeLessThan(start);
     expect(pinned, "and below the sticky header").toBeGreaterThan(90);
+});
+
+// The first code is made on the QR page, because there is nothing else
+// on it. After that the page is the list of what they have, and the form
+// has a page of its own.
+test("the form is on the page for a first code, and on /qr/new after that", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: existing } = await admin
+        .from("qr_codes")
+        .select("id")
+        .eq("business_id", state.businessId)
+        .is("archived_at", null);
+
+    // Start from nothing, and put back whatever was there.
+    const parked = (existing ?? []).map((code) => code.id);
+    if (parked.length) {
+        await admin.from("qr_codes").update({ archived_at: new Date().toISOString() }).in("id", parked);
+    }
+
+    let madeId: string | undefined;
+
+    try {
+        await page.goto(`/business/${state.businessId}/qr`);
+        await expect(page.locator("#qr-label"), "the first one is made here").toBeVisible({
+            timeout: 20_000,
+        });
+
+        const { data: made } = await admin
+            .from("qr_codes")
+            .insert({ business_id: state.businessId, label: "E2E Existing Code" })
+            .select("id")
+            .single();
+        madeId = made!.id;
+
+        // With one in hand the page is a list: no form, a way to the form.
+        await page.reload();
+        await expect(page.getByRole("heading", { name: "E2E Existing Code" })).toBeVisible({
+            timeout: 20_000,
+        });
+        await expect(page.locator("#qr-label")).toHaveCount(0);
+
+        await page.getByRole("button", { name: "Create a QR code" }).click();
+        await page.waitForURL(`**/business/${state.businessId}/qr/new`);
+        await expect(page.locator("#qr-label")).toBeVisible();
+
+        // And making one there lands back on the list.
+        await page.locator("#qr-label").fill("E2E Second Code");
+        await page.getByRole("button", { name: "Create QR code" }).click();
+        await page.waitForURL(`**/business/${state.businessId}/qr?created=1`, { timeout: 25_000 });
+        await expect(page.getByText("QR code created")).toBeVisible();
+        await expect(page.getByRole("heading", { name: "E2E Second Code" })).toBeVisible();
+    } finally {
+        await admin.from("qr_codes").delete().eq("business_id", state.businessId).eq("label", "E2E Second Code");
+        if (madeId) await admin.from("qr_codes").delete().eq("id", madeId);
+        if (parked.length) await admin.from("qr_codes").update({ archived_at: null }).in("id", parked);
+    }
 });
