@@ -109,6 +109,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 category,
                 description,
                 logo_url,
+                cover_image_url,
                 website_url,
                 contact_email,
                 approval_status,
@@ -266,6 +267,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     completed: Boolean(hours?.length),
                     href: `${base}/hours`,
                     action: "Set hours",
+                },
+                {
+                    id: "cover",
+                    label: "Add a cover photo",
+                    description: "The picture across the top of your page, and the one customers see in the directory.",
+                    completed: Boolean(business.cover_image_url),
+                    href: `${base}/cover`,
+                    action: "Add cover photo",
                 },
                 {
                     id: "offer",

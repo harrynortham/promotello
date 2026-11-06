@@ -58,13 +58,25 @@ test.describe("business setup and trial emails", () => {
 
         const [nudge] = await claim(businessId);
         expect(nudge.kind).toBe("setup_nudge_1");
+
+        // The cover photo comes first: an offer sends people to a page,
+        // and the page should be worth arriving at.
         const email = lifecycleEmail(nudge, nudge.emails[0])!;
-        expect(email.subject).toMatch(/^Post your first offer for E2E Lifecycle/);
-        expect(email.text).toContain(`/business/${businessId}/offers/new`);
+        expect(email.subject).toMatch(/^Add a cover photo for E2E Lifecycle/);
+        expect(email.text).toContain(`/business/${businessId}/cover`);
         expect(email.text).toContain("Turn off setup tips");
 
+        // With a cover, the offer is next.
+        const withCover = { ...nudge, details: { ...nudge.details, has_cover: true } };
+        expect(lifecycleEmail(withCover, "a@b.c")!.subject).toMatch(/^Post your first offer/);
+
         // Fully set up: nothing to nudge about.
-        expect(lifecycleEmail({ ...nudge, details: { ...nudge.details, has_offer: true, has_loyalty: true, has_poster: true } }, "a@b.c")).toBeNull();
+        expect(
+            lifecycleEmail(
+                { ...nudge, details: { ...nudge.details, has_cover: true, has_offer: true, has_loyalty: true, has_poster: true } },
+                "a@b.c",
+            ),
+        ).toBeNull();
     });
 
     test("the loyalty step offers a free business the Pro trial, and goes straight to loyalty on Pro", async () => {
@@ -72,8 +84,8 @@ test.describe("business setup and trial emails", () => {
 
         const [claimed] = await claim(businessId);
         expect(claimed.kind).toBe("setup_nudge_1");
-        // With the offer done, the loyalty card is next.
-        const nudge = { ...claimed, details: { ...claimed.details, has_offer: true } };
+        // With the cover and the offer done, the loyalty card is next.
+        const nudge = { ...claimed, details: { ...claimed.details, has_cover: true, has_offer: true } };
 
         const free = lifecycleEmail({ ...nudge, hasPro: false, approved: true }, "a@b.c")!;
         expect(free.subject).toMatch(/^Start a loyalty card with a free Pro trial/);
@@ -239,4 +251,29 @@ test.describe("approval emails", () => {
         expect(alert.text).toContain("Harbour Grind (Cafe, Bristol) just signed up");
         expect(alert.text).toContain("owner@b.c");
     });
+});
+
+// The welcome email lists the steps, so it counts them rather than
+// saying a number that was true when it was written.
+test("the welcome email counts the steps it lists", async () => {
+    const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const { data: created } = await admin()
+        .from("businesses")
+        .insert({ name: `E2E Counting ${Date.now()}`, category: "Testing", approval_status: "approved", created_by: businessUserId })
+        .select("id")
+        .single();
+
+    await admin().from("business_members").insert({ business_id: created!.id, user_id: businessUserId, role: "owner" });
+
+    try {
+        const [welcome] = (await admin().rpc("claim_business_lifecycle_emails", { only_business: created!.id })).data as LifecycleDue[];
+        const email = lifecycleEmail({ ...welcome, hasPro: false, approved: true }, "a@b.c")!;
+
+        // A cover photo, an offer, a loyalty card and a poster.
+        expect(email.text).toContain("Four things get you ready");
+        expect(email.text).toContain("Add a cover photo");
+        expect(email.text.indexOf("Add a cover photo")).toBeLessThan(email.text.indexOf("Post your first offer"));
+    } finally {
+        await admin().from("businesses").delete().eq("id", created!.id);
+    }
 });

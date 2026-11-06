@@ -76,6 +76,15 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await expect(page.getByText(/Welcome to Promotello, E2E Onboarding Bakery is set up/)).toBeVisible();
         await expect(page.getByText("Get ready to go live")).toBeVisible();
         await expect(page.getByText("Add logo")).toBeVisible();
+
+        // A cover photo comes before the first offer: an offer sends
+        // people to a page, and the page should be worth landing on.
+        const steps = await page.locator("main li").filter({ hasText: /Add|Set|Create|Describe/ }).allInnerTexts();
+        const cover = steps.findIndex((step) => step.includes("Add a cover photo"));
+        const offer = steps.findIndex((step) => step.includes("Create your first offer"));
+
+        expect(cover, "the cover photo step is there").toBeGreaterThan(-1);
+        expect(cover, "and comes before the first offer").toBeLessThan(offer);
     } finally {
         await admin.from("businesses").delete().eq("created_by", userId);
         await admin.auth.admin.deleteUser(userId);
