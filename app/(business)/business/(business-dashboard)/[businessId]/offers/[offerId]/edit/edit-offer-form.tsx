@@ -86,6 +86,9 @@ export default function EditOfferForm({
     // A change already sent for review. The offer below it is still the
     // one customers see; this is what it would become.
     const [waitingEdit, setWaitingEdit] = useState<WaitingEdit | null>(null);
+    // What else goes when the offer does: claimed vouchers are deleted
+    // with it, and QR codes pointing at it fall back to the business page.
+    const [attached, setAttached] = useState({ claims: 0, codes: 0 });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [removeImage, setRemoveImage] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -110,7 +113,7 @@ export default function EditOfferForm({
         async function loadOffer() {
             const supabase = createClient();
 
-            const [{ data, error }, { data: pending }] = await Promise.all([
+            const [{ data, error }, { data: pending }, claims, codes] = await Promise.all([
                 supabase
                     .from("offers")
                 .select(
@@ -141,6 +144,15 @@ export default function EditOfferForm({
                     .eq("offer_id", offerId)
                     .is("decided_at", null)
                     .maybeSingle(),
+                supabase
+                    .from("offer_redemptions")
+                    .select("id", { count: "exact", head: true })
+                    .eq("offer_id", offerId),
+                supabase
+                    .from("qr_codes")
+                    .select("id", { count: "exact", head: true })
+                    .eq("offer_id", offerId)
+                    .is("archived_at", null),
             ]);
 
             if (!current) return;
@@ -153,6 +165,7 @@ export default function EditOfferForm({
 
                 setOffer(loaded);
                 setWaitingEdit(sent);
+                setAttached({ claims: claims.count ?? 0, codes: codes.count ?? 0 });
 
                 // The form shows what they last wrote, even while it is
                 // waiting, so a second save revises it rather than
@@ -463,10 +476,48 @@ export default function EditOfferForm({
                             <DialogTitle>Delete this offer?</DialogTitle>
 
                             <DialogDescription>
-                                This action cannot be undone. The offer and its details
-                                will be permanently deleted.
+                                This can&rsquo;t be undone. The offer and its page go for
+                                good.
                             </DialogDescription>
                         </DialogHeader>
+
+                        {/* The two things people don't think of: the
+                            vouchers customers are holding, and the poster
+                            already stuck in the window. */}
+                        <ul className="space-y-2 text-sm text-[#17233B]/75">
+                            {attached.claims > 0 && (
+                                <li>
+                                    <strong className="font-semibold text-[#17233B]">
+                                        {attached.claims === 1
+                                            ? "1 customer has claimed it."
+                                            : `${attached.claims} customers have claimed it.`}
+                                    </strong>{" "}
+                                    Their vouchers go with the offer and can&rsquo;t be
+                                    redeemed afterwards.
+                                </li>
+                            )}
+
+                            {attached.codes > 0 && (
+                                <li>
+                                    <strong className="font-semibold text-[#17233B]">
+                                        {attached.codes === 1
+                                            ? "1 QR code points at it."
+                                            : `${attached.codes} QR codes point at it.`}
+                                    </strong>{" "}
+                                    The code keeps working, but a scan lands on your
+                                    business page instead of this offer — and a poster
+                                    already in your window will be advertising a deal
+                                    that isn&rsquo;t there.
+                                </li>
+                            )}
+
+                            {attached.claims === 0 && attached.codes === 0 && (
+                                <li>
+                                    Nobody has claimed it and no QR code points at it, so
+                                    nothing else is affected.
+                                </li>
+                            )}
+                        </ul>
 
                         <DialogFooter>
                             <Button
