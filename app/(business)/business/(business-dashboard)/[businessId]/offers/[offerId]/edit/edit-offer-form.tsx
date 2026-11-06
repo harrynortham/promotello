@@ -36,6 +36,7 @@ import { Separator } from "@/components/ui/separator";
 import { scheduleFromForm } from "@/components/offer-schedule-fields";
 import { scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
+import { offerWaitingForReview } from "../../actions";
 
 type EditOfferFormProps = {
     businessId: string;
@@ -200,15 +201,23 @@ export default function EditOfferForm({
             imageUrl = upload.url;
         }
 
-        const { error } = await supabase
+        const { data: saved, error } = await supabase
             .from("offers")
             .update({ ...offerRow(values, schedule), image_url: imageUrl })
             .eq("id", offerId)
-            .eq("business_id", businessId);
+            .eq("business_id", businessId)
+            .select("approval_status")
+            .maybeSingle();
 
         if (error) {
             setErrorMessage(error.message);
             return;
+        }
+
+        // Changing the wording or the picture of a live offer sends it
+        // back for review, and the queue is the only thing that knows.
+        if (saved?.approval_status === "pending" && offer.approval_status === "approved") {
+            await offerWaitingForReview(offerId).catch(() => undefined);
         }
 
         router.push(`/business/${businessId}/offers`);
