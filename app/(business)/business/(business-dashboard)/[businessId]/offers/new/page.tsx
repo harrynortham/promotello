@@ -82,7 +82,7 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
     // are for the live preview card.
     const { data: business } = await supabase
         .from("businesses")
-        .select("name, logo_url, cover_image_url, category_id")
+        .select("name, logo_url, category_id")
         .eq("id", businessId)
         .maybeSingle();
 
@@ -91,7 +91,6 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
             businessId={businessId}
             businessName={business?.name ?? "Your business"}
             businessLogoUrl={business?.logo_url ?? null}
-            businessCoverUrl={business?.cover_image_url ?? null}
             defaultCategoryId={business?.category_id ?? null}
             canSchedule={(await businessTier(supabase, businessId).catch(() => "free")) === "growth"}
         />

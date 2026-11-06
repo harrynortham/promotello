@@ -32,8 +32,6 @@ type NewOfferFormProps = {
     businessId: string;
     businessName: string;
     businessLogoUrl: string | null;
-    // Offered as the offer's picture in one tap.
-    businessCoverUrl: string | null;
     defaultCategoryId: string | null;
     canSchedule: boolean;
 };
@@ -44,16 +42,12 @@ export default function NewOfferForm({
     businessId,
     businessName,
     businessLogoUrl,
-    businessCoverUrl,
     defaultCategoryId,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     // The cropped image, shown in the preview before it's uploaded.
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-    // Their cover photo, taken as the offer's picture rather than
-    // uploading the same file twice.
-    const [usingCover, setUsingCover] = useState(false);
     const [categoryNames, setCategoryNames] = useState<Map<string, string>>(new Map());
     const router = useRouter();
     const pathname = usePathname();
@@ -120,7 +114,7 @@ export default function NewOfferForm({
     async function onSubmit(values: OfferValues, event?: React.BaseSyntheticEvent) {
         setErrorMessage("");
 
-        if (!imageFile && !usingCover) {
+        if (!imageFile) {
             setError("root.image", {
                 message: "Add a photo. Offers with one are what people stop at in the listings.",
             });
@@ -146,7 +140,7 @@ export default function NewOfferForm({
             return;
         }
 
-        let imageUrl: string | null = usingCover ? businessCoverUrl : null;
+        let imageUrl: string | null = null;
 
         if (imageFile) {
             const upload = await uploadOfferImage(supabase, businessId, imageFile);
@@ -318,20 +312,12 @@ export default function NewOfferForm({
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
                             <OfferImageField
-                                coverImageUrl={businessCoverUrl}
-                                usingCover={usingCover}
                                 disabled={isSubmitting}
                                 error={errors.root?.image?.message}
                                 onChange={(file, previewUrl) => {
                                     setImageFile(file);
                                     setImagePreviewUrl(previewUrl);
-                                    if (file) setUsingCover(false);
-                                }}
-                                onUseCover={() => {
-                                    setUsingCover(true);
-                                    setImageFile(null);
-                                    setImagePreviewUrl(businessCoverUrl);
-                                    clearErrors("root.image");
+                                    if (file) clearErrors("root.image");
                                 }}
                             />
 

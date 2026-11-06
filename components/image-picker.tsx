@@ -5,6 +5,14 @@ import type { Area } from "react-easy-crop";
 import { FiImage, FiUpload } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { FieldError } from "@/components/field-error";
 import { ImageCropper, cropImage } from "@/components/image-cropper";
 import { Label } from "@/components/ui/label";
@@ -23,6 +31,7 @@ export function ImagePicker({
     maxSize = 1600,
     convertToJpeg = false,
     imageUrl = null,
+    modal = false,
     disabled = false,
     error,
     onChange,
@@ -42,6 +51,11 @@ export function ImagePicker({
     convertToJpeg?: boolean;
     // An image already saved, shown until a new one is chosen.
     imageUrl?: string | null;
+    // Crop in a dialog rather than in place. Inside a long form the
+    // cropper is easy to walk away from: the field looks finished while
+    // the image is still sitting unconfirmed. A dialog has to be
+    // answered. Not for a picker that is already inside a dialog.
+    modal?: boolean;
     disabled?: boolean;
     error?: string;
     onChange: (file: File | null, previewUrl: string | null) => void;
@@ -121,7 +135,33 @@ export function ImagePicker({
         onRemove?.();
     }
 
-    if (isCropping && chosenUrl) {
+    // Shared by both shapes: the same cropper, the same two answers.
+    const cropControls = (
+        <>
+            <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="sm:flex-1"
+                disabled={disabled}
+                onClick={() => inputRef.current?.click()}
+            >
+                Choose another
+            </Button>
+
+            <Button
+                type="button"
+                size="lg"
+                className="sm:flex-1"
+                disabled={disabled || !cropArea}
+                onClick={useThisImage}
+            >
+                Use this image
+            </Button>
+        </>
+    );
+
+    if (!modal && isCropping && chosenUrl) {
         return (
             <div className="space-y-4">
                 <Label htmlFor={id}>{label}</Label>
@@ -135,28 +175,7 @@ export function ImagePicker({
 
                 <FieldError id={`${id}-error`} message={fileError || undefined} />
 
-                <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        className="sm:flex-1"
-                        disabled={disabled}
-                        onClick={() => inputRef.current?.click()}
-                    >
-                        Choose another
-                    </Button>
-
-                    <Button
-                        type="button"
-                        size="lg"
-                        className="sm:flex-1"
-                        disabled={disabled || !cropArea}
-                        onClick={useThisImage}
-                    >
-                        Use this image
-                    </Button>
-                </div>
+                <div className="flex flex-col-reverse gap-3 sm:flex-row">{cropControls}</div>
 
                 <button
                     type="button"
@@ -244,6 +263,43 @@ export function ImagePicker({
                 aria-hidden="true"
                 onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
             />
+
+            {modal && (
+                <Dialog
+                    open={isCropping && chosenUrl !== null}
+                    onOpenChange={(open) => {
+                        // Closing it any way at all — the cross, Escape,
+                        // the backdrop — is answering "not this one".
+                        if (!open) cancelCrop();
+                    }}
+                >
+                    <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle>Position your image</DialogTitle>
+
+                            <DialogDescription>
+                                Drag to move it and zoom to fill the frame. It is
+                                saved to the form when you choose Use this image.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {chosenUrl && (
+                            <ImageCropper
+                                src={chosenUrl}
+                                aspect={aspect}
+                                allowSpace={allowSpace}
+                                onCropChange={setCropArea}
+                            />
+                        )}
+
+                        <FieldError id={`${id}-crop-error`} message={fileError || undefined} />
+
+                        <DialogFooter className="flex-col-reverse gap-3 sm:flex-row">
+                            {cropControls}
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }
