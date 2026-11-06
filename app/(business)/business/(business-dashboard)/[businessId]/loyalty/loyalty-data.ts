@@ -30,7 +30,7 @@ export async function loadLoyaltyEditor(businessId: string) {
     const [{ data: business }, hasPro] = await Promise.all([
         supabase
             .from("businesses")
-            .select("name, logo_url")
+            .select("name, slug, logo_url, approval_status")
             .eq("id", businessId)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
@@ -41,6 +41,9 @@ export async function loadLoyaltyEditor(businessId: string) {
         canManage: ["owner", "admin"].includes(membership.role),
         businessName: business?.name ?? "Your business",
         businessLogoUrl: business?.logo_url ?? null,
+        businessSlug: business?.slug ?? null,
+        // Nothing to share until customers can open the page it links to.
+        isApproved: business?.approval_status === "approved",
         hasPro,
     };
 }

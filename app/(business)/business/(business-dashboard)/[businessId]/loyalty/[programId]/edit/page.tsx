@@ -5,8 +5,10 @@ import { notFound, redirect } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import { SharePanel } from "@/components/share-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { loyaltyShareCaption, shareLink } from "@/lib/share";
 import { loadLoyaltyEditor } from "../../loyalty-data";
 import { ProgramSettingsForm, type Program } from "../../program-form";
 import { setLoyaltyProgramActive } from "../../actions";
@@ -83,6 +85,33 @@ async function EditLoyaltyCard({ params }: PageProps) {
                         colour={program.card_colour}
                         stampIcon={program.stamp_icon}
                     />
+
+                    {program.is_active && editor.businessSlug && editor.isApproved && (
+                        <SharePanel
+                            title="Share this loyalty card"
+                            url={shareLink(`/businesses/${editor.businessSlug}`)}
+                            caption={loyaltyShareCaption({
+                                stampsRequired: program.stamps_required,
+                                reward: program.reward,
+                                businessName: editor.businessName,
+                            })}
+                            images={[
+                                {
+                                    label: "Instagram story",
+                                    href: `/businesses/${editor.businessSlug}/story-image`,
+                                    filename: `${editor.businessSlug}-loyalty-story.png`,
+                                    aspect: "aspect-[9/16]",
+                                },
+                                {
+                                    label: "Post",
+                                    href: `/businesses/${editor.businessSlug}/post-image`,
+                                    filename: `${editor.businessSlug}-loyalty-post.png`,
+                                    aspect: "aspect-square",
+                                },
+                            ]}
+                            triggerLabel="Share card"
+                        />
+                    )}
 
                     <form action={setLoyaltyProgramActive}>
                         <input type="hidden" name="businessId" value={businessId} />
