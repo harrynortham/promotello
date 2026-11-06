@@ -5,16 +5,12 @@ import { notFound, redirect } from "next/navigation";
 import { FiPlus } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
-import { LoyaltyStamps } from "@/components/loyalty-stamps";
-import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
-import { lookUpLoyaltyCard } from "./actions";
 import { SharePanel } from "@/components/share-panel";
 import { loyaltyShareCaption, shareLink } from "@/lib/share";
 import { CardDesign } from "./card-design";
@@ -239,65 +235,18 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     )
                 ) : (
                     <>
-                        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
-                            <Card className="border-[#17233B]/10">
-                                <CardHeader>
-                                    <CardTitle>Stamp a customer&apos;s card</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm leading-6 text-[#17233B]/65">
-                                        Scan the QR code on the customer&apos;s card with your phone
-                                        camera, or type the code shown under it.
-                                    </p>
-
-                                    <form action={lookUpLoyaltyCard} className="mt-5 flex gap-2">
-                                        <input type="hidden" name="businessId" value={businessId} />
-                                        <Input
-                                            name="code"
-                                            required
-                                            placeholder="e.g. 4F8A2C91D0"
-                                            aria-label="Card code"
-                                            className="font-mono uppercase"
-                                            autoComplete="off"
-                                        />
-                                        <SubmitButton size="lg" pendingLabel="Finding…">Find card</SubmitButton>
-                                    </form>
-
-                                    <dl className="mt-8 grid grid-cols-3 gap-3 text-center">
-                                        {[
-                                            ["Members", stats.members],
-                                            ["Stamps this week", stats.stampsThisWeek],
-                                            ["Rewards given", stats.rewards],
-                                        ].map(([label, value]) => (
-                                            <div key={label} className="rounded-xl bg-[#FFF8F0] px-3 py-4">
-                                                <dt className="text-xs text-[#17233B]/70">{label}</dt>
-                                                <dd className="mt-1 text-2xl font-semibold">{value}</dd>
-                                            </div>
-                                        ))}
-                                    </dl>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="h-fit border-[#17233B]/10 bg-[#17233B] text-white">
-                                <CardContent className="p-6">
-                                    <p className="text-sm text-white/70">
-                                        {program.is_active ? "Live on your business page" : "Paused"}
-                                    </p>
-                                    <p className="mt-2 text-xl font-semibold">
-                                        Collect {program.stamps_required} stamps, get {program.reward.charAt(0).toLowerCase() + program.reward.slice(1)}
-                                    </p>
-                                    <div className="mt-5">
-                                        <LoyaltyStamps
-                                            stamps={Math.min(3, program.stamps_required - 1)}
-                                            required={program.stamps_required}
-                                            size="sm"
-                                            colour={program.card_colour}
-                                            icon={program.stamp_icon}
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                        <dl className="mt-8 grid gap-4 sm:grid-cols-3">
+                            {[
+                                ["Members", stats.members],
+                                ["Stamps this week", stats.stampsThisWeek],
+                                ["Rewards given", stats.rewards],
+                            ].map(([label, value]) => (
+                                <div key={label} className="rounded-xl border border-[#17233B]/10 bg-white px-5 py-4">
+                                    <dt className="text-sm text-[#17233B]/70">{label}</dt>
+                                    <dd className="mt-1 text-3xl font-semibold">{value}</dd>
+                                </div>
+                            ))}
+                        </dl>
 
                     </>
                 )}
@@ -306,7 +255,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     <section className="mt-10">
                         <h2 className="text-xl font-semibold">Your loyalty cards</h2>
 
-                        <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        <div className="mt-4 grid gap-5 md:grid-cols-2">
                             {canManage && (
                                 <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
                                     <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
