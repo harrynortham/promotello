@@ -30,3 +30,27 @@ test("the sidebar links out to the page customers see", async ({ page }) => {
 
     expect(beside, "the link sits with the business name").toBe(true);
 });
+
+// The same link on a phone, where the sidebar isn't: once in the header
+// above the Menu button, and once in the menu itself.
+test.describe("on a phone", () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test("the link out sits in the header and in the menu", async ({ page }) => {
+        const { businessId, businessSlug } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+        await page.goto(`/business/${businessId}`);
+
+        const header = page.getByRole("link", { name: /Open .* page in a new tab/ });
+        await expect(header).toBeVisible();
+        await expect(header).toHaveAttribute("href", `/businesses/${businessSlug}`);
+        await expect(header).toHaveAttribute("target", "_blank");
+
+        await page.getByRole("button", { name: "Menu", exact: true }).click();
+
+        const inMenu = page.getByRole("dialog").getByRole("link", { name: /Open .* page in a new tab/ });
+        await expect(inMenu).toBeVisible();
+        await expect(inMenu).toHaveAttribute("href", `/businesses/${businessSlug}`);
+        await expect(inMenu).toHaveAttribute("target", "_blank");
+    });
+});
