@@ -389,7 +389,9 @@ async function OffersContent({ params }: PageProps) {
                             return (
                                 <Card
                                     key={offer.id}
-                                    className="overflow-hidden border-[#17233B]/10"
+                                    // The card pads its top for text. A
+                                    // picture runs to the edge instead.
+                                    className={`overflow-hidden border-[#17233B]/10 ${offer.image_url ? "pt-0" : ""}`}
                                 >
                                     {offer.image_url && (
                                         <div className="relative aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
