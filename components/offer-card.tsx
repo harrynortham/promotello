@@ -84,12 +84,16 @@ export function OfferCard({
                         className="object-cover transition duration-500 group-hover:scale-105"
                     />
                 ) : (
-                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] text-4xl font-semibold tracking-tight text-[#FF593F]">
-                        {discount}
+                    <div
+                        className={`flex h-full items-center justify-center bg-gradient-to-br from-[#FF593F]/20 via-[#FFF4E8] to-[#FFF8F0] px-6 text-center font-semibold tracking-tight text-[#FF593F] ${discount.length > 24 ? "text-2xl" : discount.length > 12 ? "text-3xl" : "text-4xl"}`}
+                    >
+                        <span className="line-clamp-3">{discount}</span>
                     </div>
                 )}
 
-                <span className="absolute left-3 top-3 rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white shadow-sm">
+                {/* Kept clear of the "ends" pill on the right, whatever
+                    the offer says. */}
+                <span className="absolute left-3 top-3 max-w-[60%] truncate rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white shadow-sm">
                     {discount}
                 </span>
 
