@@ -325,11 +325,16 @@ test("the poster carries the words of whatever the code opens", async ({ page })
             page.getByRole("heading", { name: "See what's on at E2E Test Business" }),
         ).toBeVisible({ timeout: 10_000 });
         await expect(page.getByText(offer!.discount, { exact: true })).toHaveCount(0);
+        // "Claim it" has nothing to point at on a poster that opens a
+        // list of offers.
+        await expect(page.getByText(/Every offer is free to claim/)).toBeVisible();
+        await expect(page.getByText(/Claim it free on Promotello/)).toHaveCount(0);
 
-        // An offer: that offer's words.
+        // An offer: that offer's words, and the claim it carries.
         await page.goto(`/poster/${toOffer!.id}?size=a4`);
         await expect(page.getByRole("heading", { name: offer!.discount })).toBeVisible();
         await expect(page.getByText(offer!.title, { exact: true })).toBeVisible();
+        await expect(page.getByText(/Claim it free on Promotello/)).toBeVisible();
     } finally {
         await admin.from("qr_codes").delete().eq("id", toBusiness!.id);
         await admin.from("qr_codes").delete().eq("id", toOffer!.id);

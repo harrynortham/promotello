@@ -39,6 +39,8 @@ export function QrPoster({
     headline?: string | null;
     className?: string;
 }) {
+    // A code that opens the business page lands on a list of offers, so
+    // "claim it" has nothing to point at yet.
     const theme = cardColour(colour);
     const pill = eyebrow?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
     const title = headline?.trim() || (offer ? offer.discount : `See what's on at ${businessName}`);
@@ -104,7 +106,9 @@ export function QrPoster({
                     Point your phone camera here
                 </p>
                 <p className="mt-[0.3em] text-[#17233B]/70" style={{ fontSize: "1.05em" }}>
-                    Claim it free on Promotello, then show your code when you pay.
+                    {offer
+                        ? "Claim it free on Promotello, then show your code when you pay."
+                        : "Every offer is free to claim on Promotello. Show your code when you pay."}
                 </p>
             </div>
 
