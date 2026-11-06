@@ -49,7 +49,7 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         // 2. Customers can't see it.
         const visitor = await (await browser.newContext()).newPage();
         await visitor.goto(`/businesses/${business.slug}`);
-        await expect(visitor.getByRole("heading", { name: /wasn.t the discovery you had in mind/ })).toBeVisible();
+        await expect(visitor.getByRole("heading", { name: /couldn.t find that place/ })).toBeVisible();
 
         // 3. The owner opens the link, signed out.
         await visitor.goto(previewPath);
