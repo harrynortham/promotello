@@ -56,13 +56,13 @@ test("offer addresses include the business name, and old ones redirect", async (
 test("an unknown business address shows the not-found page", async ({ page }) => {
     for (const path of ["/businesses/no-such-business-here", "/businesses/00000000-0000-4000-8000-000000000000"]) {
         await page.goto(path);
-        await expect(page.getByRole("heading", { name: /wasn.t the discovery you had in mind/ }), path).toBeVisible();
+        await expect(page.getByRole("heading", { name: /couldn.t find that place/ }), path).toBeVisible();
     }
 });
 
-// The page someone lands on when a deal has gone: it sits in the normal
-// page flow rather than filling the viewport, so on a phone the words
-// are not pushed below the fold by empty space.
+// The pages someone lands on when a deal or a place has gone: they sit
+// in the normal page flow rather than filling the viewport, so on a
+// phone the words are not pushed below the fold by empty space.
 test("a missing offer gets a page that fits a phone", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/offers/this-offer-does-not-exist");
@@ -77,6 +77,24 @@ test("a missing offer gets a page that fits a phone", async ({ page }) => {
 
     // Nothing spills sideways: the illustration is rotated and it would
     // be easy to push the page wider than the screen.
+    const [scrollWidth, innerWidth] = await page.evaluate(() => [
+        document.documentElement.scrollWidth,
+        window.innerWidth,
+    ]);
+    expect(scrollWidth, "no sideways scroll").toBe(innerWidth);
+});
+
+test("a missing business gets one too", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/businesses/no-such-business-here");
+
+    const heading = page.getByRole("heading", { name: /couldn.t find that place/ });
+    await expect(heading).toBeVisible();
+
+    const box = (await heading.boundingBox())!;
+    expect(box.y, "the headline is on the first screen").toBeLessThan(400);
+    await expect(page.getByRole("button", { name: "Browse local businesses" })).toBeInViewport();
+
     const [scrollWidth, innerWidth] = await page.evaluate(() => [
         document.documentElement.scrollWidth,
         window.innerWidth,
