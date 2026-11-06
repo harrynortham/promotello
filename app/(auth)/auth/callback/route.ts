@@ -3,6 +3,7 @@ import { after, NextResponse } from "next/server";
 
 import { accountWelcomeEmail } from "@/lib/account-emails";
 import { sendEmails } from "@/lib/email";
+import { landingAfterSignIn } from "@/lib/landing";
 import { safeNextPath } from "@/lib/redirects";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
@@ -26,6 +27,10 @@ export async function GET(request: Request) {
       ? requestedNext
       : (safeNextPath(requestedNext) ?? "/dashboard");
 
+  // Nothing asked for a page: the customer dashboard is only the default,
+  // and who is signing in decides.
+  const unasked = !requestedNext;
+
   const businessFlow = next === "/onboarding" || next === "/business/dashboard";
 
   if (code) {
@@ -46,7 +51,9 @@ export async function GET(request: Request) {
           after(() => welcomeNewCustomer(user));
         }
 
-        return NextResponse.redirect(new URL(next, requestUrl.origin));
+        const landing = unasked ? await landingAfterSignIn(supabase, user) : next;
+
+        return NextResponse.redirect(new URL(landing, requestUrl.origin));
       }
     } catch {
       // Continue to the sign-in fallback below.
@@ -56,12 +63,15 @@ export async function GET(request: Request) {
   // A link opened again, e.g. a confirmation clicked twice, fails, but the
   // first click may already have signed this browser in.
   try {
+    const supabase = await createClient();
     const {
       data: { user },
-    } = await (await createClient()).auth.getUser();
+    } = await supabase.auth.getUser();
 
     if (user) {
-      return NextResponse.redirect(new URL(next, requestUrl.origin));
+      const landing = unasked ? await landingAfterSignIn(supabase, user) : next;
+
+      return NextResponse.redirect(new URL(landing, requestUrl.origin));
     }
   } catch {
     // Not signed in: carry on to the sign-in page.
