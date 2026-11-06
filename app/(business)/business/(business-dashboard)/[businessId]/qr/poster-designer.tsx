@@ -6,6 +6,7 @@ import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
 import { QrPoster } from "@/components/qr-poster";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
     DEFAULT_STAMP_ICON,
@@ -35,7 +36,13 @@ export function PosterDesigner({
     businessName: string;
     place?: string | null;
     logoUrl?: string | null;
-    offers: { id: string; title: string; discount: string; approval_status?: string }[];
+    offers: {
+        id: string;
+        title: string;
+        discount: string;
+        description: string;
+        approval_status?: string;
+    }[];
     previewSvg: string;
     previewLink: string;
     size: "a4" | "a5";
@@ -44,12 +51,17 @@ export function PosterDesigner({
     const [eyebrow, setEyebrow] = useState("");
     const [headline, setHeadline] = useState("");
     const [target, setTarget] = useState("business");
+    // The line under the headline, which only an offer poster has. Null
+    // means it hasn't been touched, so it follows the offer that is
+    // chosen rather than keeping the first one's words.
+    const [detail, setDetail] = useState<string | null>(null);
 
     // The poster says whatever the code opens. Pointed at the business
     // page it invites people in; pointed at an offer it sells that offer.
     // The preview and the placeholders follow the choice above them, so
     // what is on screen is what comes out of the printer.
     const chosenOffer = offers.find((option) => option.id === target) ?? null;
+    const description = detail ?? chosenOffer?.description ?? "";
 
     const width = PREVIEW_WIDTH[size];
 
@@ -76,7 +88,10 @@ export function PosterDesigner({
                         id="qr-target"
                         name="target"
                         value={target}
-                        onChange={(event) => setTarget(event.target.value)}
+                        onChange={(event) => {
+                            setTarget(event.target.value);
+                            setDetail(null);
+                        }}
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
                         <option value="business">Your business page</option>
@@ -145,6 +160,24 @@ export function PosterDesigner({
                     </p>
                 </div>
 
+                {chosenOffer && (
+                    <div className="space-y-2">
+                        <Label htmlFor="poster-description">Description</Label>
+                        <Textarea
+                            id="poster-description"
+                            name="posterDescription"
+                            rows={3}
+                            maxLength={140}
+                            value={description}
+                            onChange={(event) => setDetail(event.target.value)}
+                        />
+                        <p className="text-xs leading-5 text-[#17233B]/65">
+                            The line under the headline. It starts as the offer&rsquo;s own
+                            description — shorten it for a poster read from across the room.
+                        </p>
+                    </div>
+                )}
+
                 <input type="hidden" name="posterColour" value={colour} />
 
                 <SubmitButton
@@ -178,6 +211,7 @@ export function PosterDesigner({
                         colour={colour}
                         eyebrow={eyebrow}
                         headline={headline}
+                        detail={description}
                     />
                 </div>
 

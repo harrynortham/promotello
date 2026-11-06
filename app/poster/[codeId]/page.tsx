@@ -48,7 +48,8 @@ async function Poster({ params, searchParams }: PageProps) {
         .from("qr_codes")
         .select(
             `
-                id, code, label, offer_id, business_id, poster_colour, poster_eyebrow, poster_headline,
+                id, code, label, offer_id, business_id, poster_colour, poster_eyebrow,
+                poster_headline, poster_description,
                 businesses ( name, logo_url, category, business_locations ( region, city ) )
             `,
         )
@@ -71,14 +72,14 @@ async function Poster({ params, searchParams }: PageProps) {
     const offerQuery = qr.offer_id
         ? supabase
             .from("offers")
-            .select("title, discount")
+            .select("title, discount, description")
             .eq("id", qr.offer_id)
             .eq("business_id", qr.business_id)
             .eq("approval_status", "approved")
             .gte("expires_at", todayIso())
             .is("plan_paused_at", null)
             .limit(1)
-        : Promise.resolve({ data: [] as { title: string; discount: string }[] });
+        : Promise.resolve({ data: [] as { title: string; discount: string; description: string }[] });
 
     const [{ data: offers }, origin] = await Promise.all([offerQuery, requestOrigin()]);
     const offer = offers?.[0] ?? null;
@@ -140,6 +141,7 @@ async function Poster({ params, searchParams }: PageProps) {
                     colour={qr.poster_colour}
                     eyebrow={qr.poster_eyebrow}
                     headline={qr.poster_headline}
+                    detail={qr.poster_description}
                     className="shadow-2xl print:shadow-none"
                 />
             </div>
