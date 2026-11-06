@@ -18,7 +18,7 @@ import { PosterDesigner } from "./poster-designer";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; created?: string; size?: string }>;
+    searchParams: Promise<{ error?: string; created?: string }>;
 };
 
 type QrCode = {
@@ -65,8 +65,7 @@ function scanWindows() {
 async function QrContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, created, size }] = await Promise.all([params, searchParams]);
-    const posterSize = size === "a5" ? "a5" : "a4";
+    const [{ businessId }, { error, created }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
 
     const {
@@ -217,8 +216,11 @@ async function QrContent({ params, searchParams }: PageProps) {
                     </Alert>
                 )}
 
+                {/* overflow-visible: a card clips its contents by default,
+                    and a clipped parent is where a sticky child stops
+                    sticking. */}
                 {canManage && isLive && !atFreeLimit && (
-                    <Card id="create-qr" className="mt-8 scroll-mt-8 border-[#17233B]/10">
+                    <Card id="create-qr" className="mt-8 overflow-visible scroll-mt-8 border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle>Create a QR code</CardTitle>
                         </CardHeader>
@@ -231,7 +233,6 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 offers={offers ?? []}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
-                                size={posterSize}
                             />
                         </CardContent>
                     </Card>
@@ -293,7 +294,7 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                                                 <div className="mt-4 flex flex-wrap gap-2">
                                                     <Button
-                                                        render={<Link href={`/poster/${code.id}?size=${posterSize}`} target="_blank" />}
+                                                        render={<Link href={`/poster/${code.id}`} target="_blank" />}
                                                         nativeButton={false}
                                                         size="sm"
                                                     >

@@ -378,3 +378,30 @@ test("the designer previews what the chosen target will print", async ({ page })
     await expect(page.locator("#poster-headline")).toHaveAttribute("placeholder", offer!.discount);
     await expect(preview.getByRole("heading", { name: offer!.discount })).toBeVisible();
 });
+
+// The paper size is chosen on the print page, where the sheet is in
+// front of you; and the poster stays in view while the form is filled.
+test("the form has no paper size, and the preview follows you down", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.setViewportSize({ width: 1280, height: 760 });
+    await page.goto(`/business/${state.businessId}/qr`);
+    await expect(page.locator("#qr-label")).toBeVisible({ timeout: 15_000 });
+
+    await expect(page.locator("#poster-size")).toHaveCount(0);
+
+    const poster = page.locator("#create-qr article");
+    const start = (await poster.boundingBox())!.y;
+
+    await page.mouse.wheel(0, 240);
+    await page.waitForTimeout(350);
+
+    const label = page.locator("#qr-label");
+    const pinned = (await poster.boundingBox())!.y;
+
+    // The form has moved up; the poster has stopped under the header
+    // rather than going with it.
+    expect((await label.boundingBox())!.y, "the form scrolled").toBeLessThan(start);
+    expect(pinned, "the poster is still on screen").toBeLessThan(start);
+    expect(pinned, "and below the sticky header").toBeGreaterThan(90);
+});
