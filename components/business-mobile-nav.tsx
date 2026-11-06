@@ -19,6 +19,7 @@ import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { BusinessInitial } from "@/components/business-initial";
+import { BusinessPageLink } from "@/components/business-page-link";
 
 type Business = {
     id: string;
@@ -29,6 +30,7 @@ type Business = {
 type BusinessMobileNavProps = {
     businessId: string;
     businessName: string;
+    businessSlug: string;
     businessLogoUrl?: string | null;
     approvalStatus: string;
     canManage: boolean;
@@ -38,6 +40,7 @@ type BusinessMobileNavProps = {
 export function BusinessMobileNav({
     businessId,
     businessName,
+    businessSlug,
     businessLogoUrl,
     approvalStatus,
     canManage,
@@ -85,7 +88,12 @@ export function BusinessMobileNav({
                             </span>
                         )}
                         <div className="min-w-0">
-                            <SheetTitle className="truncate">{businessName}</SheetTitle>
+                            <div className="flex items-center gap-1.5">
+                                <SheetTitle className="truncate">{businessName}</SheetTitle>
+
+                                <BusinessPageLink business={{ name: businessName, slug: businessSlug }} />
+                            </div>
+
                             <BusinessStatusBadge
                                 status={approvalStatus}
                                 className="mt-1"

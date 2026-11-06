@@ -1,17 +1,15 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { FiExternalLink } from "react-icons/fi";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessMobileNav } from "@/components/business-mobile-nav";
+import { BusinessPageLink } from "@/components/business-page-link";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
 import { BusinessSwitcher } from "@/components/business-switcher";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
-import { businessPath } from "@/lib/slugs";
 import { createClient } from "@/utils/supabase/server";
 
 type BusinessLayoutProps = {
@@ -133,9 +131,11 @@ async function BusinessLayoutContent({
         <div className="min-h-screen bg-[#FFF8F0]">
             <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8 lg:flex-row lg:items-start">
                 <div className="flex items-center justify-between lg:hidden">
-                    <div>
-                        <p className="font-semibold text-[#17233B]">
-                            {currentBusiness.name}
+                    <div className="min-w-0">
+                        <p className="flex items-center gap-1.5 font-semibold text-[#17233B]">
+                            <span className="truncate">{currentBusiness.name}</span>
+
+                            <BusinessPageLink business={currentBusiness} />
                         </p>
 
                         <p className="text-sm text-[#17233B]/70">
@@ -146,6 +146,7 @@ async function BusinessLayoutContent({
                     <BusinessMobileNav
                         businessId={businessId}
                         businessName={currentBusiness.name}
+                        businessSlug={currentBusiness.slug}
                         businessLogoUrl={currentBusiness.logo_url}
                         approvalStatus={currentBusiness.approval_status}
                         canManage={canManage}
@@ -169,15 +170,7 @@ async function BusinessLayoutContent({
                         <h2 className="flex items-start gap-1.5 text-xl font-semibold text-[#17233B]">
                             <span className="min-w-0">{currentBusiness.name}</span>
 
-                            <Link
-                                href={businessPath(currentBusiness)}
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={`Open ${currentBusiness.name}'s page in a new tab`}
-                                className="mt-1 shrink-0 rounded text-[#17233B]/55 transition hover:text-[#FF593F] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
-                            >
-                                <FiExternalLink aria-hidden="true" className="size-4" />
-                            </Link>
+                            <BusinessPageLink business={currentBusiness} className="mt-1" />
                         </h2>
 
                         <BusinessStatusBadge
