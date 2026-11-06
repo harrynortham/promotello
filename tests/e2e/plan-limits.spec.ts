@@ -49,3 +49,22 @@ test("the database rejects a second live offer on the Free plan", async () => {
 
     expect(error?.code).toBe("P0004");
 });
+
+// The way to make another offer leads the grid rather than trailing it,
+// and there is one of it: the button that used to sit above the list
+// said the same thing with no reason attached.
+test("making another offer is the first thing in the list", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/business/${businessId}/offers`);
+    await expect(page.getByText("Add another offer")).toBeVisible({ timeout: 20_000 });
+
+    const first = await page.evaluate(() => {
+        const grid = document.querySelector("section .grid");
+        return (grid?.firstElementChild?.textContent ?? "").trim();
+    });
+    expect(first).toContain("Add another offer");
+
+    // One way in, inside the card, not a button above the grid as well.
+    await expect(page.getByRole("button", { name: "Create offer" })).toHaveCount(1);
+});

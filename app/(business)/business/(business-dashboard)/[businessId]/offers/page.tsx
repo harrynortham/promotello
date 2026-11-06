@@ -368,22 +368,63 @@ async function OffersContent({ params }: PageProps) {
                     </>
                 ) : (
                     <section className="mt-10">
-                        {canCreateOffer && (
-                            <div className="mb-5 flex justify-end">
-                                <Button
-                                    render={
-                                        <Link href={`/business/${businessId}/offers/new`} />
-                                    }
-                                    nativeButton={false}
-                                    variant="default"
-                                    size="lg"
-                                >
-                                    Create offer
-                                </Button>
+                        <div className="grid gap-5 xl:grid-cols-2">
+                        {canManageOffers && (
+                            <div className="flex h-full min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
+                                <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+                                    <FiPlus aria-hidden="true" className="size-5" />
+                                </span>
+
+                                {canCreateOffer ? (
+                                    <>
+                                        <h2 className="mt-4 text-lg font-semibold">
+                                            Add another offer
+                                        </h2>
+
+                                        <p className="mt-2 max-w-sm text-sm leading-6 text-[#17233B]/65">
+                                            Run as many as you like at once. A
+                                            second offer gives people another
+                                            reason to choose you.
+                                        </p>
+
+                                        <Button
+                                            render={
+                                                <Link href={`/business/${businessId}/offers/new`} />
+                                            }
+                                            nativeButton={false}
+                                            size="lg"
+                                            className="mt-5"
+                                        >
+                                            Create offer
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h2 className="mt-4 text-lg font-semibold">
+                                            Add another offer
+                                        </h2>
+
+                                        <p className="mt-2 max-w-sm text-sm leading-6 text-[#17233B]/65">
+                                            The Free plan covers {FREE_LIVE_OFFER_LIMIT}{" "}
+                                            offer at a time. Pro lets you run
+                                            several together, so you can test
+                                            which one brings people in.
+                                        </p>
+
+                                        <Button
+                                            render={
+                                                <Link href={`/business/${businessId}/billing`} />
+                                            }
+                                            nativeButton={false}
+                                            size="lg"
+                                            className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                        >
+                                            Upgrade to Pro
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         )}
-
-                        <div className="grid gap-5 xl:grid-cols-2">
                         {typedOffers.map((offer) => {
                             const remainingRedemptions =
                                 offer.max_redemptions === null
@@ -550,62 +591,6 @@ async function OffersContent({ params }: PageProps) {
                             );
                         })}
 
-                        {canManageOffers && (
-                            <div className="flex h-full min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
-                                <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
-                                    <FiPlus aria-hidden="true" className="size-5" />
-                                </span>
-
-                                {canCreateOffer ? (
-                                    <>
-                                        <h2 className="mt-4 text-lg font-semibold">
-                                            Add another offer
-                                        </h2>
-
-                                        <p className="mt-2 max-w-sm text-sm leading-6 text-[#17233B]/65">
-                                            Run as many as you like at once. A
-                                            second offer gives people another
-                                            reason to choose you.
-                                        </p>
-
-                                        <Button
-                                            render={
-                                                <Link href={`/business/${businessId}/offers/new`} />
-                                            }
-                                            nativeButton={false}
-                                            size="lg"
-                                            className="mt-5"
-                                        >
-                                            Create offer
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h2 className="mt-4 text-lg font-semibold">
-                                            Add another offer
-                                        </h2>
-
-                                        <p className="mt-2 max-w-sm text-sm leading-6 text-[#17233B]/65">
-                                            The Free plan covers {FREE_LIVE_OFFER_LIMIT}{" "}
-                                            offer at a time. Pro lets you run
-                                            several together, so you can test
-                                            which one brings people in.
-                                        </p>
-
-                                        <Button
-                                            render={
-                                                <Link href={`/business/${businessId}/billing`} />
-                                            }
-                                            nativeButton={false}
-                                            size="lg"
-                                            className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-                                        >
-                                            Upgrade to Pro
-                                        </Button>
-                                    </>
-                                )}
-                            </div>
-                        )}
                         </div>
                     </section>
                 )}
