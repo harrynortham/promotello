@@ -12,6 +12,8 @@ type LoyaltyCalloutProps = {
     businessName: string;
     program: {
         id: string;
+        // A business can run more than one card, so each says which it is.
+        name?: string;
         stamps_required: number;
         reward: string;
         card_colour?: string | null;
@@ -45,16 +47,19 @@ export function LoyaltyCallout({
 
     return (
         <section
-            id="loyalty"
-            aria-labelledby="loyalty-heading"
+            id={`loyalty-${program.id}`}
+            aria-labelledby={`loyalty-heading-${program.id}`}
             className="scroll-mt-28 overflow-hidden rounded-2xl bg-[#17233B] text-white"
         >
             <div className="flex flex-col gap-6 p-6 sm:p-8 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF8A73]">
-                        Loyalty card
+                        {program.name?.trim() || "Loyalty card"}
                     </p>
-                    <h2 id="loyalty-heading" className="mt-2 text-2xl font-semibold tracking-tight">
+                    <h2
+                        id={`loyalty-heading-${program.id}`}
+                        className="mt-2 text-2xl font-semibold tracking-tight"
+                    >
                         Collect {program.stamps_required} stamps, get {reward}
                     </h2>
                     <p className="mt-2 max-w-md text-sm text-white/70">

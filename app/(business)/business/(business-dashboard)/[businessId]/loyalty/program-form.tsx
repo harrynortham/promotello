@@ -22,6 +22,9 @@ import { saveLoyaltyProgram } from "./actions";
 
 export type Program = {
     id: string;
+    // What this card is called, so a business with several can tell them
+    // apart and a customer can choose between them.
+    name: string;
     stamps_required: number;
     reward: string;
     terms: string | null;
@@ -36,6 +39,8 @@ const SAMPLE_CODE = "4F8A2C91D0";
 export function ProgramFields({
     businessId,
     program,
+    name,
+    setName,
     stampsRequired,
     setStampsRequired,
     reward,
@@ -49,6 +54,8 @@ export function ProgramFields({
 }: {
     businessId: string;
     program: Program | null;
+    name: string;
+    setName: (value: string) => void;
     stampsRequired: number;
     setStampsRequired: (value: number) => void;
     reward: string;
@@ -64,6 +71,24 @@ export function ProgramFields({
         <>
             <input type="hidden" name="businessId" value={businessId} />
             {program && <input type="hidden" name="programId" value={program.id} />}
+
+            <div className="space-y-2">
+                <Label htmlFor="card-name">Card name</Label>
+                <Input
+                    id="card-name"
+                    name="name"
+                    required
+                    minLength={2}
+                    maxLength={60}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Coffee card"
+                />
+                <p className="text-xs leading-5 text-[#17233B]/65">
+                    Customers see this when they choose which of your cards to
+                    join, so name it after what it stamps.
+                </p>
+            </div>
 
             <div className="grid gap-5 sm:grid-cols-[160px_1fr]">
                 <div className="space-y-2">
@@ -145,6 +170,7 @@ export function LoyaltyCardBuilder({
     submitLabel: string;
     locked?: boolean;
 }) {
+    const [name, setName] = useState(program?.name ?? "");
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
@@ -155,6 +181,8 @@ export function LoyaltyCardBuilder({
         <ProgramFields
             businessId={businessId}
             program={program}
+            name={name}
+            setName={setName}
             stampsRequired={stampsRequired}
             setStampsRequired={setStampsRequired}
             reward={reward}
@@ -263,6 +291,7 @@ export function ProgramSettingsForm({
     program: Program | null;
     submitLabel: string;
 }) {
+    const [name, setName] = useState(program?.name ?? "");
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
@@ -274,6 +303,8 @@ export function ProgramSettingsForm({
             <ProgramFields
                 businessId={businessId}
                 program={program}
+                name={name}
+                setName={setName}
                 stampsRequired={stampsRequired}
                 setStampsRequired={setStampsRequired}
                 reward={reward}

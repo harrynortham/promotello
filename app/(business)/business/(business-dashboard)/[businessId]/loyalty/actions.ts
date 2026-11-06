@@ -11,6 +11,7 @@ const CARD_COLOUR_NAMES = ["navy", "coral", "forest", "plum", "ocean", "charcoal
 const STAMP_ICON_NAMES = ["check", "star", "heart", "coffee", "gift"];
 
 function readProgramFields(formData: FormData) {
+    const name = String(formData.get("name") ?? "").trim();
     const stampsRequired = Number(formData.get("stampsRequired"));
     const reward = String(formData.get("reward") ?? "").trim();
     const terms = String(formData.get("terms") ?? "").trim();
@@ -18,6 +19,8 @@ function readProgramFields(formData: FormData) {
     const stampIcon = String(formData.get("stampIcon") ?? "check");
 
     const valid =
+        name.length >= 2 &&
+        name.length <= 60 &&
         Number.isInteger(stampsRequired) &&
         stampsRequired >= 3 &&
         stampsRequired <= 20 &&
@@ -29,6 +32,7 @@ function readProgramFields(formData: FormData) {
 
     return valid
         ? {
+            name,
             stamps_required: stampsRequired,
             reward,
             terms: terms || null,
@@ -57,7 +61,9 @@ export async function saveLoyaltyProgram(formData: FormData) {
         : await supabase.from("loyalty_programs").insert({ ...fields, business_id: businessId });
 
     if (error) {
-        redirect(`${page}?error=${error.code === "P0004" ? "pro" : "save"}`);
+        // 23505: two cards on one business can't share a name.
+        const reason = error.code === "P0004" ? "pro" : error.code === "23505" ? "name" : "save";
+        redirect(`${page}?error=${reason}`);
     }
 
     revalidatePath(page);
