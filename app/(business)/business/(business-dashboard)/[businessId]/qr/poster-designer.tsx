@@ -38,7 +38,7 @@ export function PosterDesigner({
     logoUrl?: string | null;
     // The newest live offer, which the poster falls back to.
     offer: { discount: string; title: string } | null;
-    offers: { id: string; title: string }[];
+    offers: { id: string; title: string; approval_status?: string }[];
     previewSvg: string;
     previewLink: string;
     size: "a4" | "a5";
@@ -75,12 +75,27 @@ export function PosterDesigner({
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
                         <option value="business">Your business page</option>
-                        {offers.map((option) => (
-                            <option key={option.id} value={option.id}>
-                                Offer: {option.title}
-                            </option>
-                        ))}
+                        {offers.map((option) => {
+                            // An offer still being read can't be pointed at
+                            // yet, but leaving it out of the list looks like
+                            // we lost it. It is here, and it says why.
+                            const waiting = option.approval_status === "pending";
+
+                            return (
+                                <option key={option.id} value={option.id} disabled={waiting}>
+                                    Offer: {option.title}
+                                    {waiting ? " — waiting for approval" : ""}
+                                </option>
+                            );
+                        })}
                     </select>
+
+                    {offers.some((option) => option.approval_status === "pending") && (
+                        <p className="text-xs leading-5 text-muted-foreground">
+                            An offer can be pointed at once it is approved,
+                            usually the same day. We will email you.
+                        </p>
+                    )}
                 </div>
 
                 <PosterSizeSelect size={size} />

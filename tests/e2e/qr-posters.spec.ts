@@ -112,3 +112,111 @@ test("a business can download its code as an image, and nobody else can", async 
     }
 });
 
+
+// A code for a business that isn't approved yet points at nothing: the
+// scan function only matches approved businesses, so the poster in the
+// window leads to a dead link. The dashboard says so instead of
+// offering the form, and the database refuses the row either way.
+test("a business waiting for approval is told so, and can't make a code", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: waiting } = await admin
+        .from("businesses")
+        .insert({
+            name: `E2E Waiting Business ${Date.now()}`,
+            category: "Testing",
+            description: "Automated test business — safe to delete.",
+            approval_status: "pending",
+            created_by: state.businessUserId,
+        })
+        .select("id")
+        .single();
+
+    try {
+        await admin.from("business_members").insert({
+            business_id: waiting!.id,
+            user_id: state.businessUserId,
+            role: "owner",
+        });
+
+        await page.goto(`/business/${waiting!.id}/qr`);
+        await expect(page.getByText("Your page is still being checked")).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByRole("button", { name: "Create QR code" })).toHaveCount(0);
+        // Nor a button offering a form that isn't on the page.
+        await expect(page.getByRole("link", { name: "Create a QR code" })).toHaveCount(0);
+
+        // And the row is refused however it is written, with its own
+        // code so it isn't read as the Free plan's one-code limit.
+        const owner = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } },
+        );
+        await owner.auth.signInWithPassword({ email: state.businessEmail, password: state.testPassword });
+
+        const { error } = await owner.from("qr_codes").insert({
+            business_id: waiting!.id,
+            label: "Front window",
+            created_by: state.businessUserId,
+        });
+        expect(
+            error?.code,
+            "supabase/migrations/20261206100000_qr_needs_approved_business.sql isn't applied",
+        ).toBe("P0003");
+    } finally {
+        await admin.from("businesses").delete().eq("id", waiting!.id);
+    }
+});
+
+// An offer still being read can't be pointed at, but leaving it out of
+// the list looks like we lost it.
+test("an offer waiting for approval is listed, and can't be chosen", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const title = `E2E Pending QR Offer ${Date.now()}`;
+    const { data: offer } = await admin
+        .from("offers")
+        .insert({
+            business_id: state.businessId,
+            created_by: state.businessUserId,
+            slug: `e2e-pending-qr-${Date.now()}`,
+            title,
+            category: "Testing",
+            discount: "5% off",
+            description: "An offer still waiting for review.",
+            availability: "Available now",
+            expires_at: "2030-12-31",
+            terms: "For automated tests only.",
+            approval_status: "pending",
+            redemption_count: 0,
+        })
+        .select("id")
+        .single();
+
+    try {
+        await page.goto(`/business/${state.businessId}/qr`);
+        const option = page.locator(`#qr-target option[value="${offer!.id}"]`);
+        await expect(option).toHaveText(`Offer: ${title} — waiting for approval`, { timeout: 10_000 });
+        await expect(option).toBeDisabled();
+    } finally {
+        await admin.from("offers").delete().eq("id", offer!.id);
+    }
+});
+
+// A scan that resolves to nothing used to land on the homepage, which
+// tells someone standing in a shop with their phone out nothing at all.
+test("a code that points at nothing explains itself", async ({ page, request }) => {
+    const scan = await request.get("/q/zzzzzzzz", { maxRedirects: 0 });
+    expect(scan.status()).toBe(307);
+    expect(scan.headers()["location"]).toContain("/q/unavailable");
+
+    await page.goto("/q/unavailable");
+    await expect(page.getByRole("heading", { name: "That code isn't live yet." })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Browse local offers" })).toBeVisible();
+});

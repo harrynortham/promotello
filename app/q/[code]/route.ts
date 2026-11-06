@@ -10,7 +10,12 @@ export async function GET(
     { params }: { params: Promise<{ code: string }> },
 ) {
     const { code } = await params;
-    const destination = new URL("/", request.url);
+
+    // Not the homepage: someone who has just scanned a poster is standing
+    // in a shop, and "here is our front page" answers nothing. A code
+    // resolves to null while its business is waiting for approval, after
+    // it is suspended, or once the offer behind it has gone.
+    const destination = new URL("/q/unavailable", request.url);
 
     if (/^[a-z0-9]{6,16}$/i.test(code)) {
         const { data: path, error } = await createPublicClient().rpc("record_qr_scan", {
