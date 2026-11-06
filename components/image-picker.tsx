@@ -29,7 +29,8 @@ export function ImagePicker({
     onRemove,
 }: {
     id: string;
-    label: string;
+    // A node, so a required field can carry its asterisk.
+    label: React.ReactNode;
     hint: string;
     aspect?: number;
     // Zooming out below 1 leaves space around the image, for a wide logo.

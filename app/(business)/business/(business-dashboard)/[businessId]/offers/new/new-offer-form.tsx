@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 
-import { ImagePicker } from "@/components/image-picker";
+import { OfferImageField } from "@/components/offer-image-field";
 import { OfferCard } from "@/components/offer-card";
 import { OffersHowItWorks } from "../how-it-works";
 import {
@@ -32,6 +32,8 @@ type NewOfferFormProps = {
     businessId: string;
     businessName: string;
     businessLogoUrl: string | null;
+    // Offered as the offer's picture in one tap.
+    businessCoverUrl: string | null;
     defaultCategoryId: string | null;
     canSchedule: boolean;
 };
@@ -42,12 +44,16 @@ export default function NewOfferForm({
     businessId,
     businessName,
     businessLogoUrl,
+    businessCoverUrl,
     defaultCategoryId,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     // The cropped image, shown in the preview before it's uploaded.
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    // Their cover photo, taken as the offer's picture rather than
+    // uploading the same file twice.
+    const [usingCover, setUsingCover] = useState(false);
     const [categoryNames, setCategoryNames] = useState<Map<string, string>>(new Map());
     const router = useRouter();
     const pathname = usePathname();
@@ -62,6 +68,7 @@ export default function NewOfferForm({
         handleSubmit,
         reset,
         setError,
+        clearErrors,
         control,
         formState: { errors, isSubmitting },
     } = useForm<OfferInput, unknown, OfferValues>({
@@ -113,6 +120,13 @@ export default function NewOfferForm({
     async function onSubmit(values: OfferValues, event?: React.BaseSyntheticEvent) {
         setErrorMessage("");
 
+        if (!imageFile && !usingCover) {
+            setError("root.image", {
+                message: "Add a photo. Offers with one are what people stop at in the listings.",
+            });
+            return;
+        }
+
         const problem = imageProblem(imageFile);
         if (problem) {
             setError("root.image", { message: problem });
@@ -132,7 +146,7 @@ export default function NewOfferForm({
             return;
         }
 
-        let imageUrl: string | null = null;
+        let imageUrl: string | null = usingCover ? businessCoverUrl : null;
 
         if (imageFile) {
             const upload = await uploadOfferImage(supabase, businessId, imageFile);
@@ -303,18 +317,21 @@ export default function NewOfferForm({
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
-                            <ImagePicker
-                                id="image"
-                                label="Offer image"
-                                hint="Optional. A landscape JPG, PNG or WebP photo. You can zoom and reposition it next."
-                                aspect={16 / 10}
-                                maxSize={1600}
-                                convertToJpeg
+                            <OfferImageField
+                                coverImageUrl={businessCoverUrl}
+                                usingCover={usingCover}
                                 disabled={isSubmitting}
                                 error={errors.root?.image?.message}
                                 onChange={(file, previewUrl) => {
                                     setImageFile(file);
                                     setImagePreviewUrl(previewUrl);
+                                    if (file) setUsingCover(false);
+                                }}
+                                onUseCover={() => {
+                                    setUsingCover(true);
+                                    setImageFile(null);
+                                    setImagePreviewUrl(businessCoverUrl);
+                                    clearErrors("root.image");
                                 }}
                             />
 

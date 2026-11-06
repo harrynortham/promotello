@@ -111,9 +111,71 @@ test.describe("business forms", () => {
         expect(rows![6].opens_at).toMatch(/^09:00/);
     });
 
+    test("an offer can't have its last photo taken away", async ({ page }) => {
+        const { businessId, businessUserId } = state();
+        const supabase = admin();
+
+        const { data: picture } = await supabase
+            .from("offers")
+            .select("image_url")
+            .not("image_url", "is", null)
+            .limit(1)
+            .single();
+
+        const { data: offer } = await supabase
+            .from("offers")
+            .insert({
+                business_id: businessId,
+                created_by: businessUserId,
+                slug: crypto.randomUUID(),
+                title: "E2E Offer Keeping Its Photo",
+                category: "Testing",
+                discount: "10% off",
+                description: "An offer for the image requirement test.",
+                availability: "Available now",
+                expires_at: "2030-12-31",
+                terms: "For automated tests only.",
+                approval_status: "approved",
+                redemption_count: 0,
+                image_url: picture!.image_url,
+            })
+            .select("id")
+            .single();
+
+        try {
+            await page.goto(`/business/${businessId}/offers/${offer!.id}/edit`);
+            await expect(page.locator("#title")).toHaveValue("E2E Offer Keeping Its Photo");
+
+            // Everything else is valid, so the picture is the only
+            // thing in the way.
+            await page.getByRole("button", { name: "Remove" }).click();
+            await page.getByRole("button", { name: "Save changes" }).click();
+            await expect(page.getByText(/Add a photo/)).toBeVisible();
+
+            const { data: unchanged } = await supabase
+                .from("offers")
+                .select("image_url")
+                .eq("id", offer!.id)
+                .single();
+            expect(unchanged!.image_url).toBe(picture!.image_url);
+        } finally {
+            await supabase.from("offers").delete().eq("id", offer!.id);
+        }
+    });
+
     test("editing an offer validates and saves it", async ({ page }) => {
         const { businessId, businessUserId } = state();
         const supabase = admin();
+
+        // Offers carry a photo, and an edit can't take the last one
+        // away, so this one has a real picture like any other.
+        const { data: picture } = await supabase
+            .from("offers")
+            .select("image_url")
+            .not("image_url", "is", null)
+            .limit(1)
+            .single();
+
         const { data: offer } = await supabase
             .from("offers")
             .insert({
@@ -129,6 +191,7 @@ test.describe("business forms", () => {
                 terms: "For automated tests only.",
                 approval_status: "approved",
                 redemption_count: 0,
+                image_url: picture!.image_url,
             })
             .select("id")
             .single();

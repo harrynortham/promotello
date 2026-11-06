@@ -11,7 +11,7 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { ImagePicker } from "@/components/image-picker";
+import { OfferImageField } from "@/components/offer-image-field";
 import {
     OfferFields,
     imageProblem,
@@ -40,6 +40,8 @@ import { createClient } from "@/utils/supabase/client";
 type EditOfferFormProps = {
     businessId: string;
     offerId: string;
+    // Offered as the offer's picture in one tap.
+    businessCoverUrl: string | null;
     canSchedule: boolean;
 };
 
@@ -67,6 +69,7 @@ const schema = offerSchema({ allowPastExpiry: true });
 export default function EditOfferForm({
     businessId,
     offerId,
+    businessCoverUrl,
     canSchedule,
 }: EditOfferFormProps) {
     const router = useRouter();
@@ -74,6 +77,7 @@ export default function EditOfferForm({
     const [offer, setOffer] = useState<Offer | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [removeImage, setRemoveImage] = useState(false);
+    const [usingCover, setUsingCover] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -84,6 +88,7 @@ export default function EditOfferForm({
         handleSubmit,
         reset,
         setError,
+        clearErrors,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<OfferInput, unknown, OfferValues>({ resolver: zodResolver(schema) });
 
@@ -161,6 +166,15 @@ export default function EditOfferForm({
             return;
         }
 
+        // An offer keeps its picture: taking the last one away would put
+        // a flat tile back in the listings.
+        if (!imageFile && !usingCover && (removeImage || !offer.image_url)) {
+            setError("root.image", {
+                message: "Add a photo. Offers with one are what people stop at in the listings.",
+            });
+            return;
+        }
+
         const problem = imageProblem(imageFile);
         if (problem) {
             setError("root.image", { message: problem });
@@ -169,7 +183,11 @@ export default function EditOfferForm({
 
         const schedule = scheduleFromForm(new FormData(event?.target as HTMLFormElement));
         const supabase = createClient();
-        let imageUrl = removeImage ? null : offer.image_url;
+        let imageUrl = usingCover
+            ? businessCoverUrl
+            : removeImage
+                ? null
+                : offer.image_url;
 
         if (imageFile) {
             const upload = await uploadOfferImage(supabase, businessId, imageFile);
@@ -304,21 +322,29 @@ export default function EditOfferForm({
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
-                            <ImagePicker
-                                id="image"
-                                label="Offer image"
-                                hint="A landscape JPG, PNG or WebP photo. You can zoom and reposition it next."
-                                aspect={16 / 10}
-                                maxSize={1600}
-                                convertToJpeg
-                                imageUrl={offer.image_url}
+                            <OfferImageField
+                                coverImageUrl={businessCoverUrl}
+                                savedImageUrl={removeImage ? null : offer.image_url}
+                                usingCover={usingCover}
                                 disabled={isSaving || isDeleting}
                                 error={errors.root?.image?.message}
                                 onChange={(file) => {
                                     setImageFile(file);
-                                    if (file) setRemoveImage(false);
+                                    if (file) {
+                                        setRemoveImage(false);
+                                        setUsingCover(false);
+                                    }
                                 }}
-                                onRemove={() => setRemoveImage(true)}
+                                onUseCover={() => {
+                                    setUsingCover(true);
+                                    setImageFile(null);
+                                    setRemoveImage(false);
+                                    clearErrors("root.image");
+                                }}
+                                onRemove={() => {
+                                    setRemoveImage(true);
+                                    setUsingCover(false);
+                                }}
                             />
 
                             <Separator />
