@@ -213,8 +213,14 @@ export function PosterDesigner({
                     />
                 </div>
 
+                {/* The poster is the obvious thing here, so the code on
+                    its own needs saying: the download buttons sit beside
+                    each code further down the page, where nobody about to
+                    print a poster is looking. */}
                 <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
-                    Ready to print. Your logo fills in automatically.
+                    Ready to print, with your logo filled in. You also get
+                    the code on its own — as an image or a print-shop file
+                    — for a menu, a sticker or a leaflet.
                 </p>
             </div>
         </div>
