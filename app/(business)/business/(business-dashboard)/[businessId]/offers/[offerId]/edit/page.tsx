@@ -27,22 +27,12 @@ async function EditOfferContent({ params }: PageProps) {
     await connection();
 
     const { businessId, offerId } = await params;
-    const supabase = await createClient();
-
-    const [tier, { data: business }] = await Promise.all([
-        businessTier(supabase, businessId).catch(() => "free"),
-        supabase
-            .from("businesses")
-            .select("cover_image_url")
-            .eq("id", businessId)
-            .maybeSingle(),
-    ]);
+    const tier = await businessTier(await createClient(), businessId).catch(() => "free");
 
     return (
         <EditOfferForm
             businessId={businessId}
             offerId={offerId}
-            businessCoverUrl={business?.cover_image_url ?? null}
             canSchedule={tier === "growth"}
         />
     );
