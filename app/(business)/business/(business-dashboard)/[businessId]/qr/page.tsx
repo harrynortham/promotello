@@ -219,7 +219,10 @@ async function QrContent({ params, searchParams }: PageProps) {
                 {/* overflow-visible: a card clips its contents by default,
                     and a clipped parent is where a sticky child stops
                     sticking. */}
-                {canManage && isLive && !atFreeLimit && (
+                {/* The first code is made here, because there is nothing
+                    else on the page to look at. After that the page is the
+                    list, and the form has /qr/new to itself. */}
+                {canManage && isLive && !atFreeLimit && qrCodes.length === 0 && (
                     <Card id="create-qr" className="mt-8 overflow-visible scroll-mt-8 border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle>Create a QR code</CardTitle>
@@ -388,7 +391,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                             </p>
 
                                             <Button
-                                                render={<Link href="#create-qr" />}
+                                                render={<Link href={`/business/${businessId}/qr/new`} />}
                                                 nativeButton={false}
                                                 variant="outline"
                                                 size="lg"
