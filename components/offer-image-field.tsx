@@ -46,6 +46,9 @@ export function OfferImageField({
                 maxSize={1600}
                 convertToJpeg
                 imageUrl={usingCover ? coverImageUrl : savedImageUrl}
+                // Cropped in a dialog: in a form this long, people were
+                // choosing a photo and walking on without confirming it.
+                modal
                 disabled={disabled}
                 error={error}
                 onChange={onChange}
