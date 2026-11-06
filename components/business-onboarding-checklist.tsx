@@ -5,58 +5,52 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { checklistView, type ChecklistGroup } from "@/lib/onboarding-checklist";
 
-export type ChecklistItem = {
-    id: string;
-    label: string;
-    description: string;
-    completed: boolean;
-    href: string;
-    // What the button says while the step is still to do, e.g. "Add your logo".
-    action: string;
-    pro?: boolean;
-};
-
-export type ChecklistGroup = {
-    title: string;
-    description: string;
-    items: ChecklistItem[];
-    // Only required groups count towards setup progress.
-    required: boolean;
-};
+export type { ChecklistGroup, ChecklistItem } from "@/lib/onboarding-checklist";
 
 export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup[] }) {
-    const required = groups.filter((group) => group.required).flatMap((group) => group.items);
-    const completedCount = required.filter((item) => item.completed).length;
-    const progress = required.length ? Math.round((completedCount / required.length) * 100) : 100;
-    const nextStep = groups.flatMap((group) => group.items).find((item) => !item.completed);
-    const ready = completedCount === required.length;
+    const view = checklistView(groups);
+
+    // Finished: the card has nothing to say, and said it above the
+    // numbers that do.
+    if (view.done) {
+        return null;
+    }
+
+    const { ready, completedCount, requiredCount, progress } = view;
 
     return (
         <Card className="rounded-xl">
             <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <CardTitle>{ready ? "You're ready to go live" : "Get your business ready"}</CardTitle>
+                        <CardTitle>{ready ? "What's next" : "Get your business ready"}</CardTitle>
                         <CardDescription className="mt-2">
                             {ready
-                                ? "Your profile is complete. Now bring customers in with posters and a loyalty card."
+                                ? "Your profile is done. These are the things that bring people in."
                                 : "A complete profile with an offer gets far more visits. Here's what's left."}
                         </CardDescription>
                     </div>
 
-                    <Badge variant={ready ? "default" : "secondary"}>
-                        {completedCount} of {required.length} done
-                    </Badge>
+                    {!ready && (
+                        <Badge variant="secondary">
+                            {completedCount} of {requiredCount} done
+                        </Badge>
+                    )}
                 </div>
 
-                <div className="pt-4">
-                    <Progress value={progress} aria-label={`Setup ${progress}% complete`} />
-                </div>
+                {/* The bar measures setup. Once setup is finished there
+                    is nothing for it to measure. */}
+                {!ready && (
+                    <div className="pt-4">
+                        <Progress value={progress} aria-label={`Setup ${progress}% complete`} />
+                    </div>
+                )}
             </CardHeader>
 
             <CardContent className="space-y-8">
-                {groups.map((group) => (
+                {view.groups.map((group) => (
                     <section key={group.title}>
                         <div className="mb-3">
                             <h3 className="font-semibold text-[#17233B]">{group.title}</h3>
@@ -65,7 +59,7 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
 
                         <ul className="space-y-2.5">
                             {group.items.map((item) => {
-                                const isNext = item.id === nextStep?.id;
+                                const isNext = item.id === view.nextStepId;
 
                                 return (
                                     <li
