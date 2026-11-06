@@ -14,11 +14,11 @@ import {
     type CardColour,
 } from "@/lib/loyalty-design";
 import { createQrCode } from "./actions";
-import { PosterSizeSelect } from "./poster-size-select";
 
-// A4 is 794px wide at 96dpi; A5 is 70.5% of it, so the preview shrinks
-// with the real sheet.
-const PREVIEW_WIDTH = { a4: 256, a5: 181 };
+// A4 is 794px wide at 96dpi, and the preview is a quarter of that. The
+// paper size is chosen on the print page itself, where the sheet is in
+// front of you — asking twice only invited the two to disagree.
+const PREVIEW_WIDTH = 256;
 
 // The create form and the poster it will print, side by side, so the
 // colour and the words can be seen before the code exists.
@@ -30,7 +30,6 @@ export function PosterDesigner({
     offers,
     previewSvg,
     previewLink,
-    size,
 }: {
     businessId: string;
     businessName: string;
@@ -45,7 +44,6 @@ export function PosterDesigner({
     }[];
     previewSvg: string;
     previewLink: string;
-    size: "a4" | "a5";
 }) {
     const [colour, setColour] = useState<CardColour>(cardColourName(null));
     const [eyebrow, setEyebrow] = useState("");
@@ -63,7 +61,7 @@ export function PosterDesigner({
     const chosenOffer = offers.find((option) => option.id === target) ?? null;
     const description = detail ?? chosenOffer?.description ?? "";
 
-    const width = PREVIEW_WIDTH[size];
+    const width = PREVIEW_WIDTH;
 
     return (
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
@@ -117,8 +115,6 @@ export function PosterDesigner({
                         </p>
                     )}
                 </div>
-
-                <PosterSizeSelect size={size} />
 
                 <LoyaltyDesignPicker
                     colour={colour}
@@ -189,7 +185,9 @@ export function PosterDesigner({
                 </SubmitButton>
             </form>
 
-            <div className="w-full shrink-0 lg:w-64">
+            {/* top-24 clears the site header, which is sticky and 80px
+                tall, so the poster isn't half under it. */}
+            <div className="w-full shrink-0 lg:sticky lg:top-24 lg:w-64">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                     What gets printed
                 </p>
