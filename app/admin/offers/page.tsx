@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -44,9 +45,17 @@ type Offer = {
     | "rejected"
     | "suspended";
     businesses:
-    | { name: string }
-    | { name: string }[]
+    | Business
+    | Business[]
     | null;
+};
+
+// An offer can only be approved once its business is, so the queue has
+// to show where the business has got to.
+type Business = {
+    id: string;
+    name: string;
+    approval_status: string;
 };
 
 type ReviewAction = {
@@ -56,12 +65,12 @@ type ReviewAction = {
 
 const pageSize = 25;
 
-function getBusinessName(offer: Offer) {
-    if (Array.isArray(offer.businesses)) {
-        return offer.businesses[0]?.name ?? "Unknown business";
-    }
+function getBusiness(offer: Offer): Business | null {
+    return (Array.isArray(offer.businesses) ? offer.businesses[0] : offer.businesses) ?? null;
+}
 
-    return offer.businesses?.name ?? "Unknown business";
+function getBusinessName(offer: Offer) {
+    return getBusiness(offer)?.name ?? "Unknown business";
 }
 
 export default function AdminOffersPage() {
@@ -104,7 +113,9 @@ export default function AdminOffersPage() {
           image_url,
           approval_status,
           businesses (
-            name
+            id,
+            name,
+            approval_status
           )
         `,
                 { count: "exact" },
@@ -340,6 +351,30 @@ export default function AdminOffersPage() {
                                     </CardHeader>
 
                                     <CardContent>
+                                        {getBusiness(offer)?.approval_status !== "approved" && (
+                                            <Alert className="mb-5 border-amber-200 bg-amber-50">
+                                                <AlertTitle>
+                                                    Approve the business first
+                                                </AlertTitle>
+
+                                                <AlertDescription>
+                                                    {getBusinessName(offer)} is{" "}
+                                                    {getBusiness(offer)?.approval_status ?? "not approved"}.
+                                                    An offer stays invisible to customers until
+                                                    its business is live, so it is reviewed
+                                                    after the business, not before.{" "}
+                                                    {getBusiness(offer) && (
+                                                        <Link
+                                                            href={`/admin/businesses/${getBusiness(offer)!.id}`}
+                                                            className="font-medium text-[#FF593F]"
+                                                        >
+                                                            Open the business
+                                                        </Link>
+                                                    )}
+                                                </AlertDescription>
+                                            </Alert>
+                                        )}
+
                                         <p className="leading-7 text-[#17233B]/65">
                                             {offer.description}
                                         </p>
@@ -362,9 +397,16 @@ export default function AdminOffersPage() {
                                         <Separator className="my-6" />
 
                                         <div className="flex flex-col gap-3 sm:flex-row">
+                                            {/* Rejecting stays open whatever the
+                                                business's status: turning an offer
+                                                down shouldn't need the business
+                                                approved first. */}
                                             <Button
                                                 type="button"
-                                                disabled={activeOfferId === offer.id}
+                                                disabled={
+                                                    activeOfferId === offer.id ||
+                                                    getBusiness(offer)?.approval_status !== "approved"
+                                                }
                                                 onClick={() =>
                                                     setReviewAction({
                                                         offerId: offer.id,
