@@ -28,6 +28,7 @@ export async function createQrCode(formData: FormData) {
     const posterColour = String(formData.get("posterColour") ?? "navy");
     const posterEyebrow = String(formData.get("posterEyebrow") ?? "").trim();
     const posterHeadline = String(formData.get("posterHeadline") ?? "").trim();
+    const posterDescription = String(formData.get("posterDescription") ?? "").trim();
     const page = `/business/${businessId}/qr`;
 
     if (label.length < 2 || label.length > 60) {
@@ -37,7 +38,8 @@ export async function createQrCode(formData: FormData) {
     if (
         !POSTER_COLOURS.includes(posterColour) ||
         posterEyebrow.length > 40 ||
-        posterHeadline.length > 90
+        posterHeadline.length > 90 ||
+        posterDescription.length > 140
     ) {
         redirect(`${page}?error=create`);
     }
@@ -55,6 +57,9 @@ export async function createQrCode(formData: FormData) {
         // Empty means the poster works the words out from the offer.
         poster_eyebrow: posterEyebrow || null,
         poster_headline: posterHeadline || null,
+        // Only an offer poster has this line, and only the words the
+        // business kept or wrote are stored.
+        poster_description: target === "business" ? null : posterDescription || null,
         created_by: user.id,
     });
 

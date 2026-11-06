@@ -100,7 +100,7 @@ async function QrContent({ params, searchParams }: PageProps) {
             .order("created_at", { ascending: true }),
         supabase
             .from("offers")
-            .select("id, title, discount, approval_status")
+            .select("id, title, discount, description, approval_status")
             .eq("business_id", businessId)
             .in("approval_status", ["approved", "pending"])
             .gte("expires_at", today)

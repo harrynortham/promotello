@@ -19,6 +19,7 @@ export function QrPoster({
     colour,
     eyebrow,
     headline,
+    detail,
     className = "",
 }: {
     width: string;
@@ -28,8 +29,8 @@ export function QrPoster({
     businessName: string;
     place?: string | null;
     logoUrl?: string | null;
-    // The headline offer, when the business has one.
-    offer?: { discount: string; title: string } | null;
+    // The headline offer, when the poster points at one.
+    offer?: { discount: string; description?: string | null } | null;
     qrMarkup: string;
     link: string;
     // The business's chosen poster colour, falling back to navy.
@@ -37,6 +38,10 @@ export function QrPoster({
     // Words the business wrote; empty means work them out from the offer.
     eyebrow?: string | null;
     headline?: string | null;
+    // The line under the headline on an offer poster: what the offer is,
+    // in the business's own words. Empty falls back to the offer's
+    // description.
+    detail?: string | null;
     className?: string;
 }) {
     // A code that opens the business page lands on a list of offers, so
@@ -86,9 +91,12 @@ export function QrPoster({
                     {title}
                 </h1>
 
-                {offer && (
-                    <p className="mt-[0.5em] max-w-[24em] text-[#17233B]/75" style={{ fontSize: "1.45em", lineHeight: 1.3 }}>
-                        {offer.title}
+                {offer && (detail?.trim() || offer.description) && (
+                    <p
+                        className="mt-[0.5em] line-clamp-3 max-w-[24em] text-[#17233B]/75"
+                        style={{ fontSize: "1.45em", lineHeight: 1.3 }}
+                    >
+                        {detail?.trim() || offer.description}
                     </p>
                 )}
 

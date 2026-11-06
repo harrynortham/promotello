@@ -297,7 +297,7 @@ test("the poster carries the words of whatever the code opens", async ({ page })
 
     const { data: offer } = await admin
         .from("offers")
-        .select("id, title, discount")
+        .select("id, title, discount, description")
         .eq("business_id", state.businessId)
         .eq("approval_status", "approved")
         .gte("expires_at", new Date().toISOString().slice(0, 10))
@@ -330,10 +330,12 @@ test("the poster carries the words of whatever the code opens", async ({ page })
         await expect(page.getByText(/Every offer is free to claim/)).toBeVisible();
         await expect(page.getByText(/Claim it free on Promotello/)).toHaveCount(0);
 
-        // An offer: that offer's words, and the claim it carries.
+        // An offer: that offer's words, and the claim it carries. The
+        // line under the headline is what the offer is, not its title,
+        // which is usually the discount said a second time.
         await page.goto(`/poster/${toOffer!.id}?size=a4`);
         await expect(page.getByRole("heading", { name: offer!.discount })).toBeVisible();
-        await expect(page.getByText(offer!.title, { exact: true })).toBeVisible();
+        await expect(page.getByText(offer!.description, { exact: true })).toBeVisible();
         await expect(page.getByText(/Claim it free on Promotello/)).toBeVisible();
     } finally {
         await admin.from("qr_codes").delete().eq("id", toBusiness!.id);
@@ -377,4 +379,84 @@ test("the designer previews what the chosen target will print", async ({ page })
     await expect(page.locator("#poster-eyebrow")).toHaveAttribute("placeholder", "Exclusive offer");
     await expect(page.locator("#poster-headline")).toHaveAttribute("placeholder", offer!.discount);
     await expect(preview.getByRole("heading", { name: offer!.discount })).toBeVisible();
+});
+
+// The words under the headline are the business's to write: they start
+// as the offer's description, and the poster prints what was kept.
+test("an offer poster prints the description the business wrote", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: offer } = await admin
+        .from("offers")
+        .select("id, description, discount")
+        .eq("business_id", state.businessId)
+        .eq("approval_status", "approved")
+        .gte("expires_at", new Date().toISOString().slice(0, 10))
+        .is("plan_paused_at", null)
+        .limit(1)
+        .single();
+
+    const written = "Two scoops for the price of one, every afternoon.";
+
+    const { data: code, error } = await admin
+        .from("qr_codes")
+        .insert({
+            business_id: state.businessId,
+            label: "E2E Poster Words",
+            offer_id: offer!.id,
+            poster_description: written,
+        })
+        .select("id")
+        .single();
+
+    expect(
+        error,
+        "supabase/migrations/20261206120000_qr_poster_description.sql isn't applied",
+    ).toBeNull();
+
+    try {
+        await page.goto(`/poster/${code!.id}?size=a4`);
+        await expect(page.getByText(written, { exact: true })).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText(offer!.description, { exact: true })).toHaveCount(0);
+    } finally {
+        if (code) await admin.from("qr_codes").delete().eq("id", code.id);
+    }
+});
+
+// The field only belongs to an offer poster: a business-page poster has
+// no description to start from and no line to put one on.
+test("the description field appears only for an offer", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: offer } = await admin
+        .from("offers")
+        .select("id, description")
+        .eq("business_id", state.businessId)
+        .eq("approval_status", "approved")
+        .gte("expires_at", new Date().toISOString().slice(0, 10))
+        .is("plan_paused_at", null)
+        .limit(1)
+        .single();
+
+    await page.goto(`/business/${state.businessId}/qr`);
+    await expect(page.locator("#qr-target")).toHaveValue("business");
+    await expect(page.locator("#poster-description")).toHaveCount(0);
+
+    await page.selectOption("#qr-target", offer!.id);
+    await expect(page.locator("#poster-description")).toHaveValue(offer!.description);
+
+    // What is typed is what the preview prints.
+    const preview = page.locator("#create-qr article");
+    await page.locator("#poster-description").fill("Two scoops for one, every afternoon.");
+    await expect(preview.getByText("Two scoops for one, every afternoon.")).toBeVisible();
+
+    // Going back to the business page takes the field away again.
+    await page.selectOption("#qr-target", "business");
+    await expect(page.locator("#poster-description")).toHaveCount(0);
 });
