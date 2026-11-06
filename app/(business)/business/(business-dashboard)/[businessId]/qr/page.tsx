@@ -253,6 +253,56 @@ async function QrContent({ params, searchParams }: PageProps) {
                         </div>
                     ) : (
                         <div className="grid gap-5 md:grid-cols-2">
+                            {canManage && isLive && (
+                                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
+                                    <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
+                                        <FiPlus aria-hidden="true" className="size-5" />
+                                    </span>
+
+                                    {atFreeLimit ? (
+                                        <>
+                                            <h2 className="mt-4 text-lg font-semibold">
+                                                Add another QR code
+                                            </h2>
+
+                                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
+                                                The Free plan includes one code. Pro gives
+                                                you a code for every spot, so you can see
+                                                which placement brings people in.
+                                            </p>
+
+                                            <Button
+                                                render={<Link href={`/business/${businessId}/billing`} />}
+                                                nativeButton={false}
+                                                size="lg"
+                                                className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                            >
+                                                Upgrade to Pro
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h2 className="mt-4 text-lg font-semibold">
+                                                Add another QR code
+                                            </h2>
+
+                                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
+                                                One per spot: your window, the till, the
+                                                tables. Each one counts its own scans.
+                                            </p>
+
+                                            <Button
+                                                render={<Link href={`/business/${businessId}/qr/new`} />}
+                                                nativeButton={false}
+                                                size="lg"
+                                                className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                                            >
+                                                Create a QR code
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                             {qrCodes.map((code, index) => {
                                 const offer = Array.isArray(code.offers) ? code.offers[0] : code.offers;
                                 const scans = (recentScans ?? []).filter((scan) => scan.qr_code_id === code.id);
@@ -352,57 +402,6 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 );
                             })}
 
-                            {canManage && isLive && (
-                                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
-                                    <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
-                                        <FiPlus aria-hidden="true" className="size-5" />
-                                    </span>
-
-                                    {atFreeLimit ? (
-                                        <>
-                                            <h2 className="mt-4 text-lg font-semibold">
-                                                Add another QR code
-                                            </h2>
-
-                                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
-                                                The Free plan includes one code. Pro gives
-                                                you a code for every spot, so you can see
-                                                which placement brings people in.
-                                            </p>
-
-                                            <Button
-                                                render={<Link href={`/business/${businessId}/billing`} />}
-                                                nativeButton={false}
-                                                size="lg"
-                                                className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-                                            >
-                                                Upgrade to Pro
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <h2 className="mt-4 text-lg font-semibold">
-                                                Add another QR code
-                                            </h2>
-
-                                            <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
-                                                One per spot: your window, the till, the
-                                                tables. Each one counts its own scans.
-                                            </p>
-
-                                            <Button
-                                                render={<Link href={`/business/${businessId}/qr/new`} />}
-                                                nativeButton={false}
-                                                variant="outline"
-                                                size="lg"
-                                                className="mt-5"
-                                            >
-                                                Create a QR code
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     )}
                 </section>

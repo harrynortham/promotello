@@ -531,6 +531,13 @@ test("the form is on the page for a first code, and on /qr/new after that", asyn
         });
         await expect(page.locator("#qr-label")).toHaveCount(0);
 
+        // Making another leads the grid rather than trailing it.
+        const first = await page.evaluate(() => {
+            const grid = document.querySelector("section .grid");
+            return (grid?.firstElementChild?.textContent ?? "").trim();
+        });
+        expect(first).toContain("Add another QR code");
+
         await page.getByRole("button", { name: "Create a QR code" }).click();
         await page.waitForURL(`**/business/${state.businessId}/qr/new`);
         await expect(page.locator("#qr-label")).toBeVisible();
