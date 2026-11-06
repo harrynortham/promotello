@@ -191,9 +191,37 @@ export default function NewOfferForm({
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
-                                ? "Customers can see and claim it now, and your followers are getting an email about it. Share it from your offers list to reach even more people."
-                                : "Our team reads it before customers see it, usually the same day. We will email you as soon as it is approved, and your followers are told about it then."}
+                                ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                : "Our team reads every offer before customers see it, usually the same day."}
                         </p>
+
+                        {/* What to do next. Creating an offer used to end
+                            here, with nothing to say that a poster is how
+                            people in the street find it. */}
+                        <ol className="mt-7 space-y-3 text-left text-sm leading-6 text-[#17233B]/75">
+                            {(createdOffer === "live"
+                                ? [
+                                    "It's on your page and in the Promotello directory now.",
+                                    "Anyone following you is getting an email about it.",
+                                    "Put it on a QR poster for your window or your till, so people passing can scan it.",
+                                ]
+                                : [
+                                    "We read it, usually the same day.",
+                                    "You get an email the moment it's live, and your followers hear about it then.",
+                                    "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.",
+                                ]
+                            ).map((step, index) => (
+                                <li key={step} className="flex gap-3">
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FFF4E8] text-xs font-semibold text-[#FF593F]"
+                                    >
+                                        {index + 1}
+                                    </span>
+                                    {step}
+                                </li>
+                            ))}
+                        </ol>
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <Button
@@ -214,6 +242,18 @@ export default function NewOfferForm({
                                 Create another
                             </Button>
                         </div>
+
+                        <p className="mt-6 text-sm text-[#17233B]/65">
+                            <Link
+                                href={`/business/${businessId}/qr`}
+                                className="font-medium text-[#17233B] underline underline-offset-4 hover:text-[#FF593F]"
+                            >
+                                See your QR posters
+                            </Link>{" "}
+                            {createdOffer === "live"
+                                ? "to put this offer in the window."
+                                : "— this offer joins them once it's approved."}
+                        </p>
                     </CardContent>
                 </Card>
             </div>

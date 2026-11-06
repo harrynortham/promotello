@@ -27,6 +27,17 @@ test("business owner can create a new offer", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
         timeout: 10_000,
     });
+
+    // And what happens next, ending where the customers are: a poster in
+    // the window. Creating an offer used to stop at "pending approval".
+    const steps = page.getByRole("listitem");
+    await expect(steps.nth(0)).toContainText("We read it");
+    await expect(steps.nth(1)).toContainText("email");
+    await expect(steps.nth(2)).toContainText("QR poster");
+
+    const posters = page.getByRole("link", { name: "See your QR posters" });
+    await expect(posters).toHaveAttribute("href", `/business/${businessId}/qr`);
+    await expect(page.getByText("joins them once it's approved")).toBeVisible();
 });
 
 // An offer isn't always money off. The field has always been free text,
