@@ -32,6 +32,7 @@ export type LifecycleDue = {
         has_offer: boolean;
         has_loyalty: boolean;
         has_poster: boolean;
+        has_cover: boolean;
         trial_end: string | null;
         since: string;
         followers: number;
@@ -47,7 +48,7 @@ export type LifecycleDue = {
     approved: boolean;
 };
 
-type Step = { key: "offer" | "loyalty" | "poster"; label: string; why: string; path: string; action: string };
+type Step = { key: "offer" | "loyalty" | "poster" | "cover"; label: string; why: string; path: string; action: string };
 
 // Loyalty cards are part of Pro, so a free business is sent to start its
 // trial rather than to a page it can't use.
@@ -55,6 +56,13 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
     const base = `/business/${businessId}`;
 
     return [
+        {
+            key: "cover",
+            label: "Add a cover photo",
+            why: "The picture across the top of your page, and the one customers see on your card in the directory. It is the first thing they look at.",
+            path: `${base}/cover`,
+            action: "Add a cover photo",
+        },
         {
             key: "offer",
             label: "Post your first offer",
@@ -87,8 +95,17 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
     ];
 }
 
+// "Three things", not "3 things": these are sentences, and the list is
+// never long enough to need a numeral.
+function countInWords(count: number) {
+    const words = ["No things", "One thing", "Two things", "Three things", "Four things", "Five things"];
+
+    return words[count] ?? `${count} things`;
+}
+
 function missingSteps(due: LifecycleDue) {
     const done = {
+        cover: due.details.has_cover,
         offer: due.details.has_offer,
         loyalty: due.details.has_loyalty,
         poster: due.details.has_poster,
@@ -186,7 +203,7 @@ export function lifecycleEmail(
             eyebrow: "Welcome to Promotello",
             title: `${name} is on Promotello`,
             paragraphs: [
-                "Thanks for signing up. Three things get you ready to turn first-time visitors into regulars, and together they take about 15 minutes:",
+                `Thanks for signing up. ${countInWords(steps.length)} get you ready to turn first-time visitors into regulars, and together they take about 15 minutes:`,
                 ...steps.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
                 "Your dashboard shows what's left to do, with a checklist you can work through at your own pace.",
                 ...(due.approved
@@ -231,7 +248,7 @@ export function lifecycleEmail(
         if (!next) return null;
 
         const remaining = missing.map((step) => step.label.toLowerCase());
-        const counted = remaining.length === 1 ? "One thing" : remaining.length === 2 ? "Two things" : "Three things";
+        const counted = countInWords(remaining.length);
         const title = `${counted} left before customers can find ${name}`;
         const list = remaining.length === 2
             ? remaining.join(" and ")
