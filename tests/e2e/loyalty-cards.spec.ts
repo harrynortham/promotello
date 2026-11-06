@@ -80,9 +80,9 @@ test("a visitor who isn't signed in is offered the card, not a form", async ({ p
     await expect(loyalty.getByRole("link", { name: "Log in" })).toBeVisible();
 });
 
-// A business can run more than one card — coffee in the morning, lunch
-// at midday — and a customer chooses which to collect.
-test("a second loyalty card can be made, edited and joined", async ({ browser }) => {
+// One card each, for now. The table and the screens can carry more, so
+// this is a decision waiting to be taken rather than a wall.
+test("a business runs one loyalty card, and stamps from the same page", async ({ browser }) => {
     test.setTimeout(120_000);
 
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
@@ -90,68 +90,32 @@ test("a second loyalty card can be made, edited and joined", async ({ browser })
         auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const name = `E2E Lunch card ${Date.now()}`;
-    let madeId: string | undefined;
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+    await page.goto(`/business/${businessId}/loyalty`);
+    await expect(page.getByRole("heading", { name: "Your loyalty cards" })).toBeVisible({
+        timeout: 20_000,
+    });
 
-    try {
-        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+    // Where another card used to be offered, staff stamp one.
+    await expect(page.getByRole("heading", { name: "Stamp a card" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Find card" })).toBeVisible();
+    await expect(page.getByText("Add another card")).toHaveCount(0);
 
-        // The first card is built on the loyalty page; another has its own.
-        await page.goto(`/business/${businessId}/loyalty`);
-        await expect(page.getByRole("heading", { name: "Your loyalty cards" })).toBeVisible({
-            timeout: 20_000,
-        });
+    // And the page that would make one sends you back while one exists.
+    await page.goto(`/business/${businessId}/loyalty/new`);
+    await page.waitForURL(`**/business/${businessId}/loyalty`, { timeout: 20_000 });
 
-        // The way to another leads the grid, as it does for offers and posters.
-        const first = await page.evaluate(() => {
-            const grid = document.querySelector("section .grid");
-            return (grid?.firstElementChild?.textContent ?? "").trim();
-        });
-        expect(first).toContain("Add another card");
+    // The card itself is changed on its own page.
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .select("id, name")
+        .eq("business_id", businessId)
+        .limit(1)
+        .single();
 
-        await page.getByRole("button", { name: "Create a loyalty card" }).click();
-        await page.waitForURL(`**/business/${businessId}/loyalty/new`);
-
-        await page.locator("#card-name:visible").fill(name);
-        await page.locator("#stamps-required:visible").selectOption("6");
-        await page.locator("#reward:visible").fill("A free sandwich");
-        await page.getByRole("button", { name: "Start this card" }).click();
-        await page.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 25_000 });
-
-        const { data: made } = await admin
-            .from("loyalty_programs")
-            .select("id, name, stamps_required")
-            .eq("business_id", businessId)
-            .eq("name", name)
-            .single();
-        madeId = made!.id;
-        expect(made!.stamps_required).toBe(6);
-
-        // Both cards are in the grid, each with its own way in.
-        await expect(page.getByText(name)).toBeVisible();
-        await page.getByRole("link", { name: "Edit card" }).first().waitFor();
-
-        // Editing one card doesn't touch the other.
-        await page.goto(`/business/${businessId}/loyalty/${madeId}/edit`);
-        await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible({ timeout: 20_000 });
-        await page.locator("#reward:visible").fill("A free soup");
-        await page.getByRole("button", { name: "Save changes" }).click();
-        await page.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 25_000 });
-
-        const { data: saved } = await admin
-            .from("loyalty_programs")
-            .select("reward")
-            .eq("id", madeId)
-            .single();
-        expect(saved!.reward).toBe("A free soup");
-
-        // A customer sees every live card on the business page.
-        const visitor = await (await browser.newContext()).newPage();
-        await visitor.goto(`/businesses/${businessId}`);
-        await expect(visitor.locator('[id^="loyalty-"]').first()).toBeVisible({ timeout: 20_000 });
-        expect(await visitor.locator('section[id^="loyalty-"]').count()).toBeGreaterThan(1);
-        await expect(visitor.getByText(name)).toBeVisible();
-    } finally {
-        if (madeId) await admin.from("loyalty_programs").delete().eq("id", madeId);
-    }
+    await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+    await expect(page.getByRole("heading", { name: program!.name, level: 1 })).toBeVisible({
+        timeout: 20_000,
+    });
+    await expect(page.getByRole("button", { name: /Pause this card|Resume this card/ })).toBeVisible();
 });

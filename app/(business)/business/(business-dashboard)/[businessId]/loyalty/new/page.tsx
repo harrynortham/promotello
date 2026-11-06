@@ -34,6 +34,19 @@ async function NewLoyaltyCard({ params }: PageProps) {
         redirect(back);
     }
 
+    // A business runs one card for now. The table, the screens and this
+    // page can all carry more, so turning that on is a decision rather
+    // than a build — until then there is nothing to do here once a card
+    // exists, and the loyalty page is where it is changed.
+    const { count } = await editor.supabase
+        .from("loyalty_programs")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId);
+
+    if ((count ?? 0) > 0) {
+        redirect(back);
+    }
+
     return (
         <div className="text-[#17233B]">
             <Button render={<Link href={back} />} nativeButton={false} variant="ghost" size="sm">

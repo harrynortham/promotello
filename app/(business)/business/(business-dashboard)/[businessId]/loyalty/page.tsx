@@ -2,15 +2,17 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { FiPlus } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
+import { lookUpLoyaltyCard } from "./actions";
 import { LoyaltyHowItWorks } from "./how-it-works";
 import { LoyaltyCardBuilder } from "./program-form";
 
@@ -212,30 +214,39 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         <h2 className="text-xl font-semibold">Your loyalty cards</h2>
 
                         <div className="mt-4 grid gap-5 md:grid-cols-2">
-                            {canManage && (
-                                <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8 text-center">
-                                    <span className="flex size-12 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
-                                        <FiPlus aria-hidden="true" className="size-5" />
-                                    </span>
+                            {/* One card each for now. The database can hold
+                                more and the screens can show more, so the way
+                                to a second is a decision rather than a build.
+                                The slot is better spent on the thing staff do
+                                every day. */}
+                            <Card className="border-[#17233B]/10">
+                                <CardHeader>
+                                    <CardTitle>Stamp a card</CardTitle>
+                                </CardHeader>
 
-                                    <h3 className="mt-4 text-lg font-semibold">Add another card</h3>
-
-                                    <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
-                                        A second card for a different habit: coffee in the
-                                        morning, lunch at midday. Customers choose which
-                                        to collect.
+                                <CardContent>
+                                    <p className="text-sm leading-6 text-[#17233B]/65">
+                                        Scan the QR code on the customer&apos;s card with
+                                        your phone camera, or type the code shown under
+                                        it.
                                     </p>
 
-                                    <Button
-                                        render={<Link href={`/business/${businessId}/loyalty/new`} />}
-                                        nativeButton={false}
-                                        size="lg"
-                                        className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-                                    >
-                                        Create a loyalty card
-                                    </Button>
-                                </div>
-                            )}
+                                    <form action={lookUpLoyaltyCard} className="mt-5 flex gap-2">
+                                        <input type="hidden" name="businessId" value={businessId} />
+                                        <Input
+                                            name="code"
+                                            required
+                                            placeholder="e.g. 4F8A2C91D0"
+                                            aria-label="Card code"
+                                            className="font-mono uppercase"
+                                            autoComplete="off"
+                                        />
+                                        <SubmitButton size="lg" pendingLabel="Finding…">
+                                            Find card
+                                        </SubmitButton>
+                                    </form>
+                                </CardContent>
+                            </Card>
 
                             {cards.map((card) => {
                                 const holders = cardList.filter((holder) => holder.program_id === card.id);

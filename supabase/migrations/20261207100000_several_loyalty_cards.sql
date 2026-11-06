@@ -1,13 +1,13 @@
--- Several loyalty cards per business.
+-- Room for several loyalty cards per business.
 --
--- A business had exactly one: a unique index allowed a single active
--- programme per business. A coffee shop that wants a coffee card and a
--- lunch card could not have both.
+-- A unique index allowed a single active programme per business. That
+-- index goes, and cards get a name to be told apart by, so the table can
+-- hold more than one.
 --
--- Everything underneath was ready for this already — joining takes a
--- programme id, a customer's card belongs to a programme, and stamping
--- works from the card — so what changes is the index, a name to tell
--- cards apart by, and the screens.
+-- The dashboard still offers exactly one. Turning that on is a decision
+-- rather than a build: joining already takes a programme id, a
+-- customer's card belongs to a programme, stamping works from the card,
+-- and the business page lists every live card it finds.
 
 -- The name first: the index below is on it.
 alter table public.loyalty_programs
