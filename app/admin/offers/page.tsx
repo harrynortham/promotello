@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiExternalLink } from "react-icons/fi";
 
@@ -28,7 +28,11 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { notifyBusinessOfOfferReview, notifyFollowersOfApprovedOffer } from "./actions";
+import {
+    notifyBusinessOfOfferEditReview,
+    notifyBusinessOfOfferReview,
+    notifyFollowersOfApprovedOffer,
+} from "./actions";
 
 type Status = "pending" | "approved" | "rejected" | "suspended";
 
@@ -60,6 +64,22 @@ type ReviewAction = {
     offerId: string;
     decision: "approved" | "rejected";
 } | null;
+
+// A change to a live offer, waiting to be read. The offer beside it is
+// what customers are seeing meanwhile.
+type OfferEdit = {
+    id: string;
+    title: string;
+    description: string;
+    discount: string;
+    terms: string;
+    submitted_at: string;
+    offers:
+    | { id: string; title: string; description: string; discount: string; terms: string; slug: string; businesses: Business | Business[] | null }
+    | null;
+};
+
+type Tab = "pending" | "edits" | "all";
 
 const statusLabels: Record<Status, string> = {
     pending: "Waiting",
@@ -99,7 +119,9 @@ export default function AdminOffersPage() {
     const [offers, setOffers] = useState<Offer[]>([]);
     // Waiting is the queue, in the order they arrived. Everything else is
     // the catalogue, newest first, for looking an offer up.
-    const [tab, setTab] = useState<"pending" | "all">("pending");
+    const [tab, setTab] = useState<Tab>("pending");
+    const [edits, setEdits] = useState<OfferEdit[]>([]);
+    const [activeEditId, setActiveEditId] = useState("");
     const [status, setStatus] = useState<Status | "all">("all");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
@@ -112,12 +134,50 @@ export default function AdminOffersPage() {
     // description in the queue.
     const [reading, setReading] = useState<Offer | null>(null);
 
-    async function loadOffers(
+    const loadEdits = useCallback(async () => {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const { data, error } = await createClient()
+            .from("offer_edits")
+            .select(
+                `
+          id,
+          title,
+          description,
+          discount,
+          terms,
+          submitted_at,
+          offers (
+            id, title, description, discount, terms, slug,
+            businesses ( id, name, approval_status )
+          )
+        `,
+            )
+            .is("decided_at", null)
+            .order("submitted_at", { ascending: true });
+
+        if (error) {
+            setErrorMessage(error.message);
+        } else {
+            setEdits((data ?? []) as unknown as OfferEdit[]);
+            setTotalPages(1);
+        }
+
+        setIsLoading(false);
+    }, []);
+
+    const loadOffers = useCallback(async (
         requestedSearch = "",
         requestedPage = 1,
-        requestedTab: "pending" | "all",
-        requestedStatus: Status | "all",
-    ) {
+        requestedTab: Tab = "pending",
+        requestedStatus: Status | "all" = "all",
+    ) => {
+        if (requestedTab === "edits") {
+            await loadEdits();
+            return;
+        }
+
         setIsLoading(true);
         setErrorMessage("");
 
@@ -179,7 +239,7 @@ export default function AdminOffersPage() {
         }
 
         setIsLoading(false);
-    }
+    }, [loadEdits]);
 
     useEffect(() => {
         async function checkAccess() {
@@ -207,7 +267,30 @@ export default function AdminOffersPage() {
         }
 
         checkAccess();
-    }, [router]);
+    }, [router, loadOffers]);
+
+    async function reviewEdit(editId: string, decision: "approved" | "rejected") {
+        setActiveEditId(editId);
+        setErrorMessage("");
+
+        const { error } = await createClient().rpc("apply_offer_edit", {
+            edit_id: editId,
+            decision,
+        });
+
+        if (error) {
+            setErrorMessage(error.message);
+            setActiveEditId("");
+            return;
+        }
+
+        await notifyBusinessOfOfferEditReview(editId, decision).catch((notifyError) =>
+            console.error("Could not email the business", notifyError),
+        );
+
+        await loadEdits();
+        setActiveEditId("");
+    }
 
     async function reviewOffer(
         offerId: string,
@@ -257,12 +340,18 @@ export default function AdminOffersPage() {
                     <p className="mt-3 text-[#17233B]/65">
                         {tab === "pending"
                             ? "Offers waiting for review, oldest first."
-                            : "Every offer on Promotello, newest first."}
+                            : tab === "edits"
+                                ? "Changes to offers that are live now. The old wording stays on the site until you answer."
+                                : "Every offer on Promotello, newest first."}
                     </p>
                 </header>
 
                 <div className="mt-8 flex flex-wrap gap-2">
-                    {([["pending", "Waiting for review"], ["all", "All offers"]] as const).map(([key, label]) => (
+                    {([
+                        ["pending", "Waiting for review"],
+                        ["edits", "Changes to live offers"],
+                        ["all", "All offers"],
+                    ] as const).map(([key, label]) => (
                         <Button
                             key={key}
                             type="button"
@@ -278,6 +367,7 @@ export default function AdminOffersPage() {
                     ))}
                 </div>
 
+                {tab !== "edits" && (
                 <Card className="mt-4 border-[#17233B]/10">
                     <CardContent className="p-6">
                         <form
@@ -326,6 +416,7 @@ export default function AdminOffersPage() {
                         </form>
                     </CardContent>
                 </Card>
+                )}
 
                 {errorMessage && (
                     <Alert variant="destructive" className="mt-8">
@@ -334,7 +425,123 @@ export default function AdminOffersPage() {
                     </Alert>
                 )}
 
-                {isLoading ? (
+                {/* The changes queue: what the offer says now against what
+                    it would say, so the job is reading four fields rather
+                    than rereading a whole offer to find what moved. */}
+                {tab === "edits" && !isLoading && (
+                    edits.length === 0 ? (
+                        <Alert className="mt-10 border-[#17233B]/10 bg-white">
+                            <AlertTitle>No changes waiting</AlertTitle>
+
+                            <AlertDescription>
+                                Nothing has been rewritten since you last looked.
+                            </AlertDescription>
+                        </Alert>
+                    ) : (
+                        <section className="mt-10 space-y-4">
+                            {edits.map((edit) => {
+                                const live = edit.offers;
+                                const business = live
+                                    ? (Array.isArray(live.businesses) ? live.businesses[0] : live.businesses)
+                                    : null;
+
+                                const fields: [string, string, string][] = live
+                                    ? [
+                                        ["Headline", live.discount, edit.discount],
+                                        ["Title", live.title, edit.title],
+                                        ["Description", live.description, edit.description],
+                                        ["Terms", live.terms, edit.terms],
+                                    ]
+                                    : [];
+
+                                return (
+                                    <Card key={edit.id} className="border-[#17233B]/10 shadow-sm">
+                                        <CardHeader>
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-[#FF593F]">
+                                                        {business?.name ?? "Unknown business"}
+                                                    </p>
+
+                                                    <CardTitle className="mt-1 text-xl">
+                                                        {live?.title ?? "Offer"}
+                                                    </CardTitle>
+
+                                                    <p className="mt-2 text-sm text-[#17233B]/70">
+                                                        Sent {when(edit.submitted_at)} · still live with the old wording
+                                                    </p>
+                                                </div>
+
+                                                <Badge className="w-fit bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                                                    Live
+                                                </Badge>
+                                            </div>
+                                        </CardHeader>
+
+                                        <CardContent>
+                                            <dl className="space-y-4">
+                                                {fields.map(([label, before, after]) => (
+                                                    <div key={label}>
+                                                        <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                                                            {label}
+                                                        </dt>
+
+                                                        <dd className="mt-1 grid gap-2 sm:grid-cols-2">
+                                                            <p
+                                                                className={`rounded-lg px-3 py-2 text-sm ${before === after ? "bg-[#17233B]/[0.03] text-[#17233B]/55" : "bg-red-50 text-[#17233B]/75 line-through decoration-red-300"}`}
+                                                            >
+                                                                {before}
+                                                            </p>
+
+                                                            <p
+                                                                className={`rounded-lg px-3 py-2 text-sm ${before === after ? "bg-[#17233B]/[0.03] text-[#17233B]/55" : "bg-emerald-50 font-medium"}`}
+                                                            >
+                                                                {after}
+                                                            </p>
+                                                        </dd>
+                                                    </div>
+                                                ))}
+                                            </dl>
+
+                                            <Separator className="my-6" />
+
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                                                <Button
+                                                    type="button"
+                                                    disabled={activeEditId === edit.id}
+                                                    onClick={() => reviewEdit(edit.id, "approved")}
+                                                >
+                                                    {activeEditId === edit.id ? "Saving…" : "Approve the change"}
+                                                </Button>
+
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    disabled={activeEditId === edit.id}
+                                                    onClick={() => reviewEdit(edit.id, "rejected")}
+                                                >
+                                                    Keep the old wording
+                                                </Button>
+
+                                                {live && (
+                                                    <Button
+                                                        render={<Link href={`/admin/offers/${live.id}`} />}
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                    >
+                                                        Open
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </section>
+                    )
+                )}
+
+                {tab !== "edits" && (isLoading ? (
                     <div className="mt-10 space-y-4">
                         {[1, 2, 3].map((item) => (
                             <div key={item} className="rounded-xl border border-[#17233B]/10 bg-white p-6">
@@ -519,7 +726,7 @@ export default function AdminOffersPage() {
                             )}
                         </nav>
                     </>
-                )}
+                ))}
             </div>
 
             {/* The whole offer as the business submitted it, photo and all,

@@ -444,3 +444,109 @@ test("an edit only goes back for review when it changes what is promised", async
         await client.from("offers").delete().eq("id", offer!.id);
     }
 });
+
+// A change to a live offer waits in its own queue: the offer keeps
+// serving customers with the words we approved, and we read the
+// difference rather than the whole offer.
+test("a change to a live offer is reviewed without taking it down", async ({ browser }) => {
+    test.setTimeout(120_000);
+
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+    let offerId: string | undefined;
+
+    await client.from("platform_admins").insert({ user_id: state.businessUserId });
+
+    try {
+        const { data: picture } = await client
+            .from("offers")
+            .select("image_url")
+            .not("image_url", "is", null)
+            .limit(1)
+            .single();
+
+        const { data: category } = await client
+            .from("categories")
+            .select("id")
+            .not("parent_id", "is", null)
+            .eq("is_active", true)
+            .limit(1)
+            .single();
+
+        const slug = `e2e-liveedit-${Date.now()}`;
+        const { data: offer } = await client
+            .from("offers")
+            .insert({
+                business_id: state.businessId,
+                created_by: state.businessUserId,
+                slug,
+                title: "E2E Live Offer",
+                category_id: category!.id,
+                discount: "10% off",
+                description: "The wording customers see today.",
+                availability: "Available now",
+                expires_at: "2030-12-31",
+                terms: "For automated tests only.",
+                approval_status: "approved",
+                redemption_count: 0,
+                image_url: picture!.image_url,
+            })
+            .select("id, slug")
+            .single();
+        offerId = offer!.id;
+
+        // The business rewrites it.
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/${state.businessId}/offers/${offerId}/edit`);
+        await expect(page.locator("#title")).toHaveValue("E2E Live Offer", { timeout: 20_000 });
+
+        await page.locator("#discount").fill("25% off");
+        await page.locator("#description").fill("The wording that is waiting to be read.");
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await page.waitForURL(`**/business/${state.businessId}/offers`, { timeout: 25_000 });
+
+        // The offer never left the site, and still says what it said.
+        const { data: live } = await client
+            .from("offers")
+            .select("approval_status, discount, description")
+            .eq("id", offerId)
+            .single();
+        expect(live!.approval_status, "the offer stayed live").toBe("approved");
+        expect(live!.discount, "customers still see the old headline").toBe("10% off");
+
+        const anon = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+            { auth: { persistSession: false } },
+        );
+        const { data: visible } = await anon.from("offers").select("discount").eq("id", offerId).single();
+        expect(visible!.discount, "and can still read it").toBe("10% off");
+
+        // The business is told where its words are.
+        await expect(page.getByText("New wording waiting").first()).toBeVisible({ timeout: 15_000 });
+
+        // We see the difference and answer it.
+        await page.goto("/admin/offers");
+        await page.getByRole("button", { name: "Changes to live offers" }).click();
+
+        const card = page.locator('section [data-slot="card"]', { hasText: "E2E Live Offer" });
+        await expect(card).toBeVisible({ timeout: 15_000 });
+        await expect(card.getByText("10% off", { exact: true })).toBeVisible();
+        await expect(card.getByText("25% off", { exact: true })).toBeVisible();
+
+        await card.getByRole("button", { name: "Approve the change" }).click();
+        await expect(page.getByText("No changes waiting")).toBeVisible({ timeout: 20_000 });
+
+        const { data: after } = await client
+            .from("offers")
+            .select("approval_status, discount, description")
+            .eq("id", offerId)
+            .single();
+        expect(after!.discount, "the new words are on the offer").toBe("25% off");
+        expect(after!.description).toBe("The wording that is waiting to be read.");
+        expect(after!.approval_status, "and it never stopped being live").toBe("approved");
+    } finally {
+        if (offerId) await client.from("offers").delete().eq("id", offerId);
+        await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
+    }
+});

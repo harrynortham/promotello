@@ -1,15 +1,18 @@
-# Reviewing an edit without taking the offer down: a scope
+# Reviewing an edit without taking the offer down
+
+**Built.** This was the scope; it now describes what is there.
 
 Every offer is read by a person before customers see it, and that stays.
-The trouble is what happens to an offer that is **already live** when its
-business edits it: it goes back to `pending`, and pending means invisible.
+The trouble was what happened to an offer that is **already live** when
+its business edited it: it went back to `pending`, and pending means
+invisible.
 
 `20261206130000_review_what_changed.sql` narrowed what sends an offer back
-— a new photograph or availability line no longer does — which removes
-most of the pain. This is the rest of it: reviewing the **change** while
-the published version stays up. Nothing here is built.
+— a new photograph or availability line no longer does — which removed
+most of the pain. `20261206140000_offer_edits.sql` is the rest of it:
+reviewing the **change** while the published version stays up.
 
-## What happens today
+## What used to happen
 
 A business with a live offer changes its wording at 9am:
 
@@ -31,7 +34,7 @@ The business cannot tell any of this from the dashboard. The offer says
 "Pending approval", which reads like "nearly there", not "your poster
 stopped working".
 
-## What we want instead
+## What happens now
 
 The published offer keeps serving customers. The edit waits in a queue of
 its own, we read the difference, and approving it swaps the words over in
@@ -60,15 +63,17 @@ create table offer_edits (
 ```
 
 Only the four fields that `require_review_of_edited_offer` still guards.
+That trigger stayed in place as a backstop: the dashboard never writes
+those fields on a live offer, so it should never fire, but anything that
+writes to an offer directly still meets the old rule.
 Everything else — photo, availability, expiry, claim limit, schedule —
 keeps saving straight to the offer, as it does now.
 
 Writing it:
 
 - The edit form writes to `offer_edits` instead of `offers` when the offer
-  is approved **and** one of the four fields changed. The trigger that
-  flips the status to pending comes out; `offers.approval_status` only
-  ever changes through `review_offer`.
+  is approved **and** one of the four fields changed. Everything else in
+  the same save goes straight onto the offer.
 - `apply_offer_edit(edit_id, decision)`, SECURITY DEFINER, admin only:
   copies the four fields onto the offer, stamps `decided_at`, and leaves
   `approval_status` alone. The offer never stops being approved.
@@ -101,7 +106,7 @@ Reading it:
 - It is honest. Today the business is told their offer is "pending" when
   what is actually pending is a sentence they changed.
 
-## The decision worth making first
+## The decision still worth making
 
 **Does an edit need reviewing at all, once the offer has been approved
 once?** The four fields are exactly where a business could rewrite "20%
@@ -109,14 +114,9 @@ off a coffee" into "free iPad", so the check has a point. But the same
 business can already write anything it likes in a *new* offer and have it
 read within the day, so the gap an edit opens is narrow.
 
-If the answer is no, this scope collapses to deleting the trigger and
-nothing else — an hour's work. If the answer is yes, it is the table
-above, a day or so. Worth answering before building either.
-
-## Effort
-
-Roughly a day: half of it the table, the function and the form, half the
-admin diff view. No new dependencies.
+Nothing above depends on the answer being yes. If it turns out to be no,
+`submit_offer_edit` becomes an immediate write and the queue empties — the
+offer never leaves the site either way, which was the part that mattered.
 
 ## What I would not do
 

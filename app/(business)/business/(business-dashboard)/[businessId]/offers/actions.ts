@@ -1,6 +1,6 @@
 "use server";
 
-import { alertNewOffer } from "@/lib/business-review-emails";
+import { alertNewOffer, alertOfferEdit } from "@/lib/business-review-emails";
 import { createClient } from "@/utils/supabase/server";
 
 // Tells us an offer is waiting. Called when one is created, and when an
@@ -26,5 +26,28 @@ export async function offerWaitingForReview(offerId: string) {
     if (!canManage) return { alerted: false };
 
     const { sent } = await alertNewOffer(offerId, user.email);
+    return { alerted: sent > 0 };
+}
+
+// A change to a live offer is waiting. The offer itself is untouched, so
+// nothing else would say so.
+export async function offerEditWaitingForReview(offerId: string) {
+    const supabase = await createClient();
+
+    const [{ data: { user } }, { data: offer }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from("offers").select("business_id").eq("id", offerId).maybeSingle(),
+    ]);
+
+    if (!user?.email || !offer) return { alerted: false };
+
+    const { data: canManage } = await supabase.rpc("is_business_member", {
+        requested_business_id: offer.business_id,
+        minimum_role: "admin",
+    });
+
+    if (!canManage) return { alerted: false };
+
+    const { sent } = await alertOfferEdit(offerId, user.email);
     return { alerted: sent > 0 };
 }

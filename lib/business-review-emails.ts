@@ -145,6 +145,113 @@ export async function alertNewOffer(offerId: string, submitter: string) {
     ]);
 }
 
+export function offerEditAlertEmail(
+    edit: { business: string; offer: string; was: string; now: string },
+    submitter: string,
+): Email {
+    const { html, text } = brandedEmail({
+        eyebrow: "Change waiting",
+        title: `${edit.business} rewrote “${edit.offer}”`,
+        paragraphs: [
+            `Was: ${edit.was}`,
+            `Now: ${edit.now}`,
+            `The offer is still live with the old words until this is answered. From: ${submitter}`,
+        ],
+        action: { label: "Read the change", url: absoluteUrl("/admin/offers") },
+        footer: "Sent to the Promotello inbox for every change waiting for review.",
+    });
+
+    return { to: contactInbox, subject: `Offer change: ${edit.business} — ${edit.offer}`, html, text };
+}
+
+// A change to a live offer waits in its own queue, so the offer stays up
+// while we read it. Nothing else would tell us it is there.
+export async function alertOfferEdit(offerId: string, submitter: string) {
+    if (!isDeliverable(submitter)) return { sent: 0 };
+
+    const admin = createAdminClient();
+
+    const { data } = await admin
+        .from("offer_edits")
+        .select("title, discount, offers ( title, discount, businesses ( name ) )")
+        .eq("offer_id", offerId)
+        .is("decided_at", null)
+        .maybeSingle();
+
+    const offer = Array.isArray(data?.offers) ? data.offers[0] : data?.offers;
+    const business = Array.isArray(offer?.businesses) ? offer.businesses[0] : offer?.businesses;
+
+    if (!data || !offer || !business) return { sent: 0 };
+
+    return sendEmails([
+        offerEditAlertEmail(
+            {
+                business: business.name,
+                offer: offer.title,
+                was: `${offer.discount} — ${offer.title}`,
+                now: `${data.discount} — ${data.title}`,
+            },
+            submitter,
+        ),
+    ]);
+}
+
+export function offerEditReviewedEmail(
+    offer: { title: string; slug: string; business: string },
+    decision: ReviewDecision,
+    to: string,
+): Email {
+    if (decision === "approved") {
+        const { html, text } = brandedEmail({
+            eyebrow: "Change live",
+            title: `Your changes to “${offer.title}” are live`,
+            paragraphs: [
+                "We've read the new wording and it's on your offer now. It never came off the site while we looked, so anything printed with its QR code kept working.",
+            ],
+            action: { label: "See the offer", url: absoluteUrl(`/offers/${offer.slug}`) },
+            footer: "You're getting this because you run a business on Promotello.",
+        });
+
+        return { to, subject: `Your changes to ${offer.title} are live`, html, text };
+    }
+
+    const { html, text } = brandedEmail({
+        eyebrow: "Change not approved",
+        title: `We couldn't approve the new wording for “${offer.title}”`,
+        paragraphs: [
+            `${offer.title} is still live with the wording we approved before, so nothing has stopped working.`,
+            "Reply to this email and we'll tell you what needs changing.",
+        ],
+        action: { label: "Edit the offer", url: absoluteUrl(`/offers/${offer.slug}`) },
+        footer: "You're getting this because you run a business on Promotello.",
+    });
+
+    return { to, subject: `A change to ${offer.title} needs another look`, html, text };
+}
+
+export async function emailOfferEditReviewed(editId: string, decision: ReviewDecision) {
+    const admin = createAdminClient();
+
+    const { data } = await admin
+        .from("offer_edits")
+        .select("business_id, offers ( title, slug, businesses ( name ) )")
+        .eq("id", editId)
+        .maybeSingle();
+
+    const offer = Array.isArray(data?.offers) ? data.offers[0] : data?.offers;
+    const business = Array.isArray(offer?.businesses) ? offer.businesses[0] : offer?.businesses;
+
+    if (!data || !offer || !business) return { sent: 0 };
+
+    const emails = await managerEmails(data.business_id);
+
+    return sendEmails(
+        emails.map((to) =>
+            offerEditReviewedEmail({ title: offer.title, slug: offer.slug, business: business.name }, decision, to),
+        ),
+    );
+}
+
 async function managerEmails(businessId: string) {
     const { data } = await createAdminClient().rpc("business_manager_emails", { requested_business_id: businessId });
     return (data ?? []) as string[];

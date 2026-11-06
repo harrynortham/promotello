@@ -206,5 +206,5 @@ Smaller gaps:
 
 - Business profiles: photo gallery and social links
 - Offer types beyond a discount — scoped in [docs/OFFER-TYPES.md](docs/OFFER-TYPES.md)
-- Reviewing an edit without taking the live offer down — scoped in [docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)
+- Reviewing an edit without taking the live offer down — built, described in [docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)
 - Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate
