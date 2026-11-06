@@ -139,3 +139,33 @@ test("the menu's close button lines up with the logo", async ({ page }) => {
     await page.getByRole("button", { name: "Close menu" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
 });
+
+// The business marketing header carries the same drawn icons the
+// customer one does, on the desktop row and inside the sheet.
+test("the business header links carry their icons too", async ({ page }) => {
+    const labels = ["How it works", "Features", "Pricing", "Demo", "Blog"];
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/business");
+
+    const header = page.locator("header").filter({ has: page.getByRole("link", { name: "Pricing" }) }).first();
+
+    for (const label of labels) {
+        const link = header.getByRole("link", { name: label });
+        await expect(link.locator('svg[viewBox="0 0 32 32"]'), label).toHaveCount(1);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/business");
+    await page.getByRole("button", { name: /menu/i }).first().click();
+
+    const sheet = page.getByRole("dialog");
+    await expect(sheet).toBeVisible();
+
+    for (const label of labels) {
+        await expect(
+            sheet.getByRole("link", { name: label }).locator('svg[viewBox="0 0 32 32"]'),
+            label,
+        ).toHaveCount(1);
+    }
+});
