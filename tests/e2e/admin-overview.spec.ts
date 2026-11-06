@@ -550,3 +550,26 @@ test("a change to a live offer is reviewed without taking it down", async ({ bro
         await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
     }
 });
+
+// The roadmap's metric table has eight rows; the overview should answer
+// the three the README asks about by name.
+test("the overview answers weekly active, trial to paid and repeat visits", async ({ browser }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+
+    await client.from("platform_admins").insert({ user_id: state.businessUserId });
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto("/admin");
+
+        for (const label of ["Weekly active businesses", "Trial to paid", "Repeat visit rate"]) {
+            const metric = page.getByRole("group", { name: label });
+            await expect(metric, label).toBeVisible({ timeout: 20_000 });
+            // Each carries the roadmap's target beside the number.
+            await expect(metric.getByText(/target/i), label).toBeVisible();
+        }
+    } finally {
+        await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
+    }
+});

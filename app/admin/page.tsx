@@ -31,6 +31,9 @@ type PlatformMetrics = {
         past_due: number;
         paying_price_ids: (string | null)[];
         canceled: number;
+        // Trials that have run their course, and how many went on to pay.
+        trials_finished?: number;
+        trials_converted?: number;
     };
     weekly_active: { paid_active: number; paid_total: number; all_active: number };
     customers: {
@@ -60,7 +63,7 @@ const monthlyValue: Record<PlanKey, number> = {
 };
 
 // Targets from the roadmap (end of Phase 2).
-const targets = { weeklyActive: 70, repeatRate: 35, crossVisits: 15, churn: 5 };
+const targets = { weeklyActive: 70, repeatRate: 35, crossVisits: 15, churn: 5, trialToPaid: 40 };
 
 const pounds = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 });
 
@@ -254,6 +257,19 @@ async function OverviewContent() {
                         {subscriptions.past_due > 0 ? `${subscriptions.past_due} past due` : "None past due"}
                     </Stat>
                     <Stat label="On free trial" value={subscriptions.trialing} />
+                    {/* The number the whole free trial is a bet on. It
+                        only means something once a trial has finished,
+                        so it reads as – until one has. */}
+                    <RateTarget
+                        label="Trial to paid"
+                        rate={percent(subscriptions.trials_converted ?? 0, subscriptions.trials_finished ?? 0)}
+                        target={targets.trialToPaid}
+                        detail={
+                            (subscriptions.trials_finished ?? 0) === 0
+                                ? "No trial has finished yet"
+                                : `${subscriptions.trials_converted ?? 0} of ${subscriptions.trials_finished} finished trials went on to pay`
+                        }
+                    />
                     <Stat label="Cancelled" value={subscriptions.canceled}>
                         {churn === null ? "Last 30 days" : `${churn}% churn · target under ${targets.churn}%`}
                     </Stat>
