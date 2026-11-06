@@ -224,7 +224,7 @@ function Posters({ posterQr }: { posterQr: string }) {
                         fontSize={16 * (256 / 794)}
                         businessName={business}
                         place="Front window"
-                        offer={{ discount: "Free pastry", title: "Free pastry with any coffee before 10am" }}
+                        offer={{ discount: "Free pastry", description: "A free pastry with any coffee, every morning before 10am." }}
                         qrMarkup={posterQr}
                         link="promotello.com/businesses/harbour-grind"
                         colour="coral"
