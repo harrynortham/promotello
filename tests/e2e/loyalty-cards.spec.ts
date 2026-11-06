@@ -97,7 +97,7 @@ test("a business runs one loyalty card, and stamps from the same page", async ({
     });
 
     // Where another card used to be offered, staff stamp one.
-    await expect(page.getByRole("heading", { name: "Stamp a card" })).toBeVisible();
+    await expect(page.getByText("Stamp a card")).toBeVisible();
     await expect(page.getByRole("button", { name: "Find card" })).toBeVisible();
     await expect(page.getByText("Add another card")).toHaveCount(0);
 

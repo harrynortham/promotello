@@ -107,19 +107,23 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
         businessHasPro(supabase, businessId),
     ]);
 
-    const cards = (programs ?? []) as Program[];
-    // The first live card still leads the page: it is what the stamp box
-    // and the share panel act on, and most businesses will only have one.
-    const program = cards.find((card) => card.is_active) ?? cards[0] ?? null;
+    const allCards = (programs ?? []) as Program[];
+    // A business runs one card. The live one is it; if none is live, the
+    // newest. Anything else is a card from before, kept but not shown
+    // beside the current one as though they were a pair.
+    const program =
+        allCards.find((card) => card.is_active) ?? allCards[allCards.length - 1] ?? null;
+    const cards = program ? [program] : [];
+    const earlier = allCards.filter((card) => card.id !== program?.id);
 
     let stats = { members: 0, stampsThisWeek: 0, rewards: 0 };
     let cardList: LoyaltyCardRow[] = [];
 
-    if (cards.length > 0) {
+    if (allCards.length > 0) {
         const { data: holders } = await supabase
             .from("loyalty_cards")
             .select("id, program_id, card_code, stamps, rewards_redeemed, created_at, last_stamped_at")
-            .in("program_id", cards.map((card) => card.id))
+            .in("program_id", allCards.map((card) => card.id))
             .order("created_at", { ascending: false });
 
         cardList = (holders ?? []) as LoyaltyCardRow[];
@@ -292,6 +296,24 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                 );
                             })}
                         </div>
+
+                        {earlier.length > 0 && canManage && (
+                            <p className="mt-4 text-sm text-[#17233B]/65">
+                                Cards from before:{" "}
+                                {earlier.map((card, index) => (
+                                    <span key={card.id}>
+                                        {index > 0 && ", "}
+                                        <Link
+                                            href={`/business/${businessId}/loyalty/${card.id}/edit`}
+                                            className="font-medium text-[#FF593F] underline-offset-4 hover:underline"
+                                        >
+                                            {card.name}
+                                        </Link>{" "}
+                                        ({card.is_active ? "live" : "paused"})
+                                    </span>
+                                ))}
+                            </p>
+                        )}
                     </section>
                 )}
 
