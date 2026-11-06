@@ -220,3 +220,66 @@ test("a code that points at nothing explains itself", async ({ page, request }) 
     await expect(page.getByRole("heading", { name: "That code isn't live yet." })).toBeVisible();
     await expect(page.getByRole("button", { name: "Browse local offers" })).toBeVisible();
 });
+
+// Printing is what this page is for, and a print dialog is nothing like
+// a screen: it drops backgrounds unless asked not to, and it paginates.
+// Chromium's print path is the same one behind "Save as PDF" on a Mac.
+test("the poster prints as one page at the size that was picked", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: code } = await admin
+        .from("qr_codes")
+        .insert({ business_id: state.businessId, label: "E2E Print" })
+        .select("id")
+        .single();
+
+    try {
+        // A4 is 595x842pt, A5 is 420x595pt.
+        for (const [size, width, height] of [["a4", 595, 842], ["a5", 420, 595]] as const) {
+            await page.goto(`/poster/${code!.id}?size=${size}`);
+
+            // The code's own card keeps no shadow on paper: a printer
+            // flattens the blur into a grey block over the words.
+            await page.emulateMedia({ media: "print" });
+            // Tailwind's shadow-none composes to transparent layers
+            // rather than the keyword, so ask whether anything would be
+            // painted rather than how it is spelled.
+            const shadow = await page
+                .locator("article div[style*='23em']")
+                .evaluate((el) =>
+                    getComputedStyle(el)
+                        .boxShadow.replace(/rgba\(0, 0, 0, 0\) 0px 0px 0px 0px,? ?/g, "")
+                        .trim(),
+                );
+            expect(shadow, `${size}: nothing is painted around the code`).toBe("");
+
+            // The navy band, the coral pill and the cream paper. A print
+            // dialog drops every background unless the page insists.
+            const colours = await page
+                .locator("article > header")
+                .evaluate((el) => getComputedStyle(el).printColorAdjust);
+            expect(colours, `${size}: backgrounds are printed`).toBe("exact");
+
+            // preferCSSPageSize: take the size from the page's own @page
+            // rule, which is what a print dialog offers as the paper.
+            const pdf = await page.pdf({ preferCSSPageSize: true });
+            const raw = pdf.toString("latin1");
+
+            const pages = raw.match(/\/Type\s*\/Page[^s]/g) ?? [];
+            expect(pages.length, `${size} is one sheet`).toBe(1);
+
+            const box = raw.match(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)/);
+            expect(Math.round(Number(box![1])), `${size} width`).toBeGreaterThanOrEqual(width - 2);
+            expect(Math.round(Number(box![1])), `${size} width`).toBeLessThanOrEqual(width + 2);
+            expect(Math.round(Number(box![2])), `${size} height`).toBeGreaterThanOrEqual(height - 2);
+            expect(Math.round(Number(box![2])), `${size} height`).toBeLessThanOrEqual(height + 2);
+
+            await page.emulateMedia({ media: "screen" });
+        }
+    } finally {
+        await admin.from("qr_codes").delete().eq("id", code!.id);
+    }
+});

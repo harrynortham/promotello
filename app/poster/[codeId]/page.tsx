@@ -20,8 +20,8 @@ type PageProps = {
 };
 
 const sizes = {
-    a4: { width: "210mm", height: "297mm", scale: 1 },
-    a5: { width: "148mm", height: "210mm", scale: 0.705 },
+    a4: { width: "210mm", height: "297mm", scale: 1, page: "A4" },
+    a5: { width: "148mm", height: "210mm", scale: 0.705, page: "A5" },
 };
 
 function todayIso() {
@@ -88,7 +88,36 @@ async function Poster({ params, searchParams }: PageProps) {
 
     return (
         <>
-            <style>{`@page { size: ${size.toUpperCase()} portrait; margin: 0; } @media print { html, body { background: #fff !important; } }`}</style>
+            {/* Printing is the whole point of this page, so the print
+                rules are not an afterthought:
+
+                - print-color-adjust keeps the navy band, the coral pill
+                  and the cream paper. Without it the browser drops every
+                  background and the poster comes out white.
+                - The page box is the poster exactly, with no margin of
+                  its own, so nothing is scaled to fit or pushed onto a
+                  second sheet.
+                - The body's default margin would make the poster wider
+                  than the printable area, which is what makes a browser
+                  shrink the whole thing. */}
+            <style>{`
+                @page { size: ${dims.page} portrait; margin: 0; }
+
+                @media print {
+                    html, body {
+                        margin: 0;
+                        padding: 0;
+                        width: ${dims.width};
+                        height: ${dims.height};
+                        background: #fff !important;
+                    }
+
+                    body * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                }
+            `}</style>
 
             <PrintToolbar
                 backHref={`/business/${qr.business_id}/qr`}

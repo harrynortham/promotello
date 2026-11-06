@@ -90,8 +90,12 @@ export function QrPoster({
                     </p>
                 )}
 
+                {/* No shadow on paper: a printer flattens the blur into
+                    a solid grey rectangle around the code, which reads as
+                    the words above and below running into it. A hairline
+                    keeps the card's edge instead. */}
                 <div
-                    className="mt-[1.6em] rounded-[1.4em] bg-white p-[1em] shadow-[0_0.4em_1.6em_rgba(23,35,59,0.12)] [&>svg]:h-full [&>svg]:w-full"
+                    className="mt-[1.6em] rounded-[1.4em] bg-white p-[1em] shadow-[0_0.4em_1.6em_rgba(23,35,59,0.12)] print:border print:border-[#17233B]/10 print:shadow-none [&>svg]:h-full [&>svg]:w-full"
                     style={{ width: "23em", height: "23em" }}
                     dangerouslySetInnerHTML={{ __html: qrMarkup }}
                 />
