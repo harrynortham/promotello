@@ -147,8 +147,6 @@ async function QrContent({ params, searchParams }: PageProps) {
     // point at an offer that is. Both are shown either way, so it is
     // clear what is coming rather than simply missing.
     const isLive = business?.approval_status === "approved";
-    const liveOffers = (offers ?? []).filter((offer) => offer.approval_status === "approved");
-    const headlineOffer = liveOffers[0] ?? null;
     const previewLink = business?.slug ? `${origin}/businesses/${business.slug}` : origin;
     const previewSvg = await qrSvg(previewLink);
 
@@ -230,7 +228,6 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 businessName={business?.name ?? "Your business"}
                                 place={location?.region || location?.city}
                                 logoUrl={business?.logo_url}
-                                offer={headlineOffer}
                                 offers={offers ?? []}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}

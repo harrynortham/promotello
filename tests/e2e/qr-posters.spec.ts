@@ -283,3 +283,93 @@ test("the poster prints as one page at the size that was picked", async ({ page 
         await admin.from("qr_codes").delete().eq("id", code!.id);
     }
 });
+
+// What the poster says follows what the code opens: a code pointed at
+// the business page invites people in, a code pointed at an offer sells
+// that offer. Before, a business-page code borrowed the newest offer,
+// so the preview disagreed with the dropdown above it — and the printed
+// sheet went stale in the window when that offer ended.
+test("the poster carries the words of whatever the code opens", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: offer } = await admin
+        .from("offers")
+        .select("id, title, discount")
+        .eq("business_id", state.businessId)
+        .eq("approval_status", "approved")
+        .gte("expires_at", new Date().toISOString().slice(0, 10))
+        .is("plan_paused_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    const { data: toBusiness } = await admin
+        .from("qr_codes")
+        .insert({ business_id: state.businessId, label: "E2E Opens Business" })
+        .select("id")
+        .single();
+
+    const { data: toOffer } = await admin
+        .from("qr_codes")
+        .insert({ business_id: state.businessId, label: "E2E Opens Offer", offer_id: offer!.id })
+        .select("id")
+        .single();
+
+    try {
+        // The business page: its own words, and not the newest offer's.
+        await page.goto(`/poster/${toBusiness!.id}?size=a4`);
+        await expect(
+            page.getByRole("heading", { name: "See what's on at E2E Test Business" }),
+        ).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText(offer!.discount, { exact: true })).toHaveCount(0);
+
+        // An offer: that offer's words.
+        await page.goto(`/poster/${toOffer!.id}?size=a4`);
+        await expect(page.getByRole("heading", { name: offer!.discount })).toBeVisible();
+        await expect(page.getByText(offer!.title, { exact: true })).toBeVisible();
+    } finally {
+        await admin.from("qr_codes").delete().eq("id", toBusiness!.id);
+        await admin.from("qr_codes").delete().eq("id", toOffer!.id);
+    }
+});
+
+// The same rule while the code is being made: the preview and the two
+// placeholders follow the dropdown rather than always showing an offer.
+test("the designer previews what the chosen target will print", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: offer } = await admin
+        .from("offers")
+        .select("id, title, discount")
+        .eq("business_id", state.businessId)
+        .eq("approval_status", "approved")
+        .gte("expires_at", new Date().toISOString().slice(0, 10))
+        .is("plan_paused_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    await page.goto(`/business/${state.businessId}/qr`);
+
+    // It opens on the business page, so that is what is previewed.
+    await expect(page.locator("#qr-target")).toHaveValue("business");
+    await expect(page.locator("#poster-eyebrow")).toHaveAttribute("placeholder", "Scan for offers");
+    await expect(page.locator("#poster-headline")).toHaveAttribute(
+        "placeholder",
+        "See what's on at E2E Test Business",
+    );
+    const preview = page.locator("#create-qr article");
+    await expect(preview.getByRole("heading", { name: "See what's on at E2E Test Business" })).toBeVisible();
+
+    // Pick an offer and the poster changes with it.
+    await page.selectOption("#qr-target", offer!.id);
+    await expect(page.locator("#poster-eyebrow")).toHaveAttribute("placeholder", "Exclusive offer");
+    await expect(page.locator("#poster-headline")).toHaveAttribute("placeholder", offer!.discount);
+    await expect(preview.getByRole("heading", { name: offer!.discount })).toBeVisible();
+});

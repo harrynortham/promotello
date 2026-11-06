@@ -64,20 +64,21 @@ async function Poster({ params, searchParams }: PageProps) {
         ? business.business_locations[0]
         : business?.business_locations;
 
-    // Headline offer: the one the code points at, otherwise the newest live one.
-    let offerQuery = supabase
-        .from("offers")
-        .select("title, discount")
-        .eq("business_id", qr.business_id)
-        .eq("approval_status", "approved")
-        .gte("expires_at", todayIso())
-        .is("plan_paused_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-    if (qr.offer_id) {
-        offerQuery = offerQuery.eq("id", qr.offer_id);
-    }
+    // The offer the code opens, if it opens one. A code pointed at the
+    // business page carries the business's own words instead, which is
+    // what its preview showed when it was made — and it can't go stale
+    // behind a window when the offer it borrowed ends.
+    const offerQuery = qr.offer_id
+        ? supabase
+            .from("offers")
+            .select("title, discount")
+            .eq("id", qr.offer_id)
+            .eq("business_id", qr.business_id)
+            .eq("approval_status", "approved")
+            .gte("expires_at", todayIso())
+            .is("plan_paused_at", null)
+            .limit(1)
+        : Promise.resolve({ data: [] as { title: string; discount: string }[] });
 
     const [{ data: offers }, origin] = await Promise.all([offerQuery, requestOrigin()]);
     const offer = offers?.[0] ?? null;

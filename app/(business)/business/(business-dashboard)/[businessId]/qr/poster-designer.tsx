@@ -26,7 +26,6 @@ export function PosterDesigner({
     businessName,
     place,
     logoUrl,
-    offer,
     offers,
     previewSvg,
     previewLink,
@@ -36,9 +35,7 @@ export function PosterDesigner({
     businessName: string;
     place?: string | null;
     logoUrl?: string | null;
-    // The newest live offer, which the poster falls back to.
-    offer: { discount: string; title: string } | null;
-    offers: { id: string; title: string; approval_status?: string }[];
+    offers: { id: string; title: string; discount: string; approval_status?: string }[];
     previewSvg: string;
     previewLink: string;
     size: "a4" | "a5";
@@ -46,6 +43,13 @@ export function PosterDesigner({
     const [colour, setColour] = useState<CardColour>(cardColourName(null));
     const [eyebrow, setEyebrow] = useState("");
     const [headline, setHeadline] = useState("");
+    const [target, setTarget] = useState("business");
+
+    // The poster says whatever the code opens. Pointed at the business
+    // page it invites people in; pointed at an offer it sells that offer.
+    // The preview and the placeholders follow the choice above them, so
+    // what is on screen is what comes out of the printer.
+    const chosenOffer = offers.find((option) => option.id === target) ?? null;
 
     const width = PREVIEW_WIDTH[size];
 
@@ -71,7 +75,8 @@ export function PosterDesigner({
                     <select
                         id="qr-target"
                         name="target"
-                        defaultValue="business"
+                        value={target}
+                        onChange={(event) => setTarget(event.target.value)}
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
                         <option value="business">Your business page</option>
@@ -117,7 +122,7 @@ export function PosterDesigner({
                         maxLength={40}
                         value={eyebrow}
                         onChange={(event) => setEyebrow(event.target.value)}
-                        placeholder={offer ? "Exclusive offer" : "Scan for offers"}
+                        placeholder={chosenOffer ? "Exclusive offer" : "Scan for offers"}
                     />
                 </div>
 
@@ -130,11 +135,13 @@ export function PosterDesigner({
                         value={headline}
                         onChange={(event) => setHeadline(event.target.value)}
                         placeholder={
-                            offer ? offer.discount : `See what's on at ${businessName}`
+                            chosenOffer
+                                ? chosenOffer.discount
+                                : `See what's on at ${businessName}`
                         }
                     />
                     <p className="text-xs leading-5 text-[#17233B]/65">
-                        Leave both empty and the poster uses your newest offer.
+                        Leave both empty and the poster uses the words above.
                     </p>
                 </div>
 
@@ -165,7 +172,7 @@ export function PosterDesigner({
                         businessName={businessName}
                         place={place}
                         logoUrl={logoUrl}
-                        offer={offer}
+                        offer={chosenOffer}
                         qrMarkup={previewSvg}
                         link={previewLink}
                         colour={colour}
