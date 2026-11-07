@@ -20,6 +20,7 @@ export function QrPoster({
     eyebrow,
     headline,
     detail,
+    eyebrowFallback,
     className = "",
 }: {
     width: string;
@@ -42,12 +43,17 @@ export function QrPoster({
     // in the business's own words. Empty falls back to the offer's
     // description.
     detail?: string | null;
+    // The small line to use when the business hasn't written one, for a
+    // poster that isn't about an offer — a loyalty card says what it
+    // takes to fill: "Collect 9 stamps".
+    eyebrowFallback?: string | null;
     className?: string;
 }) {
     // A code that opens the business page lands on a list of offers, so
     // "claim it" has nothing to point at yet.
     const theme = cardColour(colour);
-    const pill = eyebrow?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
+    const pill =
+        eyebrow?.trim() || eyebrowFallback?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
     const title = headline?.trim() || (offer ? offer.discount : `See what's on at ${businessName}`);
     // A written headline is usually a sentence, so it needs smaller type.
     const titleSize = headline?.trim() ? "3.4em" : offer ? "5.4em" : "3.8em";

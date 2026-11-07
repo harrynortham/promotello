@@ -28,6 +28,7 @@ export function PosterDesigner({
     place,
     logoUrl,
     offers,
+    loyalty,
     previewSvg,
     previewLink,
 }: {
@@ -42,6 +43,9 @@ export function PosterDesigner({
         description: string;
         approval_status?: string;
     }[];
+    // The card being handed out, if there is one. A poster by the till
+    // is the strongest thing a business has for it.
+    loyalty: { id: string; name: string; stamps_required: number; reward: string; terms: string | null } | null;
     previewSvg: string;
     previewLink: string;
 }) {
@@ -59,7 +63,23 @@ export function PosterDesigner({
     // The preview and the placeholders follow the choice above them, so
     // what is on screen is what comes out of the printer.
     const chosenOffer = offers.find((option) => option.id === target) ?? null;
-    const description = detail ?? chosenOffer?.description ?? "";
+    const chosenLoyalty = target === "loyalty" ? loyalty : null;
+
+    // What the poster says when the business hasn't written its own
+    // words: the offer's, the card's, or the business page's.
+    const suggestedEyebrow = chosenLoyalty
+        ? `Collect ${chosenLoyalty.stamps_required} stamps`
+        : chosenOffer
+            ? "Exclusive offer"
+            : "Scan for offers";
+
+    const suggestedHeadline = chosenLoyalty
+        ? `Get ${chosenLoyalty.reward.charAt(0).toLowerCase() + chosenLoyalty.reward.slice(1)}`
+        : chosenOffer
+            ? chosenOffer.discount
+            : `See what's on at ${businessName}`;
+
+    const description = detail ?? chosenOffer?.description ?? chosenLoyalty?.terms ?? "";
 
     const width = PREVIEW_WIDTH;
 
@@ -67,6 +87,9 @@ export function PosterDesigner({
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
             <form action={createQrCode} className="flex-1 space-y-5">
                 <input type="hidden" name="businessId" value={businessId} />
+                {chosenLoyalty && (
+                    <input type="hidden" name="loyaltyProgramId" value={chosenLoyalty.id} />
+                )}
 
                 <div className="space-y-2">
                     <Label htmlFor="qr-label">Where will it go?</Label>
@@ -93,6 +116,9 @@ export function PosterDesigner({
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
                         <option value="business">Your business page</option>
+                        {loyalty && (
+                            <option value="loyalty">Loyalty card: {loyalty.name}</option>
+                        )}
                         {offers.map((option) => {
                             // An offer still being read can't be pointed at
                             // yet, but leaving it out of the list looks like
@@ -133,7 +159,7 @@ export function PosterDesigner({
                         maxLength={40}
                         value={eyebrow}
                         onChange={(event) => setEyebrow(event.target.value)}
-                        placeholder={chosenOffer ? "Exclusive offer" : "Scan for offers"}
+                        placeholder={suggestedEyebrow}
                     />
                 </div>
 
@@ -145,18 +171,14 @@ export function PosterDesigner({
                         maxLength={90}
                         value={headline}
                         onChange={(event) => setHeadline(event.target.value)}
-                        placeholder={
-                            chosenOffer
-                                ? chosenOffer.discount
-                                : `See what's on at ${businessName}`
-                        }
+                        placeholder={suggestedHeadline}
                     />
                     <p className="text-xs leading-5 text-[#17233B]/65">
                         Leave both empty and the poster uses the words above.
                     </p>
                 </div>
 
-                {chosenOffer && (
+                {(chosenOffer || chosenLoyalty) && (
                     <div className="space-y-2">
                         <Label htmlFor="poster-description">Description</Label>
                         <Textarea
@@ -168,8 +190,9 @@ export function PosterDesigner({
                             onChange={(event) => setDetail(event.target.value)}
                         />
                         <p className="text-xs leading-5 text-[#17233B]/65">
-                            The line under the headline. It starts as the offer&rsquo;s own
-                            description — shorten it for a poster read from across the room.
+                            The line under the headline. It starts as the{" "}
+                            {chosenLoyalty ? "card's own terms" : "offer's own description"} —
+                            shorten it for a poster read from across the room.
                         </p>
                     </div>
                 )}
@@ -203,7 +226,13 @@ export function PosterDesigner({
                         businessName={businessName}
                         place={place}
                         logoUrl={logoUrl}
-                        offer={chosenOffer}
+                        offer={
+                            chosenOffer ??
+                            (chosenLoyalty
+                                ? { discount: suggestedHeadline, description: chosenLoyalty.terms }
+                                : null)
+                        }
+                        eyebrowFallback={suggestedEyebrow}
                         qrMarkup={previewSvg}
                         link={previewLink}
                         colour={colour}

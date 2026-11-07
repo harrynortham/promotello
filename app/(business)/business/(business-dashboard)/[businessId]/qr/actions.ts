@@ -29,6 +29,7 @@ export async function createQrCode(formData: FormData) {
     const posterEyebrow = String(formData.get("posterEyebrow") ?? "").trim();
     const posterHeadline = String(formData.get("posterHeadline") ?? "").trim();
     const posterDescription = String(formData.get("posterDescription") ?? "").trim();
+    const loyaltyProgramId = String(formData.get("loyaltyProgramId") ?? "");
     const page = `/business/${businessId}/qr`;
 
     if (label.length < 2 || label.length > 60) {
@@ -49,10 +50,12 @@ export async function createQrCode(formData: FormData) {
     // RLS checks the user is an admin and the offer belongs to the business;
     // triggers enforce the Free plan's single code (P0004) and that the
     // business is approved (P0003).
+    // A code opens one thing: the business page, an offer, or the card.
     const { error } = await supabase.from("qr_codes").insert({
         business_id: businessId,
         label,
-        offer_id: target === "business" ? null : target,
+        offer_id: target === "business" || target === "loyalty" ? null : target,
+        loyalty_program_id: target === "loyalty" ? (loyaltyProgramId || null) : null,
         poster_colour: posterColour,
         // Empty means the poster works the words out from the offer.
         poster_eyebrow: posterEyebrow || null,

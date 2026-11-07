@@ -26,6 +26,7 @@ type QrCode = {
     code: string;
     label: string;
     created_at: string;
+    loyalty_program_id: string | null;
     offers: { title: string; discount: string } | { title: string; discount: string }[] | null;
 };
 
@@ -90,10 +91,10 @@ async function QrContent({ params, searchParams }: PageProps) {
     const canManage = ["owner", "admin"].includes(membership.role);
     const { since30, since7, today } = scanWindows();
 
-    const [{ data: codes }, { data: offers }, { data: business }, hasPro, origin] = await Promise.all([
+    const [{ data: codes }, { data: offers }, { data: business }, { data: loyalty }, hasPro, origin] = await Promise.all([
         supabase
             .from("qr_codes")
-            .select("id, code, label, created_at, offers ( title, discount )")
+            .select("id, code, label, created_at, loyalty_program_id, offers ( title, discount )")
             .eq("business_id", businessId)
             .is("archived_at", null)
             .order("created_at", { ascending: true }),
@@ -109,6 +110,14 @@ async function QrContent({ params, searchParams }: PageProps) {
             .from("businesses")
             .select("name, slug, logo_url, approval_status, business_locations ( region, city )")
             .eq("id", businessId)
+            .maybeSingle(),
+        // The card being handed out, for a poster by the till.
+        supabase
+            .from("loyalty_programs")
+            .select("id, name, stamps_required, reward, terms")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .is("closed_at", null)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
         requestOrigin(),
@@ -234,6 +243,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 place={location?.region || location?.city}
                                 logoUrl={business?.logo_url}
                                 offers={offers ?? []}
+                                loyalty={loyalty}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
                             />
@@ -320,7 +330,12 @@ async function QrContent({ params, searchParams }: PageProps) {
                                             <div className="min-w-0 flex-1">
                                                 <h2 className="text-lg font-semibold">{code.label}</h2>
                                                 <p className="mt-1 text-sm text-[#17233B]/70">
-                                                    Opens {offer ? `“${offer.title}”` : "your business page"}
+                                                    Opens{" "}
+                                                    {offer
+                                                        ? `“${offer.title}”`
+                                                        : code.loyalty_program_id
+                                                            ? "your loyalty card"
+                                                            : "your business page"}
                                                 </p>
                                                 <a
                                                     href={link}
