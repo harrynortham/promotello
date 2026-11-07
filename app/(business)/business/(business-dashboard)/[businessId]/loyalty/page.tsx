@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
-import { ScanCardButton } from "@/components/scan-card-button";
+import { ScanQrButton } from "@/components/scan-qr-button";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -223,7 +223,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                         type the code shown under it.
                                     </p>
 
-                                    <ScanCardButton className="mt-5 w-full sm:w-auto" />
+                                    <ScanQrButton className="mt-5 w-full sm:w-auto" />
 
                                     <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
                                         Or type the code

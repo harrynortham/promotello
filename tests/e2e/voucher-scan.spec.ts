@@ -58,3 +58,30 @@ test("staff scan a customer's voucher and mark it used once", async ({ browser }
     await expect(staff.getByText("Already used")).toBeVisible();
     await expect(staff.getByRole("button", { name: "Mark as used" })).toHaveCount(0);
 });
+
+// The camera, for staff already on the redemptions page with a phone.
+// Whether it opens depends on the device, so what is checked here is
+// that asking for it says something either way.
+test("a voucher can be scanned from the redemptions page", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    // This file signs in per test rather than for the whole file.
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+    await page.goto(`/business/${businessId}/redemptions`);
+    await expect(page.getByRole("button", { name: "Scan a voucher" })).toBeVisible({
+        timeout: 20_000,
+    });
+
+    await page.getByRole("button", { name: "Scan a voucher" }).click();
+
+    const scanner = page.getByRole("dialog");
+    await expect(scanner.getByText("Scan the customer's voucher")).toBeVisible();
+
+    const viewfinder = await scanner.locator("video").count();
+    const refused = await scanner.getByText(/camera/i).count();
+    expect(viewfinder + refused).toBeGreaterThan(0);
+
+    // Typing a code by hand is still there underneath.
+    await page.keyboard.press("Escape");
+    await expect(page.getByText(/No camera to hand/)).toBeVisible();
+});
