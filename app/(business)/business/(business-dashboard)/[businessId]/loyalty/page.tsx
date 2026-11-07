@@ -199,19 +199,6 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     )
                 ) : (
                     <>
-                        <dl className="mt-8 grid gap-4 sm:grid-cols-3">
-                            {[
-                                ["Members", stats.members],
-                                ["Stamps this week", stats.stampsThisWeek],
-                                ["Rewards given", stats.rewards],
-                            ].map(([label, value]) => (
-                                <div key={label} className="rounded-xl border border-[#17233B]/10 bg-white px-5 py-4">
-                                    <dt className="text-sm text-[#17233B]/70">{label}</dt>
-                                    <dd className="mt-1 text-3xl font-semibold">{value}</dd>
-                                </div>
-                            ))}
-                        </dl>
-
                     </>
                 )}
 
@@ -316,6 +303,19 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                 );
                             })}
                         </div>
+
+                        <dl className="mt-8 grid gap-4 sm:grid-cols-3">
+                            {[
+                                ["Members", stats.members],
+                                ["Stamps this week", stats.stampsThisWeek],
+                                ["Rewards given", stats.rewards],
+                            ].map(([label, value]) => (
+                                <div key={label} className="rounded-xl border border-[#17233B]/10 bg-white px-5 py-4">
+                                    <dt className="text-sm text-[#17233B]/70">{label}</dt>
+                                    <dd className="mt-1 text-3xl font-semibold">{value}</dd>
+                                </div>
+                            ))}
+                        </dl>
 
                         {stillCollecting.length > 0 && (
                             <div className="mt-8">
