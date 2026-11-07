@@ -1,8 +1,10 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
-import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { LoyaltyCard } from "@/components/loyalty-card";
+import { ScanCardButton } from "@/components/scan-card-button";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,12 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
-import { lookUpLoyaltyCard, setLoyaltyProgramActive } from "./actions";
-import { SharePanel } from "@/components/share-panel";
-import { loyaltyShareCaption, shareLink } from "@/lib/share";
-import { CardDesign } from "./card-design";
+import { lookUpLoyaltyCard } from "./actions";
 import { LoyaltyHowItWorks } from "./how-it-works";
-import { LoyaltyCardBuilder, ProgramSettingsForm } from "./program-form";
+import { LoyaltyCardBuilder } from "./program-form";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
@@ -25,6 +24,7 @@ type PageProps = {
 
 type LoyaltyCardRow = {
     id: string;
+    program_id: string;
     card_code: string;
     stamps: number;
     rewards_redeemed: number;
@@ -34,6 +34,8 @@ type LoyaltyCardRow = {
 
 type Program = {
     id: string;
+    name: string;
+    closed_at: string | null;
     stamps_required: number;
     reward: string;
     terms: string | null;
@@ -46,6 +48,8 @@ const errorMessages: Record<string, string> = {
     invalid: "Choose between 3 and 20 stamps and describe the reward in 2 to 80 characters.",
     pro: "Loyalty cards are part of Pro. Upgrade to start a stamp card.",
     save: "We couldn't save the loyalty card. Please try again.",
+    name: "You already have a card with that name. Give this one a different one.",
+    frozen: "Customers are collecting that card, so its stamps and reward stay as they are. Start a new card to change the deal.",
     code: "That doesn't look like a card code. Codes are 10 letters and numbers.",
 };
 
@@ -94,11 +98,10 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
+            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
             .eq("business_id", businessId)
             .order("is_active", { ascending: false })
-            .order("created_at", { ascending: false })
-            .limit(1),
+            .order("created_at", { ascending: true }),
         supabase
             .from("businesses")
             .select("name, logo_url, slug, approval_status")
@@ -107,34 +110,40 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
         businessHasPro(supabase, businessId),
     ]);
 
-    const program = (programs?.[0] ?? null) as Program | null;
+    const allCards = (programs ?? []) as Program[];
+    // One card is on offer. The others are cards people are still
+    // finishing: closed to new joiners, stamped until their holders are
+    // done, because a card in someone's wallet is a promise.
+    const program = allCards.find((card) => card.is_active && !card.closed_at) ?? null;
+    const cards = program ? [program] : [];
+    const stillCollecting = allCards.filter((card) => card.id !== program?.id);
 
     let stats = { members: 0, stampsThisWeek: 0, rewards: 0 };
     let cardList: LoyaltyCardRow[] = [];
 
-    if (program) {
-        const { data: cards } = await supabase
+    if (allCards.length > 0) {
+        const { data: holders } = await supabase
             .from("loyalty_cards")
-            .select("id, card_code, stamps, rewards_redeemed, created_at, last_stamped_at")
-            .eq("program_id", program.id)
+            .select("id, program_id, card_code, stamps, rewards_redeemed, created_at, last_stamped_at")
+            .in("program_id", allCards.map((card) => card.id))
             .order("created_at", { ascending: false });
 
-        cardList = (cards ?? []) as LoyaltyCardRow[];
+        cardList = (holders ?? []) as LoyaltyCardRow[];
 
-        const cardIds = (cards ?? []).map((card) => card.id);
-        const { count } = cardIds.length
+        const holderIds = cardList.map((holder) => holder.id);
+        const { count } = holderIds.length
             ? await supabase
                 .from("loyalty_events")
                 .select("id", { count: "exact", head: true })
-                .in("card_id", cardIds)
+                .in("card_id", holderIds)
                 .eq("kind", "stamp")
                 .gte("created_at", weekAgo())
             : { count: 0 };
 
         stats = {
-            members: cardIds.length,
+            members: holderIds.length,
             stampsThisWeek: count ?? 0,
-            rewards: (cards ?? []).reduce((sum, card) => sum + card.rewards_redeemed, 0),
+            rewards: cardList.reduce((sum, holder) => sum + holder.rewards_redeemed, 0),
         };
     }
 
@@ -157,47 +166,6 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     </div>
 
                     <div className="flex shrink-0 flex-wrap gap-3">
-                        {program && canManage && (
-                            <CardDesign
-                                businessId={businessId}
-                                programId={program.id}
-                                businessName={business?.name ?? "Your business"}
-                                businessLogoUrl={business?.logo_url ?? null}
-                                stampsRequired={program.stamps_required}
-                                reward={program.reward}
-                                terms={program.terms}
-                                colour={program.card_colour}
-                                stampIcon={program.stamp_icon}
-                            />
-                        )}
-
-                        {program?.is_active && business?.slug && business.approval_status === "approved" && (
-                            <SharePanel
-                                title="Share your loyalty card"
-                                url={shareLink(`/businesses/${business.slug}`)}
-                                caption={loyaltyShareCaption({
-                                    stampsRequired: program.stamps_required,
-                                    reward: program.reward,
-                                    businessName: business.name ?? "us",
-                                })}
-                                images={[
-                                    {
-                                        label: "Instagram story",
-                                        href: `/businesses/${business.slug}/story-image`,
-                                        filename: `${business.slug}-loyalty-story.png`,
-                                        aspect: "aspect-[9/16]",
-                                    },
-                                    {
-                                        label: "Post",
-                                        href: `/businesses/${business.slug}/post-image`,
-                                        filename: `${business.slug}-loyalty-post.png`,
-                                        aspect: "aspect-square",
-                                    },
-                                ]}
-                                triggerLabel="Share card"
-                            />
-                        )}
-
                         <LoyaltyHowItWorks />
                     </div>
                 </div>
@@ -231,18 +199,37 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     )
                 ) : (
                     <>
-                        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
+                    </>
+                )}
+
+                {cards.length > 0 && (
+                    <section className="mt-10">
+                        <h2 className="text-xl font-semibold">Your loyalty cards</h2>
+
+                        <div className="mt-4 grid gap-5 md:grid-cols-2">
+                            {/* One card each for now. The database can hold
+                                more and the screens can show more, so the way
+                                to a second is a decision rather than a build.
+                                The slot is better spent on the thing staff do
+                                every day. */}
                             <Card className="border-[#17233B]/10">
                                 <CardHeader>
-                                    <CardTitle>Stamp a customer&apos;s card</CardTitle>
+                                    <CardTitle>Stamp a card</CardTitle>
                                 </CardHeader>
+
                                 <CardContent>
                                     <p className="text-sm leading-6 text-[#17233B]/65">
-                                        Scan the QR code on the customer&apos;s card with your phone
-                                        camera, or type the code shown under it.
+                                        Scan the QR code on the customer&apos;s card, or
+                                        type the code shown under it.
                                     </p>
 
-                                    <form action={lookUpLoyaltyCard} className="mt-5 flex gap-2">
+                                    <ScanCardButton className="mt-5 w-full sm:w-auto" />
+
+                                    <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                                        Or type the code
+                                    </p>
+
+                                    <form action={lookUpLoyaltyCard} className="mt-2 flex gap-2">
                                         <input type="hidden" name="businessId" value={businessId} />
                                         <Input
                                             name="code"
@@ -252,91 +239,158 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             className="font-mono uppercase"
                                             autoComplete="off"
                                         />
-                                        <SubmitButton size="lg" pendingLabel="Finding…">Find card</SubmitButton>
+                                        <SubmitButton size="lg" pendingLabel="Finding…">
+                                            Find card
+                                        </SubmitButton>
                                     </form>
-
-                                    <dl className="mt-8 grid grid-cols-3 gap-3 text-center">
-                                        {[
-                                            ["Members", stats.members],
-                                            ["Stamps this week", stats.stampsThisWeek],
-                                            ["Rewards given", stats.rewards],
-                                        ].map(([label, value]) => (
-                                            <div key={label} className="rounded-xl bg-[#FFF8F0] px-3 py-4">
-                                                <dt className="text-xs text-[#17233B]/70">{label}</dt>
-                                                <dd className="mt-1 text-2xl font-semibold">{value}</dd>
-                                            </div>
-                                        ))}
-                                    </dl>
                                 </CardContent>
                             </Card>
 
-                            <Card className="h-fit border-[#17233B]/10 bg-[#17233B] text-white">
-                                <CardContent className="p-6">
-                                    <p className="text-sm text-white/70">
-                                        {program.is_active ? "Live on your business page" : "Paused"}
-                                    </p>
-                                    <p className="mt-2 text-xl font-semibold">
-                                        Collect {program.stamps_required} stamps, get {program.reward.charAt(0).toLowerCase() + program.reward.slice(1)}
-                                    </p>
-                                    <div className="mt-5">
-                                        <LoyaltyStamps
-                                            stamps={Math.min(3, program.stamps_required - 1)}
-                                            required={program.stamps_required}
-                                            size="sm"
-                                            colour={program.card_colour}
-                                            icon={program.stamp_icon}
+                            {cards.map((card) => {
+                                const holders = cardList.filter((holder) => holder.program_id === card.id);
+
+                                return (
+                                    <div key={card.id} className="flex flex-col">
+                                        <LoyaltyCard
+                                            businessName={business?.name ?? "Your business"}
+                                            logoUrl={business?.logo_url}
+                                            stampsRequired={card.stamps_required}
+                                            reward={card.reward}
+                                            stamps={Math.min(3, card.stamps_required - 1)}
+                                            terms={card.terms}
+                                            code={card.id.slice(0, 10).toUpperCase()}
+                                            qr={null}
+                                            colour={card.card_colour}
+                                            stampIcon={card.stamp_icon}
+                                            active={card.is_active}
+                                            className="border-[#17233B]/10"
                                         />
+
+                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            <p className="mr-auto text-sm font-medium">
+                                                {card.name}
+                                                <span className="ml-2 text-xs font-normal text-[#17233B]/65">
+                                                    On offer · {holders.length}{" "}
+                                                    {holders.length === 1 ? "member" : "members"}
+                                                </span>
+                                            </p>
+
+                                            {canManage && (
+                                                <>
+                                                    <Button
+                                                        render={<Link href={`/business/${businessId}/loyalty/${card.id}/edit`} />}
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
+                                                        {holders.length > 0 ? "Name and look" : "Edit card"}
+                                                    </Button>
+
+                                                    {/* Changing the deal means a new card, so
+                                                        the people holding this one keep what
+                                                        they were promised. */}
+                                                    <Button
+                                                        render={<Link href={`/business/${businessId}/loyalty/new`} />}
+                                                        nativeButton={false}
+                                                        size="sm"
+                                                    >
+                                                        Change the deal
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                );
+                            })}
                         </div>
 
-                        {canManage && (
-                            <Card className="mt-6 border-[#17233B]/10">
-                                <CardHeader>
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <CardTitle>Card settings</CardTitle>
-                                        <form action={setLoyaltyProgramActive}>
-                                            <input type="hidden" name="businessId" value={businessId} />
-                                            <input type="hidden" name="programId" value={program.id} />
-                                            <input type="hidden" name="active" value={String(!program.is_active)} />
-                                            <Button type="submit" variant="outline" size="sm">
-                                                {program.is_active ? "Pause loyalty card" : "Resume loyalty card"}
-                                            </Button>
-                                        </form>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <ProgramSettingsForm businessId={businessId} program={program} submitLabel="Save changes" />
-                                    <p className="mt-4 text-xs text-[#17233B]/70">
-                                        Changing the number of stamps applies to everyone&apos;s card straight away.
-                                    </p>
-                                </CardContent>
-                            </Card>
+                        <dl className="mt-8 grid gap-4 sm:grid-cols-3">
+                            {[
+                                ["Members", stats.members],
+                                ["Stamps this week", stats.stampsThisWeek],
+                                ["Rewards given", stats.rewards],
+                            ].map(([label, value]) => (
+                                <div key={label} className="rounded-xl border border-[#17233B]/10 bg-white px-5 py-4">
+                                    <dt className="text-sm text-[#17233B]/70">{label}</dt>
+                                    <dd className="mt-1 text-3xl font-semibold">{value}</dd>
+                                </div>
+                            ))}
+                        </dl>
+
+                        {stillCollecting.length > 0 && (
+                            <div className="mt-8">
+                                <h3 className="text-lg font-semibold">Still being collected</h3>
+
+                                <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
+                                    Cards you no longer hand out. The customers holding one
+                                    keep collecting on it and claim what they were promised;
+                                    you stamp them the same way.
+                                </p>
+
+                                <ul className="mt-4 space-y-2">
+                                    {stillCollecting.map((card) => {
+                                        const holders = cardList.filter(
+                                            (holder) => holder.program_id === card.id,
+                                        );
+                                        const unfinished = holders.filter(
+                                            (holder) => holder.stamps > 0 || holder.rewards_redeemed === 0,
+                                        ).length;
+
+                                        return (
+                                            <li
+                                                key={card.id}
+                                                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#17233B]/10 bg-white px-5 py-4"
+                                            >
+                                                <div>
+                                                    <p className="font-medium">{card.name}</p>
+                                                    <p className="text-sm text-[#17233B]/65">
+                                                        {card.stamps_required} stamps for{" "}
+                                                        {card.reward.charAt(0).toLowerCase() + card.reward.slice(1)} ·{" "}
+                                                        {holders.length}{" "}
+                                                        {holders.length === 1 ? "holder" : "holders"}
+                                                        {unfinished > 0 && `, ${unfinished} still going`}
+                                                    </p>
+                                                </div>
+
+                                                {canManage && (
+                                                    <Button
+                                                        render={<Link href={`/business/${businessId}/loyalty/${card.id}/edit`} />}
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
+                                                        Open
+                                                    </Button>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
                         )}
-                    </>
+                    </section>
                 )}
 
-                {cardList.length === 0 ? (
-                    <div className="mt-6 rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
-                        <h2 className="text-xl font-semibold">No loyalty cards yet</h2>
-                        <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
-                            Cards appear here as customers join from your business page.
-                        </p>
-                    </div>
-                ) : (
-                    <Card className="mt-6 border-[#17233B]/10">
-                        <CardHeader>
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <CardTitle>Loyalty cards</CardTitle>
+                {cardList.length > 0 && (
+                    <section className="mt-10">
+                        <div className="flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                                <h3 className="text-lg font-semibold">Loyalty cards issued</h3>
 
-                                <p className="text-sm text-[#17233B]/65">
-                                    {cardList.length} {cardList.length === 1 ? "card" : "cards"}
+                                <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
+                                    Every card a customer is carrying, on any of your
+                                    cards, with how far along it is. The code is what
+                                    they show you to be stamped.
                                 </p>
                             </div>
-                        </CardHeader>
 
-                        <CardContent>
+                            <p className="text-sm text-[#17233B]/65">
+                                {cardList.length} {cardList.length === 1 ? "card" : "cards"}
+                            </p>
+                        </div>
+
+                        <Card className="mt-4 border-[#17233B]/10">
+                            <CardContent>
                             <ul className="divide-y divide-[#17233B]/10">
                                 {cardList.map((card) => {
                                     const complete = card.stamps >= (program?.stamps_required ?? 0);
@@ -376,9 +430,10 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                         </li>
                                     );
                                 })}
-                            </ul>
-                        </CardContent>
-                    </Card>
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    </section>
                 )}
             </div>
         </div>

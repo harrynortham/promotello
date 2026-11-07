@@ -24,7 +24,7 @@ export async function joinLoyaltyProgram(formData: FormData) {
     });
 
     if (error) {
-        redirect(`/businesses/${businessId}?loyalty=unavailable#loyalty`);
+        redirect(`/businesses/${businessId}?loyalty=unavailable#loyalty-${programId}`);
     }
 
     redirect(`/dashboard/loyalty?joined=${programId}`);
@@ -40,7 +40,7 @@ export async function joinLoyaltyAsGuest(formData: FormData) {
     const guestEmail = String(formData.get("email") ?? "").trim();
 
     const back = (reason: string) =>
-        `/businesses/${businessId}?loyalty=${reason}#loyalty`;
+        `/businesses/${businessId}?loyalty=${reason}#loyalty-${programId}`;
 
     if (!name || !guestEmail) {
         redirect(back("details"));

@@ -229,16 +229,21 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
 
-    // Active loyalty card, and the visitor's progress on it if they've joined.
-    const [{ data: loyaltyProgram }, { data: { user: viewer } }] = await Promise.all([
+    // The card on offer. Cards closed to new joiners are still being
+    // stamped for the people holding them, but they aren't offered to
+    // anyone else, so they don't belong on this page.
+    const [{ data: loyaltyPrograms }, { data: { user: viewer } }] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, stamps_required, reward, terms, card_colour, stamp_icon")
+            .select("id, name, stamps_required, reward, terms, card_colour, stamp_icon")
             .eq("business_id", businessId)
             .eq("is_active", true)
-            .maybeSingle(),
+            .is("closed_at", null)
+            .order("created_at", { ascending: true }),
         supabase.auth.getUser(),
     ]);
+
+    const loyaltyCards = loyaltyPrograms ?? [];
 
     const { data: eventRows } = !EVENTS_ENABLED
         ? { data: [] }
@@ -260,15 +265,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             .maybeSingle()
         : { data: null };
 
-    const { data: loyaltyCard } =
-        loyaltyProgram && viewer
+    const { data: joined } =
+        loyaltyCards.length > 0 && viewer
             ? await supabase
                 .from("loyalty_cards")
-                .select("stamps")
-                .eq("program_id", loyaltyProgram.id)
+                .select("program_id, stamps")
+                .in("program_id", loyaltyCards.map((card) => card.id))
                 .eq("user_id", viewer.id)
-                .maybeSingle()
             : { data: null };
+
+    const progress = new Map((joined ?? []).map((card) => [card.program_id as string, card]));
 
     const { data: offers, error: offersError } = await supabase
         .from("offers")
@@ -563,17 +569,18 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                     {/* Main profile content */}
                     <div className="min-w-0 space-y-8">
-                        {loyaltyProgram && (
+                        {loyaltyCards.map((program) => (
                             <LoyaltyCallout
+                                key={program.id}
                                 businessId={business.id}
                                 businessName={business.name}
-                                program={loyaltyProgram}
-                                card={loyaltyCard}
+                                program={program}
+                                card={progress.get(program.id) ?? null}
                                 isSignedIn={Boolean(viewer)}
                                 problem={loyaltyStatus}
                                 preview={isPreview}
                             />
-                        )}
+                        ))}
 
                         {events.length > 0 && (
                             <section id="events" aria-labelledby="events-heading">

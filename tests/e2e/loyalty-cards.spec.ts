@@ -1,15 +1,24 @@
 import { test, expect } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
 
 test("business sets up a loyalty card, customer joins, staff stamp it", async ({ browser }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    // Named per run: one business can't have two live cards with the
+    // same name, so a fixed name passes once and fails ever after.
+    const cardName = `E2E Coffee card ${Date.now()}`;
 
     const business = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
     const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
 
     // Owner starts a programme (the test business is on Pro).
     await business.goto(`/business/${businessId}/loyalty`, { waitUntil: "networkidle" });
+    // A card is named now that a business can run more than one.
+    await business.locator("#card-name:visible").fill(cardName);
     await business.locator("#stamps-required:visible").selectOption("5");
     await business.locator("#reward:visible").fill("A free coffee");
     await business.getByRole("button", { name: "Start loyalty card" }).click();
@@ -38,6 +47,8 @@ test("business sets up a loyalty card, customer joins, staff stamp it", async ({
     // The customer sees their progress.
     await customer.reload();
     await expect(customer.getByText("1 of 5 stamps")).toBeVisible();
+
+    await admin.from("loyalty_programs").delete().eq("business_id", businessId).eq("name", cardName);
 });
 
 test("a Free business can build a loyalty card, but publishing it needs Pro", async ({ browser }) => {
@@ -59,9 +70,26 @@ test("a Free business can build a loyalty card, but publishing it needs Pro", as
 
 test("a visitor who isn't signed in is offered the card, not a form", async ({ page }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
 
+    // Its own card, so this doesn't stand on one another test left behind.
+    const { data: seeded } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Visitor card ${Date.now()}`,
+            stamps_required: 7,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    try {
     await page.goto(`/businesses/${businessId}`);
-    const loyalty = page.locator("#loyalty");
+    const loyalty = page.locator('[id^="loyalty-"]').first();
     await expect(loyalty).toBeVisible();
 
     // The panel's job is to make the offer. Opening with two input boxes and
@@ -75,4 +103,201 @@ test("a visitor who isn't signed in is offered the card, not a form", async ({ p
     await expect(loyalty.locator("input[name=name]")).toBeFocused();
     await expect(loyalty.locator("input[name=email]")).toBeVisible();
     await expect(loyalty.getByRole("link", { name: "Log in" })).toBeVisible();
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", seeded!.id);
+    }
+});
+
+// One card each, for now. The table and the screens can carry more, so
+// this is a decision waiting to be taken rather than a wall.
+test("a business runs one loyalty card, and stamps from the same page", async ({ browser }) => {
+    test.setTimeout(120_000);
+
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: seeded } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E One card ${Date.now()}`,
+            stamps_required: 7,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id, name")
+        .single();
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/${businessId}/loyalty`);
+        await expect(page.getByRole("heading", { name: "Your loyalty cards" })).toBeVisible({
+            timeout: 20_000,
+        });
+
+    // Where another card used to be offered, staff stamp one.
+    await expect(page.getByText("Stamp a card")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Find card" })).toBeVisible();
+
+    // The camera, for staff already holding a phone. Whether it opens
+    // depends on the device, so what is checked here is that asking for
+    // it says something either way rather than failing silently.
+    await page.getByRole("button", { name: "Scan a card" }).click();
+    const scanner = page.getByRole("dialog");
+    await expect(scanner.getByText("Scan the customer's card")).toBeVisible();
+
+        // Either the viewfinder or the reason there isn't one — what is
+        // not allowed is a dialog that opens on nothing.
+        const viewfinder = await scanner.locator("video").count();
+        const refused = await scanner.getByText(/camera/i).count();
+        expect(viewfinder + refused).toBeGreaterThan(0);
+
+        await page.keyboard.press("Escape");
+    await expect(page.getByText("Add another card")).toHaveCount(0);
+
+        // The page that makes a card is where the deal is changed, and
+        // it says what that costs the people already collecting.
+        await page.goto(`/business/${businessId}/loyalty/new`);
+        await expect(page.getByRole("heading", { name: "Start a new card" })).toBeVisible({
+            timeout: 20_000,
+        });
+        await expect(page.getByText(`${seeded!.name} stops being handed out`)).toBeVisible();
+
+        // The card itself is changed on its own page.
+        await page.goto(`/business/${businessId}/loyalty/${seeded!.id}/edit`);
+        await expect(page.getByRole("heading", { name: seeded!.name, level: 1 })).toBeVisible({
+            timeout: 20_000,
+        });
+        // Pause is gone: a card is either handed out or it isn't, and
+        // either way the people holding one keep collecting.
+        await expect(page.getByRole("button", { name: "Stop handing this out" })).toBeVisible();
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", seeded!.id);
+    }
+});
+
+// The whole promise, end to end: a card is joined and stamped, the deal
+// changes, and the people holding the old card are left exactly where
+// they were.
+test("changing the deal leaves the old card's holders alone", async ({ browser }) => {
+    test.setTimeout(180_000);
+
+    const { businessId, businessSlug } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const run = Date.now();
+    const firstName = `E2E Old deal ${run}`;
+    const secondName = `E2E New deal ${run}`;
+    const made: string[] = [];
+
+    try {
+        // A card on offer, with somebody collecting it.
+        const { data: first } = await admin
+            .from("loyalty_programs")
+            .insert({
+                business_id: businessId,
+                name: firstName,
+                stamps_required: 5,
+                reward: "A free coffee",
+                is_active: true,
+            })
+            .select("id")
+            .single();
+        made.push(first!.id);
+
+        const business = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+        await customer.goto(`/businesses/${businessSlug}`);
+        await customer.getByRole("button", { name: "Join the loyalty card" }).click();
+        await customer.waitForURL("**/dashboard/loyalty?joined=*", { timeout: 20_000 });
+
+        const code = (await customer.locator("p.font-mono").first().textContent())?.trim() ?? "";
+        expect(code).toMatch(/^[A-Z0-9]{10}$/);
+
+        await business.goto(`/stamp/${code}`);
+        await business.getByRole("button", { name: "Add a stamp" }).click();
+        await expect(business.getByText("Stamp added")).toBeVisible({ timeout: 15_000 });
+
+        // The business changes the deal.
+        await business.goto(`/business/${businessId}/loyalty/new`);
+        await expect(business.getByText(`${firstName} stops being handed out`)).toBeVisible({
+            timeout: 20_000,
+        });
+        await expect(business.getByText(/1 customer is collecting 5 stamps/)).toBeVisible();
+
+        await business.locator("#card-name:visible").fill(secondName);
+        await business.locator("#stamps-required:visible").selectOption("8");
+        await business.locator("#reward:visible").fill("A free lunch");
+        await business.getByRole("button", { name: "Start the new card" }).click();
+        await business.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 25_000 });
+
+        const { data: cards } = await admin
+            .from("loyalty_programs")
+            .select("id, name, closed_at, is_active")
+            .eq("business_id", businessId)
+            .in("name", [firstName, secondName]);
+
+        const old = cards!.find((card) => card.name === firstName)!;
+        const fresh = cards!.find((card) => card.name === secondName)!;
+        made.push(fresh.id);
+
+        expect(old.closed_at, "the old card stopped being handed out").not.toBeNull();
+        expect(old.is_active, "and still works for the people holding it").toBe(true);
+        expect(fresh.closed_at, "the new card is the one on offer").toBeNull();
+
+        // The dashboard says which is which.
+        await expect(business.getByText("Still being collected")).toBeVisible({ timeout: 20_000 });
+        await expect(
+            business.getByRole("listitem").filter({ hasText: firstName }),
+        ).toBeVisible();
+        await expect(business.getByText("On offer")).toBeVisible();
+
+        // The old holder is stamped exactly as before.
+        await business.goto(`/stamp/${code}`);
+        await admin
+            .from("loyalty_cards")
+            .update({ last_stamped_at: new Date(Date.now() - 20 * 60_000).toISOString() })
+            .eq("card_code", code);
+        await business.reload();
+        await business.getByRole("button", { name: "Add a stamp" }).click();
+        await expect(business.getByText("Stamp added")).toBeVisible({ timeout: 15_000 });
+        await expect(business.getByText("2 of 5 stamps")).toBeVisible();
+
+        // A customer arriving now is offered the new deal, and only it.
+        const visitor = await (await browser.newContext()).newPage();
+        await visitor.goto(`/businesses/${businessSlug}`);
+        await expect(visitor.getByText("Collect 8 stamps, get a free lunch")).toBeVisible({
+            timeout: 20_000,
+        });
+        await expect(visitor.getByText("Collect 5 stamps, get a free coffee")).toHaveCount(0);
+
+        // And the old card's terms can't be rewritten under its holder.
+        const owner = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } },
+        );
+        const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+        await owner.auth.signInWithPassword({ email: state.businessEmail, password: state.testPassword });
+
+        const rewritten = await owner
+            .from("loyalty_programs")
+            .update({ stamps_required: 20 })
+            .eq("id", old.id);
+        expect(rewritten.error?.code, "the deal is frozen in the database").toBe("P0006");
+
+        // Its name is not the promise, so that still moves.
+        const renamed = await owner
+            .from("loyalty_programs")
+            .update({ name: `${firstName} (old)` })
+            .eq("id", old.id);
+        expect(renamed.error, "the name is not the promise").toBeNull();
+    } finally {
+        for (const id of made) await admin.from("loyalty_programs").delete().eq("id", id);
+    }
 });
