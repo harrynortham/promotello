@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { ScanVoucherIllustration } from "@/components/scan-voucher-illustration";
 import { RedemptionsHowItWorks } from "./how-it-works";
+import { ScanQrButton } from "@/components/scan-qr-button";
 import { createClient } from "@/utils/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -203,7 +204,18 @@ async function RedemptionsContent({ params }: PageProps) {
                             it used in one tap.
                         </p>
 
-                        <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-[#17233B]/55">
+                        {/* The camera, without leaving the dashboard: the
+                            same place the phone's own camera app would
+                            land on. */}
+                        <ScanQrButton
+                            kind="redeem"
+                            label="Scan a voucher"
+                            title="Scan the customer's voucher"
+                            description="Point the camera at the QR code on their voucher. It opens the voucher here, so you can mark it used in one tap."
+                            className="mt-4 w-full sm:w-auto"
+                        />
+
+                        <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-[#17233B]/55">
                             <FiCamera aria-hidden="true" className="mt-1 size-4 shrink-0 text-[#FF593F]" />
                             No camera to hand? Find the offer below and mark it
                             used from its card.

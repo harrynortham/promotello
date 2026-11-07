@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FiCamera } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
-import { cardCodeFrom } from "@/lib/card-code";
+import { scannedCodeFrom, type ScannedKind } from "@/lib/card-code";
 import {
     Dialog,
     DialogContent,
@@ -15,17 +15,31 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
-// Scanning a customer's card from the dashboard, for staff who are
-// already on this page with a phone in their hand. The card's QR opens
-// /stamp/<code> when read by the phone's own camera app, so this does
-// the same thing without leaving the browser.
+// Scanning a customer's QR from the dashboard, for staff who are
+// already on the page with a phone in their hand. A loyalty card's QR
+// opens /stamp/<code> and a voucher's opens /redeem/<code> when read by
+// the phone's own camera app; this does the same without leaving the
+// browser.
 //
 // BarcodeDetector where the browser has it (Android Chrome), jsQR
 // everywhere else, including iOS Safari, which has no detector.
 
 type Detector = { detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]> };
 
-export function ScanCardButton({ className = "" }: { className?: string }) {
+export function ScanQrButton({
+    kind = "stamp",
+    label = "Scan a card",
+    title = "Scan the customer's card",
+    description = "Point the camera at the QR code on their card. It opens the same page as scanning it with your phone's camera.",
+    className = "",
+}: {
+    // What the code is: a loyalty card to stamp, or a voucher to mark used.
+    kind?: ScannedKind;
+    label?: string;
+    title?: string;
+    description?: string;
+    className?: string;
+}) {
     const router = useRouter();
     const videoRef = useRef<HTMLVideoElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
@@ -108,11 +122,11 @@ export function ScanCardButton({ className = "" }: { className?: string }) {
                         text = jsQR(pixels.data, pixels.width, pixels.height)?.data ?? null;
                     }
 
-                    const code = text ? cardCodeFrom(text) : null;
+                    const code = text ? scannedCodeFrom(kind, text) : null;
 
                     if (code) {
                         stop();
-                        router.push(`/stamp/${code}`);
+                        router.push(`/${kind}/${code}`);
                         return;
                     }
 
@@ -133,7 +147,7 @@ export function ScanCardButton({ className = "" }: { className?: string }) {
             cancelled = true;
             stop();
         };
-    }, [open, router, stop]);
+    }, [open, router, stop, kind]);
 
     return (
         <>
@@ -145,7 +159,7 @@ export function ScanCardButton({ className = "" }: { className?: string }) {
                 onClick={() => setOpen(true)}
             >
                 <FiCamera aria-hidden="true" />
-                Scan a card
+                {label}
             </Button>
 
             <Dialog
@@ -157,12 +171,9 @@ export function ScanCardButton({ className = "" }: { className?: string }) {
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Scan the customer&apos;s card</DialogTitle>
+                        <DialogTitle>{title}</DialogTitle>
 
-                        <DialogDescription>
-                            Point the camera at the QR code on their card. It opens
-                            the same page as scanning it with your phone&apos;s camera.
-                        </DialogDescription>
+                        <DialogDescription>{description}</DialogDescription>
                     </DialogHeader>
 
                     {problem ? (
