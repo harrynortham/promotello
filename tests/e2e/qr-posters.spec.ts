@@ -611,6 +611,9 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
         await expect(page.getByText("Collect 9 stamps")).toBeVisible({ timeout: 15_000 });
         await expect(page.getByRole("heading", { name: "Get a free coffee" })).toBeVisible();
         await expect(page.getByText("One stamp per visit.")).toBeVisible();
+        // A stamp card asks to be joined, not claimed.
+        await expect(page.getByText(/Join free on Promotello and collect a stamp/)).toBeVisible();
+        await expect(page.getByText(/Claim it free on Promotello/)).toHaveCount(0);
 
         // And a scan lands on the card, not the top of the page.
         const scan = await request.get(`/q/${made!.code}`, { maxRedirects: 0 });

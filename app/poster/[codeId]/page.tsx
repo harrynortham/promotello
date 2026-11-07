@@ -161,6 +161,11 @@ async function Poster({ params, searchParams }: PageProps) {
                             : null)
                     }
                     eyebrowFallback={loyalty ? `Collect ${loyalty.stamps_required} stamps` : null}
+                    caption={
+                        loyalty
+                            ? "Join free on Promotello and collect a stamp every time you visit."
+                            : null
+                    }
                     qrMarkup={svg}
                     link={link}
                     colour={qr.poster_colour}

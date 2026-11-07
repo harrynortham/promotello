@@ -21,6 +21,7 @@ export function QrPoster({
     headline,
     detail,
     eyebrowFallback,
+    caption,
     className = "",
 }: {
     width: string;
@@ -47,6 +48,9 @@ export function QrPoster({
     // poster that isn't about an offer — a loyalty card says what it
     // takes to fill: "Collect 9 stamps".
     eyebrowFallback?: string | null;
+    // The line under "Point your phone camera here". A claim and a
+    // stamp card ask for different things.
+    caption?: string | null;
     className?: string;
 }) {
     // A code that opens the business page lands on a list of offers, so
@@ -125,9 +129,10 @@ export function QrPoster({
                     Point your phone camera here
                 </p>
                 <p className="mt-[0.3em] text-[#17233B]/70" style={{ fontSize: "1.05em" }}>
-                    {offer
-                        ? "Claim it free on Promotello, then show your code when you pay."
-                        : "Every offer is free to claim on Promotello. Show your code when you pay."}
+                    {caption?.trim() ||
+                        (offer
+                            ? "Claim it free on Promotello, then show your code when you pay."
+                            : "Every offer is free to claim on Promotello. Show your code when you pay.")}
                 </p>
             </div>
 

@@ -233,6 +233,11 @@ export function PosterDesigner({
                                 : null)
                         }
                         eyebrowFallback={suggestedEyebrow}
+                        caption={
+                            chosenLoyalty
+                                ? "Join free on Promotello and collect a stamp every time you visit."
+                                : null
+                        }
                         qrMarkup={previewSvg}
                         link={previewLink}
                         colour={colour}
