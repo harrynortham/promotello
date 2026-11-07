@@ -25,6 +25,8 @@ export type Program = {
     // What this card is called, so a business with several can tell them
     // apart and a customer can choose between them.
     name: string;
+    // When it stopped being handed out. Holders carry on collecting.
+    closed_at?: string | null;
     stamps_required: number;
     reward: string;
     terms: string | null;
@@ -39,6 +41,8 @@ const SAMPLE_CODE = "4F8A2C91D0";
 export function ProgramFields({
     businessId,
     program,
+    replacing = false,
+    lockTerms = false,
     name,
     setName,
     stampsRequired,
@@ -54,6 +58,10 @@ export function ProgramFields({
 }: {
     businessId: string;
     program: Program | null;
+    // Saving closes the card on offer and opens this one in its place.
+    replacing?: boolean;
+    // Somebody holds this card, so what it promises can't move.
+    lockTerms?: boolean;
     name: string;
     setName: (value: string) => void;
     stampsRequired: number;
@@ -71,6 +79,8 @@ export function ProgramFields({
         <>
             <input type="hidden" name="businessId" value={businessId} />
             {program && <input type="hidden" name="programId" value={program.id} />}
+            {replacing && <input type="hidden" name="replacing" value="true" />}
+            {lockTerms && <input type="hidden" name="stampsRequired" value={stampsRequired} />}
 
             <div className="space-y-2">
                 <Label htmlFor="card-name">Card name</Label>
@@ -98,7 +108,8 @@ export function ProgramFields({
                         name="stampsRequired"
                         value={stampsRequired}
                         onChange={(event) => setStampsRequired(Number(event.target.value))}
-                        className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                        disabled={lockTerms}
+                        className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {Array.from({ length: 18 }, (_, index) => index + 3).map((count) => (
                             <option key={count} value={count}>
@@ -118,6 +129,9 @@ export function ProgramFields({
                         maxLength={80}
                         value={reward}
                         onChange={(event) => setReward(event.target.value)}
+                        readOnly={lockTerms}
+                        aria-readonly={lockTerms || undefined}
+                        className={lockTerms ? "cursor-not-allowed opacity-70" : undefined}
                         placeholder="A free coffee of your choice"
                     />
                 </div>
@@ -132,6 +146,9 @@ export function ProgramFields({
                     rows={3}
                     value={terms}
                     onChange={(event) => setTerms(event.target.value)}
+                    readOnly={lockTerms}
+                    aria-readonly={lockTerms || undefined}
+                    className={lockTerms ? "cursor-not-allowed opacity-70" : undefined}
                     placeholder="One stamp per visit when you spend £3 or more."
                 />
             </div>
@@ -158,6 +175,7 @@ export function ProgramFields({
 export function LoyaltyCardBuilder({
     businessId,
     businessName,
+    replacing = false,
     businessLogoUrl,
     program,
     submitLabel,
@@ -167,6 +185,8 @@ export function LoyaltyCardBuilder({
     businessName: string;
     businessLogoUrl: string | null;
     program: Program | null;
+    // Saving closes the card on offer and opens this one in its place.
+    replacing?: boolean;
     submitLabel: string;
     locked?: boolean;
 }) {
@@ -181,6 +201,7 @@ export function LoyaltyCardBuilder({
         <ProgramFields
             businessId={businessId}
             program={program}
+            replacing={replacing}
             name={name}
             setName={setName}
             stampsRequired={stampsRequired}
@@ -285,10 +306,14 @@ export function LoyaltyCardBuilder({
 export function ProgramSettingsForm({
     businessId,
     program,
+    lockTerms = false,
     submitLabel,
 }: {
     businessId: string;
     program: Program | null;
+    // The stamps, the reward and the terms are the promise: once anyone
+    // holds the card they are shown but not changed.
+    lockTerms?: boolean;
     submitLabel: string;
 }) {
     const [name, setName] = useState(program?.name ?? "");
@@ -303,6 +328,7 @@ export function ProgramSettingsForm({
             <ProgramFields
                 businessId={businessId}
                 program={program}
+                lockTerms={lockTerms}
                 name={name}
                 setName={setName}
                 stampsRequired={stampsRequired}

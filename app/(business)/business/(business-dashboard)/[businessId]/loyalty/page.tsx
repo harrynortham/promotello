@@ -35,6 +35,7 @@ type LoyaltyCardRow = {
 type Program = {
     id: string;
     name: string;
+    closed_at: string | null;
     stamps_required: number;
     reward: string;
     terms: string | null;
@@ -48,6 +49,7 @@ const errorMessages: Record<string, string> = {
     pro: "Loyalty cards are part of Pro. Upgrade to start a stamp card.",
     save: "We couldn't save the loyalty card. Please try again.",
     name: "You already have a card with that name. Give this one a different one.",
+    frozen: "Customers are collecting that card, so its stamps and reward stay as they are. Start a new card to change the deal.",
     code: "That doesn't look like a card code. Codes are 10 letters and numbers.",
 };
 
@@ -96,7 +98,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, name, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
+            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
             .eq("business_id", businessId)
             .order("is_active", { ascending: false })
             .order("created_at", { ascending: true }),
@@ -109,13 +111,12 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     ]);
 
     const allCards = (programs ?? []) as Program[];
-    // A business runs one card. The live one is it; if none is live, the
-    // newest. Anything else is a card from before, kept but not shown
-    // beside the current one as though they were a pair.
-    const program =
-        allCards.find((card) => card.is_active) ?? allCards[allCards.length - 1] ?? null;
+    // One card is on offer. The others are cards people are still
+    // finishing: closed to new joiners, stamped until their holders are
+    // done, because a card in someone's wallet is a promise.
+    const program = allCards.find((card) => card.is_active && !card.closed_at) ?? null;
     const cards = program ? [program] : [];
-    const earlier = allCards.filter((card) => card.id !== program?.id);
+    const stillCollecting = allCards.filter((card) => card.id !== program?.id);
 
     let stats = { members: 0, stampsThisWeek: 0, rewards: 0 };
     let cardList: LoyaltyCardRow[] = [];
@@ -282,20 +283,33 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             <p className="mr-auto text-sm font-medium">
                                                 {card.name}
                                                 <span className="ml-2 text-xs font-normal text-[#17233B]/65">
-                                                    {card.is_active ? "Live" : "Paused"} · {holders.length}{" "}
+                                                    On offer · {holders.length}{" "}
                                                     {holders.length === 1 ? "member" : "members"}
                                                 </span>
                                             </p>
 
                                             {canManage && (
-                                                <Button
-                                                    render={<Link href={`/business/${businessId}/loyalty/${card.id}/edit`} />}
-                                                    nativeButton={false}
-                                                    variant="outline"
-                                                    size="sm"
-                                                >
-                                                    Edit card
-                                                </Button>
+                                                <>
+                                                    <Button
+                                                        render={<Link href={`/business/${businessId}/loyalty/${card.id}/edit`} />}
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
+                                                        {holders.length > 0 ? "Name and look" : "Edit card"}
+                                                    </Button>
+
+                                                    {/* Changing the deal means a new card, so
+                                                        the people holding this one keep what
+                                                        they were promised. */}
+                                                    <Button
+                                                        render={<Link href={`/business/${businessId}/loyalty/new`} />}
+                                                        nativeButton={false}
+                                                        size="sm"
+                                                    >
+                                                        Change the deal
+                                                    </Button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -303,22 +317,56 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             })}
                         </div>
 
-                        {earlier.length > 0 && canManage && (
-                            <p className="mt-4 text-sm text-[#17233B]/65">
-                                Cards from before:{" "}
-                                {earlier.map((card, index) => (
-                                    <span key={card.id}>
-                                        {index > 0 && ", "}
-                                        <Link
-                                            href={`/business/${businessId}/loyalty/${card.id}/edit`}
-                                            className="font-medium text-[#FF593F] underline-offset-4 hover:underline"
-                                        >
-                                            {card.name}
-                                        </Link>{" "}
-                                        ({card.is_active ? "live" : "paused"})
-                                    </span>
-                                ))}
-                            </p>
+                        {stillCollecting.length > 0 && (
+                            <div className="mt-8">
+                                <h3 className="text-lg font-semibold">Still being collected</h3>
+
+                                <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
+                                    Cards you no longer hand out. The customers holding one
+                                    keep collecting on it and claim what they were promised;
+                                    you stamp them the same way.
+                                </p>
+
+                                <ul className="mt-4 space-y-2">
+                                    {stillCollecting.map((card) => {
+                                        const holders = cardList.filter(
+                                            (holder) => holder.program_id === card.id,
+                                        );
+                                        const unfinished = holders.filter(
+                                            (holder) => holder.stamps > 0 || holder.rewards_redeemed === 0,
+                                        ).length;
+
+                                        return (
+                                            <li
+                                                key={card.id}
+                                                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#17233B]/10 bg-white px-5 py-4"
+                                            >
+                                                <div>
+                                                    <p className="font-medium">{card.name}</p>
+                                                    <p className="text-sm text-[#17233B]/65">
+                                                        {card.stamps_required} stamps for{" "}
+                                                        {card.reward.charAt(0).toLowerCase() + card.reward.slice(1)} ·{" "}
+                                                        {holders.length}{" "}
+                                                        {holders.length === 1 ? "holder" : "holders"}
+                                                        {unfinished > 0 && `, ${unfinished} still going`}
+                                                    </p>
+                                                </div>
+
+                                                {canManage && (
+                                                    <Button
+                                                        render={<Link href={`/business/${businessId}/loyalty/${card.id}/edit`} />}
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                        size="sm"
+                                                    >
+                                                        Open
+                                                    </Button>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
                         )}
                     </section>
                 )}

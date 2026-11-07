@@ -45,6 +45,9 @@ function readProgramFields(formData: FormData) {
 export async function saveLoyaltyProgram(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     const programId = String(formData.get("programId") ?? "");
+    // Replacing closes the card being offered and opens a new one in its
+    // place, so a business is never without one and never has two.
+    const replacing = formData.get("replacing") === "true";
     const page = `/business/${businessId}/loyalty`;
     const fields = readProgramFields(formData);
 
@@ -55,15 +58,54 @@ export async function saveLoyaltyProgram(formData: FormData) {
     const supabase = await createClient();
 
     // RLS limits this to business admins; a trigger requires Pro to switch a
-    // programme on.
+    // programme on, and another freezes the terms of a card people hold.
     const { error } = programId
         ? await supabase.from("loyalty_programs").update(fields).eq("id", programId).eq("business_id", businessId)
-        : await supabase.from("loyalty_programs").insert({ ...fields, business_id: businessId });
+        : replacing
+            ? await supabase.rpc("replace_loyalty_card", {
+                requested_business_id: businessId,
+                new_name: fields.name,
+                new_stamps_required: fields.stamps_required,
+                new_reward: fields.reward,
+                new_terms: fields.terms,
+                new_card_colour: fields.card_colour,
+                new_stamp_icon: fields.stamp_icon,
+            })
+            : await supabase.from("loyalty_programs").insert({ ...fields, business_id: businessId });
 
     if (error) {
-        // 23505: two cards on one business can't share a name.
-        const reason = error.code === "P0004" ? "pro" : error.code === "23505" ? "name" : "save";
+        const reason =
+            error.code === "P0004"
+                ? "pro"
+                // 23505: two cards on offer can't share a name.
+                : error.code === "23505"
+                    ? "name"
+                    : error.code === "P0006"
+                        ? "frozen"
+                        : "save";
         redirect(`${page}?error=${reason}`);
+    }
+
+    revalidatePath(page);
+    redirect(`${page}?saved=1`);
+}
+
+// Taking a card off the page without taking it away from the people
+// holding it: they carry on stamping, nobody new joins.
+export async function closeLoyaltyProgram(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const programId = String(formData.get("programId") ?? "");
+    const page = `/business/${businessId}/loyalty`;
+
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from("loyalty_programs")
+        .update({ closed_at: new Date().toISOString() })
+        .eq("id", programId)
+        .eq("business_id", businessId);
+
+    if (error) {
+        redirect(`${page}?error=save`);
     }
 
     revalidatePath(page);

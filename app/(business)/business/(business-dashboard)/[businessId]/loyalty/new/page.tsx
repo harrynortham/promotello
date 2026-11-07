@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { loadLoyaltyEditor } from "../loyalty-data";
@@ -34,18 +35,23 @@ async function NewLoyaltyCard({ params }: PageProps) {
         redirect(back);
     }
 
-    // A business runs one card for now. The table, the screens and this
-    // page can all carry more, so turning that on is a decision rather
-    // than a build — until then there is nothing to do here once a card
-    // exists, and the loyalty page is where it is changed.
-    const { count } = await editor.supabase
+    // The card being offered, if there is one. Starting a new card
+    // closes that one to new joiners rather than changing it: the people
+    // holding it were promised what it says.
+    const { data: current } = await editor.supabase
         .from("loyalty_programs")
-        .select("id", { count: "exact", head: true })
-        .eq("business_id", businessId);
+        .select("id, name, stamps_required, reward")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null)
+        .maybeSingle();
 
-    if ((count ?? 0) > 0) {
-        redirect(back);
-    }
+    const { count: holders } = current
+        ? await editor.supabase
+            .from("loyalty_cards")
+            .select("id", { count: "exact", head: true })
+            .eq("program_id", current.id)
+        : { count: 0 };
 
     return (
         <div className="text-[#17233B]">
@@ -56,26 +62,41 @@ async function NewLoyaltyCard({ params }: PageProps) {
 
             <header className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                    New loyalty card
+                    {current ? "Change the deal" : "New loyalty card"}
                 </p>
 
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                    Start another card
+                    {current ? "Start a new card" : "Start your loyalty card"}
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                    A second card for a different habit — coffee in the morning,
-                    lunch at midday. Customers choose which to collect, so give
-                    it a name they will recognise.
+                    {current
+                        ? "A card in someone's wallet is a promise, so its stamps and reward don't change. A new one takes its place for anyone joining from now on."
+                        : "A digital stamp card customers keep on their phone. Decide what it takes and what they get."}
                 </p>
             </header>
+
+            {current && (
+                <Alert className="mt-8 border-[#17233B]/10 bg-white">
+                    <AlertTitle>
+                        {current.name} stops being handed out
+                    </AlertTitle>
+
+                    <AlertDescription>
+                        {holders
+                            ? `${holders} ${holders === 1 ? "customer is" : "customers are"} collecting ${current.stamps_required} stamps for ${current.reward.charAt(0).toLowerCase() + current.reward.slice(1)}. They keep that card, keep being stamped and claim what they were promised — they simply won't be joined by anyone new.`
+                            : `Nobody is collecting it yet, so nothing is lost. It stops being offered the moment this one starts.`}
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <LoyaltyCardBuilder
                 businessId={businessId}
                 businessName={editor.businessName}
                 businessLogoUrl={editor.businessLogoUrl}
                 program={null}
-                submitLabel="Start this card"
+                replacing={Boolean(current)}
+                submitLabel={current ? "Start the new card" : "Start this card"}
                 locked={!editor.hasPro}
             />
         </div>

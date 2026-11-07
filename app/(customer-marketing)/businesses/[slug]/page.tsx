@@ -229,15 +229,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
 
-    // Every live loyalty card, and the visitor's progress on the ones
-    // they have joined. A business can run more than one — a coffee card
-    // and a lunch card — and the customer chooses.
+    // The card on offer. Cards closed to new joiners are still being
+    // stamped for the people holding them, but they aren't offered to
+    // anyone else, so they don't belong on this page.
     const [{ data: loyaltyPrograms }, { data: { user: viewer } }] = await Promise.all([
         supabase
             .from("loyalty_programs")
             .select("id, name, stamps_required, reward, terms, card_colour, stamp_icon")
             .eq("business_id", businessId)
             .eq("is_active", true)
+            .is("closed_at", null)
             .order("created_at", { ascending: true }),
         supabase.auth.getUser(),
     ]);
