@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { ScanCardButton } from "@/components/scan-card-button";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -230,12 +231,17 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
                                 <CardContent>
                                     <p className="text-sm leading-6 text-[#17233B]/65">
-                                        Scan the QR code on the customer&apos;s card with
-                                        your phone camera, or type the code shown under
-                                        it.
+                                        Scan the QR code on the customer&apos;s card, or
+                                        type the code shown under it.
                                     </p>
 
-                                    <form action={lookUpLoyaltyCard} className="mt-5 flex gap-2">
+                                    <ScanCardButton className="mt-5 w-full sm:w-auto" />
+
+                                    <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                                        Or type the code
+                                    </p>
+
+                                    <form action={lookUpLoyaltyCard} className="mt-2 flex gap-2">
                                         <input type="hidden" name="businessId" value={businessId} />
                                         <Input
                                             name="code"

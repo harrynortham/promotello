@@ -5,6 +5,12 @@ import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
 
 test("business sets up a loyalty card, customer joins, staff stamp it", async ({ browser }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    // Named per run: one business can't have two live cards with the
+    // same name, so a fixed name passes once and fails ever after.
+    const cardName = `E2E Coffee card ${Date.now()}`;
 
     const business = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
     const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
@@ -12,7 +18,7 @@ test("business sets up a loyalty card, customer joins, staff stamp it", async ({
     // Owner starts a programme (the test business is on Pro).
     await business.goto(`/business/${businessId}/loyalty`, { waitUntil: "networkidle" });
     // A card is named now that a business can run more than one.
-    await business.locator("#card-name:visible").fill("Coffee card");
+    await business.locator("#card-name:visible").fill(cardName);
     await business.locator("#stamps-required:visible").selectOption("5");
     await business.locator("#reward:visible").fill("A free coffee");
     await business.getByRole("button", { name: "Start loyalty card" }).click();
@@ -41,6 +47,8 @@ test("business sets up a loyalty card, customer joins, staff stamp it", async ({
     // The customer sees their progress.
     await customer.reload();
     await expect(customer.getByText("1 of 5 stamps")).toBeVisible();
+
+    await admin.from("loyalty_programs").delete().eq("business_id", businessId).eq("name", cardName);
 });
 
 test("a Free business can build a loyalty card, but publishing it needs Pro", async ({ browser }) => {
@@ -62,7 +70,24 @@ test("a Free business can build a loyalty card, but publishing it needs Pro", as
 
 test("a visitor who isn't signed in is offered the card, not a form", async ({ page }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
 
+    // Its own card, so this doesn't stand on one another test left behind.
+    const { data: seeded } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Visitor card ${Date.now()}`,
+            stamps_required: 7,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    try {
     await page.goto(`/businesses/${businessId}`);
     const loyalty = page.locator('[id^="loyalty-"]').first();
     await expect(loyalty).toBeVisible();
@@ -78,6 +103,9 @@ test("a visitor who isn't signed in is offered the card, not a form", async ({ p
     await expect(loyalty.locator("input[name=name]")).toBeFocused();
     await expect(loyalty.locator("input[name=email]")).toBeVisible();
     await expect(loyalty.getByRole("link", { name: "Log in" })).toBeVisible();
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", seeded!.id);
+    }
 });
 
 // One card each, for now. The table and the screens can carry more, so
@@ -90,32 +118,58 @@ test("a business runs one loyalty card, and stamps from the same page", async ({
         auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
-    await page.goto(`/business/${businessId}/loyalty`);
-    await expect(page.getByRole("heading", { name: "Your loyalty cards" })).toBeVisible({
-        timeout: 20_000,
-    });
+    const { data: seeded } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E One card ${Date.now()}`,
+            stamps_required: 7,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id, name")
+        .single();
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/${businessId}/loyalty`);
+        await expect(page.getByRole("heading", { name: "Your loyalty cards" })).toBeVisible({
+            timeout: 20_000,
+        });
 
     // Where another card used to be offered, staff stamp one.
     await expect(page.getByText("Stamp a card")).toBeVisible();
     await expect(page.getByRole("button", { name: "Find card" })).toBeVisible();
+
+    // The camera, for staff already holding a phone. Whether it opens
+    // depends on the device, so what is checked here is that asking for
+    // it says something either way rather than failing silently.
+    await page.getByRole("button", { name: "Scan a card" }).click();
+    const scanner = page.getByRole("dialog");
+    await expect(scanner.getByText("Scan the customer's card")).toBeVisible();
+
+        // Either the viewfinder or the reason there isn't one — what is
+        // not allowed is a dialog that opens on nothing.
+        const viewfinder = await scanner.locator("video").count();
+        const refused = await scanner.getByText(/camera/i).count();
+        expect(viewfinder + refused).toBeGreaterThan(0);
+
+        await page.keyboard.press("Escape");
     await expect(page.getByText("Add another card")).toHaveCount(0);
 
-    // And the page that would make one sends you back while one exists.
-    await page.goto(`/business/${businessId}/loyalty/new`);
-    await page.waitForURL(`**/business/${businessId}/loyalty`, { timeout: 20_000 });
+        // And the page that would make one sends you back while one exists.
+        await page.goto(`/business/${businessId}/loyalty/new`);
+        await page.waitForURL(`**/business/${businessId}/loyalty`, { timeout: 20_000 });
 
-    // The card itself is changed on its own page.
-    const { data: program } = await admin
-        .from("loyalty_programs")
-        .select("id, name")
-        .eq("business_id", businessId)
-        .limit(1)
-        .single();
-
-    await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
-    await expect(page.getByRole("heading", { name: program!.name, level: 1 })).toBeVisible({
-        timeout: 20_000,
-    });
-    await expect(page.getByRole("button", { name: /Pause this card|Resume this card/ })).toBeVisible();
+        // The card itself is changed on its own page.
+        await page.goto(`/business/${businessId}/loyalty/${seeded!.id}/edit`);
+        await expect(page.getByRole("heading", { name: seeded!.name, level: 1 })).toBeVisible({
+            timeout: 20_000,
+        });
+        await expect(
+            page.getByRole("button", { name: /Pause this card|Resume this card/ }),
+        ).toBeVisible();
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", seeded!.id);
+    }
 });
