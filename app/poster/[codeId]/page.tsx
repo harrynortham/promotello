@@ -48,8 +48,8 @@ async function Poster({ params, searchParams }: PageProps) {
         .from("qr_codes")
         .select(
             `
-                id, code, label, offer_id, business_id, poster_colour, poster_eyebrow,
-                poster_headline, poster_description,
+                id, code, label, offer_id, loyalty_program_id, business_id, poster_colour,
+                poster_eyebrow, poster_headline, poster_description,
                 businesses ( name, logo_url, category, business_locations ( region, city ) )
             `,
         )
@@ -81,7 +81,23 @@ async function Poster({ params, searchParams }: PageProps) {
             .limit(1)
         : Promise.resolve({ data: [] as { title: string; discount: string; description: string }[] });
 
-    const [{ data: offers }, origin] = await Promise.all([offerQuery, requestOrigin()]);
+    // The card, when the code opens one. Its words are the poster's:
+    // what it takes to fill, and what it is worth.
+    const loyaltyQuery = qr.loyalty_program_id
+        ? supabase
+            .from("loyalty_programs")
+            .select("stamps_required, reward, terms")
+            .eq("id", qr.loyalty_program_id)
+            .eq("is_active", true)
+            .is("closed_at", null)
+            .maybeSingle()
+        : Promise.resolve({ data: null });
+
+    const [{ data: offers }, { data: loyalty }, origin] = await Promise.all([
+        offerQuery,
+        loyaltyQuery,
+        requestOrigin(),
+    ]);
     const offer = offers?.[0] ?? null;
     const link = qrLink(origin, qr.code);
     const svg = await qrSvg(link);
@@ -135,7 +151,21 @@ async function Poster({ params, searchParams }: PageProps) {
                     businessName={business?.name ?? ""}
                     place={place}
                     logoUrl={business?.logo_url}
-                    offer={offer}
+                    offer={
+                        offer ??
+                        (loyalty
+                            ? {
+                                discount: `Get ${loyalty.reward.charAt(0).toLowerCase() + loyalty.reward.slice(1)}`,
+                                description: loyalty.terms,
+                            }
+                            : null)
+                    }
+                    eyebrowFallback={loyalty ? `Collect ${loyalty.stamps_required} stamps` : null}
+                    caption={
+                        loyalty
+                            ? "Join free on Promotello and collect a stamp every time you visit."
+                            : null
+                    }
                     qrMarkup={svg}
                     link={link}
                     colour={qr.poster_colour}

@@ -32,7 +32,7 @@ export async function loadDesigner(businessId: string) {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    const [{ data: offers }, { data: business }, { count: codeCount }, hasPro, origin] = await Promise.all([
+    const [{ data: offers }, { data: business }, { data: loyalty }, { count: codeCount }, hasPro, origin] = await Promise.all([
         supabase
             .from("offers")
             .select("id, title, discount, description, approval_status")
@@ -45,6 +45,13 @@ export async function loadDesigner(businessId: string) {
             .from("businesses")
             .select("name, slug, logo_url, approval_status, business_locations ( region, city )")
             .eq("id", businessId)
+            .maybeSingle(),
+        supabase
+            .from("loyalty_programs")
+            .select("id, name, stamps_required, reward, terms")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .is("closed_at", null)
             .maybeSingle(),
         supabase
             .from("qr_codes")
@@ -67,6 +74,9 @@ export async function loadDesigner(businessId: string) {
         place: location?.region || location?.city,
         logoUrl: business?.logo_url,
         offers: offers ?? [],
+        // The card being handed out: a poster by the till is the
+        // strongest thing a business has for it.
+        loyalty: loyalty ?? null,
         // A code can only be made once the business is live.
         isLive: business?.approval_status === "approved",
         codeCount: codeCount ?? 0,

@@ -28,8 +28,18 @@ export async function GET(
         }
 
         if (typeof path === "string" && path.startsWith("/")) {
-            destination.pathname = path;
+            // A loyalty code resolves to a path with an anchor on it, and
+            // assigning that whole string to pathname escapes the # into
+            // %23 — a path that doesn't exist rather than a place on the
+            // page. The fragment is set as a fragment.
+            const [withoutHash, hash] = path.split("#");
+
+            destination.pathname = withoutHash;
             destination.searchParams.set("ref", "qr");
+
+            if (hash) {
+                destination.hash = hash;
+            }
         }
     }
 

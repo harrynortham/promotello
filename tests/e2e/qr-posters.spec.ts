@@ -554,3 +554,73 @@ test("the form is on the page for a first code, and on /qr/new after that", asyn
         if (parked.length) await admin.from("qr_codes").update({ archived_at: null }).in("id", parked);
     }
 });
+
+// The card by the till. An offer poster sells one deal; this one sells
+// the reason to come back, and the scan lands on the card rather than
+// the top of the business page.
+test("a poster can be made for the loyalty card", async ({ page, request }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const { data: card } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: state.businessId,
+            name: `E2E Poster card ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free coffee",
+            terms: "One stamp per visit.",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    let codeId: string | undefined;
+
+    try {
+        await page.goto(`/business/${state.businessId}/qr/new`);
+        await expect(page.locator("#qr-target")).toBeVisible({ timeout: 20_000 });
+
+        await page.locator("#qr-label").fill("By the till");
+        await page.selectOption("#qr-target", "loyalty");
+
+        // The card's own words, offered as the poster's.
+        await expect(page.locator("#poster-eyebrow")).toHaveAttribute("placeholder", "Collect 9 stamps");
+        await expect(page.locator("#poster-headline")).toHaveAttribute("placeholder", "Get a free coffee");
+        await expect(page.locator("#poster-description")).toHaveValue("One stamp per visit.");
+
+        await page.getByRole("button", { name: "Create QR code" }).click();
+        await page.waitForURL(`**/business/${state.businessId}/qr?created=1`, { timeout: 25_000 });
+
+        const { data: made } = await admin
+            .from("qr_codes")
+            .select("id, code, offer_id, loyalty_program_id")
+            .eq("business_id", state.businessId)
+            .eq("label", "By the till")
+            .single();
+        codeId = made!.id;
+
+        expect(made!.loyalty_program_id, "the code points at the card").toBe(card!.id);
+        expect(made!.offer_id, "and at nothing else").toBeNull();
+        await expect(page.getByText("Opens your loyalty card")).toBeVisible();
+
+        // The printed sheet says what the card takes and what it gives.
+        await page.goto(`/poster/${codeId}?size=a4`);
+        await expect(page.getByText("Collect 9 stamps")).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByRole("heading", { name: "Get a free coffee" })).toBeVisible();
+        await expect(page.getByText("One stamp per visit.")).toBeVisible();
+        // A stamp card asks to be joined, not claimed.
+        await expect(page.getByText(/Join free on Promotello and collect a stamp/)).toBeVisible();
+        await expect(page.getByText(/Claim it free on Promotello/)).toHaveCount(0);
+
+        // And a scan lands on the card, not the top of the page.
+        const scan = await request.get(`/q/${made!.code}`, { maxRedirects: 0 });
+        expect(scan.status()).toBe(307);
+        expect(scan.headers()["location"]).toContain(`#loyalty-${card!.id}`);
+    } finally {
+        if (codeId) await admin.from("qr_codes").delete().eq("id", codeId);
+        await admin.from("loyalty_programs").delete().eq("id", card!.id);
+    }
+});
