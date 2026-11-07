@@ -372,18 +372,25 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                 )}
 
                 {cardList.length > 0 && (
-                    <Card className="mt-6 border-[#17233B]/10">
-                        <CardHeader>
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <CardTitle>Loyalty cards</CardTitle>
+                    <section className="mt-10">
+                        <div className="flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                                <h3 className="text-lg font-semibold">Loyalty cards issued</h3>
 
-                                <p className="text-sm text-[#17233B]/65">
-                                    {cardList.length} {cardList.length === 1 ? "card" : "cards"}
+                                <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
+                                    Every card a customer is carrying, on any of your
+                                    cards, with how far along it is. The code is what
+                                    they show you to be stamped.
                                 </p>
                             </div>
-                        </CardHeader>
 
-                        <CardContent>
+                            <p className="text-sm text-[#17233B]/65">
+                                {cardList.length} {cardList.length === 1 ? "card" : "cards"}
+                            </p>
+                        </div>
+
+                        <Card className="mt-4 border-[#17233B]/10">
+                            <CardContent>
                             <ul className="divide-y divide-[#17233B]/10">
                                 {cardList.map((card) => {
                                     const complete = card.stamps >= (program?.stamps_required ?? 0);
@@ -423,9 +430,10 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                         </li>
                                     );
                                 })}
-                            </ul>
-                        </CardContent>
-                    </Card>
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    </section>
                 )}
             </div>
         </div>
