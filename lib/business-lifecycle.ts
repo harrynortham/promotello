@@ -33,6 +33,9 @@ export type LifecycleDue = {
         has_loyalty: boolean;
         has_poster: boolean;
         has_cover: boolean;
+        // Older payloads don't carry it. Absent means sent, so nobody is
+        // asked to send a page they already did.
+        sent_for_review?: boolean;
         trial_end: string | null;
         since: string;
         followers: number;
@@ -48,7 +51,7 @@ export type LifecycleDue = {
     approved: boolean;
 };
 
-type Step = { key: "offer" | "loyalty" | "poster" | "cover"; label: string; why: string; path: string; action: string };
+type Step = { key: "offer" | "loyalty" | "poster" | "cover" | "review"; label: string; why: string; path: string; action: string };
 
 // Loyalty cards are part of Pro, so a free business is sent to start its
 // trial rather than to a page it can't use.
@@ -92,6 +95,13 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
             path: `${base}/qr`,
             action: "Get your poster",
         },
+        {
+            key: "review",
+            label: "Send your page for review",
+            why: "We built this page for you, so nothing on it is public until you have looked it over and sent it to us. Change anything that isn't right first.",
+            path: `${base}#send-for-review`,
+            action: "Send it for review",
+        },
     ];
 }
 
@@ -103,12 +113,17 @@ function countInWords(count: number) {
     return words[count] ?? `${count} things`;
 }
 
+function sentForReview(due: LifecycleDue) {
+    return due.details.sent_for_review !== false;
+}
+
 function missingSteps(due: LifecycleDue) {
     const done = {
         cover: due.details.has_cover,
         offer: due.details.has_offer,
         loyalty: due.details.has_loyalty,
         poster: due.details.has_poster,
+        review: sentForReview(due),
     };
 
     return setupSteps(due.business_id, due.hasPro).filter((step) => !done[step.key]);
@@ -190,7 +205,9 @@ export function lifecycleEmail(
     const optOutToken = due.kind === "welcome" || due.kind === "trial_ending" ? undefined : unsubscribeToken;
 
     if (due.kind === "welcome") {
-        const steps = setupSteps(due.business_id, due.hasPro);
+        const steps = setupSteps(due.business_id, due.hasPro).filter(
+            (step) => step.key !== "review" || !sentForReview(due),
+        );
         const { html, text } = brandedEmail({
             eyebrow: "Welcome to Promotello",
             title: `${name} is on Promotello`,
@@ -241,7 +258,10 @@ export function lifecycleEmail(
 
         const remaining = missing.map((step) => step.label.toLowerCase());
         const counted = countInWords(remaining.length);
-        const title = `${counted} left before customers can find ${name}`;
+        const unsent = !sentForReview(due);
+        const title = unsent
+            ? `${name} isn't live yet, and one click would do it`
+            : `${counted} left before customers can find ${name}`;
         const list = remaining.length === 2
             ? remaining.join(" and ")
             : `${remaining.slice(0, -1).join(", ")} and ${remaining[remaining.length - 1]}`;
@@ -250,10 +270,14 @@ export function lifecycleEmail(
             eyebrow: "Still to do",
             title,
             paragraphs: [
-                remaining.length === 1
-                    ? `Your page is set up apart from one thing: ${remaining[0]}.`
-                    : `Your page is set up, but it stays quiet until the rest is done: ${list}.`,
-                "Each one takes a few minutes, and you can stop after any of them. New offers are read by our team before they appear, usually the same day.",
+                unsent
+                    ? `Nothing on your page is public until you send it to us, and you haven't yet. Have a look through it, change anything that isn't right, and send it — we usually look the same day.`
+                    : remaining.length === 1
+                        ? `Your page is set up apart from one thing: ${remaining[0]}.`
+                        : `Your page is set up, but it stays quiet until the rest is done: ${list}.`,
+                unsent && remaining.length > 1
+                    ? `Still to do after that: ${remaining.filter((item) => !item.startsWith("send your page")).join(", ")}.`
+                    : "Each one takes a few minutes, and you can stop after any of them. New offers are read by our team before they appear, usually the same day.",
             ],
             action: { label: next.action, url: absoluteUrl(next.path) },
             ...tipsFooter(optOutToken),
