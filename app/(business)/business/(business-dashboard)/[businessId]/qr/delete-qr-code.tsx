@@ -32,18 +32,21 @@ export function DeleteQrCode({
                 size="sm"
                 onClick={() => setIsOpen(true)}
             >
-                Delete
+                Retire
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete “{label}”?</DialogTitle>
+                        <DialogTitle>Retire “{label}”?</DialogTitle>
 
                         <DialogDescription>
-                            Anyone scanning that poster will no longer reach
-                            your page, so take it down if it is still up. The
-                            scans it has already had stay in your analytics.
+                            It comes off this page, and you can bring it back
+                            whenever you like. Anyone scanning a copy that is
+                            still up lands on your business page with a note
+                            that the poster is out of date, and those scans keep
+                            counting &mdash; which is how you will know whether
+                            it is still out there.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -62,7 +65,7 @@ export function DeleteQrCode({
                             <input type="hidden" name="codeId" value={codeId} />
 
                             <Button type="submit" variant="destructive" size="lg">
-                                Delete code
+                                Retire code
                             </Button>
                         </form>
                     </DialogFooter>

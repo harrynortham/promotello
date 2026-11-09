@@ -41,6 +41,7 @@ import { PageViewTracker } from "@/components/page-view-tracker";
 import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
+import { ScannedNote } from "./scanned-note";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
 import { businessPath, canonicalPath, offerPath } from "@/lib/slugs";
@@ -51,7 +52,7 @@ type BusinessPageProps = {
         // A business's slug, or a live city's (/businesses/bristol).
         slug: string;
     }>;
-    searchParams?: Promise<{ loyalty?: string }>;
+    searchParams?: Promise<{ loyalty?: string; ended?: string }>;
 };
 
 const dayNames = [
@@ -175,7 +176,10 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     await connection();
 
     const { slug } = await params;
-    const loyaltyStatus = (await searchParams)?.loyalty;
+    const scanParams = await searchParams;
+    const loyaltyStatus = scanParams?.loyalty;
+    // Set by /q/<code> when the code's target has gone.
+    const endedReason = scanParams?.ended;
     const supabase = await createClient();
 
     const { data: business, error: businessError } = await supabase
@@ -422,6 +426,8 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
             <div className="mx-auto max-w-6xl">
                 {isPreview && <PreviewNotice what="business" />}
+
+                {endedReason && <ScannedNote reason={endedReason} businessName={business.name} />}
 
                 {/* Business identity */}
                 <section
