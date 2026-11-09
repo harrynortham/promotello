@@ -181,7 +181,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         "No app for customers to download and no card reader. Customers can follow you too, so a new offer lands in their inbox without you writing anything.",
         "",
-        `It's free to use with one offer. ${founding}`,
+        `It's free to use with one offer and a QR poster. ${founding}`,
         "",
         `Worth a look? It takes about two minutes to make it yours. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
@@ -209,8 +209,8 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
     // and the count again only once places have actually gone.
     const founding =
         placesLeft === null || placesLeft <= 0
-            ? `It's free with one offer, and Pro is ${plans.pro_monthly.price} a month with the first ${TRIAL_DAYS} days free.`
-            : `It's free with one offer, and the first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}.${placesLeft < FOUNDING_MEMBER_LIMIT ? ` ${placesLeft} places left.` : ""}`;
+            ? `It's free with one offer and a poster, and Pro is ${plans.pro_monthly.price} a month with the first ${TRIAL_DAYS} days free.`
+            : `It's free with one offer and a poster, and the first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}.${placesLeft < FOUNDING_MEMBER_LIMIT ? ` ${placesLeft} places left.` : ""}`;
 
     return [
         `Hi${preview.contact_name ? ` ${preview.contact_name}` : ""}! I've built ${name} a page on Promotello — easier to look at than to explain:`,
