@@ -392,6 +392,16 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                             : "your business page"}
                                                 </p>
 
+                                                <a
+                                                    href={link}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/65 hover:text-[#FF593F]"
+                                                >
+                                                    {link.replace(/^https?:\/\//, "")}
+                                                    <FiExternalLink aria-hidden="true" className="size-3" />
+                                                </a>
+
                                                 {/* The poster is already printed and already up. It
                                                     can't be fixed by changing the poster, so it is
                                                     fixed by changing what the code opens. */}
@@ -421,15 +431,6 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                         )}
                                                     </div>
                                                 )}
-                                                <a
-                                                    href={link}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/65 hover:text-[#FF593F]"
-                                                >
-                                                    {link.replace(/^https?:\/\//, "")}
-                                                    <FiExternalLink aria-hidden="true" className="size-3" />
-                                                </a>
 
                                                 <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
                                                     {[
