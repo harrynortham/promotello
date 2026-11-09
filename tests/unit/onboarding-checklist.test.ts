@@ -67,3 +67,54 @@ test("a business with no steps at all is finished, not stuck at zero", () => {
     assert.equal(view.done, true);
     assert.equal(view.progress, 100);
 });
+
+test("a locked step is never the next step", () => {
+    const view = checklistView([
+        {
+            title: "Get ready to go live",
+            description: "",
+            required: true,
+            items: [
+                { id: "logo", label: "Add your logo", description: "", completed: false, href: "/logo", action: "Add logo" },
+                {
+                    id: "review",
+                    label: "Send your page for review",
+                    description: "",
+                    completed: false,
+                    locked: true,
+                    lockedReason: "Ready once the steps above are done.",
+                    href: "#send-for-review",
+                    action: "Send for review",
+                },
+            ],
+        },
+    ]);
+
+    // Pointing someone at something they can't do is worse than nothing.
+    assert.equal(view.nextStepId, "logo");
+    assert.equal(view.done, false);
+});
+
+test("once nothing is locked, the step they are waiting on leads", () => {
+    const view = checklistView([
+        {
+            title: "Get ready to go live",
+            description: "",
+            required: true,
+            items: [
+                { id: "logo", label: "Add your logo", description: "", completed: true, href: "/logo", action: "Add logo" },
+                {
+                    id: "review",
+                    label: "Send your page for review",
+                    description: "",
+                    completed: false,
+                    locked: false,
+                    href: "#send-for-review",
+                    action: "Send for review",
+                },
+            ],
+        },
+    ]);
+
+    assert.equal(view.nextStepId, "review");
+});

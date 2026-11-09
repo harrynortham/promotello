@@ -240,6 +240,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     // Live: customers can find them, so there is something to measure.
     // Awaiting send: we built this page and nobody has asked us to look.
     const isLive = business.approval_status === "approved" && !business.closed_at;
+    // The page as a customer would see it. Sending asks us to look at
+    // this, so it is theirs to finish first — the description and the
+    // address came from us.
+    const profileReady = Boolean(
+        business.logo_url &&
+        business.description?.trim() &&
+        locations?.length &&
+        hours?.length &&
+        business.cover_image_url,
+    );
     const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
 
     const checklist: ChecklistGroup[] = [
@@ -248,19 +258,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             description: "What customers see when they find you.",
             required: true,
             items: [
-                ...(awaitingSend
-                    ? [
-                        {
-                            id: "review",
-                            label: "Send your page for review",
-                            description:
-                                "We built this page, so nothing is public until you have looked it over and sent it to us.",
-                            completed: false,
-                            href: `${base}#send-for-review`,
-                            action: "Send for review",
-                        },
-                    ]
-                    : []),
                 {
                     id: "logo",
                     label: "Add your logo",
@@ -301,6 +298,22 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     href: `${base}/cover`,
                     action: "Add cover photo",
                 },
+                ...(awaitingSend
+                    ? [
+                        {
+                            id: "review",
+                            label: "Send your page for review",
+                            description:
+                                "We wrote this page from the outside, so have a look at it, change what isn't right, and send it to us.",
+                            completed: false,
+                            locked: !profileReady,
+                            lockedReason:
+                                "Ready once the steps above are done. Nothing is public until you send it.",
+                            href: `${base}#send-for-review`,
+                            action: "Send for review",
+                        },
+                    ]
+                    : []),
                 {
                     id: "offer",
                     label: "Create your first offer",
@@ -472,11 +485,13 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
                         <p>
-                            {isWelcome ? "It's yours now. " : ""}We built it for you, so the
-                            photo, the description and the offer are our suggestions. Open it to
-                            see what a customer would see, change anything that isn&apos;t right,
-                            and send it to us when you&apos;re happy. Nothing is public until you
-                            do.
+                            {isWelcome ? "It's yours now. " : ""}We wrote it from the outside, so
+                            the description, the photo and the offer are our guesses. Open it to
+                            see what a customer would see, and work down the list below.
+                            {profileReady
+                                ? " When it's right, send it to us."
+                                : " Once it's yours, you can send it to us."}{" "}
+                            Nothing is public until you do.
                         </p>
 
                         {/* "This page" read as the dashboard, which is where they
@@ -492,12 +507,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                 <FiExternalLink aria-hidden="true" />
                             </Button>
 
-                            <form action={requestBusinessReview}>
-                                <input type="hidden" name="businessId" value={businessId} />
-                                <Button type="submit" size="sm">
-                                    Send {business.name} for review
-                                </Button>
-                            </form>
+                            {profileReady && (
+                                <form action={requestBusinessReview}>
+                                    <input type="hidden" name="businessId" value={businessId} />
+                                    <Button type="submit" size="sm">
+                                        Send {business.name} for review
+                                    </Button>
+                                </form>
+                            )}
                         </div>
                     </AlertDescription>
                 </Alert>
