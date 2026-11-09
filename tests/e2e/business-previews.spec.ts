@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
+import { previewLink } from "../../lib/previews";
 import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
 
 const options = { auth: { autoRefreshToken: false, persistSession: false } };
@@ -19,7 +20,7 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
     try {
         // 1. The admin builds it.
         const adminPage = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
-        await adminPage.goto("/admin/previews");
+        await adminPage.goto("/admin/previews/new");
         await adminPage.locator("#businessName").fill(name);
         await adminPage.locator("#category option").nth(1).waitFor({ state: "attached" });
         await adminPage.locator("#category").selectOption({ index: 1 });
@@ -40,7 +41,7 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         businessId = row!.business_id;
         const business = Array.isArray(row!.businesses) ? row!.businesses[0] : row!.businesses;
         expect(business.approval_status).toBe("pending");
-        const previewPath = `/business/preview/${row!.token}`;
+        const previewPath = previewLink(row!.token, business.name);
 
         // Admins checking the page aren't counted as views.
         await adminPage.goto(previewPath);
