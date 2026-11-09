@@ -30,9 +30,12 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // Location is used by "Use my location"; nothing needs the
-          // camera or microphone.
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
+          // The camera is how staff stamp a loyalty card and redeem a
+          // voucher (components/scan-qr-button), and location is behind
+          // "Use my location". Nothing needs the microphone. A policy
+          // denying the camera doesn't just hide a button: getUserMedia
+          // rejects, so the scanners fall back to typing the code.
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self)" },
         ],
       },
     ];
