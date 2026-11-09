@@ -4,6 +4,7 @@ import { after, NextResponse } from "next/server";
 import { accountWelcomeEmail } from "@/lib/account-emails";
 import { sendEmails } from "@/lib/email";
 import { landingAfterSignIn } from "@/lib/landing";
+import { previewBeingClaimed } from "@/lib/previews";
 import { isBusinessDestination, safeNextPath } from "@/lib/redirects";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
@@ -52,6 +53,20 @@ export async function GET(request: Request) {
           after(() => markBusinessSignUp(user));
         } else if (!next.startsWith("/invite/")) {
           after(() => welcomeNewCustomer(user));
+        }
+
+        // They pressed Claim, were sent to register, and have just
+        // confirmed their email. Making them press it again asks twice for
+        // the same thing, so it is finished here and they land on the
+        // business rather than back on the sales page for it.
+        const claiming = previewBeingClaimed(next);
+
+        if (claiming) {
+          const businessId = await claimPreviewAfterSignIn(supabase, claiming);
+
+          if (businessId) {
+            return NextResponse.redirect(new URL(`/business/${businessId}?welcome=1`, requestUrl.origin));
+          }
         }
 
         const landing = unasked ? await landingAfterSignIn(supabase, user) : next;
@@ -119,6 +134,23 @@ function isNewAccount(user: User) {
 
 // Read by claim_business_signup_reminders(): business accounts that
 // haven't created a business a day later get one reminder.
+// Already claimed by them returns the same business, so arriving twice is
+// harmless. Claimed by somebody else raises, and they go on to the preview
+// page, which now says it has an owner.
+async function claimPreviewAfterSignIn(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  token: string,
+) {
+  const { data, error } = await supabase.rpc("claim_business_preview", { requested_token: token });
+
+  if (error) {
+    console.error("Auth callback: claiming the preview failed", error);
+    return null;
+  }
+
+  return typeof data === "string" ? data : null;
+}
+
 async function markBusinessSignUp(user: User) {
   if (user.app_metadata?.business_signup_at || !isNewAccount(user)) {
     return;
