@@ -225,25 +225,22 @@ Harry's own: upgrade to Claude Max.
 ### Stage 1 — Prove the chain works. No new features.
 
 None of this is a build. It's a day or two with a phone, and any of it can
-invalidate the rest of the list, which is why nothing else starts first.
+invalidate the rest of the list, which is why nothing else starts first. The
+real-phone scan is done: a printed code with the brand badge at error
+correction H scans.
 
-1. **Scan a QR code with a real phone.** Flagged four or five times and still
-   open. It's the product's first physical touchpoint — poster in a window,
-   customer scans, card appears. The brand badge sits in the middle at error
-   correction H, which should be fine, but "should" is doing a lot of work for
-   the one interaction the whole pitch rests on. Five minutes settles it.
-2. **Walk the whole flow, start to finish, and take notes on the onboarding.**
+1. **Walk the whole flow, start to finish, and take notes on the onboarding.**
    Send the preview email, claim the business profile, update the profile,
    create a QR code for the business page, create a QR code for an offer, claim
    the offer and scan the QR, create a voucher and a QR code for it, scan that,
    then sign in as the business and redeem both by scanning. Then do it again
    as a business that never got a preview email, and once more with Google
    sign-in.
-3. **The loyalty card, end to end.** Rebuilt in #164 and #165, so the old "all
+2. **The loyalty card, end to end.** Rebuilt in #164 and #165, so the old "all
    broken and wrong" note is stale, but it has not been through a real till:
    join by scanning, stamp, stamp to the reward, and what a customer sees when
    the card is full.
-4. **Admin approval and decline.** Approve and decline both a business and an
+3. **Admin approval and decline.** Approve and decline both a business and an
    offer, and write down exactly what the business receives at each step. That
    note becomes the work in stage 3.
 
