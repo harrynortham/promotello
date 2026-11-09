@@ -283,14 +283,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     href: `${base}/cover`,
                     action: "Add cover photo",
                 },
-                {
-                    id: "offer",
-                    label: "Create your first offer",
-                    description: "Give people a reason to visit. It goes live once approved.",
-                    completed: offers.length > 0,
-                    href: `${base}/offers/new`,
-                    action: "Create offer",
-                },
                 ...(business.approval_status === "pending" && !business.review_requested_at
                     ? [
                         {
@@ -304,6 +296,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         },
                     ]
                     : []),
+                {
+                    id: "offer",
+                    label: "Create your first offer",
+                    description: "Give people a reason to visit. It goes live once approved.",
+                    completed: offers.length > 0,
+                    href: `${base}/offers/new`,
+                    action: "Create offer",
+                },
             ],
         },
         {

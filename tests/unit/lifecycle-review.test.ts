@@ -59,3 +59,14 @@ test("with everything else done, the next step is to send it", () => {
 
     assert.match(email.subject, /Send your page for review/);
 });
+
+test("sending comes before writing an offer", () => {
+    // Our clock starts when they send, so it runs while they write the
+    // offer rather than after it.
+    const email = lifecycleEmail(due("welcome", { has_cover: false, has_offer: false }), "sam@example.com")!;
+
+    const review = email.text.indexOf("Send your page for review");
+    const offer = email.text.indexOf("Post your first offer");
+
+    assert.ok(review > 0 && offer > review, email.text);
+});
