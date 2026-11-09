@@ -112,7 +112,17 @@ test("a closed business keeps its customers' records, and takes no new ones", as
     const name = `E2E Closed Records ${Date.now()}`;
     const business = await seedBusiness(admin, state.businessUserId, name);
 
-    const { data: program } = await admin
+    // A loyalty card is part of Pro, so the seeded business needs one.
+    const stamp = Date.now();
+    const { error: subscriptionError } = await admin.from("subscriptions").insert({
+        business_id: business.id,
+        stripe_subscription_id: `sub_e2e_close_${stamp}`,
+        stripe_customer_id: `cus_e2e_close_${stamp}`,
+        status: "active",
+    });
+    expect(subscriptionError, "could not seed a Pro subscription").toBeNull();
+
+    const { data: program, error: programError } = await admin
         .from("loyalty_programs")
         .insert({
             business_id: business.id,
@@ -124,6 +134,8 @@ test("a closed business keeps its customers' records, and takes no new ones", as
         })
         .select("id")
         .single();
+
+    expect(programError, "could not seed a loyalty card").toBeNull();
 
     try {
         // A customer who joined before it closed.
