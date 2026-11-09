@@ -33,6 +33,7 @@ type BusinessMobileNavProps = {
     businessSlug: string;
     businessLogoUrl?: string | null;
     approvalStatus: string;
+    reviewRequested: boolean;
     canManage: boolean;
     businesses?: Business[];
 };
@@ -43,6 +44,7 @@ export function BusinessMobileNav({
     businessSlug,
     businessLogoUrl,
     approvalStatus,
+    reviewRequested,
     canManage,
     businesses = [],
 }: BusinessMobileNavProps) {
@@ -96,6 +98,7 @@ export function BusinessMobileNav({
 
                             <BusinessStatusBadge
                                 status={approvalStatus}
+                                reviewRequested={reviewRequested}
                                 className="mt-1"
                             />
                         </div>

@@ -28,6 +28,7 @@ type Business = {
     business_previews: { claimed_at: string | null }[];
     logo_url: string | null;
     approval_status: string;
+    review_requested_at: string | null;
 };
 
 function BusinessLayoutLoading() {
@@ -91,6 +92,7 @@ async function BusinessLayoutContent({
                     name,
                     logo_url,
                     approval_status,
+                    review_requested_at,
                     business_previews ( claimed_at )
                 )
             `,
@@ -156,6 +158,7 @@ async function BusinessLayoutContent({
                         businessSlug={currentBusiness.slug}
                         businessLogoUrl={currentBusiness.logo_url}
                         approvalStatus={currentBusiness.approval_status}
+                        reviewRequested={Boolean(currentBusiness.review_requested_at)}
                         canManage={canManage}
                         businesses={businesses}
                     />
@@ -182,6 +185,7 @@ async function BusinessLayoutContent({
 
                         <BusinessStatusBadge
                             status={currentBusiness.approval_status}
+                            reviewRequested={Boolean(currentBusiness.review_requested_at)}
                             className="mt-3"
                         />
 

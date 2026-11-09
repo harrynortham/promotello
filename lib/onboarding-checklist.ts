@@ -10,6 +10,11 @@ export type ChecklistItem = {
     // What the button says while the step is still to do, e.g. "Add your logo".
     action: string;
     pro?: boolean;
+    // A step that isn't theirs to do yet. It is shown, so they can see
+    // where this is going, but it can't be the next thing and it can't be
+    // pressed.
+    locked?: boolean;
+    lockedReason?: string;
 };
 
 export type ChecklistGroup = {
@@ -59,7 +64,9 @@ export function checklistView(groups: ChecklistGroup[]): ChecklistView {
         completedCount,
         requiredCount,
         progress: requiredCount ? Math.round((completedCount / requiredCount) * 100) : 100,
-        nextStepId: remaining[0]?.id ?? null,
+        // A locked step is not the next step: pointing someone at
+        // something they can't do is worse than pointing at nothing.
+        nextStepId: remaining.find((item) => !item.locked)?.id ?? null,
         groups: shown,
     };
 }

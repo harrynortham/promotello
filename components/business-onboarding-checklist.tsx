@@ -66,7 +66,9 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                                         key={item.id}
                                         className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${isNext
                                             ? "border-[#FF593F] bg-[#FF593F]/5"
-                                            : "border-[#17233B]/10"
+                                            : item.locked
+                                                ? "border-dashed border-[#17233B]/15"
+                                                : "border-[#17233B]/10"
                                             }`}
                                     >
                                         <div className="flex gap-3">
@@ -89,7 +91,9 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                                                     )}
                                                 </p>
                                                 {!item.completed && (
-                                                    <p className="mt-0.5 text-sm leading-6 text-[#17233B]/70">{item.description}</p>
+                                                    <p className="mt-0.5 text-sm leading-6 text-[#17233B]/70">
+                                                        {item.locked && item.lockedReason ? item.lockedReason : item.description}
+                                                    </p>
                                                 )}
                                                 {item.completed && <span className="sr-only">Done</span>}
                                             </div>
@@ -98,6 +102,10 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                                         {item.completed ? (
                                             <Button render={<Link href={item.href} />} nativeButton={false} variant="ghost" size="sm" className="shrink-0 text-[#17233B]/70">
                                                 Edit
+                                            </Button>
+                                        ) : item.locked ? (
+                                            <Button type="button" variant="outline" size="sm" className="shrink-0" disabled>
+                                                {item.action}
                                             </Button>
                                         ) : (
                                             <Button

@@ -237,6 +237,21 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
     const base = `/business/${businessId}`;
 
+    // Live: customers can find them, so there is something to measure.
+    // Awaiting send: we built this page and nobody has asked us to look.
+    const isLive = business.approval_status === "approved" && !business.closed_at;
+    // The page as a customer would see it. Sending asks us to look at
+    // this, so it is theirs to finish first — the description and the
+    // address came from us.
+    const profileReady = Boolean(
+        business.logo_url &&
+        business.description?.trim() &&
+        locations?.length &&
+        hours?.length &&
+        business.cover_image_url,
+    );
+    const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
+
     const checklist: ChecklistGroup[] = [
         {
             title: "Get ready to go live",
@@ -283,14 +298,17 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     href: `${base}/cover`,
                     action: "Add cover photo",
                 },
-                ...(business.approval_status === "pending" && !business.review_requested_at
+                ...(awaitingSend
                     ? [
                         {
                             id: "review",
                             label: "Send your page for review",
                             description:
-                                "We built this page, so nothing is public until you have looked it over and sent it to us.",
+                                "We wrote this page from the outside, so have a look at it, change what isn't right, and send it to us.",
                             completed: false,
+                            locked: !profileReady,
+                            lockedReason:
+                                "Ready once the steps above are done. Nothing is public until you send it.",
                             href: `${base}#send-for-review`,
                             action: "Send for review",
                         },
@@ -389,8 +407,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </div>
 
                     <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                        Monitor your business activity and manage everything
-                        from one place.
+                        {isLive
+                            ? "Monitor your business activity and manage everything from one place."
+                            : `Let's get ${business.name} in front of customers.`}
                     </p>
                 </div>
 
@@ -410,7 +429,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </div>
             </div>
 
-            {isWelcome && (
+            {isWelcome && !awaitingSend && (
                 <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
                     <AlertTitle>Welcome to Promotello, {business.name} is set up</AlertTitle>
                     <AlertDescription>
@@ -461,15 +480,18 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </Alert>
             )}
 
-            {business.approval_status === "pending" && !business.review_requested_at && (
+            {awaitingSend && (
                 <Alert id="send-for-review" className="scroll-mt-24 border-[#FF593F]/30 bg-[#FF593F]/5">
                     <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
                         <p>
-                            We built it for you, so the photo, the description and the offer
-                            are our suggestions. Open it to see what a customer would see,
-                            change anything that isn&apos;t right, and send it to us when
-                            you&apos;re happy. Nothing is public until you do.
+                            {isWelcome ? "It's yours now. " : ""}We wrote it from the outside, so
+                            the description, the photo and the offer are our guesses. Open it to
+                            see what a customer would see, and work down the list below.
+                            {profileReady
+                                ? " When it's right, send it to us."
+                                : " Once it's yours, you can send it to us."}{" "}
+                            Nothing is public until you do.
                         </p>
 
                         {/* "This page" read as the dashboard, which is where they
@@ -485,12 +507,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                 <FiExternalLink aria-hidden="true" />
                             </Button>
 
-                            <form action={requestBusinessReview}>
-                                <input type="hidden" name="businessId" value={businessId} />
-                                <Button type="submit" size="sm">
-                                    Send {business.name} for review
-                                </Button>
-                            </form>
+                            {profileReady && (
+                                <form action={requestBusinessReview}>
+                                    <input type="hidden" name="businessId" value={businessId} />
+                                    <Button type="submit" size="sm">
+                                        Send {business.name} for review
+                                    </Button>
+                                </form>
+                            )}
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -539,6 +563,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
             <BusinessOnboardingChecklist groups={checklist} />
 
+            {isLive && (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader>
@@ -596,6 +621,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </CardContent>
                 </Card>
             </div>
+            )}
 
             {lowInventoryOffers.length > 0 && (
                 <Alert className="border-orange-200 bg-orange-50 text-orange-800">
@@ -611,6 +637,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </Alert>
             )}
 
+            {isLive && (
             <Card>
                 <CardHeader>
                     <CardTitle>Offer performance</CardTitle>
@@ -706,6 +733,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </CardContent>
             </Card>
 
+            )}
+
+            {isLive && (
             <BusinessRecentRedemptions
                 businessId={businessId}
                 redemptions={recentRedemptions.map((redemption) => {
@@ -727,6 +757,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     };
                 })}
             />
+            )}
 
             <Card>
                 <CardHeader>
