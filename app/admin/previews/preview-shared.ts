@@ -20,6 +20,7 @@ export type PreviewRow = {
         name: string;
         approval_status: string;
         review_requested_at: string | null;
+        closed_at: string | null;
         logo_url: string | null;
         cover_image_url: string | null;
         business_locations: { city: string | null; region: string | null; cities: { name: string } | null }[];
@@ -27,7 +28,7 @@ export type PreviewRow = {
 };
 
 export const previewColumns =
-    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, logo_url, cover_image_url, business_locations ( city, region, cities ( name ) ) )";
+    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, business_locations ( city, region, cities ( name ) ) )";
 
 // Signed by a real name where there is one. A DM from a brand account
 // signed "The Promotello team" reads worse than one signed by nobody.
@@ -62,15 +63,41 @@ export function signOff(sender: string) {
     return ["Cheers,", sender.trim().split(/\s+/)[0]];
 }
 
+// What became of a preview somebody claimed. Outreach is done with it;
+// what matters now is whether it turned into a business, and whose move
+// it is if it hasn't.
+export type ClaimedState = {
+    label: string;
+    // Waiting on them, waiting on us, or finished either way.
+    tone: "live" | "them" | "us" | "gone";
+};
+
+export function claimedState(preview: PreviewRow): ClaimedState {
+    const business = preview.businesses;
+
+    if (!business || business.closed_at) {
+        return { label: "Closed", tone: "gone" };
+    }
+
+    if (business.approval_status === "approved") {
+        return { label: "Live", tone: "live" };
+    }
+
+    if (business.approval_status === "rejected" || business.approval_status === "suspended") {
+        return { label: business.approval_status === "rejected" ? "Not approved" : "Suspended", tone: "gone" };
+    }
+
+    // Pending: ours to review once they've sent it, theirs until then.
+    return business.review_requested_at
+        ? { label: "Waiting for review", tone: "us" }
+        : { label: "Not sent", tone: "them" };
+}
+
 // Claimed, but the owner hasn't sent the page to us — so it is invisible
 // to customers and waiting on them, not on us. Worth seeing at a glance:
 // a page nobody sends is a business quietly lost.
 export function awaitingSend(preview: PreviewRow) {
-    return Boolean(
-        preview.claimed_at &&
-        preview.businesses?.approval_status === "pending" &&
-        !preview.businesses?.review_requested_at,
-    );
+    return claimedState(preview).tone === "them";
 }
 
 export const statusLabels: Record<string, string> = {
