@@ -12,13 +12,16 @@ import { businessHasPro } from "@/lib/billing";
 import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
+import { qrTarget, todayInUk, type QrLoyaltyProgram, type QrOffer } from "@/lib/qr-target";
+import { restoreQrCode } from "./actions";
 import { DeleteQrCode } from "./delete-qr-code";
+import { PointQrCode } from "./point-qr-code";
 import { QrHowItWorks } from "./how-it-works";
 import { PosterDesigner } from "./poster-designer";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; created?: string }>;
+    searchParams: Promise<{ error?: string; created?: string; pointed?: string; restored?: string }>;
 };
 
 type QrCode = {
@@ -26,16 +29,27 @@ type QrCode = {
     code: string;
     label: string;
     created_at: string;
+    archived_at: string | null;
+    former_target: string | null;
     loyalty_program_id: string | null;
-    offers: { title: string; discount: string } | { title: string; discount: string }[] | null;
+    offers: QrOffer | QrOffer[] | null;
+    loyalty_programs: QrLoyaltyProgram | QrLoyaltyProgram[] | null;
 };
+
+// PostgREST gives an embedded row either way round depending on the join.
+function one<T>(value: T | T[] | null | undefined): T | null {
+    if (Array.isArray(value)) return value[0] ?? null;
+    return value ?? null;
+}
 
 const errorMessages: Record<string, string> = {
     label: "Give the code a name between 2 and 60 characters, like “Front window”.",
     limit: "The Free plan includes 1 QR code. Upgrade to Pro for a code in every spot.",
     approval: "A QR code can be made once your page is approved. We check every new business, usually the same day.",
     create: "We couldn't create that code. Please try again.",
-    delete: "We couldn't delete that code. Please try again.",
+    delete: "We couldn't retire that code. Please try again.",
+    point: "We couldn't point that code somewhere else. Please try again.",
+    restore: "We couldn't bring that code back. Please try again.",
 };
 
 function LoadingState() {
@@ -59,14 +73,14 @@ function scanWindows() {
     return {
         since30: new Date(now - 30 * 86_400_000).toISOString(),
         since7: new Date(now - 7 * 86_400_000).toISOString(),
-        today: new Date(now).toISOString().slice(0, 10),
+        today: todayInUk(new Date(now)),
     };
 }
 
 async function QrContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, created }] = await Promise.all([params, searchParams]);
+    const [{ businessId }, { error, created, pointed, restored }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
 
     const {
@@ -94,9 +108,13 @@ async function QrContent({ params, searchParams }: PageProps) {
     const [{ data: codes }, { data: offers }, { data: business }, { data: loyalty }, hasPro, origin] = await Promise.all([
         supabase
             .from("qr_codes")
-            .select("id, code, label, created_at, loyalty_program_id, offers ( title, discount )")
+            .select(
+                "id, code, label, created_at, archived_at, former_target, loyalty_program_id, offers ( title, discount, approval_status, expires_at, plan_paused_at ), loyalty_programs ( name, is_active, closed_at )",
+            )
             .eq("business_id", businessId)
-            .is("archived_at", null)
+            // Retired codes come too: the poster is still in a window, so
+            // it still resolves and still counts, and the business is the
+            // only one who can take it down.
             .order("created_at", { ascending: true }),
         supabase
             .from("offers")
@@ -123,8 +141,9 @@ async function QrContent({ params, searchParams }: PageProps) {
         requestOrigin(),
     ]);
 
-    const qrCodes = (codes ?? []) as unknown as QrCode[];
-    const codeIds = qrCodes.map((code) => code.id);
+    const allCodes = (codes ?? []) as unknown as QrCode[];
+    const qrCodes = allCodes.filter((code) => !code.archived_at);
+    const codeIds = allCodes.map((code) => code.id);
 
     // Recent scans for the 7 and 30 day counts, plus an all-time count per code.
     const [{ data: recentScans }, totals] = await Promise.all([
@@ -141,6 +160,14 @@ async function QrContent({ params, searchParams }: PageProps) {
             }),
         ),
     ]);
+
+    // A retired code nobody scans is simply gone. One that is still being
+    // scanned is a poster someone forgot to take down, which is worth saying.
+    const retiredInUse = allCodes.filter(
+        (code) =>
+            code.archived_at &&
+            (recentScans ?? []).some((scan) => scan.qr_code_id === code.id),
+    );
 
     const totalById = Object.fromEntries(totals);
     const svgs = await Promise.all(qrCodes.map((code) => qrSvg(qrLink(origin, code.code))));
@@ -193,6 +220,26 @@ async function QrContent({ params, searchParams }: PageProps) {
                         <AlertTitle>QR code created</AlertTitle>
                         <AlertDescription>
                             Print its poster below and put it where customers will see it.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {pointed && !error && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>That poster works again</AlertTitle>
+                        <AlertDescription>
+                            The code now opens what you picked. Nothing to reprint &mdash; the
+                            poster in your window is already pointing at it.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {restored && !error && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>Poster brought back</AlertTitle>
+                        <AlertDescription>
+                            It is back in your posters below, and you can point it at
+                            something else from there.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -314,7 +361,14 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 </div>
                             )}
                             {qrCodes.map((code, index) => {
-                                const offer = Array.isArray(code.offers) ? code.offers[0] : code.offers;
+                                const target = qrTarget(
+                                    {
+                                        former_target: code.former_target,
+                                        offers: one(code.offers),
+                                        loyalty_programs: one(code.loyalty_programs),
+                                    },
+                                    today,
+                                );
                                 const scans = (recentScans ?? []).filter((scan) => scan.qr_code_id === code.id);
                                 const last7 = scans.filter((scan) => scan.scanned_at >= since7).length;
                                 const link = qrLink(origin, code.code);
@@ -331,12 +385,42 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                 <h2 className="text-lg font-semibold">{code.label}</h2>
                                                 <p className="mt-1 text-sm text-[#17233B]/70">
                                                     Opens{" "}
-                                                    {offer
-                                                        ? `“${offer.title}”`
-                                                        : code.loyalty_program_id
+                                                    {target.kind === "offer" && target.name
+                                                        ? `“${target.name}”`
+                                                        : target.kind === "card"
                                                             ? "your loyalty card"
                                                             : "your business page"}
                                                 </p>
+
+                                                {/* The poster is already printed and already up. It
+                                                    can't be fixed by changing the poster, so it is
+                                                    fixed by changing what the code opens. */}
+                                                {!target.live && (
+                                                    <div className="mt-3 rounded-lg border border-[#FF593F]/30 bg-[#FFF4E8] p-3">
+                                                        <p className="text-sm font-medium text-[#17233B]">
+                                                            {target.problem}
+                                                        </p>
+                                                        <p className="mt-1 text-xs leading-5 text-[#17233B]/70">
+                                                            Nobody hits a dead end: a scan lands on your
+                                                            business page with a note that the poster is out
+                                                            of date.{" "}
+                                                            {scans.length > 0
+                                                                ? `It has been scanned ${scans.length} ${scans.length === 1 ? "time" : "times"} in the last 30 days.`
+                                                                : "It hasn't been scanned in the last 30 days."}{" "}
+                                                            Point it at something else and the poster works
+                                                            again, with no reprint.
+                                                        </p>
+
+                                                        {canManage && (
+                                                            <PointQrCode
+                                                                businessId={businessId}
+                                                                codeId={code.id}
+                                                                offers={offers ?? []}
+                                                                loyalty={loyalty}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <a
                                                     href={link}
                                                     target="_blank"
@@ -417,6 +501,55 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 );
                             })}
 
+                        </div>
+                    )}
+
+                    {retiredInUse.length > 0 && (
+                        <div className="mt-12">
+                            <h2 className="text-xl font-semibold tracking-tight">
+                                Retired posters still being scanned
+                            </h2>
+                            <p className="mt-1 max-w-2xl text-sm leading-6 text-[#17233B]/70">
+                                You retired {retiredInUse.length === 1 ? "this code" : "these codes"}, but
+                                {retiredInUse.length === 1 ? " someone is" : " people are"} still scanning
+                                {retiredInUse.length === 1 ? " it" : " them"}, so the poster is still
+                                somewhere. Scans land on your business page. Bring it back to point it at
+                                something new, or go and take it down.
+                            </p>
+
+                            <div className="mt-4 grid gap-4">
+                                {retiredInUse.map((code) => {
+                                    const scans = (recentScans ?? []).filter(
+                                        (scan) => scan.qr_code_id === code.id,
+                                    );
+
+                                    return (
+                                        <Card key={code.id} className="border-[#17233B]/10">
+                                            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                                                <div className="min-w-0">
+                                                    <h3 className="font-semibold">{code.label}</h3>
+                                                    <p className="mt-1 text-sm text-[#17233B]/70">
+                                                        {scans.length} {scans.length === 1 ? "scan" : "scans"} in the
+                                                        last 30 days
+                                                        {code.former_target ? ` · printed for “${code.former_target}”` : ""}
+                                                    </p>
+                                                </div>
+
+                                                {canManage && (
+                                                    <form action={restoreQrCode} className="shrink-0">
+                                                        <input type="hidden" name="businessId" value={businessId} />
+                                                        <input type="hidden" name="codeId" value={code.id} />
+
+                                                        <Button type="submit" size="sm" variant="outline">
+                                                            Bring it back
+                                                        </Button>
+                                                    </form>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </section>

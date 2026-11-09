@@ -504,10 +504,10 @@ export default function EditOfferForm({
                                             ? "1 QR code points at it."
                                             : `${attached.codes} QR codes point at it.`}
                                     </strong>{" "}
-                                    The code keeps working, but a scan lands on your
-                                    business page instead of this offer — and a poster
-                                    already in your window will be advertising a deal
-                                    that isn&rsquo;t there.
+                                    The code keeps working: a scan lands on your business
+                                    page, with a note that the offer has ended, so nobody
+                                    reaches a dead end. From your QR page you can point
+                                    the poster at another offer without reprinting it.
                                 </li>
                             )}
 

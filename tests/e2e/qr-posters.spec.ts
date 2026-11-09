@@ -624,3 +624,78 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
         await admin.from("loyalty_programs").delete().eq("id", card!.id);
     }
 });
+
+// A poster is printed once and stays in a window for months. Deleting the
+// offer behind it used to leave a code advertising a deal that no longer
+// exists, with nothing to say about it at either end.
+test("a poster for a deleted offer still lands somewhere, and both sides are told", async ({ page, request }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const title = `E2E Deleted Offer ${Date.now()}`;
+    const { data: offer } = await admin
+        .from("offers")
+        .insert({
+            business_id: state.businessId,
+            created_by: state.businessUserId,
+            slug: `e2e-deleted-qr-${Date.now()}`,
+            title,
+            category: "Testing",
+            discount: "5% off",
+            description: "An offer that is about to be deleted.",
+            availability: "Available now",
+            expires_at: "2030-12-31",
+            terms: "For automated tests only.",
+            approval_status: "pending",
+            redemption_count: 0,
+        })
+        .select("id")
+        .single();
+
+    const { data: code } = await admin
+        .from("qr_codes")
+        .insert({ business_id: state.businessId, label: "E2E Ended Poster", offer_id: offer!.id })
+        .select("id, code")
+        .single();
+
+    try {
+        await admin.from("offers").delete().eq("id", offer!.id);
+
+        // The delete takes offer_id with it, so the title is kept instead.
+        const { data: after } = await admin
+            .from("qr_codes")
+            .select("offer_id, former_target")
+            .eq("id", code!.id)
+            .single();
+
+        expect(after!.offer_id).toBeNull();
+        expect(after!.former_target).toBe(title);
+
+        // The scan still resolves, and carries the reason.
+        const scan = await request.get(`/q/${code!.code}`, { maxRedirects: 0 });
+        expect(scan.status()).toBe(307);
+
+        const location = scan.headers()["location"];
+        expect(location).toContain(`/businesses/${state.businessId}`);
+        expect(location).toContain("ended=offer");
+
+        // Someone standing in the shop is told why this isn't the page the
+        // poster promised. The uuid address redirects to the slug, so this
+        // also proves the reason survives that redirect.
+        await page.goto(location);
+        await expect(page.getByRole("heading", { name: "That offer has ended." })).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByRole("link", { name: /See what/ })).toBeVisible();
+
+        // And the business is told, with the repair in reach.
+        await page.goto(`/business/${state.businessId}/qr`);
+        const card = page.locator('[data-slot="card"]').filter({ hasText: "E2E Ended Poster" });
+        await expect(card.getByText(/You deleted this offer/)).toBeVisible({ timeout: 10_000 });
+        await expect(card.getByText(/no reprint/)).toBeVisible();
+        await expect(card.getByRole("button", { name: "Point it there" })).toBeVisible();
+    } finally {
+        await admin.from("qr_codes").delete().eq("id", code!.id);
+        await admin.from("offers").delete().eq("id", offer!.id);
+    }
+});

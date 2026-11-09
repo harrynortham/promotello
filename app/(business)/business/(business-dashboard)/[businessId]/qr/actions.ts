@@ -92,3 +92,60 @@ export async function deleteQrCode(formData: FormData) {
 
     revalidatePath(`/business/${businessId}/qr`);
 }
+
+// Point a printed code at something else. The poster in the window is the
+// expensive part, not the code behind it, so an offer that ends should
+// never mean a reprint.
+export async function pointQrCode(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const codeId = String(formData.get("codeId") ?? "");
+    const target = String(formData.get("target") ?? "business");
+    const loyaltyProgramId = String(formData.get("loyaltyProgramId") ?? "");
+    const page = `/business/${businessId}/qr`;
+
+    const { supabase } = await requireUser();
+
+    // RLS checks the admin role and that the offer or card is this
+    // business's own.
+    const { error } = await supabase
+        .from("qr_codes")
+        .update({
+            offer_id: target === "business" || target === "loyalty" ? null : target,
+            loyalty_program_id: target === "loyalty" ? loyaltyProgramId || null : null,
+            // Whatever it used to say, it says this now.
+            former_target: null,
+        })
+        .eq("id", codeId)
+        .eq("business_id", businessId);
+
+    if (error) {
+        redirect(`${page}?error=point`);
+    }
+
+    revalidatePath(page);
+    redirect(`${page}?pointed=1`);
+}
+
+// Un-retire a code. Worth offering because the poster it was printed on
+// is usually still up: that is how the business noticed.
+export async function restoreQrCode(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const codeId = String(formData.get("codeId") ?? "");
+    const page = `/business/${businessId}/qr`;
+
+    const { supabase } = await requireUser();
+
+    const { error } = await supabase
+        .from("qr_codes")
+        .update({ archived_at: null })
+        .eq("id", codeId)
+        .eq("business_id", businessId);
+
+    if (error) {
+        // The Free plan's one-code limit is enforced on update too.
+        redirect(`${page}?error=${error.code === "P0004" ? "limit" : "restore"}`);
+    }
+
+    revalidatePath(page);
+    redirect(`${page}?restored=1`);
+}
