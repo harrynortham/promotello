@@ -98,3 +98,22 @@ test("editing an approved offer sends it back for review", async () => {
         await supabase.from("businesses").delete().eq("id", business!.id);
     }
 });
+
+// The response headers from next.config.ts. The camera one is here
+// because denying it doesn't look like a bug: the page loads, the button
+// appears, and getUserMedia rejects only once a member of staff points a
+// phone at a customer's code.
+test("the headers lock the site down without locking out the scanner", async ({ page }) => {
+    const response = await page.goto("/");
+    const headers = response!.headers();
+
+    const policy = headers["permissions-policy"];
+    expect(policy).toContain("camera=(self)");
+    expect(policy).toContain("microphone=()");
+    expect(policy).toContain("geolocation=(self)");
+
+    expect(headers["x-frame-options"]).toBe("DENY");
+    expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+    expect(headers["x-content-type-options"]).toBe("nosniff");
+    expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+});
