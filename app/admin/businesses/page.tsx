@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiExternalLink } from "react-icons/fi";
@@ -84,8 +84,14 @@ export default function AdminBusinessesPage() {
     // the directory, newest first, for looking something up.
     const [tab, setTab] = useState<"pending" | "all">("pending");
     const [status, setStatus] = useState<Status | "all">("all");
+    // What is typed, and what the list is filtered by: the box changes on
+    // every keystroke, the query on submit.
     const [search, setSearch] = useState("");
+    const [appliedSearch, setAppliedSearch] = useState("");
     const [page, setPage] = useState(1);
+    // Bumped to ask for the same filters again, after a decision.
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [isAllowed, setIsAllowed] = useState(false);
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [activeBusinessId, setActiveBusinessId] = useState("");
@@ -93,12 +99,19 @@ export default function AdminBusinessesPage() {
     const [reviewAction, setReviewAction] =
         useState<ReviewAction>(null);
 
-    async function loadBusinesses(
-        requestedSearch = "",
-        requestedPage = 1,
+    // Only the newest request may write to the page, and the state is the
+    // only description of what to show: see the same change in
+    // app/admin/offers/page.tsx for what this is fixing.
+    const latestRequest = useRef(0);
+
+    const loadBusinesses = useCallback(async (
+        requestedSearch: string,
+        requestedPage: number,
         requestedTab: "pending" | "all",
         requestedStatus: Status | "all",
-    ) {
+    ) => {
+        const requestId = ++latestRequest.current;
+
         setIsLoading(true);
         setErrorMessage("");
 
@@ -154,6 +167,11 @@ export default function AdminBusinessesPage() {
 
         const { data, error, count } = await query;
 
+        // Answered a question the page has already moved on from.
+        if (requestId !== latestRequest.current) {
+            return;
+        }
+
         if (error) {
             setErrorMessage(error.message);
         } else {
@@ -162,7 +180,7 @@ export default function AdminBusinessesPage() {
         }
 
         setIsLoading(false);
-    }
+    }, [])
 
     useEffect(() => {
         async function checkAccess() {
@@ -186,11 +204,22 @@ export default function AdminBusinessesPage() {
                 return;
             }
 
-            await loadBusinesses("", 1, "pending", "all");
+            setIsAllowed(true);
         }
 
         checkAccess();
     }, [router]);
+
+    // One load, for whatever the page is currently asking to see.
+    useEffect(() => {
+        if (!isAllowed) return;
+
+        async function run() {
+            await loadBusinesses(appliedSearch, page, tab, status);
+        }
+
+        void run();
+    }, [isAllowed, appliedSearch, page, tab, status, refreshKey, loadBusinesses]);
 
     async function reviewBusiness(
         businessId: string,
@@ -217,7 +246,7 @@ export default function AdminBusinessesPage() {
         );
 
         setReviewAction(null);
-        await loadBusinesses(search, page, tab, status);
+        setRefreshKey((key) => key + 1);
         setActiveBusinessId("");
     }
 
@@ -256,7 +285,6 @@ export default function AdminBusinessesPage() {
                             onClick={() => {
                                 setTab(key);
                                 setPage(1);
-                                loadBusinesses(search, 1, key, status);
                             }}
                         >
                             {label}
@@ -270,7 +298,7 @@ export default function AdminBusinessesPage() {
                             onSubmit={(event: FormEvent<HTMLFormElement>) => {
                                 event.preventDefault();
                                 setPage(1);
-                                loadBusinesses(search, 1, tab, status);
+                                setAppliedSearch(search);
                             }}
                             className="flex flex-col gap-3 sm:flex-row sm:items-end"
                         >
@@ -293,10 +321,8 @@ export default function AdminBusinessesPage() {
                                         id="status"
                                         value={status}
                                         onChange={(event) => {
-                                            const chosen = event.target.value as Status | "all";
-                                            setStatus(chosen);
+                                            setStatus(event.target.value as Status | "all");
                                             setPage(1);
-                                            loadBusinesses(search, 1, tab, chosen);
                                         }}
                                         className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm sm:w-44"
                                     >
@@ -504,9 +530,7 @@ export default function AdminBusinessesPage() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        const nextPage = page - 1;
-                                        setPage(nextPage);
-                                        loadBusinesses(search, nextPage, tab, status);
+                                        setPage(page - 1);
                                     }}
                                 >
                                     Previous
@@ -524,9 +548,7 @@ export default function AdminBusinessesPage() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        const nextPage = page + 1;
-                                        setPage(nextPage);
-                                        loadBusinesses(search, nextPage, tab, status);
+                                        setPage(page + 1);
                                     }}
                                 >
                                     Next

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiExternalLink } from "react-icons/fi";
 
@@ -123,8 +123,14 @@ export default function AdminOffersPage() {
     const [edits, setEdits] = useState<OfferEdit[]>([]);
     const [activeEditId, setActiveEditId] = useState("");
     const [status, setStatus] = useState<Status | "all">("all");
+    // What is typed, and what the list is actually filtered by. They are
+    // two things: the box changes on every keystroke, the query on submit.
     const [search, setSearch] = useState("");
+    const [appliedSearch, setAppliedSearch] = useState("");
     const [page, setPage] = useState(1);
+    // Bumped to ask for the same filters again, after a decision.
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [isAllowed, setIsAllowed] = useState(false);
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [activeOfferId, setActiveOfferId] = useState("");
@@ -134,7 +140,13 @@ export default function AdminOffersPage() {
     // description in the queue.
     const [reading, setReading] = useState<Offer | null>(null);
 
-    const loadEdits = useCallback(async () => {
+    // Only the newest request may write to the page. Two controls used one
+    // after the other each start a load, and the first answer can arrive
+    // last — which is how the catalogue came to show "No offers found"
+    // under a filter with plenty behind it.
+    const latestRequest = useRef(0);
+
+    const loadEdits = useCallback(async (requestId: number) => {
         setIsLoading(true);
         setErrorMessage("");
 
@@ -157,6 +169,10 @@ export default function AdminOffersPage() {
             .is("decided_at", null)
             .order("submitted_at", { ascending: true });
 
+        if (requestId !== latestRequest.current) {
+            return;
+        }
+
         if (error) {
             setErrorMessage(error.message);
         } else {
@@ -167,14 +183,20 @@ export default function AdminOffersPage() {
         setIsLoading(false);
     }, []);
 
+    // No arguments: every caller used to pass what it believed the filters
+    // were, and the page's own first load believed "pending" for as long as
+    // it took to answer. Now there is one description of what to show, and
+    // it is the state.
     const loadOffers = useCallback(async (
-        requestedSearch = "",
-        requestedPage = 1,
-        requestedTab: Tab = "pending",
-        requestedStatus: Status | "all" = "all",
+        requestedSearch: string,
+        requestedPage: number,
+        requestedTab: Tab,
+        requestedStatus: Status | "all",
     ) => {
+        const requestId = ++latestRequest.current;
+
         if (requestedTab === "edits") {
-            await loadEdits();
+            await loadEdits(requestId);
             return;
         }
 
@@ -231,6 +253,11 @@ export default function AdminOffersPage() {
 
         const { data, error, count } = await query;
 
+        // Answered a question the page has already moved on from.
+        if (requestId !== latestRequest.current) {
+            return;
+        }
+
         if (error) {
             setErrorMessage(error.message);
         } else {
@@ -263,11 +290,18 @@ export default function AdminOffersPage() {
                 return;
             }
 
-            await loadOffers("", 1, "pending", "all");
+            setIsAllowed(true);
         }
 
         checkAccess();
-    }, [router, loadOffers]);
+    }, [router]);
+
+    // One load, for whatever the page is currently asking to see.
+    useEffect(() => {
+        if (!isAllowed) return;
+
+        void loadOffers(appliedSearch, page, tab, status);
+    }, [isAllowed, appliedSearch, page, tab, status, refreshKey, loadOffers]);
 
     async function reviewEdit(editId: string, decision: "approved" | "rejected") {
         setActiveEditId(editId);
@@ -288,7 +322,7 @@ export default function AdminOffersPage() {
             console.error("Could not email the business", notifyError),
         );
 
-        await loadEdits();
+        setRefreshKey((key) => key + 1);
         setActiveEditId("");
     }
 
@@ -325,7 +359,7 @@ export default function AdminOffersPage() {
 
         setReviewAction(null);
         setReading(null);
-        await loadOffers(search, page, tab, status);
+        setRefreshKey((key) => key + 1);
         setActiveOfferId("");
     }
 
@@ -359,7 +393,6 @@ export default function AdminOffersPage() {
                             onClick={() => {
                                 setTab(key);
                                 setPage(1);
-                                loadOffers(search, 1, key, status);
                             }}
                         >
                             {label}
@@ -374,7 +407,7 @@ export default function AdminOffersPage() {
                             onSubmit={(event: FormEvent<HTMLFormElement>) => {
                                 event.preventDefault();
                                 setPage(1);
-                                loadOffers(search, 1, tab, status);
+                                setAppliedSearch(search);
                             }}
                             className="flex flex-col gap-3 sm:flex-row sm:items-end"
                         >
@@ -397,10 +430,8 @@ export default function AdminOffersPage() {
                                         id="status"
                                         value={status}
                                         onChange={(event) => {
-                                            const chosen = event.target.value as Status | "all";
-                                            setStatus(chosen);
+                                            setStatus(event.target.value as Status | "all");
                                             setPage(1);
-                                            loadOffers(search, 1, tab, chosen);
                                         }}
                                         className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm sm:w-44"
                                     >
@@ -694,9 +725,7 @@ export default function AdminOffersPage() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        const nextPage = page - 1;
-                                        setPage(nextPage);
-                                        loadOffers(search, nextPage, tab, status);
+                                        setPage(page - 1);
                                     }}
                                 >
                                     Previous
@@ -714,9 +743,7 @@ export default function AdminOffersPage() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        const nextPage = page + 1;
-                                        setPage(nextPage);
-                                        loadOffers(search, nextPage, tab, status);
+                                        setPage(page + 1);
                                     }}
                                 >
                                     Next
