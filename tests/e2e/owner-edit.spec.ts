@@ -43,6 +43,11 @@ test("an owner sees an edit link on each part of their page, and nobody else doe
         await expect(link, label).toBeVisible({ timeout: 15_000 });
         await expect(link).toHaveAttribute("href", href);
     }
+    // And a way back: the header here is the customer's.
+    const home = owner.getByRole("button", { name: "Back to your dashboard" });
+    await expect(home).toBeVisible();
+    await expect(home).toHaveAttribute("href", dashboard);
+
     await owner.close();
 
     // A customer signed in to their own account sees none of it.
@@ -50,6 +55,7 @@ test("an owner sees an edit link on each part of their page, and nobody else doe
     await customer.goto(`/businesses/${business!.slug}`);
     await expect(customer.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
     await expect(customer.getByRole("button", { name: /^Edit your/ })).toHaveCount(0);
+    await expect(customer.getByText("the way a customer sees it")).toHaveCount(0);
     await customer.close();
 
     // Nor does a stranger.
