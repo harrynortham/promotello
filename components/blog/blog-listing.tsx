@@ -78,7 +78,7 @@ export function BlogListing({
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Turn first-time visitors into regulars</h2>
                         <p className="mt-2 max-w-xl text-white/80">
-                            Digital loyalty cards, offers and QR posters for independent businesses. Free to start.
+                            A local directory, offers, QR posters and stamp cards for independent businesses. Free to start.
                         </p>
                     </div>
                     <Button render={<Link href="/business/register" />} nativeButton={false} size="lg" className="shrink-0">

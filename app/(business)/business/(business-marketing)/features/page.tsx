@@ -23,7 +23,7 @@ import { qrSvg } from "@/lib/qr";
 export const metadata: Metadata = {
     title: "Business Features",
     description:
-        "Digital loyalty cards, QR posters with scan counts, offers and scan-to-redeem vouchers, follower emails, Google review prompts, automations and monthly reports.",
+        "A page in the local directory, offers and scan-to-redeem vouchers, QR posters with scan counts, digital loyalty cards, follower emails, Google review prompts, automations and monthly reports.",
 };
 
 const sections = [

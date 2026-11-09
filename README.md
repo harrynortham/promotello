@@ -1,12 +1,121 @@
 # Promotello
 
-Loyalty cards, offers and QR posters for independent businesses, with a local directory customers browse to find them. Launching in Bristol first.
+**A local network that turns first-time visitors into regulars.** A directory customers browse, offers they claim on their phone, a stamp card that brings them back, and QR posters in the window tying the shop to all three. Launching in Bristol first.
+
+Promotello is **not a digital loyalty card app**, and that difference is the whole business — see [How we sell it](#how-we-sell-it).
 
 - **Businesses** sign up, post offers, run a digital stamp card, print QR posters, and see who follows them. Paid plans (Pro, Growth) add unlimited offers, automations, quiet-hours offers and monthly reports.
 - **Customers** browse by city, area and category, claim vouchers, collect stamps and follow businesses for new-offer emails.
 - **Admins** approve businesses and offers, manage cities and areas, build previews for businesses they're approaching, and watch platform metrics.
 
 Product plan and priorities: [docs/ROADMAP.md](docs/ROADMAP.md). More than one city: [docs/MULTI-CITY.md](docs/MULTI-CITY.md). How Stripe billing is set up: [docs/STRIPE_GO_LIVE.md](docs/STRIPE_GO_LIVE.md). Finding businesses and writing to them: [docs/OUTREACH.md](docs/OUTREACH.md). Making videos for social: [docs/SOCIAL-VIDEO.md](docs/SOCIAL-VIDEO.md).
+
+## How we sell it
+
+The strategy and the build order are in [docs/ROADMAP.md](docs/ROADMAP.md), who
+to write to and what to send in [docs/OUTREACH.md](docs/OUTREACH.md). This is the
+short version, and every page of copy, email and sales sheet should agree with
+it.
+
+### The sentence
+
+> Promotello brings you customers from your own high street, gives you the card
+> and the posters that turn them into regulars, and then shows you how many came
+> back.
+
+### Who we are not
+
+Searching "digital loyalty card" returns a dozen vendors — Stamp Me, Loopy
+Loyalty, Square Loyalty, LoyBee, TapStamp, Loyaltify, Passcard, UpCard, Inkmark,
+Lovely Loyalty, Oappso — several of them under £15 a month and some free. Every
+one of them sells software to **one shop**, and the card only ever reaches people
+who already walked in: the shop brings its own customers, the software counts
+them.
+
+Promotello has the other half. A directory customers browse by city, area and
+category, followers, new-offer emails, SEO pages for every business and offer,
+and a customer wallet that holds the lot. That is the part a loyalty app can't
+copy quickly, because it is local density rather than code.
+
+**So never sell on card features.** Sell the network, with the card included. A
+conversation about stamps per reward is a conversation we lose on price.
+
+### The three claims only we can make
+
+1. **A card people join before they have ever been in.** Every rival's card is
+   invisible to anyone who isn't already a customer. Ours is on a public business
+   page, on the area and category pages, and on a poster in the window — so "5
+   stamps, then a free coffee" is a reason to try the place, not only a reason to
+   return. *Live: the card and join button on the business page, the loyalty
+   poster. Planned: cards on the listing pages and a filter for them.*
+2. **One wallet for the whole street.** Customers keep one Promotello wallet with
+   every nearby independent in it, not a pass per shop. Every business that signs
+   up makes the customer side better for the rest, which is why the pitch to the
+   twentieth business on a street is stronger than the pitch to the first. *Live:
+   `/dashboard` holding vouchers and cards. Planned: grouping by area, and the
+   Bristol passport trail.*
+3. **We can tell a business who came back.** No loyalty app can report a first
+   visit, because it was never part of one. *Live: views, claims, redemptions,
+   stamps, QR scans, plus repeat visit rate and cross-visits in admin. Planned:
+   the per-business report attributing first visits to Promotello and following
+   them to regulars.*
+
+Claims 1 and 3 are the ones that close deals. Claim 2 gets stronger with every
+business signed on the same street, and is worth nothing until a street has ten
+of them — which is the real reason density beats reach.
+
+### What to show, in this order
+
+| Show them                                                        | Why it lands                                              | Where it is                            |
+| ---------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------- |
+| Their own profile, pre-built from public information             | It already exists; they only have to claim it             | Admin previews                          |
+| The QR poster with their logo on it                              | Something physical, on day one, no hardware              | `/poster/<code>`                        |
+| A customer scanning it: page, then claim or join in seconds      | No app to download, nothing to install at the till       | Any phone                               |
+| Staff scanning a voucher or a card with their own phone camera    | Proves it survives a queue                               | Dashboard → redemptions, loyalty        |
+| The directory page for their street                              | The part no loyalty app has, and their neighbours are on it | `/explore/bristol/gloucester-road`   |
+| The numbers after a fortnight                                    | Turns a trial into a renewal                             | Dashboard → analytics                   |
+
+### Words to use, and words to drop
+
+| Say this                                     | Not this                                      |
+| -------------------------------------------- | --------------------------------------------- |
+| local network, your high street              | loyalty platform, rewards programme           |
+| customers we send you                        | footfall uplift, engagement                   |
+| a stamp card comes with it                   | our loyalty features                          |
+| free to start, live in about 15 minutes      | 30-day free trial (lead with free, not trial) |
+| £24 a month, everything included             | per-location pricing, per-visit pricing       |
+| your street, Gloucester Road, Bristol        | your area (never — see [docs/MULTI-CITY.md](docs/MULTI-CITY.md)) |
+
+Two more lines worth keeping word for word:
+
+- **"A card is a promise."** Once a customer holds a card, the deal on it can't
+  be edited — change the offer by starting a new card and the old one keeps
+  working. In a market of configurators, that is a trust claim, not a missing
+  feature.
+- **"No app, no hardware, no contract."** True of us, and not true of most of
+  the list above. It is already the line in the hero and on the one-pager.
+
+### Where this copy lives
+
+Changing the positioning means changing these, together, or the site drifts back
+to selling stamp cards:
+
+| What                                    | Where                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------- |
+| Hero, the loop, the feature sections, pricing FAQ | `app/(business)/business/(business-marketing)/page.tsx`           |
+| The printable one-pager for outreach    | `app/(business)/business/(business-marketing)/why-promotello/page.tsx`      |
+| Plan names and what each tier is for    | `planSummaries` in `components/business-marketing.tsx`                     |
+| Page titles and descriptions            | `metadata` in each marketing page                                          |
+| Footer tagline, blog header             | `components/site/footers.tsx`, `components/blog/blog-listing.tsx`          |
+| Setup checklist and lifecycle emails    | `lib/business-lifecycle.ts`                                                |
+| What AI crawlers are told               | `app/llms.txt/route.ts`                                                    |
+
+### The price, in one line
+
+£24 a month for the network, with loyalty, offers, posters, follower emails and
+the directory included. The loyalty-only tools run £25 to £49 and bring nobody
+through the door. Compare Promotello with a week of ads, not with a stamp-card
+app.
 
 ## Stack
 
@@ -107,6 +216,8 @@ deleted when they're done rather than ticked.
 
 ### Blocking launch
 
+Upgrade to Claude max
+
 1. **Scan a QR code with a real phone.** Flagged four or five times and still
    open. It's the product's first physical touchpoint — poster in a window,
    customer scans, card appears. The brand badge sits in the middle at error
@@ -117,54 +228,55 @@ deleted when they're done rather than ticked.
    optional: ico.org.uk/for-organisations/data-protection-fee, then add the
    number to the privacy policy and the other legal pages (company number is
    already in `lib/legal.ts`).
-3. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
+3. **Check Resend's limits** are enough for launch volume.
+4. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
    card, how it looks in the customer's wallet, the offers, the directory page
    and the pricing.
-4. **Staff documentation on redemptions**, for the people behind the counter.
+5. **Staff documentation on redemptions**, for the people behind the counter.
+6. **Test full flow.** Send preview email, claim business profile. Update profile, create QR code for business profile. Create QR code for offer. Claim offer, scan qr. Create a voucher, create a QR code for voucher. Scan it. Login as business, redeem both by scanning. Make an notes on the onboarding. Create a business account without the preview email and follow same steps. Create business with google login.
+7. **Test admin side approval flow and decline.** What gets send or seen by user when we decline an offer or business profile, how to we suggest improvements. We should have a set set of messages that we can send off quickly that are polite and helpful and documentation to match. Lets log also the approval reasons and resubmissions for history.
+8. What does customer or owner see when voucher offer claimed, any animation we can add?
+
+### Blockers from testing flow
+
+Loyalty cards interface is all broken and wrong
+
+Test the claim functions for offers.
+Test the loyalty cards and stamping them
+test getting loyalty card via scan
+
+Do we give a way to renew expired or deleted promotions. If user has stuck QR posters places adn deletes it, they should be able to bring back the offer without having to reprint??
+
+Does editing a business page require the same review process when editing page as we made in offers
+
+Should offers be able to be deleted? This would end up with dead QR codes. or we direct them to page within their business profile saying this doesnt exist anymore. or we take them to the offer where it shows expired? It could look unprofessional if promotello has dead QR codes everywhere. We can inform businesses if the old offers are still getting views?
 
 ### Product gaps to close before or around launch
 
+- business to manually add a stamp to user if process fails?
+
 - Bring back the "Promotello isn't in your area yet" bar, with an email field
-  so people can be told when it arrives — a waitlist rather than a dead end.
+  so people can be told when it arrives — a waitlist rather than a dead end. I will need to test with vpn that it says each location correct. how will the waitlist be notified?
 - What happens at onboarding when a business doesn't fit any category.
-- What a customer sees after scanning an offer QR: ideally a standalone page
-  with just that offer, no scrolling.
+  just do waht
 - Test what happens when a loyalty card is full.
 - Joining a loyalty card without an account takes a name and an email. Phone
   needs an SMS sender first, or a guest who gives only a number has no way back
   to their card.
-- A QR image a business can download on its own, not only inside a poster.
 - Decide the email volume before outreach: a business that signs up and does
   nothing gets 7 emails in 21 days (welcome, setup nudge, loyalty pitch, second
   nudge, founding places, results, check-in). All verified working, there are
-  just a lot of them.
-- The trial terms sentence repeats word for word in the loyalty pitch, founding
-  places and results emails, and again in the loyalty setup step.
-- Lifecycle emails need product imagery, and a read-through against the job
-  they're doing: converting a Free business to Pro.
-- Conversion emails should carry the signature from the marketing folder.
+  just a lot of them. Can we track conversion of each business customer in dashboard. have a user profile for each?
+- When claiming a promo do we prompt user to follow the business? Will too many followers for a business cost us in email sends when they add new promos?
+- Give users a hint and a link to the offer QR code and a prompt they can add to chatgpt to create a poster with the offeri
 
-### Admin tools
-
-- `/admin/businesses` doesn't show everything needed to approve. Either show it
-  all, or keep the list short and link to the preview page.
-- `/admin/offers`: a list for approval with a button to see the full offer,
-  perhaps in a modal.
-- Can an offer still be edited once it's been sent for approval?
-- List everything, approved and not, with filtering — both pages.
+### Admin too
 
 ### Accounts and infrastructure
 
+- Get custom supabase domain
 - A second Supabase project for development, so tests stop running against the
   live database.
-- **Move Resend to Pro ($20/mo) before the daily cap bites.** The free plan is
-  3,000 emails a month *and* 100 a day, and the daily one goes first: daily
-  summaries alone are about 75 a day at 50 active businesses, one offer
-  announced to 150 followers is 150 in a burst, and the 1st of the month adds
-  every monthly report. Supabase's sign-in emails come out of the same quota,
-  since `auth.promotello.com` sends through Resend. Upgrade when daily sends
-  reach ~70, or before the first business with more than ~80 followers
-  announces an offer — whichever comes first, and both before business 50.
 - Secure every social account with keychain passwords and the right phone
   numbers and email addresses.
 - 3 December: transfer the YouTube channel to harry@promotello.com (not
@@ -187,24 +299,33 @@ deleted when they're done rather than ticked.
 - Events: built and hidden until there are enough customers (`lib/features.ts`).
 - Security, password and email preference guides in both help centres are still
   in the older formal voice. Left that way on purpose.
+- Android and iOS apps with notifications
 
 ### App improvements
 
-From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them. Joining without an account is built, by email. A guest card should go straight into the Wallet once passes exist, so 1 finishes that thought.
+From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them, re-cut on 9 November 2026 against [Positioning](docs/ROADMAP.md#positioning-what-a-loyalty-app-cant-copy). Joining without an account is built, by email. A guest card should go straight into the Wallet once passes exist, so 1 finishes that thought.
+
+Create own wallet apps instead of being tied to apple and google. use our own push and scanning
 
 1. Apple and Google Wallet passes. Apply for an Apple Developer account and a Google Wallet issuer account first, as approval takes time
 2. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
-3. Customer list, segments (lapsed, VIP) and CSV export with consent flags
-4. Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
-5. Double-stamp days, reusing the quiet-hours schedules
-6. Surprise rewards and scratch-to-win
+3. The attributed repeat-visit report: first visits Promotello sent, how many came back, how many became regulars. The one number no loyalty app can print, and the reason a business renews
+4. Loyalty in discovery: cards on the offers and businesses listings with a filter for them, so a card is seen by people who have never been in
+5. One wallet for the street, then the Bristol passport trail: every nearby independent in one place, then stamps collected across members
+6. Customer list, segments (lapsed, VIP) and CSV export with consent flags
 7. Customer refer-a-friend
 8. Wallet push messages and location alerts (needs 1)
 9. QR poster sizes and designs + sticker request through AP
+
+Parked on purpose, as feature depth that only invites a comparison with a £10 stamp-card app. Build one when a paying business asks twice:
+
+- Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
+- Double-stamp days, reusing the quiet-hours schedules
+- Surprise rewards and scratch-to-win / wheel spin daily - check if prize to claim. business lists prizes and quantities, spin without account, claim needs created account. Is it gambling? Create nice branded wheel poster to put next to bar, 1 spin per device per day? (your note, kept: the wheel is the one parked idea with a poster behind it, which makes it the first to unpark)
+- SMS credits, NFC stamp tags, spend-based points, VIP tiers, Zapier
 
 Smaller gaps:
 
 - Business profiles: photo gallery and social links
 - Offer types beyond a discount — scoped in [docs/OFFER-TYPES.md](docs/OFFER-TYPES.md)
-- Reviewing an edit without taking the live offer down — built, described in [docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)
 - Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate

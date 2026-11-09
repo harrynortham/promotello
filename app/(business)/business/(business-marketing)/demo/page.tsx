@@ -11,7 +11,7 @@ import { DemoDashboard } from "./demo-dashboard";
 export const metadata: Metadata = {
     title: "Demo",
     description:
-        "Explore the Promotello business dashboard with sample data: loyalty cards, QR posters, offers, followers and monthly results.",
+        "Explore the Promotello business dashboard with sample data: offers, loyalty cards, QR posters, followers and monthly results.",
 };
 
 // A believable month for a small café, with quieter Mondays. Cached for a

@@ -17,7 +17,7 @@ import { qrSvg } from "@/lib/qr";
 export const metadata: Metadata = {
     title: { absolute: "How It Works | Promotello for Business" },
     description:
-        "Sign up free, put up your QR poster, and turn first-time visitors into regulars with loyalty cards, offers and follower emails. Here's how it works, step by step.",
+        "Sign up free, get your page in the local directory, put up your QR poster, and turn first-time visitors into regulars. Here's how it works, step by step.",
 };
 
 function SetupScreen() {

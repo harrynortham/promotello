@@ -47,7 +47,7 @@ import { qrSvg } from "@/lib/qr";
 export const metadata: Metadata = {
     title: { absolute: "Promotello for Business | Turn First-Time Visitors into Regulars" },
     description:
-        "Digital loyalty cards, QR posters, offers and follower emails for independent businesses. Free to start, set up in 15 minutes, no hardware.",
+        "A local directory that sends you customers, plus the offers, QR posters and stamp cards that turn them into regulars. Free to start, 15 minutes to set up.",
 };
 
 const loop = [
@@ -88,7 +88,7 @@ const faqs = [
     },
     {
         question: "What does it cost?",
-        answer: `Free gets you a profile, one live offer and a QR poster. Pro adds loyalty cards, unlimited offers and follower emails, and Growth adds automations. Paid plans start with a 30-day free trial and you can cancel any time.`,
+        answer: `Free gets you found: a page in the directory, one live offer and a QR poster. Pro is for bringing people back — unlimited offers, a stamp card, posters for every spot, and an email to your followers whenever you post an offer. Growth adds marketing that runs without you. Paid plans start with a 30-day free trial and you can cancel any time.`,
     },
 ];
 
@@ -109,9 +109,10 @@ export default async function BusinessPage() {
                             <span className="text-[#FF593F]">regulars.</span>
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
-                            Offers customers claim on their phone and digital loyalty cards that bring them
-                            back, plus QR posters and follower emails. It works from day one with your own
-                            customers. No hardware, no contract.
+                            Your page in a local directory customers already browse, offers they claim on
+                            their phone, and a stamp card that brings them back. It works from day one with
+                            your own customers, and gets better as your street joins. No hardware, no
+                            contract.
                         </p>
 
                         <div className="mt-8">
@@ -234,7 +235,7 @@ export default async function BusinessPage() {
                 reverse
                 eyebrow="Loyalty cards"
                 title="A stamp card that never gets lost in a coat pocket."
-                body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves."
+                body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves. Your card also sits on your Promotello page and your poster, so someone who has never been in can join before their first visit."
                 points={[
                     "Choose how many stamps and what the reward is",
                     "Staff use their own phone: no card reader",
