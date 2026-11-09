@@ -8,9 +8,10 @@ const admin = () =>
         auth: { autoRefreshToken: false, persistSession: false },
     });
 
-// A preview is built before anyone has been asked, so it is pending without
-// anybody waiting on us. It belongs in Previews, not in the review queue.
-test("an unclaimed preview stays out of the approval queue until it is claimed", async ({ browser }) => {
+// A page we built carries our words and often a stand-in photo, so claiming
+// it is not the same as agreeing to publish it. Nothing reaches the queue
+// until the business has looked and sent it.
+test("a page we built reaches the queue only when the business sends it", async ({ browser }) => {
     const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const db = admin();
     const name = `E2E Preview Queue ${Date.now()}`;
@@ -40,34 +41,39 @@ test("an unclaimed preview stays out of the approval queue until it is claimed",
         });
         expect(previewError, "could not seed the preview").toBeNull();
 
-        // The trigger marks the business as waiting to be claimed.
+        // Creating the preview takes back the review request the column's
+        // default wrote when the business row was inserted.
         const { data: flagged } = await db
             .from("businesses")
-            .select("awaiting_claim")
+            .select("review_requested_at")
             .eq("id", business!.id)
             .single();
         expect(
-            flagged!.awaiting_claim,
-            "supabase/migrations/20261207160000_unclaimed_previews_are_not_a_queue.sql isn't applied",
-        ).toBe(true);
+            flagged!.review_requested_at,
+            "supabase/migrations/20261207170000_a_business_asks_to_be_reviewed.sql isn't applied",
+        ).toBeNull();
 
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto("/admin/businesses");
         await expect(page.getByRole("heading", { name: "Businesses", level: 1 })).toBeVisible({ timeout: 15_000 });
         await expect(page.getByText(name)).toHaveCount(0);
 
-        // Claiming it is the business asking to be reviewed.
+        // Claiming is "this account is mine", not "publish that": still
+        // out of the queue.
         await db
             .from("business_previews")
             .update({ claimed_at: new Date().toISOString() })
             .eq("business_id", business!.id);
 
-        const { data: claimed } = await db
+        await page.reload();
+        await expect(page.getByText(name)).toHaveCount(0);
+
+        // Sending it is the business asking.
+        const { error: reviewError } = await db
             .from("businesses")
-            .select("awaiting_claim")
-            .eq("id", business!.id)
-            .single();
-        expect(claimed!.awaiting_claim).toBe(false);
+            .update({ review_requested_at: new Date().toISOString() })
+            .eq("id", business!.id);
+        expect(reviewError).toBeNull();
 
         await page.reload();
         await expect(page.getByText(name)).toBeVisible({ timeout: 15_000 });

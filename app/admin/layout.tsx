@@ -65,9 +65,9 @@ async function AdminNavWithCounts() {
             .from("businesses")
             .select("id", { count: "exact", head: true })
             .eq("approval_status", "pending")
-            // Unclaimed previews are nobody's work: see the queue in
+            // Only the ones that have asked: see the queue in
             // app/admin/businesses/page.tsx.
-            .eq("awaiting_claim", false),
+            .not("review_requested_at", "is", null),
         supabase.from("offers").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         supabase.from("billing_alerts").select("id", { count: "exact", head: true }).is("resolved_at", null),
         supabase.from("business_feedback").select("id", { count: "exact", head: true }).eq("status", "new"),
