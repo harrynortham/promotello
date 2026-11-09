@@ -281,13 +281,6 @@ after outreach has started.
 These are the places the product breaks in front of someone. Small builds,
 each tied to a moment in stage 1's walkthrough.
 
-- **A scanned code must never die.** The biggest one, and three of the old
-  notes are the same problem: a deleted or expired offer leaves a poster in a
-  window pointing at nothing, and Promotello looks unprofessional in public. A
-  scan should always land somewhere useful — the business page saying what's on
-  now, or the offer marked ended — never a dead end. With that, a business can
-  also bring an offer back without reprinting, and can be told when an old
-  offer is still being scanned.
 - **Decide whether editing a business page needs review**, the way an offer
   edit does ([docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)). If it
   does, reuse that flow so the page never goes offline while it's reviewed.
