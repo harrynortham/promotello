@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 // way the offer page draws a torn-off voucher. Built from the page's own
 // colours rather than an image, so it costs nothing to load and follows
 // the brand if the palette ever moves.
-function ClosedShopfront() {
+export function ClosedShopfront() {
     return (
         <div aria-hidden="true" className="relative mx-auto w-full max-w-sm lg:max-w-none">
             {/* Kept inside the card's own box: a glow that reaches past

@@ -70,11 +70,18 @@ async function getPublicListings() {
     // approved businesses, and approved, unexpired, unpaused offers.
     // Sample (demo) listings are left out so search engines never index them.
     const [{ data: businesses }, { data: offers }] = await Promise.all([
-        supabase.from("businesses").select("slug, updated_at").eq("is_sample", false),
+        // A closed business keeps its row so customers' records still name
+        // it, so the sitemap has to leave it out itself.
+        supabase
+            .from("businesses")
+            .select("slug, updated_at")
+            .eq("is_sample", false)
+            .is("closed_at", null),
         supabase
             .from("offers")
-            .select("slug, updated_at, businesses!inner ( is_sample )")
-            .eq("businesses.is_sample", false),
+            .select("slug, updated_at, businesses!inner ( is_sample, closed_at )")
+            .eq("businesses.is_sample", false)
+            .is("businesses.closed_at", null),
     ]);
 
     return { businesses, offers };

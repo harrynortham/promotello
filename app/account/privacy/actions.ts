@@ -38,17 +38,23 @@ export async function deleteAccount(_: unknown, formData: FormData) {
         return { error: "Sort out the businesses listed above first." };
     }
 
-    const admin = createAdminClient();
-
-    // Businesses only this person runs go with the account.
+    // Businesses only this person runs are closed, not deleted. Deleting
+    // cascaded through offers, redemptions, loyalty cards and stamps, which
+    // took customers' records with it and left every printed QR code
+    // pointing at nothing. Closing unlists it and leaves all of that intact
+    // for an admin to erase properly.
     for (const { business_id } of outcomes) {
-        const { error: businessError } = await admin.from("businesses").delete().eq("id", business_id);
+        const { error: closeError } = await supabase.rpc("close_business", {
+            requested_business_id: business_id,
+        });
 
-        if (businessError) {
-            console.error("Account deletion: business delete failed", businessError);
-            return { error: "We couldn't delete your business. Please contact us." };
+        if (closeError && closeError.code !== "P0008") {
+            console.error("Account deletion: closing the business failed", closeError);
+            return { error: "We couldn't close your business. Please contact us." };
         }
     }
+
+    const admin = createAdminClient();
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
 

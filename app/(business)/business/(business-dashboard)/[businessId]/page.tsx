@@ -10,6 +10,7 @@ import {
     type ChecklistGroup,
 } from "@/components/business-onboarding-checklist";
 import { BusinessRecentRedemptions } from "@/components/business-recent-redemptions";
+import { reopenBusiness } from "./settings/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,13 +31,14 @@ type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
-    searchParams?: Promise<{ welcome?: string }>;
+    searchParams?: Promise<{ welcome?: string; reopened?: string; error?: string }>;
 };
 
 type OfferSummary = {
     id: string;
     title: string;
     approval_status: string;
+    closed_at: string | null;
     max_redemptions: number | null;
     redemption_count: number;
 };
@@ -96,7 +98,8 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     await connection();
 
     const { businessId } = await params;
-    const isWelcome = (await searchParams)?.welcome === "1";
+    const search = await searchParams;
+    const isWelcome = search?.welcome === "1";
     const supabase = await createClient();
 
     const { data: business } = await supabase
@@ -113,6 +116,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 website_url,
                 contact_email,
                 approval_status,
+                closed_at,
                 google_review_url
             `,
         )
@@ -398,6 +402,44 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                             ? "Your business is live. Pick up from the steps below."
                             : "Our team checks every new business before it appears publicly. You can set everything up in the meantime, starting with the steps below."}
                     </AlertDescription>
+                </Alert>
+            )}
+
+            {business.closed_at && (
+                <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
+                    <AlertTitle>This business is closed</AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            It has left the directory, its offers aren&apos;t showing and
+                            nobody new can join its loyalty card. Nothing has been deleted,
+                            and the stamps and vouchers your customers are holding are
+                            still theirs. Anything else you run is unaffected.
+                        </p>
+
+                        <form action={reopenBusiness} className="mt-4">
+                            <input type="hidden" name="businessId" value={businessId} />
+                            <Button type="submit" size="sm">
+                                Reopen {business.name}
+                            </Button>
+                        </form>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {search?.reopened && !business.closed_at && (
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
+                    <AlertTitle>{business.name} is open again</AlertTitle>
+                    <AlertDescription>
+                        It is back in the directory exactly as it was, with its offers and
+                        its loyalty card.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {search?.error === "reopen" && (
+                <Alert variant="destructive">
+                    <AlertTitle>We couldn&apos;t reopen it</AlertTitle>
+                    <AlertDescription>Please try again.</AlertDescription>
                 </Alert>
             )}
 
