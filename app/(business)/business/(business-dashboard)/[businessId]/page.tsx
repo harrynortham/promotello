@@ -450,21 +450,35 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
             {business.approval_status === "pending" && !business.review_requested_at && (
                 <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
-                    <AlertTitle>Not live yet &mdash; have a look first</AlertTitle>
+                    <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
                         <p>
-                            We built this page for you, so the photo, the description and
-                            the offer are our suggestions. Change anything that isn&apos;t
-                            right, and send it to us when you&apos;re happy with it. Nothing
-                            is public until you do.
+                            We built it for you, so the photo, the description and the offer
+                            are our suggestions. Open it to see what a customer would see,
+                            change anything that isn&apos;t right, and send it to us when
+                            you&apos;re happy. Nothing is public until you do.
                         </p>
 
-                        <form action={requestBusinessReview} className="mt-4">
-                            <input type="hidden" name="businessId" value={businessId} />
-                            <Button type="submit" size="sm">
-                                Send {business.name} for review
+                        {/* "This page" read as the dashboard, which is where they
+                            are standing. The page it means is a click away. */}
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <Button
+                                render={<Link href={businessPath(business)} target="_blank" rel="noreferrer" />}
+                                nativeButton={false}
+                                variant="outline"
+                                size="sm"
+                            >
+                                See your page
+                                <FiExternalLink aria-hidden="true" />
                             </Button>
-                        </form>
+
+                            <form action={requestBusinessReview}>
+                                <input type="hidden" name="businessId" value={businessId} />
+                                <Button type="submit" size="sm">
+                                    Send {business.name} for review
+                                </Button>
+                            </form>
+                        </div>
                     </AlertDescription>
                 </Alert>
             )}
