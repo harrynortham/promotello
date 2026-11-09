@@ -13,7 +13,11 @@ function text(formData: FormData, key: string) {
 // Builds a business with the admin as its temporary owner, plus its
 // preview. The business stays pending (hidden from customers) until it's
 // claimed and approved.
-export async function createPreview(formData: FormData) {
+//
+// Returns the id rather than redirecting: the form has the logo and the
+// cover photo in hand and can only upload them once the business exists,
+// so it finishes the job and sends the admin to the preview itself.
+export async function createPreview(formData: FormData): Promise<{ businessId?: string; error?: string }> {
     const supabase = await createClient();
 
     const { data: isAdmin } = await supabase.rpc("is_platform_admin");
@@ -24,7 +28,7 @@ export async function createPreview(formData: FormData) {
     const stamps = Number(formData.get("sampleStamps"));
 
     if (sampleOffer.length < 3 || sampleReward.length < 3) {
-        redirect("/admin/previews?error=sample");
+        return { error: "Add a sample offer and a loyalty reward." };
     }
 
     const { data: businessId, error } = await supabase.rpc("create_business_with_owner", {
@@ -43,7 +47,7 @@ export async function createPreview(formData: FormData) {
     });
 
     if (error || !businessId) {
-        redirect(`/admin/previews?error=${encodeURIComponent(error?.message ?? "The business couldn't be created.")}`);
+        return { error: error?.message ?? "The business couldn't be created." };
     }
 
     const { data: user } = await supabase.auth.getUser();
@@ -59,11 +63,13 @@ export async function createPreview(formData: FormData) {
     });
 
     if (previewError) {
-        redirect(`/admin/previews?error=${encodeURIComponent(`The preview couldn't be saved (${previewError.message}). The business was created; find it under Businesses.`)}`);
+        return {
+            error: `The preview couldn't be saved (${previewError.message}). The business was created; find it under Businesses.`,
+        };
     }
 
     revalidatePath("/admin/previews");
-    redirect(`/admin/previews?created=${businessId}`);
+    return { businessId };
 }
 
 // Deletes an unclaimed preview and the business built for it.

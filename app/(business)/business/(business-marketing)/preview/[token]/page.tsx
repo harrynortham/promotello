@@ -151,6 +151,9 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     }
 
     const signedIn = Boolean(auth.user);
+    const town = preview.city?.trim() || null;
+    // The street if we know it, the town otherwise. Never "your area".
+    const nearby = preview.area?.trim() || town;
     const nextPath = `/business/preview/${token}`;
     const poster = await qrSvg(absoluteUrl(nextPath));
 
@@ -184,8 +187,9 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 </h1>
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-[#17233B]/70">
                     We&apos;ve set up your page, a digital loyalty card and a QR poster for your window, to show how
-                    Promotello turns first-time visitors into regulars. Nothing is live until you claim it, and
-                    you can change everything afterwards.
+                    Promotello turns first-time visitors into regulars.
+                    {town && ` Your page sits in the ${town} directory, where people look for somewhere to go.`}{" "}
+                    Nothing is live until you claim it, and you can change everything afterwards.
                 </p>
 
                 {error && (
@@ -206,7 +210,9 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                             Your page
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                            Customers find you in the Promotello directory, follow you, and claim your offers.
+                            {town
+                                ? `Customers browsing ${town} find you in the directory, follow you, and claim your offers.`
+                                : "Customers find you in the Promotello directory, follow you, and claim your offers."}
                         </p>
                         <div className="mt-6">
                             <BusinessPagePreview preview={preview} />
@@ -238,7 +244,8 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                             Your window poster
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                            Print it in a minute. Every scan is counted, so you can see what&apos;s working.
+                            Print it in a minute and put it in the window.
+                            {nearby ? ` Every scan on ${nearby} is counted, so you can see what's working.` : " Every scan is counted, so you can see what's working."}
                         </p>
                         <div className="mt-10 flex justify-center">
                             <PosterVisual

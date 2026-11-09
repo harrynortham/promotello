@@ -7,6 +7,7 @@ import { FiArrowLeft, FiExternalLink } from "react-icons/fi";
 import { BusinessImageDialog } from "@/components/business-image-dialog";
 import { CopyButton } from "@/components/copy-button";
 import { SubmitButton } from "@/components/submit-button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,12 +31,18 @@ import {
     type PreviewRow,
 } from "../preview-shared";
 
-type PageProps = { params: Promise<{ businessId: string }> };
+type PageProps = {
+    params: Promise<{ businessId: string }>;
+    searchParams?: Promise<{ created?: string; images?: string }>;
+};
 
-async function PreviewDetail({ params }: PageProps) {
+async function PreviewDetail({ params, searchParams }: PageProps) {
     await connection();
 
     const { businessId } = await params;
+    const search = await searchParams;
+    const created = search?.created;
+    const imagesFailed = Boolean(search?.images);
     const supabase = await createClient();
 
     const [{ data }, { data: userData }, foundingTaken] = await Promise.all([
@@ -57,8 +64,21 @@ async function PreviewDetail({ params }: PageProps) {
     const link = absoluteUrl(`/business/preview/${preview.token}`);
     const placesLeft = foundingTaken === null ? null : Math.max(FOUNDING_MEMBER_LIMIT - foundingTaken, 0);
 
+    const justCreated = Boolean(created);
+
     return (
         <div className="space-y-8">
+            {justCreated && (
+                <Alert className={imagesFailed ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}>
+                    <AlertTitle>{imagesFailed ? "Preview built, images didn't upload" : `Preview ready for ${name}`}</AlertTitle>
+                    <AlertDescription>
+                        {imagesFailed
+                            ? "Everything else saved. Add the logo and cover photo below and they'll show on their page."
+                            : "Check it over, then copy the message and send it."}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <div>
                 <Button render={<Link href="/admin/previews" />} nativeButton={false} variant="ghost" size="sm">
                     <FiArrowLeft aria-hidden="true" />
