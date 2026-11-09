@@ -165,6 +165,10 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     {signedIn ? `Claim ${preview.business_name}` : `Claim ${preview.business_name} for free`}
                 </SubmitButton>
             </form>
+            <p className="text-sm text-[#17233B]/70">
+                Free, and nothing goes public until you say so.
+            </p>
+
             {!signedIn && (
                 <p className="text-sm text-[#17233B]/70">
                     You&apos;ll create an account first. Already have one?{" "}
@@ -189,7 +193,9 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     We&apos;ve set up your page, a digital loyalty card and a QR poster for your window, to show how
                     Promotello turns first-time visitors into regulars.
                     {town && ` Your page sits in the ${town} directory, where people look for somewhere to go.`}{" "}
-                    Nothing is live until you claim it, and you can change everything afterwards.
+                    Claiming doesn&apos;t publish anything. It hands you the keys, so you can open the
+                    real page, change whatever isn&apos;t right, and send it to us when you&apos;re happy
+                    with it.
                 </p>
 
                 {error && (
