@@ -48,6 +48,10 @@ test("an owner sees an edit link on each part of their page, and nobody else doe
     await expect(home).toBeVisible();
     await expect(home).toHaveAttribute("href", dashboard);
 
+    // The pill on the cover photo: the one thing on their own page that
+    // led away from the dashboard they came from.
+    await expect(owner.getByLabel(/^Back to businesses in /)).toHaveCount(0);
+
     await owner.close();
 
     // A customer signed in to their own account sees none of it.
@@ -56,6 +60,8 @@ test("an owner sees an edit link on each part of their page, and nobody else doe
     await expect(customer.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
     await expect(customer.getByRole("button", { name: /^Edit your/ })).toHaveCount(0);
     await expect(customer.getByText("the way a customer sees it")).toHaveCount(0);
+    // Someone browsing keeps the way back to the listing they came from.
+    await expect(customer.getByLabel(/^Back to businesses in /)).toBeVisible();
     await customer.close();
 
     // Nor does a stranger.
