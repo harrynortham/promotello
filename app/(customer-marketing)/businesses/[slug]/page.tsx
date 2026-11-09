@@ -469,11 +469,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                     <div
                         className={`relative overflow-hidden bg-[#17233B] ${coverImageUrl ? "h-44 sm:h-64" : "h-24 sm:h-28"}`}
                     >
-                        <CoverBackLink
-                            href={directoryPath}
-                            label={cityPage ? cityPage.name : "All businesses"}
-                            city={cityPage ? cityPage.name : "your area"}
-                        />
+                        {!canEdit && (
+                            <CoverBackLink
+                                href={directoryPath}
+                                label={cityPage ? cityPage.name : "All businesses"}
+                                city={cityPage ? cityPage.name : "your area"}
+                            />
+                        )}
 
                         {business.is_sample && <CoverExampleBadge />}
 
