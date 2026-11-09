@@ -42,6 +42,7 @@ import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
 import { BusinessClosedNotice } from "./closed-notice";
+import { OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
@@ -240,6 +241,11 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     }
 
     const businessId = business.id;
+    const { data: canEdit } = await supabase.rpc("is_business_member", {
+        requested_business_id: businessId,
+        minimum_role: "admin",
+    });
+    const dashboard = `/business/${businessId}`;
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
 
@@ -455,6 +461,14 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
                         {business.is_sample && <CoverExampleBadge />}
 
+                        {canEdit && (
+                            <OwnerEdit
+                                href={`${dashboard}/cover`}
+                                label="Edit your cover photo"
+                                className="absolute right-4 top-4 z-10"
+                            />
+                        )}
+
                         {coverImageUrl ? (
                             <>
                                 <Image
@@ -477,6 +491,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
                     <div className="px-6 pb-7 sm:px-8">
                         <div className="relative -mt-10 flex items-end justify-between gap-4">
+                            <div className="flex items-end gap-3">
                             <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-sm sm:size-28">
                                 {business.logo_url ? (
                                     <Image
@@ -490,6 +505,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                     <span className="flex h-full w-full items-center justify-center bg-[#FFF4E8] text-3xl font-semibold">
                                         {initials}
                                     </span>
+                                )}
+                            </div>
+
+                                {canEdit && (
+                                    <OwnerEdit
+                                        href={`${dashboard}/logo`}
+                                        label="Edit your logo"
+                                        className="mb-1"
+                                    />
                                 )}
                             </div>
 
@@ -577,6 +601,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                         Directions
                                     </Button>
                                 )}
+
+                                {canEdit && (
+                                    <OwnerEdit
+                                        href={`${dashboard}/edit`}
+                                        label="Edit your name, description and category"
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -585,6 +616,12 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                     {/* Main profile content */}
                     <div className="min-w-0 space-y-8">
+                        {canEdit && loyaltyCards.length > 0 && (
+                            <div className="flex justify-end">
+                                <OwnerEdit href={`${dashboard}/loyalty`} label="Edit your loyalty card" />
+                            </div>
+                        )}
+
                         {loyaltyCards.map((program) => (
                             <LoyaltyCallout
                                 key={program.id}
@@ -600,9 +637,13 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
 
                         {events.length > 0 && (
                             <section id="events" aria-labelledby="events-heading">
-                                <h2 id="events-heading" className="text-2xl font-semibold tracking-tight">
-                                    Coming up
-                                </h2>
+                                <div className="flex items-start justify-between gap-4">
+                                    <h2 id="events-heading" className="text-2xl font-semibold tracking-tight">
+                                        Coming up
+                                    </h2>
+
+                                    {canEdit && <OwnerEdit href={`${dashboard}/events`} label="Edit your events" />}
+                                </div>
                                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                                     {events.map((event) => (
                                         <EventCard key={event.id} event={event} />
@@ -618,7 +659,8 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                         >
                             {/* No count beside the heading: the offers are
                                 directly below and countable. */}
-                            <div className="mb-5">
+                            <div className="mb-5 flex items-start justify-between gap-4">
+                                <div>
                                 <h2
                                     id="offers-heading"
                                     className="text-2xl font-semibold tracking-tight"
@@ -629,6 +671,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                                     Explore what’s on offer at {business.name}.
                                 </p>
+                                </div>
+
+                                {canEdit && <OwnerEdit href={`${dashboard}/offers`} label="Edit your offers" />}
                             </div>
 
                             {offersError ? (
@@ -702,12 +747,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                     >
                         <Card className="gap-0 overflow-hidden rounded-2xl border-[#17233B]/10 pb-0 shadow-none">
                             <CardHeader className="pb-5">
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <FiMapPin
-                                        aria-hidden="true"
-                                        className="size-4 text-muted-foreground"
-                                    />
-                                    Find us
+                                <CardTitle className="flex items-center justify-between gap-3 text-base">
+                                    <span className="flex items-center gap-2">
+                                        <FiMapPin
+                                            aria-hidden="true"
+                                            className="size-4 text-muted-foreground"
+                                        />
+                                        Find us
+                                    </span>
+
+                                    {canEdit && <OwnerEdit href={`${dashboard}/edit`} label="Edit your address" />}
                                 </CardTitle>
                             </CardHeader>
 
@@ -775,13 +824,22 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 >
                                     <h3
                                         id="opening-hours"
-                                        className="flex items-center gap-2 text-base font-semibold"
+                                        className="flex items-center justify-between gap-3 text-base font-semibold"
                                     >
-                                        <FiClock
-                                            aria-hidden="true"
-                                            className="size-4 text-muted-foreground"
-                                        />
-                                        Opening hours
+                                        <span className="flex items-center gap-2">
+                                            <FiClock
+                                                aria-hidden="true"
+                                                className="size-4 text-muted-foreground"
+                                            />
+                                            Opening hours
+                                        </span>
+
+                                        {canEdit && (
+                                            <OwnerEdit
+                                                href={`${dashboard}/hours`}
+                                                label="Edit your opening hours"
+                                            />
+                                        )}
                                     </h3>
 
                                     <div className="mt-4">
