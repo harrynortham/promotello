@@ -1,7 +1,7 @@
 import { FiClock } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
-import { approvalLabel } from "@/lib/business-status";
+import { statusLabel } from "@/lib/business-status";
 import { cn } from "@/lib/utils";
 
 // A business's approval status, wherever its team sees it. Pending is
@@ -9,12 +9,17 @@ import { cn } from "@/lib/utils";
 // business is waiting on rather than a setting.
 export function BusinessStatusBadge({
     status,
+    reviewRequested = true,
     className = "",
 }: {
     status: string;
+    // Whether the business has asked us to look. Defaults to true so a
+    // caller that doesn't know says the old thing rather than the wrong one.
+    reviewRequested?: boolean;
     className?: string;
 }) {
-    const isPending = status === "pending";
+    // Waiting on us, rather than waiting on them.
+    const isPending = status === "pending" && reviewRequested;
 
     return (
         <Badge
@@ -25,7 +30,7 @@ export function BusinessStatusBadge({
             )}
         >
             {isPending && <FiClock aria-hidden="true" />}
-            {approvalLabel(status)}
+            {statusLabel(status, reviewRequested)}
         </Badge>
     );
 }

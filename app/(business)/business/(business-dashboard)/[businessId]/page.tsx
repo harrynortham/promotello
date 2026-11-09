@@ -237,12 +237,30 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
     const base = `/business/${businessId}`;
 
+    // Live: customers can find them, so there is something to measure.
+    // Awaiting send: we built this page and nobody has asked us to look.
+    const isLive = business.approval_status === "approved" && !business.closed_at;
+    const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
+
     const checklist: ChecklistGroup[] = [
         {
             title: "Get ready to go live",
             description: "What customers see when they find you.",
             required: true,
             items: [
+                ...(awaitingSend
+                    ? [
+                        {
+                            id: "review",
+                            label: "Send your page for review",
+                            description:
+                                "We built this page, so nothing is public until you have looked it over and sent it to us.",
+                            completed: false,
+                            href: `${base}#send-for-review`,
+                            action: "Send for review",
+                        },
+                    ]
+                    : []),
                 {
                     id: "logo",
                     label: "Add your logo",
@@ -283,19 +301,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     href: `${base}/cover`,
                     action: "Add cover photo",
                 },
-                ...(business.approval_status === "pending" && !business.review_requested_at
-                    ? [
-                        {
-                            id: "review",
-                            label: "Send your page for review",
-                            description:
-                                "We built this page, so nothing is public until you have looked it over and sent it to us.",
-                            completed: false,
-                            href: `${base}#send-for-review`,
-                            action: "Send for review",
-                        },
-                    ]
-                    : []),
                 {
                     id: "offer",
                     label: "Create your first offer",
@@ -389,8 +394,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </div>
 
                     <p className="mt-3 max-w-2xl text-[#17233B]/65">
-                        Monitor your business activity and manage everything
-                        from one place.
+                        {isLive
+                            ? "Monitor your business activity and manage everything from one place."
+                            : `Let's get ${business.name} in front of customers.`}
                     </p>
                 </div>
 
@@ -410,7 +416,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </div>
             </div>
 
-            {isWelcome && (
+            {isWelcome && !awaitingSend && (
                 <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
                     <AlertTitle>Welcome to Promotello, {business.name} is set up</AlertTitle>
                     <AlertDescription>
@@ -461,15 +467,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </Alert>
             )}
 
-            {business.approval_status === "pending" && !business.review_requested_at && (
+            {awaitingSend && (
                 <Alert id="send-for-review" className="scroll-mt-24 border-[#FF593F]/30 bg-[#FF593F]/5">
                     <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
                         <p>
-                            We built it for you, so the photo, the description and the offer
-                            are our suggestions. Open it to see what a customer would see,
-                            change anything that isn&apos;t right, and send it to us when
-                            you&apos;re happy. Nothing is public until you do.
+                            {isWelcome ? "It's yours now. " : ""}We built it for you, so the
+                            photo, the description and the offer are our suggestions. Open it to
+                            see what a customer would see, change anything that isn&apos;t right,
+                            and send it to us when you&apos;re happy. Nothing is public until you
+                            do.
                         </p>
 
                         {/* "This page" read as the dashboard, which is where they
@@ -539,6 +546,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
             <BusinessOnboardingChecklist groups={checklist} />
 
+            {isLive && (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader>
@@ -596,6 +604,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </CardContent>
                 </Card>
             </div>
+            )}
 
             {lowInventoryOffers.length > 0 && (
                 <Alert className="border-orange-200 bg-orange-50 text-orange-800">
@@ -611,6 +620,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </Alert>
             )}
 
+            {isLive && (
             <Card>
                 <CardHeader>
                     <CardTitle>Offer performance</CardTitle>
@@ -706,6 +716,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </CardContent>
             </Card>
 
+            )}
+
+            {isLive && (
             <BusinessRecentRedemptions
                 businessId={businessId}
                 redemptions={recentRedemptions.map((redemption) => {
@@ -727,6 +740,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     };
                 })}
             />
+            )}
 
             <Card>
                 <CardHeader>
