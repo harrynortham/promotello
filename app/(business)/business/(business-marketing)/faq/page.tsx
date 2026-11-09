@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
     title: { absolute: "Frequently Asked Questions | Promotello for Business" },
     description:
-        "Answers about offers, vouchers, loyalty cards, QR posters, follower emails, automations, your team and pricing.",
+        "Answers about your directory page, offers and vouchers, loyalty cards, QR posters, follower emails, automations, your team and pricing.",
 };
 
 const sections = [
@@ -20,7 +20,7 @@ const sections = [
             {
                 question: "What is Promotello?",
                 answer:
-                    "Promotello helps independent businesses turn first-time visitors into regulars. You get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place. Your business also gets a page in the Promotello directory.",
+                    "Promotello helps independent businesses turn first-time visitors into regulars. Your business gets a page in the Promotello directory, where customers browse by area and category to find somewhere to go. On top of that you get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place.",
             },
             {
                 question: "Is it right for my business?",

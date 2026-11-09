@@ -74,14 +74,14 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
             ? {
                 key: "loyalty",
                 label: "Set up your loyalty card",
-                why: "A digital stamp card turns first-time visitors into regulars. Customers join by scanning, and you stamp them at the till.",
+                why: "A digital stamp card turns first-time visitors into regulars. Customers join by scanning your poster or from your page in the directory, so people who have never been in can join too, and you stamp them at the till.",
                 path: `${base}/loyalty`,
                 action: "Set up a loyalty card",
             }
             : {
                 key: "loyalty",
                 label: "Start a loyalty card with a free Pro trial",
-                why: `A digital stamp card turns first-time visitors into regulars. Customers join by scanning, and you stamp them at the till. Loyalty cards are part of Pro, free for ${TRIAL_DAYS} days, with the terms on the Billing page before you start.`,
+                why: `A digital stamp card turns first-time visitors into regulars, and because it sits on your page in the directory as well as your poster, people who have never been in can join it too. Loyalty cards are part of Pro, free for ${TRIAL_DAYS} days, with the terms on the Billing page before you start.`,
                 path: `${base}/billing`,
                 action: `Try Pro free for ${TRIAL_DAYS} days`,
             },

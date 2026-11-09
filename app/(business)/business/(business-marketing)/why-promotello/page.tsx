@@ -9,6 +9,7 @@ import {
     FiGift,
     FiGrid,
     FiHeart,
+    FiMapPin,
     FiStar,
 } from "react-icons/fi";
 
@@ -20,24 +21,24 @@ import { PrintButton } from "./print-button";
 export const metadata: Metadata = {
     title: "Why Promotello",
     description:
-        "Turn first-time visitors into regulars with digital loyalty cards, QR posters, offers and follower emails. Free to start, set up in 15 minutes.",
+        "Turn first-time visitors into regulars: a page in the local directory, offers, QR posters and a stamp card, all in one place. Free to start, set up in 15 minutes.",
 };
 
 const tools: { icon: ReactNode; title: string; body: string }[] = [
     {
+        icon: <FiGift />,
+        title: "Offers that bring people in",
+        body: "Create a deal in a minute, cap how many can claim it, and redeem vouchers by scanning.",
+    },
+    {
         icon: <FiAward />,
-        title: "Digital loyalty cards",
-        body: "Stamp cards on your customers' phones. Staff stamp by scanning, so nobody can stamp themselves.",
+        title: "A stamp card that brings them back",
+        body: "The card lives on your customers' phones, and on your page, so people can join before their first visit. Staff stamp by scanning, so nobody can stamp themselves.",
     },
     {
         icon: <FiGrid />,
         title: "QR posters with scan counts",
         body: "Print a poster for your window or till. See how many people scan each one.",
-    },
-    {
-        icon: <FiGift />,
-        title: "Offers that bring people in",
-        body: "Create a deal in a minute, cap how many can claim it, and redeem vouchers by scanning.",
     },
     {
         icon: <FiHeart />,
@@ -113,12 +114,26 @@ export default function WhyPromotelloPage() {
                         Turn first-time visitors into regulars.
                     </h1>
                     <p className="mt-4 max-w-2xl text-lg leading-8 text-[#17233B]/70 print:mt-2 print:text-sm print:leading-6">
-                        Loyalty cards, QR posters, offers and follower emails in one simple app. It works
-                        from day one with your own customers. No hardware, no contract, free to start.
+                        A local directory that sends you customers, and the offers, QR posters and stamp
+                        cards that bring them back. It works from day one with your own customers. No
+                        hardware, no contract, free to start.
                     </p>
                 </header>
 
-                <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:mt-4 print:grid-cols-3 print:gap-2">
+                <section className="mt-10 rounded-2xl border border-[#FF593F]/30 bg-white p-5 print:mt-4 print:break-inside-avoid print:rounded-xl print:p-3">
+                    <span className="flex size-9 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F] print:size-7">
+                        <FiMapPin />
+                    </span>
+                    <h2 className="mt-3 font-semibold print:mt-2 print:text-sm">Your page in the local directory</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-[#17233B]/65 print:text-xs print:leading-5">
+                        This is the part a loyalty app can&apos;t give you. Customers browse Promotello by
+                        area and category to find somewhere to go, so your offers and your card are seen by
+                        people who have never been in &mdash; and every business that joins your street
+                        brings more of them.
+                    </p>
+                </section>
+
+                <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 print:mt-2 print:grid-cols-3 print:gap-2">
                     {tools.map((tool) => (
                         <div key={tool.title} className="rounded-2xl border border-[#17233B]/10 bg-white p-5 print:break-inside-avoid print:rounded-xl print:p-3">
                             <span className="flex size-9 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F] print:size-7">

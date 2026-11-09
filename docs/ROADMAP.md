@@ -10,7 +10,9 @@ Promotello will launch in Bristol as a retention toolkit for independent busines
 
 **Positioning shift:** from "get discovered" to **"Turn first-time visitors into regulars."** Discovery through the directory becomes the bonus that grows as more Bristol businesses join.
 
-**The plan in one line:** billing, loyalty, QR and followers are live. Now add Wallet passes and account-free joining, then sign 50 paying businesses on two or three Bristol high streets before expanding.
+**What we are not:** a digital loyalty card app. That category is a dozen vendors deep — LoyBee, TapStamp, Loyaltify, LoyalStamps, Passcard, UpCard, Inkmark, Lovely Loyalty, Oappso — several of them under £15 a month and some free. A feature-for-feature fight there is unwinnable, and winning it would only earn the right to sell a £24 product into a £10 market. Loyalty is the second half of Promotello, never the headline. See [Positioning](#positioning-what-a-loyalty-app-cant-copy).
+
+**The plan in one line:** billing, loyalty, QR and followers are live. Now take the friction out of the card (Wallet passes, joining without an account), sign 50 paying businesses on two or three Bristol high streets, and build the cross-business layer that only that density makes possible.
 
 ## Where we are today
 
@@ -46,9 +48,91 @@ Three rules follow from this:
 2. **Density over reach.** 50 businesses on Gloucester Road beat 500 scattered across the UK. A customer who joins at one café needs to see ten more nearby.
 3. **Sell to groups as well as shops.** Business Improvement Districts and traders' associations can bring dozens of members in one deal.
 
+## Positioning: what a loyalty app can't copy
+
+Added 9 November 2026, after searching "digital loyalty card" and finding
+Promotello behind a dozen cheaper tools on features. That comparison is the
+wrong one, and this section says why and what follows from it.
+
+### The asymmetry
+
+Every one of those tools sells software to **one shop**. The card only ever
+reaches people who already walked in; the shop brings its own customers and the
+software counts them. None of them has a demand side, and none of them can
+easily get one, because a demand side is local density — slow, unglamorous, and
+not something a competitor ships in a quarter.
+
+Promotello already has one: the directory, areas and categories, followers,
+new-offer emails, SEO pages and a customer wallet. **That is the moat.** Wallet
+passes are not a moat; they are table stakes.
+
+### Keep two, park the rest
+
+The October competitor analysis below is accurate, but acting on all of it would
+turn the build plan into parity with Stamp Me and Loopy — a plan to lose slowly
+to cheaper specialists. Split that list in two:
+
+- **Friction, not features — build these.** Wallet passes and joining without an
+  account. Neither is a spec-sheet item: they decide whether the card is used at
+  all, because a signup form at a busy till kills the product. Card design,
+  multi-stamp and the switching kit come with them: cheap, and they close deals.
+- **Feature depth — park it.** Scratch-to-win, SMS credits, NFC hardware,
+  spend-based points, VIP tiers, reward ladders, multiple cards, Zapier. Every
+  one of these invites a buyer to compare Promotello with a loyalty specialist
+  on a spec sheet, which is the comparison we lose. Build them only if a paying
+  business asks twice.
+
+### The three claims only Promotello can make
+
+1. **The card is an acquisition asset, not just a retention one.** Every
+   competitor's card is invisible to anyone who isn't already a customer. Ours
+   is on a public business page, in area and category pages, on a poster in the
+   window — so someone deciding whether to try a café can see "5 stamps = a free
+   coffee" and join **before** their first visit. Half built already
+   (`loyalty-callout.tsx`, `loyalty-join.tsx`, the loyalty poster). What's
+   missing is loyalty in the listings and filters: *shops near you with a card
+   worth joining*.
+2. **One wallet for the street.** The customer pain in digital loyalty is
+   fragmentation — a pass per shop, an app per chain. One place holding every
+   independent nearby means each business signed makes the consumer product
+   better for every other business. Nothing single-tenant has this loop.
+3. **Attributed repeat visits — the number nobody else can print.** *"Promotello
+   sent you 41 first-time customers this quarter. 12 came back. 5 are now
+   regulars."* No loyalty app can produce the first number, because it never had
+   the first visit. Repeat visit rate and cross-visits are already tracked in
+   admin; turned into a monthly report with a first-visit split, this is both the
+   sales asset and the churn defence — worth more than every parked feature
+   above put together.
+
+### Known precedent, and what it means for the BID pitch
+
+City-wide loyalty is proven at the *place* level. [Mi Rewards](https://mi-cnx.com/news/13-benefits-of-mi-rewards-the-smart-solution-to-town-and-city-loyalty)
+has run it since 2018 in [around ten UK towns](https://thewisemarketer.com/retail/town-and-city-loyalty-programme-mi-rewards-expands-across-the-uk/)
+— Perth, Gloucester, Stoke, Kirkcaldy — [free to the businesses](https://www.gloucesterbid.uk/news/mi-rewards-gloucester-earn-points-and-get-rewarded-for-shopping-local/)
+and funded by the BID, using [card-linked](https://fidelapi.com/stories/miconex)
+points that go into prize draws.
+
+That validates the appetite and warns against walking into Bristol BID pitching
+the same thing. Theirs is card-linked prize draws sold to councils; ours is
+stamps, offers and a directory sold to shops, with the BID as a route to many
+shops at once. Different buyer, different mechanic — say so explicitly in that
+meeting.
+
+### The honest caveat
+
+All three claims above depend on density we don't have yet. The cross-business
+layer is a *consequence* of the Gloucester Road grind, not a shortcut past it,
+so rule 1 above ("standalone value first") still holds: until a street has ten
+live businesses, the single-shop card has to be excellent on its own.
+
+Which is why **"a card is a promise"** stays. In a market of configurators where
+the deal can be edited under the customer, a card that cannot be changed once
+someone holds it is a trust position, not a missing feature. Don't let the parity
+list talk you out of it.
+
 ## Roadmap
 
-Four phases over about 11 months. Phase 1 is where Promotello becomes worth £19+ a month. The dates assume you are building solo with Claude Code. Each gate is a business result, not a date: don't start the next phase until the gate is met.
+Four phases over about 11 months. Phase 1 is where Promotello becomes worth £19+ a month. The dates assume you are building solo with Claude Code. Each gate is a business result, not a date: don't start the next phase until the gate is met. **Parked** means deliberately not building it — see [Positioning](#positioning-what-a-loyalty-app-cant-copy) for why, and build it only when a paying business asks twice.
 
 &#91;embedded content: roadmap · 4 phases, 3 gates\]
 
@@ -70,20 +154,23 @@ Four phases over about 11 months. Phase 1 is where Promotello becomes worth £19
 | 2     | Built       | Welcome, birthday and win-back automations | Marketing that runs without the owner                            | Scheduled job (Supabase cron) checks rules daily                                                                      |
 | 2     | Built       | Quiet-hours recurring offers               | "Fill your dead hours" is a concrete pitch                       | Offer schedules by weekday and time window                                                                            |
 | 2     | To do       | Wallet push messages and location alerts   | Free lock-screen messages, instead of Stamp Me's SMS            | Send messages through the pass update; up to 10 shop locations on the pass for nearby alerts                          |
-| 2     | To do       | Multiple cards and reward ladders          | Stamp Me includes multiple cards on every plan; Loopy offers up to 10 designs | Drop the one-active-programme index; rewards at several stamp counts (5 = pastry, 10 = coffee)        |
-| 2     | To do       | Double-stamp days and bonus promotions     | Square sells bonus-point promotions; pairs with quiet hours     | Stamp multiplier on a weekday and time schedule, reusing offer schedules                                              |
-| 2     | To do       | Surprise rewards and scratch-to-win        | Stamp Me's Scratch & Win gives customers a reason to open the card | Random reward on join or the Nth stamp, chance set by the owner; reuses `reward_vouchers`                    |
+| 2     | Parked      | Multiple cards and reward ladders          | Stamp Me includes multiple cards on every plan; Loopy offers up to 10 designs | Drop the one-active-programme index; rewards at several stamp counts (5 = pastry, 10 = coffee)        |
+| 2     | Parked      | Double-stamp days and bonus promotions     | Square sells bonus-point promotions; pairs with quiet hours     | Stamp multiplier on a weekday and time schedule, reusing offer schedules                                              |
+| 2     | Parked      | Surprise rewards and scratch-to-win        | Stamp Me's Scratch & Win gives customers a reason to open the card | Random reward on join or the Nth stamp, chance set by the owner; reuses `reward_vouchers`                    |
+| 2     | To do       | Attributed repeat-visit report             | The one number no loyalty app can print: first visits we sent, and who came back | First visit vs returning per business, attributed to a QR scan, offer claim or directory view; monthly email and a dashboard panel |
+| 2     | To do       | Loyalty in discovery                       | Makes the card an acquisition asset: joined before the first visit, not after    | Card on the offers and businesses listings and a "has a loyalty card" filter; reuses `loyalty-callout.tsx` and the public join flow |
+| 2     | To do       | One wallet for the street                  | Every business signed makes the consumer side better — the loop rivals can't build | One place holding every nearby independent's card and vouchers; group by area, not by business |
+| 2     | To do       | Bristol passport trail                     | Gets customers visiting several members                          | Collect stamps across participating businesses for a prize                                                            |
 | 2     | To do       | Customer list, segments and CSV export     | Loopy and Square sell a customer view; owners want to own their list | One customer page joining followers, cards, redemptions and vouchers; filters such as lapsed and VIP; export with consent flags |
 | 2     | To do       | Customer refer-a-friend                    | None of the three rewards referrals well, so this is a selling point | Personal referral link on the card; both people get a stamp after the friend's first stamp                  |
 | 2     | Built       | Value report and analytics funnel          | Proves ROI and stops cancellations                               | Track offer views; monthly email: visits, repeat customers, estimated value                                           |
 | 2     | Built       | Events and social share images             | Extra reasons to post and come back                              | Events table; generated Instagram story image per offer                                                               |
-| 3     | To do       | Bristol passport trail                     | Gets customers visiting several members                          | Collect stamps across participating businesses for a prize                                                            |
 | 3     | To do       | Group accounts for BIDs and associations   | Larger contracts, many businesses per sale                       | Group dashboard across member businesses                                                                              |
 | 3     | To do       | Referrals and multi-location plan          | Growth from existing customers                                   | Referral credits; per-location stats                                                                                  |
 | 3     | To do       | Till integrations (Square, SumUp, Shopify POS) | Square stamps automatically at checkout; we should too, on any till | Auto-stamp on payment webhooks matched to a customer; start with the till most Bristol members use |
-| 3     | To do       | Zapier, Make and a public API              | Stamp Me and Loopy both connect to Zapier                       | Webhooks for join, stamp and reward; API keys per business                                                            |
-| 3     | To do       | Spend-based points and VIP tiers           | Square earns on spend, items and categories with VIP levels     | Only if larger customers ask; stamps stay the default                                                                 |
-| 3     | To do       | SMS credits and NFC stamp tags             | Stamp Me sells SMS and tap-to-stamp hardware                    | Paid add-ons; an NFC tag opens a signed one-time stamp link, rate-limited per card                                    |
+| 3     | Parked      | Zapier, Make and a public API              | Stamp Me and Loopy both connect to Zapier                       | Webhooks for join, stamp and reward; API keys per business                                                            |
+| 3     | Parked      | Spend-based points and VIP tiers           | Square earns on spend, items and categories with VIP levels     | Only if larger customers ask; stamps stay the default                                                                 |
+| 3     | Parked      | SMS credits and NFC stamp tags             | Stamp Me sells SMS and tap-to-stamp hardware                    | Paid add-ons; an NFC tag opens a signed one-time stamp link, rate-limited per card                                    |
 | 3     | To do       | Second city                                | Repeat the Bristol playbook                                      | Choose from what Phase 1 and 2 data shows                                                                             |
 
 ## Competitor analysis (October 2026)
@@ -105,16 +192,18 @@ Stamp Me, Square Loyalty and Loopy Loyalty are the loyalty tools a Bristol café
 | Integrations | Zapier | Square App Marketplace | Zapier, Make, API | None |
 | Directory, offers, events, QR posters, review prompts | None | None | None | Yes |
 
-**What to build, in order:**
+**What to build, in order** (re-cut 9 November 2026 against [Positioning](#positioning-what-a-loyalty-app-cant-copy)):
 
-1. **Wallet passes, now (Phase 1, moved up from Phase 2).** It is the main thing Loopy sells, and Square has it too. A card in Apple or Google Wallet also opens up free lock-screen messages in Phase 2.
+1. **Wallet passes, now (Phase 1, moved up from Phase 2).** It is the main thing Loopy sells, and Square has it too. A card in Apple or Google Wallet also opens up free lock-screen messages later.
 2. **Join without signing up (Phase 1).** Requiring an account is the biggest piece of friction at a busy till. Square joins a customer in about 10 seconds with a phone number.
 3. **Card design, multi-stamp and a switching kit (Phase 1).** These are cheap to build and help close deals. Importing members and paper-card balances removes the cost of leaving a competitor.
-4. **More flexible loyalty (Phase 2).** Multiple cards, reward ladders, double-stamp days, surprise rewards and scratch-to-win. These match Stamp Me's plans and fill quiet hours.
-5. **Customer list and export (Phase 2).** Owners want to own their customer data, and an export also answers the "what if I leave?" objection.
-6. **Integrations (Phase 3).** Stamping automatically from the till takes away Square's one real advantage.
+4. **The attributed repeat-visit report (Phase 2).** First visits Promotello sent, how many came back, how many became regulars. The one number no loyalty app can print, and the reason a business renews.
+5. **Loyalty in discovery (Phase 2).** Cards on the listing pages and a filter for them, so a card is seen by people who have never been in. Turns the card from a retention tool into an acquisition one.
+6. **One wallet for the street, then the passport trail (Phase 2).** Every nearby independent in one place, then stamps collected across members. Each business signed makes the consumer side better — the loop no single-tenant tool has.
+7. **Customer list and export (Phase 2).** Owners want to own their customer data, and an export also answers the "what if I leave?" objection.
+8. **Till integrations (Phase 3), if asked for.** Stamping automatically from the till takes away Square's one real advantage, but only matters to shops already on Square.
 
-**What not to copy:** Stamp Me's native app (Wallet passes cover it), Square's per-location pricing based on visits (owners dislike unpredictable bills), and paid hardware before there's demand.
+**What not to copy, and what to park.** Not Stamp Me's native app (Wallet passes cover it), not Square's per-location pricing based on visits (owners dislike unpredictable bills), and no paid hardware before there's demand. **Parked outright**, as feature depth that only invites a spec-sheet comparison we lose: scratch-to-win, SMS credits, NFC tags, spend-based points, VIP tiers, reward ladders, multiple cards and Zapier. Build any of them when a paying business asks twice, not to fill a column in the table above.
 
 ## Pricing and packaging
 
@@ -124,8 +213,8 @@ Move from one £19 plan to a free tier plus two paid tiers, with a founding pric
 | ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
 | Free   | £0                          | Directory profile, 1 live offer, redemption codes                                                                                     | Phase 0                    |
 | Pro    | £24/month, or £240/year     | Unlimited offers, loyalty card, QR posters with scan stats, followers and offer emails, review prompts, staff scanner, unlimited team, Apple and Google Wallet card, card design, member import | Phase 0 (grows in Phase 1) |
-| Growth | £39/month                   | Everything in Pro plus automations, quiet-hours offers, Wallet push messages, multiple cards, scratch-to-win, customer export, monthly value report, events                                 | Phase 2                    |
-| Groups | Custom, per member business | Group dashboard, Bristol passport trail, shared campaigns for BIDs and associations                                                   | Phase 3                    |
+| Growth | £39/month                   | Everything in Pro plus automations, quiet-hours offers, the attributed repeat-visit report, customer list and export, loyalty in discovery, events                                 | Phase 2                    |
+| Groups | Custom, per member business | Group dashboard, Bristol passport trail, shared campaigns for BIDs and associations                                                   | Phase 2 (trail), Phase 3 (group dashboard) |
 
 **Founding member offer:** the first 50 Bristol businesses get Pro at £19/month, locked for life. This keeps your current price point, rewards early risk and creates a deadline ("only 12 founding spots left").
 
