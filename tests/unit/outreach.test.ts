@@ -19,26 +19,40 @@ test("the subject offers a page, not the thing every stamp-card app emails about
     assert.doesNotMatch(subject, /loyalty card/i);
 });
 
-test("the offer that gets someone in comes before the card that keeps them", () => {
+test("page, then offer, then card, then reminders", () => {
     const message = outreachMessage(preview, "Harry Northam", 38);
 
+    const page = message.indexOf("page in the Bristol directory");
     const offer = message.indexOf("claim your offer");
     const card = message.indexOf("stamp card");
+    const reminders = message.indexOf("follow you");
 
-    assert.ok(offer > 0, "the message says how a customer claims an offer");
-    assert.ok(card > offer, "the card is what brings them back, so it comes second");
+    assert.ok(page > 0, "the page they get comes first");
+    assert.ok(offer > page, "then the offer that brings someone in");
+    assert.ok(reminders > card, "reminders come after the card");
+
+    assert.ok(card > offer, "the card is what brings them back, so it comes after");
     // The poster is what carries the offer into the street.
     assert.match(message, /QR poster in your window/);
 });
 
-test("what works today comes before what the directory will be", () => {
+test("the DM runs in the same order", () => {
+    const dm = outreachDm(preview, "Harry Northam", 38);
+
+    const page = dm.indexOf("page in the Bristol directory");
+    const offer = dm.indexOf("claim an offer");
+    const card = dm.indexOf("stamp card");
+
+    assert.ok(page > 0 && offer > page && card > offer, dm);
+});
+
+test("the directory is something that grows, and nothing waits on it", () => {
     const message = outreachMessage(preview, "Harry Northam", 38);
 
-    const today = message.indexOf("works from day one");
-    const directory = message.indexOf("directory");
-
-    assert.ok(today > 0, "the message leads on what works with their own customers");
-    assert.ok(directory > today, "the network is what it becomes, not what is promised now");
+    // A new directory can't promise an audience it hasn't got.
+    assert.match(message, /gets better as more of Gloucester Road joins/);
+    assert.match(message, /None of that has to happen first/);
+    assert.doesNotMatch(message, /people browse|people search/);
     // The one thing a loyalty app can't say about its card.
     assert.match(message, /before they have ever been in/);
 });
