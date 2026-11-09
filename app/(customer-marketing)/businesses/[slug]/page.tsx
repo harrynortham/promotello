@@ -42,7 +42,7 @@ import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
 import { BusinessClosedNotice } from "./closed-notice";
-import { OwnerEdit } from "./owner-edit";
+import { OwnerBar, OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
@@ -192,6 +192,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 slug,
                 name,
                 closed_at,
+                review_requested_at,
                 logo_url,
                 cover_image_url,
                 category,
@@ -441,7 +442,22 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
             <PageViewTracker businessId={business.id} />
 
             <div className="mx-auto max-w-6xl">
-                {isPreview && <PreviewNotice what="business" />}
+                {canEdit && (
+                    <OwnerBar
+                        businessId={businessId}
+                        privacy={
+                            isPreview
+                                ? business.review_requested_at
+                                    ? "waiting"
+                                    : "unsent"
+                                : undefined
+                        }
+                    />
+                )}
+
+                {/* The bar says it for an owner; this is for anyone else on
+                    the team who can see the page but can't change it. */}
+                {isPreview && !canEdit && <PreviewNotice what="business" />}
 
                 {endedReason && <ScannedNote reason={endedReason} businessName={business.name} />}
 
