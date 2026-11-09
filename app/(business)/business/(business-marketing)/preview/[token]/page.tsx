@@ -14,6 +14,7 @@ import { FOUNDING_MEMBER_LIMIT, plans } from "@/lib/billing";
 import { qrSvg } from "@/lib/qr";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
+import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
 import { claimPreview } from "./actions";
 import { PreviewClaimed } from "./claimed";
@@ -63,9 +64,9 @@ function BusinessPagePreview({ preview }: { preview: Preview }) {
     return (
         <BrowserFrame url="promotello.com/businesses/…" label={`${preview.business_name}'s page on Promotello`}>
             <div className="bg-[#FFF8F0] p-5 text-[#17233B]">
-                {preview.cover_image_url ? (
+                {storedImage(preview.cover_image_url) ? (
                     <Image
-                        src={preview.cover_image_url}
+                        src={storedImage(preview.cover_image_url)!}
                         alt=""
                         width={480}
                         height={160}
@@ -75,9 +76,9 @@ function BusinessPagePreview({ preview }: { preview: Preview }) {
                     <div className="h-20 rounded-xl bg-[#17233B]" />
                 )}
                 <div className="-mt-7 flex items-end gap-3 px-3">
-                    {preview.logo_url ? (
+                    {storedImage(preview.logo_url) ? (
                         <Image
-                            src={preview.logo_url}
+                            src={storedImage(preview.logo_url)!}
                             alt=""
                             width={56}
                             height={56}

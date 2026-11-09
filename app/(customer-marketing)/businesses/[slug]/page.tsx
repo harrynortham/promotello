@@ -47,6 +47,7 @@ import { ScannedNote } from "./scanned-note";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
 import { businessPath, canonicalPath, offerPath } from "@/lib/slugs";
+import { storedImage } from "@/lib/images";
 import { BusinessesListing, businessesMetadata } from "../businesses-listing";
 
 type BusinessPageProps = {
@@ -362,8 +363,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     const promotionCount = offers?.length ?? 0;
 
     // The business's own cover photo, or else its newest offer photo.
-    const coverImageUrl =
-        business.cover_image_url ?? offers?.find((offer) => offer.image_url)?.image_url ?? null;
+    const coverImageUrl = storedImage(
+        business.cover_image_url ?? offers?.find((offer) => offer.image_url)?.image_url,
+    );
     const placeName = [location?.region, location?.city]
         .filter((part, index, parts) => part && parts.indexOf(part) === index)
         .join(", ");
@@ -511,9 +513,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                         <div className="relative -mt-10 flex items-end justify-between gap-4">
                             <div className="flex items-end gap-3">
                             <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-sm sm:size-28">
-                                {business.logo_url ? (
+                                {storedImage(business.logo_url) ? (
                                     <Image
-                                        src={business.logo_url}
+                                        src={storedImage(business.logo_url)!}
                                         alt={`${business.name} logo`}
                                         width={112}
                                         height={112}

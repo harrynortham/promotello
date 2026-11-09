@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
+import { storedImage } from "@/lib/images";
 
 // One offer, everything we know about it: what was submitted, what has
 // happened to it since, and what customers have done with it. For when a
@@ -210,9 +211,9 @@ async function Overview({ params }: PageProps) {
                 <Card className="border-[#17233B]/10">
                     <CardHeader><h2 className="text-lg font-semibold">The offer</h2></CardHeader>
                     <CardContent>
-                        {offer.image_url && (
+                        {storedImage(offer.image_url) && (
                             <div className="relative mb-5 aspect-[16/10] overflow-hidden rounded-xl bg-[#FFF4E8]">
-                                <Image src={offer.image_url} alt="" fill sizes="480px" className="object-cover" />
+                                <Image src={storedImage(offer.image_url)!} alt="" fill sizes="480px" className="object-cover" />
                             </div>
                         )}
 

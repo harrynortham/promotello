@@ -37,6 +37,7 @@ import { ShareOfferButton } from "@/components/share-offer-button";
 import { offerShareCaption, shareLink } from "@/lib/share";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { businessPath, canonicalPath } from "@/lib/slugs";
+import { storedImage } from "@/lib/images";
 
 type OfferPageProps = {
     params: Promise<{
@@ -421,9 +422,9 @@ async function OfferContent({ params }: OfferPageProps) {
 
                 <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-8">
                     <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-[#FFF4E8] sm:aspect-[16/10] lg:col-start-1 lg:row-start-1 lg:aspect-[4/3]">
-                        {offer.image_url ? (
+                        {storedImage(offer.image_url) ? (
                             <Image
-                                src={offer.image_url}
+                                src={storedImage(offer.image_url)!}
                                 alt={offer.title}
                                 fill
                                 priority
@@ -454,9 +455,9 @@ async function OfferContent({ params }: OfferPageProps) {
                             href={businessPath(business)}
                             className="group flex items-center gap-3"
                         >
-                            {business.logo_url ? (
+                            {storedImage(business.logo_url) ? (
                                 <Image
-                                    src={business.logo_url}
+                                    src={storedImage(business.logo_url)!}
                                     alt=""
                                     width={44}
                                     height={44}

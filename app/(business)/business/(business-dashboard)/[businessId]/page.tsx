@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { businessPath } from "@/lib/slugs";
+import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
 
 type PageProps = {
@@ -376,14 +377,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </p>
 
                     <div className="mt-3 flex items-center gap-4">
-                        {business.logo_url ? (
+                        {storedImage(business.logo_url) ? (
                             <Link
                                 href={`/business/${businessId}/logo`}
                                 aria-label="Change your logo"
                                 className="shrink-0"
                             >
                                 <Image
-                                    src={business.logo_url}
+                                    src={storedImage(business.logo_url)!}
                                     alt=""
                                     width={64}
                                     height={64}

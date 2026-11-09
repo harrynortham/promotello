@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FiClock, FiMapPin } from "react-icons/fi";
 
 import { ExampleBadge } from "@/components/example-badge";
+import { storedImage } from "@/lib/images";
 
 type OfferCardProps = {
     slug: string;
@@ -62,22 +63,28 @@ export function OfferCard({
 }: OfferCardProps) {
     const endingSoon = expiresAt !== undefined && daysLeft(expiresAt) <= 14;
 
+    // Read once: a URL on a host next/image doesn't allow throws, and an
+    // Image with a null src throws too, so both are decided up here and
+    // anything we didn't store falls back to the drawn panel and initial.
+    const image = storedImage(imageUrl);
+    const logo = storedImage(businessLogoUrl);
+
     return (
         <article
             data-slot="offer-card"
             className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
         >
             <div className="relative aspect-[16/10] overflow-hidden bg-[#FFF4E8]">
-                {imageUrl && rawImage ? (
+                {image && rawImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                        src={imageUrl}
+                        src={image}
                         alt=""
                         className="absolute inset-0 size-full object-cover"
                     />
-                ) : imageUrl ? (
+                ) : image ? (
                     <Image
-                        src={imageUrl}
+                        src={image}
                         alt=""
                         fill
                         sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 100vw"
@@ -116,9 +123,9 @@ export function OfferCard({
             <div className="flex flex-1 flex-col p-5">
                 {business && (
                     <div className="flex items-center gap-2.5">
-                        {businessLogoUrl ? (
+                        {logo ? (
                             <Image
-                                src={businessLogoUrl}
+                                src={logo}
                                 alt=""
                                 width={32}
                                 height={32}

@@ -5,6 +5,7 @@ import { FiMapPin } from "react-icons/fi";
 import { ExampleBadge } from "@/components/example-badge";
 import type { ListingBusiness } from "@/lib/listings";
 import { businessPath } from "@/lib/slugs";
+import { storedImage } from "@/lib/images";
 
 // `showCity` names the city under the business, for listings that show more
 // than one at a time: "Clifton" on its own doesn't say which city.
@@ -15,9 +16,9 @@ export function BusinessCard({ business, showCity = false }: { business: Listing
             className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
         >
             <div className="relative aspect-[16/9] overflow-hidden bg-[#17233B]">
-                {business.coverImageUrl ? (
+                {storedImage(business.coverImageUrl) ? (
                     <Image
-                        src={business.coverImageUrl}
+                        src={storedImage(business.coverImageUrl)!}
                         alt=""
                         fill
                         sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
@@ -39,9 +40,9 @@ export function BusinessCard({ business, showCity = false }: { business: Listing
             {/* Not positioned, so the name's link covers the whole card. */}
             <div className="flex flex-1 flex-col px-5 pb-5">
                 <div className="relative -mt-8 flex items-end justify-between gap-3">
-                    {business.logoUrl ? (
+                    {storedImage(business.logoUrl) ? (
                         <Image
-                            src={business.logoUrl}
+                            src={storedImage(business.logoUrl)!}
                             alt=""
                             width={64}
                             height={64}

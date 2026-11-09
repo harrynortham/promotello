@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RememberCity } from "@/components/remember-city";
 import { areaPath, cityPhotos, getLiveCities, type Place } from "@/lib/cities";
 import { topLevelFor } from "@/lib/categories";
+import { storedImage } from "@/lib/images";
 import { areaPhoto, getCategories, getLiveOffers, getPublicBusinesses } from "@/lib/listings";
 import { absoluteUrl, jsonLd, truncate } from "@/lib/site";
 import { businessPath } from "@/lib/slugs";
@@ -111,7 +112,7 @@ async function AreaContent({ params }: PageProps) {
     const photos = cityPhotos(place);
     // The city's photo is the same on all 29 of its area pages, so a picture
     // from this neighbourhood is used where there is one.
-    const backdrop = areaPhoto(businesses) ?? photos.feature;
+    const backdrop = storedImage(areaPhoto(businesses)) ?? photos.feature;
     const cityPath = `/explore/${place.slug}`;
     const pageUrl = absoluteUrl(areaPath(place, name)!);
 

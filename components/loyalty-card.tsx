@@ -4,6 +4,7 @@ import { FiGift } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { cardColour } from "@/lib/loyalty-design";
+import { storedImage } from "@/lib/images";
 
 // A customer's stamp card: the one on /dashboard/loyalty, and the preview
 // a business sees while setting theirs up. Both render this, so what the
@@ -58,8 +59,8 @@ export function LoyaltyCard({
                 className="flex items-center gap-3 px-6 py-4 text-white"
                 style={{ backgroundColor: theme.header }}
             >
-                {logoUrl ? (
-                    <Image src={logoUrl} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
+                {storedImage(logoUrl) ? (
+                    <Image src={storedImage(logoUrl)!} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
                 ) : (
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 font-semibold">
                         {businessName.charAt(0).toUpperCase()}
