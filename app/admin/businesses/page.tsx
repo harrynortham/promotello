@@ -39,6 +39,7 @@ type Business = {
     contact_email: string | null;
     approval_status: "pending" | "approved" | "rejected" | "suspended";
     review_requested_at: string | null;
+    closed_at: string | null;
     created_at: string;
     business_locations:
     | {
@@ -133,6 +134,7 @@ export default function AdminBusinessesPage() {
           contact_email,
           approval_status,
           review_requested_at,
+          closed_at,
           created_at,
           business_locations (
             name,
@@ -151,8 +153,11 @@ export default function AdminBusinessesPage() {
 
         if (requestedTab === "pending") {
             // Pending only means nobody has approved it. The queue is the
-            // businesses that have asked.
-            query = query.eq("approval_status", "pending").not("review_requested_at", "is", null);
+            // businesses that have asked and are still here.
+            query = query
+                .eq("approval_status", "pending")
+                .not("review_requested_at", "is", null)
+                .is("closed_at", null);
         } else if (requestedStatus !== "all") {
             query = query.eq("approval_status", requestedStatus);
         }
@@ -411,7 +416,7 @@ export default function AdminBusinessesPage() {
                                 return (
                                     <Card
                                         key={business.id}
-                                        className="border-[#17233B]/10 shadow-sm"
+                                        className={`border-[#17233B]/10 shadow-sm ${business.closed_at ? "bg-[#17233B]/[0.02] opacity-70" : ""}`}
                                     >
                                         <CardHeader>
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -430,10 +435,17 @@ export default function AdminBusinessesPage() {
                                                         {statusLabels[business.approval_status]}
                                                     </Badge>
 
-                                                    {business.approval_status === "pending" && !business.review_requested_at && (
-                                                        <Badge variant="outline" className="w-fit">
-                                                            Not sent for review
+                                                    {business.closed_at ? (
+                                                        <Badge variant="outline" className="w-fit text-[#17233B]/55">
+                                                            Closed
                                                         </Badge>
+                                                    ) : (
+                                                        business.approval_status === "pending" &&
+                                                        !business.review_requested_at && (
+                                                            <Badge variant="outline" className="w-fit">
+                                                                Not sent for review
+                                                            </Badge>
+                                                        )
                                                     )}
                                                 </div>
                                             </div>
