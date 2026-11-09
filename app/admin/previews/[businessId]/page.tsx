@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { FOUNDING_MEMBER_LIMIT, countFoundingMembers } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
+import { previewLink } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 import { deletePreview, savePreviewInstagram, savePreviewNotes, setPreviewStatus } from "../actions";
 import {
@@ -61,7 +62,7 @@ async function PreviewDetail({ params, searchParams }: PageProps) {
     const name = preview.businesses?.name ?? "This business";
     const location = preview.businesses?.business_locations?.[0];
     const where = location?.cities?.name ?? location?.city ?? null;
-    const link = absoluteUrl(`/business/preview/${preview.token}`);
+    const link = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const placesLeft = foundingTaken === null ? null : Math.max(FOUNDING_MEMBER_LIMIT - foundingTaken, 0);
 
     const justCreated = Boolean(created);
@@ -232,7 +233,7 @@ async function PreviewDetail({ params, searchParams }: PageProps) {
                         <CopyButton text={link} label="Copy link" />
                         <Button
                             render={
-                                <a href={`/business/preview/${preview.token}`} target="_blank" rel="noopener noreferrer" />
+                                <a href={previewLink(preview.token, preview.businesses?.name)} target="_blank" rel="noopener noreferrer" />
                             }
                             nativeButton={false}
                             variant="outline"

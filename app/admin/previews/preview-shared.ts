@@ -1,5 +1,6 @@
 import { FOUNDING_MEMBER_LIMIT, TRIAL_DAYS, plans } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
+import { previewLink } from "@/lib/previews";
 
 // What a preview looks like wherever it is listed or opened.
 export type PreviewRow = {
@@ -136,7 +137,7 @@ export function outreachSubject(preview: PreviewRow) {
 // disclosure is in the email signature, and sending it twice reads badly.
 export function outreachMessage(preview: PreviewRow, sender: string, placesLeft: number | null) {
     const name = preview.businesses?.name ?? "your business";
-    const url = absoluteUrl(`/business/preview/${preview.token}`);
+    const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim();
     const where = town ? ` ${town}` : "";
@@ -184,7 +185,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
 // be emailed.
 export function outreachDm(preview: PreviewRow, sender: string, placesLeft: number | null) {
     const name = preview.businesses?.name ?? "your business";
-    const url = absoluteUrl(`/business/preview/${preview.token}`);
+    const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim();
     const where = town ? ` ${town}` : "";

@@ -9,3 +9,35 @@ export function unclaimedPreview(business: {
 }) {
     return (business.business_previews ?? []).some((preview) => preview.claimed_at === null);
 }
+
+// A preview link is pasted into an email or a DM, where it is read before
+// it is clicked. "promotello.com/business/preview/fcdbe48a-49fc-450a…"
+// looks like a tracking link; with their name in front of it, it looks
+// like theirs. The token is still the whole of the key — the name in front
+// of it is decoration, and is never checked.
+const TOKEN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function slugify(value: string) {
+    return value
+        .normalize("NFKD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60)
+        .replace(/-+$/g, "");
+}
+
+export function previewLink(token: string, businessName?: string | null) {
+    const name = businessName ? slugify(businessName) : "";
+
+    return `/business/preview/${name ? `${name}-${token}` : token}`;
+}
+
+// The token is the last 36 characters, whatever is in front of it. A link
+// sent before the name was added is a bare token, and still reads.
+export function tokenFromPreviewSegment(segment: string) {
+    const token = segment.slice(-36);
+
+    return TOKEN.test(token) ? token : null;
+}

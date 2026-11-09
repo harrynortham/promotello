@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FOUNDING_MEMBER_LIMIT, plans } from "@/lib/billing";
 import { qrSvg } from "@/lib/qr";
 import { absoluteUrl } from "@/lib/site";
+import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 import { claimPreview } from "./actions";
 
@@ -45,7 +46,6 @@ type Preview = {
     claimed: boolean;
 };
 
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function Initials({ name }: { name: string }) {
     const letters = name.trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join("").toUpperCase();
@@ -121,9 +121,10 @@ function NotAvailable() {
 async function PreviewContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ token }, { error }] = await Promise.all([params, searchParams]);
+    const [{ token: segment }, { error }] = await Promise.all([params, searchParams]);
+    const token = tokenFromPreviewSegment(segment);
 
-    if (!uuid.test(token)) {
+    if (!token) {
         return <NotAvailable />;
     }
 
@@ -154,13 +155,14 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     const town = preview.city?.trim() || null;
     // The street if we know it, the town otherwise. Never "your area".
     const nearby = preview.area?.trim() || town;
-    const nextPath = `/business/preview/${token}`;
+    const nextPath = previewLink(token, preview.business_name);
     const poster = await qrSvg(absoluteUrl(nextPath));
 
     const claim = (
         <div className="flex flex-col items-start gap-3">
             <form action={claimPreview}>
                 <input type="hidden" name="token" value={token} />
+                <input type="hidden" name="name" value={preview.business_name} />
                 <SubmitButton pendingLabel="Claiming…" className="h-12 px-6 text-base">
                     {signedIn ? `Claim ${preview.business_name}` : `Claim ${preview.business_name} for free`}
                 </SubmitButton>
