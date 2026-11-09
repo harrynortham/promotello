@@ -211,72 +211,131 @@ Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Cus
 
 ## Still to do
 
-Roughly in the order it matters. Everything here is still open; things get
-deleted when they're done rather than ticked.
+Five stages, in order. Stage 1 can change what everything below it says, so it
+goes first, and nothing in a later stage starts while an earlier one is open.
+Only stage 4 is a feature build. Things get deleted when they're done rather
+than ticked.
 
-### Blocking launch
+The ordering rule, from [docs/ROADMAP.md](docs/ROADMAP.md): *the biggest risk is
+building too long before selling.* With 487 commits in the last 30 days and no
+paying business yet, the product is not what's behind.
 
-Upgrade to Claude max
+Harry's own: upgrade to Claude Max.
+
+### Stage 1 — Prove the chain works. No new features.
+
+None of this is a build. It's a day or two with a phone, and any of it can
+invalidate the rest of the list, which is why nothing else starts first.
 
 1. **Scan a QR code with a real phone.** Flagged four or five times and still
    open. It's the product's first physical touchpoint — poster in a window,
    customer scans, card appears. The brand badge sits in the middle at error
    correction H, which should be fine, but "should" is doing a lot of work for
    the one interaction the whole pitch rests on. Five minutes settles it.
-2. **ICO registration.** A UK data controller processing names, emails,
-   birthdays and visit history. A fee and a form, not a project, but not
-   optional: ico.org.uk/for-organisations/data-protection-fee, then add the
-   number to the privacy policy and the other legal pages (company number is
-   already in `lib/legal.ts`).
-3. **Check Resend's limits** are enough for launch volume.
-4. **Offline sales pack.** Sales sheets showing a live QR code for a loyalty
-   card, how it looks in the customer's wallet, the offers, the directory page
-   and the pricing.
-5. **Staff documentation on redemptions**, for the people behind the counter.
-6. **Test full flow.** Send preview email, claim business profile. Update profile, create QR code for business profile. Create QR code for offer. Claim offer, scan qr. Create a voucher, create a QR code for voucher. Scan it. Login as business, redeem both by scanning. Make an notes on the onboarding. Create a business account without the preview email and follow same steps. Create business with google login.
-7. **Test admin side approval flow and decline.** What gets send or seen by user when we decline an offer or business profile, how to we suggest improvements. We should have a set set of messages that we can send off quickly that are polite and helpful and documentation to match. Lets log also the approval reasons and resubmissions for history.
-8. What does customer or owner see when voucher offer claimed, any animation we can add?
+2. **Walk the whole flow, start to finish, and take notes on the onboarding.**
+   Send the preview email, claim the business profile, update the profile,
+   create a QR code for the business page, create a QR code for an offer, claim
+   the offer and scan the QR, create a voucher and a QR code for it, scan that,
+   then sign in as the business and redeem both by scanning. Then do it again
+   as a business that never got a preview email, and once more with Google
+   sign-in.
+3. **The loyalty card, end to end.** Rebuilt in #164 and #165, so the old "all
+   broken and wrong" note is stale, but it has not been through a real till:
+   join by scanning, stamp, stamp to the reward, and what a customer sees when
+   the card is full.
+4. **Admin approval and decline.** Approve and decline both a business and an
+   offer, and write down exactly what the business receives at each step. That
+   note becomes the work in stage 3.
 
-### Blockers from testing flow
+### Stage 2 — True before you email a single business
 
-Loyalty cards interface is all broken and wrong
+Each of these is an afternoon or a form, and each one is painful to discover
+after outreach has started.
 
-Test the claim functions for offers.
-Test the loyalty cards and stamping them
-test getting loyalty card via scan
+- **ICO registration.** A UK data controller processing names, emails,
+  birthdays and visit history. A fee and a form, not a project, but not
+  optional: ico.org.uk/for-organisations/data-protection-fee, then add the
+  number to the privacy policy and the other legal pages (company number is
+  already in `lib/legal.ts`).
+- **Resend's limits.** The free plan is 3,000 a month *and* 100 a day, and the
+  daily cap goes first: daily summaries alone are about 75 a day at 50 active
+  businesses, one offer announced to 150 followers is 150 in a burst, and the
+  1st of the month adds every monthly report. Supabase's sign-in emails come
+  out of the same quota. Move to Pro ($20/mo) before daily sends reach ~70, or
+  before the first business with more than ~80 followers announces an offer.
+- **A second Supabase project for development**, so tests stop running against
+  the live database. One accidental e2e run during launch week is worse than
+  the day this costs.
+- **Decide the email volume.** A business that signs up and does nothing gets 7
+  emails in 21 days (welcome, setup nudge, loyalty pitch, second nudge,
+  founding places, results, check-in). All verified working, there are just a
+  lot of them. Related: do we prompt a customer to follow the business when
+  they claim an offer, and does a business with a lot of followers become
+  expensive to email?
+- **Apply for the Apple Developer and Google Wallet issuer accounts.** The
+  build is post-launch (app improvements, 1), but approval takes weeks, so the
+  applications go in now.
 
-Do we give a way to renew expired or deleted promotions. If user has stuck QR posters places adn deletes it, they should be able to bring back the offer without having to reprint??
+### Stage 3 — The gaps that lose a customer
 
-Does editing a business page require the same review process when editing page as we made in offers
+These are the places the product breaks in front of someone. Small builds,
+each tied to a moment in stage 1's walkthrough.
 
-Should offers be able to be deleted? This would end up with dead QR codes. or we direct them to page within their business profile saying this doesnt exist anymore. or we take them to the offer where it shows expired? It could look unprofessional if promotello has dead QR codes everywhere. We can inform businesses if the old offers are still getting views?
+- **A scanned code must never die.** The biggest one, and three of the old
+  notes are the same problem: a deleted or expired offer leaves a poster in a
+  window pointing at nothing, and Promotello looks unprofessional in public. A
+  scan should always land somewhere useful — the business page saying what's on
+  now, or the offer marked ended — never a dead end. With that, a business can
+  also bring an offer back without reprinting, and can be told when an old
+  offer is still being scanned.
+- **Decide whether editing a business page needs review**, the way an offer
+  edit does ([docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)). If it
+  does, reuse that flow so the page never goes offline while it's reviewed.
+- **Decline messages, and a history.** A set of polite, helpful, ready-to-send
+  messages for declining a business or an offer, with matching help-centre
+  wording, plus a log of approval reasons and resubmissions so there's a
+  history when a business asks.
+- **Staff documentation on redemptions**, for the people behind the counter.
+  One printable page. The till is where this product fails quietly.
+- **A manual stamp**, for when scanning fails and the customer's phone is dead
+  or the camera won't open. Staff need a way through that doesn't send the
+  customer away.
+- **Onboarding when a business fits no category.**
 
-### Product gaps to close before or around launch
+### Stage 4 — The one build that earns month two
 
-- business to manually add a stamp to user if process fails?
+**The attributed repeat-visit report.** First visits Promotello sent, how many
+came back, how many became regulars, per business. It is the only number a
+loyalty app can't print, the reason a business renews rather than cancels in
+month two, and the thing that makes £24 a month read as cheap rather than
+expensive — see [Positioning](docs/ROADMAP.md#positioning-what-a-loyalty-app-cant-copy).
+Everything it needs is already tracked: views, claims, redemptions, stamps, QR
+scans, repeat visit rate and cross-visits. This is a reporting job, not new
+instrumentation. Covers the old note about tracking conversion per business and
+wanting a profile for each customer.
 
-- Bring back the "Promotello isn't in your area yet" bar, with an email field
-  so people can be told when it arrives — a waitlist rather than a dead end. I will need to test with vpn that it says each location correct. how will the waitlist be notified?
-- What happens at onboarding when a business doesn't fit any category.
-  just do waht
-- Test what happens when a loyalty card is full.
-- Joining a loyalty card without an account takes a name and an email. Phone
-  needs an SMS sender first, or a guest who gives only a number has no way back
-  to their card.
-- Decide the email volume before outreach: a business that signs up and does
-  nothing gets 7 emails in 21 days (welcome, setup nudge, loyalty pitch, second
-  nudge, founding places, results, check-in). All verified working, there are
-  just a lot of them. Can we track conversion of each business customer in dashboard. have a user profile for each?
-- When claiming a promo do we prompt user to follow the business? Will too many followers for a business cost us in email sends when they add new promos?
-- Give users a hint and a link to the offer QR code and a prompt they can add to chatgpt to create a poster with the offeri
+With it done: **the offline sales pack.** Sales sheets showing a live QR code
+for a loyalty card, how it looks on a customer's phone, the offers, the
+directory page, the pricing — and a page of the report, which is the part no
+competitor's sheet can show.
 
-### Admin too
+### Stage 5 — Not before launch
 
-### Accounts and infrastructure
+Kept, not forgotten. Nothing here stops a business paying.
 
-- Get custom supabase domain
-- A second Supabase project for development, so tests stop running against the
-  live database.
+- What a customer or owner sees when a voucher offer is claimed, and whether an
+  animation belongs there.
+- The "Promotello isn't in your area yet" bar with an email field, as a
+  waitlist rather than a dead end. Note [docs/MULTI-CITY.md](docs/MULTI-CITY.md):
+  the IP lookup names the wrong town often enough that it was removed on
+  purpose, so this belongs in the location search where someone names their own
+  town, not in a bar that guesses. Needs a decision on how a waitlist is told
+  when its city opens, and a VPN test either way.
+- Joining a loyalty card by phone number. Needs an SMS sender first, or a guest
+  who gives only a number has no way back to their card.
+- A hint and a link to the offer QR code, with a prompt someone can paste into
+  ChatGPT to make their own poster.
+- Custom Supabase domain.
 - Secure every social account with keychain passwords and the right phone
   numbers and email addresses.
 - 3 December: transfer the YouTube channel to harry@promotello.com (not
@@ -285,9 +344,6 @@ Should offers be able to be deleted? This would end up with dead QR codes. or we
 - A BIMI mark certificate (VMC or CMC) so Gmail and Apple Mail show the logo.
   The logo and the DNS record are already in place.
 - Apple sign-in on the login and register pages: quicker than verifying email.
-
-### Later
-
 - More poster sizes, including something smaller than the two we offer.
 - Generate a window poster for every business that signs up, printed and posted
   through an API (Printful: documented REST API, kiss-cut stickers, printed in
@@ -299,7 +355,7 @@ Should offers be able to be deleted? This would end up with dead QR codes. or we
 - Events: built and hidden until there are enough customers (`lib/features.ts`).
 - Security, password and email preference guides in both help centres are still
   in the older formal voice. Left that way on purpose.
-- Android and iOS apps with notifications
+- Android and iOS apps with notifications.
 
 ### App improvements
 
