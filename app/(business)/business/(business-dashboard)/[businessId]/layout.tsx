@@ -11,6 +11,7 @@ import { BusinessSwitcher } from "@/components/business-switcher";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { createClient } from "@/utils/supabase/server";
+import { unclaimedPreview } from "@/lib/previews";
 
 type BusinessLayoutProps = {
     children: React.ReactNode;
@@ -24,6 +25,7 @@ type Business = {
     // For the link out to the page customers see.
     slug: string;
     name: string;
+    business_previews: { claimed_at: string | null }[];
     logo_url: string | null;
     approval_status: string;
 };
@@ -88,7 +90,8 @@ async function BusinessLayoutContent({
                     slug,
                     name,
                     logo_url,
-                    approval_status
+                    approval_status,
+                    business_previews ( claimed_at )
                 )
             `,
         )
@@ -122,7 +125,11 @@ async function BusinessLayoutContent({
             .filter(
                 (business): business is Business =>
                     Boolean(business?.id && business?.slug && business?.name),
-            ) ?? [];
+            )
+            // Previews nobody has claimed aren't businesses this person runs,
+            // but the one they are standing on stays, or the switcher would
+            // be missing the page it is on.
+            .filter((business) => business.id === businessId || !unclaimedPreview(business)) ?? [];
 
     const canManage =
         membership.role === "owner" || membership.role === "admin";

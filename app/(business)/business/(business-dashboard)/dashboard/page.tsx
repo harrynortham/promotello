@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
+import { unclaimedPreview } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 
 type Business = {
@@ -18,6 +19,7 @@ type Business = {
     logo_url: string | null;
     approval_status: string;
     closed_at: string | null;
+    business_previews: { claimed_at: string | null }[];
 };
 
 type BusinessSummary = Business & {
@@ -183,7 +185,7 @@ async function BusinessDashboardContent() {
 
     const { data: memberships, error } = await supabase
         .from("business_members")
-        .select("businesses ( id, name, logo_url, approval_status, closed_at )")
+        .select("businesses ( id, name, logo_url, approval_status, closed_at, business_previews ( claimed_at ) )")
         .eq("user_id", user.id);
 
     if (error) {
@@ -197,12 +199,16 @@ async function BusinessDashboardContent() {
         );
     }
 
+    // A preview nobody has claimed belongs to whoever built it only in the
+    // sense that someone has to own the row. It is managed in /admin/previews,
+    // and listing it here would bury the businesses they actually run.
     const businesses: Business[] =
         memberships
             ?.map((membership) =>
                 Array.isArray(membership.businesses) ? membership.businesses[0] : membership.businesses,
             )
-            .filter((business): business is Business => Boolean(business?.id && business?.name)) ?? [];
+            .filter((business): business is Business => Boolean(business?.id && business?.name))
+            .filter((business) => !unclaimedPreview(business)) ?? [];
 
     const fullName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "";
     const firstName = fullName.split(" ")[0] || null;
