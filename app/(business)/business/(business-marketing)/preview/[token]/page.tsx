@@ -192,10 +192,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-[#17233B]/70">
                     We&apos;ve set up your page, a digital loyalty card and a QR poster for your window, to show how
                     Promotello turns first-time visitors into regulars.
-                    {town && ` Your page sits in the ${town} directory, where people look for somewhere to go.`}{" "}
-                    Claiming doesn&apos;t publish anything. It hands you the keys, so you can open the
-                    real page, change whatever isn&apos;t right, and send it to us when you&apos;re happy
-                    with it.
+                    {town && ` Your page sits in the ${town} directory, where people look for somewhere to go.`}
                 </p>
 
                 {error && (
