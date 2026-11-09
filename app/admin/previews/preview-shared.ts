@@ -20,12 +20,12 @@ export type PreviewRow = {
         approval_status: string;
         logo_url: string | null;
         cover_image_url: string | null;
-        business_locations: { city: string | null; cities: { name: string } | null }[];
+        business_locations: { city: string | null; region: string | null; cities: { name: string } | null }[];
     } | null;
 };
 
 export const previewColumns =
-    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, logo_url, cover_image_url, business_locations ( city, cities ( name ) ) )";
+    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, logo_url, cover_image_url, business_locations ( city, region, cities ( name ) ) )";
 
 // Signed by a real name where there is one. A DM from a brand account
 // signed "The Promotello team" reads worse than one signed by nobody.
@@ -33,6 +33,31 @@ export const DEFAULT_SENDER = "The Promotello team";
 
 export function senderName(fullName: unknown) {
     return typeof fullName === "string" && fullName.trim() ? fullName.trim() : DEFAULT_SENDER;
+}
+
+// A cold email signed with a full name reads like a letter from a company.
+// Signed with a first name it reads like a person who has done something for
+// you, which is what has actually happened.
+// Who is writing, and the fact they will find out for themselves the moment
+// they open the page: that this is new and small. Said plainly it makes the
+// founding price make sense and the rest believable. Not apologised for —
+// "we're just starting out, bear with us" is a plea, and nobody buys from
+// one.
+export function introduction(sender: string, town: string, street: string | null) {
+    const who =
+        sender === DEFAULT_SENDER
+            ? `We're building Promotello here in ${town}`
+            : `I'm ${sender.trim().split(/\s+/)[0]} — I'm building Promotello here in ${town}`;
+
+    return street ? `${who}. It's new, and I'm starting with ${street}.` : `${who}, and it's new.`;
+}
+
+export function signOff(sender: string) {
+    if (sender === DEFAULT_SENDER) {
+        return ["Thanks,", DEFAULT_SENDER];
+    }
+
+    return ["Cheers,", sender.trim().split(/\s+/)[0]];
 }
 
 export const statusLabels: Record<string, string> = {
@@ -87,17 +112,25 @@ export function instagramDmUrl(handle: string) {
     return `https://ig.me/m/${handle}`;
 }
 
-// The subject line. It leads with their own business and with something
-// that already exists, because a cold email is read or deleted on this line
+// The subject line. It leads with something that already exists and with
+// their own business, because a cold email is read or deleted on this line
 // alone.
+//
+// Not "your loyalty card is ready": that is the line every stamp-card app
+// sends, and it invites the comparison we lose. A page is the thing they
+// don't already have an email about.
 export function outreachSubject(preview: PreviewRow) {
-    return `Your loyalty card is ready, ${preview.businesses?.name ?? "your business"}`;
+    return `Your Promotello page is ready, ${preview.businesses?.name ?? "your business"}`;
 }
 
 // The message to send with the link, by email or a DM. It opens with what has
 // been built for them rather than with us, names the two objections that stop
 // people (an app, a card reader), and gives the founding price a number of
 // places left so there is a reason to look today.
+//
+// The directory comes first and the card second, deliberately. A stamp card
+// is something a dozen cheaper apps sell them; customers who have never been
+// in are not. See Positioning in docs/ROADMAP.md.
 //
 // It signs off by name, but carries no company footer: the Companies Act
 // disclosure is in the email signature, and sending it twice reads badly.
@@ -107,6 +140,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim();
     const where = town ? ` ${town}` : "";
+    const street = location?.region?.trim() || null;
 
     const offer = `The first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}, and the first ${TRIAL_DAYS} days are free.`;
 
@@ -126,15 +160,17 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         url,
         "",
-        `Promotello is for independent businesses in${where || " Bristol"}: a digital loyalty card your customers keep on their phone, a QR poster for your window, and your offers in a directory people search. It is built around turning a first visit into a second one.`,
+        introduction(sender, town || "Bristol", street),
         "",
-        "No app for customers to download and no card reader. Your staff stamp a card by scanning it with their own phone, and you can see how many people come back because of it.",
+        `It works from day one with the customers you already have: a stamp card they keep on their phone, a QR poster for your window, and your offers on a page that's yours. The more of ${street || town || "Bristol"} joins, the more people find you through the directory too — and your card is on your page, so someone can join it before they have ever been in.`,
+        "",
+        "No app for customers to download and no card reader. Staff stamp a card by scanning it with their own phone, so nobody can stamp their own.",
         "",
         `It's free to use with one offer. ${founding}`,
         "",
         `Worth a look? Claiming it takes about two minutes. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
-        sender,
+        ...signOff(sender),
     ].join("\n");
 }
 
@@ -152,6 +188,7 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim();
     const where = town ? ` ${town}` : "";
+    const street = location?.region?.trim() || null;
 
     // Kept separate from the email's version on purpose: one sentence here,
     // and the count again only once places have actually gone.
@@ -165,11 +202,14 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
         "",
         url,
         "",
-        `It's a digital loyalty card your customers keep on their phone, a QR poster for your window, and your offers in the${where || " Bristol"} directory people search. No app for them to download and no card reader.`,
+        introduction(sender, town || "Bristol", street),
+        "",
+        `It works from day one with the customers you already have: a stamp card on their phone and a QR poster for your window, plus a page in the${where || " Bristol"} directory that gets better as more of the street joins. No app for them to download and no card reader.`,
         "",
         founding,
         "",
         `Worth a look? Claiming it takes about two minutes. If it's not for you, just say and I won't message again.`,
-        ...(sender === DEFAULT_SENDER ? [] : ["", sender]),
+        // One line in a DM: "Cheers," on its own looks like a stray message.
+        ...(sender === DEFAULT_SENDER ? [] : ["", `— ${sender.trim().split(/\s+/)[0]}`]),
     ].join("\n");
 }
