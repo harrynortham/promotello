@@ -291,6 +291,19 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     href: `${base}/offers/new`,
                     action: "Create offer",
                 },
+                ...(business.approval_status === "pending" && !business.review_requested_at
+                    ? [
+                        {
+                            id: "review",
+                            label: "Send your page for review",
+                            description:
+                                "We built this page, so nothing is public until you have looked it over and sent it to us.",
+                            completed: false,
+                            href: `${base}#send-for-review`,
+                            action: "Send for review",
+                        },
+                    ]
+                    : []),
             ],
         },
         {
@@ -449,7 +462,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             )}
 
             {business.approval_status === "pending" && !business.review_requested_at && (
-                <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
+                <Alert id="send-for-review" className="scroll-mt-24 border-[#FF593F]/30 bg-[#FF593F]/5">
                     <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
                         <p>

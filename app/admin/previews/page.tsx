@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
-import { formatDate, previewColumns, previewPath, statusLabels, type PreviewRow } from "./preview-shared";
+import { awaitingSend, formatDate, previewColumns, previewPath, statusLabels, type PreviewRow } from "./preview-shared";
 
 type PageProps = { searchParams: Promise<{ page?: string }> };
 
@@ -31,6 +31,7 @@ async function PreviewsContent({ searchParams }: PageProps) {
         .range(from, from + pageSize - 1);
 
     const previews = (rows ?? []) as unknown as PreviewRow[];
+    const unsent = previews.filter(awaitingSend).length;
     const total = count ?? 0;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -59,7 +60,17 @@ async function PreviewsContent({ searchParams }: PageProps) {
 
             <Card className="border-[#17233B]/10">
                 <CardHeader>
-                    <CardTitle className="text-lg">{total === 1 ? "1 preview" : `${total} previews`}</CardTitle>
+                    <CardTitle className="flex flex-wrap items-center gap-3 text-lg">
+                        {total === 1 ? "1 preview" : `${total} previews`}
+
+                        {/* Claimed and never sent: waiting on them, and
+                            invisible until it is. */}
+                        {unsent > 0 && (
+                            <Badge variant="outline" className="border-[#FF593F]/40 bg-[#FF593F]/5 font-normal text-[#FF593F]">
+                                {unsent === 1 ? "1 claimed, not sent" : `${unsent} claimed, not sent`}
+                            </Badge>
+                        )}
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {previews.length === 0 ? (
@@ -95,7 +106,11 @@ async function PreviewsContent({ searchParams }: PageProps) {
                                             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#17233B]/70">
                                                 <span>Built {formatDate(preview.created_at)}</span>
 
-                                                {preview.claimed_at ? (
+                                                {awaitingSend(preview) ? (
+                                                    <Badge variant="outline" className="border-[#FF593F]/40 text-[#FF593F]">
+                                                        Claimed {formatDate(preview.claimed_at!)} · not sent
+                                                    </Badge>
+                                                ) : preview.claimed_at ? (
                                                     <Badge className="bg-emerald-100 text-emerald-800">
                                                         Claimed {formatDate(preview.claimed_at)}
                                                     </Badge>
