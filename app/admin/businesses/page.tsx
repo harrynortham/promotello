@@ -38,6 +38,7 @@ type Business = {
     website_url: string | null;
     contact_email: string | null;
     approval_status: "pending" | "approved" | "rejected" | "suspended";
+    review_requested_at: string | null;
     created_at: string;
     business_locations:
     | {
@@ -118,6 +119,7 @@ export default function AdminBusinessesPage() {
           website_url,
           contact_email,
           approval_status,
+          review_requested_at,
           created_at,
           business_locations (
             name,
@@ -135,7 +137,9 @@ export default function AdminBusinessesPage() {
             .range(from, to);
 
         if (requestedTab === "pending") {
-            query = query.eq("approval_status", "pending");
+            // Pending only means nobody has approved it. The queue is the
+            // businesses that have asked.
+            query = query.eq("approval_status", "pending").not("review_requested_at", "is", null);
         } else if (requestedStatus !== "all") {
             query = query.eq("approval_status", requestedStatus);
         }
@@ -395,9 +399,17 @@ export default function AdminBusinessesPage() {
                                                     </CardTitle>
                                                 </div>
 
-                                                <Badge className={`w-fit ${statusStyles[business.approval_status]}`}>
-                                                    {statusLabels[business.approval_status]}
-                                                </Badge>
+                                                <div className="flex w-fit flex-wrap gap-2">
+                                                    <Badge className={`w-fit ${statusStyles[business.approval_status]}`}>
+                                                        {statusLabels[business.approval_status]}
+                                                    </Badge>
+
+                                                    {business.approval_status === "pending" && !business.review_requested_at && (
+                                                        <Badge variant="outline" className="w-fit">
+                                                            Not sent for review
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         </CardHeader>
 

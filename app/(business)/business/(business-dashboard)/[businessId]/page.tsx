@@ -11,6 +11,7 @@ import {
 } from "@/components/business-onboarding-checklist";
 import { BusinessRecentRedemptions } from "@/components/business-recent-redemptions";
 import { reopenBusiness } from "./settings/actions";
+import { requestBusinessReview } from "./review-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
-    searchParams?: Promise<{ welcome?: string; reopened?: string; error?: string }>;
+    searchParams?: Promise<{ welcome?: string; reopened?: string; sent?: string; error?: string }>;
 };
 
 type OfferSummary = {
@@ -39,6 +40,7 @@ type OfferSummary = {
     title: string;
     approval_status: string;
     closed_at: string | null;
+    review_requested_at: string | null;
     max_redemptions: number | null;
     redemption_count: number;
 };
@@ -117,6 +119,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 contact_email,
                 approval_status,
                 closed_at,
+                review_requested_at,
                 google_review_url
             `,
         )
@@ -443,13 +446,50 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </Alert>
             )}
 
-            {business.approval_status === "pending" && !isWelcome && (
+            {business.approval_status === "pending" && !business.review_requested_at && (
+                <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
+                    <AlertTitle>Not live yet &mdash; have a look first</AlertTitle>
+                    <AlertDescription>
+                        <p>
+                            We built this page for you, so the photo, the description and
+                            the offer are our suggestions. Change anything that isn&apos;t
+                            right, and send it to us when you&apos;re happy with it. Nothing
+                            is public until you do.
+                        </p>
+
+                        <form action={requestBusinessReview} className="mt-4">
+                            <input type="hidden" name="businessId" value={businessId} />
+                            <Button type="submit" size="sm">
+                                Send {business.name} for review
+                            </Button>
+                        </form>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {business.approval_status === "pending" && business.review_requested_at && !isWelcome && (
                 <Alert className="border-amber-200 bg-amber-50 text-amber-900">
                     <AlertTitle>Waiting for approval</AlertTitle>
                     <AlertDescription>
                         Your profile and offers go live once our team has approved
                         your business. Finish setting up so you&apos;re ready.
                     </AlertDescription>
+                </Alert>
+            )}
+
+            {search?.sent && (
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
+                    <AlertTitle>Sent for review</AlertTitle>
+                    <AlertDescription>
+                        We usually look the same day, and we&apos;ll email you either way.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {search?.error === "review" && (
+                <Alert variant="destructive">
+                    <AlertTitle>We couldn&apos;t send it</AlertTitle>
+                    <AlertDescription>Please try again.</AlertDescription>
                 </Alert>
             )}
 

@@ -61,7 +61,13 @@ async function AdminNavWithCounts() {
     const supabase = await requireAdmin();
 
     const [{ count: businesses }, { count: offers }, { count: billing }, { count: feedback }] = await Promise.all([
-        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
+        supabase
+            .from("businesses")
+            .select("id", { count: "exact", head: true })
+            .eq("approval_status", "pending")
+            // Only the ones that have asked: see the queue in
+            // app/admin/businesses/page.tsx.
+            .not("review_requested_at", "is", null),
         supabase.from("offers").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
         supabase.from("billing_alerts").select("id", { count: "exact", head: true }).is("resolved_at", null),
         supabase.from("business_feedback").select("id", { count: "exact", head: true }).eq("status", "new"),
