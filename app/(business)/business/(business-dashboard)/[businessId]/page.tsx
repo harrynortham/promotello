@@ -403,7 +403,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     <AlertDescription>
                         {business.approval_status === "approved"
                             ? "Your business is live. Pick up from the steps below."
-                            : "Our team checks every new business before it appears publicly. You can set everything up in the meantime, starting with the steps below."}
+                            : business.review_requested_at
+                                ? "Our team checks every new business before it appears publicly. You can set everything up in the meantime, starting with the steps below."
+                                : "It's yours now, and nothing is public yet. Have a look through what we set up and change anything that isn't right."}
                     </AlertDescription>
                 </Alert>
             )}
