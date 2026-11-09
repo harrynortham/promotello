@@ -573,3 +573,34 @@ test("the overview answers weekly active, trial to paid and repeat visits", asyn
         await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
     }
 });
+
+// The catalogue used to answer its own first question last. Opening the
+// page starts a load for the queue; choosing a tab and then a status
+// starts two more, and the queue's answer — empty, because nothing is
+// waiting — arrived after them and wiped the list. The page said "No
+// offers found" under a filter with 25 behind it.
+test("choosing a tab and a status straight after each other shows the offers", async ({ browser }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+
+    await client.from("platform_admins").insert({ user_id: state.businessUserId });
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto("/admin/offers");
+
+        // No waiting in between: that is the whole point.
+        await page.getByRole("button", { name: "All offers" }).click();
+        await page.locator("#status").selectOption("approved");
+
+        await expect(page.getByText("No offers found")).toHaveCount(0, { timeout: 15_000 });
+        await expect(
+            page.locator('section [data-slot="card"]').filter({ hasText: "Live" }).first(),
+        ).toBeVisible();
+
+        // And the filter the page is showing is the one it answered.
+        await expect(page.locator("#status")).toHaveValue("approved");
+    } finally {
+        await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
+    }
+});
