@@ -187,6 +187,94 @@ export function CreatePreviewForm({ cities }: { cities: CityOption }) {
                 title="Their logo and a photo"
                 hint="Optional, and the thing that makes a preview look like them rather than a template. Both can be added or changed afterwards."
             >
+                <details className="rounded-xl border border-dashed border-[#17233B]/20 bg-white">
+                    <summary className="cursor-pointer list-none p-4 text-sm font-medium text-[#FF593F]">
+                        Where to get these for free, without a legal headache
+                    </summary>
+
+                    <div className="space-y-5 border-t border-[#17233B]/10 p-4 text-sm leading-6 text-[#17233B]/75">
+                        <p>
+                            A preview is private and the business stays pending, so nothing here is
+                            shown to customers until they claim it and you approve it. They own both
+                            images the moment they claim. That is what makes the logo
+                            straightforward and the photo worth more care.
+                        </p>
+
+                        <div>
+                            <h4 className="font-semibold text-[#17233B]">The logo: take theirs</h4>
+                            <p className="mt-1">
+                                From their own website (the header, or the favicon if that&rsquo;s all
+                                there is), their Instagram or Facebook profile picture, or their
+                                Google Business Profile. You are using their mark to identify them, on
+                                a page built for them, which is what every directory does. Keep it
+                                that way: don&rsquo;t alter it, don&rsquo;t imply they have joined, and
+                                take it down if they ask.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold text-[#17233B]">The photo: use free stock</h4>
+                            <p className="mt-1">
+                                A photo belongs to whoever took it, often a photographer they paid,
+                                and a cover is decoration rather than identification &mdash; so the
+                                argument that carries the logo doesn&rsquo;t carry here.{" "}
+                                <a
+                                    href="https://unsplash.com"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline underline-offset-4"
+                                >
+                                    Unsplash
+                                </a>
+                                ,{" "}
+                                <a
+                                    href="https://www.pexels.com"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline underline-offset-4"
+                                >
+                                    Pexels
+                                </a>{" "}
+                                and{" "}
+                                <a
+                                    href="https://pixabay.com"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="underline underline-offset-4"
+                                >
+                                    Pixabay
+                                </a>{" "}
+                                are all free for commercial use with no attribution. Search their
+                                category &mdash; &ldquo;independent bakery counter&rdquo;, &ldquo;barber
+                                shop interior&rdquo; &mdash; and pick something close in feel.
+                            </p>
+                            <p className="mt-2">
+                                Their own shopfront photo from their website or Instagram is more
+                                personal and usually fine on a private preview they are about to own.
+                                Swap it for stock if you are unsure, and never use one with
+                                recognisable customers in it.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold text-[#17233B]">Never</h4>
+                            <p className="mt-1">
+                                Google Maps or Street View imagery (their terms don&rsquo;t allow
+                                reusing it), watermarked previews from paid stock libraries, or
+                                anything from a photographer&rsquo;s portfolio. Wikimedia and Geograph
+                                are properly licensed but want attribution on the page, which is more
+                                trouble than Unsplash is worth avoiding.
+                            </p>
+                        </div>
+
+                        <p className="text-[#17233B]/60">
+                            Rules of thumb from how directories work, not legal advice. If a business
+                            ever objects to either image, swapping it takes a minute from their
+                            preview page.
+                        </p>
+                    </div>
+                </details>
+
                 <div className="grid gap-5 sm:grid-cols-2">
                     <ImagePicker
                         id="preview-logo"
