@@ -16,6 +16,7 @@ import { absoluteUrl } from "@/lib/site";
 import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 import { claimPreview } from "./actions";
+import { PreviewClaimed } from "./claimed";
 
 // A private page showing a business how it would look on Promotello,
 // built by us before they've signed up. The token in the link is the key.
@@ -140,15 +141,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     }
 
     if (preview.claimed) {
-        return (
-            <section className="mx-auto max-w-xl px-6 py-24 text-center sm:px-10">
-                <h1 className="text-3xl font-semibold tracking-tight">{preview.business_name} has been claimed</h1>
-                <p className="mt-4 text-[#17233B]/65">If that was you, sign in to manage it.</p>
-                <Button render={<Link href="/login?next=/business/dashboard" />} nativeButton={false} size="lg" className="mt-8">
-                    Sign in
-                </Button>
-            </section>
-        );
+        return <PreviewClaimed name={preview.business_name} />;
     }
 
     const signedIn = Boolean(auth.user);

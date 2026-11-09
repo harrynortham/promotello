@@ -85,7 +85,7 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
 
         // The link now says it's been claimed.
         await visitor.goto(previewPath);
-        await expect(visitor.getByRole("heading", { name: `${name} has been claimed` })).toBeVisible();
+        await expect(visitor.getByRole("heading", { name: `${name} has an owner now.` })).toBeVisible();
     } finally {
         await admin().from("platform_admins").delete().eq("user_id", businessUserId);
         if (businessId) await admin().from("businesses").delete().eq("id", businessId);
