@@ -19,6 +19,18 @@ test("the subject offers a page, not the thing every stamp-card app emails about
     assert.doesNotMatch(subject, /loyalty card/i);
 });
 
+test("the offer that gets someone in comes before the card that keeps them", () => {
+    const message = outreachMessage(preview, "Harry Northam", 38);
+
+    const offer = message.indexOf("claim your offer");
+    const card = message.indexOf("stamp card");
+
+    assert.ok(offer > 0, "the message says how a customer claims an offer");
+    assert.ok(card > offer, "the card is what brings them back, so it comes second");
+    // The poster is what carries the offer into the street.
+    assert.match(message, /QR poster in your window/);
+});
+
 test("what works today comes before what the directory will be", () => {
     const message = outreachMessage(preview, "Harry Northam", 38);
 
