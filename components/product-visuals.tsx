@@ -13,6 +13,7 @@ import {
     FiStar,
 } from "react-icons/fi";
 
+import { storedImage } from "@/lib/images";
 import { cardColour } from "@/lib/loyalty-design";
 import { DailyBars } from "@/components/daily-bars";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
@@ -91,9 +92,9 @@ export function LoyaltyCardScreen({
 
             <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm">
                 <div className="flex items-center gap-2 p-3 text-white" style={{ backgroundColor: design.header }}>
-                    {logoUrl ? (
+                    {storedImage(logoUrl) ? (
                         <Image
-                            src={logoUrl}
+                            src={storedImage(logoUrl)!}
                             alt=""
                             width={28}
                             height={28}

@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { placeName } from "@/lib/cities";
 import { getLiveOffers } from "@/lib/listings";
 import { getVisitorContext } from "@/lib/visitor";
+import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
 
 import { byNextReward, getLoyaltyCards } from "./loyalty/cards";
@@ -156,8 +157,8 @@ async function CustomerDashboardContent() {
                                 className="flex flex-col gap-4 rounded-xl border border-[#FF593F]/30 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="flex items-center gap-4">
-                                    {prompt.logo_url ? (
-                                        <Image src={prompt.logo_url} alt="" width={48} height={48} className="size-12 rounded-xl object-cover" />
+                                    {storedImage(prompt.logo_url) ? (
+                                        <Image src={storedImage(prompt.logo_url)!} alt="" width={48} height={48} className="size-12 rounded-xl object-cover" />
                                     ) : (
                                         <span className="flex size-12 items-center justify-center rounded-xl bg-[#FFF4E8] text-lg font-semibold text-[#FF593F]">
                                             {prompt.business_name.charAt(0)}

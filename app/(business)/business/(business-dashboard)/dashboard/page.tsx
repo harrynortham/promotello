@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { unclaimedPreview } from "@/lib/previews";
+import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
 
 type Business = {
@@ -62,9 +63,9 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
 
     return (
         <li className="group relative flex items-center gap-4 rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:gap-5 sm:p-6">
-            {business.logo_url ? (
+            {storedImage(business.logo_url) ? (
                 <Image
-                    src={business.logo_url}
+                    src={storedImage(business.logo_url)!}
                     alt=""
                     width={64}
                     height={64}

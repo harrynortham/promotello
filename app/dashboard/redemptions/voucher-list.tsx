@@ -9,6 +9,7 @@ import { FilterDrawer } from "@/components/filter-drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { timingLabel, type StatusedVoucher, type StatusFilter } from "./voucher-status";
+import { storedImage } from "@/lib/images";
 
 // The pieces of the vouchers pages and the dashboard's "Ready to use".
 
@@ -78,8 +79,8 @@ export function CompactVoucher({ item }: { item: StatusedVoucher }) {
             className={`group flex overflow-hidden rounded-xl border border-[#17233B]/10 bg-white transition hover:shadow-md ${isReady ? "" : "opacity-80 hover:opacity-100"}`}
         >
             <div className="relative flex w-24 shrink-0 items-center justify-center bg-[#FFF4E8] sm:w-28">
-                {offer?.imageUrl ? (
-                    <Image src={offer.imageUrl} alt="" fill sizes="112px" className={`object-cover ${isReady ? "" : "grayscale"}`} />
+                {storedImage(offer?.imageUrl) ? (
+                    <Image src={storedImage(offer?.imageUrl)!} alt="" fill sizes="112px" className={`object-cover ${isReady ? "" : "grayscale"}`} />
                 ) : (
                     <FiGift aria-hidden="true" className="size-7 text-[#FF593F]" />
                 )}

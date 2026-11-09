@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
+import { storedImage } from "@/lib/images";
 import { WEEK, formatHour, type HoursRow } from "@/lib/business-hours";
 import type { CityOption } from "@/lib/locations";
 import {
@@ -424,9 +425,9 @@ function BusinessForm({
 
                                 {/* The logo has its own page, with cropping, and saves on its own. */}
                                 <div className="flex items-center gap-4">
-                                    {business.logo_url ? (
+                                    {storedImage(business.logo_url) ? (
                                         <Image
-                                            src={business.logo_url}
+                                            src={storedImage(business.logo_url)!}
                                             alt={`${business.name} logo`}
                                             width={64}
                                             height={64}
@@ -458,9 +459,9 @@ function BusinessForm({
                                 {/* So is the cover photo. */}
                                 <div className="flex items-center gap-4">
                                     <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl border border-dashed border-[#17233B]/20 bg-[#FFF8F0]">
-                                        {business.cover_image_url && (
+                                        {storedImage(business.cover_image_url) && (
                                             <Image
-                                                src={business.cover_image_url}
+                                                src={storedImage(business.cover_image_url)!}
                                                 alt={`${business.name} cover photo`}
                                                 fill
                                                 sizes="112px"

@@ -27,6 +27,7 @@ import {
 } from "@/lib/listings";
 import { LocationSearch } from "@/components/location-search";
 import { areaPath, cityPhotosFor, getLiveCities, placeIsOneCity, placeName, type City } from "@/lib/cities";
+import { storedImage } from "@/lib/images";
 
 // Neighbourhoods to explore, in every live city (/explore) or one
 // (/explore/bristol).
@@ -73,7 +74,7 @@ function AreaCard({
 }) {
     // The same picture the area's own page uses, so the card is recognisable
     // as the place it opens.
-    const cover = areaPhoto(businesses);
+    const cover = storedImage(areaPhoto(businesses));
 
     return (
         <Link

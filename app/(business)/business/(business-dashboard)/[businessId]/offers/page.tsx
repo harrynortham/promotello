@@ -23,6 +23,7 @@ import {
 import { OffersHowItWorks } from "./how-it-works";
 import { SharePanel } from "@/components/share-panel";
 import { offerShareCaption, shareLink } from "@/lib/share";
+import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -442,12 +443,12 @@ async function OffersContent({ params }: PageProps) {
                                     key={offer.id}
                                     // The card pads its top for text. A
                                     // picture runs to the edge instead.
-                                    className={`overflow-hidden border-[#17233B]/10 ${offer.image_url ? "pt-0" : ""}`}
+                                    className={`overflow-hidden border-[#17233B]/10 ${storedImage(offer.image_url) ? "pt-0" : ""}`}
                                 >
-                                    {offer.image_url && (
+                                    {storedImage(offer.image_url) && (
                                         <div className="relative aspect-[3/1] w-full overflow-hidden bg-[#FFF8F0]">
                                             <Image
-                                                src={offer.image_url}
+                                                src={storedImage(offer.image_url)!}
                                                 alt={offer.title}
                                                 fill
                                                 className="object-cover"

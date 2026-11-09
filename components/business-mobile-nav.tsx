@@ -20,6 +20,7 @@ import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { BusinessInitial } from "@/components/business-initial";
 import { BusinessPageLink } from "@/components/business-page-link";
+import { storedImage } from "@/lib/images";
 
 type Business = {
     id: string;
@@ -76,9 +77,9 @@ export function BusinessMobileNav({
             >
                 <SheetHeader className="flex-row items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                        {businessLogoUrl ? (
+                        {storedImage(businessLogoUrl) ? (
                             <Image
-                                src={businessLogoUrl}
+                                src={storedImage(businessLogoUrl)!}
                                 alt=""
                                 width={40}
                                 height={40}

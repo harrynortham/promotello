@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { storedImage } from "@/lib/images";
 
 import {
     notifyBusinessOfOfferEditReview,
@@ -770,10 +771,10 @@ export default function AdminOffersPage() {
                                 </DialogDescription>
                             </DialogHeader>
 
-                            {reading.image_url && (
+                            {storedImage(reading.image_url) && (
                                 <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-[#FFF4E8]">
                                     <Image
-                                        src={reading.image_url}
+                                        src={storedImage(reading.image_url)!}
                                         alt=""
                                         fill
                                         sizes="576px"

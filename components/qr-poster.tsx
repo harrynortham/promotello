@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { storedImage } from "@/lib/images";
 import { cardColour } from "@/lib/loyalty-design";
 
 // The printable QR poster (app/poster/[codeId]), also shown small on the
@@ -71,9 +72,9 @@ export function QrPoster({
                 className="flex items-center gap-[1em] px-[2.5em] py-[1.8em] text-white"
                 style={{ backgroundColor: theme.header }}
             >
-                {logoUrl && (
+                {storedImage(logoUrl) && (
                     <Image
-                        src={logoUrl}
+                        src={storedImage(logoUrl)!}
                         alt=""
                         width={96}
                         height={96}

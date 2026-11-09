@@ -5,6 +5,7 @@ import { FiArrowRight, FiGift, FiStar } from "react-icons/fi";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 
 import type { CustomerLoyaltyCard } from "./cards";
+import { storedImage } from "@/lib/images";
 
 // A loyalty card in brief, the same shape as a compact voucher. Opens the
 // card on the loyalty cards page, where its QR code is.
@@ -17,8 +18,8 @@ export function LoyaltyCardTile({ card }: { card: CustomerLoyaltyCard }) {
             className="group flex overflow-hidden rounded-xl border border-[#17233B]/10 bg-white transition hover:shadow-md"
         >
             <div className="relative flex w-24 shrink-0 items-center justify-center bg-[#FFF4E8] sm:w-28">
-                {card.business?.logo_url ? (
-                    <Image src={card.business.logo_url} alt="" fill sizes="112px" className="object-cover" />
+                {storedImage(card.business?.logo_url) ? (
+                    <Image src={storedImage(card.business?.logo_url)!} alt="" fill sizes="112px" className="object-cover" />
                 ) : (
                     <FiStar aria-hidden="true" className="size-7 text-[#FF593F]" />
                 )}
