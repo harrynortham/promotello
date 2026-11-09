@@ -41,6 +41,7 @@ import { PageViewTracker } from "@/components/page-view-tracker";
 import { EventCard, type EventSummary } from "@/components/event-card";
 import { EVENTS_ENABLED } from "@/lib/features";
 import { LoyaltyCallout } from "./loyalty-callout";
+import { BusinessClosedNotice } from "./closed-notice";
 import { ScannedNote } from "./scanned-note";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
@@ -189,6 +190,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 id,
                 slug,
                 name,
+                closed_at,
                 logo_url,
                 cover_image_url,
                 category,
@@ -226,7 +228,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         // An old address (the proxy usually redirects these first).
         const moved = await canonicalPath("business", slug);
         if (moved) permanentRedirect(moved);
+
         notFound();
+    }
+
+    // Closed: the row is still readable, so customers' cards and vouchers
+    // keep naming the shop. Its own page says it has gone, because the
+    // posters are still in the window.
+    if (business.closed_at) {
+        return <BusinessClosedNotice name={business.name} />;
     }
 
     const businessId = business.id;

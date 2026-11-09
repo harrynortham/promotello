@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { FiArrowRight, FiPlus } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
@@ -16,6 +17,7 @@ type Business = {
     name: string;
     logo_url: string | null;
     approval_status: string;
+    closed_at: string | null;
 };
 
 type BusinessSummary = Business & {
@@ -80,13 +82,21 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
                             {business.name}
                         </Link>
                     </h2>
-                    {/* The same badge as the sidebar: pending wears a clock. */}
-                    <BusinessStatusBadge status={business.approval_status} />
+                    {business.closed_at ? (
+                        <Badge variant="outline" className="border-[#FF593F]/40 bg-[#FF593F]/5 text-[#FF593F]">
+                            Closed
+                        </Badge>
+                    ) : (
+                        /* The same badge as the sidebar: pending wears a clock. */
+                        <BusinessStatusBadge status={business.approval_status} />
+                    )}
                 </div>
 
                 <p className="mt-1 text-sm text-[#17233B]/65">
-                    {status.note ??
-                        `${business.liveOffers} live ${business.liveOffers === 1 ? "offer" : "offers"} · ${business.redemptions} redeemed`}
+                    {business.closed_at
+                        ? "Off the directory. Open it to reopen it."
+                        : status.note ??
+                            `${business.liveOffers} live ${business.liveOffers === 1 ? "offer" : "offers"} · ${business.redemptions} redeemed`}
                 </p>
             </div>
 
@@ -173,7 +183,7 @@ async function BusinessDashboardContent() {
 
     const { data: memberships, error } = await supabase
         .from("business_members")
-        .select("businesses ( id, name, logo_url, approval_status )")
+        .select("businesses ( id, name, logo_url, approval_status, closed_at )")
         .eq("user_id", user.id);
 
     if (error) {

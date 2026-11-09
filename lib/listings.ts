@@ -55,7 +55,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                 expires_at, created_at, image_url, category, category_id,
                 redemption_count, max_redemptions,
                 businesses!inner (
-                    id, slug, name, logo_url, is_sample,
+                    id, slug, name, logo_url, is_sample, closed_at,
                     business_locations ( region, city, city_id, area_id )
                 )
             `,
@@ -69,7 +69,9 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
     return data.flatMap((row) => {
         const business = one(row.businesses);
 
-        if (!business || !inCity(business.business_locations, cityId)) {
+        // A closed business keeps its row so customers' cards and vouchers
+        // still name the shop; it just isn't listed any more.
+        if (!business || business.closed_at || !inCity(business.business_locations, cityId)) {
             return [];
         }
 
@@ -111,6 +113,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         .select(
             `
                 id, slug, name, description, logo_url, cover_image_url, category, category_id, created_at, is_sample,
+                closed_at,
                 business_locations ( region, city, city_id, area_id ),
                 offers ( slug, title, discount, image_url, created_at )
             `,
@@ -121,7 +124,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         throw error;
     }
 
-    return data.filter((row) => inCity(row.business_locations, cityId)).map((row) => {
+    return data.filter((row) => !row.closed_at && inCity(row.business_locations, cityId)).map((row) => {
         // RLS only returns live offers here; newest first.
         const offers = [...(row.offers ?? [])].sort((a, b) =>
             b.created_at.localeCompare(a.created_at),

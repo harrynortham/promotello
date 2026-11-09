@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 import {
     FiAward,
     FiBarChart2,
-    FiBell,
     FiCalendar,
     FiCheckCircle,
     FiCreditCard,
     FiHome,
     FiPrinter,
+    FiSettings,
     FiShoppingBag,
     FiTag,
     FiUsers,
@@ -94,9 +94,9 @@ export function BusinessSidebarNav({
                     icon: FiUsers,
                 },
                 {
-                    label: "Notifications",
-                    path: "/settings/notifications",
-                    icon: FiBell,
+                    label: "Settings",
+                    path: "/settings",
+                    icon: FiSettings,
                 },
                 {
                     label: "Billing",
