@@ -35,6 +35,17 @@ export function senderName(fullName: unknown) {
     return typeof fullName === "string" && fullName.trim() ? fullName.trim() : DEFAULT_SENDER;
 }
 
+// A cold email signed with a full name reads like a letter from a company.
+// Signed with a first name it reads like a person who has done something for
+// you, which is what has actually happened.
+export function signOff(sender: string) {
+    if (sender === DEFAULT_SENDER) {
+        return ["Thanks,", DEFAULT_SENDER];
+    }
+
+    return ["Cheers,", sender.trim().split(/\s+/)[0]];
+}
+
 export const statusLabels: Record<string, string> = {
     to_send: "Not emailed",
     sent: "Emailed",
@@ -87,17 +98,25 @@ export function instagramDmUrl(handle: string) {
     return `https://ig.me/m/${handle}`;
 }
 
-// The subject line. It leads with their own business and with something
-// that already exists, because a cold email is read or deleted on this line
+// The subject line. It leads with something that already exists and with
+// their own business, because a cold email is read or deleted on this line
 // alone.
+//
+// Not "your loyalty card is ready": that is the line every stamp-card app
+// sends, and it invites the comparison we lose. A page is the thing they
+// don't already have an email about.
 export function outreachSubject(preview: PreviewRow) {
-    return `Your loyalty card is ready, ${preview.businesses?.name ?? "your business"}`;
+    return `Your Promotello page is ready, ${preview.businesses?.name ?? "your business"}`;
 }
 
 // The message to send with the link, by email or a DM. It opens with what has
 // been built for them rather than with us, names the two objections that stop
 // people (an app, a card reader), and gives the founding price a number of
 // places left so there is a reason to look today.
+//
+// The directory comes first and the card second, deliberately. A stamp card
+// is something a dozen cheaper apps sell them; customers who have never been
+// in are not. See Positioning in docs/ROADMAP.md.
 //
 // It signs off by name, but carries no company footer: the Companies Act
 // disclosure is in the email signature, and sending it twice reads badly.
@@ -126,15 +145,15 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         url,
         "",
-        `Promotello is for independent businesses in${where || " Bristol"}: a digital loyalty card your customers keep on their phone, a QR poster for your window, and your offers in a directory people search. It is built around turning a first visit into a second one.`,
+        `Promotello is a local directory people in${where || " Bristol"} browse when they're deciding where to go, so your offers are seen by people who have never been in. The stamp card and the QR poster in your window are what bring them back a second time.`,
         "",
-        "No app for customers to download and no card reader. Your staff stamp a card by scanning it with their own phone, and you can see how many people come back because of it.",
+        "No app for customers to download and no card reader. Staff stamp a card by scanning it with their own phone. Your card sits on your page too, so someone can join it before they have ever been in.",
         "",
         `It's free to use with one offer. ${founding}`,
         "",
         `Worth a look? Claiming it takes about two minutes. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
-        sender,
+        ...signOff(sender),
     ].join("\n");
 }
 
@@ -165,11 +184,12 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
         "",
         url,
         "",
-        `It's a digital loyalty card your customers keep on their phone, a QR poster for your window, and your offers in the${where || " Bristol"} directory people search. No app for them to download and no card reader.`,
+        `It's the${where || " Bristol"} directory people browse to find somewhere to go, with a stamp card and a QR poster to bring them back. No app for them to download and no card reader.`,
         "",
         founding,
         "",
         `Worth a look? Claiming it takes about two minutes. If it's not for you, just say and I won't message again.`,
-        ...(sender === DEFAULT_SENDER ? [] : ["", sender]),
+        // One line in a DM: "Cheers," on its own looks like a stray message.
+        ...(sender === DEFAULT_SENDER ? [] : ["", `— ${sender.trim().split(/\s+/)[0]}`]),
     ].join("\n");
 }
