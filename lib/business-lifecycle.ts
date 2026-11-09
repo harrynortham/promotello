@@ -67,6 +67,13 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
             action: "Add a cover photo",
         },
         {
+            key: "review",
+            label: "Send your page for review",
+            why: "We built this page for you, so nothing on it is public until you have looked it over and sent it to us. Change anything that isn't right first.",
+            path: `${base}#send-for-review`,
+            action: "Send it for review",
+        },
+        {
             key: "offer",
             label: "Post your first offer",
             why: "An offer gives new customers a reason to visit, and it shows on your page and in the Promotello directory.",
@@ -94,13 +101,6 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
             why: "A poster in your window or by the till is how customers find your offers and loyalty card. It takes a minute to print.",
             path: `${base}/qr`,
             action: "Get your poster",
-        },
-        {
-            key: "review",
-            label: "Send your page for review",
-            why: "We built this page for you, so nothing on it is public until you have looked it over and sent it to us. Change anything that isn't right first.",
-            path: `${base}#send-for-review`,
-            action: "Send it for review",
         },
     ];
 }
