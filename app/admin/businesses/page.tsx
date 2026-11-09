@@ -38,6 +38,7 @@ type Business = {
     website_url: string | null;
     contact_email: string | null;
     approval_status: "pending" | "approved" | "rejected" | "suspended";
+    awaiting_claim: boolean;
     created_at: string;
     business_locations:
     | {
@@ -118,6 +119,7 @@ export default function AdminBusinessesPage() {
           website_url,
           contact_email,
           approval_status,
+          awaiting_claim,
           created_at,
           business_locations (
             name,
@@ -135,7 +137,9 @@ export default function AdminBusinessesPage() {
             .range(from, to);
 
         if (requestedTab === "pending") {
-            query = query.eq("approval_status", "pending");
+            // An unclaimed preview is pending because nobody has been asked
+            // yet, not because anyone is waiting on us.
+            query = query.eq("approval_status", "pending").eq("awaiting_claim", false);
         } else if (requestedStatus !== "all") {
             query = query.eq("approval_status", requestedStatus);
         }
@@ -395,9 +399,17 @@ export default function AdminBusinessesPage() {
                                                     </CardTitle>
                                                 </div>
 
-                                                <Badge className={`w-fit ${statusStyles[business.approval_status]}`}>
-                                                    {statusLabels[business.approval_status]}
-                                                </Badge>
+                                                <div className="flex w-fit flex-wrap gap-2">
+                                                    <Badge className={`w-fit ${statusStyles[business.approval_status]}`}>
+                                                        {statusLabels[business.approval_status]}
+                                                    </Badge>
+
+                                                    {business.awaiting_claim && (
+                                                        <Badge variant="outline" className="w-fit">
+                                                            Preview, not claimed
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         </CardHeader>
 
