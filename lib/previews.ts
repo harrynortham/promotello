@@ -41,3 +41,16 @@ export function tokenFromPreviewSegment(segment: string) {
 
     return TOKEN.test(token) ? token : null;
 }
+
+// The preview someone was claiming when they were sent off to register.
+// They pressed Claim before they had an account, so coming back with a
+// confirmed email is the rest of that one action rather than a new one.
+export function previewBeingClaimed(next: string) {
+    const path = next.split(/[?#]/)[0];
+
+    if (!path.startsWith("/business/preview/")) {
+        return null;
+    }
+
+    return tokenFromPreviewSegment(path.slice("/business/preview/".length));
+}

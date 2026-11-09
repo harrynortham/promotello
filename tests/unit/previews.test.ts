@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { previewLink, tokenFromPreviewSegment, unclaimedPreview } from "@/lib/previews";
+import { previewBeingClaimed, previewLink, tokenFromPreviewSegment, unclaimedPreview } from "@/lib/previews";
 
 test("a business with an unclaimed preview isn't one the owner runs", () => {
     assert.equal(unclaimedPreview({ business_previews: [{ claimed_at: null }] }), true);
@@ -48,4 +48,23 @@ test("anything that isn't a token at the end is refused", () => {
     assert.equal(tokenFromPreviewSegment("fcdbe48a-49fc-450a-9eaa-07fed0b1717"), null);
     // The right shape but not hex.
     assert.equal(tokenFromPreviewSegment("zzzzzzzz-49fc-450a-9eaa-07fed0b1717f"), null);
+});
+
+test("a preview link in next is the claim they already started", () => {
+    const token = "fcdbe48a-49fc-450a-9eaa-07fed0b1717f";
+
+    assert.equal(previewBeingClaimed(`/business/preview/jamaican-kitchen-${token}`), token);
+    // Sent before the name was in the link.
+    assert.equal(previewBeingClaimed(`/business/preview/${token}`), token);
+    // A query or a fragment tacked on doesn't hide it.
+    assert.equal(previewBeingClaimed(`/business/preview/jamaican-kitchen-${token}?error=x`), token);
+});
+
+test("nothing else is claimed on the way in", () => {
+    assert.equal(previewBeingClaimed("/business/dashboard"), null);
+    assert.equal(previewBeingClaimed("/dashboard"), null);
+    assert.equal(previewBeingClaimed("/businesses/jamaican-kitchen-bristol-34qpuc"), null);
+    // A path that looks like one but carries no token.
+    assert.equal(previewBeingClaimed("/business/preview/jamaican-kitchen"), null);
+    assert.equal(previewBeingClaimed("/business/preview/"), null);
 });
