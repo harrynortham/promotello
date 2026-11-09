@@ -30,3 +30,14 @@ export function safeNextPath(value: string | null | undefined) {
 
     return allowed ? value : null;
 }
+
+// Whether someone arriving here is signing up to run a business rather
+// than to use one. They get the business welcome once they have a
+// business, and a reminder if they never make one — never the customer
+// welcome, which tells them to go and find offers near them.
+//
+// "/businesses/..." is the public directory, which is a customer reading
+// about a business, so it is deliberately not a business destination.
+export function isBusinessDestination(next: string) {
+    return next === "/onboarding" || next === "/business" || next.startsWith("/business/");
+}

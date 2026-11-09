@@ -4,7 +4,7 @@ import { after, NextResponse } from "next/server";
 import { accountWelcomeEmail } from "@/lib/account-emails";
 import { sendEmails } from "@/lib/email";
 import { landingAfterSignIn } from "@/lib/landing";
-import { safeNextPath } from "@/lib/redirects";
+import { isBusinessDestination, safeNextPath } from "@/lib/redirects";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
@@ -31,7 +31,10 @@ export async function GET(request: Request) {
   // and who is signing in decides.
   const unasked = !requestedNext;
 
-  const businessFlow = next === "/onboarding" || next === "/business/dashboard";
+  // Claiming a preview is a business signing up too, and it used to fall
+  // through to the customer welcome — which tells a shop owner to go and
+  // find offers near them.
+  const businessFlow = isBusinessDestination(next);
 
   if (code) {
     try {
