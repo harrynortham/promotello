@@ -224,6 +224,26 @@ async function PreviewContent({ params, searchParams }: PageProps) {
 
                     <div>
                         <h2 className="flex items-center gap-2 font-semibold">
+                            <FiCheckCircle aria-hidden="true" className="text-[#FF593F]" />
+                            Your offer, on a poster
+                        </h2>
+                        <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
+                            Print it in a minute and put it in the window. People scan it, claim your
+                            offer on their phone, and show the code at the till.
+                            {nearby ? ` Every scan on ${nearby} is counted, so you can see what's working.` : " Every scan is counted, so you can see what's working."}
+                        </p>
+                        <div className="mt-10 flex justify-center">
+                            <PosterVisual
+                                qrSvg={poster}
+                                businessName={preview.business_name}
+                                logoUrl={preview.logo_url}
+                                headline={preview.sample_offer}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 className="flex items-center gap-2 font-semibold">
                             <FiGift aria-hidden="true" className="text-[#FF593F]" />
                             Your loyalty card
                         </h2>
@@ -237,25 +257,6 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                                 required={preview.sample_stamps}
                                 stamps={Math.max(1, preview.sample_stamps - 3)}
                                 reward={preview.sample_reward}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <h2 className="flex items-center gap-2 font-semibold">
-                            <FiCheckCircle aria-hidden="true" className="text-[#FF593F]" />
-                            Your window poster
-                        </h2>
-                        <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                            Print it in a minute and put it in the window.
-                            {nearby ? ` Every scan on ${nearby} is counted, so you can see what's working.` : " Every scan is counted, so you can see what's working."}
-                        </p>
-                        <div className="mt-10 flex justify-center">
-                            <PosterVisual
-                                qrSvg={poster}
-                                businessName={preview.business_name}
-                                logoUrl={preview.logo_url}
-                                headline={preview.sample_offer}
                             />
                         </div>
                     </div>

@@ -233,26 +233,6 @@ export default async function BusinessPage() {
 
             <FeatureSection
                 reverse
-                eyebrow="Loyalty cards"
-                title="A stamp card that never gets lost in a coat pocket."
-                body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves. Your card also sits on your Promotello page and your poster, so someone who has never been in can join before their first visit."
-                points={[
-                    "Choose how many stamps and what the reward is",
-                    "Staff use their own phone: no card reader",
-                    "See members, stamps and rewards earned",
-                ]}
-                visual={
-                    <div className="flex items-end gap-4">
-                        <LoyaltyCardScreen />
-                        <div className="hidden translate-y-8 sm:block">
-                            <StaffScanScreen />
-                        </div>
-                    </div>
-                }
-            />
-
-            <FeatureSection
-                tinted
                 eyebrow="QR posters"
                 title="Turn passers-by into followers."
                 body="Print a poster for your window, your till or your tables. A scan takes people to your page, where they can follow you, join your loyalty card or claim your offer."
@@ -266,6 +246,26 @@ export default async function BusinessPage() {
                         <PosterVisual qrSvg={posterQr} />
                         <div className="relative z-10 -ml-12 mt-40 hidden sm:block">
                             <PosterScansCard />
+                        </div>
+                    </div>
+                }
+            />
+
+            <FeatureSection
+                tinted
+                eyebrow="Loyalty cards"
+                title="A stamp card that never gets lost in a coat pocket."
+                body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves. Your card also sits on your Promotello page and your poster, so someone who has never been in can join before their first visit."
+                points={[
+                    "Choose how many stamps and what the reward is",
+                    "Staff use their own phone: no card reader",
+                    "See members, stamps and rewards earned",
+                ]}
+                visual={
+                    <div className="flex items-end gap-4">
+                        <LoyaltyCardScreen />
+                        <div className="hidden translate-y-8 sm:block">
+                            <StaffScanScreen />
                         </div>
                     </div>
                 }

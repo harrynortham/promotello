@@ -26,10 +26,12 @@ export const metadata: Metadata = {
         "A page in the local directory, offers and scan-to-redeem vouchers, QR posters with scan counts, digital loyalty cards, follower emails, Google review prompts, automations and monthly reports.",
 };
 
+// Offers, then posters, then the card: how a customer arrives, then how
+// they are brought back. Reminders follow the card.
 const sections = [
-    { id: "loyalty", label: "Loyalty cards" },
-    { id: "posters", label: "QR posters" },
     { id: "offers", label: "Offers and vouchers" },
+    { id: "posters", label: "QR posters" },
+    { id: "loyalty", label: "Loyalty cards" },
     { id: "followers", label: "Followers" },
     { id: "reviews", label: "Google reviews" },
     { id: "automations", label: "Automations" },
@@ -52,8 +54,9 @@ export default async function FeaturesPage() {
                             Everything you need to bring customers back.
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
-                            One place for your loyalty card, QR posters, offers, follower emails and results.
-                            Customers use it in their phone&apos;s browser, and your staff use their own phones at the till.
+                            Your page in the local directory, offers customers claim on their phone, QR
+                            posters, a loyalty card, follower emails and results. Customers use it in their
+                            phone&apos;s browser, and your staff use their own phones at the till.
                         </p>
                         <div className="mt-8">
                             <PrimaryActions />
@@ -79,24 +82,17 @@ export default async function FeaturesPage() {
             </section>
 
             <FeatureSection
-                id="loyalty"
+                id="offers"
                 tinted
-                eyebrow="Loyalty cards · Pro"
-                title="A digital stamp card, stamped by your staff."
-                body="Choose how many stamps it takes and what the reward is. Customers keep the card on their phone; staff scan it and tap once to stamp. Rewards are tracked for you."
+                eyebrow="Offers and vouchers"
+                title="Offers that are simple to claim and quick to redeem."
+                body="Write the offer, set how many can be claimed and when it ends. Each customer gets their own voucher with a QR code; staff scan it and mark it used, and it can't be used twice."
                 points={[
-                    "3 to 20 stamps, any reward you like",
-                    "Only your team can add stamps",
-                    "See members, stamps this week and rewards earned",
+                    "Claim limits, expiry dates and clear terms",
+                    "One voucher per customer per offer",
+                    "Run several offers at once",
                 ]}
-                visual={
-                    <div className="flex items-end gap-4">
-                        <LoyaltyCardScreen />
-                        <div className="hidden translate-y-8 sm:block">
-                            <StaffScanScreen />
-                        </div>
-                    </div>
-                }
+                visual={<VoucherScreen />}
             />
 
             <FeatureSection
@@ -117,17 +113,24 @@ export default async function FeaturesPage() {
             />
 
             <FeatureSection
-                id="offers"
+                id="loyalty"
                 tinted
-                eyebrow="Offers and vouchers"
-                title="Offers that are simple to claim and quick to redeem."
-                body="Write the offer, set how many can be claimed and when it ends. Each customer gets their own voucher with a QR code; staff scan it and mark it used, and it can't be used twice."
+                eyebrow="Loyalty cards · Pro"
+                title="A digital stamp card, stamped by your staff."
+                body="Choose how many stamps it takes and what the reward is. Customers keep the card on their phone; staff scan it and tap once to stamp. Rewards are tracked for you."
                 points={[
-                    "Claim limits, expiry dates and clear terms",
-                    "One voucher per customer per offer",
-                    "Run several offers at once",
+                    "3 to 20 stamps, any reward you like",
+                    "Only your team can add stamps",
+                    "See members, stamps this week and rewards earned",
                 ]}
-                visual={<VoucherScreen />}
+                visual={
+                    <div className="flex items-end gap-4">
+                        <LoyaltyCardScreen />
+                        <div className="hidden translate-y-8 sm:block">
+                            <StaffScanScreen />
+                        </div>
+                    </div>
+                }
             />
 
             <FeatureSection
