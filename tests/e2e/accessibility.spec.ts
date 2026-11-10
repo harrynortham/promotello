@@ -68,6 +68,7 @@ test.describe("signed out", () => {
 test.describe("customers", () => {
     test.use({ storageState: CUSTOMER_AUTH });
     test("the customer dashboard is accessible", async ({ page }) => expectAccessible(page, "/dashboard"));
+    test("my vouchers is accessible", async ({ page }) => expectAccessible(page, "/dashboard/redemptions"));
 });
 
 test.describe("businesses", () => {
