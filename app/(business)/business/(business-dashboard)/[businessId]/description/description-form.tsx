@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { savingProblem, tryToSave } from "@/lib/saving";
 import { createClient } from "@/utils/supabase/client";
 
 // Something is required, because this page exists to fill the step in.
@@ -55,13 +56,14 @@ export default function DescriptionForm({
     async function onSubmit(values: Values) {
         setErrorMessage("");
 
-        const { error } = await createClient()
-            .from("businesses")
-            .update({ description: values.description.trim() })
-            .eq("id", businessId);
+        const supabase = createClient();
 
-        if (error) {
-            setErrorMessage(error.message);
+        const saved = await tryToSave(() =>
+            supabase.from("businesses").update({ description: values.description.trim() }).eq("id", businessId),
+        );
+
+        if (saved.error) {
+            setErrorMessage(savingProblem(saved));
             return;
         }
 
