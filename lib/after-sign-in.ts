@@ -2,6 +2,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { after } from "next/server";
 
 import { accountWelcomeEmail } from "@/lib/account-emails";
+import { claimOffer, offerBeingClaimed, sendVoucherFor } from "@/lib/claim-offer";
 import { claimPreview } from "@/lib/claim-preview";
 import { sendEmails } from "@/lib/email";
 import { landingAfterSignIn } from "@/lib/landing";
@@ -71,6 +72,29 @@ export async function afterSignIn(
         }
 
         console.error("After sign-in: claiming the preview failed", error);
+    }
+
+    // They pressed "Log in to claim this deal", which is one thing asked
+    // for, not two: it is claimed here, and they land on the voucher
+    // rather than on the button again.
+    const offer = offerBeingClaimed(next);
+
+    if (offer) {
+        const { redemptionId, error } = await claimOffer(supabase, offer, user);
+
+        if (error) {
+            // Expired, all gone, or already theirs: the offer page says
+            // which, so there is nothing to do but take them to it.
+            console.error("After sign-in: claiming the offer failed", error);
+        }
+
+        if (redemptionId) {
+            await sendVoucherFor(supabase, user, redemptionId).catch((failure) =>
+                console.error("After sign-in: the voucher email failed", failure),
+            );
+        }
+
+        return `/offers/${offer}`;
     }
 
     return unasked ? await landingAfterSignIn(supabase, user) : next;

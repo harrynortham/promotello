@@ -1,59 +1,19 @@
 "use server";
 
-import { voucherConfirmationEmail } from "@/lib/account-emails";
-import { sendOfferStockAlert } from "@/lib/business-notifications";
-import { sendEmails } from "@/lib/email";
+import { sendVoucherFor } from "@/lib/claim-offer";
 import { createClient } from "@/utils/supabase/server";
 
-type VoucherRow = {
-    redemption_code: string;
-    offer_id: string;
-    offers: {
-        title: string;
-        discount: string;
-        expires_at: string | null;
-        businesses: { name: string } | null;
-    } | null;
-};
-
-// Emails the signed-in customer their voucher code after claiming.
+// Emails the signed-in customer their voucher code after claiming. The
+// claim finished at sign-in sends the same email from lib/claim-offer.
 export async function sendVoucherConfirmation(redemptionId: string) {
     const supabase = await createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user?.email) {
+    if (!user) {
         return { ok: false };
     }
 
-    // RLS: customers can only read their own vouchers.
-    const { data: voucher } = await supabase
-        .from("offer_redemptions")
-        .select("redemption_code, offer_id, offers ( title, discount, expires_at, businesses ( name ) )")
-        .eq("id", redemptionId)
-        .eq("user_id", user.id)
-        .maybeSingle<VoucherRow>();
-
-    if (!voucher?.offers) {
-        return { ok: false };
-    }
-
-    const { failed } = await sendEmails([
-        voucherConfirmationEmail({
-            to: user.email,
-            code: voucher.redemption_code,
-            offerTitle: voucher.offers.title,
-            discount: voucher.offers.discount,
-            businessName: voucher.offers.businesses?.name ?? "the business",
-            expiresAt: voucher.offers.expires_at,
-        }),
-    ]);
-
-    // Tell the business if this claim ran the offer low or out. Its
-    // failure mustn't affect the customer.
-    await sendOfferStockAlert(voucher.offer_id).catch((error) => console.error("Offer stock alert failed", error));
-
-    // Skipped sends (sending not set up, test addresses) aren't failures.
-    return { ok: failed === 0 };
+    return sendVoucherFor(supabase, user, redemptionId);
 }

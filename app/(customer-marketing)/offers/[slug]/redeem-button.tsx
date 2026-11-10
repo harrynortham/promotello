@@ -297,7 +297,7 @@ export default function RedeemButton({
         return (
             <div className="mt-6 space-y-3">
                 <Button
-                    render={<Link href={`/login?next=${encodeURIComponent(returnPath)}`} />}
+                    render={<Link href={`/login?next=${encodeURIComponent(`${returnPath}?claim=1`)}`} />}
                     nativeButton={false}
                     size="lg"
                     className="w-full"
@@ -308,7 +308,7 @@ export default function RedeemButton({
                 <p className="text-center text-sm text-muted-foreground">
                     New to Promotello?{" "}
                     <Link
-                        href={`/signup?next=${encodeURIComponent(returnPath)}`}
+                        href={`/signup?next=${encodeURIComponent(`${returnPath}?claim=1`)}`}
                         className="font-medium underline underline-offset-4"
                     >
                         Create a free account
