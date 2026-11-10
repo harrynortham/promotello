@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 
-// A page we built for a business carries our words, our sample offer and
-// often a stand-in photo, so it is never sent for review on their behalf.
-// They look, change what they want, then ask.
+// A page we built for a business carries our words, its address as we
+// found it and often a stand-in photo, so it is never sent for review on
+// their behalf. They look, change what they want, then ask. (Not an
+// offer: building a preview has never created one.)
 export async function requestBusinessReview(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     const supabase = await createClient();

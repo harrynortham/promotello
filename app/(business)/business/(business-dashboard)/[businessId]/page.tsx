@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
 import { businessPath } from "@/lib/slugs";
 import { storedImage } from "@/lib/images";
+import { guessNotice } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 
 type PageProps = {
@@ -121,7 +122,8 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 approval_status,
                 closed_at,
                 review_requested_at,
-                google_review_url
+                google_review_url,
+                created_by
             `,
         )
         .eq("id", businessId)
@@ -137,6 +139,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { data: locations },
         { data: hours },
         { count: memberCount },
+        { count: creatorIsMember },
         { data: recentRedemptionRows },
         { count: qrCodeCount },
         { count: loyaltyCount },
@@ -177,6 +180,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .from("business_members")
             .select("business_id", { count: "exact", head: true })
             .eq("business_id", businessId),
+
+        // Whether whoever created this business works there. A page we
+        // built from the outside was created by one of us, who never
+        // becomes a member of it — so this is how the dashboard knows
+        // whose words are on the page.
+        supabase
+            .from("business_members")
+            .select("business_id", { count: "exact", head: true })
+            .eq("business_id", businessId)
+            .eq("user_id", business.created_by ?? "00000000-0000-0000-0000-000000000000"),
 
         supabase
             .from("offer_redemptions")
@@ -253,6 +266,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     );
     const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
 
+    // A page we wrote for them, rather than one they filled in themselves.
+    // Only then is anything on it a guess of ours.
+    const builtByUs = Boolean(business.created_by) && !creatorIsMember;
+    const guesses = guessNotice({
+        description: business.description,
+        logoUrl: business.logo_url,
+        coverImageUrl: business.cover_image_url,
+        hasAddress: Boolean(locations?.length),
+    });
+
     const checklist: ChecklistGroup[] = [
         {
             title: "Get ready to go live",
@@ -304,8 +327,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         {
                             id: "review",
                             label: "Send your page for review",
-                            description:
-                                "We wrote this page from the outside, so have a look at it, change what isn't right, and send it to us.",
+                            description: builtByUs
+                                ? "We wrote this page from the outside, so have a look at it, change what isn't right, and send it to us."
+                                : "Have a look at your page the way a customer sees it, change what isn't right, and send it to us.",
                             completed: false,
                             locked: !profileReady,
                             lockedReason:
@@ -486,12 +510,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
                         <p>
-                            {isWelcome ? "It's yours now. " : ""}We wrote it from the outside, so
-                            the description, the photo and the offer are our guesses. Open it to
-                            see what a customer would see, and work down the list below.
+                            {isWelcome ? "It's yours now. " : ""}
+                            {builtByUs ? `${guesses} ` : ""}Open it to see what a customer would
+                            see, and work down the list below.
                             {profileReady
                                 ? " When it's right, send it to us."
-                                : " Once it's yours, you can send it to us."}{" "}
+                                : builtByUs
+                                    ? " Once it's yours, you can send it to us."
+                                    : " Once it's finished, you can send it to us."}{" "}
                             Nothing is public until you do.
                         </p>
 
