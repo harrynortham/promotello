@@ -138,6 +138,17 @@ const sections: LegalSection[] = [
                     itself, which resets every day — so it can&apos;t
                     recognise you tomorrow, or on any other website.
                 </p>
+                <p>
+                    <strong>How fast pages are.</strong> Vercel Speed
+                    Insights measures how quickly pages load and respond for
+                    the people using them, from timings the browser itself
+                    keeps. Each measurement records the page, your network
+                    speed, your browser, device type and operating system,
+                    your country, the timing itself and which part of the
+                    page it was about. Vercel says these measurements are
+                    anonymous and can&apos;t be joined up into a session or
+                    traced to anyone.
+                </p>
             </>
         ),
     },
@@ -251,9 +262,10 @@ const sections: LegalSection[] = [
                     <li>
                         <strong>Website analytics (legitimate
                         interests):</strong> counting page views to see which
-                        parts of Promotello people use. It sets nothing on
-                        your device and builds no profile of you, which is why
-                        we don&apos;t have to ask.
+                        parts of Promotello people use, and measuring how fast
+                        those pages are so we can fix the slow ones. Neither
+                        sets anything on your device or builds a profile of
+                        you, which is why we don&apos;t have to ask.
                     </li>
                     <li>
                         <strong>Keeping Promotello safe (legitimate
@@ -323,7 +335,10 @@ const sections: LegalSection[] = [
                 </p>
                 <ul>
                     <li>Supabase: database, sign-in (including Google sign-in) and file storage</li>
-                    <li>Vercel: website hosting, and the page-view counts described above</li>
+                    <li>
+                        Vercel: website hosting, and the page-view counts and
+                        speed measurements described above
+                    </li>
                     <li>Resend: sending emails</li>
                     <li>
                         Sentry: error reports when something breaks, such as the
@@ -367,6 +382,11 @@ const sections: LegalSection[] = [
                     Vercel&apos;s page-view counts: 12 months, the reporting
                     window of our plan. The value that lets it count a repeat
                     visit is discarded after 24 hours.
+                </li>
+                <li>
+                    Vercel&apos;s speed measurements: Vercel doesn&apos;t
+                    publish a retention period for these. Our dashboard shows
+                    the last 30 days of them.
                 </li>
             </ul>
         ),

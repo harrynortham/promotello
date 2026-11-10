@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { ForgetAnalyticsCookies } from "@/components/forget-analytics-cookies";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
@@ -55,8 +56,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         {/* Counts page views without cookies and without following
             anyone between sites, which is why there is nothing to ask
-            about. Named in the privacy policy as a processor. */}
+            about. Named in the privacy policy as a processor.
+
+            Don't call its identify(): that is the one thing in the
+            script that writes to local storage, and both policies say
+            nothing is kept on the visitor's device. */}
         <Analytics />
+        {/* How fast pages actually are for the people using them, from
+            the browser's own timing APIs. Named in the privacy policy
+            with what each measurement carries. */}
+        <SpeedInsights />
         <ForgetAnalyticsCookies />
       </body>
     </html>
