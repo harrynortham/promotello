@@ -7,6 +7,7 @@ import { automationEmail } from "@/lib/automations";
 const voucher = () =>
     voucherConfirmationEmail({
         to: "someone@example.com",
+        redemptionId: "964afc4c-4470-4abe-83be-669f023fe75e",
         code: "5280613F90",
         offerTitle: "Get that Friday feeling",
         discount: "2 for 1 on pints",
@@ -30,6 +31,11 @@ test("the email carries the voucher, not directions to it", () => {
 
     // It used to send people somewhere else to find their own voucher.
     assert.doesNotMatch(html, /Show the QR code in My vouchers/);
+
+    // And the button opens this voucher rather than the pile of them.
+    assert.match(html, /Open this voucher/);
+    assert.match(html, /\/dashboard\/redemptions\/964afc4c-4470-4abe-83be-669f023fe75e/);
+    assert.doesNotMatch(html, /\/dashboard\/redemptions"/);
 });
 
 test("the code reads without pictures, and without HTML", () => {
@@ -44,6 +50,7 @@ test("the code reads without pictures, and without HTML", () => {
 test("an offer with no end date still says something", () => {
     const { html } = voucherConfirmationEmail({
         to: "someone@example.com",
+        redemptionId: "11111111-2222-4333-8444-555555555555",
         code: "ABCDEF0123",
         offerTitle: "A free coffee",
         discount: "Free",
@@ -79,6 +86,9 @@ test("a reward voucher arrives in the same card", () => {
     assert.match(html, /<img src="https:\/\/[^"]+\/redeem\/G1A2B3C4D5\/qr"/);
     assert.match(html, /G1A2B3C4D5/);
     assert.match(html, /Use it by 24 November/);
+
+    assert.match(html, /Open this voucher/);
+    assert.match(html, /\/dashboard\/redemptions\/00000000-0000-4000-8000-000000000000/);
 
     // It used to spell the code out mid-sentence and send them elsewhere
     // for the picture.
