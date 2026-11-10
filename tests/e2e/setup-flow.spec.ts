@@ -48,8 +48,8 @@ test("a business finishes its page in the flow, and sends it from there", async 
         // being built beside it.
         await expect(page.getByRole("heading", { name: /Let's finish your page/ })).toBeVisible({ timeout: 15_000 });
         await expect(page.getByRole("heading", { name: "Add your logo", level: 2 })).toBeVisible();
-        await expect(page.getByText("0 of 7 done")).toBeVisible();
-        await expect(page.getByText("Your page so far")).toBeVisible();
+        await expect(page.getByText("0 of 7 done").first()).toBeVisible();
+        await expect(page.getByText("Your page so far").first()).toBeVisible();
         await expect(page.getByText(name).first()).toBeVisible();
 
         // A picture can wait; the words can't.
@@ -62,7 +62,7 @@ test("a business finishes its page in the flow, and sends it from there", async 
         await page.getByRole("button", { name: "Save and continue" }).click();
 
         await expect(page.getByRole("heading", { name: "Where to find you", level: 2 })).toBeVisible();
-        await expect(page.getByText("1 of 7 done")).toBeVisible();
+        await expect(page.getByText("1 of 7 done").first()).toBeVisible();
         await page.locator("#setup-address-1").fill("12 Cotham Hill");
         await page.locator("#region").selectOption("Cotham");
         await page.locator("#postalCode").fill("BS6 6DF");
@@ -81,7 +81,7 @@ test("a business finishes its page in the flow, and sends it from there", async 
         // Sending it is a step in the flow, not a trip to the dashboard —
         // and it names what is missing rather than refusing silently.
         await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
-        await expect(page.getByText("2 things first")).toBeVisible();
+        await expect(page.getByText("2 things first").first()).toBeVisible();
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
 
         // Finish the two pictures the quick way, then send it.
@@ -106,7 +106,7 @@ test("a business finishes its page in the flow, and sends it from there", async 
         // to come in.
         await page.waitForURL(`**/business/setup/${businessId}?step=offer&sent=1`, { timeout: 20_000 });
         await expect(page.getByRole("heading", { name: "Give people a reason to come in", level: 2 })).toBeVisible();
-        await expect(page.getByText("6 of 7 done")).toBeVisible();
+        await expect(page.getByText("6 of 7 done").first()).toBeVisible();
 
         const { data: sent } = await admin()
             .from("businesses")

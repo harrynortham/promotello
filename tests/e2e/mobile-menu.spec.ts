@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { CUSTOMER_AUTH } from "../global-setup";
+import { BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -48,6 +48,37 @@ test("the bottom of the menu offers the pitch to businesses, or your dashboard",
     await signedIn.goto("/dashboard/redemptions");
     await signedIn.getByRole("button", { name: "Open menu" }).click();
     await expect(signedIn.getByRole("link", { name: "Go to your dashboard" })).toBeVisible();
+});
+
+// The business sales pages have no way back to the dashboard: the links
+// across the top are the pitch, and the avatar is the only thing that
+// leads anywhere of yours. So the bottom of the menu says it.
+test("signed in, the business menu leads back to the dashboard", async ({ page, browser }) => {
+    await page.goto("/business/pricing");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("link", { name: "Go to your business dashboard" })).toHaveCount(0);
+    // Base UI renders these as <a role="button">, so not getByRole("link").
+    await expect(page.getByRole("button", { name: /Already registered/ })).toBeVisible();
+
+    const owner = await (
+        await browser.newContext({ storageState: BUSINESS_AUTH, viewport: { width: 390, height: 844 } })
+    ).newPage();
+
+    await owner.goto("/business/pricing");
+    // Not /menu/i: signed in, that also matches "Open account menu for …".
+    await owner.getByRole("button", { name: "Open menu" }).click();
+
+    const dashboard = owner.getByRole("link", { name: "Go to your business dashboard" });
+    await expect(dashboard).toBeVisible();
+    await expect(owner.getByText("Your offers, posters and stamp cards")).toBeVisible();
+
+    await dashboard.click();
+    // One business goes straight to it, several to the chooser; either way
+    // it leaves the sales pages behind.
+    await owner.waitForURL((url) => !url.pathname.startsWith("/business/pricing"), { timeout: 20_000 });
+    await expect(owner.getByRole("dialog")).toBeHidden();
+
+    await owner.close();
 });
 
 test("on a phone, the customer area carries a row of pills for its pages", async ({ browser }) => {

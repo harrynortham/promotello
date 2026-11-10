@@ -176,7 +176,7 @@ export function BusinessMobileNav({
 
                     <div className="space-y-2">
                         <Button
-                            render={<Link href="/onboarding" />}
+                            render={<Link href="/business/setup/new" />}
                             nativeButton={false}
                             variant="ghost"
                             className="w-full"

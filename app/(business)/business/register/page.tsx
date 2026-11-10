@@ -26,7 +26,7 @@ function BusinessRegisterForm() {
     // Claiming a preview sends people here with ?next= pointing back at it,
     // so they land on their own business rather than in onboarding.
     const requestedNext = safeNextPath(useSearchParams().get("next"));
-    const next = requestedNext ?? "/onboarding";
+    const next = requestedNext ?? "/business/setup/new";
 
     const signInHref = requestedNext
         ? `/login?next=${encodeURIComponent(requestedNext)}`

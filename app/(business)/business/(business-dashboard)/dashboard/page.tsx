@@ -154,7 +154,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                 </ol>
 
                 <Button
-                    render={<Link href="/onboarding" />}
+                    render={<Link href="/business/setup/new" />}
                     nativeButton={false}
                     size="lg"
                     className="mt-8 w-full sm:w-auto"
@@ -263,7 +263,7 @@ async function BusinessDashboardContent() {
 
             <Button
                 size="lg"
-                render={<Link href="/onboarding" />}
+                render={<Link href="/business/setup/new" />}
                 nativeButton={false}
                 variant="ghost"
                 className="mt-6 text-[#17233B]/70 hover:text-[#17233B]"

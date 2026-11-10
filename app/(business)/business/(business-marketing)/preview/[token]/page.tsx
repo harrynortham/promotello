@@ -235,7 +235,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
 
 export default function BusinessPreviewPage(props: PageProps) {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] text-[#17233B]">
+        <main className="flex-1 bg-[#FFF8F0] text-[#17233B]">
             <Suspense fallback={<div className="mx-auto max-w-7xl px-6 py-20 sm:px-10"><Skeleton className="h-96 rounded-3xl" /></div>}>
                 <PreviewContent {...props} />
             </Suspense>
