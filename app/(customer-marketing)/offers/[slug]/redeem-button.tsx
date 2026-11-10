@@ -220,7 +220,7 @@ export default function RedeemButton({
 
                     <Button
                         render={
-                            <Link href="/dashboard/redemptions" />
+                            <Link href={`/dashboard/redemptions/${redemption.id}`} />
                         }
                         nativeButton={false}
                         variant="secondary"

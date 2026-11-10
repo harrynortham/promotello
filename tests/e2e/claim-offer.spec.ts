@@ -29,6 +29,11 @@ test("signed-in customer can claim an approved offer", async ({ page }) => {
     const codeEl = page.locator(".font-mono").first();
     const code = (await codeEl.textContent())?.trim() ?? "";
     expect(code.length).toBeGreaterThan(0);
+
+    // "View my voucher" opens that voucher, not the list of them.
+    await page.getByRole("button", { name: "View my voucher" }).click();
+    await page.waitForURL(/\/dashboard\/redemptions\/[0-9a-f-]{36}$/, { timeout: 20_000 });
+    await expect(page.getByText(code).first()).toBeVisible({ timeout: 15_000 });
 });
 
 test.describe("signed out", () => {
