@@ -90,7 +90,7 @@ test("a preview becomes a live business", async ({ browser }) => {
 
         // 3. First login: one banner, no Send button, and the page is
         //    theirs to finish before they vouch for it.
-        await expect(page.getByText("Not sent yet")).toBeVisible();
+        await expect(page.getByText("Draft")).toBeVisible();
         await expect(page.getByText("Your page isn't live yet")).toBeVisible();
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
         await expect(page.getByText("Ready once the steps above are done.")).toBeVisible();
