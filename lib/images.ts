@@ -35,3 +35,16 @@ export function storedImage(url: string | null | undefined) {
         return null;
     }
 }
+
+// A picture the browser made a moment ago and hasn't uploaded yet: a live
+// preview holds a blob: URL from URL.createObjectURL. No remote-pattern
+// check can vouch for one and next/image can't take one, so it goes to a
+// plain <img> — and the only thing worth checking is that it came from
+// this page rather than from somewhere else.
+export function localImage(url: string | null | undefined) {
+    if (!url) {
+        return null;
+    }
+
+    return url.startsWith("blob:") || url.startsWith("data:image/") ? url : null;
+}
