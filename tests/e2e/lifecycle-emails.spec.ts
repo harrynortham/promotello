@@ -66,14 +66,29 @@ test.describe("business setup and trial emails", () => {
         expect(email.text).toContain(`/business/${businessId}/cover`);
         expect(email.text).toContain("Turn off setup tips");
 
-        // With a cover, the offer is next.
+        // With a cover, sending the page is next: nothing on it reaches a
+        // customer until the business has looked it over and sent it.
         const withCover = { ...nudge, details: { ...nudge.details, has_cover: true } };
-        expect(lifecycleEmail(withCover, "a@b.c")!.subject).toMatch(/^Post your first offer/);
+        expect(lifecycleEmail(withCover, "a@b.c")!.subject).toMatch(/^Send your page for review/);
+
+        // Once it is sent, the offer.
+        const sent = { ...withCover, details: { ...withCover.details, sent_for_review: true } };
+        expect(lifecycleEmail(sent, "a@b.c")!.subject).toMatch(/^Post your first offer/);
 
         // Fully set up: nothing to nudge about.
         expect(
             lifecycleEmail(
-                { ...nudge, details: { ...nudge.details, has_cover: true, has_offer: true, has_loyalty: true, has_poster: true } },
+                {
+                    ...nudge,
+                    details: {
+                        ...nudge.details,
+                        has_cover: true,
+                        has_offer: true,
+                        has_loyalty: true,
+                        has_poster: true,
+                        sent_for_review: true,
+                    },
+                },
                 "a@b.c",
             ),
         ).toBeNull();
@@ -84,8 +99,12 @@ test.describe("business setup and trial emails", () => {
 
         const [claimed] = await claim(businessId);
         expect(claimed.kind).toBe("setup_nudge_1");
-        // With the cover and the offer done, the loyalty card is next.
-        const nudge = { ...claimed, details: { ...claimed.details, has_cover: true, has_offer: true } };
+        // With the page sent, the cover and the offer done, the loyalty
+        // card is next.
+        const nudge = {
+            ...claimed,
+            details: { ...claimed.details, has_cover: true, has_offer: true, sent_for_review: true },
+        };
 
         const free = lifecycleEmail({ ...nudge, hasPro: false, approved: true }, "a@b.c")!;
         expect(free.subject).toMatch(/^Start a loyalty card with a free Pro trial/);

@@ -23,6 +23,9 @@ test("a closed business leaves the review queue but stays findable", async ({ br
             category: "Testing",
             description: "Automated test business — safe to delete.",
             approval_status: "pending",
+            // Nobody is in the queue until they ask: a business asks for
+            // itself now, whoever wrote the page.
+            review_requested_at: new Date().toISOString(),
             created_by: businessUserId,
         })
         .select("id")

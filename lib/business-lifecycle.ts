@@ -69,7 +69,7 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
         {
             key: "review",
             label: "Send your page for review",
-            why: "We built this page for you, so nothing on it is public until you have looked it over and sent it to us. Change anything that isn't right first.",
+            why: "Nothing on your page is public until you have looked it over and sent it to us. Change anything that isn't right first, then send it — we read every page, usually the same day.",
             path: `${base}#send-for-review`,
             action: "Send it for review",
         },
@@ -117,13 +117,19 @@ function sentForReview(due: LifecycleDue) {
     return due.details.sent_for_review !== false;
 }
 
+// Nothing left to send: either they have sent it, or it is already live,
+// which means somebody here has read it.
+function alreadySeen(due: LifecycleDue) {
+    return sentForReview(due) || due.approved;
+}
+
 function missingSteps(due: LifecycleDue) {
     const done = {
         cover: due.details.has_cover,
         offer: due.details.has_offer,
         loyalty: due.details.has_loyalty,
         poster: due.details.has_poster,
-        review: sentForReview(due),
+        review: alreadySeen(due),
     };
 
     return setupSteps(due.business_id, due.hasPro).filter((step) => !done[step.key]);
@@ -206,7 +212,7 @@ export function lifecycleEmail(
 
     if (due.kind === "welcome") {
         const steps = setupSteps(due.business_id, due.hasPro).filter(
-            (step) => step.key !== "review" || !sentForReview(due),
+            (step) => step.key !== "review" || !alreadySeen(due),
         );
         const { html, text } = brandedEmail({
             eyebrow: "Welcome to Promotello",
