@@ -90,3 +90,34 @@ test("saying not now is remembered on the next visit", async ({ browser }) => {
 
     await startFresh(customerUserId);
 });
+
+// Stacked on a phone, the close used to sit in the bottom row beside
+// "Add your birthday", where it reads as a second thing to press.
+test("on a phone the close is in the corner, not beside the button", async ({ browser }) => {
+    const { customerUserId } = state();
+    await startFresh(customerUserId);
+
+    const page = await (
+        await browser.newContext({ storageState: CUSTOMER_AUTH, viewport: { width: 390, height: 844 } })
+    ).newPage();
+    await page.goto("/dashboard");
+
+    const bar = page.getByRole("complementary", { name: "Suggestion" });
+    await expect(bar).toBeVisible({ timeout: 20_000 });
+
+    const barBox = (await bar.boundingBox())!;
+    const close = (await bar.getByRole("button", { name: "Dismiss this suggestion" }).boundingBox())!;
+    const action = (await bar.getByRole("button", { name: "Add your birthday" }).boundingBox())!;
+
+    // Tucked into the top right.
+    expect(barBox.x + barBox.width - (close.x + close.width), "from the right").toBeLessThanOrEqual(16);
+    expect(close.y - barBox.y, "from the top").toBeLessThanOrEqual(16);
+
+    // And nowhere near the button at the bottom.
+    expect(close.y + close.height, "above the button entirely").toBeLessThan(action.y);
+
+    // Still big enough to hit.
+    expect(Math.min(close.width, close.height)).toBeGreaterThanOrEqual(40);
+
+    await page.close();
+});

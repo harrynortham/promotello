@@ -177,7 +177,7 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
     return (
         <aside
             aria-label="Suggestion"
-            className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#FF593F]/20 bg-[#FFF4E8] p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5"
+            className="relative mb-6 flex flex-col gap-4 rounded-2xl border border-[#FF593F]/20 bg-[#FFF4E8] p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5"
         >
             <span
                 aria-hidden="true"
@@ -201,17 +201,24 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
                         {announcement.action.label}
                     </Button>
                 )}
-
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Dismiss this suggestion"
-                    onClick={dismiss}
-                >
-                    <FiX aria-hidden="true" className="size-5" />
-                </Button>
             </div>
+
+            {/* Stacked on a phone, the close sat in the row beside the
+                button, where it reads as a second thing to press. It
+                belongs in the corner — at a thumb's size there, rather
+                than the 32px an icon button is by default. On a wide
+                screen the row is the corner, so it goes back to the end
+                of it. */}
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Dismiss this suggestion"
+                onClick={dismiss}
+                className="absolute right-2 top-2 size-10 shrink-0 sm:static sm:-ml-2 sm:size-9"
+            >
+                <FiX aria-hidden="true" className="size-5" />
+            </Button>
 
             {"opens" in announcement.action && announcement.action.opens === "birthday" && (
                 <BirthdayDialog
