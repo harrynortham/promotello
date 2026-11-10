@@ -82,12 +82,17 @@ test("a preview becomes a live business", async ({ browser }) => {
         // The claim block appears twice: hero and foot of the page.
         await expect(page.getByText("Free, and nothing goes public until you say so.").first()).toBeVisible();
 
-        // 2. Claiming lands them on the business, not back on the preview.
+        // 2. Claiming hands them the flow that finishes the page, rather
+        //    than a dashboard they would have to find their way around.
         await page.getByRole("button", { name: `Claim ${name}` }).first().click();
-        await page.waitForURL(new RegExp(`${dashboard}\\?welcome=1`), { timeout: 20_000 });
+        await page.waitForURL(`**/business/setup/${business!.id}?welcome=1`, { timeout: 20_000 });
+        await expect(page.getByRole("heading", { name: /Let's finish your page/ })).toBeVisible();
+        // What they are building, beside what they are filling in.
+        await expect(page.getByText("Your page so far")).toBeVisible();
 
-        // 3. First login: one banner, no Send button, and the page is
-        //    theirs to finish before they vouch for it.
+        // 3. The dashboard is still there for anyone who wants it: one
+        //    banner, no Send button, and the page theirs to finish first.
+        await page.goto(dashboard);
         await expect(page.getByText("Not sent yet")).toBeVisible();
         await expect(page.getByText("Your page isn't live yet")).toBeVisible();
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);

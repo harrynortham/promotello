@@ -67,7 +67,7 @@ export async function afterSignIn(
         const { businessId, error } = await claimPreview(supabase, claiming, user.email);
 
         if (businessId) {
-            return `/business/${businessId}?welcome=1`;
+            return `/business/setup/${businessId}?welcome=1`;
         }
 
         console.error("After sign-in: claiming the preview failed", error);

@@ -171,7 +171,7 @@ export function OnboardingForm({ firstName, cities }: { firstName: string | null
 
         // The welcome email; a failure here mustn't block the dashboard.
         await welcomeNewBusiness(data).catch(() => undefined);
-        router.push(`/business/${data}?welcome=1`);
+        router.push(`/business/setup/${data}?welcome=1`);
     }
 
     // Enter on an earlier step moves forward rather than submitting.

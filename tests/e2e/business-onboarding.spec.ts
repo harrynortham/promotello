@@ -70,19 +70,26 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await page.getByRole("button", { name: "Create my business" }).click();
 
         // Client-side navigation: wait for the URL, not a full page load.
-        await page.waitForURL(/\/business\/[0-9a-f-]+\?welcome=1/, { timeout: 15_000, waitUntil: "commit" });
-        await expect(page.getByText(/Welcome to Promotello, E2E Onboarding Bakery is set up/)).toBeVisible();
-        await expect(page.getByText("Get ready to go live")).toBeVisible();
-        await expect(page.getByText("Add logo")).toBeVisible();
+        await page.waitForURL(/\/business\/setup\/[0-9a-f-]+\?welcome=1/, { timeout: 15_000, waitUntil: "commit" });
+
+        // Straight into finishing the page, with the page itself beside it.
+        await expect(page.getByRole("heading", { name: /Let's finish your page, Jo/ })).toBeVisible();
+        await expect(page.getByText("Your page so far")).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Add your logo", level: 2 })).toBeVisible();
 
         // A cover photo comes before the first offer: an offer sends
         // people to a page, and the page should be worth landing on.
-        const steps = await page.locator("main li").filter({ hasText: /Add|Set|Create|Describe/ }).allInnerTexts();
-        const cover = steps.findIndex((step) => step.includes("Add a cover photo"));
-        const offer = steps.findIndex((step) => step.includes("Create your first offer"));
+        const steps = await page.locator("ol button").allInnerTexts();
+        const cover = steps.findIndex((step) => step.includes("Cover photo"));
+        const offer = steps.findIndex((step) => step.includes("First offer"));
 
         expect(cover, "the cover photo step is there").toBeGreaterThan(-1);
         expect(cover, "and comes before the first offer").toBeLessThan(offer);
+
+        // The dashboard is a click away for anyone who would rather.
+        await page.getByRole("button", { name: "Finish later" }).click();
+        await expect(page.getByText("Get ready to go live")).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByText("Add logo")).toBeVisible();
     } finally {
         await admin.from("businesses").delete().eq("created_by", userId);
         await admin.auth.admin.deleteUser(userId);

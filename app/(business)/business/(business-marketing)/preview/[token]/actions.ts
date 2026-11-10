@@ -26,5 +26,5 @@ export async function claimPreview(formData: FormData) {
         redirect(`${previewLink(token, name)}?error=${encodeURIComponent(error ?? "We couldn't claim this business.")}`);
     }
 
-    redirect(`/business/${businessId}?welcome=1`);
+    redirect(`/business/setup/${businessId}?welcome=1`);
 }
