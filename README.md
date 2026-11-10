@@ -194,6 +194,27 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 - **Brand colours** are used directly in class names: `#17233B` navy, `#FFF8F0` off-white, `#FF593F` coral.
 - **Copy** is UK English.
 
+## How a business starts
+
+Two ways in, one flow after it.
+
+- **We build the page** from the outside and email a preview link; somebody
+  claims it (`lib/claim-preview.ts`).
+- **They sign up** and give a name, a category and an address (`/onboarding`).
+
+Either way they land on **`/business/setup/[businessId]`**: the same seven
+steps in the same order, beside a picture of the page filling in as they go.
+Nothing is in the approval queue until the business sends it from there —
+`review_requested_at` is written by `request_business_review()` and by
+nothing else, whoever wrote the words on the page.
+
+The one thing that differs is a sentence: on a page we built, the fields we
+guessed at say so ("We wrote this from the outside, so read it over"). That
+is about whose words those are, and it is said on the field being edited.
+Everything else — the dashboard, the checklist, the queue, the emails — is
+the same for both, deliberately, so a new feature never has to ask which
+kind of business it is looking at.
+
 ## Signing in
 
 There are no passwords. Somebody types their email address, Supabase emails
