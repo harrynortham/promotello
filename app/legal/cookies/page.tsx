@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CookieSettings } from "@/components/cookie-settings";
-import { analyticsCookieNames } from "@/lib/consent";
 import {
     LegalDocument,
     type LegalSection,
@@ -14,14 +12,14 @@ export const metadata: Metadata = {
     robots: { index: false, follow: true },
 };
 
-// Keep this in step with what the site actually sets. Audited 24 October
-// 2026: Supabase auth cookies, the consent cookie, the city choice, and
-// Google Analytics after consent; the Google map loads on request.
+// Keep this in step with what the site actually sets. Audited 11 November
+// 2026: the Supabase sign-in cookies and the city choice, and nothing
+// else. Google Analytics is gone, and with it the only cookie anyone was
+// ever asked about; the Google map still loads only on request.
 
 const summary = [
-    "We use essential cookies to keep you signed in, to remember your cookie choice, and to remember the city you pick.",
-    "Google Analytics cookies help us improve Promotello. They're only set if you accept them, and you can change your mind at any time.",
-    "We don't use advertising cookies.",
+    "We use essential cookies only: to keep you signed in, and to remember the city you pick.",
+    "We don't use analytics or advertising cookies, so there's no cookie banner to answer.",
     "Google Maps can set its own cookies, so a business's map only loads when you choose to show it.",
 ];
 
@@ -39,32 +37,9 @@ const essentialCookies = [
         duration: "Removed once the link is used",
     },
     {
-        name: "promotello_consent",
-        purpose:
-            "Remembers whether you accepted or rejected analytics cookies, the day you chose, and which version of this policy you were asked about.",
-        duration: "1 year",
-    },
-    {
         name: "promotello_city",
         purpose: "Remembers the city you chose in the location search, so you see its offers. Only set when you choose one.",
         duration: "1 year",
-    },
-];
-
-// Named after the Analytics property we report to, read from the same
-// place the site reads it, so this table can't name a cookie we don't set.
-const [visitorCookie, sessionCookie] = analyticsCookieNames;
-
-const analyticsCookies = [
-    {
-        name: visitorCookie,
-        purpose: "Google Analytics: tells visits apart so we can count visitors.",
-        duration: "2 years",
-    },
-    {
-        name: sessionCookie,
-        purpose: "Google Analytics: keeps track of the current visit.",
-        duration: "2 years",
     },
 ];
 
@@ -123,17 +98,13 @@ const sections: LegalSection[] = [
                 </p>
                 <CookieTable rows={essentialCookies} />
 
-                <h3 className="pt-2 font-semibold text-foreground">Analytics cookies (optional)</h3>
+                <h3 className="pt-2 font-semibold text-foreground">Analytics cookies</h3>
                 <p>
-                    If you accept, we use Google Analytics to understand how
-                    people find and use Promotello, such as which pages are
-                    visited and roughly where visitors are. Google processes
-                    this on our behalf. We don&apos;t use it to identify you or
-                    for advertising, and Google Analytics doesn&apos;t store
-                    your IP address. If you reject or ignore the banner, these
-                    cookies are never set.
+                    None. We used Google Analytics behind a cookie banner
+                    until November 2026 and have removed it. If we measure
+                    how the site is used again, we&apos;ll use something that
+                    doesn&apos;t set cookies or follow you between sites.
                 </p>
-                <CookieTable rows={analyticsCookies} />
 
                 <p>
                     The page view and QR scan counts businesses see are
@@ -174,25 +145,22 @@ const sections: LegalSection[] = [
         content: (
             <>
                 <p>
-                    When you first visit, we ask whether you accept analytics
-                    cookies. Accept and Reject are equally easy, and nothing
-                    optional is set until you choose. Change your choice here
-                    at any time:
-                </p>
-                <CookieSettings />
-                <p>
-                    We keep your answer for a year, along with the date you
-                    gave it and the version of this policy you were asked
-                    about. If we ever want cookies for something new, that
-                    makes it a different question, so we ask it again rather
-                    than treat an old answer as a yes.
+                    There is nothing to ask you about and no banner to
+                    answer: every cookie we set is needed to run the site,
+                    and UK law allows those without consent. If that ever
+                    changes we&apos;ll ask first, and nothing optional will be
+                    set until you say yes.
                 </p>
                 <p>
-                    Turning analytics off stops it straight away and deletes
-                    its cookies. You can also block or delete cookies in your
-                    browser settings, but you won&apos;t be able to stay signed
-                    in to Promotello without the essential ones. Signing out
-                    removes our sign-in cookie.
+                    If you answered the banner we used to show, that answer
+                    and the Google Analytics cookies it allowed are deleted
+                    the next time you open the site.
+                </p>
+                <p>
+                    You can block or delete cookies in your browser settings,
+                    but you won&apos;t be able to stay signed in to Promotello
+                    without the essential ones. Signing out removes our
+                    sign-in cookie.
                 </p>
             </>
         ),
@@ -215,8 +183,8 @@ export default function CookiesPage() {
         <LegalDocument
             title="Cookie policy"
             description="Information about cookies, similar technologies, and your choices when using Promotello."
-            updatedAt="24 October 2026"
-            version="1.0"
+            updatedAt="11 November 2026"
+            version="1.1"
             summary={summary}
             sections={sections}
         />

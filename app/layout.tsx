@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { Analytics } from "@/components/analytics";
+import { ForgetAnalyticsCookies } from "@/components/forget-analytics-cookies";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="font-sans">
         {children}
-        <Analytics />
+        <ForgetAnalyticsCookies />
       </body>
     </html>
   );

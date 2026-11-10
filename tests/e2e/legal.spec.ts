@@ -62,21 +62,53 @@ test("the restricted businesses page is reachable from where it applies", async 
     ).toHaveAttribute("href", "/legal/restricted-businesses");
 });
 
-// The cookie table is the thing a complaint would check first, so it has to
-// name the cookies we actually set. It reads them from the same constant
-// the site does, rather than a name typed out once and left behind.
-test("the cookie policy names the cookies Analytics actually sets", async ({ page }) => {
+// The cookie table is the thing a complaint would check first, so it has
+// to name the cookies we actually set — and now that Google Analytics is
+// gone, that means naming none of its.
+test("the cookie policy names only cookies we still set", async ({ page }) => {
     await page.goto("/legal/cookies");
 
+    const main = page.locator("main");
     const table = page.locator("main table");
-    await expect(table.getByText("_ga", { exact: true })).toBeVisible();
-    await expect(table.getByText(/^_ga_[A-Z0-9]+$/)).toBeVisible();
 
-    // The name from a property we don't report to.
-    await expect(page.locator("main")).not.toContainText("_ga_2W27LXHDWE");
+    await expect(table.getByText("sb-…-auth-token", { exact: true })).toBeVisible();
+    await expect(table.getByText("promotello_city", { exact: true })).toBeVisible();
 
-    // And it says what the consent cookie holds, which is the record of the
-    // choice: what, when, and which policy.
-    await expect(page.locator("main")).toContainText("promotello_consent");
-    await expect(page.locator("main")).toContainText("the day you chose");
+    // Gone with Analytics, and so is the record of the answer about it.
+    await expect(main).not.toContainText("_ga");
+    await expect(main).not.toContainText("promotello_consent");
+
+    // And it says so rather than going quiet about it.
+    await expect(main).toContainText("no banner");
+});
+
+// The site asks nothing because it sets nothing worth asking about. This
+// is the claim the policy makes, checked against the browser.
+test("no banner, and nothing but essential cookies", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByRole("region", { name: "Cookie choice" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^(Accept|Reject)$/ })).toHaveCount(0);
+
+    const cookies = await page.context().cookies();
+    const theirs = cookies.filter((cookie) => /^_ga|^promotello_consent$/.test(cookie.name));
+
+    expect(theirs.map((cookie) => cookie.name), "no analytics cookies, and nothing asking about them").toEqual([]);
+});
+
+// Whoever answered the old banner still carries its cookies. They are
+// cleared on the next visit rather than left for two years.
+test("cookies from the old banner are deleted on the next visit", async ({ page, context }) => {
+    await context.addCookies([
+        { name: "_ga", value: "GA1.1.123.456", url: "http://localhost:3000" },
+        { name: "_ga_J5SCQTSJTY", value: "GS1.1.123", url: "http://localhost:3000" },
+        { name: "promotello_consent", value: "analytics|2026-11-05|1", url: "http://localhost:3000" },
+    ]);
+
+    await page.goto("/");
+
+    await expect
+        .poll(async () => (await context.cookies()).map((cookie) => cookie.name).filter((name) => /^_ga|^promotello_consent$/.test(name)))
+        .toEqual([]);
 });
