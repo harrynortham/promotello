@@ -4,6 +4,10 @@
 // Supabase dashboard, with the subject listed below. Re-run after changing
 // the layout:
 //
+// There is nothing here for "Reset password" or "Password changed":
+// Promotello has no passwords. Whatever those two say in the dashboard,
+// nothing in the product asks Supabase to send them.
+//
 //   npx tsx --conditions=react-server scripts/auth-email-templates.ts
 //
 // The {{ .X }} placeholders are Supabase's template variables.
@@ -14,33 +18,35 @@ import { brandedEmail } from "@/lib/email";
 
 const notYou = "If you didn't ask for this, you can ignore this email.";
 
+// Signing in is a six-digit code, so two templates carry one: Magic link
+// for an address that already has an account, Confirm sign up for one
+// that doesn't. They say the same thing because the person is doing the
+// same thing, and a code that only appears in one of them would mean
+// signing up quietly broke while signing in worked.
+//
+// Both need {{ .Token }} in the body or Supabase sends a link instead.
+const signInCode = {
+    eyebrow: "Sign in",
+    title: "Your sign-in code",
+    paragraphs: [
+        "Type this code into Promotello to sign in. It expires in an hour and works once.",
+    ],
+    code: "{{ .Token }}",
+    footer: `We will never ask you for this code — not by email, phone or message. ${notYou}`,
+};
+
 const templates = [
     {
         file: "confirm-signup",
         dashboardName: "Confirm sign up",
-        subject: "Confirm your email address",
+        subject: "Your Promotello code",
         email: {
+            ...signInCode,
             eyebrow: "Welcome to Promotello",
-            title: "Confirm your email address",
             paragraphs: [
-                "Thanks for signing up. Confirm this is your email address to finish creating your account.",
+                "Type this code into Promotello to finish creating your account. It expires in an hour and works once.",
             ],
-            action: { label: "Confirm my email", url: "{{ .ConfirmationURL }}" },
-            footer: `You're getting this because this address was used to sign up to Promotello. ${notYou}`,
-        },
-    },
-    {
-        file: "reset-password",
-        dashboardName: "Reset password",
-        subject: "Reset your Promotello password",
-        email: {
-            eyebrow: "Password reset",
-            title: "Choose a new password",
-            paragraphs: [
-                "We got a request to reset the password for your Promotello account. The link only works once, and expires soon for your security.",
-            ],
-            action: { label: "Choose a new password", url: "{{ .ConfirmationURL }}" },
-            footer: `${notYou} Your password stays the same.`,
+            footer: `You're getting this because this address was used to sign up to Promotello. ${signInCode.footer}`,
         },
     },
     {
@@ -61,14 +67,8 @@ const templates = [
     {
         file: "magic-link",
         dashboardName: "Magic link",
-        subject: "Your Promotello sign-in link",
-        email: {
-            eyebrow: "Sign in",
-            title: "Sign in to Promotello",
-            paragraphs: ["Use this link to sign in. It only works once, and expires soon for your security."],
-            action: { label: "Sign in", url: "{{ .ConfirmationURL }}" },
-            footer: notYou,
-        },
+        subject: "Your Promotello code",
+        email: signInCode,
     },
     {
         file: "reauthentication",
@@ -76,24 +76,10 @@ const templates = [
         subject: "Your Promotello confirmation code",
         email: {
             eyebrow: "Confirm it's you",
-            title: "Your code is {{ .Token }}",
-            paragraphs: ["Enter this code in Promotello to confirm the change to your account. It expires soon for your security."],
-            footer: `${notYou} Someone may be trying to change your account, so consider changing your password.`,
-        },
-    },
-    {
-        file: "password-changed",
-        dashboardName: "Password changed (security notification)",
-        subject: "Your Promotello password was changed",
-        email: {
-            eyebrow: "Security notice",
-            title: "Your password was changed",
-            paragraphs: [
-                "The password for your Promotello account, {{ .Email }}, was just changed.",
-                "If this was you, there's nothing more to do. If it wasn't, reset your password straight away and email support@promotello.com.",
-            ],
-            action: { label: "Reset my password", url: "{{ .SiteURL }}/forgot-password" },
-            footer: "We send this whenever your password changes, to keep your account safe.",
+            title: "Confirm it's you",
+            paragraphs: ["Type this code into Promotello to confirm the change to your account. It expires soon for your security."],
+            code: "{{ .Token }}",
+            footer: `${notYou} If you keep getting these, email support@promotello.com.`,
         },
     },
     {
