@@ -48,8 +48,8 @@ const sections: LegalSection[] = [
             <>
                 <p>
                     <strong>Your account.</strong> Your email address, name
-                    and, if you add it, your town or city. We hold no password:
-                    signing in is a single-use code we email you. If you sign
+                    and, if you add it, your town or city. You don&apos;t set a
+                    password: signing in is a single-use code we email you. If you sign
                     in with Google, see{" "}
                     <a href="#google">Signing in with Google</a>.
                 </p>
@@ -144,8 +144,8 @@ const sections: LegalSection[] = [
             <>
                 <p>
                     You can create a Promotello account, or sign in to one, with
-                    your Google account. This is optional: you can always use an
-                    email address and password instead.
+                    your Google account. This is optional: you can always sign
+                    in with a code we email to your address instead.
                 </p>
                 <p>
                     <strong>What we receive.</strong> When you choose
@@ -185,8 +185,8 @@ const sections: LegalSection[] = [
                     <a href="https://myaccount.google.com/connections" target="_blank" rel="noopener noreferrer">
                         third-party connections
                     </a>
-                    ; you can then still sign in with an email and password if
-                    you set one.
+                    ; you can then still sign in with a code we email to your
+                    address.
                 </p>
                 <p>
                     Promotello&apos;s use of information received from Google
@@ -218,7 +218,7 @@ const sections: LegalSection[] = [
                     </li>
                     <li>
                         <strong>Service emails (contract):</strong> voucher
-                        confirmations, sign-in and password emails, team
+                        confirmations, the codes you sign in with, team
                         invitations and important account notices. You
                         can&apos;t turn these off while you have an account.
                     </li>

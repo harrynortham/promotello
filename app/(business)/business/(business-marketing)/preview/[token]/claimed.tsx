@@ -77,8 +77,9 @@ export function PreviewClaimed({
     yours: boolean;
     signedIn: boolean;
 }) {
+    // A <div>, not a <main>: the page it is returned into is the <main>.
     return (
-        <main className="bg-[#FFF8F0] px-6 py-14 text-[#17233B] sm:py-20">
+        <div className="px-6 py-14 sm:py-20">
             <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -131,6 +132,6 @@ export function PreviewClaimed({
 
                 <SignedShopfront name={name} />
             </div>
-        </main>
+        </div>
     );
 }

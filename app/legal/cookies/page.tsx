@@ -35,7 +35,7 @@ const essentialCookies = [
     {
         name: "sb-…-auth-token-code-verifier",
         purpose:
-            "Completes sign-up confirmation and password reset links securely.",
+            "Completes a sign-in or sign-up link securely.",
         duration: "Removed once the link is used",
     },
     {
@@ -119,7 +119,7 @@ const sections: LegalSection[] = [
                     These are needed for the site to work, so they don&apos;t
                     need your consent. The sign-in cookies are set by Supabase,
                     which runs our sign-in, on Promotello&apos;s own domain, and
-                    only when you sign in or use a sign-up or password link.
+                    only when you sign in or use a sign-up link.
                 </p>
                 <CookieTable rows={essentialCookies} />
 

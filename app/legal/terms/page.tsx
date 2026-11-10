@@ -50,8 +50,8 @@ const sections: LegalSection[] = [
                     You need to be at least 16 to create an account. Each account
                     is for one person: keep your sign-in details to yourself, and
                     tell us straight away if you think someone else has used
-                    your account. You can sign in with an email and password or
-                    with Google.
+                    your account. You sign in with a six-digit code we email
+                    you, or with Google. There is no password to lose.
                 </p>
                 <p>
                     Keep your details accurate. You can close your account at

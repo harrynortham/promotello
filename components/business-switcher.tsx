@@ -87,7 +87,7 @@ export function BusinessSwitcher({
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem render={<Link href="/onboarding" />}>
+                <DropdownMenuItem render={<Link href="/business/setup/new" />}>
                     <span
                         aria-hidden="true"
                         className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#17233B]/[0.06] text-[#17233B]/70 transition-colors group-focus/dropdown-menu-item:bg-[#FF593F]/10 group-focus/dropdown-menu-item:text-[#FF593F]"

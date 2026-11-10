@@ -608,7 +608,7 @@ export function businessSignupReminderEmail({ to, fullName }: { to: string; full
             "Then you can post your first offer, get a QR poster for your counter and start bringing in new customers. The Free plan costs nothing, for as long as you like.",
             `If you'd like a hand, just reply to this email.`,
         ],
-        action: { label: "Add my business", url: absoluteUrl("/onboarding") },
+        action: { label: "Add my business", url: absoluteUrl("/business/setup/new") },
         footer: "You're getting this because you signed up for a Promotello business account. This is the only reminder we'll send.",
     });
 

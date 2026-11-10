@@ -35,6 +35,13 @@ test("business owner can create a new offer", async ({ page }) => {
     await dialog.getByRole("button", { name: "Use this image" }).click();
     await expect(dialog).toBeHidden();
 
+    // The card beside the form is what they are making, so it shows the
+    // photo straight away — before it is uploaded, from the browser's own
+    // copy of it.
+    const inPreview = page.locator('[data-slot="offer-card"] img').first();
+    await expect(inPreview).toBeVisible();
+    await expect(inPreview).toHaveAttribute("src", /^blob:/);
+
     await page.locator('button[type="submit"]').click();
 
     // Every offer waits for review, whatever the business's plan.

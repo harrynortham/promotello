@@ -27,7 +27,7 @@ const guides: HelpGuide[] = [
             "Your business must be approved before its offers can appear publicly.",
         link: {
             label: "Add a business",
-            href: "/onboarding",
+            href: "/business/setup/new",
         },
     },
     {

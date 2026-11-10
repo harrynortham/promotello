@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HoursFields } from "@/components/hours-fields";
 import { hoursRowsFor, hoursSchema, type DayValues, type HoursValues } from "@/lib/business-hours";
+import { savingProblem, tryToSave } from "@/lib/saving";
 import { createClient } from "@/utils/supabase/client";
 
 type Values = HoursValues;
@@ -49,12 +50,14 @@ export default function HoursForm({
 
         const rows = hoursRowsFor(businessId, values.days);
 
-        const { error } = await createClient()
-            .from("business_hours")
-            .upsert(rows, { onConflict: "business_id,day_of_week" });
+        const supabase = createClient();
 
-        if (error) {
-            setErrorMessage(error.message);
+        const saved = await tryToSave(() =>
+            supabase.from("business_hours").upsert(rows, { onConflict: "business_id,day_of_week" }),
+        );
+
+        if (saved.error) {
+            setErrorMessage(savingProblem(saved));
             return;
         }
 
