@@ -156,11 +156,15 @@ export function instagramDmUrl(handle: string) {
 // their own business, because a cold email is read or deleted on this line
 // alone.
 //
-// Not "your loyalty card is ready": that is the line every stamp-card app
+// Not "your loyalty card is waiting": that is the line every stamp-card app
 // sends, and it invites the comparison we lose. A page is the thing they
 // don't already have an email about.
+//
+// Waiting, not ready: ready is a thing that has been finished and is now
+// sitting there, which is a notification. Waiting is a thing that wants
+// them, which is why they open it.
 export function outreachSubject(preview: PreviewRow) {
-    return `Your Promotello page is ready, ${preview.businesses?.name ?? "your business"}`;
+    return `Your Promotello page is waiting, ${preview.businesses?.name ?? "your business"}`;
 }
 
 // The message to send with the link, by email or a DM. It opens with what has
