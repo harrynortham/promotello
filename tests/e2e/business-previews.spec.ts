@@ -76,7 +76,7 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         // finishes it: they land on their business rather than back on the
         // page that sold it to them.
         await enterSignInCode(owner, ownerEmail);
-        await owner.waitForURL(`**/business/${businessId}?welcome=1`, { waitUntil: "commit", timeout: 30_000 });
+        await owner.waitForURL(`**/business/setup/${businessId}?welcome=1`, { waitUntil: "commit", timeout: 30_000 });
 
         // The admin has left the team; the owner got a welcome email.
         const { data: members } = await admin().from("business_members").select("user_id, role").eq("business_id", businessId);

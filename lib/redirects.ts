@@ -10,6 +10,7 @@ const allowedPrefixes = [
     "/account",
     "/business/dashboard",
     "/business/preview/",
+    "/business/setup/",
     "/onboarding",
     "/admin",
     "/invite/",

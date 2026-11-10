@@ -11,6 +11,9 @@ import { createClient } from "@/utils/supabase/server";
 // offer: building a preview has never created one.)
 export async function requestBusinessReview(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
+    // Sent from the setup flow, where the next thing is their first offer
+    // rather than the dashboard.
+    const fromSetup = formData.get("from") === "setup";
     const supabase = await createClient();
 
     const {
@@ -26,9 +29,18 @@ export async function requestBusinessReview(formData: FormData) {
     });
 
     if (error && error.code !== "P0009") {
-        redirect(`/business/${businessId}?error=review`);
+        redirect(
+            fromSetup
+                ? `/business/setup/${businessId}?step=review&error=review`
+                : `/business/${businessId}?error=review`,
+        );
     }
 
     revalidatePath(`/business/${businessId}`);
-    redirect(`/business/${businessId}?sent=1`);
+
+    redirect(
+        fromSetup
+            ? `/business/setup/${businessId}?step=offer&sent=1`
+            : `/business/${businessId}?sent=1`,
+    );
 }

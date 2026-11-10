@@ -40,6 +40,22 @@ export const daySchema = z
 
 export type DayValues = z.input<typeof daySchema>;
 
+// A week of them, which is what every form that sets hours collects.
+export const hoursSchema = z.object({ days: z.array(daySchema).length(7) });
+
+export type HoursValues = z.input<typeof hoursSchema>;
+
+// What the business_hours table wants, from what the form collects.
+export function hoursRowsFor(businessId: string, days: DayValues[]) {
+    return days.map((day, index) => ({
+        business_id: businessId,
+        day_of_week: WEEK[index].dayOfWeek,
+        is_closed: day.status === "closed",
+        opens_at: day.status === "open" ? day.opensAt : null,
+        closes_at: day.status === "open" ? day.closesAt : null,
+    }));
+}
+
 // Saved rows, in WEEK order, as form values. Days with no row stay unset.
 export function hoursToValues(rows: HoursRow[]): DayValues[] {
     return WEEK.map(({ dayOfWeek }) => {

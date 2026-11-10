@@ -588,7 +588,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 </Alert>
             )}
 
-            <BusinessOnboardingChecklist groups={checklist} />
+            <BusinessOnboardingChecklist groups={checklist} setupHref={`/business/setup/${businessId}`} />
 
             {isLive && (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

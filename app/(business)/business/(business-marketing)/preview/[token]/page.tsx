@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { FiCheckCircle, FiGift, FiMapPin, FiUsers } from "react-icons/fi";
+import { FiCheckCircle, FiGift, FiUsers } from "react-icons/fi";
 
-import { BrowserFrame, LoyaltyCardScreen, PosterVisual } from "@/components/product-visuals";
+import { BusinessPagePreview } from "@/components/business-page-preview";
+import { LoyaltyCardScreen, PosterVisual } from "@/components/product-visuals";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import { FOUNDING_MEMBER_LIMIT, plans } from "@/lib/billing";
 import { qrSvg } from "@/lib/qr";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
-import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
 import { claimPreview } from "./actions";
 import { PreviewClaimed } from "./claimed";
@@ -48,63 +47,6 @@ type Preview = {
     claimed: boolean;
 };
 
-
-function Initials({ name }: { name: string }) {
-    const letters = name.trim().split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join("").toUpperCase();
-    return (
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4E8] text-xl font-semibold text-[#17233B]">
-            {letters}
-        </span>
-    );
-}
-
-function BusinessPagePreview({ preview }: { preview: Preview }) {
-    const where = [preview.area, preview.city].filter((part, index, parts) => part && parts.indexOf(part) === index).join(", ");
-
-    return (
-        <BrowserFrame url="promotello.com/businesses/…" label={`${preview.business_name}'s page on Promotello`}>
-            <div className="bg-[#FFF8F0] p-5 text-[#17233B]">
-                {storedImage(preview.cover_image_url) ? (
-                    <Image
-                        src={storedImage(preview.cover_image_url)!}
-                        alt=""
-                        width={480}
-                        height={160}
-                        className="h-20 w-full rounded-xl object-cover"
-                    />
-                ) : (
-                    <div className="h-20 rounded-xl bg-[#17233B]" />
-                )}
-                <div className="-mt-7 flex items-end gap-3 px-3">
-                    {storedImage(preview.logo_url) ? (
-                        <Image
-                            src={storedImage(preview.logo_url)!}
-                            alt=""
-                            width={56}
-                            height={56}
-                            className="size-14 rounded-2xl border-4 border-white bg-white object-contain"
-                        />
-                    ) : (
-                        <Initials name={preview.business_name} />
-                    )}
-                </div>
-                <p className="mt-3 text-lg font-semibold">{preview.business_name}</p>
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-[#17233B]/70">
-                    <FiMapPin aria-hidden="true" />
-                    {[preview.category, where].filter(Boolean).join(" · ")}
-                </p>
-                {preview.description && (
-                    <p className="mt-2 line-clamp-2 text-sm text-[#17233B]/70">{preview.description}</p>
-                )}
-                <div className="mt-4 rounded-xl border border-[#17233B]/10 bg-white p-3">
-                    <span className="inline-flex rounded-full bg-[#FF593F] px-2.5 py-0.5 text-xs font-semibold text-white">Offer</span>
-                    <p className="mt-1.5 text-sm font-semibold">{preview.sample_offer}</p>
-                    <div className="mt-2 rounded-lg bg-[#FF593F] py-1.5 text-center text-xs font-semibold text-white">Claim offer</div>
-                </div>
-            </div>
-        </BrowserFrame>
-    );
-}
 
 function NotAvailable() {
     return (
@@ -214,7 +156,18 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                                 : "Customers find you in the Promotello directory, follow you, and claim your offers."}
                         </p>
                         <div className="mt-6">
-                            <BusinessPagePreview preview={preview} />
+                            <BusinessPagePreview
+                                page={{
+                                    name: preview.business_name,
+                                    category: preview.category,
+                                    area: preview.area,
+                                    city: preview.city,
+                                    description: preview.description,
+                                    logoUrl: preview.logo_url,
+                                    coverImageUrl: preview.cover_image_url,
+                                    offer: preview.sample_offer,
+                                }}
+                            />
                         </div>
                     </div>
 

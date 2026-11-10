@@ -9,7 +9,15 @@ import { checklistView, type ChecklistGroup } from "@/lib/onboarding-checklist";
 
 export type { ChecklistGroup, ChecklistItem } from "@/lib/onboarding-checklist";
 
-export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup[] }) {
+export function BusinessOnboardingChecklist({
+    groups,
+    setupHref,
+}: {
+    groups: ChecklistGroup[];
+    // The guided version of this list, for anyone who would rather be
+    // walked through it than pick items off a card.
+    setupHref?: string;
+}) {
     const view = checklistView(groups);
 
     // Finished: the card has nothing to say, and said it above the
@@ -34,9 +42,18 @@ export function BusinessOnboardingChecklist({ groups }: { groups: ChecklistGroup
                     </div>
 
                     {!ready && (
-                        <Badge variant="secondary">
-                            {completedCount} of {requiredCount} done
-                        </Badge>
+                        <div className="flex shrink-0 flex-wrap items-center gap-3">
+                            <Badge variant="secondary">
+                                {completedCount} of {requiredCount} done
+                            </Badge>
+
+                            {setupHref && (
+                                <Button render={<Link href={setupHref} />} nativeButton={false} size="sm">
+                                    Finish setting up
+                                    <FiArrowRight aria-hidden="true" />
+                                </Button>
+                            )}
+                        </div>
                     )}
                 </div>
 
