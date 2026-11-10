@@ -364,7 +364,7 @@ const sections: LegalSection[] = [
                     information, so we may keep them.
                 </li>
                 <li>
-                    Vercel&apos;s page-view counts: kept for the reporting
+                    Vercel&apos;s page-view counts: 12 months, the reporting
                     window of our plan. The value that lets it count a repeat
                     visit is discarded after 24 hours.
                 </li>
