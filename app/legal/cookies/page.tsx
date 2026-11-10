@@ -103,11 +103,12 @@ const sections: LegalSection[] = [
                 <p>
                     None. We used Google Analytics behind a cookie banner
                     until November 2026 and have removed it. We now count
-                    page views with Vercel Web Analytics, which sets no
-                    cookies, stores nothing on your device and can&apos;t
-                    recognise you tomorrow or on another site — so there is
-                    nothing to ask you about. What it records is listed in
-                    our <Link href="/legal/privacy">privacy policy</Link>.
+                    page views with Vercel Web Analytics, and measure how
+                    fast pages are with Vercel Speed Insights. Neither sets
+                    cookies or stores anything on your device, and neither
+                    can recognise you tomorrow or on another site — so there
+                    is nothing to ask you about. What they record is listed
+                    in our <Link href="/legal/privacy">privacy policy</Link>.
                 </p>
 
                 <p>
