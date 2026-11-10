@@ -83,18 +83,30 @@ test("the cookie policy names only cookies we still set", async ({ page }) => {
 });
 
 // The site asks nothing because it sets nothing worth asking about. This
-// is the claim the policy makes, checked against the browser.
-test("no banner, and nothing but essential cookies", async ({ page }) => {
+// is the claim both policies make, checked against the browser rather
+// than taken from anybody's documentation.
+//
+// Essential: the Supabase sign-in cookies, and the city someone picks.
+const ESSENTIAL = /^(sb-|promotello_city$)/;
+
+test("no banner, and nothing on the visitor's device but essentials", async ({ page }) => {
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("link", { name: "Offers", exact: true }).first().click();
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("region", { name: "Cookie choice" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^(Accept|Reject)$/ })).toHaveCount(0);
 
-    const cookies = await page.context().cookies();
-    const theirs = cookies.filter((cookie) => /^_ga|^promotello_consent$/.test(cookie.name));
+    const cookies = (await page.context().cookies()).map((cookie) => cookie.name);
+    expect(cookies.filter((name) => !ESSENTIAL.test(name)), "cookies beyond the essential ones").toEqual([]);
 
-    expect(theirs.map((cookie) => cookie.name), "no analytics cookies, and nothing asking about them").toEqual([]);
+    const stored = await page.evaluate(() => ({
+        local: Object.keys(localStorage),
+        session: Object.keys(sessionStorage),
+    }));
+
+    expect(stored, "nothing kept in the browser either").toEqual({ local: [], session: [] });
 });
 
 // Whoever answered the old banner still carries its cookies. They are

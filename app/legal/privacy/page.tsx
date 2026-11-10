@@ -17,7 +17,7 @@ const summary = [
     "We collect what we need to run your account, your vouchers and loyalty cards, and the tools businesses use.",
     "Marketing emails are optional. Every one has an unsubscribe link, and you can turn them off in your account.",
     "Businesses see your first name on vouchers and loyalty cards you use with them. They never see who follows them or your email address.",
-    "We don't use analytics cookies, we don't sell your information, and we don't use advertising trackers.",
+    "We count page views with a tool that sets no cookies and can't recognise you tomorrow or on any other site. We don't sell your information or use advertising trackers.",
     "If you sign in with Google, we only receive your name, email address and profile photo, and use them only to run your account.",
 ];
 
@@ -127,6 +127,16 @@ const sections: LegalSection[] = [
                     If you ask us to tell you when Promotello comes to your
                     town, we keep your email address and town for that, and
                     only that.
+                </p>
+                <p>
+                    <strong>Website analytics.</strong> We count page views
+                    with Vercel Web Analytics, which sets no cookies. Each
+                    view records the time, the page, the page you came from,
+                    your approximate location, your device type, and your
+                    browser and operating system. To tell one visit from
+                    another it uses a value worked out from the request
+                    itself, which resets every day — so it can&apos;t
+                    recognise you tomorrow, or on any other website.
                 </p>
             </>
         ),
@@ -239,6 +249,13 @@ const sections: LegalSection[] = [
                         for them (consent).
                     </li>
                     <li>
+                        <strong>Website analytics (legitimate
+                        interests):</strong> counting page views to see which
+                        parts of Promotello people use. It sets nothing on
+                        your device and builds no profile of you, which is why
+                        we don&apos;t have to ask.
+                    </li>
+                    <li>
                         <strong>Keeping Promotello safe (legitimate
                         interests):</strong> approving businesses and offers,
                         preventing fraud such as self-stamping, and keeping
@@ -306,7 +323,7 @@ const sections: LegalSection[] = [
                 </p>
                 <ul>
                     <li>Supabase: database, sign-in (including Google sign-in) and file storage</li>
-                    <li>Vercel: website hosting</li>
+                    <li>Vercel: website hosting, and the page-view counts described above</li>
                     <li>Resend: sending emails</li>
                     <li>
                         Sentry: error reports when something breaks, such as the
@@ -345,6 +362,11 @@ const sections: LegalSection[] = [
                 <li>
                     Page view and QR scan counts aren&apos;t personal
                     information, so we may keep them.
+                </li>
+                <li>
+                    Vercel&apos;s page-view counts: kept for the reporting
+                    window of our plan. The value that lets it count a repeat
+                    visit is discarded after 24 hours.
                 </li>
             </ul>
         ),
