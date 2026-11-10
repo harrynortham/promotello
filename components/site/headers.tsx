@@ -50,6 +50,15 @@ export function CustomerHeader() {
     );
 }
 
+// The same line on the business side, where somebody signed in is an
+// owner reading the sales pages: their own dashboard, which nothing else
+// in this header leads to.
+const yourBusiness = {
+    text: "Your offers, posters and stamp cards",
+    label: "Go to your business dashboard",
+    href: "/business/dashboard",
+};
+
 // Business marketing pages under /business.
 export function BusinessMarketingHeader() {
     return (
@@ -65,6 +74,7 @@ export function BusinessMarketingHeader() {
                 },
                 { label: "Get started", href: "/business/register", primary: true },
             ]}
+            signedInMenuFooter={yourBusiness}
         />
     );
 }
