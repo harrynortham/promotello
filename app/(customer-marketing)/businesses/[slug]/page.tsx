@@ -776,7 +776,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                         Find us
                                     </span>
 
-                                    {canEdit && <OwnerEdit href={`${dashboard}/edit`} label="Edit your address" />}
+                                    {canEdit && <OwnerEdit href={`${dashboard}/address`} label="Edit your address" />}
                                 </CardTitle>
                             </CardHeader>
 

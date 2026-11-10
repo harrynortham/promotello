@@ -246,3 +246,110 @@ test("the setup checklist goes once there is nothing left to do", async ({ brows
         if (businessId) await admin.from("businesses").delete().eq("id", businessId);
     }
 });
+
+// Two steps used to send someone to the full business profile page: tabs,
+// nine fields, a save button at the bottom and no way back to the list
+// they were working down. Each has a page of its own now, and saving
+// returns to the dashboard with the step ticked.
+test("the description and the address each have a page of their own", async ({ browser }) => {
+    test.setTimeout(120_000);
+
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const context = await browser.newContext({ storageState: BUSINESS_AUTH });
+    const page = await context.newPage();
+
+    const { data: before } = await admin
+        .from("businesses")
+        .select("description")
+        .eq("id", businessId)
+        .single();
+
+    // So the checklist offers the step rather than a tick.
+    await admin.from("businesses").update({ description: null }).eq("id", businessId);
+
+    const dashboard = new RegExp(`/business/${businessId}$`);
+
+    try {
+        await page.goto(`/business/${businessId}`);
+        await page.getByRole("button", { name: "Add description" }).click();
+
+        await expect(page).toHaveURL(new RegExp(`/business/${businessId}/description$`));
+        await expect(page.getByRole("heading", { name: "Describe your business", level: 1 })).toBeVisible();
+
+        // The point of the page: nothing else to decide on it.
+        // Only what is on screen: the router keeps the page they came
+        // from mounted and hidden, so "main form" alone finds two.
+        const describe = page.locator("main form:visible");
+        await expect(describe).toHaveCount(1);
+        await expect(describe.locator("#description")).toBeVisible();
+
+        for (const field of ["Website", "Contact email", "Google review link", "Address line 1"]) {
+            await expect(describe.getByLabel(field)).toHaveCount(0);
+        }
+
+        // It asks for something, so the step can't be "saved" still empty.
+        await page.getByRole("button", { name: "Save description" }).click();
+        await expect(page.getByText("Write a sentence or two about your business.")).toBeVisible();
+
+        await page.locator("#description").fill("A corner bakery, open since Tuesday.");
+        await page.getByRole("button", { name: "Save description" }).click();
+
+        await expect(page).toHaveURL(dashboard);
+        await expect(page.getByRole("button", { name: "Add description" })).toHaveCount(0);
+
+        const { data: saved } = await admin
+            .from("businesses")
+            .select("description")
+            .eq("id", businessId)
+            .single();
+        expect(saved!.description).toBe("A corner bakery, open since Tuesday.");
+
+        // The address, which this business has never had — so this is also
+        // the only place it can be added at all.
+        await page.getByRole("button", { name: "Add address" }).click();
+
+        await expect(page).toHaveURL(new RegExp(`/business/${businessId}/address$`));
+        await expect(page.getByRole("heading", { name: "Add your address", level: 1 })).toBeVisible();
+
+        const address = page.locator("main form:visible");
+        await expect(address).toHaveCount(1);
+        await expect(address.locator("#addressLine1")).toBeVisible();
+
+        for (const field of ["Description", "Website", "Business name"]) {
+            await expect(address.getByLabel(field)).toHaveCount(0);
+        }
+
+        // The city's own rules still apply, and are answered before the save.
+        await page.locator("#addressLine1").fill("12 Cotham Hill");
+        await page.locator("#region").selectOption("Cotham");
+        await page.locator("#postalCode").fill("BA1 1AA");
+        await page.getByRole("button", { name: "Save address" }).click();
+        await expect(page.getByText("That postcode isn't in Bristol.")).toBeVisible();
+
+        await page.locator("#postalCode").fill("BS6 6DF");
+        await page.getByRole("button", { name: "Save address" }).click();
+
+        await expect(page).toHaveURL(dashboard);
+        await expect(page.getByRole("button", { name: "Add address" })).toHaveCount(0);
+
+        const { data: location } = await admin
+            .from("business_locations")
+            .select("address_line_1, city, region, postal_code, city_id, area_id")
+            .eq("business_id", businessId)
+            .single();
+
+        expect(location).toMatchObject({
+            address_line_1: "12 Cotham Hill",
+            city: "Bristol",
+            region: "Cotham",
+            postal_code: "BS6 6DF",
+        });
+        // The database resolved the names it was sent (see docs/MULTI-CITY.md).
+        expect(location!.city_id).not.toBeNull();
+        expect(location!.area_id).not.toBeNull();
+    } finally {
+        await admin.from("business_locations").delete().eq("business_id", businessId);
+        await admin.from("businesses").update(before!).eq("id", businessId);
+        await context.close();
+    }
+});

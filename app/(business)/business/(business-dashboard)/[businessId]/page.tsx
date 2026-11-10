@@ -272,7 +272,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     label: "Describe your business",
                     description: "A couple of sentences on what makes you worth a visit.",
                     completed: Boolean(business.description?.trim()),
-                    href: `${base}/edit`,
+                    href: `${base}/description`,
                     action: "Add description",
                 },
                 {
@@ -280,7 +280,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     label: "Add your address",
                     description: "So customers can find you and get directions.",
                     completed: Boolean(locations?.length),
-                    href: `${base}/edit`,
+                    href: `${base}/address`,
                     action: "Add address",
                 },
                 {
