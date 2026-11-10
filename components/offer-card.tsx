@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FiClock, FiMapPin } from "react-icons/fi";
 
 import { ExampleBadge } from "@/components/example-badge";
-import { storedImage } from "@/lib/images";
+import { localImage, storedImage } from "@/lib/images";
 
 type OfferCardProps = {
     slug: string;
@@ -69,16 +69,22 @@ export function OfferCard({
     const image = storedImage(imageUrl);
     const logo = storedImage(businessLogoUrl);
 
+    // A live preview hands over a blob: URL for a photo that hasn't been
+    // uploaded yet, which storedImage rightly refuses. Without a guard of
+    // its own the raw path could never fire, and the preview beside the
+    // form stayed empty however many photos were chosen.
+    const raw = rawImage ? (localImage(imageUrl) ?? image) : null;
+
     return (
         <article
             data-slot="offer-card"
             className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#17233B]/10 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
         >
             <div className="relative aspect-[16/10] overflow-hidden bg-[#FFF4E8]">
-                {image && rawImage ? (
+                {raw ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                        src={image}
+                        src={raw}
                         alt=""
                         className="absolute inset-0 size-full object-cover"
                     />
