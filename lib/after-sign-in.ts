@@ -4,7 +4,8 @@ import { after } from "next/server";
 import { accountWelcomeEmail } from "@/lib/account-emails";
 import { claimPreview } from "@/lib/claim-preview";
 import { sendEmails } from "@/lib/email";
-import { landingAfterSignIn } from "@/lib/landing";
+import { customerWelcomeDue, isNewAccount } from "@/lib/customer-welcome";
+import { businessMemberships, landingFor } from "@/lib/landing";
 import { previewBeingClaimed } from "@/lib/previews";
 import { isBusinessDestination, safeNextPath } from "@/lib/redirects";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -45,12 +46,23 @@ export async function afterSignIn(
     // find offers near them.
     const businessFlow = isBusinessDestination(next);
 
-    // Business sign-ups get the business welcome after onboarding, and are
-    // marked so the daily job can remind them if they never get there.
-    // Invited team members are joining a business, so neither.
+    // One read, two answers: the businesses they already run say both
+    // where an unasked sign-in lands and which welcome is theirs.
+    const memberships = await businessMemberships(supabase, user.id);
+
+    // Business sign-ups are marked so the daily job can remind them if
+    // they never get a business made.
     if (businessFlow) {
         after(() => markBusinessSignUp(user));
-    } else if (!next.startsWith("/invite/")) {
+    } else if (
+        customerWelcomeDue({
+            next,
+            createdAt: user.created_at,
+            welcomedAt: user.app_metadata?.welcomed_at,
+            businessSignUpAt: user.app_metadata?.business_signup_at,
+            runsABusiness: memberships.length > 0,
+        })
+    ) {
         after(() => welcomeNewCustomer(user));
     }
 
@@ -73,21 +85,13 @@ export async function afterSignIn(
         console.error("After sign-in: claiming the preview failed", error);
     }
 
-    return unasked ? await landingAfterSignIn(supabase, user) : next;
-}
-
-// Accounts older than this when they first come through here signed up
-// before these emails existed, so they're left alone.
-const NEW_ACCOUNT_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-function isNewAccount(user: User) {
-    return Date.now() - new Date(user.created_at).getTime() <= NEW_ACCOUNT_WINDOW_MS;
+    return unasked ? landingFor(user, memberships) : next;
 }
 
 // Read by claim_business_signup_reminders(): business accounts that
 // haven't created a business a day later get one reminder.
 async function markBusinessSignUp(user: User) {
-    if (user.app_metadata?.business_signup_at || !isNewAccount(user)) {
+    if (user.app_metadata?.business_signup_at || !isNewAccount(user.created_at)) {
         return;
     }
 
@@ -101,7 +105,7 @@ async function markBusinessSignUp(user: User) {
 }
 
 async function welcomeNewCustomer(user: User) {
-    if (!user.email || user.app_metadata?.welcomed_at || !isNewAccount(user)) {
+    if (!user.email) {
         return;
     }
 
