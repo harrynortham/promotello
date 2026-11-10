@@ -60,6 +60,7 @@ export function handOverEmail({
 
 export function voucherConfirmationEmail({
     to,
+    redemptionId,
     code,
     offerTitle,
     discount,
@@ -67,6 +68,10 @@ export function voucherConfirmationEmail({
     expiresAt,
 }: {
     to: string;
+    // The voucher this email is about, so the button opens it rather than
+    // the pile of every voucher they hold. The page it opens has My
+    // vouchers as its back link, so that pile is still one tap away.
+    redemptionId: string;
     code: string;
     offerTitle: string;
     discount: string;
@@ -90,7 +95,10 @@ export function voucherConfirmationEmail({
         // The voucher itself, not a line about where to find it: at the
         // till it is this email that is open.
         voucher: { code, qrUrl: absoluteUrl(`/redeem/${code}/qr`) },
-        action: { label: "Open my vouchers", url: absoluteUrl("/dashboard/redemptions") },
+        action: {
+            label: "Open this voucher",
+            url: absoluteUrl(`/dashboard/redemptions/${redemptionId}`),
+        },
         footer: "You're getting this because you claimed a voucher on Promotello.",
     });
 

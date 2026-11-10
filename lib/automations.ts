@@ -73,7 +73,12 @@ export function automationEmail(voucher: IssuedVoucher): Email {
         // voucher for a claimed offer arrives in: one thing to hold up at
         // the till, whichever way the voucher was earned.
         voucher: { code: voucher.code, qrUrl: absoluteUrl(`/redeem/${voucher.code}/qr`) },
-        action: { label: "Open my vouchers", url: absoluteUrl("/dashboard/redemptions") },
+        // The reward itself, not the pile of every voucher they hold. My
+        // vouchers is the back link on the page this opens.
+        action: {
+            label: "Open this voucher",
+            url: absoluteUrl(`/dashboard/redemptions/${voucher.voucher_id}`),
+        },
         footer: `You're getting this because you follow ${voucher.business_name} on Promotello.`,
         footerLinks: [
             { label: `Unsubscribe from ${voucher.business_name}`, url: unsubscribeUrl },

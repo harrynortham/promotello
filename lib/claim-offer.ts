@@ -98,6 +98,7 @@ export async function sendVoucherFor(supabase: SupabaseClient, user: User, redem
     const { failed } = await sendEmails([
         voucherConfirmationEmail({
             to: user.email,
+            redemptionId,
             code: voucher.redemption_code,
             offerTitle: voucher.offers.title,
             discount: voucher.offers.discount,
