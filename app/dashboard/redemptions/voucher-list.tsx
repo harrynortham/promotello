@@ -67,47 +67,89 @@ export function VoucherFilter({ active, counts }: { active: StatusFilter | "all"
     return <FilterDrawer sections={[{ title: "Show", options }]} description="Which of your vouchers to show." />;
 }
 
+// One voucher, drawn as the thing it is: the offer it came from on top,
+// a torn edge, and the code on the stub underneath. A voucher in a wallet
+// is a ticket, not a row in a list — and the discount is what was
+// claimed, so it is the biggest thing on it.
 export function CompactVoucher({ item }: { item: StatusedVoucher }) {
     const { voucher, status } = item;
     const offer = voucher.offer;
     const isReady = status === "ready";
     const timing = timingLabel(item);
+    const image = storedImage(offer?.imageUrl);
+    const stamp = status === "used" ? "Used" : status === "expired" ? "Expired" : null;
 
     return (
         <Link
             href={`/dashboard/redemptions/${voucher.id}`}
-            className={`group flex overflow-hidden rounded-xl border border-[#17233B]/10 bg-white transition hover:shadow-md ${isReady ? "" : "opacity-80 hover:opacity-100"}`}
+            className={`group relative flex h-full flex-col rounded-2xl border border-[#17233B]/10 bg-white transition hover:-translate-y-0.5 hover:shadow-lg ${isReady ? "" : "opacity-90 hover:opacity-100"}`}
         >
-            <div className="relative flex w-24 shrink-0 items-center justify-center bg-[#FFF4E8] sm:w-28">
-                {storedImage(offer?.imageUrl) ? (
-                    <Image src={storedImage(offer?.imageUrl)!} alt="" fill sizes="112px" className={`object-cover ${isReady ? "" : "grayscale"}`} />
+            <div className="relative aspect-[16/10] overflow-hidden rounded-t-2xl bg-[#FFF4E8]">
+                {image ? (
+                    <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 24rem, (min-width: 768px) 50vw, 100vw"
+                        className={`object-cover ${isReady ? "" : "grayscale"}`}
+                    />
                 ) : (
-                    <FiGift aria-hidden="true" className="size-7 text-[#FF593F]" />
+                    <FiGift aria-hidden="true" className="absolute left-1/2 top-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-[#FF593F]/70" />
+                )}
+
+                {/* Spent, and it looks it. */}
+                {stamp && (
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 rounded-lg border-2 border-[#17233B]/55 bg-white/85 px-4 py-1.5 text-sm font-bold uppercase tracking-[0.2em] text-[#17233B]/70">
+                        {stamp}
+                    </span>
                 )}
             </div>
 
-            <div className="min-w-0 flex-1 p-4">
-                <p className="truncate text-sm text-[#17233B]/70">{voucher.business?.name ?? "Business"}</p>
-                <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{offer?.title ?? "Offer details unavailable"}</p>
+            <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
+                <p className="truncate text-sm text-[#17233B]/65">{voucher.business?.name ?? "Business"}</p>
+
+                {offer?.discount && (
+                    <p className={`mt-1 truncate text-xl font-semibold leading-tight ${isReady ? "text-[#FF593F]" : "text-[#17233B]/70"}`}>
+                        {offer.discount}
+                    </p>
+                )}
+
+                <p className="mt-1 line-clamp-2 text-sm leading-snug text-[#17233B]/80">
+                    {offer?.title ?? "Offer details unavailable"}
+                </p>
 
                 {timing && (
-                    <p className={`mt-1.5 inline-flex items-center gap-1 text-xs font-medium ${timing.urgent ? "text-amber-700" : "text-[#17233B]/65"}`}>
+                    <p className={`mt-2 inline-flex items-center gap-1 text-xs font-medium ${timing.urgent ? "text-amber-700" : "text-[#17233B]/65"}`}>
                         <FiClock aria-hidden="true" />
                         {timing.text}
                     </p>
                 )}
+            </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    {isReady && (
-                        <span className="inline-flex rounded-lg bg-[#17233B] px-2.5 py-1 font-mono text-sm font-semibold tracking-widest text-white">
-                            {voucher.code}
-                        </span>
-                    )}
-                    <span className={`inline-flex items-center gap-1 text-sm font-medium group-hover:underline ${isReady ? "text-[#FF593F]" : "text-[#17233B]/70"}`}>
-                        {isReady ? "Show QR code" : "View details"}
-                        <FiArrowRight aria-hidden="true" />
+            {/* The tear, punched through both sides. The circles are the
+                page's own colour: what makes a hole read as a hole is the
+                card's edge stopping at it. */}
+            <div className="relative">
+                <span className="absolute -left-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-[#FFF8F0]" />
+                <span className="absolute -right-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-[#FFF8F0]" />
+                <div className="mx-3.5 border-t border-dashed border-[#17233B]/25" />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 px-5 py-4">
+                {isReady ? (
+                    <span className="rounded-lg bg-[#17233B] px-2.5 py-1 font-mono text-sm font-semibold tracking-widest text-white">
+                        {voucher.code}
                     </span>
-                </div>
+                ) : (
+                    <span className="font-mono text-sm font-semibold tracking-widest text-[#17233B]/65 line-through">
+                        {voucher.code}
+                    </span>
+                )}
+
+                <span className={`inline-flex shrink-0 items-center gap-1 text-sm font-medium group-hover:underline ${isReady ? "text-[#FF593F]" : "text-[#17233B]/65"}`}>
+                    {isReady ? "Show QR code" : "View details"}
+                    <FiArrowRight aria-hidden="true" />
+                </span>
             </div>
         </Link>
     );
