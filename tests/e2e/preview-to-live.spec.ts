@@ -90,7 +90,7 @@ test("a preview becomes a live business", async ({ browser }) => {
         await page.waitForURL(`**/business/setup/${business!.id}?welcome=1`, { timeout: 20_000 });
         await expect(page.getByRole("heading", { name: /Let's finish your page/ })).toBeVisible();
         // What they are building, beside what they are filling in.
-        await expect(page.getByText("Your page so far")).toBeVisible();
+        await expect(page.getByText("Your page so far").first()).toBeVisible();
 
         // Whose words these are is said once, on the field being edited —
         // and never about an offer, because building a preview has never

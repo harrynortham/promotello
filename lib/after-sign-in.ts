@@ -18,6 +18,7 @@ const allowedDestinations = new Set([
     "/dashboard",
     "/business/dashboard",
     "/onboarding",
+    "/business/setup/new",
     "/account/security",
 ]);
 

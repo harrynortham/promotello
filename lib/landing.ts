@@ -31,7 +31,7 @@ export async function landingAfterSignIn(supabase: SupabaseClient, user: User) {
     // Signed up to run a business but never finished: they were on their
     // way to onboarding, so that is where signing in takes them.
     if (user.app_metadata?.business_signup_at) {
-        return "/onboarding";
+        return "/business/setup/new";
     }
 
     return "/dashboard";

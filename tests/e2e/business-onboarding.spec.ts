@@ -31,60 +31,46 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await expect(page.getByRole("heading", { name: /Welcome, Jo/ })).toBeVisible({ timeout: 15_000 });
         await page.getByRole("button", { name: "Add your business" }).click();
 
-        // Step 1: the basics. Continue is blocked until the name is filled in.
-        await page.waitForURL("**/onboarding");
-        await page.getByRole("button", { name: "Continue" }).click();
-        await expect(page.getByRole("heading", { name: "Your business" })).toBeVisible();
+        // The first screen of the same flow a claimed page starts in: a
+        // name, a kind of business, and the page beside it taking the name
+        // as it is typed. The old three-step wizard at /onboarding is a
+        // redirect into this now.
+        await page.waitForURL("**/business/setup/new");
+        await expect(page.getByRole("heading", { name: /Let's get you set up, Jo/ })).toBeVisible();
+        await expect(page.getByText("0 of 7 done").first()).toBeVisible();
 
-        await page.locator("#category").selectOption({ label: "Bakeries" });
+        await page.getByRole("button", { name: "Add my business" }).click();
+        await expect(page.getByText("The business name needs at least 2 characters.")).toBeVisible();
+
         await page.locator("#businessName").fill("E2E Onboarding Bakery");
-        // Pressing Enter moves on just like the Continue button.
-        await page.locator("#businessName").press("Enter");
+        await expect(page.getByText("E2E Onboarding Bakery").first()).toBeVisible();
+        await page.locator("#category").selectOption({ label: "Bakeries" });
 
-        // Step 2: address, with Bristol filled in.
-        await expect(page.getByRole("heading", { name: "Where to find you" })).toBeVisible();
-        await expect(page.locator("#city")).toHaveValue("Bristol");
-        await page.locator("#addressLine1").fill("Cotham Hill");
-        await page.locator("#region").selectOption("Cotham");
-
-        // Only postcodes in the city are accepted.
-        await page.locator("#postalCode").fill("BA1 1AA");
-        await page.getByRole("button", { name: "Continue" }).click();
-        await expect(page.getByText("That postcode isn't in Bristol.")).toBeVisible();
-        await page.locator("#postalCode").fill("bs6 6df");
-        await page.getByRole("button", { name: "Continue" }).click();
-
-        // Step 3: review, then create. Reaching the review step must not
-        // create the business by itself.
-        await expect(page.getByText("E2E Onboarding Bakery")).toBeVisible();
-        await expect(page.getByText("Cotham Hill, Cotham, Bristol, bs6 6df")).toBeVisible();
-        await page.waitForTimeout(1500);
-        await expect(page).toHaveURL(/\/onboarding$/);
+        // Nothing has been created by filling the form in.
         const { count: early } = await admin
             .from("businesses")
             .select("id", { count: "exact", head: true })
             .eq("created_by", userId);
         expect(early).toBe(0);
 
-        await page.locator("#website").fill("https://example.com");
-        await page.getByRole("button", { name: "Create my business" }).click();
+        await page.getByRole("button", { name: "Add my business" }).click();
 
         // Client-side navigation: wait for the URL, not a full page load.
-        await page.waitForURL(/\/business\/setup\/[0-9a-f-]+\?welcome=1/, { timeout: 15_000, waitUntil: "commit" });
+        await page.waitForURL(/\/business\/setup\/[0-9a-f-]+\?welcome=1/, { timeout: 20_000, waitUntil: "commit" });
 
         // Straight into finishing the page, with the page itself beside it.
         await expect(page.getByRole("heading", { name: /Let's finish your page, Jo/ })).toBeVisible();
-        await expect(page.getByText("Your page so far")).toBeVisible();
+        await expect(page.getByText("Your page so far").first()).toBeVisible();
         await expect(page.getByRole("heading", { name: "Add your logo", level: 2 })).toBeVisible();
 
-        // The address it just collected is the only thing done: a business
-        // that signs itself up is in exactly the state a claimed page is,
-        // including having to send the page for review itself.
-        await expect(page.getByText("1 of 7 done")).toBeVisible();
+        // Nothing is done yet — the address is a step like the rest now —
+        // and a business that signs itself up is in exactly the state a
+        // claimed page is, including having to send the page itself.
+        await expect(page.getByText("0 of 7 done").first()).toBeVisible();
 
         await page.getByRole("button", { name: "Send it" }).click();
         await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
-        await expect(page.getByText("4 things first")).toBeVisible();
+        await expect(page.getByText("5 things first").first()).toBeVisible();
         await expect(page.getByRole("button", { name: /Send .* for review/ })).toHaveCount(0);
 
         // They wrote this page themselves, so nothing on it is a guess of
