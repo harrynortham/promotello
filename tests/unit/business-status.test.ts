@@ -6,7 +6,7 @@ import { approvalLabel, statusLabel } from "@/lib/business-status";
 test("pending only reads as pending once they have asked", () => {
     // Before sending, nothing is pending: the page is theirs and nobody
     // is looking at it. "Pending approval" told them to wait for us.
-    assert.equal(statusLabel("pending", false), "Not sent yet");
+    assert.equal(statusLabel("pending", false), "Draft");
     assert.equal(statusLabel("pending", true), "Pending approval");
 });
 

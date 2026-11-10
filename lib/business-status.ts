@@ -13,6 +13,12 @@ export function approvalLabel(status: string) {
 // "Pending approval" is only true once the business has asked. Before
 // that nothing is pending: the page is theirs, unsent, and nobody is
 // looking at it — saying otherwise tells them to wait for us.
+//
+// "Draft" rather than "Not sent yet", which was written for the sentence
+// it used to sit in. On its own in the sidebar it asks a question —
+// not sent where? — and the badge is there to answer one: who can see
+// this page. A draft is yours, unfinished and private, which is exactly
+// the state it is in.
 export function statusLabel(status: string, reviewRequested: boolean) {
-    return status === "pending" && !reviewRequested ? "Not sent yet" : approvalLabel(status);
+    return status === "pending" && !reviewRequested ? "Draft" : approvalLabel(status);
 }
