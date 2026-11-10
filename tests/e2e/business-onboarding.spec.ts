@@ -77,6 +77,10 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await expect(page.getByText("Get ready to go live")).toBeVisible();
         await expect(page.getByText("Add logo")).toBeVisible();
 
+        // They wrote this page themselves, so nothing on it is a guess of
+        // ours and the dashboard mustn't say it is.
+        await expect(page.getByText("We wrote")).toHaveCount(0);
+
         // A cover photo comes before the first offer: an offer sends
         // people to a page, and the page should be worth landing on.
         const steps = await page.locator("main li").filter({ hasText: /Add|Set|Create|Describe/ }).allInnerTexts();

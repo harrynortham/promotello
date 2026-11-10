@@ -28,7 +28,9 @@ test("a preview becomes a live business", async ({ browser }) => {
             category: "Testing",
             description: "A kitchen we wrote a line about from the outside.",
             approval_status: "pending",
-            created_by: state.businessUserId,
+            // One of us built it, and we never join the business: that is
+            // how the dashboard knows whose words are on the page.
+            created_by: state.customerUserId,
         })
         .select("id, slug")
         .single();
@@ -88,10 +90,17 @@ test("a preview becomes a live business", async ({ browser }) => {
 
         // 3. First login: one banner, no Send button, and the page is
         //    theirs to finish before they vouch for it.
-        await expect(page.getByText("Not sent yet")).toBeVisible();
+        await expect(page.getByText("Draft")).toBeVisible();
         await expect(page.getByText("Your page isn't live yet")).toBeVisible();
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
         await expect(page.getByText("Ready once the steps above are done.")).toBeVisible();
+
+        // The notice names what is actually ours, and never an offer:
+        // building a preview has never created one.
+        const notice = page.locator("#send-for-review");
+        await expect(notice).toContainText("the description and the address are our guesses");
+        await expect(notice).not.toContainText("offer");
+
         // Nothing telling them they have nothing.
         await expect(page.getByText("No redemptions yet")).toHaveCount(0);
 
