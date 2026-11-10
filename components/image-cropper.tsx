@@ -34,9 +34,15 @@ export function ImageCropper({
     const changeZoom = (next: number) => setZoom(Math.min(MAX_ZOOM, Math.max(minZoom, Number(next.toFixed(2)))));
 
     return (
-        <div className="space-y-4">
-            {/* A wide crop gets a wider frame, so it isn't a thin strip. */}
-            <div className={`relative w-full overflow-hidden rounded-2xl bg-[#17233B] ${aspect > 1 ? "aspect-[4/3]" : "aspect-square"}`}>
+        <div className="space-y-3">
+            {/* A wide crop gets a wider frame, so it isn't a thin strip.
+                Capped, and capped again against the window: left to fill a
+                desktop column the square frame was 864px tall and pushed
+                Save 450px below the fold. The cap is on the width, so the
+                shape holds and a phone still gets the full width. */}
+            <div
+                className={`relative mx-auto w-full overflow-hidden rounded-2xl bg-[#17233B] ${aspect > 1 ? "aspect-[4/3] max-w-[min(30rem,48vh)]" : "aspect-square max-w-[min(22rem,36vh)]"}`}
+            >
                 <Cropper
                     image={src}
                     crop={crop}

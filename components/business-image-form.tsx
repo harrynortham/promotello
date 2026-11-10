@@ -156,8 +156,11 @@ export function BusinessImageForm({
                     <p className="mt-3 text-[#17233B]/65">{config.intro(businessName)}</p>
                 </div>
 
-                <Card className="mt-10 border-[#17233B]/10">
-                    <CardContent className="p-6 sm:p-10">
+                {/* A column the width of the thing being cropped: the
+                    picture, the zoom and the buttons read as one piece,
+                    rather than a small square adrift in a page-wide card. */}
+                <Card className="mt-8 max-w-xl border-[#17233B]/10">
+                    <CardContent className="p-5 sm:p-8">
                         <input
                             ref={inputRef}
                             id={kind}
@@ -170,7 +173,7 @@ export function BusinessImageForm({
                         />
 
                         {file && previewUrl ? (
-                            <form onSubmit={save} noValidate className="space-y-6">
+                            <form onSubmit={save} noValidate className="space-y-5">
                                 <ImageCropper
                                     src={previewUrl}
                                     aspect={config.aspect}
@@ -214,7 +217,7 @@ export function BusinessImageForm({
                         ) : (
                             <div className="flex flex-col items-center gap-6 text-center">
                                 <div
-                                    className={`flex items-center justify-center overflow-hidden rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] ${kind === "cover" ? "aspect-video w-full" : "size-32"}`}
+                                    className={`flex items-center justify-center overflow-hidden rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] ${kind === "cover" ? "aspect-video w-full max-w-[min(30rem,42vh)]" : "size-32"}`}
                                 >
                                     {imageUrl ? (
                                         // eslint-disable-next-line @next/next/no-img-element
