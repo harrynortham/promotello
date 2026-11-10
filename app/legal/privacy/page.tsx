@@ -17,7 +17,7 @@ const summary = [
     "We collect what we need to run your account, your vouchers and loyalty cards, and the tools businesses use.",
     "Marketing emails are optional. Every one has an unsubscribe link, and you can turn them off in your account.",
     "Businesses see your first name on vouchers and loyalty cards you use with them. They never see who follows them or your email address.",
-    "We only use Google Analytics if you accept analytics cookies. We don't sell your information or use advertising trackers.",
+    "We don't use analytics cookies, we don't sell your information, and we don't use advertising trackers.",
     "If you sign in with Google, we only receive your name, email address and profile photo, and use them only to run your account.",
 ];
 
@@ -127,12 +127,6 @@ const sections: LegalSection[] = [
                     If you ask us to tell you when Promotello comes to your
                     town, we keep your email address and town for that, and
                     only that.
-                </p>
-                <p>
-                    <strong>Website analytics.</strong> Only if you accept
-                    analytics cookies: Google Analytics collects information
-                    about your visit, such as the pages you view, your device
-                    and browser, and your approximate location.
                 </p>
             </>
         ),
@@ -245,12 +239,6 @@ const sections: LegalSection[] = [
                         for them (consent).
                     </li>
                     <li>
-                        <strong>Website analytics (consent):</strong> only if
-                        you accept analytics cookies. You can change your
-                        choice in our{" "}
-                        <Link href="/legal/cookies#choices">cookie settings</Link>.
-                    </li>
-                    <li>
                         <strong>Keeping Promotello safe (legitimate
                         interests):</strong> approving businesses and offers,
                         preventing fraud such as self-stamping, and keeping
@@ -326,10 +314,7 @@ const sections: LegalSection[] = [
                         address)
                     </li>
                     <li>Stripe: subscription payments for businesses</li>
-                    <li>
-                        Google: Google Analytics if you accept analytics
-                        cookies, and maps or review links you choose to open
-                    </li>
+                    <li>Google: maps or review links you choose to open</li>
                 </ul>
                 <p>
                     We may also share information if the law requires it, or to
@@ -361,7 +346,6 @@ const sections: LegalSection[] = [
                     Page view and QR scan counts aren&apos;t personal
                     information, so we may keep them.
                 </li>
-                <li>Google Analytics data: 2 months, after which Google deletes it.</li>
             </ul>
         ),
     },
@@ -420,9 +404,10 @@ const sections: LegalSection[] = [
         title: "Cookies",
         content: (
             <p>
-                We use essential cookies to keep you signed in, and Google
-                Analytics cookies only if you accept them. We don&apos;t use
-                advertising cookies. See our{" "}
+                We use essential cookies only, to keep you signed in and to
+                remember the city you pick. We used Google Analytics behind a
+                cookie banner until November 2026 and have removed both. We
+                don&apos;t use advertising cookies. See our{" "}
                 <Link href="/legal/cookies">cookie policy</Link>.
             </p>
         ),
@@ -446,8 +431,8 @@ export default function PrivacyPage() {
         <LegalDocument
             title="Privacy policy"
             description="How we handle personal information when you visit or use Promotello."
-            updatedAt="28 October 2026"
-            version="1.0"
+            updatedAt="11 November 2026"
+            version="1.1"
             summary={summary}
             sections={sections}
         />

@@ -46,19 +46,19 @@ conversation about stamps per reward is a conversation we lose on price.
    invisible to anyone who isn't already a customer. Ours is on a public business
    page, on the area and category pages, and on a poster in the window — so "5
    stamps, then a free coffee" is a reason to try the place, not only a reason to
-   return. *Live: the card and join button on the business page, the loyalty
-   poster. Planned: cards on the listing pages and a filter for them.*
+   return. _Live: the card and join button on the business page, the loyalty
+   poster. Planned: cards on the listing pages and a filter for them._
 2. **One wallet for the whole street.** Customers keep one Promotello wallet with
    every nearby independent in it, not a pass per shop. Every business that signs
    up makes the customer side better for the rest, which is why the pitch to the
-   twentieth business on a street is stronger than the pitch to the first. *Live:
+   twentieth business on a street is stronger than the pitch to the first. _Live:
    `/dashboard` holding vouchers and cards. Planned: grouping by area, and the
-   Bristol passport trail.*
+   Bristol passport trail._
 3. **We can tell a business who came back.** No loyalty app can report a first
-   visit, because it was never part of one. *Live: views, claims, redemptions,
+   visit, because it was never part of one. _Live: views, claims, redemptions,
    stamps, QR scans, plus repeat visit rate and cross-visits in admin. Planned:
    the per-business report attributing first visits to Promotello and following
-   them to regulars.*
+   them to regulars._
 
 Claims 1 and 3 are the ones that close deals. Claim 2 gets stronger with every
 business signed on the same street, and is worth nothing until a street has ten
@@ -66,25 +66,25 @@ of them — which is the real reason density beats reach.
 
 ### What to show, in this order
 
-| Show them                                                        | Why it lands                                              | Where it is                            |
-| ---------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------- |
-| Their own profile, pre-built from public information             | It already exists; they only have to claim it             | Admin previews                          |
-| The QR poster with their logo on it                              | Something physical, on day one, no hardware              | `/poster/<code>`                        |
-| A customer scanning it: page, then claim or join in seconds      | No app to download, nothing to install at the till       | Any phone                               |
-| Staff scanning a voucher or a card with their own phone camera    | Proves it survives a queue                               | Dashboard → redemptions, loyalty        |
-| The directory page for their street                              | The part no loyalty app has, and their neighbours are on it | `/explore/bristol/gloucester-road`   |
-| The numbers after a fortnight                                    | Turns a trial into a renewal                             | Dashboard → analytics                   |
+| Show them                                                      | Why it lands                                                | Where it is                        |
+| -------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------- |
+| Their own profile, pre-built from public information           | It already exists; they only have to claim it               | Admin previews                     |
+| The QR poster with their logo on it                            | Something physical, on day one, no hardware                 | `/poster/<code>`                   |
+| A customer scanning it: page, then claim or join in seconds    | No app to download, nothing to install at the till          | Any phone                          |
+| Staff scanning a voucher or a card with their own phone camera | Proves it survives a queue                                  | Dashboard → redemptions, loyalty   |
+| The directory page for their street                            | The part no loyalty app has, and their neighbours are on it | `/explore/bristol/gloucester-road` |
+| The numbers after a fortnight                                  | Turns a trial into a renewal                                | Dashboard → analytics              |
 
 ### Words to use, and words to drop
 
-| Say this                                     | Not this                                      |
-| -------------------------------------------- | --------------------------------------------- |
-| local network, your high street              | loyalty platform, rewards programme           |
-| customers we send you                        | footfall uplift, engagement                   |
-| a stamp card comes with it                   | our loyalty features                          |
-| free to start, live in about 15 minutes      | 30-day free trial (lead with free, not trial) |
-| £24 a month, everything included             | per-location pricing, per-visit pricing       |
-| your street, Gloucester Road, Bristol        | your area (never — see [docs/MULTI-CITY.md](docs/MULTI-CITY.md)) |
+| Say this                                | Not this                                                         |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| local network, your high street         | loyalty platform, rewards programme                              |
+| customers we send you                   | footfall uplift, engagement                                      |
+| a stamp card comes with it              | our loyalty features                                             |
+| free to start, live in about 15 minutes | 30-day free trial (lead with free, not trial)                    |
+| £24 a month, everything included        | per-location pricing, per-visit pricing                          |
+| your street, Gloucester Road, Bristol   | your area (never — see [docs/MULTI-CITY.md](docs/MULTI-CITY.md)) |
 
 Two more lines worth keeping word for word:
 
@@ -100,15 +100,15 @@ Two more lines worth keeping word for word:
 Changing the positioning means changing these, together, or the site drifts back
 to selling stamp cards:
 
-| What                                    | Where                                                                      |
-| --------------------------------------- | -------------------------------------------------------------------------- |
-| Hero, the loop, the feature sections, pricing FAQ | `app/(business)/business/(business-marketing)/page.tsx`           |
-| The printable one-pager for outreach    | `app/(business)/business/(business-marketing)/why-promotello/page.tsx`      |
-| Plan names and what each tier is for    | `planSummaries` in `components/business-marketing.tsx`                     |
-| Page titles and descriptions            | `metadata` in each marketing page                                          |
-| Footer tagline, blog header             | `components/site/footers.tsx`, `components/blog/blog-listing.tsx`          |
-| Setup checklist and lifecycle emails    | `lib/business-lifecycle.ts`                                                |
-| What AI crawlers are told               | `app/llms.txt/route.ts`                                                    |
+| What                                              | Where                                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| Hero, the loop, the feature sections, pricing FAQ | `app/(business)/business/(business-marketing)/page.tsx`                |
+| The printable one-pager for outreach              | `app/(business)/business/(business-marketing)/why-promotello/page.tsx` |
+| Plan names and what each tier is for              | `planSummaries` in `components/business-marketing.tsx`                 |
+| Page titles and descriptions                      | `metadata` in each marketing page                                      |
+| Footer tagline, blog header                       | `components/site/footers.tsx`, `components/blog/blog-listing.tsx`      |
+| Setup checklist and lifecycle emails              | `lib/business-lifecycle.ts`                                            |
+| What AI crawlers are told                         | `app/llms.txt/route.ts`                                                |
 
 ### The price, in one line
 
@@ -162,7 +162,6 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
 | `NEXT_PUBLIC_KEYSTATIC_STORAGE` and `KEYSTATIC_*`                              | Editing the blog on the live site through GitHub. See [docs/BLOG.md](docs/BLOG.md)                                                               |
 | `NEXT_PUBLIC_SENTRY_DSN`                                                       | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally)                             |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID`                                                | Optional: Google Analytics outside production (it's on in production by default, behind cookie consent)                                          |
 
 Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on), so the same code works in test and live mode.
 
@@ -233,15 +232,15 @@ Google sign-in still works alongside it.
 
 ### What Supabase has to be set to
 
-| Where | Setting | Why |
-| --- | --- | --- |
-| Authentication → Email Templates → **Magic Link** | must contain `{{ .Token }}` | This is the template that carries the code for anyone who already has an account. Without the token it sends a link instead, and the form asks for a code nobody was sent. |
-| Authentication → Email Templates → **Confirm signup** | must contain `{{ .Token }}` | A brand-new address gets this one, not Magic Link. Miss it and signing up breaks while signing in works. |
-| Authentication → Providers → Email → **Email OTP Expiration** | 3600 (an hour) | What the form tells people. Supabase refuses anything over 86400. |
-| Authentication → Providers → Email → **Email OTP Length** | 6 | The forms say "6-digit" and `lib/sign-in-code.ts` checks for six. |
-| Authentication → Providers → Email → **Confirm email** | on | Typing the code is the confirmation. |
-| Authentication → Rate Limits → **emails sent per hour** | well above a day's sign-ins | Every sign-in is an email now. The built-in SMTP allows 2 an hour, which is why custom SMTP is not optional here. |
-| Authentication → SMTP | the Resend sender on `auth.promotello.com` | Already set; see [Emails](#emails). |
+| Where                                                         | Setting                                    | Why                                                                                                                                                                        |
+| ------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication → Email Templates → **Magic Link**             | must contain `{{ .Token }}`                | This is the template that carries the code for anyone who already has an account. Without the token it sends a link instead, and the form asks for a code nobody was sent. |
+| Authentication → Email Templates → **Confirm signup**         | must contain `{{ .Token }}`                | A brand-new address gets this one, not Magic Link. Miss it and signing up breaks while signing in works.                                                                   |
+| Authentication → Providers → Email → **Email OTP Expiration** | 3600 (an hour)                             | What the form tells people. Supabase refuses anything over 86400.                                                                                                          |
+| Authentication → Providers → Email → **Email OTP Length**     | 6                                          | The forms say "6-digit" and `lib/sign-in-code.ts` checks for six.                                                                                                          |
+| Authentication → Providers → Email → **Confirm email**        | on                                         | Typing the code is the confirmation.                                                                                                                                       |
+| Authentication → Rate Limits → **emails sent per hour**       | well above a day's sign-ins                | Every sign-in is an email now. The built-in SMTP allows 2 an hour, which is why custom SMTP is not optional here.                                                          |
+| Authentication → SMTP                                         | the Resend sender on `auth.promotello.com` | Already set; see [Emails](#emails).                                                                                                                                        |
 
 Email and password sign-in is still enabled at the Supabase end, which is how
 the test suite signs in through the API. Nothing in the product offers it, and
@@ -269,8 +268,8 @@ goes first, and nothing in a later stage starts while an earlier one is open.
 Only stage 4 is a feature build. Things get deleted when they're done rather
 than ticked.
 
-The ordering rule, from [docs/ROADMAP.md](docs/ROADMAP.md): *the biggest risk is
-building too long before selling.* With 487 commits in the last 30 days and no
+The ordering rule, from [docs/ROADMAP.md](docs/ROADMAP.md): _the biggest risk is
+building too long before selling._ With 487 commits in the last 30 days and no
 paying business yet, the product is not what's behind.
 
 Harry's own: upgrade to Claude Max.
@@ -307,7 +306,7 @@ after outreach has started.
   optional: ico.org.uk/for-organisations/data-protection-fee, then add the
   number to the privacy policy and the other legal pages (company number is
   already in `lib/legal.ts`).
-- **Resend's limits.** The free plan is 3,000 a month *and* 100 a day, and the
+- **Resend's limits.** The free plan is 3,000 a month _and_ 100 a day, and the
   daily cap goes first: daily summaries alone are about 75 a day at 50 active
   businesses, one offer announced to 150 followers is 150 in a burst, and the
   1st of the month adds every monthly report. Supabase's sign-in emails come
@@ -366,6 +365,7 @@ competitor's sheet can show.
 
 Kept, not forgotten. Nothing here stops a business paying.
 
+- Add custom URL as a premium feature
 - What a customer or owner sees when a voucher offer is claimed, and whether an
   animation belongs there.
 - The "Promotello isn't in your area yet" bar with an email field, as a
