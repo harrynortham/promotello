@@ -25,6 +25,10 @@ const notYou = "If you didn't ask for this, you can ignore this email.";
 // signing up quietly broke while signing in worked.
 //
 // Both need {{ .Token }} in the body or Supabase sends a link instead.
+//
+// The subject carries the code as well, because that is where it gets
+// read: off a lock screen, standing at a till, without opening anything.
+// Supabase's own reauthentication default does the same.
 const signInCode = {
     eyebrow: "Sign in",
     title: "Your sign-in code",
@@ -39,7 +43,7 @@ const templates = [
     {
         file: "confirm-signup",
         dashboardName: "Confirm sign up",
-        subject: "Your Promotello code",
+        subject: "{{ .Token }} is your Promotello code",
         email: {
             ...signInCode,
             eyebrow: "Welcome to Promotello",
@@ -67,13 +71,13 @@ const templates = [
     {
         file: "magic-link",
         dashboardName: "Magic link",
-        subject: "Your Promotello code",
+        subject: "{{ .Token }} is your Promotello code",
         email: signInCode,
     },
     {
         file: "reauthentication",
         dashboardName: "Reauthentication",
-        subject: "Your Promotello confirmation code",
+        subject: "{{ .Token }} is your Promotello confirmation code",
         email: {
             eyebrow: "Confirm it's you",
             title: "Confirm it's you",
