@@ -63,38 +63,69 @@ function SignedShopfront({ name }: { name: string }) {
 }
 
 // Someone has already taken this page. Usually them, a moment ago, on
-// another tab — so the first thing offered is the way back in.
-export function PreviewClaimed({ name }: { name: string }) {
+// another tab — so what is offered depends on who is reading it: their
+// own business if they're signed in as its owner, the way in if they're
+// signed out, and a way to tell us if it wasn't them at all.
+export function PreviewClaimed({
+    name,
+    businessId,
+    yours,
+    signedIn,
+}: {
+    name: string;
+    businessId: string;
+    yours: boolean;
+    signedIn: boolean;
+}) {
     return (
         <main className="bg-[#FFF8F0] px-6 py-14 text-[#17233B] sm:py-20">
             <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Already claimed
+                        {yours ? "Already yours" : "Already claimed"}
                     </p>
 
                     <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-                        {name} has an owner now.
+                        {yours ? `${name} is yours.` : `${name} has an owner now.`}
                     </h1>
 
                     <p className="mt-5 max-w-md text-lg leading-8 text-[#17233B]/70">
-                        This link only works once, and it has been used. If that was you, sign in
-                        and the page is on your dashboard.
+                        {yours
+                            ? `You've claimed this page, so the link has done its job. Everything about ${name} is in your dashboard now.`
+                            : signedIn
+                              ? "This link only works once, and it has been used — not by the account you're signed in with. If you think that's wrong, tell us."
+                              : "This link only works once, and it has been used. If that was you, sign in and the page is on your dashboard."}
                     </p>
 
                     <div className="mt-8 flex flex-wrap gap-3">
-                        <Button render={<Link href="/login?next=/business/dashboard" />} nativeButton={false} size="lg">
-                            Sign in
-                        </Button>
+                        {yours ? (
+                            <Button render={<Link href={`/business/${businessId}`} />} nativeButton={false} size="lg">
+                                Open {name}
+                            </Button>
+                        ) : (
+                            <>
+                                {/* Signed in already: offering a sign-in button is
+                                    the one thing they cannot usefully do. */}
+                                {!signedIn && (
+                                    <Button
+                                        render={<Link href="/login?next=/business/dashboard" />}
+                                        nativeButton={false}
+                                        size="lg"
+                                    >
+                                        Sign in
+                                    </Button>
+                                )}
 
-                        <Button
-                            render={<Link href="/business/contact" />}
-                            nativeButton={false}
-                            variant="outline"
-                            size="lg"
-                        >
-                            It wasn&rsquo;t me
-                        </Button>
+                                <Button
+                                    render={<Link href="/business/contact" />}
+                                    nativeButton={false}
+                                    variant={signedIn ? "default" : "outline"}
+                                    size="lg"
+                                >
+                                    It wasn&rsquo;t me
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
 

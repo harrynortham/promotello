@@ -88,6 +88,27 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         // The link now says it's been claimed.
         await visitor.goto(previewPath);
         await expect(visitor.getByRole("heading", { name: `${name} has an owner now.` })).toBeVisible();
+        // Signed out, the way in is the thing to offer. (The header has a
+        // Sign in button of its own, so this asks for the card's words.)
+        await expect(visitor.getByText(/If that was you, sign in/)).toBeVisible();
+
+        // The owner opening their own link again — which is how almost
+        // everybody sees this page — gets their business, not a sign-in
+        // button they have no use for.
+        await owner.goto(previewPath);
+        await expect(owner.getByRole("heading", { name: `${name} is yours.` })).toBeVisible();
+        await expect(owner.getByRole("button", { name: "Sign in" })).toHaveCount(0);
+
+        await owner.getByRole("button", { name: `Open ${name}` }).click();
+        await owner.waitForURL(`**/business/${businessId}`, { waitUntil: "commit", timeout: 30_000 });
+
+        // Signed in as somebody who isn't on this business — the admin,
+        // who handed it over and left the team — gets the truth and a way
+        // to say it wasn't them, and no sign-in button either.
+        await adminPage.goto(previewPath);
+        await expect(adminPage.getByText(/not by the account you.re signed in with/)).toBeVisible();
+        await expect(adminPage.getByRole("button", { name: "Sign in" })).toHaveCount(0);
+        await expect(adminPage.getByRole("button", { name: /It wasn.t me/ })).toBeVisible();
     } finally {
         await admin().from("platform_admins").delete().eq("user_id", businessUserId);
         if (businessId) await admin().from("businesses").delete().eq("id", businessId);
