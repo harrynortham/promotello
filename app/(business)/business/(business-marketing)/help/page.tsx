@@ -203,7 +203,7 @@ const guides: HelpGuide[] = [
             "Missing a page you expected? Ask the owner to check your role.",
         ],
         note:
-            "Being on a team never gives anyone access to someone else’s password or personal account settings.",
+            "Being on a team never gives anyone access to someone else’s personal account settings.",
     },
     {
         id: "business-emails",
@@ -241,7 +241,7 @@ const guides: HelpGuide[] = [
         steps: [
             "Open the account menu in the header and choose Account settings.",
             "Use Profile for your name and photo.",
-            "Use Security for password and email changes.",
+            "Use Security to change the email address you sign in with.",
             "Use Notifications for optional personal emails.",
             "Use Privacy to request a copy of your data or delete your account.",
         ],

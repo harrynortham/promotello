@@ -19,14 +19,13 @@ async function SecurityContent() {
         redirect("/login");
     }
 
-    // "email" means they have a password; "google" / "apple" are social sign-ins.
+    // "email" is the code we send them; "google" / "apple" are social sign-ins.
     const providers = (user.identities ?? []).map((identity) => identity.provider);
 
     return (
         <SecurityForm
             email={user.email ?? ""}
             pendingEmail={user.new_email ?? ""}
-            hasPassword={providers.includes("email")}
             socialProviders={providers.filter((provider) => provider !== "email")}
         />
     );

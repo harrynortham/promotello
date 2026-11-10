@@ -39,7 +39,7 @@ const settings = [
     {
         title: "Login & security",
         description:
-            "Manage your password and the email address you use to sign in.",
+            "Manage how you sign in and the email address you use.",
         href: "/account/security",
         action: "Manage security",
         icon: FiLock,

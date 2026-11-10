@@ -2,6 +2,7 @@ import { test, expect, type Browser } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
+import { enterSignInCode } from "../sign-in";
 
 const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -20,8 +21,7 @@ async function signIn(browser: Browser, email: string, next: string) {
     const page = await (await browser.newContext()).newPage();
     await page.goto(`/login?next=${encodeURIComponent(next)}&email=${encodeURIComponent(email)}`);
     await expect(page.locator("#login-email")).toHaveValue(email);
-    await page.locator("#login-password").fill(password);
-    await page.locator('button[type="submit"]').click();
+    await enterSignInCode(page, email);
     return page;
 }
 

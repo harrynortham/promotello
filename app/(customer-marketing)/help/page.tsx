@@ -201,37 +201,35 @@ const guides: HelpGuide[] = [
     {
         id: "login-security",
         category: "Your account",
-        title: "Change your password or email",
-        description: "Manage the details you use to sign in.",
+        title: "Change your email address",
+        description: "Manage the address you use to sign in.",
         steps: [
             "Open Account settings and choose Security.",
-            "For a password change, enter your current password and confirm your new password.",
-            "For an email change, enter your new address and current password.",
-            "Follow any email confirmation instructions to finish changing your email.",
+            "Enter the new address and select Update email.",
+            "Follow the confirmation instructions sent to both addresses.",
         ],
         note:
-            "If you have forgotten your password, use the password reset link instead.",
+            "Your current address keeps working until the change is confirmed, so keep access to it.",
         link: {
             label: "Open Security settings",
             href: "/account/security",
         },
     },
     {
-        id: "reset-password",
+        id: "sign-in-code",
         category: "Your account",
-        title: "Reset a forgotten password",
-        description: "Get back into your account.",
+        title: "Sign in with a code",
+        description: "No password to remember.",
         steps: [
-            "Open the sign-in page and select Forgot password.",
-            "Enter the email address used for your account.",
-            "Check your inbox and spam folder for reset instructions.",
-            "Follow the reset link and choose a new password.",
+            "Open the sign-in page and enter your email address.",
+            "Check your inbox for a six-digit code from Promotello.",
+            "Type the code in to sign in.",
         ],
         note:
-            "If a link has expired, request a new one. Never share password reset links.",
+            "A code lasts an hour and works once. If it has expired, ask for a new one — and never share a code with anyone, including us.",
         link: {
-            label: "Reset password",
-            href: "/forgot-password",
+            label: "Sign in",
+            href: "/login",
         },
     },
     {
@@ -277,7 +275,7 @@ export default function CustomerHelpPage() {
             audience="Customer help centre"
             title="A little help along the way."
             description="Find clear steps for discovering deals, using your codes, and looking after your account."
-            searchPlaceholder="Search claims, passwords, profile photos…"
+            searchPlaceholder="Search claims, sign-in codes, profile photos…"
             guides={guides}
             contactHref="/contact"
             alternateHref="/business/help"

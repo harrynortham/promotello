@@ -1,42 +1,55 @@
 import { test, expect } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+
+import { codeFor } from "../sign-in";
 
 // No stored auth — this test exercises the public signup form.
 test.use({ storageState: { cookies: [], origins: [] } });
+
+const admin = () =>
+    createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
 
 test.describe("Sign up", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto("/signup");
     });
 
-    test("rejects passwords shorter than 8 characters", async ({ page }) => {
-        await page.locator("#signup-email").fill("test@example.com");
+    test("asks for an email address before it sends anything", async ({ page }) => {
+        await page.getByRole("button", { name: "Email me a code" }).click();
 
-        await page.locator("#signup-password").fill("short");
-        await page.locator('button[type="submit"]').click();
-
-        await expect(
-            page.getByText("Choose a password with at least 8 characters."),
-        ).toBeVisible();
+        await expect(page.getByText("Enter your email address.")).toBeVisible();
+        await expect(page.locator("#signup-code")).toHaveCount(0);
     });
 
-    test("submitting a valid form shows a confirmation or redirects to the dashboard", async ({
-        page,
-    }) => {
-        // A unique address on Resend's test inbox: Supabase's confirmation
-        // email is accepted without being delivered, so it never bounces
-        // (bounces hurt the sending domain's reputation).
+    test("an address nobody has used gets an account", async ({ page }) => {
+        test.setTimeout(90_000);
+
+        // A unique address on Resend's test inbox: the code email is
+        // accepted without being delivered, so it never bounces (bounces
+        // hurt the sending domain's reputation). This one goes out for
+        // real, which is the point — nothing else proves a stranger can
+        // make an account.
         const email = `delivered+e2e-signup-${Date.now()}@resend.dev`;
 
         await page.locator("#signup-email").fill(email);
-        await page.locator("#signup-password").fill("E2eTestPass1!");
-        await page.locator('button[type="submit"]').click();
+        await page.getByRole("button", { name: "Email me a code" }).click();
 
-        // Supabase may auto-confirm or require email verification depending
-        // on project settings — accept either outcome.
-        await Promise.race([
-            page.waitForURL("**/dashboard**", { timeout: 15_000 }),
-            expect(page.getByText("Check your inbox.")).toBeVisible({ timeout: 15_000 }),
-        ]);
+        await expect(page.getByText(`We've sent a 6-digit code to ${email}`)).toBeVisible({
+            timeout: 20_000,
+        });
+
+        try {
+            await page.locator("#signup-code").fill(await codeFor(email));
+            await page.getByRole("button", { name: "Sign in" }).click();
+
+            await page.waitForURL("**/dashboard**", { timeout: 25_000 });
+        } finally {
+            const { data } = await admin().auth.admin.listUsers();
+            const created = data.users.find((user) => user.email === email);
+            if (created) await admin().auth.admin.deleteUser(created.id);
+        }
     });
 });
 

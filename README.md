@@ -194,11 +194,43 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 - **Brand colours** are used directly in class names: `#17233B` navy, `#FFF8F0` off-white, `#FF593F` coral.
 - **Copy** is UK English.
 
+## Signing in
+
+There are no passwords. Somebody types their email address, Supabase emails
+them a six-digit code, and they type it in — customers and businesses alike.
+Google sign-in still works alongside it.
+
+- `components/email-code-form.tsx` is both forms: the address, then the code.
+  `mode="sign-up"` is the only difference, and it decides whether an address
+  nobody has used makes an account or an apology.
+- The browser verifies the code, so the session exists before the server sees
+  it. `/auth/signed-in` is the server's half: the welcome email, a business
+  marked as one, a claimed preview, and where they land
+  (`lib/after-sign-in.ts`, shared with the Google callback).
+- `/forgot-password` and `/reset-password` are gone, redirected to `/login` in
+  `next.config.ts`. There is nothing to reset.
+
+### What Supabase has to be set to
+
+| Where | Setting | Why |
+| --- | --- | --- |
+| Authentication → Email Templates → **Magic Link** | must contain `{{ .Token }}` | This is the template that carries the code for anyone who already has an account. Without the token it sends a link instead, and the form asks for a code nobody was sent. |
+| Authentication → Email Templates → **Confirm signup** | must contain `{{ .Token }}` | A brand-new address gets this one, not Magic Link. Miss it and signing up breaks while signing in works. |
+| Authentication → Providers → Email → **Email OTP Expiration** | 3600 (an hour) | What the form tells people. Supabase refuses anything over 86400. |
+| Authentication → Providers → Email → **Email OTP Length** | 6 | The forms say "6-digit" and `lib/sign-in-code.ts` checks for six. |
+| Authentication → Providers → Email → **Confirm email** | on | Typing the code is the confirmation. |
+| Authentication → Rate Limits → **emails sent per hour** | well above a day's sign-ins | Every sign-in is an email now. The built-in SMTP allows 2 an hour, which is why custom SMTP is not optional here. |
+| Authentication → SMTP | the Resend sender on `auth.promotello.com` | Already set; see [Emails](#emails). |
+
+Email and password sign-in is still enabled at the Supabase end, which is how
+the test suite signs in through the API. Nothing in the product offers it, and
+turning it off is a one-switch decision once the tests are converted.
+
 ## Emails
 
 Two sending subdomains in Resend, so sign-in emails keep their own reputation:
 
-- `auth.promotello.com`: Supabase's sign-in emails only (confirmations, password resets, sign-in links), from `no-reply@auth.promotello.com`, set in Supabase's SMTP settings.
+- `auth.promotello.com`: Supabase's sign-in emails only (the six-digit codes people sign in with, and email-change confirmations), from `no-reply@auth.promotello.com`, set in Supabase's SMTP settings. Every sign-in sends one, so the rate limits in Supabase matter: see [Signing in](#signing-in).
 - `mail.promotello.com`: everything the app sends, from `EMAIL_FROM` (`Promotello <offers@mail.promotello.com>`). Replies go to `EMAIL_REPLY_TO` (default hello@promotello.com).
 
 Mail apps that support BIMI show the Promotello logo next to emails: the logo is `public/bimi/logo.svg` (SVG Tiny PS, don't edit it casually) and the DNS record is `default._bimi.promotello.com`. Gmail and Apple Mail also need a mark certificate (VMC or CMC).
@@ -343,8 +375,8 @@ Kept, not forgotten. Nothing here stops a business paying.
   cheaper than Managed Payments' extra ~3.5%, and Stripe doesn't have to become
   the seller. Nothing to do now.
 - Events: built and hidden until there are enough customers (`lib/features.ts`).
-- Security, password and email preference guides in both help centres are still
-  in the older formal voice. Left that way on purpose.
+- Security and email preference guides in both help centres are still in the
+  older formal voice. Left that way on purpose.
 - Android and iOS apps with notifications.
 
 ### App improvements

@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
   // crawlers and link-preview bots get them in the <head> up front.
   htmlLimitedBots:
     /Googlebot|Google-InspectionTool|Storebot-Google|bingbot|DuckDuckBot|Applebot|YandexBot|Baiduspider|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot|Pinterest|redditbot|SkypeUriPreview|iMessage/i,
+  // Passwords are gone: signing in is a code we email. Anyone with one of
+  // these bookmarked, or following an old email, lands where they can ask
+  // for a code instead of on a 404.
+  async redirects() {
+    return [
+      { source: "/forgot-password", destination: "/login", permanent: true },
+      { source: "/reset-password", destination: "/login", permanent: true },
+    ];
+  },
   // Security headers on every page. Vercel already adds HSTS.
   async headers() {
     return [

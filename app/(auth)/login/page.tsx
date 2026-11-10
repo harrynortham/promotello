@@ -2,42 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-    FiEye,
-    FiEyeOff,
-    FiLock,
-} from "react-icons/fi";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { FiLock } from "react-icons/fi";
 
 import {
     Alert,
     AlertDescription,
     AlertTitle,
 } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { EmailCodeForm } from "@/components/email-code-form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FieldError, invalidProps } from "@/components/field-error";
 import { SocialSignIn } from "@/components/social-sign-in";
-import { landingAfterSignIn } from "@/lib/landing";
 import { safeNextPath } from "@/lib/redirects";
-import { email } from "@/lib/validation";
-import { createClient } from "@/utils/supabase/client";
-
-const schema = z.object({
-    email,
-    password: z.string().min(1, "Enter your password."),
-});
-
-type Values = z.infer<typeof schema>;
 
 function LoginContent() {
-    const router = useRouter();
     const searchParams = useSearchParams();
 
     const requestedNext = safeNextPath(searchParams.get("next"));
@@ -56,47 +35,9 @@ function LoginContent() {
             : "/signup";
 
     const callbackError = searchParams.get("error");
-    const hasCallbackError = Boolean(callbackError) && callbackError !== "oauth";
+    const hasLinkError = Boolean(callbackError) && !["oauth", "session"].includes(callbackError!);
     const hasOAuthError = callbackError === "oauth";
-
-    const [showPassword, setShowPassword] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-    // Stays true after success, while the next page loads.
-    const [isRedirecting, setIsRedirecting] = useState(false);
-
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isSubmitting: isSending },
-    } = useForm<Values>({
-        resolver: zodResolver(schema),
-        // Prefilled from invitation links (?email=).
-        defaultValues: { email: searchParams.get("email") ?? "", password: "" },
-    });
-
-    const isSubmitting = isSending || isRedirecting;
-
-    async function onSubmit(values: Values) {
-        setErrorMessage("");
-
-        const supabase = createClient();
-        const { data, error } = await supabase.auth.signInWithPassword(values);
-
-        if (error) {
-            setErrorMessage(error.message || "We couldn’t sign you in. Please try again.");
-            return;
-        }
-
-        setIsRedirecting(true);
-
-        // A page that asked for sign-in always wins: someone part-way
-        // through claiming an offer has to land back on that offer.
-        const landing =
-            requestedNext ?? (data.user ? await landingAfterSignIn(supabase, data.user) : destination);
-
-        router.replace(landing);
-        router.refresh();
-    }
+    const hasSessionError = callbackError === "session";
 
     return (
         <main className="min-h-dvh bg-background text-foreground">
@@ -116,164 +57,58 @@ function LoginContent() {
                                 priority
                             />
                         </Link>
-
-                        {/* <Button
-                            render={<Link href={registerHref} />}
-                            nativeButton={false}
-                            variant="ghost"
-                            size="sm"
-                        >
-                            Create an account
-                        </Button> */}
                     </div>
 
                     <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12 lg:py-20">
-                        {/* <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <FiLock
-                                aria-hidden="true"
-                                className="size-6"
-                            />
-                        </span> */}
-
                         <h1 className="mt-6 text-3xl font-semibold tracking-tight text-nowrap sm:text-4xl">
                             Log in to Promotello.
                         </h1>
 
-                        {hasCallbackError && (
+                        {hasLinkError && (
                             <Alert className="mt-6">
-                                <AlertTitle>
-                                    That email link couldn’t be completed
-                                </AlertTitle>
+                                <AlertTitle>That link couldn’t be completed</AlertTitle>
 
                                 <AlertDescription>
-                                    It may have expired or already been used.
-                                    If you&apos;ve already confirmed your email,
-                                    just sign in below. If you were resetting
-                                    your password, request a new reset link.
+                                    It may have expired or already been used. Put your email in
+                                    below and we’ll send you a code.
                                 </AlertDescription>
                             </Alert>
                         )}
 
                         {hasOAuthError && (
                             <Alert className="mt-6">
-                                <AlertTitle>
-                                    You weren’t signed in
-                                </AlertTitle>
+                                <AlertTitle>You weren’t signed in</AlertTitle>
 
                                 <AlertDescription>
-                                    Signing in with Google or Apple was
-                                    cancelled or didn’t finish. Try again, or
-                                    use your email and password.
+                                    Signing in with Google was cancelled or didn’t finish. Try
+                                    again, or use your email below.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {hasSessionError && (
+                            <Alert className="mt-6">
+                                <AlertTitle>That didn’t quite finish</AlertTitle>
+
+                                <AlertDescription>
+                                    Your code was accepted but the sign-in didn’t stick, which
+                                    usually means cookies are blocked. Try once more.
                                 </AlertDescription>
                             </Alert>
                         )}
 
                         <SocialSignIn next={destination} />
 
-                        <form
-                            onSubmit={handleSubmit(onSubmit)}
-                            noValidate
-                            className="mt-6 space-y-5"
-                            aria-busy={isSubmitting}
-                        >
-                            <div className="space-y-2">
-                                <Label htmlFor="login-email">
-                                    Email address
-                                </Label>
-
-                                <Input
-                                    id="login-email"
-                                    type="email"
-                                    autoComplete="username"
-                                    placeholder="you@example.com"
-                                    readOnly={isSubmitting}
-                                    {...register("email")}
-                                    {...invalidProps("login-email-error", errors.email)}
-                                />
-
-                                <FieldError id="login-email-error" message={errors.email?.message} />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="login-password">
-                                    Password
-                                </Label>
-
-                                <div className="relative">
-                                    <Input
-                                        id="login-password"
-                                        type={
-                                            showPassword
-                                                ? "text"
-                                                : "password"
-                                        }
-                                        autoComplete="current-password"
-                                        placeholder="Your password"
-                                        readOnly={isSubmitting}
-                                        className="pr-12"
-                                        {...register("password")}
-                                        {...invalidProps("login-password-error", errors.password)}
-                                    />
-
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label={
-                                            showPassword
-                                                ? "Hide password"
-                                                : "Show password"
-                                        }
-                                        aria-pressed={showPassword}
-                                        disabled={isSubmitting}
-                                        onClick={() =>
-                                            setShowPassword(
-                                                (current) => !current,
-                                            )
-                                        }
-                                        className="absolute right-2 top-1/2 size-8 -translate-y-1/2"
-                                    >
-                                        {showPassword ? (
-                                            <FiEyeOff aria-hidden="true" />
-                                        ) : (
-                                            <FiEye aria-hidden="true" />
-                                        )}
-                                    </Button>
-                                </div>
-
-                                <FieldError id="login-password-error" message={errors.password?.message} />
-                            </div>
-
-                            {errorMessage && (
-                                <Alert variant="destructive">
-                                    <AlertTitle>
-                                        Unable to sign in
-                                    </AlertTitle>
-
-                                    <AlertDescription>
-                                        {errorMessage}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            <Button
-                                type="submit"
-                                disabled={isSubmitting}
-                                size="lg"
-                                className="w-full"
-                            >
-                                {isSubmitting ? "Logging in…" : "Log in"}
-                            </Button>
-
-                            <div className="text-center">
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-xs font-medium underline-offset-4 hover:underline"
-                                >
-                                    Forgot password?
-                                </Link>
-                            </div>
-                        </form>
+                        <EmailCodeForm
+                            mode="sign-in"
+                            // Nothing asked for a page: the server decides,
+                            // and a business owner lands in their business.
+                            next={requestedNext ?? undefined}
+                            idPrefix="login"
+                            // Prefilled from invitation links (?email=).
+                            defaultEmail={searchParams.get("email") ?? ""}
+                            otherWayHref={registerHref}
+                        />
 
                         <div className="mt-6 border-t pt-6">
                             <p className="text-center text-sm leading-7 text-muted-foreground">
@@ -328,7 +163,6 @@ function LoginLoading() {
                     <Skeleton className="size-12 rounded-2xl" />
                     <Skeleton className="w-3/4" />
                     <Skeleton className="h-6 w-full" />
-                    <Skeleton className="w-full" />
                     <Skeleton className="w-full" />
                     <Skeleton className="w-full" />
                 </div>

@@ -47,10 +47,10 @@ const sections: LegalSection[] = [
         content: (
             <>
                 <p>
-                    <strong>Your account.</strong> Your email address, password
-                    (stored only as a secure hash), name and, if you add it,
-                    your town or city. If you sign in with Google, we don&apos;t
-                    get a password; see{" "}
+                    <strong>Your account.</strong> Your email address, name
+                    and, if you add it, your town or city. We hold no password:
+                    signing in is a single-use code we email you. If you sign
+                    in with Google, see{" "}
                     <a href="#google">Signing in with Google</a>.
                 </p>
                 <p>
