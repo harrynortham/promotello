@@ -138,7 +138,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { data: hours },
         { count: memberCount },
         { data: recentRedemptionRows },
-        { count: qrCodeCount },
+        { count: printedPosterCount },
         { count: loyaltyCount },
         hasPro,
     ] = await Promise.all([
@@ -198,10 +198,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .limit(5),
 
         supabase
+            // Printed, not made: a code sitting in the dashboard has never
+            // been in a window. poster_printed_at is set when the poster is
+            // printed or saved as a PDF.
             .from("qr_codes")
             .select("id", { count: "exact", head: true })
             .eq("business_id", businessId)
-            .is("archived_at", null),
+            .is("archived_at", null)
+            .not("poster_printed_at", "is", null),
 
         supabase
             .from("loyalty_programs")
@@ -335,7 +339,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     id: "qr",
                     label: "Print a QR poster",
                     description: "Put it in your window or by the till so passers-by find your offers.",
-                    completed: Boolean(qrCodeCount),
+                    completed: Boolean(printedPosterCount),
                     href: `${base}/qr`,
                     action: "Make a poster",
                 },

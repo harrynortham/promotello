@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
 
@@ -28,6 +28,7 @@ import {
     ReviewStep,
     type BusinessLocation,
 } from "./steps";
+import { trackStep } from "./track";
 
 export type SetupDraft = PagePreview;
 
@@ -128,6 +129,20 @@ export function SetupFlow({
     }
 
     const step = live.find((item) => item.id === active) ?? null;
+
+    // Which step somebody is looking at. A step that is opened and left is
+    // the only kind of giving up that leaves no other trace: nothing is
+    // saved, so nothing else would ever know it happened.
+    const viewed = useRef<SetupStepId | null>(null);
+
+    useEffect(() => {
+        if (!active || viewed.current === active) {
+            return;
+        }
+
+        viewed.current = active;
+        trackStep(businessId, active, "step_viewed");
+    }, [businessId, active]);
 
     return (
         <SetupShell

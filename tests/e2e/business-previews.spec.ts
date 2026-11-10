@@ -78,6 +78,20 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         await enterSignInCode(owner, ownerEmail);
         await owner.waitForURL(`**/business/setup/${businessId}?welcome=1`, { waitUntil: "commit", timeout: 30_000 });
 
+        // Pressing Claim and signing in is where setting up starts, and the
+        // funnel counts it: nothing else records that moment.
+        const { data: started, error: startedError } = await admin()
+            .from("onboarding_events")
+            .select("step, event")
+            .eq("user_id", ownerId)
+            .eq("step", "signup_started");
+
+        expect(
+            startedError?.message ?? "",
+            "apply supabase/migrations/20261211090000_onboarding_funnel.sql first",
+        ).not.toMatch(/onboarding_events/);
+        expect(started?.length, "the claim was recorded as a start").toBeGreaterThan(0);
+
         // The admin has left the team; the owner got a welcome email.
         const { data: members } = await admin().from("business_members").select("user_id, role").eq("business_id", businessId);
         expect(members).toEqual([{ user_id: ownerId, role: "owner" }]);

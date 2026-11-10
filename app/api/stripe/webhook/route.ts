@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import { sendTrialStartedEmail } from "@/lib/business-lifecycle";
+import { trackOnboarding } from "@/lib/onboarding-events";
 import { createStripeClient } from "@/utils/stripe/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -278,6 +279,24 @@ async function syncSubscription(
 
   if (error) {
     throw error;
+  }
+
+  // Trialing is trying; active is paying, and the end of the funnel. Only
+  // the first time: this runs on every subscription event there is.
+  if (subscription.status === "active") {
+    const { data: already } = await supabase
+      .from("onboarding_events")
+      .select("id")
+      .eq("business_id", customer.business_id)
+      .eq("step", "upgraded_to_paid")
+      .limit(1);
+
+    if (!already?.length) {
+      await trackOnboarding("upgraded_to_paid", {
+        businessId: customer.business_id,
+        metadata: { subscription: subscription.id },
+      });
+    }
   }
 
   // Pause offers over the Free limit on downgrade, restore them on upgrade.

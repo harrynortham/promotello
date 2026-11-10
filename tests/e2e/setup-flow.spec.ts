@@ -115,6 +115,29 @@ test("a business finishes its page in the flow, and sends it from there", async 
             .single();
         expect(sent!.review_requested_at, "the page was sent for review").not.toBeNull();
 
+        // The flow saves from the browser, so the only record of which
+        // steps somebody finished — and which they merely opened — is the
+        // one it writes as it goes. The admin funnel is built on it.
+        const { data: events, error: eventsError } = await admin()
+            .from("onboarding_events")
+            .select("step, event")
+            .eq("business_id", businessId);
+
+        expect(
+            eventsError?.message ?? "",
+            "apply supabase/migrations/20261211090000_onboarding_funnel.sql first",
+        ).not.toMatch(/onboarding_events/);
+
+        const completed = (events ?? []).filter((row) => row.event === "step_completed").map((row) => row.step);
+        const viewed = (events ?? []).filter((row) => row.event === "step_viewed").map((row) => row.step);
+
+        expect(completed, "the steps they finished").toEqual(
+            expect.arrayContaining(["description_added", "address_added", "hours_added"]),
+        );
+        expect(viewed, "and the ones they were shown").toEqual(
+            expect.arrayContaining(["logo_added", "cover_added"]),
+        );
+
         await page.close();
     } finally {
         if (businessId) await admin().from("businesses").delete().eq("id", businessId);
