@@ -83,11 +83,31 @@ async function PreviewContent({ params, searchParams }: PageProps) {
         return <NotAvailable />;
     }
 
+    const signedIn = Boolean(auth.user);
+
     if (preview.claimed) {
-        return <PreviewClaimed name={preview.business_name} />;
+        // Usually it was them, a moment ago, on another tab — so the page
+        // says so and opens the business rather than offering a sign-in
+        // button to somebody who is already signed in.
+        const { data: membership } = signedIn
+            ? await supabase
+                  .from("business_members")
+                  .select("business_id")
+                  .eq("business_id", preview.business_id)
+                  .eq("user_id", auth.user!.id)
+                  .maybeSingle()
+            : { data: null };
+
+        return (
+            <PreviewClaimed
+                name={preview.business_name}
+                businessId={preview.business_id}
+                yours={Boolean(membership)}
+                signedIn={signedIn}
+            />
+        );
     }
 
-    const signedIn = Boolean(auth.user);
     const town = preview.city?.trim() || null;
     // The street if we know it, the town otherwise. Never "your area".
     const nearby = preview.area?.trim() || town;
