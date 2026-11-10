@@ -14,15 +14,17 @@ const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
 
 test("sign-in explains what's missing without sending anything", async ({ page }) => {
     await page.goto("/login");
-    await page.locator('button[type="submit"]').click();
+    await page.getByRole("button", { name: "Email me a code" }).click();
 
     await expect(page.getByText("Enter your email address.")).toBeVisible();
-    await expect(page.getByText("Enter your password.")).toBeVisible();
     await expect(page.locator("#login-email")).toHaveAttribute("aria-invalid", "true");
 
     await page.locator("#login-email").fill("not-an-email");
-    await page.locator('button[type="submit"]').click();
+    await page.getByRole("button", { name: "Email me a code" }).click();
     await expect(page.getByText("Enter an email address like name@example.com.")).toBeVisible();
+
+    // Nothing has been asked of Supabase, so nothing has been emailed.
+    await expect(page.locator("#login-code")).toHaveCount(0);
 });
 
 test("the contact form asks for a longer message", async ({ page }) => {

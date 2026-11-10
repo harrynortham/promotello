@@ -2,8 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { sendLifecycleEmails } from "@/lib/business-lifecycle";
-import { alertNewBusiness } from "@/lib/business-review-emails";
+import { claimPreview as claimFor } from "@/lib/claim-preview";
 import { previewLink } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 
@@ -21,17 +20,10 @@ export async function claimPreview(formData: FormData) {
         redirect(`/business/register?next=${encodeURIComponent(previewLink(token, name))}`);
     }
 
-    const { data: businessId, error } = await supabase.rpc("claim_business_preview", { requested_token: token });
+    const { businessId, error } = await claimFor(supabase, token, user.email);
 
-    if (error || !businessId) {
-        redirect(`${previewLink(token, name)}?error=${encodeURIComponent(error?.message ?? "We couldn't claim this business.")}`);
-    }
-
-    const { due } = await sendLifecycleEmails(businessId).catch(() => ({ due: 0 }));
-
-    // It stays hidden until an admin approves it, so let them know.
-    if (due > 0 && user.email) {
-        await alertNewBusiness(businessId, user.email, true).catch(() => undefined);
+    if (!businessId) {
+        redirect(`${previewLink(token, name)}?error=${encodeURIComponent(error ?? "We couldn't claim this business.")}`);
     }
 
     redirect(`/business/${businessId}?welcome=1`);

@@ -2,99 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-    FiCheckCircle,
-    FiEye,
-    FiEyeOff,
-    FiUserPlus,
-} from "react-icons/fi";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { FiUserPlus } from "react-icons/fi";
 
-import {
-    Alert,
-    AlertDescription,
-    AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { FieldError, invalidProps } from "@/components/field-error";
+import { EmailCodeForm } from "@/components/email-code-form";
 import { SocialSignIn } from "@/components/social-sign-in";
 import { safeNextPath } from "@/lib/redirects";
-import { email, password } from "@/lib/validation";
-import { createClient } from "@/utils/supabase/client";
-
-const schema = z.object({ email, password });
-
-type Values = z.infer<typeof schema>;
 
 function SignupContent() {
-    const router = useRouter();
-
-    const [showPassword, setShowPassword] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-    const [confirmationEmail, setConfirmationEmail] = useState("");
-    const [isRedirecting, setIsRedirecting] = useState(false);
-
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors, isSubmitting: isSending },
-    } = useForm<Values>({
-        resolver: zodResolver(schema),
-        defaultValues: { email: "", password: "" },
-    });
-
-    const isSubmitting = isSending || isRedirecting;
+    const searchParams = useSearchParams();
 
     // Return to the page that sent them here, e.g. an offer to claim.
-    function nextPath() {
-        return safeNextPath(new URLSearchParams(window.location.search).get("next")) ?? "/dashboard";
-    }
+    const requestedNext = safeNextPath(searchParams.get("next"));
+    const next = requestedNext ?? "/dashboard";
 
     // Someone part-way through claiming an offer who finds they already
     // have an account should still end up at the offer.
-    const requestedNext = safeNextPath(useSearchParams().get("next"));
     const loginHref = requestedNext
         ? `/login?next=${encodeURIComponent(requestedNext)}`
         : "/login";
-
-    async function onSubmit(values: Values) {
-        setErrorMessage("");
-
-        const next = nextPath();
-
-        const { data, error } = await createClient().auth.signUp({
-            email: values.email,
-            password: values.password,
-            options: {
-                emailRedirectTo:
-                    `${window.location.origin}/auth/callback` +
-                    `?next=${encodeURIComponent(next)}`,
-            },
-        });
-
-        if (error) {
-            setErrorMessage(error.message || "We couldn’t create your account. Please try again.");
-            return;
-        }
-
-        reset();
-
-        if (data.session) {
-            setIsRedirecting(true);
-            router.replace(next);
-            router.refresh();
-            return;
-        }
-
-        setConfirmationEmail(values.email);
-    }
 
     return (
         <main className="min-h-dvh bg-background text-foreground">
@@ -114,225 +41,58 @@ function SignupContent() {
                                 priority
                             />
                         </Link>
-
-                        {/* <Button
-                            render={<Link href="/login" />}
-                            nativeButton={false}
-                            variant="ghost"
-                            size="sm"
-                        >
-                            Sign in
-                        </Button> */}
                     </div>
 
                     <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12 lg:py-20">
-                        {confirmationEmail ? (
-                            <div role="status" aria-live="polite">
-                                <span className="flex size-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                                    <FiCheckCircle
-                                        aria-hidden="true"
-                                        className="size-7"
-                                    />
-                                </span>
+                        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-nowrap sm:text-4xl">
+                            Welcome to Promotello
+                        </h1>
 
-                                <h1 className="mt-6 text-3xl font-semibold tracking-tight sm:text-4xl">
-                                    Check your inbox.
-                                </h1>
+                        <p className="mt-4 leading-7 text-muted-foreground">
+                            Create your Promotello account to claim offers and keep your
+                            vouchers together.
+                        </p>
 
-                                <p className="mt-5 leading-8 text-muted-foreground">
-                                    We’ve sent a confirmation link to{" "}
-                                    <span className="break-all font-medium text-foreground">
-                                        {confirmationEmail}
-                                    </span>
-                                    . Follow it to finish setting up your
-                                    account.
-                                </p>
+                        <SocialSignIn next={next} />
 
-                                <div className="mt-6 rounded-2xl border bg-muted/30 p-5">
-                                    <h2 className="font-semibold">
-                                        Already have an account?
-                                    </h2>
+                        <EmailCodeForm
+                            mode="sign-up"
+                            next={requestedNext ?? undefined}
+                            idPrefix="signup"
+                            // Prefilled from team invitations (?email=).
+                            defaultEmail={searchParams.get("email") ?? ""}
+                            otherWayHref={loginHref}
+                        />
 
-                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                        You can sign in with your existing
-                                        details. You don’t need a second
-                                        account.
-                                    </p>
-                                </div>
-
-                                <Button
-                                    render={<Link href={loginHref} />}
-                                    nativeButton={false}
-                                    size="lg"
-                                    className="mt-7"
+                        <div className="mt-8">
+                            <p className="text-center text-sm leading-7 text-muted-foreground">
+                                Already have an account?{" "}
+                                <Link
+                                    href={loginHref}
+                                    className="font-semibold text-foreground underline underline-offset-4"
                                 >
-                                    Continue to sign in
-                                </Button>
+                                    Sign in
+                                </Link>
+                            </p>
+                        </div>
 
-                                <p className="mt-6 text-sm leading-7 text-muted-foreground">
-                                    Check your spam folder if an expected
-                                    email hasn’t arrived.{" "}
-                                    <Link
-                                        href="/contact"
-                                        className="font-medium text-foreground underline underline-offset-4"
-                                    >
-                                        Contact us
-                                    </Link>{" "}
-                                    if you need help.
-                                </p>
-                            </div>
-                        ) : (
-                            <>
-                                {/* <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                    <FiUserPlus
-                                        aria-hidden="true"
-                                        className="size-6"
-                                    />
-                                </span> */}
-
-                                <h1 className="mt-6 text-2xl font-semibold tracking-tight text-nowrap sm:text-4xl">
-                                    Welcome to Promotello
-                                </h1>
-
-                                <p className="mt-4 leading-7 text-muted-foreground">
-                                    Create your Promotello account to claim
-                                    offers and keep your vouchers together.
-                                </p>
-
-                                <SocialSignIn next={nextPath} />
-
-                                <form
-                                    onSubmit={handleSubmit(onSubmit)}
-                                    noValidate
-                                    className="mt-6 space-y-5"
-                                    aria-busy={isSubmitting}
-                                >
-                                    <div className="space-y-2">
-                                        <Label htmlFor="signup-email">
-                                            Email address
-                                        </Label>
-
-                                        <Input
-                                            id="signup-email"
-                                            type="email"
-                                            autoComplete="username"
-                                            placeholder="you@example.com"
-                                            maxLength={254}
-                                            readOnly={isSubmitting}
-                                            {...register("email")}
-                                            {...invalidProps("signup-email-error", errors.email)}
-                                        />
-
-                                        <FieldError id="signup-email-error" message={errors.email?.message} />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="signup-password">
-                                            Password
-                                        </Label>
-
-                                        <div className="relative">
-                                            <Input
-                                                id="signup-password"
-                                                type={
-                                                    showPassword
-                                                        ? "text"
-                                                        : "password"
-                                                }
-                                                autoComplete="new-password"
-                                                placeholder="Create a password"
-                                                readOnly={isSubmitting}
-                                                className="pr-12"
-                                                {...register("password")}
-                                                {...invalidProps("signup-password-error", errors.password)}
-                                            />
-
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                aria-label={
-                                                    showPassword
-                                                        ? "Hide password"
-                                                        : "Show password"
-                                                }
-                                                aria-pressed={showPassword}
-                                                disabled={isSubmitting}
-                                                onClick={() =>
-                                                    setShowPassword(
-                                                        (current) => !current,
-                                                    )
-                                                }
-                                                className="absolute right-2 top-1/2 size-8 -translate-y-1/2"
-                                            >
-                                                {showPassword ? (
-                                                    <FiEyeOff aria-hidden="true" />
-                                                ) : (
-                                                    <FiEye aria-hidden="true" />
-                                                )}
-                                            </Button>
-                                        </div>
-
-                                        <FieldError id="signup-password-error" message={errors.password?.message} />
-                                    </div>
-
-                                    {errorMessage && (
-                                        <Alert variant="destructive">
-                                            <AlertTitle>
-                                                Unable to create account
-                                            </AlertTitle>
-
-                                            <AlertDescription>
-                                                {errorMessage}
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
-
-                                    <Button
-                                        type="submit"
-                                        size="lg"
-                                        className="w-full"
-                                        disabled={isSubmitting}
-                                    >
-                                        {isSubmitting
-                                            ? "Creating your account…"
-                                            : "Create account"}
-                                    </Button>
-                                </form>
-
-                                <div className="mt-8">
-                                    <p className="text-center text-sm leading-7 text-muted-foreground">
-                                        Already have an account?{" "}
-                                        <Link
-                                            href={loginHref}
-                                            className="font-semibold text-foreground underline underline-offset-4"
-                                        >
-                                            Sign in
-                                        </Link>
-                                    </p>
-                                </div>
-
-                                <p className="mt-6 border-t pt-6 text-xs leading-6 text-muted-foreground">
-                                    By creating an account, you agree to
-                                    our{" "}
-                                    <Link
-                                        href="/legal/terms"
-                                        className="text-foreground underline underline-offset-4"
-                                    >
-                                        Terms of Service
-                                    </Link>
-                                    . Read our{" "}
-                                    <Link
-                                        href="/legal/privacy"
-                                        className="text-foreground underline underline-offset-4"
-                                    >
-                                        Privacy Policy
-                                    </Link>{" "}
-                                    to understand how we handle your
-                                    information.
-                                </p>
-                            </>
-                        )}
+                        <p className="mt-6 border-t pt-6 text-xs leading-6 text-muted-foreground">
+                            By creating an account, you agree to our{" "}
+                            <Link
+                                href="/legal/terms"
+                                className="text-foreground underline underline-offset-4"
+                            >
+                                Terms of Service
+                            </Link>
+                            . Read our{" "}
+                            <Link
+                                href="/legal/privacy"
+                                className="text-foreground underline underline-offset-4"
+                            >
+                                Privacy Policy
+                            </Link>{" "}
+                            to understand how we handle your information.
+                        </p>
                     </div>
                 </section>
 

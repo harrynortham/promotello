@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { BUSINESS_AUTH, STATE_PATH } from "../global-setup";
+import { signInWithCode } from "../sign-in";
 
 const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,10 +25,7 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
     const userId = created.user!.id;
 
     try {
-        await page.goto("/login?next=/business/dashboard");
-        await page.locator("#login-email").fill(email);
-        await page.locator("#login-password").fill(password);
-        await page.locator('button[type="submit"]').click();
+        await signInWithCode(page, email, "/business/dashboard");
 
         // No business yet: one clear next step.
         await expect(page.getByRole("heading", { name: /Welcome, Jo/ })).toBeVisible({ timeout: 15_000 });

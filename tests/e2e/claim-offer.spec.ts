@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import fs from "fs";
 import { STATE_PATH, CUSTOMER_AUTH } from "../global-setup";
+import { enterSignInCode } from "../sign-in";
 
 test.use({ storageState: CUSTOMER_AUTH });
 
@@ -33,9 +34,7 @@ test.describe("signed out", () => {
         await page.goto(`/offers/${state.claimOfferSlug}`);
         await page.getByText("Log in to claim this deal").click();
 
-        await page.locator("#login-email").fill(state.customerEmail);
-        await page.locator("#login-password").fill(state.testPassword);
-        await page.locator('button[type="submit"]').click();
+        await enterSignInCode(page, state.customerEmail);
 
         await page.waitForURL(`**/offers/${state.claimOfferSlug}`, { timeout: 15_000 });
         await expect(

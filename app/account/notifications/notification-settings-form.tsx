@@ -357,7 +357,7 @@ export default function NotificationSettingsForm({
 
                     <p className="mt-4 text-sm leading-7 text-muted-foreground">
                         You’ll still receive necessary messages such as
-                        password resets, email confirmations, and important
+                        sign-in codes, email confirmations, and important
                         account or security notices. These are separate from
                         optional updates.
                     </p>

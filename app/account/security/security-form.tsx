@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,44 +19,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldError, invalidProps } from "@/components/field-error";
-import { email as emailField, password } from "@/lib/validation";
+import { email as emailField } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
-
-// People who signed up with Google or Apple have no current password; they
-// can set one without it.
-function passwordSchemaFor(hasPassword: boolean) {
-    return z
-        .object({
-            currentPassword: hasPassword ? z.string().min(1, "Enter your current password.") : z.string(),
-            newPassword: password,
-            confirmNewPassword: z.string(),
-        })
-        .refine((values) => values.newPassword === values.confirmNewPassword, {
-            message: "Your new passwords do not match.",
-            path: ["confirmNewPassword"],
-        })
-        .refine((values) => !hasPassword || values.newPassword !== values.currentPassword, {
-            message: "Choose a different password from your current one.",
-            path: ["newPassword"],
-        });
-}
 
 const providerNames: Record<string, string> = { google: "Google", apple: "Apple" };
 
-function emailSchemaFor(hasPassword: boolean) {
-    return z.object({
-        newEmail: emailField.transform((value) => value.toLowerCase()),
-        emailPassword: hasPassword ? z.string().min(1, "Enter your current password.") : z.string(),
-    });
-}
+const emailSchema = z.object({
+    newEmail: emailField.transform((value) => value.toLowerCase()),
+});
 
-type PasswordValues = z.infer<ReturnType<typeof passwordSchemaFor>>;
-type EmailValues = z.infer<ReturnType<typeof emailSchemaFor>>;
+type EmailValues = z.infer<typeof emailSchema>;
 
 type SecurityFormProps = {
     email: string;
     pendingEmail: string;
-    hasPassword: boolean;
     // e.g. ["google"]
     socialProviders: string[];
 };
@@ -92,108 +67,20 @@ function FormFeedback({ feedback }: { feedback: Feedback }) {
 export default function SecurityForm({
     email,
     pendingEmail,
-    hasPassword,
     socialProviders,
 }: SecurityFormProps) {
     const router = useRouter();
     const signInWith = socialProviders.map((provider) => providerNames[provider] ?? provider).join(" and ");
 
-    const [passwordFeedback, setPasswordFeedback] =
-        useState<Feedback>(null);
-
-    const [emailFeedback, setEmailFeedback] =
-        useState<Feedback>(null);
-
-    const passwordForm = useForm<PasswordValues>({
-        resolver: zodResolver(passwordSchemaFor(hasPassword)),
-        defaultValues: { currentPassword: "", newPassword: "", confirmNewPassword: "" },
-    });
+    const [emailFeedback, setEmailFeedback] = useState<Feedback>(null);
 
     const emailForm = useForm<EmailValues>({
-        resolver: zodResolver(emailSchemaFor(hasPassword)),
-        defaultValues: { newEmail: "", emailPassword: "" },
+        resolver: zodResolver(emailSchema),
+        defaultValues: { newEmail: "" },
     });
 
-    const passwordErrors = passwordForm.formState.errors;
     const emailErrors = emailForm.formState.errors;
-
-    const busyForm = passwordForm.formState.isSubmitting
-        ? "password"
-        : emailForm.formState.isSubmitting
-            ? "email"
-            : null;
-
-    const isBusy = busyForm !== null;
-
-    async function confirmPassword(currentPassword: string) {
-        const supabase = createClient();
-
-        // Read the current identity instead of relying on page props.
-        const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user?.email) {
-            throw new Error(
-                "Your session could not be verified. Please sign in again.",
-            );
-        }
-
-        const { data, error } =
-            await supabase.auth.signInWithPassword({
-                email: user.email,
-                password: currentPassword,
-            });
-
-        if (error || data.user?.id !== user.id) {
-            throw new Error(
-                "We couldn’t verify your current password. Check it and try again.",
-            );
-        }
-
-        return {
-            supabase,
-            currentEmail: user.email,
-        };
-    }
-
-    async function changePassword(values: PasswordValues) {
-        if (isBusy) return;
-
-        setPasswordFeedback(null);
-
-        try {
-            const supabase = hasPassword
-                ? (await confirmPassword(values.currentPassword)).supabase
-                : createClient();
-
-            const { error } = await supabase.auth.updateUser({
-                password: values.newPassword,
-            });
-
-            if (error) throw error;
-
-            passwordForm.reset();
-
-            setPasswordFeedback({
-                type: "success",
-                message: hasPassword
-                    ? "Your password has been changed. Use your new password the next time you sign in."
-                    : "Your password is set. You can now also sign in with your email and password.",
-            });
-
-            router.refresh();
-        } catch (error) {
-            setPasswordFeedback({
-                type: "error",
-                message:
-                    error instanceof Error
-                        ? error.message
-                        : "Please try again.",
-            });
-        }
-    }
+    const isBusy = emailForm.formState.isSubmitting;
 
     async function changeEmail(values: EmailValues) {
         if (isBusy) return;
@@ -201,13 +88,11 @@ export default function SecurityForm({
         setEmailFeedback(null);
 
         try {
-            // Without a password (Google or Apple sign-in), the confirmation
-            // emails to both addresses are the check.
-            const { supabase, currentEmail } = hasPassword
-                ? await confirmPassword(values.emailPassword)
-                : { supabase: createClient(), currentEmail: email };
+            // Nobody has a password to re-enter: a change is confirmed from
+            // both addresses, which is the check.
+            const supabase = createClient();
 
-            if (values.newEmail === currentEmail.toLowerCase()) {
+            if (values.newEmail === email.toLowerCase()) {
                 throw new Error(
                     "Enter a different email address from your current one.",
                 );
@@ -264,110 +149,19 @@ export default function SecurityForm({
             <Card className="rounded-xl shadow-none">
                 <CardHeader>
                     <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-muted">
-                        <FiLock
-                            aria-hidden="true"
-                            className="size-5"
-                        />
+                        <FiLock aria-hidden="true" className="size-5" />
                     </div>
 
-                    <CardTitle>{hasPassword ? "Change password" : "Set a password"}</CardTitle>
+                    <CardTitle>How you sign in</CardTitle>
 
                     <CardDescription className="leading-7">
-                        {hasPassword
-                            ? "Choose a strong, unique password that you don’t use for other accounts."
-                            : `You sign in with ${signInWith}. Add a password if you'd also like to sign in with your email.`}
+                        {socialProviders.length
+                            ? `You sign in with ${signInWith}, or with a code we email to the address below. There is no password to manage.`
+                            : "We email you a six-digit code each time you sign in. There is no password to remember, or to lose."}
                     </CardDescription>
                 </CardHeader>
-
-                <CardContent>
-                    <form
-                        onSubmit={passwordForm.handleSubmit(changePassword)}
-                        noValidate
-                        className="space-y-5"
-                        aria-busy={busyForm === "password"}
-                    >
-                        {hasPassword && (
-                            <div className="space-y-2">
-                                <Label htmlFor="current-password">
-                                    Current password
-                                </Label>
-
-                                <Input
-                                    id="current-password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    readOnly={isBusy}
-                                    {...passwordForm.register("currentPassword")}
-                                    {...invalidProps("current-password-error", passwordErrors.currentPassword)}
-                                />
-                                <FieldError id="current-password-error" message={passwordErrors.currentPassword?.message} />
-                            </div>
-                        )}
-
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="new-password">
-                                    New password
-                                </Label>
-
-                                <Input
-                                    id="new-password"
-                                    type="password"
-                                    autoComplete="new-password"
-                                    readOnly={isBusy}
-                                    {...passwordForm.register("newPassword")}
-                                    {...invalidProps("new-password-error", passwordErrors.newPassword)}
-                                />
-                                <FieldError id="new-password-error" message={passwordErrors.newPassword?.message} />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="confirm-new-password">
-                                    Confirm new password
-                                </Label>
-
-                                <Input
-                                    id="confirm-new-password"
-                                    type="password"
-                                    autoComplete="new-password"
-                                    readOnly={isBusy}
-                                    {...passwordForm.register("confirmNewPassword")}
-                                    {...invalidProps("confirm-new-password-error", passwordErrors.confirmNewPassword)}
-                                />
-                                <FieldError id="confirm-new-password-error" message={passwordErrors.confirmNewPassword?.message} />
-                            </div>
-                        </div>
-
-                        <p className="text-xs leading-6 text-muted-foreground">
-                            Use at least 8 characters. Any additional password
-                            requirements for your account will also apply.
-                        </p>
-
-                        <div aria-live="polite">
-                            <FormFeedback feedback={passwordFeedback} />
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5">
-                            <Button size="lg" type="submit" disabled={isBusy}>
-                                {busyForm === "password"
-                                    ? "Saving password…"
-                                    : hasPassword
-                                        ? "Update password"
-                                        : "Set password"}
-                            </Button>
-
-                            {hasPassword && (
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-sm font-medium underline underline-offset-4"
-                                >
-                                    Forgotten your password?
-                                </Link>
-                            )}
-                        </div>
-                    </form>
-                </CardContent>
             </Card>
+
 
             <Card className="rounded-xl shadow-none">
                 <CardHeader>
@@ -415,7 +209,7 @@ export default function SecurityForm({
                         onSubmit={emailForm.handleSubmit(changeEmail)}
                         noValidate
                         className="space-y-5"
-                        aria-busy={busyForm === "email"}
+                        aria-busy={isBusy}
                     >
                         <div className="space-y-2">
                             <Label htmlFor="new-email">
@@ -435,24 +229,6 @@ export default function SecurityForm({
                             <FieldError id="new-email-error" message={emailErrors.newEmail?.message} />
                         </div>
 
-                        {hasPassword && (
-                            <div className="space-y-2">
-                                <Label htmlFor="email-password">
-                                    Current password
-                                </Label>
-
-                                <Input
-                                    id="email-password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    readOnly={isBusy}
-                                    {...emailForm.register("emailPassword")}
-                                    {...invalidProps("email-password-error", emailErrors.emailPassword)}
-                                />
-                                <FieldError id="email-password-error" message={emailErrors.emailPassword?.message} />
-                            </div>
-                        )}
-
                         <p className="text-sm leading-7 text-muted-foreground">
                             Keep access to your current email while confirming
                             the change. Follow all confirmation instructions
@@ -465,7 +241,7 @@ export default function SecurityForm({
 
                         <div className="border-t pt-5">
                             <Button size="lg" type="submit" disabled={isBusy}>
-                                {busyForm === "email"
+                                {isBusy
                                     ? "Requesting change…"
                                     : "Update email address"}
                             </Button>

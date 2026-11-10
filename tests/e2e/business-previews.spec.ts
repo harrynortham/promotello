@@ -3,12 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { previewLink } from "../../lib/previews";
 import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
+import { enterSignInCode } from "../sign-in";
 
 const options = { auth: { autoRefreshToken: false, persistSession: false } };
 const admin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, options);
 const password = "E2e-Preview-Pass-123!";
 
 test("an admin builds a preview, and the owner claims it", async ({ browser }) => {
+    test.setTimeout(90_000);
     const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const name = `E2E Preview Bakery ${Date.now()}`;
     const ownerEmail = `e2e-preview-owner-${Date.now()}@test.internal`;
@@ -70,11 +72,11 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
 
         const owner = await (await browser.newContext()).newPage();
         await owner.goto(`/login?next=${encodeURIComponent(previewPath)}&email=${encodeURIComponent(ownerEmail)}`);
-        await owner.locator("#login-password").fill(password);
-        await owner.locator('button[type="submit"]').click();
-        await owner.waitForURL(`**${previewPath}`);
-        await owner.getByRole("button", { name: `Claim ${name}` }).first().click();
-        await owner.waitForURL(`**/business/${businessId}?welcome=1`, { waitUntil: "commit" });
+        // They pressed Claim, which asked them to sign in, so signing in
+        // finishes it: they land on their business rather than back on the
+        // page that sold it to them.
+        await enterSignInCode(owner, ownerEmail);
+        await owner.waitForURL(`**/business/${businessId}?welcome=1`, { waitUntil: "commit", timeout: 30_000 });
 
         // The admin has left the team; the owner got a welcome email.
         const { data: members } = await admin().from("business_members").select("user_id, role").eq("business_id", businessId);
