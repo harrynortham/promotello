@@ -69,6 +69,17 @@ test.describe("customers", () => {
     test.use({ storageState: CUSTOMER_AUTH });
     test("the customer dashboard is accessible", async ({ page }) => expectAccessible(page, "/dashboard"));
     test("my vouchers is accessible", async ({ page }) => expectAccessible(page, "/dashboard/redemptions"));
+
+    // The voucher itself: white above the tear, navy below it, so both
+    // halves are worth checking. Found by following the first ticket,
+    // since its id is whatever the seed claimed.
+    test("a voucher is accessible", async ({ page }) => {
+        await page.goto("/dashboard/redemptions");
+        const href = await page.locator('a[href^="/dashboard/redemptions/"]').first().getAttribute("href");
+        expect(href, "a voucher to open").toBeTruthy();
+
+        await expectAccessible(page, href!);
+    });
 });
 
 test.describe("businesses", () => {
