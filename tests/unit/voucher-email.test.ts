@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { voucherConfirmationEmail } from "@/lib/account-emails";
+import { automationEmail } from "@/lib/automations";
 
 const voucher = () =>
     voucherConfirmationEmail({
@@ -52,4 +53,35 @@ test("an offer with no end date still says something", () => {
 
     assert.match(html, /whenever you&#39;re next in/);
     assert.match(html, /ABCDEF0123/);
+});
+
+// The other voucher: one an automation gives a follower, which is held up
+// at the same till and so carries the same card.
+test("a reward voucher arrives in the same card", () => {
+    const { html, text, subject, senderName } = automationEmail({
+        voucher_id: "00000000-0000-4000-8000-000000000000",
+        kind: "welcome",
+        reward: "10% off your first visit",
+        code: "G1A2B3C4D5",
+        expires_at: "2026-11-24T00:00:00Z",
+        business_id: "00000000-0000-4000-8000-000000000000",
+        business_name: "Dublin Pub",
+        email: "someone@example.com",
+        first_name: "Harry",
+        unsubscribe_token: "00000000-0000-4000-8000-000000000001",
+    });
+
+    assert.equal(subject, "Thanks for following Dublin Pub");
+    // Sent on the business's behalf, so it reads as theirs.
+    assert.equal(senderName, "Dublin Pub");
+
+    assert.match(html, /Your claimed voucher/);
+    assert.match(html, /<img src="https:\/\/[^"]+\/redeem\/G1A2B3C4D5\/qr"/);
+    assert.match(html, /G1A2B3C4D5/);
+    assert.match(html, /Use it by 24 November/);
+
+    // It used to spell the code out mid-sentence and send them elsewhere
+    // for the picture.
+    assert.doesNotMatch(html, /Show code G1A2B3C4D5 at the till/);
+    assert.match(text, /Your redemption code: G1A2B3C4D5/);
 });

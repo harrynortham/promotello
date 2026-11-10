@@ -25,7 +25,7 @@ export const automationDetails: Record<
     },
 };
 
-type IssuedVoucher = {
+export type IssuedVoucher = {
     voucher_id: string;
     kind: AutomationKind;
     reward: string;
@@ -56,7 +56,7 @@ const copy: Record<AutomationKind, (v: IssuedVoucher) => { subject: string; titl
     }),
 };
 
-function automationEmail(voucher: IssuedVoucher): Email {
+export function automationEmail(voucher: IssuedVoucher): Email {
     const { subject, title, intro } = copy[voucher.kind](voucher);
     const until = new Date(voucher.expires_at).toLocaleDateString("en-GB", {
         day: "numeric",
