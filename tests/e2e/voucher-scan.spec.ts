@@ -85,3 +85,31 @@ test("a voucher can be scanned from the redemptions page", async ({ browser }) =
     await page.keyboard.press("Escape");
     await expect(page.getByText(/No camera to hand/)).toBeVisible();
 });
+
+// The picture in the confirmation email. The card on the offer page draws
+// its QR in the browser, which an email can't do — so staff scanning the
+// email are scanning this.
+test("the voucher QR in the email scans, and only a code draws one", async ({ request }) => {
+    const code = "5280613F90";
+    const image = await request.get(`/redeem/${code}/qr`);
+
+    expect(image.status()).toBe(200);
+    expect(image.headers()["content-type"]).toBe("image/png");
+    expect(image.headers()["cache-control"]).toContain("max-age=31536000");
+
+    const [{ default: jsQR }, { default: sharp }] = await Promise.all([import("jsqr"), import("sharp")]);
+    const { data, info } = await sharp(await image.body())
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+    const scanned = jsQR(new Uint8ClampedArray(data), info.width, info.height);
+
+    expect(scanned, "the picture scans").not.toBeNull();
+    expect(scanned!.data, "and opens the voucher").toMatch(new RegExp(`/redeem/${code}$`));
+
+    // Not a code: nothing is drawn. The route takes a voucher code, not
+    // anything somebody would like a branded QR of.
+    expect((await request.get("/redeem/not-a-code/qr")).status()).toBe(404);
+    expect((await request.get("/redeem/12345/qr")).status()).toBe(404);
+});

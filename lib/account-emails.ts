@@ -84,11 +84,12 @@ export function voucherConfirmationEmail({
     const { html, text } = brandedEmail({
         eyebrow: `Your voucher for ${businessName}`,
         title: `${discount}: ${offerTitle}`,
-        paragraphs: [
-            `Your voucher code is ${code}.`,
-            "Show the QR code in My vouchers at the till, or tell staff your code.",
-            ...(until ? [`Use it by ${until}.`] : []),
-        ],
+        paragraphs: until
+            ? [`Use it by ${until}.`]
+            : ["It's yours whenever you're next in."],
+        // The voucher itself, not a line about where to find it: at the
+        // till it is this email that is open.
+        voucher: { code, qrUrl: absoluteUrl(`/redeem/${code}/qr`) },
         action: { label: "Open my vouchers", url: absoluteUrl("/dashboard/redemptions") },
         footer: "You're getting this because you claimed a voucher on Promotello.",
     });

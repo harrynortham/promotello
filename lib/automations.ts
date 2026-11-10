@@ -68,11 +68,11 @@ function automationEmail(voucher: IssuedVoucher): Email {
     const { html, text } = brandedEmail({
         eyebrow: voucher.business_name,
         title,
-        paragraphs: [
-            intro,
-            `Your reward: ${voucher.reward}.`,
-            `Show code ${voucher.code} at the till, or open My vouchers so staff can scan it. Use it by ${until}.`,
-        ],
+        paragraphs: [intro, `Your reward: ${voucher.reward}.`, `Use it by ${until}.`],
+        // The same card the offer page shows, and the same card the
+        // voucher for a claimed offer arrives in: one thing to hold up at
+        // the till, whichever way the voucher was earned.
+        voucher: { code: voucher.code, qrUrl: absoluteUrl(`/redeem/${voucher.code}/qr`) },
         action: { label: "Open my vouchers", url: absoluteUrl("/dashboard/redemptions") },
         footer: `You're getting this because you follow ${voucher.business_name} on Promotello.`,
         footerLinks: [

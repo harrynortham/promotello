@@ -181,6 +181,7 @@ export function brandedEmail({
     title,
     paragraphs,
     code,
+    voucher,
     action,
     footer,
     footerLinks = [],
@@ -192,6 +193,11 @@ export function brandedEmail({
     // is the whole point of the email it appears in, so it sits above
     // anything else and there is nothing to press.
     code?: string;
+    // A claimed voucher, drawn the way the offer page draws it once it is
+    // claimed: the same navy card, the same QR for staff to scan, the same
+    // code underneath it. Somebody at the till has the email open, not the
+    // website, so it has to be the thing itself rather than a link to it.
+    voucher?: { code: string; qrUrl: string };
     // Left out for notices with nothing to click.
     action?: { label: string; url: string };
     footer: string;
@@ -216,6 +222,15 @@ ${code ? `<tr><td style="padding:20px 28px 4px">
 <p style="margin:10px 0 0;font-size:34px;font-weight:700;line-height:1.2;letter-spacing:.18em;text-indent:.18em;color:#17233B">${e(code)}</p>
 </td></tr></table>
 </td></tr>
+` : ""}${voucher ? `<tr><td style="padding:20px 28px 4px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#17233B;border-radius:16px"><tr><td align="center" style="padding:26px 20px">
+<span style="display:inline-block;padding:5px 12px;border:1px solid #3a4258;border-radius:999px;font-size:12px;font-weight:600;color:#c6cbd8">Your claimed voucher</span>
+<p style="margin:18px 0 0;font-size:13px;color:#aab1c2">Your redemption code</p>
+<img src="${e(voucher.qrUrl)}" width="160" height="160" alt="QR code for your voucher" style="display:block;margin:14px auto 0;width:160px;height:160px;border:0;outline:none;border-radius:12px;background:#ffffff">
+<p style="margin:14px 0 0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;font-size:28px;font-weight:700;line-height:1.2;letter-spacing:.2em;text-indent:.2em;color:#ffffff">${e(voucher.code)}</p>
+<p style="margin:14px auto 0;max-width:340px;font-size:13px;line-height:1.6;color:#aab1c2">Show this to staff when you pay. They can scan it or type the code.</p>
+</td></tr></table>
+</td></tr>
 ` : ""}${action ? `<tr><td style="padding:20px 28px 28px">
 <a href="${e(action.url)}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${e(action.label)}</a>
 <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#6b7387;word-break:break-all">Or open this link: ${e(action.url)}</p>
@@ -230,6 +245,13 @@ ${emailCompanyFooter()}
         title,
         "",
         ...(code ? [`Your code: ${code}`, ""] : []),
+        ...(voucher
+            ? [
+                  `Your redemption code: ${voucher.code}`,
+                  "Show this to staff when you pay. They can scan it or type the code.",
+                  "",
+              ]
+            : []),
         ...paragraphs.flatMap((p) => [p, ""]),
         ...(action ? [`${action.label}: ${action.url}`, ""] : []),
         footer,
