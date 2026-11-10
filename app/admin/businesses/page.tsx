@@ -273,7 +273,7 @@ export default function AdminBusinessesPage() {
                     </div>
 
                     <Button
-                        render={<Link href="/onboarding" />}
+                        render={<Link href="/business/setup/new" />}
                         nativeButton={false}
                         variant="outline"
                     >

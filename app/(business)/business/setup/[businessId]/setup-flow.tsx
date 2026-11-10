@@ -1,14 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FiArrowRight, FiCheck, FiExternalLink } from "react-icons/fi";
+import { FiArrowRight, FiCheck } from "react-icons/fi";
 
-import { BusinessPagePreview, type PagePreview } from "@/components/business-page-preview";
+import type { PagePreview } from "@/components/business-page-preview";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { SetupShell } from "../setup-shell";
 import type { DayValues } from "@/lib/business-hours";
 import type { CityOption } from "@/lib/locations";
 import {
@@ -16,7 +15,6 @@ import {
     isSetupStepId,
     missingBeforeReview,
     setupFinished,
-    setupProgress,
     type SetupStep,
     type SetupStepId,
 } from "@/lib/setup-steps";
@@ -88,7 +86,6 @@ export function SetupFlow({
         [steps, done],
     );
 
-    const progress = setupProgress(live);
     const finished = setupFinished(live);
     const active = requested ?? firstUnfinished(live);
 
@@ -133,183 +130,85 @@ export function SetupFlow({
     const step = live.find((item) => item.id === active) ?? null;
 
     return (
-        <main className="min-h-dvh bg-[#FFF8F0] text-[#17233B]">
-            <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-6">
-                <Link href="/business/dashboard" aria-label="Promotello home" className="inline-flex">
-                    <Image
-                        src="/brand/promotello-horizontal-primary.svg"
-                        alt="Promotello"
-                        width={150}
-                        height={40}
-                        priority
-                    />
-                </Link>
-
-                <Button render={<Link href={`/business/${businessId}`} />} nativeButton={false} variant="ghost" size="sm">
-                    {finished ? "Go to your dashboard" : "Finish later"}
-                </Button>
-            </header>
-
-            <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 pb-16 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-x-14 lg:gap-y-8">
-                <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        {justClaimed ? `${businessName} is yours` : `Setting up ${businessName}`}
-                    </p>
-
-                    {/* The heading belongs to the journey, not the step:
-                        it stays put while the card below changes. */}
-                    <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-                        {finished
-                            ? `That's everything${firstName ? `, ${firstName}` : ""}.`
-                            : `Let's finish your page${firstName ? `, ${firstName}` : ""}.`}
-                    </h1>
-
-                    <p className="mt-3 max-w-xl leading-7 text-[#17233B]/65">
-                        {finished
-                            ? "Your page is with us and your first offer is in. Everything else lives in your dashboard."
-                            : "A few quick things and it's ready for customers. You can watch it take shape as you go."}
-                    </p>
-
-                    <div className="mt-8">
-                        <div className="flex items-center justify-between gap-4 text-sm">
-                            <p className="font-medium">
-                                {progress.done} of {progress.total} done
-                            </p>
-
-                            {!finished && step && (
-                                <p className="text-[#17233B]/60">{step.nav}</p>
-                            )}
-                        </div>
-
-                        <Progress value={progress.percent} aria-label={`Setup ${progress.percent}% complete`} className="mt-3" />
-
-                        <ol className="mt-5 flex flex-wrap gap-x-2 gap-y-2">
-                            {live.map((item) => {
-                                const isActive = item.id === active;
-
-                                return (
-                                    <li key={item.id}>
-                                        <button
-                                            type="button"
-                                            onClick={() => go(item.id)}
-                                            aria-current={isActive ? "step" : undefined}
-                                            className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${isActive
-                                                ? "border-[#FF593F] bg-[#FF593F] text-white"
-                                                : item.done
-                                                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                                                    : "border-[#17233B]/15 bg-white text-[#17233B]/70 hover:border-[#17233B]/30"
-                                                }`}
-                                        >
-                                            {item.done && <FiCheck aria-hidden="true" className="size-3.5" />}
-                                            {item.nav}
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                        </ol>
-                    </div>
-                </div>
-
-                {/* On a phone this sits between the heading and the step,
-                    so the page they are building is the first thing they
-                    see and the step is what they scroll to. */}
-                <aside className="mx-auto w-full max-w-sm lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mx-0 lg:max-w-none lg:sticky lg:top-8 lg:self-start">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/50">
-                        Your page so far
-                    </p>
-
-                    <BusinessPagePreview page={draft} className="mt-4" />
-
-                    <p className="mt-4 text-xs leading-6 text-[#17233B]/60">
-                        {draft.description && draft.logoUrl && draft.coverImageUrl
-                            ? "This is what customers see when they find you."
-                            : "It fills in as you go. Nothing is public until you send it to us."}
-                    </p>
-
-                    {businessSlug && (
-                        <Button
-                            render={<Link href={`/businesses/${businessSlug}`} target="_blank" rel="noreferrer" />}
-                            nativeButton={false}
-                            variant="ghost"
-                            size="sm"
-                            className="mt-2 -ml-2.5"
-                        >
-                            See the full page
-                            <FiExternalLink aria-hidden="true" />
-                        </Button>
-                    )}
-                </aside>
-
-                <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-                    <div>
-                        {!finished && step && (
-                            <div className="mb-5">
-                                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{step.title}</h2>
-                                <p className="mt-2 max-w-xl leading-7 text-[#17233B]/65">{step.blurb}</p>
-                            </div>
-                        )}
-
-                        {finished ? (
-                            <FinishedCard businessId={businessId} businessSlug={businessSlug} />
-                        ) : step?.id === "logo" ? (
-                            <LogoStep
-                                businessId={businessId}
-                                businessName={businessName}
-                                draft={draft}
-                                setDraft={setDraft}
-                                ours={ours}
-                                onDone={() => completed("logo")}
-                                onSkip={() => skip("logo")}
-                            />
-                        ) : step?.id === "description" ? (
-                            <DescriptionStep
-                                businessId={businessId}
-                                draft={draft}
-                                setDraft={setDraft}
-                                ours={ours}
-                                onDone={() => completed("description")}
-                            />
-                        ) : step?.id === "address" ? (
-                            <AddressStep
-                                businessId={businessId}
-                                cities={cities}
-                                location={location}
-                                setDraft={setDraft}
-                                ours={ours}
-                                onDone={() => completed("address")}
-                            />
-                        ) : step?.id === "hours" ? (
-                            <HoursStep businessId={businessId} days={days} onDone={() => completed("hours")} />
-                        ) : step?.id === "cover" ? (
-                            <CoverStep
-                                businessId={businessId}
-                                businessName={businessName}
-                                draft={draft}
-                                setDraft={setDraft}
-                                onDone={() => completed("cover")}
-                                onSkip={() => skip("cover")}
-                            />
-                        ) : step?.id === "review" ? (
-                            <ReviewStep
-                                businessId={businessId}
-                                businessName={businessName}
-                                businessSlug={businessSlug}
-                                missing={missingBeforeReview(live)}
-                                sent={step.done || justSent}
-                                isLive={isLive}
-                                onGo={(id) => go(id)}
-                            />
-                        ) : step?.id === "offer" ? (
-                            <OfferStep businessId={businessId} />
-                        ) : null}
-                    </div>
-                </div>
-
-                {/* On a phone the page they are building comes first: under
-                    a long step like the opening hours, nobody scrolls past
-                    the form to find it. */}
-            </div>
-        </main>
+        <SetupShell
+            eyebrow={justClaimed ? `${businessName} is yours` : `Setting up ${businessName}`}
+            heading={
+                finished
+                    ? `That's everything${firstName ? `, ${firstName}` : ""}.`
+                    : `Let's finish your page${firstName ? `, ${firstName}` : ""}.`
+            }
+            blurb={
+                finished
+                    ? "Your page is with us and your first offer is in. Everything else lives in your dashboard."
+                    : "A few quick things and it's ready for customers. You can watch it take shape as you go."
+            }
+            steps={live}
+            active={finished ? null : active}
+            onGo={go}
+            page={draft}
+            pageHref={businessSlug ? `/businesses/${businessSlug}` : null}
+            finishLater={{
+                href: `/business/${businessId}`,
+                label: finished ? "Go to your dashboard" : "Finish later",
+            }}
+            stepTitle={finished ? undefined : step?.title}
+            stepBlurb={finished ? undefined : step?.blurb}
+        >
+            {finished ? (
+                <FinishedCard businessId={businessId} businessSlug={businessSlug} />
+            ) : step?.id === "logo" ? (
+                <LogoStep
+                    businessId={businessId}
+                    businessName={businessName}
+                    draft={draft}
+                    setDraft={setDraft}
+                    ours={ours}
+                    onDone={() => completed("logo")}
+                    onSkip={() => skip("logo")}
+                />
+            ) : step?.id === "description" ? (
+                <DescriptionStep
+                    businessId={businessId}
+                    draft={draft}
+                    setDraft={setDraft}
+                    ours={ours}
+                    onDone={() => completed("description")}
+                />
+            ) : step?.id === "address" ? (
+                <AddressStep
+                    businessId={businessId}
+                    cities={cities}
+                    location={location}
+                    setDraft={setDraft}
+                    ours={ours}
+                    onDone={() => completed("address")}
+                />
+            ) : step?.id === "hours" ? (
+                <HoursStep businessId={businessId} days={days} onDone={() => completed("hours")} />
+            ) : step?.id === "cover" ? (
+                <CoverStep
+                    businessId={businessId}
+                    businessName={businessName}
+                    draft={draft}
+                    setDraft={setDraft}
+                    ours={ours}
+                    onDone={() => completed("cover")}
+                    onSkip={() => skip("cover")}
+                />
+            ) : step?.id === "review" ? (
+                <ReviewStep
+                    businessId={businessId}
+                    businessName={businessName}
+                    businessSlug={businessSlug}
+                    missing={missingBeforeReview(live)}
+                    sent={step.done || justSent}
+                    isLive={isLive}
+                    onGo={(id) => go(id)}
+                />
+            ) : step?.id === "offer" ? (
+                <OfferStep businessId={businessId} />
+            ) : null}
+        </SetupShell>
     );
 }
 
