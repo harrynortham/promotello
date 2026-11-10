@@ -1,14 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import {
-    guessNotice,
-    ourGuesses,
-    previewBeingClaimed,
-    previewLink,
-    tokenFromPreviewSegment,
-    unclaimedPreview,
-} from "@/lib/previews";
+import { previewBeingClaimed, previewLink, tokenFromPreviewSegment, unclaimedPreview } from "@/lib/previews";
 
 test("a business with an unclaimed preview isn't one the owner runs", () => {
     assert.equal(unclaimedPreview({ business_previews: [{ claimed_at: null }] }), true);
@@ -74,42 +67,4 @@ test("nothing else is claimed on the way in", () => {
     // A path that looks like one but carries no token.
     assert.equal(previewBeingClaimed("/business/preview/jamaican-kitchen"), null);
     assert.equal(previewBeingClaimed("/business/preview/"), null);
-});
-
-test("the notice names what is on the page, and never an offer", () => {
-    // Building a preview never creates one, so it can't be one of our
-    // guesses, however the page is filled in.
-    const everything = guessNotice({
-        description: "A bakery.",
-        logoUrl: "https://example.test/logo.png",
-        coverImageUrl: "https://example.test/cover.jpg",
-        hasAddress: true,
-    });
-
-    assert.equal(everything, "We wrote it from the outside, so the description, the pictures and the address are our guesses.");
-    assert.doesNotMatch(everything, /offer/i);
-});
-
-test("one picture is named for what it is", () => {
-    assert.match(
-        guessNotice({ description: "A bakery.", logoUrl: "https://example.test/logo.png", hasAddress: true }),
-        /the description, the logo and the address are our guesses/,
-    );
-
-    assert.match(
-        guessNotice({ coverImageUrl: "https://example.test/cover.jpg", hasAddress: true }),
-        /the cover photo and the address are our guesses/,
-    );
-});
-
-test("one thing of ours is a guess, not guesses", () => {
-    assert.equal(
-        guessNotice({ description: "A bakery." }),
-        "We wrote it from the outside, so the description is our guess.",
-    );
-});
-
-test("a page with nothing of ours on it claims nothing", () => {
-    assert.equal(guessNotice({ description: "   " }), "We wrote it from the outside.");
-    assert.deepEqual(ourGuesses({}), []);
 });

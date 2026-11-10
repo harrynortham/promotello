@@ -19,9 +19,9 @@ test("a business finishes its page in the flow, and sends it from there", async 
     let businessId: string | undefined;
 
     try {
-        // A page we built and somebody claimed: pending, and nobody has
-        // asked us to look at it. (A business that signs itself up asks on
-        // the way in, by the column's default — see the migration.)
+        // A business with nothing on its page yet. However it got here —
+        // claimed from a preview or signed up by its owner — this is the
+        // state it starts in, and these are the steps.
         const { data: business, error } = await admin()
             .from("businesses")
             .insert({
@@ -34,17 +34,6 @@ test("a business finishes its page in the flow, and sends it from there", async 
             .single();
         expect(error, "could not seed the business").toBeNull();
         businessId = business!.id;
-
-        const { error: previewError } = await admin().from("business_previews").insert({
-            business_id: businessId,
-            contact_name: "Sam",
-            sample_offer: "Free side with any main",
-            sample_reward: "a free main",
-            sample_stamps: 9,
-            claimed_at: new Date().toISOString(),
-            created_by: state.businessUserId,
-        });
-        expect(previewError, "could not seed the preview").toBeNull();
 
         await admin().from("business_members").insert({
             business_id: businessId,

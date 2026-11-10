@@ -77,6 +77,16 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await expect(page.getByText("Your page so far")).toBeVisible();
         await expect(page.getByRole("heading", { name: "Add your logo", level: 2 })).toBeVisible();
 
+        // The address it just collected is the only thing done: a business
+        // that signs itself up is in exactly the state a claimed page is,
+        // including having to send the page for review itself.
+        await expect(page.getByText("1 of 7 done")).toBeVisible();
+
+        await page.getByRole("button", { name: "Send it" }).click();
+        await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
+        await expect(page.getByText("4 things first")).toBeVisible();
+        await expect(page.getByRole("button", { name: /Send .* for review/ })).toHaveCount(0);
+
         // They wrote this page themselves, so nothing on it is a guess of
         // ours and the dashboard mustn't say it is.
         await expect(page.getByText("We wrote")).toHaveCount(0);
@@ -90,10 +100,13 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         expect(cover, "the cover photo step is there").toBeGreaterThan(-1);
         expect(cover, "and comes before the first offer").toBeLessThan(offer);
 
-        // The dashboard is a click away for anyone who would rather.
+        // The dashboard is a click away for anyone who would rather, and
+        // says the same thing it says to a business whose page we wrote.
         await page.getByRole("button", { name: "Finish later" }).click();
         await expect(page.getByText("Get ready to go live")).toBeVisible({ timeout: 15_000 });
         await expect(page.getByText("Add logo")).toBeVisible();
+        await expect(page.getByText("Your page isn't live yet")).toBeVisible();
+        await expect(page.getByText("Send your page for review")).toBeVisible();
     } finally {
         await admin.from("businesses").delete().eq("created_by", userId);
         await admin.auth.admin.deleteUser(userId);

@@ -92,6 +92,14 @@ test("a preview becomes a live business", async ({ browser }) => {
         // What they are building, beside what they are filling in.
         await expect(page.getByText("Your page so far")).toBeVisible();
 
+        // Whose words these are is said once, on the field being edited —
+        // and never about an offer, because building a preview has never
+        // created one.
+        await page.goto(`/business/setup/${business!.id}?step=description`);
+        const note = page.getByText("We wrote this from the outside");
+        await expect(note).toBeVisible({ timeout: 15_000 });
+        await expect(page.locator("main")).not.toContainText("offer are our guesses");
+
         // 3. The dashboard is still there for anyone who wants it: one
         //    banner, no Send button, and the page theirs to finish first.
         await page.goto(dashboard);
@@ -100,11 +108,9 @@ test("a preview becomes a live business", async ({ browser }) => {
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
         await expect(page.getByText("Ready once the steps above are done.")).toBeVisible();
 
-        // The notice names what is actually ours, and never an offer:
-        // building a preview has never created one.
-        const notice = page.locator("#send-for-review");
-        await expect(notice).toContainText("the description and the address are our guesses");
-        await expect(notice).not.toContainText("offer");
+        // And the dashboard says the same thing it says to a business that
+        // signed itself up: no claim about who wrote the page.
+        await expect(page.locator("#send-for-review")).not.toContainText("We wrote");
 
         // Nothing telling them they have nothing.
         await expect(page.getByText("No redemptions yet")).toHaveCount(0);

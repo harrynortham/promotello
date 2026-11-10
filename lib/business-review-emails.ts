@@ -73,6 +73,9 @@ export function offerReviewedEmail(offer: OfferForEmail, decision: ReviewDecisio
     return { to, subject: `Your offer wasn't approved: ${offer.title}`, html, text };
 }
 
+// A business has arrived and started setting its page up. Nothing to do
+// about it: it reaches the queue when the business sends it, which is the
+// other email below.
 export function newBusinessAlertEmail(
     business: { name: string; category: string | null; city: string | null },
     owner: string,
@@ -81,16 +84,37 @@ export function newBusinessAlertEmail(
     const what = [business.category, business.city].filter(Boolean).join(", ");
     const { html, text } = brandedEmail({
         eyebrow: claimedPreview ? "Preview claimed" : "New sign-up",
-        title: `${business.name} is waiting for approval`,
+        title: `${business.name} has started setting up`,
         paragraphs: [
-            `${business.name}${what ? ` (${what})` : ""} ${claimedPreview ? "was claimed from its preview" : "just signed up"}. It's hidden from customers until it's approved.`,
+            `${business.name}${what ? ` (${what})` : ""} ${claimedPreview ? "was claimed from its preview" : "just signed up"}. Nothing to approve yet — we hear from them again when they send the page for review.`,
             `Owner: ${owner}`,
         ],
-        action: { label: "Review it", url: absoluteUrl("/admin/businesses") },
+        action: { label: "See it in admin", url: absoluteUrl("/admin/businesses") },
         footer: "Sent to the Promotello inbox for every new business.",
     });
 
     return { to: contactInbox, subject: `New business: ${business.name}`, html, text };
+}
+
+// And the one that needs answering: they have looked at the page and sent
+// it. Whoever wrote it, this is the only way into the queue.
+export function businessReadyAlertEmail(
+    business: { name: string; category: string | null; city: string | null },
+    owner: string,
+): Email {
+    const what = [business.category, business.city].filter(Boolean).join(", ");
+    const { html, text } = brandedEmail({
+        eyebrow: "Ready for review",
+        title: `${business.name} is waiting for approval`,
+        paragraphs: [
+            `${business.name}${what ? ` (${what})` : ""} has finished its page and sent it to us. It's hidden from customers until it's approved.`,
+            `Owner: ${owner}`,
+        ],
+        action: { label: "Review it", url: absoluteUrl("/admin/businesses") },
+        footer: "Sent to the Promotello inbox when a business asks for a review.",
+    });
+
+    return { to: contactInbox, subject: `Ready for review: ${business.name}`, html, text };
 }
 
 export function newOfferAlertEmail(
@@ -287,6 +311,20 @@ export async function emailOfferReviewed(offerId: string, decision: ReviewDecisi
 }
 
 export async function alertNewBusiness(businessId: string, owner: string, claimedPreview = false) {
+    return alertAbout(businessId, owner, (business) =>
+        newBusinessAlertEmail(business, owner, claimedPreview),
+    );
+}
+
+export async function alertBusinessReady(businessId: string, owner: string) {
+    return alertAbout(businessId, owner, (business) => businessReadyAlertEmail(business, owner));
+}
+
+async function alertAbout(
+    businessId: string,
+    owner: string,
+    email: (business: { name: string; category: string | null; city: string | null }) => Email,
+) {
     // Test sign-ups would otherwise reach the real inbox.
     if (!isDeliverable(owner)) return { sent: 0 };
 
@@ -298,6 +336,5 @@ export async function alertNewBusiness(businessId: string, owner: string, claime
 
     if (!data) return { sent: 0 };
 
-    const city = data.business_locations?.[0]?.city ?? null;
-    return sendEmails([newBusinessAlertEmail({ name: data.name, category: data.category, city }, owner, claimedPreview)]);
+    return sendEmails([email({ name: data.name, category: data.category, city: data.business_locations?.[0]?.city ?? null })]);
 }

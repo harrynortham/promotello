@@ -1,34 +1,19 @@
 "use server";
 
-import { sendLifecycleEmails } from "@/lib/business-lifecycle";
-import { alertNewBusiness } from "@/lib/business-review-emails";
+import { announceNewBusiness, ownsBusiness } from "@/lib/new-business";
 import { createClient } from "@/utils/supabase/server";
 
-// Right after sign-up: sends the welcome email to the new business's owner
-// and tells the Promotello inbox there's a business to approve.
+// Right after sign-up: the welcome email, and a line in the Promotello
+// inbox saying a business has started setting up. Claiming a page we built
+// does the same thing through the same function (lib/new-business), so
+// there is one answer to "what happens when a business arrives".
 export async function welcomeNewBusiness(businessId: string) {
     const supabase = await createClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user || !(await ownsBusiness(supabase, businessId, user.id))) return;
 
-    const { data: membership } = await supabase
-        .from("business_members")
-        .select("role")
-        .eq("business_id", businessId)
-        .eq("user_id", user.id)
-        .eq("role", "owner")
-        .maybeSingle();
-
-    if (!membership) return;
-
-    // The welcome is only ever claimed once, so neither email repeats if
-    // this is called again.
-    const { due } = await sendLifecycleEmails(businessId);
-
-    if (due > 0 && user.email) {
-        await alertNewBusiness(businessId, user.email);
-    }
+    await announceNewBusiness(businessId, user.email, { claimedPreview: false });
 }

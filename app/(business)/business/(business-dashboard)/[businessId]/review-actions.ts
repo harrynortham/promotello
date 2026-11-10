@@ -2,13 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
+import { alertBusinessReady } from "@/lib/business-review-emails";
 import { createClient } from "@/utils/supabase/server";
 
-// A page we built for a business carries our words, its address as we
-// found it and often a stand-in photo, so it is never sent for review on
-// their behalf. They look, change what they want, then ask. (Not an
-// offer: building a preview has never created one.)
+// Nobody's page is sent for them. A page we built carries our words and
+// often a stand-in photo; a page somebody set up themselves has whatever
+// they have got round to. Either way they look at it, change what isn't
+// right, and ask — and asking is the only way into the approval queue.
 export async function requestBusinessReview(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     // Sent from the setup flow, where the next thing is their first offer
@@ -34,6 +36,12 @@ export async function requestBusinessReview(formData: FormData) {
                 ? `/business/setup/${businessId}?step=review&error=review`
                 : `/business/${businessId}?error=review`,
         );
+    }
+
+    // P0009 is "already asked", so this only fires the once.
+    if (!error && user.email) {
+        const email = user.email;
+        after(() => alertBusinessReady(businessId, email).catch(() => undefined));
     }
 
     revalidatePath(`/business/${businessId}`);

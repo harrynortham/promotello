@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { sendLifecycleEmails } from "@/lib/business-lifecycle";
-import { alertNewBusiness } from "@/lib/business-review-emails";
+import { announceNewBusiness } from "@/lib/new-business";
 
 // Becoming the owner of a page we built. It happens two ways — pressing
 // Claim while signed in, or signing in after pressing it — and both have
@@ -20,12 +19,7 @@ export async function claimPreview(supabase: SupabaseClient, token: string, emai
 
     // Already claimed by them returns the same business, and the welcome is
     // only ever claimed once, so arriving twice sends nothing twice.
-    const { due } = await sendLifecycleEmails(businessId).catch(() => ({ due: 0 }));
-
-    // It stays hidden until an admin approves it, so let them know.
-    if (due > 0 && email) {
-        await alertNewBusiness(businessId, email, true).catch(() => undefined);
-    }
+    await announceNewBusiness(businessId, email, { claimedPreview: true });
 
     return { businessId, error: null };
 }
