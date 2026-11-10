@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { LocationFields } from "@/components/location-fields";
 import type { CityOption } from "@/lib/locations";
 import { locationShape, optionalText, postcodeInCity, requiredText } from "@/lib/validation";
+import { savingProblem, tryToSave } from "@/lib/saving";
 import { createClient } from "@/utils/supabase/client";
 
 export type BusinessLocation = {
@@ -91,18 +92,20 @@ export default function AddressForm({
         // The database resolves the city and area names to their ids, and
         // refuses a postcode that isn't in the city, so its message is the
         // one worth showing.
-        const { error } = location
-            ? await supabase
-                .from("business_locations")
-                .update(address)
-                .eq("id", location.id)
-                .eq("business_id", businessId)
+        const saved = location
+            ? await tryToSave(() =>
+                  supabase
+                      .from("business_locations")
+                      .update(address)
+                      .eq("id", location.id)
+                      .eq("business_id", businessId),
+              )
             : await supabase
                 .from("business_locations")
                 .insert({ ...address, business_id: businessId, name: "Main location" });
 
-        if (error) {
-            setErrorMessage(error.message);
+        if (saved.error) {
+            setErrorMessage(savingProblem(saved));
             return;
         }
 

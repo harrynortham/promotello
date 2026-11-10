@@ -23,6 +23,7 @@ import { locationShape, optionalText, postcodeInCity, requiredText } from "@/lib
 import type { SetupStep, SetupStepId } from "@/lib/setup-steps";
 import { requestBusinessReview } from "@/app/(business)/business/(business-dashboard)/[businessId]/review-actions";
 import { createClient } from "@/utils/supabase/client";
+import { savingProblem, tryToSave } from "@/lib/saving";
 import type { SetupDraft } from "./setup-flow";
 
 export type BusinessLocation = {
@@ -149,9 +150,11 @@ function ImageStep({
                 throw new Error(upload.error ?? `Your ${label.toLowerCase()} couldn't be uploaded.`);
             }
 
-            const { error } = await supabase.from("businesses").update({ [column]: upload.url }).eq("id", businessId);
+            const saved = await tryToSave(() =>
+                supabase.from("businesses").update({ [column]: upload.url }).eq("id", businessId),
+            );
 
-            if (error) throw new Error(error.message);
+            if (saved.error) throw new Error(savingProblem(saved));
 
             onSaved(upload.url);
         } catch (error) {
@@ -290,13 +293,14 @@ export function DescriptionStep({ businessId, draft, setDraft, onDone, ours }: S
     async function save(values: z.input<typeof descriptionSchema>) {
         setErrorMessage("");
 
-        const { error } = await createClient()
-            .from("businesses")
-            .update({ description: values.description.trim() })
-            .eq("id", businessId);
+        const supabase = createClient();
 
-        if (error) {
-            setErrorMessage(error.message);
+        const saved = await tryToSave(() =>
+            supabase.from("businesses").update({ description: values.description.trim() }).eq("id", businessId),
+        );
+
+        if (saved.error) {
+            setErrorMessage(savingProblem(saved));
             return;
         }
 
@@ -397,12 +401,20 @@ export function AddressStep({
 
         // The database resolves the names to a city and an area, and
         // refuses a postcode that isn't in the city.
-        const { error } = location
-            ? await supabase.from("business_locations").update(address).eq("id", location.id).eq("business_id", businessId)
-            : await supabase.from("business_locations").insert({ ...address, business_id: businessId, name: "Main location" });
+        const saved = location
+            ? await tryToSave(() =>
+                  supabase
+                      .from("business_locations")
+                      .update(address)
+                      .eq("id", location.id)
+                      .eq("business_id", businessId),
+              )
+            : await supabase
+                  .from("business_locations")
+                  .insert({ ...address, business_id: businessId, name: "Main location" });
 
-        if (error) {
-            setErrorMessage(error.message);
+        if (saved.error) {
+            setErrorMessage(savingProblem(saved));
             return;
         }
 
@@ -489,12 +501,16 @@ export function HoursStep({
     async function save(values: HoursValues) {
         setErrorMessage("");
 
-        const { error } = await createClient()
-            .from("business_hours")
-            .upsert(hoursRowsFor(businessId, values.days), { onConflict: "business_id,day_of_week" });
+        const supabase = createClient();
 
-        if (error) {
-            setErrorMessage(error.message);
+        const saved = await tryToSave(() =>
+            supabase
+                .from("business_hours")
+                .upsert(hoursRowsFor(businessId, values.days), { onConflict: "business_id,day_of_week" }),
+        );
+
+        if (saved.error) {
+            setErrorMessage(savingProblem(saved));
             return;
         }
 
