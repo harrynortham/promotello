@@ -12,19 +12,6 @@ export const email = z
     .max(320, "That email address is too long.")
     .email("Enter an email address like name@example.com.");
 
-export const password = z
-    .string()
-    .min(8, "Choose a password with at least 8 characters.")
-    .max(72, "Choose a password of 72 characters or fewer.");
-
-// For a password and its confirmation:
-//   z.object({ password, confirmPassword: z.string() }).refine(passwordsMatch, passwordsMatchError)
-export function passwordsMatch(values: { password: string; confirmPassword: string }) {
-    return values.password === values.confirmPassword;
-}
-
-export const passwordsMatchError = { message: "Your passwords do not match.", path: ["confirmPassword"] };
-
 export function requiredText(label: string, { min = 1, max = 200 }: { min?: number; max?: number } = {}) {
     return z
         .string()

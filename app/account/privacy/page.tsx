@@ -164,8 +164,7 @@ export default function AccountPrivacyPage() {
                     <p className="text-sm leading-7 text-muted-foreground">
                         Use your account email when contacting us. We may need
                         to verify your identity before sharing information.
-                        Please do not include your password or redemption
-                        codes.
+                        Please do not include sign-in or redemption codes.
                     </p>
 
                     <Button
