@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
+
 import { ForgetAnalyticsCookies } from "@/components/forget-analytics-cookies";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
@@ -51,6 +53,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="font-sans">
         {children}
+        {/* Counts page views without cookies and without following
+            anyone between sites, which is why there is nothing to ask
+            about. Named in the privacy policy as a processor. */}
+        <Analytics />
         <ForgetAnalyticsCookies />
       </body>
     </html>

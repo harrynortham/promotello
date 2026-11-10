@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 // Keep this in step with what the site actually sets. Audited 11 November
 // 2026: the Supabase sign-in cookies and the city choice, and nothing
 // else. Google Analytics is gone, and with it the only cookie anyone was
-// ever asked about; the Google map still loads only on request.
+// ever asked about; what counts page views now sets none. The Google map
+// still loads only on request.
 
 const summary = [
     "We use essential cookies only: to keep you signed in, and to remember the city you pick.",
@@ -101,9 +102,12 @@ const sections: LegalSection[] = [
                 <h3 className="pt-2 font-semibold text-foreground">Analytics cookies</h3>
                 <p>
                     None. We used Google Analytics behind a cookie banner
-                    until November 2026 and have removed it. If we measure
-                    how the site is used again, we&apos;ll use something that
-                    doesn&apos;t set cookies or follow you between sites.
+                    until November 2026 and have removed it. We now count
+                    page views with Vercel Web Analytics, which sets no
+                    cookies, stores nothing on your device and can&apos;t
+                    recognise you tomorrow or on another site — so there is
+                    nothing to ask you about. What it records is listed in
+                    our <Link href="/legal/privacy">privacy policy</Link>.
                 </p>
 
                 <p>
