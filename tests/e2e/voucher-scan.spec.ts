@@ -58,7 +58,8 @@ test("staff scan a customer's voucher and mark it used once", async ({ browser }
     await expect(staff.getByText("A test offer for scan-to-redeem."), needsMigration).toBeVisible();
     await expect(staff.getByText("For automated tests only."), needsMigration).toBeVisible();
     await staff.getByRole("button", { name: "Mark as used" }).click();
-    await expect(staff.getByText("Voucher used")).toBeVisible({ timeout: 10_000 });
+    // Exact: "The first voucher used here today" sits on the same card.
+    await expect(staff.getByText("Voucher used", { exact: true })).toBeVisible({ timeout: 10_000 });
 
     // What somebody at a till needs in that second is the discount, at a
     // size they can read with a queue behind them — not a note that a row
