@@ -441,7 +441,7 @@ export function QuietHoursCard() {
 
     return (
         <div className="w-full max-w-sm rounded-2xl border border-[#17233B]/10 bg-white p-6 text-[#17233B] shadow-xl shadow-[#17233B]/10">
-            <p className="text-sm font-semibold">Only on set days and times</p>
+            <p className="text-sm font-semibold">Only let staff redeem it at these times</p>
             <div className="mt-4 flex flex-wrap gap-2">
                 {days.map(([day, on]) => (
                     <span
@@ -453,8 +453,8 @@ export function QuietHoursCard() {
                 ))}
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-lg border border-[#17233B]/10 px-3 py-2">From 2:00pm</div>
-                <div className="rounded-lg border border-[#17233B]/10 px-3 py-2">Until 4:00pm</div>
+                <div className="rounded-lg border border-[#17233B]/10 px-3 py-2">From 14:00</div>
+                <div className="rounded-lg border border-[#17233B]/10 px-3 py-2">Until 16:00</div>
             </div>
             <p className="mt-4 text-xs text-[#17233B]/70">Customers can claim it any time, and use it Mon–Thu, 2pm–4pm.</p>
         </div>
@@ -497,7 +497,7 @@ export function OfferClaimScreen() {
             <p className="mt-3 text-xs text-[#17233B]/70">{business} · Gloucester Road</p>
             <p className="mt-0.5 font-semibold leading-snug">Free pastry with any coffee before 10am</p>
             <div className="mt-3 flex items-center justify-between text-[11px] text-[#17233B]/70">
-                <span>Weekdays before 10am</span>
+                <span>Weekdays, until 10am</span>
                 <span className="shrink-0 whitespace-nowrap rounded-full bg-[#FF593F]/10 px-2 py-0.5 font-semibold text-[#C2341F]">16 of 100 left</span>
             </div>
             <div className="mt-4 rounded-xl bg-[#FF593F] py-2.5 text-center text-sm font-semibold text-white">Claim this offer</div>

@@ -1,5 +1,7 @@
 # Offer availability: the spec
 
+**Built.** This was the spec; it now describes what is there.
+
 Follows `docs/OFFER-TYPES-SPEC.md` and uses the same idea: the business
 answers structured questions, and we write the line customers read.
 

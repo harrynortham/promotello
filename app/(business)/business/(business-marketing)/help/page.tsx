@@ -70,8 +70,8 @@ const guides: HelpGuide[] = [
         steps: [
             "Open your business and choose Offers.",
             "Choose Create offer.",
-            "Add a title, description, image, and offer details.",
-            "Set availability, expiry, terms, and an optional total claim limit.",
+            "Add a title, description and image, then choose the type of offer and fill in what it needs.",
+            "Choose when it can be used and who it is for, then set the expiry, terms and an optional total claim limit.",
             "Submit the offer and check its approval status.",
         ],
         note:
@@ -94,6 +94,19 @@ const guides: HelpGuide[] = [
         ],
         note:
             "The limit counts claims, not visits. Someone can claim a voucher and never come in.",
+    },
+    {
+        id: "when-an-offer-runs",
+        category: "Offers",
+        title: "Say when an offer can be used",
+        description: "Certain days, certain times, or new customers only.",
+        steps: [
+            "Create or edit an offer.",
+            "Under When can it be used?, choose Any time you're open, Certain days, or Certain days and times.",
+            "Press the days it runs. For times, fill in From, Until, or just one of them for an open end.",
+            "Under Who is it for?, choose Everyone or New customers only.",
+        ],
+        note: "Your card says it back to you as you answer: \u201cWeekdays, until 10am\u201d. Running out is the claim limit's job, and anything else unusual belongs in the terms.",
     },
     {
         id: "approval",
@@ -333,15 +346,14 @@ const guides: HelpGuide[] = [
     {
         id: "quiet-hours",
         category: "Growth",
-        title: "Make a quiet-hours offer",
-        description: "An offer that only works at set times.",
+        title: "Hold staff to an offer's times",
+        description: "A voucher that can only be marked used in its window.",
         steps: [
-            "Create or edit an offer.",
-            "Tick Only on set days and times.",
-            "Choose the days, and the start and end times.",
+            "Create or edit an offer and choose Certain days and times.",
+            "Tick Only let staff redeem it at these times.",
             "Save. Customers can claim it any time but only use it in that window.",
         ],
-        note: "Times are UK time. Staff see a warning if a customer tries to use it outside the window.",
+        note: "Saying when an offer runs is on every plan; holding your staff to it is part of Growth. Times are UK time, and staff see a warning if a customer tries to use it outside the window.",
     },
     {
         id: "hand-over",

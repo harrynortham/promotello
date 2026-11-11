@@ -345,7 +345,7 @@ export default async function BusinessPage() {
                                 { icon: FiHeart, title: "Welcome", body: "A thank-you reward for every new follower." },
                                 { icon: FiStar, title: "Birthday", body: "A treat on their birthday, every year." },
                                 { icon: FiArrowRight, title: "Win-back", body: "A nudge for customers you haven't seen in a while." },
-                                { icon: FiClock, title: "Quiet hours", body: "Offers that only work when you're quiet, like Monday 2 to 4pm." },
+                                { icon: FiClock, title: "Quiet hours", body: "Staff can only redeem an offer when you're quiet, like Monday 2 to 4pm." },
                             ].map(({ icon: Icon, title, body }) => (
                                 <li key={title} className="flex gap-3">
                                     <Icon aria-hidden="true" className="mt-1 shrink-0 text-[#FF8F7D]" />

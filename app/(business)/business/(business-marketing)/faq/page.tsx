@@ -83,7 +83,7 @@ const sections = [
             {
                 question: "Can an offer only work at certain times?",
                 answer:
-                    "Yes, on Growth. Quiet-hours offers only work on the days and times you choose, such as Monday to Thursday, 2pm to 4pm. Customers can claim them any time, but staff can only redeem them in the window.",
+                    "Yes, on every plan. When you create an offer you choose when it can be used — certain days, or certain days and times, like Monday to Thursday, 2pm to 4pm — and the card says so. On Growth you can also hold your staff to it: customers claim it any time, but a voucher can only be marked used inside the window.",
             },
         ],
     },

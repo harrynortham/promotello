@@ -402,7 +402,7 @@ function CustomerView() {
                         discount="Free pastry"
                         title="Free pastry with any coffee before 10am"
                         description="Pick any pastry from the counter when you buy a coffee before 10am."
-                        availability="Weekdays before 10am"
+                        availability="Weekdays, until 10am"
                         business={business}
                         area="Gloucester Road"
                         category="Cafés & coffee"
