@@ -1,16 +1,16 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-// The waiting shapes for the business's offer pages.
+// The waiting shapes for the business dashboard.
 //
 // A skeleton is a promise about what is coming, so each of these is laid
 // out from the page it stands in for: the same header, the same grid,
 // the same number of columns. One that guesses is worse than none —
 // the page jumps when the real thing arrives, and a jump reads as a bug.
 //
-// Kept together, and apart from the pages, because the edit page and the
-// edit form both show the same one: the page waits for the plan, then
-// the form waits for the offer, and a visitor shouldn't be able to tell
-// those apart.
+// Kept together, and apart from the pages, because the edit screens show
+// the same one twice: the page waits for the server, then the form waits
+// for what it loads itself, and a visitor shouldn't be able to tell
+// those two waits apart.
 
 function PageHeading({ back = false }: { back?: boolean }) {
     return (
@@ -202,6 +202,68 @@ export function EditOfferLoading() {
 
                 <div className="mt-6">
                     <OfferFormSkeleton />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// The business's own details: a card of tabbed fields, and the card the
+// directory shows beside it.
+export function BusinessProfileLoading() {
+    return (
+        <div className="text-[#17233B]">
+            <div>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="w-full">
+                        <Skeleton className="h-5 w-40 rounded-lg" />
+                        <Skeleton className="mt-3 h-10 w-64 max-w-full rounded-lg" />
+                        <Skeleton className="mt-4 h-5 w-[26rem] max-w-full rounded-lg" />
+                    </div>
+
+                    <Skeleton className="h-11 w-44 shrink-0 rounded-lg" />
+                </div>
+
+                <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
+                    <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+                        {/* Profile, Photos, Location, Hours. Only the
+                            chosen one is a pill on the loaded page, and
+                            four skeletons on this track would just read
+                            as one long bar. */}
+                        <div className="flex w-full flex-wrap gap-1 rounded-full bg-[#17233B]/5 p-1">
+                            <div className="h-9 w-20 rounded-full bg-white shadow-sm" />
+                        </div>
+
+                        <div className="mt-8 space-y-6">
+                            {[1, 2].map((field) => (
+                                <div key={field} className="space-y-2">
+                                    <Skeleton className="h-4 w-28 rounded-lg" />
+                                    <Skeleton className="h-12 w-full rounded-lg" />
+                                </div>
+                            ))}
+
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-24 rounded-lg" />
+                                <Skeleton className="h-24 w-full rounded-lg" />
+                            </div>
+
+                            {[1, 2, 3].map((field) => (
+                                <div key={field} className="space-y-2">
+                                    <Skeleton className="h-4 w-32 rounded-lg" />
+                                    <Skeleton className="h-12 w-full rounded-lg" />
+                                </div>
+                            ))}
+                        </div>
+
+                        <Skeleton className="mt-8 h-12 w-full rounded-lg" />
+                    </div>
+
+                    <aside>
+                        <Skeleton className="h-4 w-44 rounded-lg" />
+                        <Skeleton className="mt-3 h-72 w-full rounded-2xl" />
+                        <Skeleton className="mt-3 h-4 w-full rounded-lg" />
+                        <Skeleton className="mt-2 h-4 w-3/4 rounded-lg" />
+                    </aside>
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 
-import { EditOfferLoading } from "@/components/offer-skeletons";
+import { EditOfferLoading } from "@/components/dashboard-skeletons";
 import { businessTier } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import EditOfferForm from "./edit-offer-form";

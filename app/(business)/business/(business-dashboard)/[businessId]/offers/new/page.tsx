@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
-import { NewOfferLoading } from "@/components/offer-skeletons";
+import { NewOfferLoading } from "@/components/dashboard-skeletons";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     FREE_LIVE_OFFER_LIMIT,

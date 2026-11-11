@@ -22,7 +22,7 @@ import {
     type OfferValues,
 } from "@/components/offer-fields";
 import { BackButton } from "@/components/back-button";
-import { EditOfferLoading } from "@/components/offer-skeletons";
+import { EditOfferLoading } from "@/components/dashboard-skeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

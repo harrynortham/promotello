@@ -25,7 +25,7 @@ import { SharePanel } from "@/components/share-panel";
 import { offerShareCaption, shareLink } from "@/lib/share";
 import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
-import { OffersLoading } from "@/components/offer-skeletons";
+import { OffersLoading } from "@/components/dashboard-skeletons";
 
 type PageProps = {
     params: Promise<{
