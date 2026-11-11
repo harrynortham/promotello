@@ -273,3 +273,58 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* The moment a voucher is used (app/redeem/[code]/voucher-used.tsx): a
+   tick that lands, a ring off it, the discount rising into place and a
+   few marks thrown outward. Each plays once, and motion-safe: in the
+   markup keeps them still for anyone who asked for less movement. */
+@keyframes pop {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ring {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  0% {
+    transform: translateY(0.75rem);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spark {
+  0% {
+    transform: translate(-50%, 0) scale(0.4);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--x)), var(--y)) scale(1);
+    opacity: 0;
+  }
+}
