@@ -57,7 +57,7 @@ const features = [
 
 export default function About() {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] text-[#17233B]">
+        <main className="bg-[#FFF8F0] text-[#17233B]">
             <section className="relative overflow-hidden bg-[#17233B]">
                 <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full bg-[#FF593F]/20 blur-3xl" />
                 <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-[#FF8F7D]/10 blur-3xl" />
