@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { UserProfile } from "@/lib/user-profile";
 import { createClient } from "@/utils/supabase/client";
+import { useRunsABusiness } from "./use-runs-a-business";
 import { UserAvatar } from "./user-avatar";
 
 // needsBusiness: shown only to somebody who runs one. A customer who
@@ -76,30 +77,6 @@ function useIsPlatformAdmin() {
     }, []);
 
     return isAdmin;
-}
-
-// Whether this person runs a business, for the links that only mean
-// something if they do. The policy on business_members only returns the
-// rows of businesses you belong to, so a count is the whole question.
-function useRunsABusiness() {
-    const [runsOne, setRunsOne] = useState(false);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        createClient()
-            .from("business_members")
-            .select("business_id", { count: "exact", head: true })
-            .then(({ count }) => {
-                if (isMounted) setRunsOne((count ?? 0) > 0);
-            });
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    return runsOne;
 }
 
 function useSignOut(redirectTo: string) {

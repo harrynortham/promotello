@@ -78,6 +78,19 @@ test("signed in, the business menu leads back to the dashboard", async ({ page, 
     await owner.waitForURL((url) => !url.pathname.startsWith("/business/pricing"), { timeout: 20_000 });
     await expect(owner.getByRole("dialog")).toBeHidden();
 
+    // A customer reading the same page has no dashboard behind that line,
+    // so it isn't offered — they would land on "let's set up your
+    // business", which is not what "yours" promised.
+    const customer = await (
+        await browser.newContext({ storageState: CUSTOMER_AUTH, viewport: { width: 390, height: 844 } })
+    ).newPage();
+
+    await customer.goto("/business/pricing");
+    await customer.getByRole("button", { name: "Open menu" }).click();
+    // Given a moment, in case the check is still in flight.
+    await customer.waitForTimeout(1_500);
+    await expect(customer.getByRole("link", { name: "Go to your business dashboard" })).toHaveCount(0);
+
     await owner.close();
 });
 

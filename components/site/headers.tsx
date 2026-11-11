@@ -57,6 +57,8 @@ const yourBusiness = {
     text: "Your offers, posters and stamp cards",
     label: "Go to your business dashboard",
     href: "/business/dashboard",
+    // A customer reading the sales pages has no dashboard behind this.
+    needsBusiness: true,
 };
 
 // Business marketing pages under /business.
