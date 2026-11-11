@@ -33,8 +33,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { scheduleFromForm } from "@/components/offer-schedule-fields";
-import { scheduleFrom } from "@/lib/schedule";
+import { isLegacyAvailability } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
 import { offerEditWaitingForReview } from "../../actions";
 
@@ -70,6 +69,10 @@ type Offer = {
     kind_item: string | null;
     description: string;
     availability: string;
+    available_days: number[] | null;
+    available_from: string | null;
+    available_until: string | null;
+    audience: string;
     expires_at: string;
     terms: string;
     approval_status: string;
@@ -112,6 +115,7 @@ export default function EditOfferForm({
         setError,
         clearErrors,
         control,
+        setValue,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<OfferInput, unknown, OfferValues>({ resolver: zodResolver(schema) });
 
@@ -138,6 +142,10 @@ export default function EditOfferForm({
             kind_item,
             description,
             availability,
+            available_days,
+            available_from,
+            available_until,
+            audience,
             expires_at,
             terms,
             approval_status,
@@ -200,7 +208,19 @@ export default function EditOfferForm({
                     kindItem: kindOf.kind_item ?? "",
                     discount: kindOf.kind === "other" ? (sent?.discount ?? loaded.discount) : "",
                     description: sent?.description ?? loaded.description,
-                    availability: loaded.availability,
+                    // An offer saved before the pickers has no columns to
+                    // open on, so it opens on "Any time" with its own line
+                    // shown above as a note.
+                    when: loaded.available_from || loaded.available_until
+                        ? "times"
+                        : loaded.available_days?.length
+                            ? "days"
+                            : "any",
+                    availableDays: loaded.available_days ?? [],
+                    availableFrom: (loaded.available_from ?? "").slice(0, 5),
+                    availableUntil: (loaded.available_until ?? "").slice(0, 5),
+                    audience: loaded.audience === "new_customers" ? "new_customers" : "everyone",
+                    enforceSchedule: loaded.schedule_days !== null,
                     expiresAt: loaded.expires_at,
                     maxRedemptions: loaded.max_redemptions === null ? "" : String(loaded.max_redemptions),
                     terms: sent?.terms ?? loaded.terms,
@@ -217,7 +237,7 @@ export default function EditOfferForm({
         };
     }, [businessId, offerId, reset]);
 
-    async function onSubmit(values: OfferValues, event?: React.BaseSyntheticEvent) {
+    async function onSubmit(values: OfferValues) {
         if (!offer) return;
 
         setErrorMessage("");
@@ -244,7 +264,6 @@ export default function EditOfferForm({
             return;
         }
 
-        const schedule = scheduleFromForm(new FormData(event?.target as HTMLFormElement));
         const supabase = createClient();
         let imageUrl = removeImage ? null : offer.image_url;
 
@@ -259,7 +278,7 @@ export default function EditOfferForm({
             imageUrl = upload.url;
         }
 
-        const row = offerRow(values, schedule);
+        const row = offerRow(values);
 
         // What the offer promises: read by a person before customers see
         // it. On a live offer those four fields are sent as a change and
@@ -368,6 +387,19 @@ export default function EditOfferForm({
         );
     }
 
+    // An offer whose line isn't the one its columns would write was made
+    // before the pickers: "Weekdays before 10am", "First visit only". The
+    // note above the pickers says what customers see, because saving
+    // replaces it with the built line.
+    const legacyLine = isLegacyAvailability(offer.availability, {
+        days: offer.available_days,
+        from: offer.available_from,
+        until: offer.available_until,
+        audience: offer.audience,
+    })
+        ? offer.availability
+        : null;
+
     return (
         <div className="text-[#17233B]">
             <div>
@@ -463,9 +495,10 @@ export default function EditOfferForm({
                                 register={register}
                                 errors={errors}
                                 control={control}
+                                setValue={setValue}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
-                                schedule={scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)}
+                                currentLine={legacyLine}
                                 defaultCategoryId={offer.category_id}
                                 minRedemptions={offer.redemption_count}
                             />

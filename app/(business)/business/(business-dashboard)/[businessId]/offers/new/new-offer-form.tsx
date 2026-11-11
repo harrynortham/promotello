@@ -11,6 +11,7 @@ import { OfferCard } from "@/components/offer-card";
 import { OffersHowItWorks } from "../how-it-works";
 import {
     OfferFields,
+    availabilityParts,
     draftHeadline,
     imageProblem,
     offerRow,
@@ -19,13 +20,13 @@ import {
     type OfferInput,
     type OfferValues,
 } from "@/components/offer-fields";
-import { scheduleFromForm } from "@/components/offer-schedule-fields";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getCategoryGroups } from "@/lib/categories";
+import { availabilityLine } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
 import { announceNewOffer } from "./actions";
 
@@ -65,6 +66,7 @@ export default function NewOfferForm({
         setError,
         clearErrors,
         control,
+        setValue,
         formState: { errors, isSubmitting },
     } = useForm<OfferInput, unknown, OfferValues>({
         resolver: zodResolver(schema),
@@ -79,7 +81,13 @@ export default function NewOfferForm({
             kindItem: "",
             discount: "",
             description: "",
-            availability: "",
+            // Open on the answer most offers have: any time, everyone.
+            when: "any",
+            availableDays: [],
+            availableFrom: "",
+            availableUntil: "",
+            audience: "everyone",
+            enforceSchedule: false,
             expiresAt: "",
             maxRedemptions: "",
             terms: "",
@@ -113,12 +121,12 @@ export default function NewOfferForm({
         description:
             draft.description?.trim() ||
             "Your description shows here, so customers know what they get.",
-        availability: draft.availability?.trim() || "Available now",
+        availability: availabilityLine(availabilityParts(draft)),
         expiresAt: draft.expiresAt || undefined,
         category: draft.category ? categoryNames.get(draft.category) : undefined,
     };
 
-    async function onSubmit(values: OfferValues, event?: React.BaseSyntheticEvent) {
+    async function onSubmit(values: OfferValues) {
         setErrorMessage("");
 
         if (!imageFile) {
@@ -134,7 +142,6 @@ export default function NewOfferForm({
             return;
         }
 
-        const schedule = scheduleFromForm(new FormData(event?.target as HTMLFormElement));
         const supabase = createClient();
 
         const {
@@ -162,7 +169,7 @@ export default function NewOfferForm({
 
         // The database sets the slug from the business name and title.
         const { data: inserted, error } = await supabase.from("offers").insert({
-            ...offerRow(values, schedule),
+            ...offerRow(values),
             business_id: businessId,
             created_by: user.id,
             slug: crypto.randomUUID(),
@@ -334,9 +341,9 @@ export default function NewOfferForm({
                                 register={register}
                                 errors={errors}
                                 control={control}
+                                setValue={setValue}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
-                                schedule={null}
                                 defaultCategoryId={defaultCategoryId}
                             />
 
