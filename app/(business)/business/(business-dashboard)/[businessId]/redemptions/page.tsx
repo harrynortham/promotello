@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { FiCamera } from "react-icons/fi";
+import Link from "next/link";
+import { FiArrowLeft, FiArrowRight, FiCamera, FiSearch } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -8,35 +9,53 @@ import { RedemptionsHowItWorks } from "./how-it-works";
 import { ScanQrButton } from "@/components/scan-qr-button";
 import { createClient } from "@/utils/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { JustUsed, Redemption, type RedemptionRow } from "./redemption-rows";
+
+type Filter = "all" | "to-use" | "used" | "expired";
 
 type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
+    searchParams: Promise<{ show?: string; code?: string; page?: string; used?: string }>;
 };
 
-type Redemption = {
+// Ten at a time: a till is not a place to scroll.
+const PER_PAGE = 10;
+
+const filters: { id: Filter; label: string }[] = [
+    { id: "to-use", label: "To use" },
+    { id: "used", label: "Used" },
+    { id: "expired", label: "Offer ended" },
+    { id: "all", label: "All" },
+];
+
+function isFilter(value: string | undefined): value is Filter {
+    return filters.some((filter) => filter.id === value);
+}
+
+function today() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+type OfferRow = {
+    id: string;
+    title: string;
+    discount: string;
+    description: string | null;
+    terms: string | null;
+    expires_at: string;
+    business_id: string;
+};
+
+type Row = {
     id: string;
     redemption_code: string;
     redeemed_at: string;
     used_at: string | null;
-    offers:
-    | {
-        id: string;
-        title: string;
-        discount: string;
-        business_id: string;
-    }
-    | {
-        id: string;
-        title: string;
-        discount: string;
-        business_id: string;
-    }[]
-    | null;
+    offers: OfferRow | OfferRow[] | null;
 };
 
 async function markRedemptionUsed(formData: FormData) {
@@ -72,7 +91,10 @@ async function markRedemptionUsed(formData: FormData) {
         throw new Error(error.message);
     }
 
-    redirect(`/business/${businessId}/redemptions`);
+    // Back to the list, which says what just happened at the top of it.
+    const code = String(formData.get("code") ?? "");
+
+    redirect(`/business/${businessId}/redemptions?used=${encodeURIComponent(code)}`);
 }
 
 function LoadingState() {
@@ -114,10 +136,10 @@ function LoadingState() {
         </div>
     );
 }
-async function RedemptionsContent({ params }: PageProps) {
+async function RedemptionsContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const { businessId } = await params;
+    const [{ businessId }, query] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
 
     const {
@@ -138,10 +160,12 @@ async function RedemptionsContent({ params }: PageProps) {
         notFound();
     }
 
-    const { data, error } = await supabase
-        .from("offer_redemptions")
-        .select(
-            `
+    const show: Filter = isFilter(query.show) ? query.show : "to-use";
+    const code = (query.code ?? "").trim().toUpperCase().slice(0, 16);
+    const page = Math.max(Number.parseInt(query.page ?? "1", 10) || 1, 1);
+    const from = (page - 1) * PER_PAGE;
+
+    const columns = `
         id,
         redemption_code,
         redeemed_at,
@@ -150,187 +174,280 @@ async function RedemptionsContent({ params }: PageProps) {
           id,
           title,
           discount,
+          description,
+          terms,
+          expires_at,
           business_id
         )
-      `,
-        )
-        .eq("offers.business_id", businessId)
-        .order("redeemed_at", { ascending: false });
+    `;
 
-    if (error) {
+    // Which of them, in each of the three states a voucher can be in. A
+    // searched code ignores the tabs: somebody holding a code wants that
+    // voucher, wherever it has got to.
+    function forFilter(filter: Filter, select: string, options?: { head?: boolean }) {
+        let rows = supabase
+            .from("offer_redemptions")
+            .select(select, options?.head ? { count: "exact", head: true } : undefined)
+            .eq("offers.business_id", businessId);
+
+        if (filter === "to-use") {
+            rows = rows.is("used_at", null).gte("offers.expires_at", today());
+        } else if (filter === "used") {
+            rows = rows.not("used_at", "is", null);
+        } else if (filter === "expired") {
+            rows = rows.is("used_at", null).lt("offers.expires_at", today());
+        }
+
+        return rows;
+    }
+
+    const [listed, counts, justUsed] = await Promise.all([
+        code
+            ? supabase
+                .from("offer_redemptions")
+                .select(columns)
+                .eq("offers.business_id", businessId)
+                .eq("redemption_code", code)
+                .order("redeemed_at", { ascending: false })
+            : forFilter(show, columns)
+                .order("redeemed_at", { ascending: false })
+                .range(from, from + PER_PAGE - 1),
+
+        Promise.all(
+            filters.map(async (filter) => ({
+                id: filter.id,
+                // The join has to be in the select for a filter on it to
+                // mean anything, even when only the count is wanted.
+                count: (await forFilter(filter.id, "id, offers!inner ( business_id, expires_at )", { head: true }))
+                    .count ?? 0,
+            })),
+        ),
+
+        // What was just marked used, for the line at the top. It may not
+        // be on this page of the list, so it is asked for by name.
+        query.used
+            ? supabase
+                .from("offer_redemptions")
+                .select("redemption_code, offers!inner ( discount, business_id )")
+                .eq("offers.business_id", businessId)
+                .eq("redemption_code", String(query.used).toUpperCase())
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+    ]);
+
+    if (listed.error) {
         throw new Error("Unable to load redemptions.");
     }
 
-    const redemptions = (data ?? []) as Redemption[];
+    const rows: RedemptionRow[] = ((listed.data ?? []) as unknown as Row[]).map((row) => {
+        const offer = Array.isArray(row.offers) ? row.offers[0] : row.offers;
+
+        return {
+            id: row.id,
+            code: row.redemption_code,
+            claimedAt: row.redeemed_at,
+            usedAt: row.used_at,
+            expired: Boolean(offer && offer.expires_at < today()),
+            offer: offer
+                ? {
+                    title: offer.title,
+                    discount: offer.discount,
+                    description: offer.description,
+                    terms: offer.terms,
+                    expiresAt: offer.expires_at,
+                }
+                : null,
+        };
+    });
+
+    const countFor = (id: Filter) => counts.find((count) => count.id === id)?.count ?? 0;
+    const total = countFor(show);
+    const pages = Math.max(Math.ceil(total / PER_PAGE), 1);
+    const usedRow = (justUsed as { data: { redemption_code: string; offers: { discount: string } | { discount: string }[] } | null }).data;
+    const usedOffer = usedRow ? (Array.isArray(usedRow.offers) ? usedRow.offers[0] : usedRow.offers) : null;
+
+    const linkTo = (next: { show?: Filter; page?: number }) => {
+        const params = new URLSearchParams();
+        if (next.show && next.show !== "to-use") params.set("show", next.show);
+        if (next.page && next.page > 1) params.set("page", String(next.page));
+        const search = params.toString();
+
+        return `/business/${businessId}/redemptions${search ? `?${search}` : ""}`;
+    };
 
     return (
         <div>
-            <div>
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                            {business.name}
-                        </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        {business.name}
+                    </p>
 
-                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                            Redemptions
-                        </h1>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">Redemptions</h1>
 
-                        <p className="mt-3 text-[#17233B]/65">
-                            Check customer codes and mark offers as used.
-                        </p>
-                    </div>
-
-                    <div className="shrink-0">
-                        <RedemptionsHowItWorks />
-                    </div>
+                    <p className="mt-3 text-[#17233B]/65">
+                        Check customer codes and mark offers as used.
+                    </p>
                 </div>
 
-                <div className="mt-8 grid gap-6 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-8">
-                    <ScanVoucherIllustration className="mx-auto w-36 sm:w-40" />
-
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                            Quickest at the till
-                        </p>
-
-                        <h2 className="mt-2 text-xl font-semibold text-[#17233B]">
-                            Scan the customer&apos;s voucher
-                        </h2>
-
-                        <p className="mt-2 text-sm leading-6 text-[#17233B]/70">
-                            Point your phone camera at the QR code on their
-                            voucher. It opens the voucher here, so you can mark
-                            it used in one tap.
-                        </p>
-
-                        {/* The camera, without leaving the dashboard: the
-                            same place the phone's own camera app would
-                            land on. */}
-                        <ScanQrButton
-                            kind="redeem"
-                            label="Scan a voucher"
-                            title="Scan the customer's voucher"
-                            description="Point the camera at the QR code on their voucher. It opens the voucher here, so you can mark it used in one tap."
-                            className="mt-4 w-full sm:w-auto"
-                        />
-
-                        <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-[#17233B]/55">
-                            <FiCamera aria-hidden="true" className="mt-1 size-4 shrink-0 text-[#FF593F]" />
-                            No camera to hand? Find the offer below and mark it
-                            used from its card.
-                        </p>
-                    </div>
+                <div className="shrink-0">
+                    <RedemptionsHowItWorks />
                 </div>
-
-                {redemptions.length === 0 ? (
-                    <div className="mt-10 rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
-                        <h2 className="text-xl font-semibold">No redemptions yet</h2>
-                        <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
-                            Customer redemptions will appear here when customers claim your offers.
-                        </p>
-                    </div>
-                ) : (
-                    <section className="mt-10 space-y-4">
-                        {redemptions.map((redemption) => {
-                            const offer = Array.isArray(redemption.offers)
-                                ? redemption.offers[0]
-                                : redemption.offers;
-
-                            const isUsed = Boolean(redemption.used_at);
-
-                            return (
-                                <Card key={redemption.id} className="border-[#17233B]/10">
-                                    <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <CardTitle className="text-xl text-[#17233B]">
-                                                    {offer?.title ?? "Offer"}
-                                                </CardTitle>
-
-                                                <Badge
-                                                    variant={isUsed ? "default" : "secondary"}
-                                                    className={
-                                                        isUsed
-                                                            ? "bg-green-100 text-green-700 hover:bg-green-100"
-                                                            : "bg-amber-100 text-amber-700 hover:bg-amber-100"
-                                                    }
-                                                >
-                                                    {isUsed ? "Used" : "Not used"}
-                                                </Badge>
-                                            </div>
-
-                                            {offer?.discount && (
-                                                <p className="mt-2 text-sm font-medium text-[#FF593F]">
-                                                    {offer.discount}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="rounded-xl bg-[#17233B] px-6 py-4 text-center text-white">
-                                            <p className="text-xs uppercase tracking-wide text-white/60">
-                                                Redemption code
-                                            </p>
-
-                                            <p className="mt-1 text-2xl font-bold tracking-[0.2em]">
-                                                {redemption.redemption_code}
-                                            </p>
-                                        </div>
-                                    </CardHeader>
-
-                                    <CardContent>
-                                        <div className="space-y-1 text-sm text-[#17233B]/70">
-                                            <p>
-                                                Redeemed{" "}
-                                                {new Date(
-                                                    redemption.redeemed_at,
-                                                ).toLocaleDateString("en-GB")}
-                                            </p>
-
-                                            {redemption.used_at && (
-                                                <p className="text-green-700">
-                                                    Marked as used{" "}
-                                                    {new Date(
-                                                        redemption.used_at,
-                                                    ).toLocaleDateString("en-GB")}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {!isUsed && (
-                                            <form action={markRedemptionUsed} className="mt-6">
-                                                <input
-                                                    type="hidden"
-                                                    name="redemptionId"
-                                                    value={redemption.id}
-                                                />
-
-                                                <input
-                                                    type="hidden"
-                                                    name="businessId"
-                                                    value={businessId}
-                                                />
-
-                                                <Button type="submit" variant="default" size="sm">
-                                                    Mark as used
-                                                </Button>
-                                            </form>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </section>
-                )}
             </div>
+
+            {usedRow && <JustUsed code={usedRow.redemption_code} discount={usedOffer?.discount ?? null} />}
+
+            <div className="mt-8 grid gap-6 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-8">
+                <ScanVoucherIllustration className="mx-auto w-36 sm:w-40" />
+
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Quickest at the till
+                    </p>
+
+                    <h2 className="mt-2 text-xl font-semibold text-[#17233B]">
+                        Scan the customer&apos;s voucher
+                    </h2>
+
+                    <p className="mt-2 text-sm leading-6 text-[#17233B]/70">
+                        Point your phone camera at the QR code on their voucher. It opens the
+                        voucher here, so you can mark it used in one tap.
+                    </p>
+
+                    <ScanQrButton
+                        kind="redeem"
+                        label="Scan a voucher"
+                        title="Scan the customer's voucher"
+                        description="Point the camera at the QR code on their voucher. It opens the voucher here, so you can mark it used in one tap."
+                        className="mt-4 w-full sm:w-auto"
+                    />
+
+                    <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-[#17233B]/55">
+                        <FiCamera aria-hidden="true" className="mt-1 size-4 shrink-0 text-[#FF593F]" />
+                        No camera to hand? Type the code below, or find the offer in the list.
+                    </p>
+                </div>
+            </div>
+
+            {/* A code read off a phone or a printout, which is the other
+                half of "no camera to hand". */}
+            <form method="get" className="mt-8 flex flex-wrap items-end gap-3">
+                <div className="min-w-0 flex-1">
+                    <label htmlFor="code" className="text-sm font-medium">
+                        Find a code
+                    </label>
+                    <Input
+                        id="code"
+                        name="code"
+                        defaultValue={code}
+                        placeholder="e.g. 5280613F90"
+                        autoComplete="off"
+                        spellCheck={false}
+                        className="mt-1.5 font-mono tracking-[0.12em] uppercase"
+                    />
+                </div>
+
+                <Button type="submit" size="lg">
+                    <FiSearch aria-hidden="true" />
+                    Find
+                </Button>
+
+                {code && (
+                    <Button render={<Link href={linkTo({ show })} />} nativeButton={false} variant="ghost" size="lg">
+                        Clear
+                    </Button>
+                )}
+            </form>
+
+            {code ? (
+                <p className="mt-6 text-sm text-[#17233B]/65">
+                    {rows.length === 0
+                        ? `No voucher of yours has the code ${code}. Check the code with the customer.`
+                        : `One voucher with the code ${code}.`}
+                </p>
+            ) : (
+                <nav aria-label="Which vouchers" className="mt-8 flex flex-wrap gap-2">
+                    {filters.map((filter) => (
+                        <Button
+                            key={filter.id}
+                            render={<Link href={linkTo({ show: filter.id })} />}
+                            nativeButton={false}
+                            variant={show === filter.id ? "default" : "outline"}
+                            size="sm"
+                        >
+                            {filter.label}
+                            <span className={show === filter.id ? "text-white/70" : "text-[#17233B]/50"}>
+                                {countFor(filter.id)}
+                            </span>
+                        </Button>
+                    ))}
+                </nav>
+            )}
+
+            {rows.length === 0 ? (
+                <div className="mt-6 rounded-2xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
+                    <h2 className="text-xl font-semibold">
+                        {code ? "Nothing with that code" : "Nothing here"}
+                    </h2>
+                    <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
+                        {code
+                            ? "Codes are ten characters. Check it with the customer, or scan their voucher instead."
+                            : "Vouchers appear here when customers claim your offers."}
+                    </p>
+                </div>
+            ) : (
+                <ul className="mt-6 space-y-3">
+                    {rows.map((row) => (
+                        <Redemption
+                            key={row.id}
+                            redemption={row}
+                            businessId={businessId}
+                            markUsed={markRedemptionUsed}
+                        />
+                    ))}
+                </ul>
+            )}
+
+            {!code && pages > 1 && (
+                <nav
+                    aria-label="More vouchers"
+                    className="mt-6 flex items-center justify-between gap-4 text-sm"
+                >
+                    <Button
+                        render={<Link href={linkTo({ show, page: page - 1 })} />}
+                        nativeButton={false}
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                    >
+                        <FiArrowLeft aria-hidden="true" />
+                        Newer
+                    </Button>
+
+                    <p className="text-[#17233B]/65">
+                        Page {Math.min(page, pages)} of {pages}
+                    </p>
+
+                    <Button
+                        render={<Link href={linkTo({ show, page: page + 1 })} />}
+                        nativeButton={false}
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= pages}
+                    >
+                        Older
+                        <FiArrowRight aria-hidden="true" />
+                    </Button>
+                </nav>
+            )}
         </div>
     );
 }
 
-export default function BusinessRedemptionsPage({ params }: PageProps) {
+export default function BusinessRedemptionsPage(props: PageProps) {
     return (
         <Suspense fallback={<LoadingState />}>
-            <RedemptionsContent params={params} />
+            <RedemptionsContent {...props} />
         </Suspense>
     );
 }
