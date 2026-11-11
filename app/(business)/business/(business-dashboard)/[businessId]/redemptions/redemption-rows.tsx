@@ -19,6 +19,8 @@ import { SubmitButton } from "@/components/submit-button";
 export type RedemptionRow = {
     id: string;
     code: string;
+    // A first name, when they gave us one.
+    customerName?: string | null;
     claimedAt: string | null;
     usedAt: string | null;
     expired: boolean;
@@ -83,6 +85,14 @@ export function Redemption({
                     )}
 
                     <p className="mt-2 text-sm text-[#17233B]/60">
+                        {redemption.customerName && (
+                            <>
+                                <span className="font-medium text-[#17233B]/80">
+                                    {redemption.customerName}
+                                </span>
+                                {" · "}
+                            </>
+                        )}
                         {when(redemption.claimedAt) ? `Claimed ${when(redemption.claimedAt)}` : "Claimed"}
                         {used && when(redemption.usedAt) && ` · used ${when(redemption.usedAt)}`}
                     </p>
@@ -165,6 +175,9 @@ export function Redemption({
                     </DialogHeader>
 
                     <div className="rounded-xl bg-[#FFF8F0] p-4 text-sm">
+                        {redemption.customerName && (
+                            <p className="mb-1 text-[#17233B]/65">{redemption.customerName}&apos;s voucher</p>
+                        )}
                         <p className="font-semibold text-[#17233B]">{offer?.title ?? "Offer"}</p>
                         <p className="mt-1 font-medium text-[#FF593F]">{offer?.discount}</p>
                         <p className="mt-2 font-mono text-sm tracking-[0.18em] text-[#17233B]/70">

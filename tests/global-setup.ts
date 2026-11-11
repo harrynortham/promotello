@@ -39,6 +39,9 @@ async function globalSetup() {
         email: CUSTOMER_EMAIL,
         password: TEST_PASSWORD,
         email_confirm: true,
+        // A real customer usually has a name, and a business sees the
+        // first of it on their vouchers.
+        user_metadata: { full_name: "Ellie Tester" },
     });
     if (custErr || !custData.user) throw new Error(`Could not create customer user: ${custErr?.message}`);
     const customerUserId = custData.user.id;
