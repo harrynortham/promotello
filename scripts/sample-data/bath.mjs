@@ -1,3 +1,5 @@
+import { on } from "./when.mjs";
+
 // A second city's worth of sample data, for checking that the customer pages
 // adapt when Promotello is live in more than one place. Bath is the obvious
 // neighbour to Bristol: close enough that one city's radius nearly reaches
@@ -71,8 +73,8 @@ export const bathBusinesses = [
         street: "Argyle Street", area: areas.cityCentre, hours: hours.cafe,
         logo: { color: "#2F4858", accent: "#F4E3C1" },
         offers: [
-            { title: "Free cake with any coffee before 11am", discount: "Free cake", description: "Any espresso drink before 11am comes with a slice from the counter, on us.", availability: "Weekdays before 11am", photo: "N76Cadq2wQs", maxRedemptions: 120 },
-            { title: "25% off whole beans", discount: "25% off", description: "Take home 250g of our house blend or a single origin filter roast, a quarter off.", availability: "While stocks last", photo: "TD4DBagg2wE", maxRedemptions: 50 },
+            { title: "Free cake with any coffee before 11am", discount: "Free cake", description: "Any espresso drink before 11am comes with a slice from the counter, on us.", days: on.weekdays, until: "11:00", photo: "N76Cadq2wQs", maxRedemptions: 120 },
+            { title: "25% off whole beans", discount: "25% off", description: "Take home 250g of our house blend or a single origin filter roast, a quarter off.", photo: "TD4DBagg2wE", maxRedemptions: 50 },
         ],
     },
     {
@@ -83,7 +85,7 @@ export const bathBusinesses = [
         street: "Widcombe Parade", area: areas.widcombe, hours: hours.shop,
         logo: { color: "#4F6F52", accent: "#F3F0E3" },
         offers: [
-            { title: "15% off your first refill", discount: "15% off", description: "Bring your own container and take 15% off everything you fill on your first visit.", availability: "First visit only", photo: "MQUqbmszGGM" },
+            { title: "15% off your first refill", discount: "15% off", description: "Bring your own container and take 15% off everything you fill on your first visit.", audience: "new_customers", photo: "MQUqbmszGGM" },
         ],
     },
     {
@@ -94,7 +96,7 @@ export const bathBusinesses = [
         street: "Bruton Avenue", area: areas.bearFlat, hours: hours.salon,
         logo: { color: "#1F2A38", accent: "#E4B363" },
         offers: [
-            { title: "£5 off a cut and beard trim", discount: "£5 off", description: "A full cut with a beard tidy and hot towel finish, five pounds off the usual price.", availability: "Tuesday to Thursday", photo: "vt0O0Av96R4" },
+            { title: "£5 off a cut and beard trim", discount: "£5 off", description: "A full cut with a beard tidy and hot towel finish, five pounds off the usual price.", days: on.tueThu, photo: "vt0O0Av96R4" },
         ],
     },
     {
@@ -105,8 +107,8 @@ export const bathBusinesses = [
         street: "St Saviours Road", area: areas.larkhall, hours: hours.leisure,
         logo: { color: "#1B6CA8", accent: "#EAF4FB" },
         offers: [
-            { title: "Two swims for the price of one", discount: "2 for 1", description: "Bring someone with you on a weekday morning and only pay for one swim.", availability: "Weekdays before noon", photo: "uNNlbCrrcXk", maxRedemptions: 200 },
-            { title: "First month of membership half price", discount: "50% off", description: "Join on a rolling monthly membership and the first month is half price, sauna included.", availability: "New members", photo: "fEVaiLwWvlU", maxRedemptions: 30 },
+            { title: "Two swims for the price of one", discount: "2 for 1", description: "Bring someone with you on a weekday morning and only pay for one swim.", days: on.weekdays, until: "12:00", photo: "uNNlbCrrcXk", maxRedemptions: 200 },
+            { title: "First month of membership half price", discount: "50% off", description: "Join on a rolling monthly membership and the first month is half price, sauna included.", audience: "new_customers", photo: "fEVaiLwWvlU", maxRedemptions: 30 },
         ],
     },
     {
@@ -117,7 +119,7 @@ export const bathBusinesses = [
         street: "Moorland Road", area: areas.oldfieldPark, hours: hours.shop,
         logo: { color: "#6B3F2B", accent: "#F6ECD9" },
         offers: [
-            { title: "Three secondhand paperbacks for £10", discount: "3 for £10", description: "Any three paperbacks from the shelves at the front of the shop for a tenner.", availability: "Any time", photo: "q58p3oxqY0Q" },
+            { title: "Three secondhand paperbacks for £10", discount: "3 for £10", description: "Any three paperbacks from the shelves at the front of the shop for a tenner.", photo: "q58p3oxqY0Q" },
         ],
     },
     {
@@ -128,8 +130,8 @@ export const bathBusinesses = [
         street: "Temple Street", area: areas.keynsham, hours: hours.workshop,
         logo: { color: "#243B53", accent: "#F0B429" },
         offers: [
-            { title: "Free safety check with any repair", discount: "Free check", description: "Any repair booked in comes with a twenty-point safety check and a chain clean.", availability: "Any time", photo: "Tnpd6TB6uN0" },
-            { title: "20% off a winter service", discount: "20% off", description: "Cables, brakes, gears and a full clean, ready for the wet months.", availability: "Until the end of winter", photo: "CMt1rgM5Y0I", maxRedemptions: 60 },
+            { title: "Free safety check with any repair", discount: "Free check", description: "Any repair booked in comes with a twenty-point safety check and a chain clean.", photo: "Tnpd6TB6uN0" },
+            { title: "20% off a winter service", discount: "20% off", description: "Cables, brakes, gears and a full clean, ready for the wet months.", photo: "CMt1rgM5Y0I", maxRedemptions: 60 },
         ],
     },
     {
@@ -140,7 +142,7 @@ export const bathBusinesses = [
         street: "Mill Lane", area: areas.saltford, hours: hours.stay,
         logo: { color: "#3C4F3D", accent: "#EFE6D3" },
         offers: [
-            { title: "Third night free on a midweek stay", discount: "3rd night free", description: "Book two midweek nights and the third is on us, breakfast included throughout.", availability: "Sunday to Thursday", photo: "rPG-sZpJHQA", maxRedemptions: 20 },
+            { title: "Third night free on a midweek stay", discount: "3rd night free", description: "Book two midweek nights and the third is on us, breakfast included throughout.", days: on.sunThu, photo: "rPG-sZpJHQA", maxRedemptions: 20 },
         ],
     },
     {
@@ -151,7 +153,7 @@ export const bathBusinesses = [
         street: "Combe Road", area: areas.combeDown, hours: hours.workshop,
         logo: { color: "#8C5E58", accent: "#F7EDE2" },
         offers: [
-            { title: "£10 off a beginners' wheel evening", discount: "£10 off", description: "Three hours on the wheel with clay, firing and a glass of wine included.", availability: "Thursday evenings", photo: "LpK2xddrElI", maxRedemptions: 40 },
+            { title: "£10 off a beginners' wheel evening", discount: "£10 off", description: "Three hours on the wheel with clay, firing and a glass of wine included.", days: on.thu, from: "17:00", photo: "LpK2xddrElI", maxRedemptions: 40 },
         ],
     },
 ];

@@ -41,6 +41,19 @@ test("days are said the way a person would say them", () => {
     assert.equal(availabilityLine({ days: [1, 2, 3, 4] }), "Mon–Thu");
     assert.equal(availabilityLine({ days: [1, 2, 3, 4, 5, 6] }), "Mon–Sat");
     assert.equal(availabilityLine({ days: [5, 6] }), "Fri, Sat");
+    assert.equal(availabilityLine({ days: [1, 3, 5] }), "Mon, Wed, Fri");
+});
+
+// The week we show starts on Monday, so a run that crosses Sunday isn't
+// in order in it — and Sunday to Thursday is how a hotel says it.
+test("a run of days reads as a run wherever it starts", () => {
+    assert.equal(availabilityLine({ days: [0, 1, 2, 3, 4] }), "Sun–Thu");
+    assert.equal(availabilityLine({ days: [5, 6, 0] }), "Fri–Sun");
+    assert.equal(availabilityLine({ days: [4, 5, 6] }), "Thu–Sat");
+    assert.equal(availabilityLine({ days: [6, 0, 1] }), "Sat–Mon");
+
+    // Still a list when the days don't run on.
+    assert.equal(availabilityLine({ days: [0, 2, 4] }), "Tue, Thu, Sun");
 
     // The till's window is a list of days staff are held to, not a
     // phrase on a card, so it still spells them out.
@@ -78,7 +91,10 @@ test("the times read as a person would say them, however they are stored", () =>
     // The database hands back "10:00:00"; the form sends "10:00".
     assert.equal(availabilityLine({ until: "10:00:00" }), "Every day, until 10am");
     assert.equal(availabilityLine({ from: "17:30" }), "Every day, from 5:30pm");
-    assert.equal(availabilityLine({ from: "00:00", until: "12:00" }), "Every day, 12am–12pm");
+    // The two times people read twice to be sure of.
+    assert.equal(availabilityLine({ from: "00:00", until: "12:00" }), "Every day, midnight–noon");
+    assert.equal(availabilityLine({ until: "12:00" }), "Every day, until noon");
+    assert.equal(availabilityLine({ days: [1, 2, 3, 4, 5], until: "12:30" }), "Weekdays, until 12:30pm");
 });
 
 test("the till's window is filled in where the picker left a gap", () => {

@@ -608,3 +608,79 @@ test("choosing a tab and a status straight after each other shows the offers", a
         await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
     }
 });
+
+// Two backfills left what their rules couldn't read alone: "£10 credit"
+// has no type, "Tuesday to Thursday evenings" has no days. Until someone
+// answers the pickers those offers sit outside the type filter and say
+// whatever they said before, so an admin can answer them without waiting
+// for the business.
+test("an admin can give a backfilled offer a type and an availability", async ({ browser }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+    let offerId: string | undefined;
+
+    await client.from("platform_admins").insert({ user_id: state.businessUserId });
+
+    try {
+        const { data: offer } = await client
+            .from("offers")
+            .insert({
+                business_id: state.businessId,
+                created_by: state.businessUserId,
+                slug: `e2e-correct-${Date.now()}`,
+                title: `E2E Correction Offer ${Date.now()}`,
+                category: "Testing",
+                // Exactly what the backfills leave behind.
+                discount: "£10 credit",
+                kind: "other",
+                availability: "Tuesday to Thursday evenings",
+                description: "An offer for the admin correction test.",
+                expires_at: "2030-12-31",
+                terms: "For automated tests only.",
+                approval_status: "approved",
+                redemption_count: 0,
+            })
+            .select("id")
+            .single();
+        offerId = offer!.id;
+
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/admin/offers/${offerId}`);
+        await expect(page.getByRole("heading", { name: "Put it right" })).toBeVisible({ timeout: 20_000 });
+
+        // It opens on what the offer has: no type, no days.
+        await expect(page.locator("#kind")).toHaveValue("other");
+        await expect(page.locator("#discount")).toHaveValue("£10 credit");
+
+        await page.locator("#kind").selectOption("money_off");
+        await page.locator("#kindValue").fill("10");
+
+        await page.getByLabel("Certain days and times").check();
+        for (const day of ["Tue", "Wed", "Thu"]) {
+            await page.getByRole("button", { name: day, exact: true }).click();
+        }
+        await page.locator("#availableFrom").fill("17:00");
+
+        await page.getByRole("button", { name: "Save the type and availability" }).click();
+        await expect(page.getByText("Saved", { exact: true })).toBeVisible({ timeout: 15_000 });
+
+        const { data: fixed } = await client
+            .from("offers")
+            .select("kind, kind_value, discount, availability, available_days, available_from, approval_status")
+            .eq("id", offerId)
+            .single();
+
+        expect(fixed!.kind).toBe("money_off");
+        expect(Number(fixed!.kind_value)).toBe(10);
+        expect(fixed!.discount, "the headline is rebuilt from the type").toBe("£10 off");
+        expect(fixed!.availability, "and the line from the days and the time").toBe("Tue–Thu, from 5pm");
+        expect(fixed!.available_days).toEqual([2, 3, 4]);
+        expect(fixed!.available_from).toBe("17:00:00");
+        // Neither field is reviewed, and an admin is exempt anyway, so
+        // the offer never leaves the site to be corrected.
+        expect(fixed!.approval_status).toBe("approved");
+    } finally {
+        if (offerId) await client.from("offers").delete().eq("id", offerId);
+        await client.from("platform_admins").delete().eq("user_id", state.businessUserId);
+    }
+});

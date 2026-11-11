@@ -8,7 +8,6 @@ import {
 import { emailFollowersAboutOffer } from "@/lib/new-offer-email";
 import { ITEM_MAX, isOfferKind, kindTakes, offerHeadline } from "@/lib/offer-kinds";
 import { availabilityLine, availabilityParts } from "@/lib/schedule";
-import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 // Called after an admin approves an offer: emails the business's followers.
@@ -55,13 +54,15 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
 // headlines and the availability lines the rules couldn't read — get a
 // type that joins the customer's filter and a line like every other.
 //
-// Written with the service key: an admin has row-level access to read
-// every offer but not to write another business's, the same reason that
-// page reads with it. The caller is checked against is_platform_admin()
-// with their own session first.
+// Written through admin_correct_offer(), with the admin's own session
+// rather than the service key: there is no update policy on offers for
+// platform admins, but the service key has no auth.uid(), so the review
+// trigger couldn't see an admin and corrected offers went back to
+// 'pending' — off the site until somebody re-approved them.
 //
-// The headline is rebuilt here from the type rather than taken from the
-// browser, so it can only ever be what lib/offer-kinds.ts would write.
+// Both lines are rebuilt here from the answers rather than taken from
+// the browser, so they can only ever be what lib/offer-kinds.ts and
+// lib/schedule.ts would write.
 export async function correctOffer(
     offerId: string,
     values: {
@@ -108,23 +109,20 @@ export async function correctOffer(
     // for the days and times when the answer goes back to "any time".
     //
     // schedule_days/start/end are not touched: whether staff are held to
-    // the window is the business's to ask for, on its own plan, and the
-    // trigger that enforces that would refuse this write anyway.
-    const { error } = await createAdminClient()
-        .from("offers")
-        .update({
-            kind,
-            kind_value: kindTakes(kind, "value") ? value : null,
-            kind_quantity: kindTakes(kind, "quantity") ? quantity : null,
-            kind_item: kindTakes(kind, "item") ? item : null,
-            discount,
-            availability,
-            available_days: parts.days,
-            available_from: parts.from,
-            available_until: parts.until,
-            audience: parts.audience,
-        })
-        .eq("id", offerId);
+    // the window is the business's to ask for, on its own plan.
+    const { error } = await supabase.rpc("admin_correct_offer", {
+        requested_offer_id: offerId,
+        new_kind: kind,
+        new_kind_value: kindTakes(kind, "value") ? value : null,
+        new_kind_quantity: kindTakes(kind, "quantity") ? quantity : null,
+        new_kind_item: kindTakes(kind, "item") ? item : null,
+        new_discount: discount,
+        new_availability: availability,
+        new_available_days: parts.days,
+        new_available_from: parts.from,
+        new_available_until: parts.until,
+        new_audience: parts.audience,
+    });
 
     if (error) {
         return { error: error.message };

@@ -49,6 +49,11 @@ export function scheduleFrom(
 
 function formatTime(value: string) {
     const [hours, minutes] = value.split(":").map(Number);
+
+    // 12pm and 12am are the two times people read twice to be sure of.
+    if (!minutes && hours === 12) return "noon";
+    if (!minutes && (hours === 0 || hours === 24)) return "midnight";
+
     const suffix = hours >= 12 ? "pm" : "am";
     const hour = hours % 12 || 12;
     return minutes ? `${hour}:${String(minutes).padStart(2, "0")}${suffix}` : `${hour}${suffix}`;
@@ -117,7 +122,25 @@ function namedDays(days: number[]) {
     if (days.length === 5 && [1, 2, 3, 4, 5].every(has)) return "Weekdays";
     if (days.length === 2 && has(6) && has(0)) return "Weekends";
 
+    const run = days.length > 2 ? runOfDays(days) : null;
+
+    if (run) return `${dayNames[run[0]]}–${dayNames[run[run.length - 1]]}`;
+
     return formatDays(days);
+}
+
+// A run of days in order, wherever in the week it starts. Sunday to
+// Thursday is how a hotel says it, and the week we show starts on
+// Monday, so without this it comes out as a list of five: "Mon, Tue,
+// Wed, Thu, Sun".
+function runOfDays(days: number[]) {
+    for (const start of days) {
+        const run = Array.from({ length: days.length }, (_, step) => (start + step) % 7);
+
+        if (run.every((day) => days.includes(day))) return run;
+    }
+
+    return null;
 }
 
 // "Weekdays, until 10am", "Every day, 2pm–4pm", "Any time · New

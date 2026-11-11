@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 import { guessKind } from "@/lib/offer-kinds";
+import { availabilityLine, type AvailabilityParts } from "@/lib/schedule";
 
 // A seeded offer carries the same kind fields the form would have
 // written, so test data is shaped like real data: the type shows on the
@@ -14,6 +15,18 @@ function kindFieldsFor(discount: string) {
         kind_value: guess.value,
         kind_quantity: guess.quantity,
         kind_item: guess.item,
+    };
+}
+
+// A seeded offer's line is built from its columns, like a real one's, so
+// nothing in the suite is looking at a line nobody could write today.
+function availabilityFieldsFor(parts: AvailabilityParts = {}) {
+    return {
+        availability: availabilityLine(parts),
+        available_days: parts.days ?? null,
+        available_from: parts.from ?? null,
+        available_until: parts.until ?? null,
+        audience: parts.audience ?? "everyone",
     };
 }
 
@@ -102,7 +115,7 @@ async function globalSetup() {
         discount: "5% off",
         ...kindFieldsFor("5% off"),
         description: "The one live offer allowed on the Free plan.",
-        availability: "Available now",
+        ...availabilityFieldsFor(),
         expires_at: "2030-12-31",
         terms: "For automated tests only.",
         approval_status: "approved",
@@ -127,7 +140,7 @@ async function globalSetup() {
             discount: "5% off",
             ...kindFieldsFor("5% off"),
             description: "Offer for the upgrade test.",
-            availability: "Available now",
+            ...availabilityFieldsFor(),
             expires_at: "2030-12-31",
             terms: "For automated tests only.",
             approval_status: "approved",
@@ -150,7 +163,7 @@ async function globalSetup() {
             discount: "10% off",
             ...kindFieldsFor("10% off"),
             description: "A test offer for the claim flow.",
-            availability: "Available now",
+            ...availabilityFieldsFor(),
             expires_at: "2030-12-31",
             terms: "For automated tests only.",
             approval_status: "approved",
@@ -173,7 +186,7 @@ async function globalSetup() {
             discount: "20% off",
             ...kindFieldsFor("20% off"),
             description: "A test offer for the redeem flow.",
-            availability: "Available now",
+            ...availabilityFieldsFor(),
             expires_at: "2030-12-31",
             terms: "For automated tests only.",
             approval_status: "approved",
