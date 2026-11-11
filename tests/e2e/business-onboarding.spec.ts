@@ -27,8 +27,12 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
     try {
         await signInWithCode(page, email, "/business/dashboard");
 
-        // No business yet: one clear next step.
-        await expect(page.getByRole("heading", { name: /Welcome, Jo/ })).toBeVisible({ timeout: 15_000 });
+        // No business yet: what this side of Promotello is, who they
+        // are, and one clear next step.
+        await expect(
+            page.getByRole("heading", { name: "Promotello for Business", level: 1 }),
+        ).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByText(/Welcome, Jo\./)).toBeVisible();
         await page.getByRole("button", { name: "Add your business" }).click();
 
         // The first screen of the same flow a claimed page starts in: a

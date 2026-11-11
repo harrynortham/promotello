@@ -3,13 +3,23 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FiArrowRight, FiPlus } from "react-icons/fi";
+import {
+    FiArrowRight,
+    FiAward,
+    FiCheck,
+    FiPlus,
+    FiPrinter,
+    FiShoppingBag,
+    FiTag,
+} from "react-icons/fi";
+import type { IconType } from "react-icons";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
+import { cn } from "@/lib/utils";
 import { unclaimedPreview } from "@/lib/previews";
 import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
@@ -38,12 +48,32 @@ function Page({ children }: { children: React.ReactNode }) {
     );
 }
 
+// The same coral tile the account menu and the checklist use, so an icon
+// on this page belongs to the same product as the ones behind it.
+function IconTile({ icon: Icon, className }: { icon: IconType; className?: string }) {
+    return (
+        <span
+            aria-hidden="true"
+            // cn, not a template string: the first step's tile swaps both
+            // of these colours, and which one wins can't be left to the
+            // order the classes happen to land in the stylesheet.
+            className={cn(
+                "flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] text-[#FF593F]",
+                className,
+            )}
+        >
+            <Icon className="size-5" />
+        </span>
+    );
+}
+
 function LoadingState() {
     return (
         <Page>
-            <Skeleton className="h-10 w-72" />
-            <Skeleton className="mt-3 h-5 w-80 max-w-full" />
-            <Skeleton className="mt-10 h-40 rounded-xl" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="mt-4 h-10 w-72" />
+            <Skeleton className="mt-4 h-5 w-full max-w-xl" />
+            <Skeleton className="mt-10 h-72 rounded-xl" />
         </Page>
     );
 }
@@ -111,43 +141,101 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
     );
 }
 
+// The same four the checklist works down once a business exists, in the
+// same order, so the first screen and the second agree about what
+// setting up means.
 const welcomeSteps = [
     {
-        title: "Add your business",
-        description: "Your name, category and address. About two minutes.",
+        icon: FiShoppingBag,
+        title: "Your profile page",
+        description:
+            "Your name, where to find you, your hours and a photo. This is the page a customer lands on.",
+        time: "About five minutes",
     },
     {
-        title: "Create your first offer",
-        description: "Free on every plan. A good offer gives people a reason to visit.",
+        icon: FiTag,
+        title: "Your first offer",
+        description:
+            "Something small is plenty: a discount, a free side, a second coffee. It is the reason somebody walks in today.",
+        time: "Free on every plan",
     },
     {
-        title: "Go live and bring people in",
-        description: "Once approved, print a QR poster for your window and watch the visits.",
+        icon: FiPrinter,
+        title: "A QR poster for your window",
+        description:
+            "Every scan opens your offers, and you can see which spot is earning its place.",
+        time: "A4 or A5, from your own printer",
     },
+    {
+        icon: FiAward,
+        title: "Your loyalty card",
+        description:
+            "Digital stamps that live in a phone rather than the bottom of a bag, so the next one is worth walking past somewhere else for.",
+        time: "On Pro, free for 30 days",
+    },
+];
+
+const reassurances = [
+    "Free to start, no card needed",
+    "Nothing is public until we've checked your page, usually the same day",
+    "Add your team, your other locations and more offers whenever you like",
 ];
 
 function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
     return (
         <Page>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                {firstName ? `Welcome, ${firstName}` : "Welcome to Promotello"}
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                Getting started
+            </p>
+
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+                Promotello for Business
             </h1>
-            <p className="mt-3 text-[#17233B]/65">
-                Three steps to your first customers. Start free, no card needed.
+
+            <p className="mt-4 text-lg leading-8 text-[#17233B]/70">
+                {firstName ? `Welcome, ${firstName}. The` : "The"} customers Promotello
+                works on first are the ones already walking past your door. Give them a
+                reason to come in, and a reason to come back.
             </p>
 
             <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
-                <ol className="space-y-5">
+                <h2 className="text-xl font-semibold">Four steps to your first regulars</h2>
+                <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
+                    Start at the top. Nothing here is permanent, and nothing is public
+                    until you say so.
+                </p>
+
+                <ol className="mt-7 space-y-6">
                     {welcomeSteps.map((step, index) => (
                         <li key={step.title} className="flex gap-4">
-                            <span
-                                className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#FF593F] text-[#17233B]" : "bg-[#17233B]/5 text-[#17233B]/65"}`}
-                            >
-                                {index + 1}
-                            </span>
-                            <div>
-                                <p className="font-semibold">{step.title}</p>
-                                <p className="text-sm text-[#17233B]/65">{step.description}</p>
+                            <div className="relative shrink-0">
+                                <IconTile
+                                    icon={step.icon}
+                                    className={index === 0 ? "bg-[#FF593F] text-white" : ""}
+                                />
+
+                                {/* A line down the margin, through the gap
+                                    below, so the four read as one run
+                                    rather than four cards. */}
+                                {index < welcomeSteps.length - 1 && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="absolute -bottom-6 left-1/2 top-13 w-px -translate-x-1/2 bg-[#17233B]/10"
+                                    />
+                                )}
+                            </div>
+
+                            <div className="pb-1">
+                                <p className="font-semibold">
+                                    <span className="text-[#17233B]/40">{index + 1}.</span>{" "}
+                                    {step.title}
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
+                                    {step.description}
+                                </p>
+                                <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-[#17233B]/50">
+                                    {step.time}
+                                </p>
                             </div>
                         </li>
                     ))}
@@ -162,9 +250,18 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                     Add your business
                     <FiArrowRight aria-hidden="true" />
                 </Button>
+
+                <ul className="mt-7 space-y-2.5 border-t border-[#17233B]/10 pt-6">
+                    {reassurances.map((line) => (
+                        <li key={line} className="flex gap-2.5 text-sm leading-6 text-[#17233B]/70">
+                            <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
+                            {line}
+                        </li>
+                    ))}
+                </ul>
             </div>
 
-            <p className="mt-6 text-center text-sm text-[#17233B]/65">
+            <p className="mt-8 text-center text-sm text-[#17233B]/65">
                 Been invited to join a team? Open the link in your invitation email.
             </p>
         </Page>
