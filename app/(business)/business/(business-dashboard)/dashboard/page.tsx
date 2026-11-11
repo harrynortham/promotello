@@ -3,7 +3,17 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FiArrowRight, FiPlus } from "react-icons/fi";
+import {
+    FiArrowRight,
+    FiAward,
+    FiCheck,
+    FiPlus,
+    FiPrinter,
+    FiShoppingBag,
+    FiTag,
+    FiZap,
+} from "react-icons/fi";
+import type { IconType } from "react-icons";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -30,20 +40,34 @@ type BusinessSummary = Business & {
 
 // Only people with no business or several see this page; one business goes
 // straight to its overview.
-function Page({ children }: { children: React.ReactNode }) {
+function Page({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
     return (
         <main className="bg-[#FFF8F0] px-6 py-12 text-[#17233B] sm:py-16">
-            <div className="mx-auto max-w-2xl">{children}</div>
+            <div className={`mx-auto ${wide ? "max-w-4xl" : "max-w-2xl"}`}>{children}</div>
         </main>
+    );
+}
+
+// The same coral tile the account menu and the checklist use, so an icon
+// on this page belongs to the same product as the ones behind it.
+function IconTile({ icon: Icon, className = "" }: { icon: IconType; className?: string }) {
+    return (
+        <span
+            aria-hidden="true"
+            className={`flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] text-[#FF593F] ${className}`}
+        >
+            <Icon className="size-5" />
+        </span>
     );
 }
 
 function LoadingState() {
     return (
         <Page>
-            <Skeleton className="h-10 w-72" />
-            <Skeleton className="mt-3 h-5 w-80 max-w-full" />
-            <Skeleton className="mt-10 h-40 rounded-xl" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="mt-4 h-10 w-72" />
+            <Skeleton className="mt-4 h-5 w-full max-w-xl" />
+            <Skeleton className="mt-10 h-72 rounded-xl" />
         </Page>
     );
 }
@@ -113,58 +137,159 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
 
 const welcomeSteps = [
     {
+        icon: FiShoppingBag,
         title: "Add your business",
-        description: "Your name, category and address. About two minutes.",
+        description:
+            "Your name, category and where to find you. About two minutes, and you can change any of it later.",
+        time: "2 minutes",
     },
     {
+        icon: FiTag,
         title: "Create your first offer",
-        description: "Free on every plan. A good offer gives people a reason to visit.",
+        description:
+            "Free on every plan. Something small is plenty: a discount, a free side, a second coffee. It is the reason somebody walks in today.",
+        time: "5 minutes",
     },
     {
-        title: "Go live and bring people in",
-        description: "Once approved, print a QR poster for your window and watch the visits.",
+        icon: FiPrinter,
+        title: "Print a QR poster",
+        description:
+            "Put it in your window. Every scan opens your offers and your loyalty card, and you can see which poster is earning its place.",
+        time: "A4 or A5, straight from your printer",
     },
+];
+
+// What they are getting, not what the screens are called. The three
+// lines match the ones on their dashboard once a business exists, so the
+// promise made here is the thing they find there.
+const whatItDoes = [
+    {
+        icon: FiTag,
+        title: "Brings people in",
+        description:
+            "Your page and your offer sit in the local directory, where somebody deciding where to go this afternoon is already looking.",
+    },
+    {
+        icon: FiAward,
+        title: "Brings them back",
+        description:
+            "A stamp card that lives in their phone instead of the bottom of a bag, so the next coffee is worth walking past somewhere else for.",
+    },
+    {
+        icon: FiZap,
+        title: "Runs without you",
+        description:
+            "A welcome offer, a birthday treat and a nudge to anybody who hasn't been in for a while, sent while you are serving.",
+    },
+];
+
+const reassurances = [
+    "Free to start, no card needed",
+    "Nothing is public until we've checked your page, usually the same day",
+    "Add your team, your other locations and more offers whenever you like",
 ];
 
 function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
     return (
-        <Page>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                {firstName ? `Welcome, ${firstName}` : "Welcome to Promotello"}
-            </h1>
-            <p className="mt-3 text-[#17233B]/65">
-                Three steps to your first customers. Start free, no card needed.
+        <Page wide>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                Getting started
             </p>
 
-            <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
-                <ol className="space-y-5">
-                    {welcomeSteps.map((step, index) => (
-                        <li key={step.title} className="flex gap-4">
-                            <span
-                                className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${index === 0 ? "bg-[#FF593F] text-[#17233B]" : "bg-[#17233B]/5 text-[#17233B]/65"}`}
-                            >
-                                {index + 1}
-                            </span>
-                            <div>
-                                <p className="font-semibold">{step.title}</p>
-                                <p className="text-sm text-[#17233B]/65">{step.description}</p>
-                            </div>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+                {firstName ? `Welcome, ${firstName}` : "Welcome to Promotello"}
+            </h1>
+
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#17233B]/70">
+                The customers Promotello works on first are the ones already walking
+                past your door. Give them a reason to come in, and a reason to come
+                back. A quarter of an hour from here to a poster in your window.
+            </p>
+
+            <div className="mt-10 grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-start">
+                {/* The three steps, and the only button on the page. */}
+                <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
+                    <h2 className="text-xl font-semibold">Three steps to your first customers</h2>
+                    <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
+                        Start at the top. Nothing here is permanent and nothing is
+                        public until you say so.
+                    </p>
+
+                    <ol className="mt-7 space-y-6">
+                        {welcomeSteps.map((step, index) => (
+                            <li key={step.title} className="flex gap-4">
+                                <div className="relative shrink-0">
+                                    <IconTile
+                                        icon={step.icon}
+                                        className={index === 0 ? "bg-[#FF593F] text-white" : ""}
+                                    />
+
+                                    {/* A line down the margin, through the
+                                        gap below, so the three read as one
+                                        run rather than three cards. */}
+                                    {index < welcomeSteps.length - 1 && (
+                                        <span
+                                            aria-hidden="true"
+                                            className="absolute -bottom-6 left-1/2 top-13 w-px -translate-x-1/2 bg-[#17233B]/10"
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="pb-1">
+                                    <p className="font-semibold">
+                                        <span className="text-[#17233B]/40">{index + 1}.</span>{" "}
+                                        {step.title}
+                                    </p>
+                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
+                                        {step.description}
+                                    </p>
+                                    <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-[#17233B]/50">
+                                        {step.time}
+                                    </p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+
+                    <Button
+                        render={<Link href="/business/setup/new" />}
+                        nativeButton={false}
+                        size="lg"
+                        className="mt-8 w-full sm:w-auto"
+                    >
+                        Add your business
+                        <FiArrowRight aria-hidden="true" />
+                    </Button>
+
+                    <ul className="mt-7 space-y-2.5 border-t border-[#17233B]/10 pt-6">
+                        {reassurances.map((line) => (
+                            <li key={line} className="flex gap-2.5 text-sm leading-6 text-[#17233B]/70">
+                                <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
+                                {line}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                {/* What they get for it, beside the steps on a wide screen
+                    and under them on a phone. */}
+                <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                    {whatItDoes.map((item) => (
+                        <li
+                            key={item.title}
+                            className="rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm"
+                        >
+                            <IconTile icon={item.icon} />
+                            <p className="mt-4 font-semibold">{item.title}</p>
+                            <p className="mt-1.5 text-sm leading-6 text-[#17233B]/70">
+                                {item.description}
+                            </p>
                         </li>
                     ))}
-                </ol>
-
-                <Button
-                    render={<Link href="/business/setup/new" />}
-                    nativeButton={false}
-                    size="lg"
-                    className="mt-8 w-full sm:w-auto"
-                >
-                    Add your business
-                    <FiArrowRight aria-hidden="true" />
-                </Button>
+                </ul>
             </div>
 
-            <p className="mt-6 text-center text-sm text-[#17233B]/65">
+            <p className="mt-8 text-center text-sm text-[#17233B]/65">
                 Been invited to join a team? Open the link in your invitation email.
             </p>
         </Page>
