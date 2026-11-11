@@ -244,8 +244,10 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                             {business.name}
                         </h1>
 
-                        <p className="mt-3 text-[#17233B]/65">
-                            See the customers your offers bring in.
+                        <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                            Who found you, what they claimed and what they came back for.
+                            It is how you tell which offer is worth repeating and which
+                            poster spot has earned its place.
                         </p>
                     </div>
 

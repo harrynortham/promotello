@@ -324,8 +324,10 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
 
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight">Redemptions</h1>
 
-                    <p className="mt-3 text-[#17233B]/65">
-                        Check customer codes and mark offers as used.
+                    <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                        Every voucher your customers are holding, and the one in front of
+                        you right now. Search the code they read out, mark it used in a
+                        tap, and nobody can use it twice.
                     </p>
                 </div>
 

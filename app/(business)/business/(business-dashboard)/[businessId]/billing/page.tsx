@@ -104,7 +104,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
 
     const { data: membership } = await supabase
         .from("business_members")
-        .select("role, businesses ( name )")
+        .select("role")
         .eq("business_id", businessId)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -112,10 +112,6 @@ async function BillingContent({ params, searchParams }: PageProps) {
     if (!membership || !["owner", "admin"].includes(membership.role)) {
         redirect(`/business/${businessId}`);
     }
-
-    const business = Array.isArray(membership.businesses)
-        ? membership.businesses[0]
-        : membership.businesses;
 
     const [{ data: subscriptions }, { data: customer }] = await Promise.all([
         supabase
@@ -150,8 +146,10 @@ async function BillingContent({ params, searchParams }: PageProps) {
                             Billing
                         </h1>
 
-                        <p className="mt-3 text-[#17233B]/65">
-                            Manage the Promotello subscription for {business?.name}.
+                        <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                            What you&apos;re on, what it costs, and what the next plan up
+                            would add. Change it whenever you like &mdash; it takes effect
+                            the same day, and nothing you have already made goes anywhere.
                         </p>
                     </div>
 
