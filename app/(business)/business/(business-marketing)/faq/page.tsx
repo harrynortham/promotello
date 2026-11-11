@@ -83,7 +83,7 @@ const sections = [
             {
                 question: "Can an offer only work at certain times?",
                 answer:
-                    "Yes, on every plan. When you create an offer you choose when it can be used — certain days, or certain days and times, like Monday to Thursday, 2pm to 4pm — and the card says so. On Growth you can also hold your staff to it: customers claim it any time, but a voucher can only be marked used inside the window.",
+                    "Yes, on every plan. When you create an offer you choose when it can be used — certain days, or certain days and times, like Monday to Thursday, 2pm to 4pm — and the card says so. On its own that is a request: someone can turn up on Saturday night with the voucher and your staff have to decide whether to argue. On Growth the till decides instead — outside the window the voucher won't mark as used and the screen tells the customer when to come back.",
             },
         ],
     },

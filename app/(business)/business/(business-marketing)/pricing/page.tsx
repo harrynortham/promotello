@@ -46,7 +46,7 @@ const freeFeatures = [
 const growthFeatures = [
     "Everything in Pro",
     "Welcome, birthday and win-back emails that run themselves",
-    "Quiet hours: staff can only redeem an offer inside the times it runs",
+    "Quiet hours: outside an offer's times the voucher won't mark as used",
     "A monthly value report in your inbox",
 ];
 

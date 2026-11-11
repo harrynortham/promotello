@@ -772,8 +772,10 @@ export function OfferAvailabilityFields({
                                     </span>
 
                                     <span className="mt-1 block text-[#17233B]/65">
-                                        Customers can claim it any time. Staff can only mark
-                                        it used inside these times (UK time).
+                                        Anyone can claim it whenever they see it. Outside
+                                        these times their voucher won&apos;t mark as used,
+                                        and the screen tells them when to come back — so
+                                        your staff never have to. Times are UK time.
                                     </span>
                                 </span>
                             </label>
@@ -781,21 +783,32 @@ export function OfferAvailabilityFields({
                             <div className="flex gap-3 rounded-xl border border-dashed border-[#17233B]/20 p-4 text-sm">
                                 <FiLock aria-hidden="true" className="mt-0.5 shrink-0 text-[#17233B]/65" />
 
-                                <p className="text-[#17233B]/65">
-                                    <strong className="text-[#17233B]">
-                                        Only let staff redeem it at these times
-                                    </strong>{" "}
-                                    holds your staff to the window at the till, so a
-                                    quiet-hours offer can&apos;t be used at six on a
-                                    Saturday.{" "}
-                                    <Link
-                                        href={`/business/${businessId}/billing`}
-                                        className="font-medium text-[#FF593F] underline"
-                                    >
-                                        Available on Growth
-                                    </Link>
-                                    . The days and times above are yours either way.
-                                </p>
+                                <div className="text-[#17233B]/65">
+                                    <p>
+                                        <strong className="text-[#17233B]">
+                                            Want the till to say no for you?
+                                        </strong>{" "}
+                                        As it stands these times are a request. Someone can
+                                        turn up at six on a Saturday with this voucher, and
+                                        it is your staff who have to decide whether to
+                                        argue — most will just let it go, and the discount
+                                        lands on your busiest hour instead of your quietest.
+                                    </p>
+
+                                    <p className="mt-2">
+                                        On Growth the voucher won&apos;t mark as used
+                                        outside these times. The screen tells the customer
+                                        when to come back, so nobody behind the counter has
+                                        to.{" "}
+                                        <Link
+                                            href={`/business/${businessId}/billing`}
+                                            className="font-medium text-[#FF593F] underline"
+                                        >
+                                            See Growth
+                                        </Link>
+                                        .
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -823,12 +836,6 @@ export function OfferAvailabilityFields({
                 <strong className="font-semibold text-[#17233B]">{line}</strong>
             </p>
 
-            {/* Stock is the claim limit's job, and anything stranger
-                belongs in the terms. */}
-            <p className="text-xs leading-5 text-muted-foreground">
-                Running out is what the claim limit below is for. Anything else
-                unusual about using it belongs in the terms.
-            </p>
         </div>
     );
 }

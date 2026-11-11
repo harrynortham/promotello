@@ -149,9 +149,11 @@ test.describe.serial("Growth plan", () => {
         await expect(page.getByRole("button", { name: "Mon", exact: true })).toBeEnabled();
         await expect(page.locator("#availableFrom")).toBeEnabled();
 
-        // The tick-box isn't, and it says where to get it.
+        // The tick-box isn't, and it says what it would do and where to
+        // get it.
         await expect(page.getByLabel("Only let staff redeem it at these times")).toHaveCount(0);
-        await expect(page.getByRole("link", { name: "Available on Growth" })).toHaveAttribute(
+        await expect(page.getByText("Want the till to say no for you?")).toBeVisible();
+        await expect(page.getByRole("link", { name: "See Growth" })).toHaveAttribute(
             "href",
             `/business/${freeBusinessId}/billing`,
         );
