@@ -198,7 +198,8 @@ const appFooters = {
             { label: "Getting started", href: "/business/getting-started" },
             { label: "Contact support", href: "/business/contact" },
         ],
-        switchTo: { label: "Customer area", href: "/dashboard" },
+        // The front of Promotello, the way a customer arrives at it.
+        switchTo: { label: "Customer area", href: "/" },
     },
     admin: {
         homeHref: "/admin",

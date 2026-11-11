@@ -60,9 +60,12 @@ const accountLinks = {
         ],
     ],
     // In the business dashboard, the customer side is one link, not three.
+    // It leads to the front of Promotello rather than to the customer
+    // dashboard: somebody leaving the business side is going to look at
+    // what their customers see.
     business: [
         [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase }],
-        [{ label: "Customer area", href: "/dashboard", icon: FiCompass }],
+        [{ label: "Customer area", href: "/", icon: FiCompass }],
         [
             { label: "Notifications", href: "/notifications", icon: FiBell, unread: true },
             { label: "Account settings", href: "/account", icon: FiSettings },
