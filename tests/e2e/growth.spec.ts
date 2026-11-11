@@ -113,6 +113,14 @@ test.describe.serial("Growth plan", () => {
         await staff.goto(`/redeem/${code}`);
         await expect(staff.getByText("Not valid right now")).toBeVisible();
         await expect(staff.getByRole("button", { name: "Mark as used" })).toHaveCount(0);
+
+        // And the customer hears it from us rather than from somebody
+        // behind the counter.
+        const wallet = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+        await wallet.goto(`/dashboard/redemptions/${(claim as { id: string }).id}`);
+        await expect(
+            wallet.getByText(/Only valid .*\. Staff can't mark it used at any other time\./),
+        ).toBeVisible({ timeout: 20_000 });
     });
 
     test("quiet hours need Growth", async () => {

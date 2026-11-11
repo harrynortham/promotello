@@ -5,7 +5,11 @@ import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
 test.use({ storageState: BUSINESS_AUTH });
 
 // Requires `stripe listen --forward-to localhost:3000/api/stripe/webhook`
-// so the subscription created in Checkout reaches the webhook.
+// so the subscription created in Checkout reaches the webhook. Without
+// it the test pays, lands back on the billing page and then waits for a
+// plan that nothing told us about — which is what the message on the
+// assertion below says, because a red test nobody can explain is one
+// everybody learns to ignore.
 test("business owner can start a founding member trial and open the billing portal", async ({
     page,
 }) => {
@@ -47,9 +51,10 @@ test("business owner can start a founding member trial and open the billing port
     // The webhook may land a moment after the redirect.
     await expect(async () => {
         await page.reload();
-        await expect(page.getByText("Free trial", { exact: true })).toBeVisible({
-            timeout: 2_000,
-        });
+        await expect(
+            page.getByText("Free trial", { exact: true }),
+            "Checkout was paid but no plan appeared. Is `stripe listen --forward-to localhost:3000/api/stripe/webhook` running, with the whsec_ it prints in STRIPE_WEBHOOK_SECRET?",
+        ).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 30_000 });
 
     await expect(page.getByText("Pro · founding member")).toBeVisible();
