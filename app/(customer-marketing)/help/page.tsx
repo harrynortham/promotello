@@ -233,19 +233,36 @@ const guides: HelpGuide[] = [
         },
     },
     {
+        id: "notifications",
+        category: "Privacy & preferences",
+        title: "See what has happened",
+        description: "Your offers, vouchers and the businesses you follow.",
+        steps: [
+            "Open the account menu in the header. A dot on your photo means something is unread.",
+            "Choose Notifications.",
+            "Open one to go to what it is about, or mark it read and leave it.",
+        ],
+        note:
+            "We email you as well. Which emails arrive is up to you, on Email preferences; what has happened is here either way.",
+        link: {
+            label: "Open your notifications",
+            href: "/notifications",
+        },
+    },
+    {
         id: "email-preferences",
         category: "Privacy & preferences",
         title: "Choose your email preferences",
         description: "Control optional updates from Promotello.",
         steps: [
-            "Open Account settings and choose Notifications.",
+            "Open Account settings and choose Email preferences.",
             "Switch optional email categories on or off.",
             "Select Save preferences.",
         ],
         note:
             "Password resets, email confirmations, and essential account messages are separate from optional emails.",
         link: {
-            label: "Manage notifications",
+            label: "Manage email preferences",
             href: "/account/notifications",
         },
     },

@@ -99,6 +99,77 @@ test("editing an approved offer sends it back for review", async () => {
     }
 });
 
+// Notifications belong to one account. Nothing in the browser inserts
+// one, and the only column a person may write is read_at.
+test("notifications are one person's, and read_at is all they can write", async () => {
+    const { businessUserId, customerUserId } = state();
+    const supabase = admin();
+
+    const { data: theirs, error: seeded } = await supabase
+        .from("notifications")
+        .insert({
+            user_id: businessUserId,
+            type: "offer_approved",
+            title: "E2E someone else's notification",
+            href: "/business/dashboard",
+        })
+        .select("id")
+        .single();
+    expect(seeded).toBeNull();
+
+    try {
+        const customer = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, options);
+        const { customerEmail, testPassword } = state();
+        await customer.auth.signInWithPassword({ email: customerEmail, password: testPassword });
+
+        // Can't read it.
+        const { data: read } = await customer.from("notifications").select("id").eq("id", theirs!.id);
+        expect(read ?? []).toEqual([]);
+
+        // Can't mark it read, or delete it.
+        await customer.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", theirs!.id);
+        await customer.from("notifications").delete().eq("id", theirs!.id);
+
+        const { data: untouched } = await supabase
+            .from("notifications")
+            .select("read_at")
+            .eq("id", theirs!.id)
+            .maybeSingle();
+        expect(untouched, "somebody else's notification is still there").not.toBeNull();
+        expect(untouched!.read_at, "and still unread").toBeNull();
+
+        // Can't write one of their own either: there is no insert policy.
+        const { error: inserted } = await customer.from("notifications").insert({
+            user_id: customerUserId,
+            type: "offer_approved",
+            title: "E2E notification from a browser",
+        });
+        expect(inserted).not.toBeNull();
+
+        // On their own, read_at and nothing else.
+        const { data: mine } = await supabase
+            .from("notifications")
+            .insert({ user_id: customerUserId, type: "offer_approved", title: "E2E my own notification" })
+            .select("id")
+            .single();
+
+        const { error: readAt } = await customer
+            .from("notifications")
+            .update({ read_at: new Date().toISOString() })
+            .eq("id", mine!.id);
+        expect(readAt).toBeNull();
+
+        for (const change of [{ title: "Something else" }, { href: "/elsewhere" }, { user_id: businessUserId }]) {
+            const { error } = await customer.from("notifications").update(change).eq("id", mine!.id);
+            expect(error, `updating ${Object.keys(change)[0]}`).not.toBeNull();
+        }
+
+        await supabase.from("notifications").delete().eq("id", mine!.id);
+    } finally {
+        await supabase.from("notifications").delete().eq("id", theirs!.id);
+    }
+});
+
 // The response headers from next.config.ts. The camera one is here
 // because denying it doesn't look like a bug: the page loads, the button
 // appears, and getUserMedia rejects only once a member of staff points a

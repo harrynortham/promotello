@@ -17,7 +17,10 @@ export function DeleteAccount({ outcomes }: { outcomes: DeletionOutcome[] }) {
     return (
         <div className="space-y-5">
             <ul className="list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
-                <li>Your profile, vouchers, loyalty cards and follows are deleted straight away.</li>
+                <li>
+                    Your profile, vouchers, loyalty cards, follows and notifications are
+                    deleted straight away.
+                </li>
                 <li>Unused vouchers stop working and can&apos;t be recovered.</li>
                 <li>You&apos;ll be removed from any business teams you&apos;re part of.</li>
             </ul>

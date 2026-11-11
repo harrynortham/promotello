@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { BUSINESS_AUTH, CUSTOMER_AUTH, STATE_PATH } from "../global-setup";
 
@@ -69,6 +70,28 @@ test.describe("customers", () => {
     test.use({ storageState: CUSTOMER_AUTH });
     test("the customer dashboard is accessible", async ({ page }) => expectAccessible(page, "/dashboard"));
     test("my vouchers is accessible", async ({ page }) => expectAccessible(page, "/dashboard/redemptions"));
+    test("notifications are accessible", async ({ page }) => {
+        // An empty list proves nothing: the rows are what has a dot, a
+        // bin button and a time on it.
+        const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+            auth: { autoRefreshToken: false, persistSession: false },
+        });
+
+        await admin.from("notifications").insert(
+            [
+                { title: "E2E axe unread", href: "/dashboard/redemptions", read_at: null },
+                { title: "E2E axe read", href: null, read_at: new Date().toISOString() },
+            ].map((row) => ({
+                user_id: state().customerUserId,
+                type: "offer_approved",
+                body: "With a second line, as a real one has.",
+                dedupe_key: `e2e-axe-${Date.now()}-${row.title}`,
+                ...row,
+            })),
+        );
+
+        await expectAccessible(page, "/notifications");
+    });
 });
 
 test.describe("businesses", () => {
