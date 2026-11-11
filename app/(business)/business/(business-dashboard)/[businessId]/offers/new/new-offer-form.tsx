@@ -373,7 +373,7 @@ export default function NewOfferForm({
                     </CardContent>
                 </Card>
 
-                <aside className="order-1 lg:order-2 lg:sticky lg:top-8">
+                <aside className="order-1 lg:order-2 lg:sticky lg:top-24">
                     <div className="rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] p-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                             Preview

@@ -691,7 +691,7 @@ function BusinessForm({
                     </CardContent>
                 </Card>
 
-                    <aside className="lg:sticky lg:top-8">
+                    <aside className="lg:sticky lg:top-24">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                             How customers see you
                         </p>

@@ -271,7 +271,10 @@ export function LoyaltyCardBuilder({
                 </CardContent>
             </Card>
 
-            <div className="h-fit">
+            {/* It stays beside the form as the fields go past, the same
+                as the offer and profile previews. top-24 clears the site
+                header, which is sticky and 80px tall. */}
+            <aside className="h-fit lg:sticky lg:top-24">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
                     The card customers carry
                 </p>
@@ -296,7 +299,7 @@ export function LoyaltyCardBuilder({
                     An example card with sample stamps. Each customer gets
                     their own code and QR when they join.
                 </p>
-            </div>
+            </aside>
         </div>
     );
 }
