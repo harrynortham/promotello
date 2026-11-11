@@ -260,6 +260,26 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
         };
     });
 
+    // Who claimed each of them. Names live in auth.users, which a
+    // business can't read, so they come back from a function that checks
+    // the business owns these vouchers — a first name, as everywhere else
+    // a business sees a customer.
+    const { data: customers } = rows.length
+        ? await supabase.rpc("staff_redemption_customers", {
+            requested_business_id: businessId,
+            requested_ids: rows.map((row) => row.id),
+        })
+        : { data: null };
+
+    const nameFor = new Map(
+        ((customers ?? []) as { redemption_id: string; customer_name: string | null }[]).map((row) => [
+            row.redemption_id,
+            row.customer_name,
+        ]),
+    );
+
+    const withCustomers = rows.map((row) => ({ ...row, customerName: nameFor.get(row.id) ?? null }));
+
     const countFor = (id: Filter) => counts.find((count) => count.id === id)?.count ?? 0;
     const total = countFor(show);
     const pages = Math.max(Math.ceil(total / PER_PAGE), 1);
@@ -397,7 +417,7 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
                 </div>
             ) : (
                 <ul className="mt-6 space-y-3">
-                    {rows.map((row) => (
+                    {withCustomers.map((row) => (
                         <Redemption
                             key={row.id}
                             redemption={row}

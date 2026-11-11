@@ -22,6 +22,14 @@ test("a code is found, checked, and marked used once", async ({ page }) => {
     await page.getByRole("button", { name: "Find" }).click();
     await expect(page.getByText(preClaimedCode).first()).toBeVisible({ timeout: 15_000 });
 
+    // Who is standing there, which the list never said before. The e2e
+    // customer has a name on their account; a customer who gave us none
+    // simply doesn't get a name here.
+    const row = page.locator("li").filter({ hasText: preClaimedCode });
+    await expect(row, "apply supabase/migrations/20261214090000_who_claimed_it.sql first").toContainText(
+        "Ellie",
+    );
+
     // What the offer covers, for the owner who has forgotten it.
     await page.getByRole("button", { name: "Offer details" }).first().click();
     await expect(page.getByText("A test offer for the redeem flow.")).toBeVisible();
