@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { POSTER_LAYOUTS } from "@/components/qr-poster";
+import { CUSTOM_COLOUR, isHexColour } from "@/lib/poster-colour";
 
 async function requireUser() {
     const supabase = await createClient();
@@ -26,6 +28,12 @@ export async function createQrCode(formData: FormData) {
     const label = String(formData.get("label") ?? "").trim();
     const target = String(formData.get("target") ?? "business");
     const posterColour = String(formData.get("posterColour") ?? "navy");
+    const posterLayout = String(formData.get("posterLayout") ?? "classic");
+    const posterHeader = String(formData.get("posterHeader") ?? "");
+    const posterAccent = String(formData.get("posterAccent") ?? "");
+    // Their own palette only counts when both halves arrived.
+    const ownColours =
+        posterColour === CUSTOM_COLOUR && isHexColour(posterHeader) && isHexColour(posterAccent);
     const posterEyebrow = String(formData.get("posterEyebrow") ?? "").trim();
     const posterHeadline = String(formData.get("posterHeadline") ?? "").trim();
     const posterDescription = String(formData.get("posterDescription") ?? "").trim();
@@ -37,7 +45,8 @@ export async function createQrCode(formData: FormData) {
     }
 
     if (
-        !POSTER_COLOURS.includes(posterColour) ||
+        !(POSTER_COLOURS.includes(posterColour) || ownColours) ||
+        !POSTER_LAYOUTS.some((option) => option.value === posterLayout) ||
         posterEyebrow.length > 40 ||
         posterHeadline.length > 90 ||
         posterDescription.length > 140
@@ -57,6 +66,9 @@ export async function createQrCode(formData: FormData) {
         offer_id: target === "business" || target === "loyalty" ? null : target,
         loyalty_program_id: target === "loyalty" ? (loyaltyProgramId || null) : null,
         poster_colour: posterColour,
+        poster_layout: posterLayout,
+        poster_header: ownColours ? posterHeader : null,
+        poster_accent: ownColours ? posterAccent : null,
         // Empty means the poster works the words out from the offer.
         poster_eyebrow: posterEyebrow || null,
         poster_headline: posterHeadline || null,

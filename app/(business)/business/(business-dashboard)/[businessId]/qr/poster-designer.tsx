@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
-import { QrPoster } from "@/components/qr-poster";
+import { POSTER_LAYOUTS, QrPoster, type PosterLayout } from "@/components/qr-poster";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import {
     cardColourName,
     type CardColour,
 } from "@/lib/loyalty-design";
+import { CUSTOM_COLOUR } from "@/lib/poster-colour";
 import { createQrCode } from "./actions";
 
 // A4 is 794px wide at 96dpi, and the preview is a quarter of that. The
@@ -49,7 +50,10 @@ export function PosterDesigner({
     previewSvg: string;
     previewLink: string;
 }) {
-    const [colour, setColour] = useState<CardColour>(cardColourName(null));
+    const [colour, setColour] = useState<CardColour | typeof CUSTOM_COLOUR>(cardColourName(null));
+    // Their own two, once they have opened the picker.
+    const [custom, setCustom] = useState<{ header: string; accent: string } | null>(null);
+    const [layout, setLayout] = useState<PosterLayout>("classic");
     const [eyebrow, setEyebrow] = useState("");
     const [headline, setHeadline] = useState("");
     const [target, setTarget] = useState("business");
@@ -82,6 +86,37 @@ export function PosterDesigner({
     const description = detail ?? chosenOffer?.description ?? chosenLoyalty?.terms ?? "";
 
     const width = PREVIEW_WIDTH;
+
+    // The same poster for the big preview and for each layout thumbnail,
+    // so the small ones are the real thing rather than a drawing of it.
+    const poster = {
+        businessName,
+        place,
+        logoUrl,
+        offer:
+            chosenOffer ??
+            (chosenLoyalty ? { discount: suggestedHeadline, description: chosenLoyalty.terms } : null),
+        eyebrowFallback: suggestedEyebrow,
+        caption: chosenLoyalty
+            ? "Join free on Promotello and collect a stamp every time you visit."
+            : null,
+        qrMarkup: previewSvg,
+        link: previewLink,
+        colour,
+        headerColour: custom?.header,
+        accentColour: custom?.accent,
+        eyebrow,
+        headline,
+        detail: description,
+    };
+
+    function sheet(pixels: number) {
+        return {
+            width: `${pixels}px`,
+            height: `${Math.round(pixels * (297 / 210))}px`,
+            fontSize: 16 * (pixels / 794),
+        };
+    }
 
     return (
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
@@ -149,7 +184,54 @@ export function PosterDesigner({
                     onIcon={() => undefined}
                     showStamps={false}
                     colourLabel="Poster colour"
+                    custom={custom}
+                    onCustom={(value) => {
+                        setCustom(value);
+                        setColour(CUSTOM_COLOUR);
+                    }}
                 />
+
+                {/* Real posters at thumbnail size: the shape is the
+                    whole point, and a drawing of it would be a second
+                    thing to keep in step with the first. */}
+                <div className="space-y-2">
+                    <Label>Layout</Label>
+
+                    <div className="grid grid-cols-4 gap-3">
+                        {POSTER_LAYOUTS.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                aria-pressed={layout === option.value}
+                                onClick={() => setLayout(option.value)}
+                                className={`cursor-pointer rounded-lg border p-1.5 text-center transition ${
+                                    layout === option.value
+                                        ? "border-[#FF593F] ring-2 ring-[#FF593F]/20"
+                                        : "border-[#17233B]/15 hover:border-[#17233B]/40"
+                                }`}
+                            >
+                                {/* A picture of a poster, not a poster:
+                                    the name under it is what this button
+                                    is, and nobody wants four whole
+                                    posters read out to them. */}
+                                <span
+                                    aria-hidden="true"
+                                    className="mx-auto block w-fit overflow-hidden rounded border border-[#17233B]/10"
+                                >
+                                    <QrPoster {...poster} {...sheet(72)} layout={option.value} />
+                                </span>
+
+                                <span className="mt-1.5 block text-[11px] font-medium leading-4">
+                                    {option.label}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <p className="text-xs leading-5 text-[#17233B]/65">
+                        {POSTER_LAYOUTS.find((option) => option.value === layout)?.hint}
+                    </p>
+                </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="poster-eyebrow">Small line</Label>
@@ -198,6 +280,13 @@ export function PosterDesigner({
                 )}
 
                 <input type="hidden" name="posterColour" value={colour} />
+                <input type="hidden" name="posterLayout" value={layout} />
+                {colour === CUSTOM_COLOUR && custom && (
+                    <>
+                        <input type="hidden" name="posterHeader" value={custom.header} />
+                        <input type="hidden" name="posterAccent" value={custom.accent} />
+                    </>
+                )}
 
                 <SubmitButton
                     size="lg"
@@ -216,46 +305,39 @@ export function PosterDesigner({
                 </p>
 
                 <div
+                    data-slot="poster-preview"
                     className="mt-3 overflow-hidden rounded-xl border border-[#17233B]/10 shadow-sm"
                     style={{ width }}
                 >
-                    <QrPoster
-                        width={`${width}px`}
-                        height={`${Math.round(width * (297 / 210))}px`}
-                        fontSize={16 * (width / 794)}
-                        businessName={businessName}
-                        place={place}
-                        logoUrl={logoUrl}
-                        offer={
-                            chosenOffer ??
-                            (chosenLoyalty
-                                ? { discount: suggestedHeadline, description: chosenLoyalty.terms }
-                                : null)
-                        }
-                        eyebrowFallback={suggestedEyebrow}
-                        caption={
-                            chosenLoyalty
-                                ? "Join free on Promotello and collect a stamp every time you visit."
-                                : null
-                        }
-                        qrMarkup={previewSvg}
-                        link={previewLink}
-                        colour={colour}
-                        eyebrow={eyebrow}
-                        headline={headline}
-                        detail={description}
-                    />
+                    <QrPoster {...poster} {...sheet(width)} layout={layout} />
                 </div>
 
-                {/* The poster is the obvious thing here, so the code on
-                    its own needs saying: the download buttons sit beside
-                    each code further down the page, where nobody about to
-                    print a poster is looking. */}
                 <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
-                    Ready to print, with your logo filled in. You also get
-                    the code on its own — as an image or a print-shop file
-                    — for a menu, a sticker or a leaflet.
+                    Ready to print, with your logo filled in.
                 </p>
+
+                {/* The poster is the obvious thing on this page, so the
+                    bare code has to be shown rather than mentioned: the
+                    download buttons sit beside each code further down,
+                    where nobody about to print a poster is looking. */}
+                <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
+                    And the code on its own
+                </p>
+
+                <div
+                    className="mt-3 flex items-center gap-3 rounded-xl border border-[#17233B]/10 bg-white p-3"
+                    style={{ width }}
+                >
+                    <span
+                        className="size-16 shrink-0 [&>svg]:h-full [&>svg]:w-full"
+                        dangerouslySetInnerHTML={{ __html: previewSvg }}
+                    />
+
+                    <p className="text-xs leading-5 text-[#17233B]/65">
+                        Yours to download as an image or a print-shop file, for a
+                        menu, a sticker, a leaflet or a post.
+                    </p>
+                </div>
             </div>
         </div>
     );
