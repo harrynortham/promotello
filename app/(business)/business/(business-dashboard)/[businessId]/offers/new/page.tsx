@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
+import { NewOfferLoading } from "@/components/offer-skeletons";
 import { Card, CardContent } from "@/components/ui/card";
 import {
     FREE_LIVE_OFFER_LIMIT,
@@ -149,18 +150,9 @@ function OfferLimitReached({
     );
 }
 
-function LoadingState() {
-    return (
-        <div>
-            <div className="h-8 w-48 animate-pulse rounded-lg bg-slate-200" />
-            <div className="mt-6 h-96 animate-pulse rounded-xl bg-slate-100" />
-        </div>
-    );
-}
-
 export default function NewOfferPage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<NewOfferLoading />}>
             <NewOfferPageContent {...props} />
         </Suspense>
     );
