@@ -43,13 +43,13 @@ function one<T>(value: T | T[] | null | undefined): T | null {
 }
 
 const errorMessages: Record<string, string> = {
-    label: "Give the code a name between 2 and 60 characters, like “Front window”.",
-    limit: "The Free plan includes 1 QR code. Upgrade to Pro for a code in every spot.",
-    approval: "A QR code can be made once your page is approved. We check every new business, usually the same day.",
-    create: "We couldn't create that code. Please try again.",
-    delete: "We couldn't retire that code. Please try again.",
-    point: "We couldn't point that code somewhere else. Please try again.",
-    restore: "We couldn't bring that code back. Please try again.",
+    label: "Give the poster a name between 2 and 60 characters, like “Front window”.",
+    limit: "The Free plan includes 1 poster. Upgrade to Pro for one in every spot.",
+    approval: "A poster can be made once your page is approved. We check every new business, usually the same day.",
+    create: "We couldn't make that poster. Please try again.",
+    delete: "We couldn't retire that poster. Please try again.",
+    point: "We couldn't point that poster somewhere else. Please try again.",
+    restore: "We couldn't bring that poster back. Please try again.",
 };
 
 
@@ -203,9 +203,9 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                 {created && !error && (
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
-                        <AlertTitle>QR code created</AlertTitle>
+                        <AlertTitle>Poster made</AlertTitle>
                         <AlertDescription>
-                            Print its poster below and put it where customers will see it.
+                            Print it below and put it where customers will see it.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -232,9 +232,9 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                 {!hasPro && (
                     <Alert className="mt-8 border-[#FF593F]/30 bg-[#FF593F]/5">
-                        <AlertTitle>Free plan · {qrCodes.length} of 1 QR code used</AlertTitle>
+                        <AlertTitle>Free plan · {qrCodes.length} of 1 poster used</AlertTitle>
                         <AlertDescription>
-                            Get a code in every spot, and compare which
+                            Get a poster in every spot, and compare which
                             placements bring people in.{" "}
                             <Link
                                 href={`/business/${businessId}/billing`}
@@ -250,7 +250,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                     <Alert className="mt-8 border-amber-200 bg-amber-50">
                         <AlertTitle>Your page is still being checked</AlertTitle>
                         <AlertDescription>
-                            A QR code sends people to your page, so it can be
+                            A poster sends people to your page, so it can be
                             made once that page is live — usually the same
                             day. We will email you as soon as it is, and
                             everything here is waiting for you.
@@ -267,7 +267,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                 {canManage && isLive && !atFreeLimit && qrCodes.length === 0 && (
                     <Card id="create-qr" className="mt-8 overflow-visible scroll-mt-8 border-[#17233B]/10">
                         <CardHeader>
-                            <CardTitle>Create a QR code</CardTitle>
+                            <CardTitle>Make a poster</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <PosterDesigner
@@ -287,11 +287,11 @@ async function QrContent({ params, searchParams }: PageProps) {
                 <section className="mt-10">
                     {qrCodes.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-[#17233B]/20 bg-white px-6 py-14 text-center">
-                            <h2 className="text-xl font-semibold">No QR codes yet</h2>
+                            <h2 className="text-xl font-semibold">No posters yet</h2>
                             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
                                 {isLive
-                                    ? "Create your first code above, print the poster and put it in your window."
-                                    : "Once your page is approved you can create one here, print the poster and put it in your window."}
+                                    ? "Make your first one above, print it and put it in your window."
+                                    : "Once your page is approved you can make one here, print it and put it in your window."}
                             </p>
                         </div>
                     ) : (
@@ -305,13 +305,13 @@ async function QrContent({ params, searchParams }: PageProps) {
                                     {atFreeLimit ? (
                                         <>
                                             <h2 className="mt-4 text-lg font-semibold">
-                                                Add another QR code
+                                                Add another poster
                                             </h2>
 
                                             <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
-                                                The Free plan includes one code. Pro gives
-                                                you a code for every spot, so you can see
-                                                which placement brings people in.
+                                                The Free plan includes one poster. Pro gives
+                                                you one for every spot, so you can see which
+                                                placement brings people in.
                                             </p>
 
                                             <Button
@@ -326,7 +326,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                     ) : (
                                         <>
                                             <h2 className="mt-4 text-lg font-semibold">
-                                                Add another QR code
+                                                Add another poster
                                             </h2>
 
                                             <p className="mt-2 max-w-xs text-sm leading-6 text-[#17233B]/65">
@@ -340,7 +340,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                 size="lg"
                                                 className="mt-5 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                                             >
-                                                Create a QR code
+                                                Make a poster
                                             </Button>
                                         </>
                                     )}

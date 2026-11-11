@@ -40,7 +40,7 @@ async function NewQrCode({ params }: PageProps) {
 
             <header className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                    New QR code
+                    New poster
                 </p>
 
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">
@@ -68,7 +68,7 @@ async function NewQrCode({ params }: PageProps) {
 
             <Card id="create-qr" className="mt-8 overflow-visible border-[#17233B]/10">
                 <CardHeader>
-                    <CardTitle>Create a QR code</CardTitle>
+                    <CardTitle>Make a poster</CardTitle>
                 </CardHeader>
 
                 <CardContent>

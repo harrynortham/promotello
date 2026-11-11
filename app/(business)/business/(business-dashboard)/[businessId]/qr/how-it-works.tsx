@@ -66,18 +66,18 @@ function TrackArt() {
 const steps = [
     {
         art: <CreateArt />,
-        title: "Create a code",
+        title: "Make a poster",
         body: "Name it for the spot it will live in, like Front window, and choose whether it opens your business page or one offer.",
     },
     {
         art: <QrPrintArt />,
         title: "Print the poster",
-        body: "Every code comes with a ready-made A4 or A5 poster carrying your logo and your newest offer. Print it, or save it as a PDF.",
+        body: "It comes ready to print at A4 or A5, carrying your logo and your newest offer. Print it, or save it as a PDF.",
     },
     {
         art: <DisplayArt />,
         title: "Put it where people look",
-        body: "Your window, by the till, on tables. One code per spot tells you which places actually bring people in.",
+        body: "Your window, by the till, on tables. One poster per spot tells you which places actually bring people in.",
     },
     {
         art: <ScanArt />,
@@ -87,7 +87,7 @@ const steps = [
     {
         art: <TrackArt />,
         title: "See what works",
-        body: "Each scan is counted against its code, so you can compare placements over 7 days, 30 days and all time.",
+        body: "Each scan is counted against the poster it came from, so you can compare placements over 7 days, 30 days and all time.",
     },
 ];
 

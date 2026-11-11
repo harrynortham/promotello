@@ -204,7 +204,7 @@ export function PosterDesigner({
                     pendingLabel="Creating…"
                     className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto"
                 >
-                    Create QR code
+                    Make this poster
                 </SubmitButton>
             </form>
 
