@@ -1,12 +1,19 @@
 # Offer types: a scope
 
+**Built.** This was the scope; `docs/OFFER-TYPES-SPEC.md` is what was
+built from it, and `20261215090000_what_kind_of_offer.sql` is the
+migration. The numbers below are the live headlines as they were when
+this was written, and the backfill classified them exactly as it predicts
+— three stayed "Something else": "£10 credit", "3rd half price" and
+"Flight for £8".
+
 Today an offer has one free-text headline, stored in `offers.discount`:
 "20% off", "2 for 1", "Free side". It is written by the business, shown on
 the card and the offer page, and searched as text. Nothing knows what kind
 of offer it is.
 
 This is what it would take to make the kind a real thing, and what we would
-get for it. Nothing here is built.
+get for it.
 
 ## What the headlines actually say
 

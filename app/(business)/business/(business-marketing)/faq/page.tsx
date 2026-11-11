@@ -20,7 +20,7 @@ const sections = [
             {
                 question: "What is Promotello?",
                 answer:
-                    "Promotello helps independent businesses turn first-time visitors into regulars. Your business gets a page in the Promotello directory, where customers browse by area and category to find somewhere to go. On top of that you get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place.",
+                    "Promotello helps independent businesses turn first-time visitors into regulars. Your business gets a page in the Promotello directory, where customers browse by area, by category and by the kind of offer — freebies, 2 for 1, money off — to find somewhere to go. On top of that you get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place.",
             },
             {
                 question: "Is it right for my business?",
@@ -63,7 +63,7 @@ const sections = [
             {
                 question: "How do customers claim an offer?",
                 answer:
-                    "They find it on your page, in the Promotello directory or by scanning your poster, then tap to claim it. They get their own voucher with a QR code and a short code, kept in their account. Each customer can claim each offer once.",
+                    "They find it on your page, in the Promotello directory — where they can filter by the kind of offer they are after — or by scanning your poster, then tap to claim it. They get their own voucher with a QR code and a short code, kept in their account. Each customer can claim each offer once.",
             },
             {
                 question: "How do my staff redeem a voucher?",

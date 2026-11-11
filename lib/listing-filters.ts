@@ -1,4 +1,5 @@
 import { isInCategory, topLevelFor, type CategoryGroup } from "@/lib/categories";
+import { OFFER_KINDS, kindFromSlug, type OfferKind } from "@/lib/offer-kinds";
 
 // Shapes, grouping and filtering for the public listings. Kept apart from
 // lib/listings.ts, which fetches them, so this file imports nothing from
@@ -24,6 +25,9 @@ export type ListingOffer = {
     imageUrl: string | null;
     categoryId: string | null;
     categoryName: string;
+    // What kind of offer it is; the headline in discount is built from
+    // it. See lib/offer-kinds.ts.
+    kind: string;
     redemptionCount: number;
     maxRedemptions: number | null;
     business: ListingPlace & {
@@ -90,17 +94,24 @@ function matchesSearch(text: string, search: string) {
 export function filterOffers(
     offers: ListingOffer[],
     groups: CategoryGroup[],
-    { category, area, search, sort = "newest" }: {
+    { category, area, kind, search, sort = "newest" }: {
         category?: string;
         area?: string;
+        // The ?type= slug, not the kind itself. One nobody recognises
+        // filters nothing, so a stale link is a full listing rather than
+        // an empty page.
+        kind?: string;
         search?: string;
         sort?: OfferSort;
     },
 ) {
+    const wanted = kindFromSlug(kind);
+
     const filtered = offers.filter(
         (offer) =>
             (!category || isInCategory(offer.categoryId, category, groups)) &&
             inArea(offer.business, area) &&
+            (!wanted || offer.kind === wanted) &&
             (!search ||
                 matchesSearch(
                     `${offer.title} ${offer.discount} ${offer.description} ${offer.business.name} ${offer.categoryName} ${offer.business.area ?? ""} ${offer.business.city ?? ""}`,
@@ -175,6 +186,33 @@ export function areasFrom(places: ListingPlace[]): ListingArea[] {
     }
 
     return [...areas.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+export type ListingKind = {
+    kind: OfferKind;
+    label: string;
+    slug: string;
+    count: number;
+};
+
+// The types this listing has something in, in the order the picker lists
+// them, so the filter doesn't reshuffle as offers come and go. "Something
+// else" is never offered: it is the escape hatch, not a type anyone would
+// browse by.
+export function kindsFrom(offers: ListingOffer[]): ListingKind[] {
+    const counts = new Map<string, number>();
+
+    for (const offer of offers) {
+        counts.set(offer.kind, (counts.get(offer.kind) ?? 0) + 1);
+    }
+
+    return OFFER_KINDS.flatMap((spec) => {
+        const count = counts.get(spec.kind) ?? 0;
+
+        return spec.slug && spec.filterLabel && count > 0
+            ? [{ kind: spec.kind, label: spec.filterLabel, slug: spec.slug, count }]
+            : [];
+    });
 }
 
 // Whether a listing is in this exact area. Matched on the area's id so two

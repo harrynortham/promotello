@@ -1,32 +1,66 @@
 "use client";
 
-import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import type { Control, FieldErrors, UseFormRegister, UseFormRegisterReturn } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
-import { CategorySelect } from "@/components/category-select";
+import { CategorySelect, nativeSelectClassName } from "@/components/category-select";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { OfferScheduleFields, type scheduleFromForm } from "@/components/offer-schedule-fields";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    HEADLINE_MAX,
+    ITEM_MAX,
+    OFFER_KINDS,
+    isOfferKind,
+    kindTakes,
+    offerHeadline,
+    offerKind,
+    type OfferKind,
+} from "@/lib/offer-kinds";
 import { formatSchedule, scheduleFrom, type OfferSchedule } from "@/lib/schedule";
 import { optionalText, requiredText } from "@/lib/validation";
 
 // The fields, rules and image upload shared by the new and edit offer
 // forms. The quiet-hours schedule is its own widget (OfferScheduleFields)
 // and is read from the submitted form with scheduleFromForm().
+//
+// "The offer" used to be one free-text box. It is now a type and only the
+// numbers that type needs; the headline customers read is built from them
+// by lib/offer-kinds.ts, which is the only thing that assembles one.
 
 function todayInUk() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
 }
 
+// The type and its inputs, as text because that is what an input holds;
+// kindRow() turns them into numbers and nulls. Each is checked by
+// checkKind() below, but only when the chosen type asks for it. Shared
+// so the admin's correction form has the same rules as the business's.
+export const kindFields = {
+    kind: z.string().min(1, "Choose a type of offer."),
+    kindValue: z.string().trim(),
+    kindQuantity: z.string().trim(),
+    kindItem: z.string().trim(),
+    // Only "Something else" writes the headline by hand.
+    discount: z.string().trim(),
+};
+
+export function offerKindSchema() {
+    return z.object(kindFields).superRefine(checkKind);
+}
+
+export type KindInput = z.input<ReturnType<typeof offerKindSchema>>;
+
 export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}) {
     return z.object({
         title: requiredText("The title", { min: 2, max: 160 }),
         category: z.string().min(1, "Choose a category."),
-        discount: requiredText("The offer", { max: 100 }),
+        ...kindFields,
         description: requiredText("The description", { min: 2, max: 5000 }),
         availability: optionalText("Availability", 160),
         expiresAt: z
@@ -45,11 +79,125 @@ export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}
                         : "Use a number greater than zero.",
             }),
         terms: requiredText("The terms", { min: 2, max: 5000 }),
-    });
+    }).superRefine(checkKind);
 }
 
 export type OfferInput = z.input<ReturnType<typeof offerSchema>>;
 export type OfferValues = z.output<ReturnType<typeof offerSchema>>;
+
+// What the chosen type needs, and nothing else: a percentage is not asked
+// for on a freebie. Messages land under their own field and say what to
+// do, the way lib/validation.ts writes them.
+function checkKind(
+    values: { kind: string; kindValue: string; kindQuantity: string; kindItem: string; discount: string },
+    ctx: z.RefinementCtx,
+) {
+    const kind = values.kind;
+
+    // Nothing picked yet: "Choose a type of offer." has already been said.
+    if (!isOfferKind(kind)) return;
+
+    function problem(path: string, message: string) {
+        ctx.addIssue({ code: "custom", path: [path], message });
+    }
+
+    if (kindTakes(kind, "value")) {
+        const amount = Number(values.kindValue);
+        const given = values.kindValue !== "" && Number.isFinite(amount);
+
+        if (kind === "percent_off") {
+            if (!given || !Number.isInteger(amount) || amount < 1 || amount > 100) {
+                problem("kindValue", "Enter a percentage between 1 and 100.");
+            }
+        } else if (!given || amount <= 0) {
+            problem("kindValue", "Enter an amount, like 5 or 2.50.");
+        }
+    }
+
+    if (kindTakes(kind, "quantity")) {
+        const quantity = Number(values.kindQuantity);
+
+        if (
+            values.kindQuantity === "" ||
+            !Number.isInteger(quantity) ||
+            quantity < 2 ||
+            quantity > 10
+        ) {
+            problem("kindQuantity", "Enter how many they get, between 2 and 10.");
+        }
+    }
+
+    if (kindTakes(kind, "item")) {
+        if (offerKind(kind).itemRequired && !values.kindItem) {
+            problem(
+                "kindItem",
+                kind === "freebie"
+                    ? "Enter what's free, like pastry or side."
+                    : "Enter what the price is for, like beard trim.",
+            );
+        }
+
+        if (values.kindItem.length > ITEM_MAX) {
+            problem("kindItem", `That can be up to ${ITEM_MAX} characters.`);
+        }
+    }
+
+    if (kind === "other") {
+        if (!values.discount) {
+            problem("discount", "Enter the offer as it should appear, like 3rd half price.");
+        }
+
+        if (values.discount.length > HEADLINE_MAX) {
+            problem("discount", `The offer can be up to ${HEADLINE_MAX} characters.`);
+        }
+    }
+}
+
+type KindFields = {
+    kind?: string | null;
+    kindValue?: string | null;
+    kindQuantity?: string | null;
+    kindItem?: string | null;
+    discount?: string | null;
+};
+
+// The type's inputs as the columns hold them: a number, or null where the
+// type doesn't use it, so switching type never leaves a stale number
+// behind.
+function kindParts(values: KindFields) {
+    const kind: OfferKind = isOfferKind(values.kind) ? values.kind : "other";
+    const amount = (values.kindValue ?? "").trim();
+    const count = (values.kindQuantity ?? "").trim();
+    const item = (values.kindItem ?? "").trim();
+
+    return {
+        kind,
+        value: kindTakes(kind, "value") && amount !== "" ? Number(amount) : null,
+        quantity: kindTakes(kind, "quantity") && count !== "" ? Number(count) : null,
+        item: (kindTakes(kind, "item") && item.slice(0, ITEM_MAX)) || null,
+        text: values.discount ?? "",
+    };
+}
+
+// The headline as it will read, for the line under the inputs and the
+// preview card. Empty until there is something true to say.
+export function draftHeadline(values: KindFields) {
+    return offerHeadline(kindParts(values));
+}
+
+// The four columns and the headline built from them.
+export function kindRow(values: KindFields) {
+    const parts = kindParts(values);
+
+    return {
+        // Built, never typed, so "20% offer" can't happen.
+        discount: offerHeadline(parts),
+        kind: parts.kind,
+        kind_value: parts.value,
+        kind_quantity: parts.quantity,
+        kind_item: parts.item,
+    };
+}
 
 // The offers row for the values and schedule. Scheduled offers describe
 // their days and times unless the business wrote its own availability.
@@ -59,7 +207,7 @@ export function offerRow(values: OfferValues, schedule: ReturnType<typeof schedu
     return {
         title: values.title,
         category_id: values.category,
-        discount: values.discount,
+        ...kindRow(values),
         description: values.description,
         availability: values.availability || (parsed ? formatSchedule(parsed) : "Available now"),
         expires_at: values.expiresAt,
@@ -96,9 +244,247 @@ function Required() {
     return <span className="text-[#FF593F]">*</span>;
 }
 
+// What each type calls its inputs. The label says what to type, so the
+// example underneath doesn't have to do both jobs.
+const kindInputWords: Record<
+    OfferKind,
+    {
+        value?: { label: string; placeholder: string; unit: "%" | "£"; step: string };
+        quantity?: { label: string; placeholder: string };
+        item?: { label: string; placeholder: string };
+    }
+> = {
+    percent_off: {
+        value: { label: "Percentage off", placeholder: "20", unit: "%", step: "1" },
+        item: { label: "What it's on (optional)", placeholder: "pints" },
+    },
+    money_off: {
+        value: { label: "Amount off", placeholder: "5", unit: "£", step: "0.01" },
+        item: { label: "What it's on (optional)", placeholder: "a cut and finish" },
+    },
+    two_for_one: {
+        item: { label: "What it's on (optional)", placeholder: "cocktails" },
+    },
+    multi_buy: {
+        quantity: { label: "How many", placeholder: "2" },
+        value: { label: "For a total of", placeholder: "15", unit: "£", step: "0.01" },
+    },
+    fixed_price: {
+        value: { label: "Price", placeholder: "8", unit: "£", step: "0.01" },
+        item: { label: "What it's for", placeholder: "beard trim" },
+    },
+    freebie: {
+        item: { label: "What's free", placeholder: "pastry" },
+    },
+    other: {},
+};
+
+// A number with its unit beside it, so "20" reads as 20% and not £20.
+function AmountInput({
+    id,
+    unit,
+    step,
+    placeholder,
+    registration,
+    invalid,
+}: {
+    id: string;
+    unit: "%" | "£";
+    step: string;
+    placeholder: string;
+    registration: UseFormRegisterReturn;
+    invalid: { "aria-invalid"?: true; "aria-describedby"?: string };
+}) {
+    return (
+        <div className="relative">
+            {unit === "£" && (
+                <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-[#17233B]/60 md:text-sm"
+                >
+                    £
+                </span>
+            )}
+
+            <Input
+                id={id}
+                type="number"
+                inputMode="decimal"
+                min={unit === "%" ? 1 : 0}
+                step={step}
+                placeholder={placeholder}
+                className={unit === "£" ? "pl-7" : "pr-8"}
+                {...registration}
+                {...invalid}
+            />
+
+            {unit === "%" && (
+                <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base text-[#17233B]/60 md:text-sm"
+                >
+                    %
+                </span>
+            )}
+        </div>
+    );
+}
+
+// The type, then only the inputs that type needs, then the headline they
+// add up to. Typed on the kind fields alone, so the offer forms and the
+// admin's correction form share it.
+export function OfferKindFields({
+    register,
+    errors,
+    control,
+}: {
+    register: UseFormRegister<KindInput>;
+    errors: FieldErrors<KindInput>;
+    control: Control<KindInput, unknown, unknown>;
+}) {
+    const draft = useWatch({ control, name: ["kind", "kindValue", "kindQuantity", "kindItem", "discount"] });
+    const [kind, kindValue, kindQuantity, kindItem, discount] = draft;
+    const chosen = isOfferKind(kind) ? kind : null;
+    const spec = chosen ? offerKind(chosen) : null;
+    const words = chosen ? kindInputWords[chosen] : null;
+    const headline = chosen
+        ? draftHeadline({ kind, kindValue, kindQuantity, kindItem, discount })
+        : "";
+
+    return (
+        <div className="space-y-2">
+            <Label htmlFor="kind">
+                Type of offer <Required />
+            </Label>
+
+            <select
+                id="kind"
+                className={nativeSelectClassName}
+                {...register("kind")}
+                {...invalidProps("kind-error", errors.kind)}
+            >
+                <option value="" disabled>
+                    Choose a type
+                </option>
+
+                {OFFER_KINDS.map((option) => (
+                    <option key={option.kind} value={option.kind}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+
+            <FieldError id="kind-error" message={errors.kind?.message} />
+
+            {chosen && spec && words && (
+                <div className="space-y-3 pt-1">
+                    {(words.quantity || words.value) && (
+                        <div className={words.quantity && words.value ? "grid grid-cols-2 gap-3" : undefined}>
+                            {words.quantity && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="kindQuantity">{words.quantity.label}</Label>
+
+                                    <Input
+                                        id="kindQuantity"
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={2}
+                                        max={10}
+                                        step="1"
+                                        placeholder={words.quantity.placeholder}
+                                        {...register("kindQuantity")}
+                                        {...invalidProps("kindQuantity-error", errors.kindQuantity)}
+                                    />
+
+                                    <FieldError
+                                        id="kindQuantity-error"
+                                        message={errors.kindQuantity?.message}
+                                    />
+                                </div>
+                            )}
+
+                            {words.value && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="kindValue">{words.value.label}</Label>
+
+                                    <AmountInput
+                                        id="kindValue"
+                                        unit={words.value.unit}
+                                        step={words.value.step}
+                                        placeholder={words.value.placeholder}
+                                        registration={register("kindValue")}
+                                        invalid={invalidProps("kindValue-error", errors.kindValue)}
+                                    />
+
+                                    <FieldError id="kindValue-error" message={errors.kindValue?.message} />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {words.item && (
+                        <div className="space-y-2">
+                            <Label htmlFor="kindItem">
+                                {words.item.label} {spec.itemRequired && <Required />}
+                            </Label>
+
+                            <Input
+                                id="kindItem"
+                                maxLength={ITEM_MAX}
+                                placeholder={words.item.placeholder}
+                                {...register("kindItem")}
+                                {...invalidProps("kindItem-error", errors.kindItem)}
+                            />
+
+                            <FieldError id="kindItem-error" message={errors.kindItem?.message} />
+                        </div>
+                    )}
+
+                    {chosen === "other" && (
+                        <div className="space-y-2">
+                            <Label htmlFor="discount">
+                                The offer <Required />
+                            </Label>
+
+                            <Input
+                                id="discount"
+                                maxLength={HEADLINE_MAX}
+                                placeholder="3rd half price"
+                                {...register("discount")}
+                                {...invalidProps("discount-error", errors.discount)}
+                            />
+
+                            <FieldError id="discount-error" message={errors.discount?.message} />
+
+                            <p className="text-xs leading-5 text-muted-foreground">
+                                Use this only if none of the others fit. It won&apos;t
+                                appear in the type filter.
+                            </p>
+                        </div>
+                    )}
+
+                    {chosen !== "other" && (
+                        <p className="text-xs leading-5 text-muted-foreground">
+                            For example: {spec.example}.
+                        </p>
+                    )}
+
+                    {headline && (
+                        <p className="text-xs leading-5 text-[#17233B]/70">
+                            On your card:{" "}
+                            <strong className="font-semibold text-[#17233B]">{headline}</strong>
+                        </p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export function OfferFields({
     register,
     errors,
+    control,
     businessId,
     canSchedule,
     schedule,
@@ -107,6 +493,7 @@ export function OfferFields({
 }: {
     register: UseFormRegister<OfferInput>;
     errors: FieldErrors<OfferInput>;
+    control: Control<OfferInput, unknown, OfferValues>;
     businessId: string;
     canSchedule: boolean;
     schedule: OfferSchedule | null;
@@ -145,25 +532,16 @@ export function OfferFields({
                     <FieldError id="category-error" message={errors.category?.message} />
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="discount">
-                        The offer <Required />
-                    </Label>
-                    <Input
-                        id="discount"
-                        maxLength={100}
-                        placeholder="2 for 1 on cocktails"
-                        {...register("discount")}
-                        {...invalidProps("discount-error", errors.discount)}
-                    />
-                    <FieldError id="discount-error" message={errors.discount?.message} />
-                    {/* It was labelled Discount, which read as money off and
-                        nothing else. It has always been free text. */}
-                    <p className="text-xs leading-5 text-muted-foreground">
-                        A few words, shown on your offer card: 20% off, 2 for 1,
-                        free side with any main, kids eat free.
-                    </p>
-                </div>
+                {/* react-hook-form's generics are invariant, so the big
+                    form's register and control don't describe themselves
+                    as the smaller form's. The field names and rules are
+                    the same object (kindFields) either way, which is what
+                    makes this safe. */}
+                <OfferKindFields
+                    register={register as unknown as UseFormRegister<KindInput>}
+                    errors={errors as FieldErrors<KindInput>}
+                    control={control as unknown as Control<KindInput, unknown, unknown>}
+                />
             </div>
 
             <div className="space-y-2">

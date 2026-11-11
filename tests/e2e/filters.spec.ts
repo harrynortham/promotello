@@ -93,6 +93,54 @@ test.describe("a visitor we can't place", () => {
     });
 });
 
+// Offers can be browsed by what kind of offer they are, which areas and
+// categories can't answer: somebody after a freebie doesn't want to read
+// nine percentages to find one.
+test.describe("filtering offers by type", () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test("the types on offer are listed, filter, and survive a category change", async ({ page }) => {
+        await page.goto("/offers");
+        await (await filterTrigger(page)).click();
+
+        const drawer = page.locator(panel);
+        await expect(drawer.getByText("Type of offer", { exact: true })).toBeVisible();
+        await expect(drawer.getByRole("link", { name: "Any type" })).toBeVisible();
+
+        // Only types something is actually under, so no choice leads to an
+        // empty page. "Something else" is never one of them.
+        await expect(drawer.getByRole("link", { name: /^Something else/ })).toHaveCount(0);
+
+        const freebies = drawer.getByRole("link", { name: /^Freebies/ });
+        test.skip(!(await freebies.count()), "no live freebies to filter by");
+
+        await freebies.click();
+        await page.waitForURL(/type=freebie/);
+
+        // The pill says what is chosen, and every card is a freebie.
+        await expect(page.getByRole("button", { name: "Freebies" })).toBeVisible();
+        const headlines = await page.locator("main article [data-slot=offer-headline]").allInnerTexts();
+        expect(headlines.length, "something matched").toBeGreaterThan(0);
+        for (const headline of headlines) {
+            expect(headline, "every card is a freebie").toMatch(/^Free /i);
+        }
+
+        // Narrowing by category keeps it: a different question, the same
+        // answer to this one.
+        await page.getByRole("link", { name: "Food & drink", exact: true }).click();
+        await page.waitForURL(/category=food-drink/);
+        expect(new URL(page.url()).searchParams.get("type")).toBe("freebie");
+        await expect(page.getByRole("button", { name: "Freebies" })).toBeVisible();
+    });
+
+    test("a type nobody recognises shows the whole listing", async ({ page }) => {
+        await page.goto("/offers?type=half-price");
+
+        await expect(page.locator("main article").first()).toBeVisible();
+        await expect(page.getByText("No offers match")).toHaveCount(0);
+    });
+});
+
 test.describe("on a desktop", () => {
     test.use({ viewport: { width: 1440, height: 900 } });
 

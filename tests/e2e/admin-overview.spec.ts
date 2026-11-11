@@ -483,6 +483,10 @@ test("a change to a live offer is reviewed without taking it down", async ({ bro
                 title: "E2E Live Offer",
                 category_id: category!.id,
                 discount: "10% off",
+                // As the form would have saved it, so the edit form opens
+                // on "Percentage off" with 10 in the box.
+                kind: "percent_off",
+                kind_value: 10,
                 description: "The wording customers see today.",
                 availability: "Available now",
                 expires_at: "2030-12-31",
@@ -500,7 +504,7 @@ test("a change to a live offer is reviewed without taking it down", async ({ bro
         await page.goto(`/business/${state.businessId}/offers/${offerId}/edit`);
         await expect(page.locator("#title")).toHaveValue("E2E Live Offer", { timeout: 20_000 });
 
-        await page.locator("#discount").fill("25% off");
+        await page.locator("#kindValue").fill("25");
         await page.locator("#description").fill("The wording that is waiting to be read.");
         await page.getByRole("button", { name: "Save changes" }).click();
         await page.waitForURL(`**/business/${state.businessId}/offers`, { timeout: 25_000 });

@@ -250,6 +250,10 @@ test.describe("business forms", () => {
                 title: "E2E Offer To Edit",
                 category: "Testing",
                 discount: "10% off",
+                // Seeded the way the form would have saved it, so the
+                // edit form opens on the right type.
+                kind: "percent_off",
+                kind_value: 10,
                 description: "An offer for the edit form test.",
                 availability: "Available now",
                 expires_at: "2030-12-31",
@@ -274,6 +278,14 @@ test.describe("business forms", () => {
             await page.locator("#title").fill("E2E Offer Edited");
             await page.locator("#maxRedemptions").fill("25");
             await page.locator("#category").selectOption({ index: 1 });
+
+            // The type is part of what is promised, so it travels with
+            // the words rather than changing under the customers.
+            await page.locator("#kind").selectOption("freebie");
+            await page.locator("#kindItem").fill("pastry");
+            // Exactly: the examples under the field say "Free pastry" too.
+            await expect(page.getByText("Free pastry", { exact: true })).toBeVisible();
+
             await page.getByRole("button", { name: "Save changes" }).click();
             await page.waitForURL(`**/business/${businessId}/offers`);
 
@@ -282,22 +294,28 @@ test.describe("business forms", () => {
             // while customers carry on seeing the published words.
             const { data: saved } = await supabase
                 .from("offers")
-                .select("title, max_redemptions, approval_status")
+                .select("title, max_redemptions, approval_status, kind, discount")
                 .eq("id", offer!.id)
                 .single();
             expect(saved).toEqual({
                 title: "E2E Offer To Edit",
                 max_redemptions: 25,
                 approval_status: "approved",
+                // The live offer keeps the type it was approved with.
+                kind: "percent_off",
+                discount: "10% off",
             });
 
             const { data: waiting } = await supabase
                 .from("offer_edits")
-                .select("title")
+                .select("title, kind, kind_item, discount")
                 .eq("offer_id", offer!.id)
                 .is("decided_at", null)
                 .single();
             expect(waiting!.title).toBe("E2E Offer Edited");
+            expect(waiting!.kind, "the new type waits with the words").toBe("freebie");
+            expect(waiting!.kind_item).toBe("pastry");
+            expect(waiting!.discount).toBe("Free pastry");
         } finally {
             await supabase.from("offers").delete().eq("id", offer!.id);
         }

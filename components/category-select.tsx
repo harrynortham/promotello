@@ -19,6 +19,11 @@ type CategorySelectProps = {
     invalid?: { "aria-invalid"?: true; "aria-describedby"?: string };
 };
 
+// A native select dressed like our Input, shared with the other native
+// selects on the offer form so they don't drift apart.
+export const nativeSelectClassName =
+    "h-12 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm";
+
 // Subcategories grouped under their top-level category. Submits the
 // subcategory id.
 export function CategorySelect({
@@ -51,10 +56,7 @@ export function CategorySelect({
             disabled={!groups}
             {...registration}
             {...invalid}
-            className={cn(
-                "h-12 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                className,
-            )}
+            className={cn(nativeSelectClassName, className)}
         >
             <option value="" disabled>
                 {failed

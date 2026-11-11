@@ -53,7 +53,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
             `
                 id, slug, title, discount, description, availability,
                 expires_at, created_at, image_url, category, category_id,
-                redemption_count, max_redemptions,
+                kind, redemption_count, max_redemptions,
                 businesses!inner (
                     id, slug, name, logo_url, is_sample, closed_at,
                     business_locations ( region, city, city_id, area_id )
@@ -88,6 +88,7 @@ export async function getLiveOffers(cityId?: string): Promise<ListingOffer[]> {
                 imageUrl: row.image_url,
                 categoryId: row.category_id,
                 categoryName: row.category,
+                kind: row.kind,
                 redemptionCount: row.redemption_count,
                 maxRedemptions: row.max_redemptions,
                 business: {

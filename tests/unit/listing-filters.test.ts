@@ -10,6 +10,7 @@ import {
     filterOffers,
     inArea,
     interleaveByCity,
+    kindsFrom,
     BUSINESS_PAGE_SIZE,
     isInArea,
     MAX_PAGES,
@@ -66,6 +67,7 @@ function offer(place: ListingPlace, over: Partial<ListingOffer> = {}): ListingOf
         imageUrl: null,
         categoryId: "cat-cafes",
         categoryName: "Cafés & coffee",
+        kind: "freebie",
         redemptionCount: 0,
         maxRedemptions: null,
         ...over,
@@ -176,6 +178,66 @@ test("filtering by area still works inside one city", () => {
     const offers = [offer(places.bathCentre), offer(places.bathKeynsham, { id: "o-2" })];
 
     assert.deepEqual(filterOffers(offers, groups, { area: "Keynsham" }).map((item) => item.id), ["o-2"]);
+});
+
+test("the type filter narrows to one kind of offer", () => {
+    const offers = [
+        offer(places.bathCentre, { id: "free", kind: "freebie" }),
+        offer(places.bathCentre, { id: "half", kind: "percent_off" }),
+        offer(places.bathKeynsham, { id: "two-for-one", kind: "two_for_one" }),
+    ];
+
+    assert.deepEqual(filterOffers(offers, groups, { kind: "freebie" }).map((item) => item.id), ["free"]);
+    assert.deepEqual(filterOffers(offers, groups, { kind: "2-for-1" }).map((item) => item.id), ["two-for-one"]);
+});
+
+test("a type nobody recognises shows everything, rather than nothing", () => {
+    // A stale or hand-typed link is a full listing, not an empty page.
+    const offers = [offer(places.bathCentre, { id: "free" }), offer(places.bathCentre, { id: "half", kind: "percent_off" })];
+
+    assert.equal(filterOffers(offers, groups, { kind: "half-price" }).length, 2);
+    assert.equal(filterOffers(offers, groups, { kind: "" }).length, 2);
+    assert.equal(filterOffers(offers, groups, {}).length, 2);
+    // The escape hatch is not a filter: its slug is null, so it never matches.
+    assert.equal(filterOffers(offers, groups, { kind: "other" }).length, 2);
+});
+
+test("type, category and area narrow together", () => {
+    const offers = [
+        offer(places.bathCentre, { id: "cafe-free" }),
+        offer(places.bathKeynsham, { id: "keynsham-free" }),
+        offer(places.bathCentre, { id: "salon-free", categoryId: "cat-salons" }),
+        offer(places.bathCentre, { id: "cafe-percent", kind: "percent_off" }),
+    ];
+
+    assert.deepEqual(
+        filterOffers(offers, groups, { kind: "freebie", category: "food-drink", area: "City Centre" }).map(
+            (item) => item.id,
+        ),
+        ["cafe-free"],
+    );
+});
+
+test("the filter offers the types this listing has, and counts them", () => {
+    const offers = [
+        offer(places.bathCentre, { id: "free-1" }),
+        offer(places.bathCentre, { id: "free-2" }),
+        offer(places.bathCentre, { id: "percent", kind: "percent_off" }),
+        offer(places.bathCentre, { id: "odd", kind: "other" }),
+    ];
+
+    // The picker's order, not the busiest first, so the filter doesn't
+    // reshuffle as offers come and go. "Something else" is never offered.
+    assert.deepEqual(
+        kindsFrom(offers).map((item) => [item.slug, item.label, item.count]),
+        [
+            ["percent-off", "% off", 1],
+            ["freebie", "Freebies", 2],
+        ],
+    );
+
+    assert.deepEqual(kindsFrom([]), []);
+    assert.deepEqual(kindsFrom([offer(places.bathCentre, { kind: "other" })]), []);
 });
 
 test("a list spanning cities takes one from each in turn", () => {

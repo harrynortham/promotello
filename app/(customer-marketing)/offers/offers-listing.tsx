@@ -25,6 +25,7 @@ import {
     interleaveByCity,
     getCategories,
     getLiveOffers,
+    kindsFrom,
     pageOf,
     parseOfferSort,
 } from "@/lib/listings";
@@ -45,6 +46,8 @@ type SearchParams = {
     search?: string;
     category?: string;
     area?: string;
+    // The kind of offer, as its slug: ?type=2-for-1.
+    type?: string;
     sort?: string;
     // How many offers to render; see pageOf.
     show?: string;
@@ -105,6 +108,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
     const found = filterOffers(offers, groups, {
         category: params.category,
         area: params.area,
+        kind: params.type,
         search: params.search,
         sort,
     });
@@ -124,16 +128,21 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
         ) ??
         null;
 
-    const areas = areasFrom(
-        offers
-            .filter((offer) => !params.category || topLevelFor(offer.categoryId, groups)?.slug === selectedGroup?.slug)
-            .map((offer) => offer.business),
+    const inCategory = offers.filter(
+        (offer) => !params.category || topLevelFor(offer.categoryId, groups)?.slug === selectedGroup?.slug,
     );
+
+    const areas = areasFrom(inCategory.map((offer) => offer.business));
+
+    // The types this city and category actually have something in, so
+    // nobody is offered a filter that leads nowhere. With fewer than two
+    // there is no choice to make, so the section is left out.
+    const kinds = kindsFrom(inCategory);
 
     // Filters build on the current query, but never carry how far down the
     // list you had got: a different filter is a different list.
     const current = { ...params, show: undefined };
-    const hasFilters = Boolean(params.search || params.category || params.area);
+    const hasFilters = Boolean(params.search || params.category || params.area || params.type);
     const page = pageOf(results, params.show);
 
     return (
@@ -151,6 +160,22 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                                     active: sort === option.value,
                                 })),
                             },
+                            ...(kinds.length > 1
+                                ? [
+                                    {
+                                        title: "Type of offer",
+                                        options: [
+                                            { label: "Any type", href: hrefWith(base, current, { type: null }), active: !params.type },
+                                            ...kinds.map((kind) => ({
+                                                label: kind.label,
+                                                href: hrefWith(base, current, { type: kind.slug }),
+                                                active: params.type === kind.slug,
+                                                count: kind.count,
+                                            })),
+                                        ],
+                                    },
+                                ]
+                                : []),
                             // An area belongs to a city, so areas are offered
                             // whenever the page is one city's worth — chosen,
                             // or the only one live. Looking at several, the
@@ -236,7 +261,7 @@ async function OffersCatalogue({ city, searchParams }: ListingProps) {
                         title="No offers match"
                         description={
                             hasFilters
-                                ? "Try a different search, category or area."
+                                ? "Try a different search, category, type or area."
                                 : "New offers are on their way. Check back soon."
                         }
                         href={hasFilters ? base : undefined}
@@ -315,7 +340,7 @@ async function OffersSearch({ city, searchParams }: ListingProps) {
             action={city ? `/offers/${city.slug}` : "/offers"}
             defaultValue={params.search}
             placeholder="Search offers, businesses or areas"
-            hidden={{ category: params.category, area: params.area, sort: params.sort }}
+            hidden={{ category: params.category, area: params.area, type: params.type, sort: params.sort }}
             size="lg"
         />
     );
