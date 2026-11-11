@@ -412,10 +412,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         </h1>
                     </div>
 
+                    {/* The first screen anybody sees. It says what
+                        Promotello does for them rather than what this
+                        screen is called, and it says the same thing on
+                        day one and a year in — the card below it comes
+                        and goes, so a line about what is in it would be
+                        wrong half the time. */}
                     <p className="mt-3 max-w-2xl text-[#17233B]/65">
                         {isLive
-                            ? "Monitor your business activity and manage everything from one place."
-                            : `Let's get ${business.name} in front of customers.`}
+                            ? `Everything ${business.name} does on Promotello, in one place: offers that bring people in, QR posters that get them scanning, and a loyalty card that brings them back. How it is all going is below.`
+                            : `Everything ${business.name} will do on Promotello starts here: offers that bring people in, QR posters that get them scanning, and a loyalty card that brings them back. Nothing is public until we have checked your page, which is usually the same day.`}
                     </p>
                 </div>
             </div>
