@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import {
     FiAward,
+    FiBell,
     FiBriefcase,
     FiCompass,
     FiGrid,
@@ -26,9 +27,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { UserProfile } from "@/lib/user-profile";
 import { createClient } from "@/utils/supabase/client";
+import { useUnreadNotifications } from "./use-unread-notifications";
 import { UserAvatar } from "./user-avatar";
 
-type AccountLink = { label: string; href: string; icon: IconType };
+type AccountLink = {
+    label: string;
+    href: string;
+    icon: IconType;
+    // Carries the unread count at the right of the row.
+    unread?: boolean;
+};
 
 // The same account links everywhere, so users always know where to find
 // them. Each inner array is a group with a divider between: what you came
@@ -41,13 +49,19 @@ const accountLinks = {
             { label: "Loyalty cards", href: "/dashboard/loyalty", icon: FiAward },
         ],
         [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase }],
-        [{ label: "Account settings", href: "/account", icon: FiSettings }],
+        [
+            { label: "Notifications", href: "/notifications", icon: FiBell, unread: true },
+            { label: "Account settings", href: "/account", icon: FiSettings },
+        ],
     ],
     // In the business dashboard, the customer side is one link, not three.
     business: [
         [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase }],
         [{ label: "Customer area", href: "/dashboard", icon: FiCompass }],
-        [{ label: "Account settings", href: "/account", icon: FiSettings }],
+        [
+            { label: "Notifications", href: "/notifications", icon: FiBell, unread: true },
+            { label: "Account settings", href: "/account", icon: FiSettings },
+        ],
     ],
 } satisfies Record<string, AccountLink[][]>;
 
@@ -127,6 +141,7 @@ export function UserMenu({
 }) {
     const { signOut, isSigningOut, error } = useSignOut(signOutRedirect);
     const isAdmin = useIsPlatformAdmin();
+    const unread = useUnreadNotifications();
 
     const groups = accountLinks[area];
 
@@ -137,7 +152,11 @@ export function UserMenu({
                     <Button
                         type="button"
                         variant="ghost"
-                        aria-label={`Open account menu for ${user.displayName}`}
+                        aria-label={
+                            unread > 0
+                                ? `Open account menu for ${user.displayName}, ${unread} unread ${unread === 1 ? "notification" : "notifications"}`
+                                : `Open account menu for ${user.displayName}`
+                        }
                         className="h-auto cursor-pointer gap-3 rounded-full px-2 py-1.5 data-popup-open:bg-[#17233B]/[0.06]"
                     />
                 }
@@ -153,7 +172,21 @@ export function UserMenu({
                     </span>
                 </span>
 
-                <UserAvatar src={user.avatarUrl} initials={user.initials} />
+                {/* The dot says there is something, and the menu says
+                    how many. Nothing is drawn until the count arrives,
+                    so it never appears and then goes. The ring is the
+                    header's own background, so it reads against a
+                    photograph as well as a plain tile. */}
+                <span className="relative flex">
+                    <UserAvatar src={user.avatarUrl} initials={user.initials} />
+
+                    {unread > 0 && (
+                        <span
+                            aria-hidden="true"
+                            className="absolute -right-0.5 -top-0.5 size-3 rounded-full bg-[#FF593F] ring-2 ring-background"
+                        />
+                    )}
+                </span>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" sideOffset={8} className="w-72 max-w-[calc(100vw-2rem)]">
@@ -179,6 +212,12 @@ export function UserMenu({
                                 <DropdownMenuItem key={link.href} render={<Link href={link.href} />}>
                                     <MenuIcon icon={link.icon} />
                                     {link.label}
+
+                                    {link.unread && unread > 0 && (
+                                        <span className="ml-auto rounded-full bg-[#FF593F] px-2 py-0.5 text-xs font-semibold text-white">
+                                            {unread > 9 ? "9+" : unread}
+                                        </span>
+                                    )}
                                 </DropdownMenuItem>
                             ))}
 
