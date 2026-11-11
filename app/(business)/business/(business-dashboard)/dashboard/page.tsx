@@ -11,7 +11,6 @@ import {
     FiPrinter,
     FiShoppingBag,
     FiTag,
-    FiZap,
 } from "react-icons/fi";
 import type { IconType } from "react-icons";
 
@@ -20,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
+import { cn } from "@/lib/utils";
 import { unclaimedPreview } from "@/lib/previews";
 import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
@@ -40,21 +40,27 @@ type BusinessSummary = Business & {
 
 // Only people with no business or several see this page; one business goes
 // straight to its overview.
-function Page({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
+function Page({ children }: { children: React.ReactNode }) {
     return (
         <main className="bg-[#FFF8F0] px-6 py-12 text-[#17233B] sm:py-16">
-            <div className={`mx-auto ${wide ? "max-w-4xl" : "max-w-2xl"}`}>{children}</div>
+            <div className="mx-auto max-w-2xl">{children}</div>
         </main>
     );
 }
 
 // The same coral tile the account menu and the checklist use, so an icon
 // on this page belongs to the same product as the ones behind it.
-function IconTile({ icon: Icon, className = "" }: { icon: IconType; className?: string }) {
+function IconTile({ icon: Icon, className }: { icon: IconType; className?: string }) {
     return (
         <span
             aria-hidden="true"
-            className={`flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] text-[#FF593F] ${className}`}
+            // cn, not a template string: the first step's tile swaps both
+            // of these colours, and which one wins can't be left to the
+            // order the classes happen to land in the stylesheet.
+            className={cn(
+                "flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4E8] text-[#FF593F]",
+                className,
+            )}
         >
             <Icon className="size-5" />
         </span>
@@ -135,51 +141,37 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
     );
 }
 
+// The same four the checklist works down once a business exists, in the
+// same order, so the first screen and the second agree about what
+// setting up means.
 const welcomeSteps = [
     {
         icon: FiShoppingBag,
-        title: "Add your business",
+        title: "Your profile page",
         description:
-            "Your name, category and where to find you. About two minutes, and you can change any of it later.",
-        time: "2 minutes",
+            "Your name, where to find you, your hours and a photo. This is the page a customer lands on.",
+        time: "About five minutes",
     },
     {
         icon: FiTag,
-        title: "Create your first offer",
+        title: "Your first offer",
         description:
-            "Free on every plan. Something small is plenty: a discount, a free side, a second coffee. It is the reason somebody walks in today.",
-        time: "5 minutes",
+            "Something small is plenty: a discount, a free side, a second coffee. It is the reason somebody walks in today.",
+        time: "Free on every plan",
     },
     {
         icon: FiPrinter,
-        title: "Print a QR poster",
+        title: "A QR poster for your window",
         description:
-            "Put it in your window. Every scan opens your offers and your loyalty card, and you can see which poster is earning its place.",
-        time: "A4 or A5, straight from your printer",
-    },
-];
-
-// What they are getting, not what the screens are called. The three
-// lines match the ones on their dashboard once a business exists, so the
-// promise made here is the thing they find there.
-const whatItDoes = [
-    {
-        icon: FiTag,
-        title: "Brings people in",
-        description:
-            "Your page and your offer sit in the local directory, where somebody deciding where to go this afternoon is already looking.",
+            "Every scan opens your offers, and you can see which spot is earning its place.",
+        time: "A4 or A5, from your own printer",
     },
     {
         icon: FiAward,
-        title: "Brings them back",
+        title: "Your loyalty card",
         description:
-            "A stamp card that lives in their phone instead of the bottom of a bag, so the next coffee is worth walking past somewhere else for.",
-    },
-    {
-        icon: FiZap,
-        title: "Runs without you",
-        description:
-            "A welcome offer, a birthday treat and a nudge to anybody who hasn't been in for a while, sent while you are serving.",
+            "Digital stamps that live in a phone rather than the bottom of a bag, so the next one is worth walking past somewhere else for.",
+        time: "On Pro, free for 30 days",
     },
 ];
 
@@ -191,99 +183,79 @@ const reassurances = [
 
 function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
     return (
-        <Page wide>
+        <Page>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
                 Getting started
             </p>
 
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-                {firstName ? `Welcome, ${firstName}` : "Welcome to Promotello"}
+                Promotello for Business
             </h1>
 
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-[#17233B]/70">
-                The customers Promotello works on first are the ones already walking
-                past your door. Give them a reason to come in, and a reason to come
-                back. A quarter of an hour from here to a poster in your window.
+            <p className="mt-4 text-lg leading-8 text-[#17233B]/70">
+                {firstName ? `Welcome, ${firstName}. The` : "The"} customers Promotello
+                works on first are the ones already walking past your door. Give them a
+                reason to come in, and a reason to come back.
             </p>
 
-            <div className="mt-10 grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-start">
-                {/* The three steps, and the only button on the page. */}
-                <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
-                    <h2 className="text-xl font-semibold">Three steps to your first customers</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                        Start at the top. Nothing here is permanent and nothing is
-                        public until you say so.
-                    </p>
+            <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
+                <h2 className="text-xl font-semibold">Four steps to your first regulars</h2>
+                <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
+                    Start at the top. Nothing here is permanent, and nothing is public
+                    until you say so.
+                </p>
 
-                    <ol className="mt-7 space-y-6">
-                        {welcomeSteps.map((step, index) => (
-                            <li key={step.title} className="flex gap-4">
-                                <div className="relative shrink-0">
-                                    <IconTile
-                                        icon={step.icon}
-                                        className={index === 0 ? "bg-[#FF593F] text-white" : ""}
+                <ol className="mt-7 space-y-6">
+                    {welcomeSteps.map((step, index) => (
+                        <li key={step.title} className="flex gap-4">
+                            <div className="relative shrink-0">
+                                <IconTile
+                                    icon={step.icon}
+                                    className={index === 0 ? "bg-[#FF593F] text-white" : ""}
+                                />
+
+                                {/* A line down the margin, through the gap
+                                    below, so the four read as one run
+                                    rather than four cards. */}
+                                {index < welcomeSteps.length - 1 && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="absolute -bottom-6 left-1/2 top-13 w-px -translate-x-1/2 bg-[#17233B]/10"
                                     />
+                                )}
+                            </div>
 
-                                    {/* A line down the margin, through the
-                                        gap below, so the three read as one
-                                        run rather than three cards. */}
-                                    {index < welcomeSteps.length - 1 && (
-                                        <span
-                                            aria-hidden="true"
-                                            className="absolute -bottom-6 left-1/2 top-13 w-px -translate-x-1/2 bg-[#17233B]/10"
-                                        />
-                                    )}
-                                </div>
+                            <div className="pb-1">
+                                <p className="font-semibold">
+                                    <span className="text-[#17233B]/40">{index + 1}.</span>{" "}
+                                    {step.title}
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
+                                    {step.description}
+                                </p>
+                                <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-[#17233B]/50">
+                                    {step.time}
+                                </p>
+                            </div>
+                        </li>
+                    ))}
+                </ol>
 
-                                <div className="pb-1">
-                                    <p className="font-semibold">
-                                        <span className="text-[#17233B]/40">{index + 1}.</span>{" "}
-                                        {step.title}
-                                    </p>
-                                    <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
-                                        {step.description}
-                                    </p>
-                                    <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-[#17233B]/50">
-                                        {step.time}
-                                    </p>
-                                </div>
-                            </li>
-                        ))}
-                    </ol>
+                <Button
+                    render={<Link href="/business/setup/new" />}
+                    nativeButton={false}
+                    size="lg"
+                    className="mt-8 w-full sm:w-auto"
+                >
+                    Add your business
+                    <FiArrowRight aria-hidden="true" />
+                </Button>
 
-                    <Button
-                        render={<Link href="/business/setup/new" />}
-                        nativeButton={false}
-                        size="lg"
-                        className="mt-8 w-full sm:w-auto"
-                    >
-                        Add your business
-                        <FiArrowRight aria-hidden="true" />
-                    </Button>
-
-                    <ul className="mt-7 space-y-2.5 border-t border-[#17233B]/10 pt-6">
-                        {reassurances.map((line) => (
-                            <li key={line} className="flex gap-2.5 text-sm leading-6 text-[#17233B]/70">
-                                <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
-                                {line}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* What they get for it, beside the steps on a wide screen
-                    and under them on a phone. */}
-                <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-                    {whatItDoes.map((item) => (
-                        <li
-                            key={item.title}
-                            className="rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm"
-                        >
-                            <IconTile icon={item.icon} />
-                            <p className="mt-4 font-semibold">{item.title}</p>
-                            <p className="mt-1.5 text-sm leading-6 text-[#17233B]/70">
-                                {item.description}
-                            </p>
+                <ul className="mt-7 space-y-2.5 border-t border-[#17233B]/10 pt-6">
+                    {reassurances.map((line) => (
+                        <li key={line} className="flex gap-2.5 text-sm leading-6 text-[#17233B]/70">
+                            <FiCheck aria-hidden="true" className="mt-1 shrink-0 text-[#FF593F]" />
+                            {line}
                         </li>
                     ))}
                 </ul>
