@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { BusinessProfileLoading } from "@/components/dashboard-skeletons";
 import { createClient } from "@/utils/supabase/server";
 import { getCityOptions } from "@/lib/locations";
 import EditBusinessForm from "./edit-business-form";
@@ -12,50 +12,6 @@ type PageProps = {
         businessId: string;
     }>;
 };
-
-function LoadingState() {
-    return (
-        <div>
-            <div>
-                <Skeleton className="h-9 w-44 rounded-lg" />
-
-                <div className="mt-8">
-                    <Skeleton className="h-5 w-40 rounded-lg" />
-                    <Skeleton className="mt-3 h-12 w-64 rounded-lg" />
-                    <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
-                </div>
-
-                <div className="mt-10 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-10">
-                    <Skeleton className="h-7 w-56 rounded-lg" />
-
-                    <div className="mt-6 space-y-5">
-                        <Skeleton className="h-24 w-24 rounded-xl" />
-                        <Skeleton className="h-10 w-full rounded-lg" />
-                        <Skeleton className="h-10 w-full rounded-lg" />
-                        <Skeleton className="h-28 w-full rounded-lg" />
-                        <Skeleton className="h-10 w-full rounded-lg" />
-                        <Skeleton className="h-10 w-full rounded-lg" />
-                    </div>
-
-                    <Skeleton className="my-8 h-px w-full" />
-
-                    <Skeleton className="h-7 w-48 rounded-lg" />
-
-                    <div className="mt-6 space-y-4">
-                        {[1, 2, 3, 4].map((item) => (
-                            <Skeleton
-                                key={item}
-                                className="h-16 w-full rounded-xl"
-                            />
-                        ))}
-                    </div>
-
-                    <Skeleton className="mt-8 h-11 w-full rounded-lg" />
-                </div>
-            </div>
-        </div>
-    );
-}
 
 async function EditBusinessContent({ params }: PageProps) {
     await connection();
@@ -90,7 +46,7 @@ async function EditBusinessContent({ params }: PageProps) {
 
 export default function EditBusinessPage({ params }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<BusinessProfileLoading />}>
             <EditBusinessContent params={params} />
         </Suspense>
     );

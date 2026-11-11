@@ -6,7 +6,7 @@ import { FiArrowLeft } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { loadLoyaltyEditor } from "../loyalty-data";
 import { LoyaltyCardBuilder } from "../program-form";
 
@@ -15,14 +15,6 @@ import { LoyaltyCardBuilder } from "../program-form";
 
 type PageProps = { params: Promise<{ businessId: string }> };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-10 w-48 rounded-lg" />
-            <Skeleton className="mt-8 h-[32rem] rounded-xl" />
-        </div>
-    );
-}
 
 async function NewLoyaltyCard({ params }: PageProps) {
     await connection();
@@ -105,7 +97,7 @@ async function NewLoyaltyCard({ params }: PageProps) {
 
 export default function NewLoyaltyCardPage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading fields={5} />}>
             <NewLoyaltyCard {...props} />
         </Suspense>
     );

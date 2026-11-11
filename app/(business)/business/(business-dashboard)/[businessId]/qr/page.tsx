@@ -7,7 +7,7 @@ import { FiDownload, FiExternalLink, FiPlus, FiPrinter } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardGridLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
 import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
@@ -52,20 +52,6 @@ const errorMessages: Record<string, string> = {
     restore: "We couldn't bring that code back. Please try again.",
 };
 
-function LoadingState() {
-    return (
-        <div>
-            <div>
-                <Skeleton className="h-10 w-64 rounded-lg" />
-                <Skeleton className="mt-8 h-40 rounded-xl" />
-                <div className="mt-8 grid gap-5 md:grid-cols-2">
-                    <Skeleton className="h-72 rounded-xl" />
-                    <Skeleton className="h-72 rounded-xl" />
-                </div>
-            </div>
-        </div>
-    );
-}
 
 function scanWindows() {
     const now = Date.now();
@@ -561,7 +547,7 @@ async function QrContent({ params, searchParams }: PageProps) {
 
 export default function QrPage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<CardGridLoading />}>
             <QrContent {...props} />
         </Suspense>
     );

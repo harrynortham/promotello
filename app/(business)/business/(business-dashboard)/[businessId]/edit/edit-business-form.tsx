@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BusinessProfileLoading } from "@/components/dashboard-skeletons";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { LocationFields } from "@/components/location-fields";
@@ -178,14 +179,9 @@ export default function EditBusinessForm({
         };
     }, [businessId]);
 
+    // The same shape the page showed while it waited: one wait, not two.
     if (isLoading) {
-        return (
-            <div>
-                <div>
-                    <div className="h-96 animate-pulse rounded-xl bg-white" />
-                </div>
-            </div>
-        );
+        return <BusinessProfileLoading />;
     }
 
     if (!loaded) {

@@ -7,7 +7,7 @@ import { FiArrowRight, FiBell } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardStackLoading } from "@/components/dashboard-skeletons";
 import { CURRENT_SUBSCRIPTION_STATUSES } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { CloseBusiness } from "./close-business";
@@ -25,15 +25,6 @@ const errorMessages: Record<string, string> = {
     close: "We couldn't close that business. Please try again.",
 };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-9 w-44 rounded-lg" />
-            <Skeleton className="mt-8 h-28 rounded-xl" />
-            <Skeleton className="mt-6 h-48 rounded-xl" />
-        </div>
-    );
-}
 
 async function SettingsContent({ params, searchParams }: PageProps) {
     await connection();
@@ -156,7 +147,7 @@ async function SettingsContent({ params, searchParams }: PageProps) {
 
 export default function BusinessSettingsPage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<CardStackLoading cards={2} eyebrow={false} action={false} />}>
             <SettingsContent {...props} />
         </Suspense>
     );

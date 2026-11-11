@@ -22,6 +22,7 @@ import {
     type OfferValues,
 } from "@/components/offer-fields";
 import { BackButton } from "@/components/back-button";
+import { EditOfferLoading } from "@/components/dashboard-skeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -360,15 +361,10 @@ export default function EditOfferForm({
         router.refresh();
     }
 
+    // The same shape the page showed while it waited for the plan: this
+    // is the second half of one wait, not a different screen.
     if (isLoading) {
-        return (
-            <div>
-                <div>
-                    <div className="h-10 animate-pulse rounded-lg bg-white" />
-                    <div className="mt-6 h-96 animate-pulse rounded-xl bg-white" />
-                </div>
-            </div>
-        );
+        return <EditOfferLoading />;
     }
 
     if (!offer) {

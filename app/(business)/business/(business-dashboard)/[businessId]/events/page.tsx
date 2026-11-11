@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardStackLoading } from "@/components/dashboard-skeletons";
 import { Textarea } from "@/components/ui/textarea";
 import { businessTier } from "@/lib/billing";
 import { EVENTS_ENABLED } from "@/lib/features";
@@ -236,12 +236,7 @@ async function EventsContent({ params, searchParams }: PageProps) {
 export default function EventsPage(props: PageProps) {
     return (
         <Suspense
-            fallback={
-                <div className="space-y-6">
-                    <Skeleton className="h-10 w-48" />
-                    <Skeleton className="h-64 rounded-xl" />
-                </div>
-            }
+            fallback={<CardStackLoading cards={3} />}
         >
             <EventsContent {...props} />
         </Suspense>

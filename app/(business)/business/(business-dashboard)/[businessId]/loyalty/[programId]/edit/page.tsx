@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { SharePanel } from "@/components/share-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { loyaltyShareCaption, shareLink } from "@/lib/share";
 import { loadLoyaltyEditor } from "../../loyalty-data";
 import { ProgramSettingsForm, type Program } from "../../program-form";
@@ -20,14 +20,6 @@ import { CardDesign } from "../../card-design";
 
 type PageProps = { params: Promise<{ businessId: string; programId: string }> };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-10 w-48 rounded-lg" />
-            <Skeleton className="mt-8 h-[28rem] rounded-xl" />
-        </div>
-    );
-}
 
 async function EditLoyaltyCard({ params }: PageProps) {
     await connection();
@@ -182,7 +174,7 @@ async function EditLoyaltyCard({ params }: PageProps) {
 
 export default function EditLoyaltyCardPage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading fields={5} />}>
             <EditLoyaltyCard {...props} />
         </Suspense>
     );

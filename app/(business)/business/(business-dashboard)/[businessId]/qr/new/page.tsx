@@ -7,7 +7,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { loadDesigner } from "../designer-data";
 import { PosterDesigner } from "../poster-designer";
 
@@ -17,14 +17,6 @@ import { PosterDesigner } from "../poster-designer";
 
 type PageProps = { params: Promise<{ businessId: string }> };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-10 w-48 rounded-lg" />
-            <Skeleton className="mt-8 h-[32rem] rounded-xl" />
-        </div>
-    );
-}
 
 async function NewQrCode({ params }: PageProps) {
     await connection();
@@ -98,7 +90,7 @@ async function NewQrCode({ params }: PageProps) {
 
 export default function NewQrCodePage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading fields={4} />}>
             <NewQrCode {...props} />
         </Suspense>
     );

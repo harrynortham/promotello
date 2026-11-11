@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { createClient } from "@/utils/supabase/server";
 import DescriptionForm from "./description-form";
 
@@ -12,15 +12,6 @@ type PageProps = {
     }>;
 };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-9 w-44 rounded-lg" />
-            <Skeleton className="mt-8 h-12 w-72 rounded-lg" />
-            <Skeleton className="mt-10 h-72 w-full rounded-xl" />
-        </div>
-    );
-}
 
 // Just the description, for the "Describe your business" setup step. The
 // business profile page can change everything at once, which is the wrong
@@ -67,7 +58,7 @@ async function DescriptionContent({ params }: PageProps) {
 
 export default function DescriptionPage({ params }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading back fields={2} eyebrow={false} />}>
             <DescriptionContent params={params} />
         </Suspense>
     );

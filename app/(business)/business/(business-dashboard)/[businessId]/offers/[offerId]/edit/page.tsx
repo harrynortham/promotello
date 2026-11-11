@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 
+import { EditOfferLoading } from "@/components/dashboard-skeletons";
 import { businessTier } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import EditOfferForm from "./edit-offer-form";
@@ -11,17 +12,6 @@ type PageProps = {
         offerId: string;
     }>;
 };
-
-function LoadingState() {
-    return (
-        <div>
-            <div>
-                <div className="h-10 w-64 animate-pulse rounded-lg bg-[#17233B]/10" />
-                <div className="mt-8 h-[700px] animate-pulse rounded-xl bg-white" />
-            </div>
-        </div>
-    );
-}
 
 async function EditOfferContent({ params }: PageProps) {
     await connection();
@@ -40,7 +30,7 @@ async function EditOfferContent({ params }: PageProps) {
 
 export default function EditOfferPage({ params }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<EditOfferLoading />}>
             <EditOfferContent params={params} />
         </Suspense>
     );

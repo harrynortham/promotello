@@ -25,7 +25,7 @@ import { SharePanel } from "@/components/share-panel";
 import { offerShareCaption, shareLink } from "@/lib/share";
 import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
-import { Skeleton } from "@/components/ui/skeleton";
+import { OffersLoading } from "@/components/dashboard-skeletons";
 
 type PageProps = {
     params: Promise<{
@@ -96,61 +96,6 @@ const statusClasses: Record<OfferStatus, string> = {
     rejected: "border-red-200 bg-red-100 text-red-800",
     suspended: "border-slate-200 bg-slate-100 text-slate-700",
 };
-
-function LoadingState() {
-    return (
-        <div>
-            <div>
-                <Skeleton className="h-9 w-44 rounded-lg" />
-
-                <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <Skeleton className="h-5 w-32 rounded-lg" />
-                        <Skeleton className="mt-3 h-12 w-72 rounded-lg" />
-                        <Skeleton className="mt-3 h-5 w-96 max-w-full rounded-lg" />
-                    </div>
-
-                    <Skeleton className="h-9 w-40 rounded-lg" />
-                </div>
-
-                <div className="mt-10 space-y-5">
-                    {[1, 2, 3].map((item) => (
-                        <div
-                            key={item}
-                            className="overflow-hidden rounded-xl border border-[#17233B]/10 bg-white"
-                        >
-                            <Skeleton className="h-48 w-full rounded-none" />
-
-                            <div className="space-y-5 p-6 sm:p-8">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <Skeleton className="h-4 w-24 rounded-lg" />
-                                        <Skeleton className="mt-3 h-8 w-64 rounded-lg" />
-                                        <Skeleton className="mt-2 h-4 w-32 rounded-lg" />
-                                    </div>
-
-                                    <Skeleton className="h-6 w-28 rounded-full" />
-                                </div>
-
-                                <Skeleton className="h-16 w-full rounded-lg" />
-
-                                <div className="rounded-xl bg-[#FFF8F0] p-4">
-                                    <Skeleton className="h-5 w-56 rounded-lg" />
-                                    <Skeleton className="mt-3 h-2 w-full rounded-full" />
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <Skeleton className="h-9 w-32 rounded-lg" />
-                                    <Skeleton className="h-9 w-32 rounded-lg" />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
 
 function formatExpiry(date: string) {
     return new Intl.DateTimeFormat("en-GB", {
@@ -647,7 +592,7 @@ async function OffersContent({ params }: PageProps) {
 
 export default function BusinessOffersPage({ params }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<OffersLoading />}>
             <OffersContent params={params} />
         </Suspense>
     );
