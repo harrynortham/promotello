@@ -10,9 +10,9 @@ test("business owner can create a QR code, print its poster and see scans", asyn
 
     await page.goto(`/business/${businessId}/qr`);
     await page.locator("#qr-label").fill("Front window");
-    await page.getByRole("button", { name: "Create QR code" }).click();
+    await page.getByRole("button", { name: "Make this poster" }).click();
 
-    await expect(page.getByText("QR code created")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Poster made")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("heading", { name: "Front window" })).toBeVisible();
 
     // The short link printed on the poster.
@@ -176,9 +176,9 @@ test("a business waiting for approval is told so, and can't make a code", async 
 
         await page.goto(`/business/${waiting!.id}/qr`);
         await expect(page.getByText("Your page is still being checked")).toBeVisible({ timeout: 10_000 });
-        await expect(page.getByRole("button", { name: "Create QR code" })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Make this poster" })).toHaveCount(0);
         // Nor a button offering a form that isn't on the page.
-        await expect(page.getByRole("link", { name: "Create a QR code" })).toHaveCount(0);
+        await expect(page.getByRole("link", { name: "Make a poster" })).toHaveCount(0);
 
         // And the row is refused however it is written, with its own
         // code so it isn't read as the Free plan's one-code limit.
@@ -568,17 +568,17 @@ test("the form is on the page for a first code, and on /qr/new after that", asyn
             const grid = document.querySelector("section .grid");
             return (grid?.firstElementChild?.textContent ?? "").trim();
         });
-        expect(first).toContain("Add another QR code");
+        expect(first).toContain("Add another poster");
 
-        await page.getByRole("button", { name: "Create a QR code" }).click();
+        await page.getByRole("button", { name: "Make a poster" }).click();
         await page.waitForURL(`**/business/${state.businessId}/qr/new`);
         await expect(page.locator("#qr-label")).toBeVisible();
 
         // And making one there lands back on the list.
         await page.locator("#qr-label").fill("E2E Second Code");
-        await page.getByRole("button", { name: "Create QR code" }).click();
+        await page.getByRole("button", { name: "Make this poster" }).click();
         await page.waitForURL(`**/business/${state.businessId}/qr?created=1`, { timeout: 25_000 });
-        await expect(page.getByText("QR code created")).toBeVisible();
+        await expect(page.getByText("Poster made")).toBeVisible();
         await expect(page.getByRole("heading", { name: "E2E Second Code" })).toBeVisible();
     } finally {
         await admin.from("qr_codes").delete().eq("business_id", state.businessId).eq("label", "E2E Second Code");
@@ -623,7 +623,7 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
         await expect(page.locator("#poster-headline")).toHaveAttribute("placeholder", "Get a free coffee");
         await expect(page.locator("#poster-description")).toHaveValue("One stamp per visit.");
 
-        await page.getByRole("button", { name: "Create QR code" }).click();
+        await page.getByRole("button", { name: "Make this poster" }).click();
         await page.waitForURL(`**/business/${state.businessId}/qr?created=1`, { timeout: 25_000 });
 
         const { data: made } = await admin

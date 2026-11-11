@@ -40,7 +40,7 @@ async function NewQrCode({ params }: PageProps) {
 
             <header className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                    New QR code
+                    New poster
                 </p>
 
                 <h1 className="mt-3 text-4xl font-semibold tracking-tight">
@@ -59,8 +59,8 @@ async function NewQrCode({ params }: PageProps) {
                     <AlertTitle>No live offers to point at</AlertTitle>
 
                     <AlertDescription>
-                        This code can open your business page, which shows whatever
-                        is on at the time. Create an offer and you can point a code
+                        This poster can open your business profile page, which shows whatever
+                        is on at the time. Create an offer and you can point a poster
                         straight at it.
                     </AlertDescription>
                 </Alert>
@@ -68,7 +68,7 @@ async function NewQrCode({ params }: PageProps) {
 
             <Card id="create-qr" className="mt-8 overflow-visible border-[#17233B]/10">
                 <CardHeader>
-                    <CardTitle>Create a QR code</CardTitle>
+                    <CardTitle>Make a poster</CardTitle>
                 </CardHeader>
 
                 <CardContent>

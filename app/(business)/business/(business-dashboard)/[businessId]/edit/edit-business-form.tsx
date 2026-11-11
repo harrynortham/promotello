@@ -355,8 +355,11 @@ function BusinessForm({
                             Business profile
                         </h1>
 
-                        <p className="mt-3 text-[#17233B]/65">
-                            Keep your business information up to date.
+                        <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                            This is where customers land from the directory, your
+                            offers and your posters. What you put here is what they
+                            read while they decide whether to come in &mdash; the
+                            card beside it is how you look to them.
                         </p>
                     </div>
 

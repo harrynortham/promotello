@@ -115,7 +115,7 @@ export function PosterDesigner({
                         }}
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
-                        <option value="business">Your business page</option>
+                        <option value="business">Your business profile page</option>
                         {loyalty && (
                             <option value="loyalty">Loyalty card: {loyalty.name}</option>
                         )}
@@ -204,7 +204,7 @@ export function PosterDesigner({
                     pendingLabel="Creating…"
                     className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto"
                 >
-                    Create QR code
+                    Make this poster
                 </SubmitButton>
             </form>
 

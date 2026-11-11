@@ -42,7 +42,7 @@ export function PointQrCode({
                     defaultValue="business"
                     className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
                 >
-                    <option value="business">Your business page</option>
+                    <option value="business">Your business profile page</option>
                     {loyalty && <option value="loyalty">Loyalty card: {loyalty.name}</option>}
                     {offers.map((offer) => {
                         const waiting = offer.approval_status === "pending";
