@@ -403,7 +403,7 @@ test("the designer previews what the chosen target will print", async ({ page })
         "placeholder",
         "See what's on at E2E Test Business",
     );
-    const preview = page.locator("#create-qr article");
+    const preview = page.locator("#create-qr [data-slot=poster-preview] article");
     await expect(preview.getByRole("heading", { name: "See what's on at E2E Test Business" })).toBeVisible();
 
     // Pick an offer and the poster changes with it.
@@ -484,7 +484,7 @@ test("the description field appears only for an offer", async ({ page }) => {
     await expect(page.locator("#poster-description")).toHaveValue(offer!.description);
 
     // What is typed is what the preview prints.
-    const preview = page.locator("#create-qr article");
+    const preview = page.locator("#create-qr [data-slot=poster-preview] article");
     await page.locator("#poster-description").fill("Two scoops for one, every afternoon.");
     await expect(preview.getByText("Two scoops for one, every afternoon.")).toBeVisible();
 
@@ -504,7 +504,7 @@ test("the form has no paper size, and the preview follows you down", async ({ pa
 
     await expect(page.locator("#poster-size")).toHaveCount(0);
 
-    const poster = page.locator("#create-qr article");
+    const poster = page.locator("#create-qr [data-slot=poster-preview] article");
     const start = (await poster.boundingBox())!.y;
 
     await page.mouse.wheel(0, 240);
@@ -729,5 +729,67 @@ test("a poster for a deleted offer still lands somewhere, and both sides are tol
     } finally {
         await admin.from("qr_codes").delete().eq("id", code!.id);
         await admin.from("offers").delete().eq("id", offer!.id);
+    }
+});
+
+// A poster is an arrangement and a palette, and both have to survive the
+// trip to the printer: the business picks them on a form and then looks
+// at a different page, rendered by a different component, days later.
+test("a poster keeps the layout and the colours it was made with", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false } },
+    );
+    const label = `E2E layout ${Date.now()}`;
+
+    await page.goto(`/business/${businessId}/qr/new`);
+    await expect(page.locator("#qr-label")).toBeVisible({ timeout: 20_000 });
+    await page.locator("#qr-label").fill(label);
+
+    // Four arrangements, each its own real poster at thumbnail size.
+    await expect(page.getByRole("button", { name: /Classic/ })).toBeVisible();
+    await page.getByRole("button", { name: /^Bold/ }).click();
+
+    // Their own two colours, from their own logo.
+    await page.getByRole("button", { name: "Your own colours" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("Your own colours")).toBeVisible();
+
+    await dialog.getByLabel("Band colour, as a hex code").fill("#FFE14D");
+    await dialog.getByLabel("Pill colour, as a hex code").fill("#2B2B2B");
+    await dialog.getByRole("button", { name: "Use these colours" }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole("button", { name: "Make this poster" }).click();
+    await expect(page.getByText("Poster made")).toBeVisible({ timeout: 15_000 });
+
+    const { data: made } = await client
+        .from("qr_codes")
+        .select("id, poster_layout, poster_colour, poster_header, poster_accent")
+        .eq("business_id", businessId)
+        .eq("label", label)
+        .single();
+
+    try {
+        expect(made!.poster_layout).toBe("bold");
+        expect(made!.poster_colour).toBe("custom");
+        expect(made!.poster_header).toBe("#FFE14D");
+        expect(made!.poster_accent).toBe("#2B2B2B");
+
+        // The printed sheet is the one they chose, in their colour —
+        // and the type on it is dark, because white would vanish on
+        // that yellow.
+        await page.goto(`/poster/${made!.id}`);
+        const poster = page.locator("article").first();
+        await expect(poster).toHaveCSS("background-color", "rgb(255, 225, 77)");
+        await expect(poster).toHaveCSS("color", "rgb(23, 35, 59)");
+
+        // Two to a sheet, to cut down the middle.
+        await page.goto(`/poster/${made!.id}?size=a5x2`);
+        await expect(page.locator("article")).toHaveCount(2);
+    } finally {
+        await client.from("qr_codes").delete().eq("id", made!.id);
     }
 });

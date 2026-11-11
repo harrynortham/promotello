@@ -8,6 +8,7 @@ import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { QrPoster } from "@/components/qr-poster";
 import { PrintToolbar } from "./print-toolbar";
+import { posterSize, sheetSize } from "@/lib/poster-sizes";
 
 export const metadata: Metadata = {
     title: "QR poster",
@@ -19,11 +20,6 @@ type PageProps = {
     searchParams: Promise<{ size?: string }>;
 };
 
-const sizes = {
-    a4: { width: "210mm", height: "297mm", scale: 1, page: "A4" },
-    a5: { width: "148mm", height: "210mm", scale: 0.705, page: "A5" },
-};
-
 function todayIso() {
     return new Date().toISOString().slice(0, 10);
 }
@@ -32,7 +28,7 @@ async function Poster({ params, searchParams }: PageProps) {
     await connection();
 
     const [{ codeId }, { size: sizeParam }] = await Promise.all([params, searchParams]);
-    const size = sizeParam === "a5" ? "a5" : "a4";
+    const size = posterSize(sizeParam);
     const supabase = await createClient();
 
     const {
@@ -48,7 +44,7 @@ async function Poster({ params, searchParams }: PageProps) {
         .from("qr_codes")
         .select(
             `
-                id, code, label, offer_id, loyalty_program_id, business_id, poster_colour,
+                id, code, label, offer_id, loyalty_program_id, business_id, poster_colour, poster_layout, poster_header, poster_accent,
                 poster_eyebrow, poster_headline, poster_description,
                 businesses ( name, logo_url, category, business_locations ( region, city ) )
             `,
@@ -101,7 +97,8 @@ async function Poster({ params, searchParams }: PageProps) {
     const offer = offers?.[0] ?? null;
     const link = qrLink(origin, qr.code);
     const svg = await qrSvg(link);
-    const dims = sizes[size];
+    const dims = size;
+    const sheet = sheetSize(size);
     const place = location?.region || location?.city;
 
     return (
@@ -119,14 +116,14 @@ async function Poster({ params, searchParams }: PageProps) {
                   than the printable area, which is what makes a browser
                   shrink the whole thing. */}
             <style>{`
-                @page { size: ${dims.page} portrait; margin: 0; }
+                @page { size: ${dims.page}; margin: 0; }
 
                 @media print {
                     html, body {
                         margin: 0;
                         padding: 0;
-                        width: ${dims.width};
-                        height: ${dims.height};
+                        width: ${sheet.width};
+                        height: ${sheet.height};
                         background: #fff !important;
                     }
 
@@ -140,41 +137,65 @@ async function Poster({ params, searchParams }: PageProps) {
             <PrintToolbar
                 backHref={`/business/${qr.business_id}/qr`}
                 codeId={qr.id}
-                size={size}
-                sizeHrefs={{ a4: `/poster/${qr.id}?size=a4`, a5: `/poster/${qr.id}?size=a5` }}
+                size={size.value}
+                sizeHrefs={{
+                    a4: `/poster/${qr.id}?size=a4`,
+                    a5: `/poster/${qr.id}?size=a5`,
+                    a5x2: `/poster/${qr.id}?size=a5x2`,
+                }}
             />
 
-            <div className="flex justify-center bg-[#E9E4DD] py-10 print:block print:bg-white print:py-0">
-                <QrPoster
-                    width={dims.width}
-                    height={dims.height}
-                    fontSize={16 * dims.scale}
-                    businessName={business?.name ?? ""}
-                    place={place}
-                    logoUrl={business?.logo_url}
-                    offer={
-                        offer ??
-                        (loyalty
-                            ? {
-                                discount: `Get ${loyalty.reward.charAt(0).toLowerCase() + loyalty.reward.slice(1)}`,
-                                description: loyalty.terms,
-                            }
-                            : null)
-                    }
-                    eyebrowFallback={loyalty ? `Collect ${loyalty.stamps_required} stamps` : null}
-                    caption={
-                        loyalty
-                            ? "Join free on Promotello and collect a stamp every time you visit."
-                            : null
-                    }
-                    qrMarkup={svg}
-                    link={link}
-                    colour={qr.poster_colour}
-                    eyebrow={qr.poster_eyebrow}
-                    headline={qr.poster_headline}
-                    detail={qr.poster_description}
-                    className="shadow-2xl print:shadow-none"
-                />
+            {/* Two copies share a landscape sheet, to be cut down the
+                middle. On screen they sit side by side with the cut
+                line between them; on paper the line is all that is
+                added. */}
+            <div
+                className={`flex justify-center bg-[#E9E4DD] py-10 print:bg-white print:py-0 ${
+                    dims.copies > 1 ? "print:flex" : "print:block"
+                }`}
+            >
+                {Array.from({ length: dims.copies }, (_, copy) => (
+                    <div
+                        key={copy}
+                        className={
+                            copy > 0 ? "border-l border-dashed border-[#17233B]/30" : undefined
+                        }
+                    >
+                    <QrPoster
+                        width={dims.width}
+                        height={dims.height}
+                        fontSize={16 * dims.scale}
+                        businessName={business?.name ?? ""}
+                        place={place}
+                        logoUrl={business?.logo_url}
+                        offer={
+                            offer ??
+                            (loyalty
+                                ? {
+                                    discount: `Get ${loyalty.reward.charAt(0).toLowerCase() + loyalty.reward.slice(1)}`,
+                                    description: loyalty.terms,
+                                }
+                                : null)
+                        }
+                        eyebrowFallback={loyalty ? `Collect ${loyalty.stamps_required} stamps` : null}
+                        caption={
+                            loyalty
+                                ? "Join free on Promotello and collect a stamp every time you visit."
+                                : null
+                        }
+                        qrMarkup={svg}
+                        link={link}
+                        colour={qr.poster_colour}
+                        headerColour={qr.poster_header}
+                        accentColour={qr.poster_accent}
+                        layout={qr.poster_layout}
+                        eyebrow={qr.poster_eyebrow}
+                        headline={qr.poster_headline}
+                        detail={qr.poster_description}
+                        className="shadow-2xl print:shadow-none"
+                    />
+                    </div>
+                ))}
             </div>
         </>
     );

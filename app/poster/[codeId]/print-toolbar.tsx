@@ -6,6 +6,7 @@ import { FiArrowLeft, FiPrinter } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
+import { POSTER_SIZES, type PosterSize } from "@/lib/poster-sizes";
 
 export function PrintToolbar({
     backHref,
@@ -15,8 +16,8 @@ export function PrintToolbar({
 }: {
     backHref: string;
     codeId: string;
-    size: "a4" | "a5";
-    sizeHrefs: Record<"a4" | "a5", string>;
+    size: PosterSize;
+    sizeHrefs: Record<PosterSize, string>;
 }) {
     // Made is not printed. The dashboard used to tick "Print a QR poster"
     // the moment a code existed, and the funnel wants the poster that
@@ -38,19 +39,19 @@ export function PrintToolbar({
         <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-[#17233B]/10 bg-white/95 px-6 py-3 backdrop-blur print:hidden">
             <Button render={<Link href={backHref} />} nativeButton={false} variant="ghost" size="sm">
                 <FiArrowLeft aria-hidden="true" />
-                Back to QR codes
+                Back to QR posters
             </Button>
 
             <div className="flex items-center gap-2">
-                {(["a4", "a5"] as const).map((option) => (
+                {POSTER_SIZES.map((option) => (
                     <Button
-                        key={option}
-                        render={<Link href={sizeHrefs[option]} replace />}
+                        key={option.value}
+                        render={<Link href={sizeHrefs[option.value]} replace />}
                         nativeButton={false}
-                        variant={size === option ? "default" : "outline"}
+                        variant={size === option.value ? "default" : "outline"}
                         size="sm"
                     >
-                        {option.toUpperCase()}
+                        {option.label}
                     </Button>
                 ))}
 

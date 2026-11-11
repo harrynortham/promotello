@@ -43,8 +43,8 @@ export function DeleteQrCode({
                         <DialogDescription>
                             It comes off this page, and you can bring it back
                             whenever you like. Anyone scanning a copy that is
-                            still up lands on your business page with a note
-                            that the poster is out of date, and those scans keep
+                            still up lands on your business profile page with a
+                            note that the poster is out of date, and those scans keep
                             counting &mdash; which is how you will know whether
                             it is still out there.
                         </DialogDescription>
@@ -65,7 +65,7 @@ export function DeleteQrCode({
                             <input type="hidden" name="codeId" value={codeId} />
 
                             <Button type="submit" variant="destructive" size="lg">
-                                Retire code
+                                Retire poster
                             </Button>
                         </form>
                     </DialogFooter>
