@@ -9,6 +9,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RegisterLink } from "@/components/register-link";
 
 export const metadata = {
     title: { absolute: "About Promotello for Businesses" },
@@ -82,7 +83,7 @@ export default function About() {
 
                         <div className="mt-8 flex flex-wrap gap-3">
                             <Button
-                                render={<Link href="/business/register" />}
+                                render={<RegisterLink />}
                                 nativeButton={false}
                                 size="lg"
                                 className="bg-[#FF593F] text-[#17233B] hover:bg-[#ff735e]"
@@ -223,7 +224,7 @@ export default function About() {
 
                     <div className="mt-7 flex flex-wrap justify-center gap-3">
                         <Button
-                            render={<Link href="/business/register" />}
+                            render={<RegisterLink />}
                             nativeButton={false}
                             size="lg"
                             className="bg-[#17233B] text-white hover:bg-[#293b60]"

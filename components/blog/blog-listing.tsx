@@ -6,6 +6,7 @@ import { PostCard } from "@/components/blog/post-card";
 import { Button } from "@/components/ui/button";
 import { blogCategories } from "@/keystatic.config";
 import type { PostSummary } from "@/lib/blog";
+import { RegisterLink } from "@/components/register-link";
 
 export const BLOG_TITLE = "Guides for independent business owners";
 export const BLOG_INTRO =
@@ -81,7 +82,7 @@ export function BlogListing({
                             A local directory, offers, QR posters and stamp cards for independent businesses. Free to start.
                         </p>
                     </div>
-                    <Button render={<Link href="/business/register" />} nativeButton={false} size="lg" className="shrink-0">
+                    <Button render={<RegisterLink />} nativeButton={false} size="lg" className="shrink-0">
                         Start free
                         <FiArrowRight aria-hidden="true" />
                     </Button>

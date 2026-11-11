@@ -4,6 +4,7 @@ import { FiArrowRight, FiCheck } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import { plans } from "@/lib/billing";
+import { RegisterLink } from "@/components/register-link";
 
 // Building blocks shared by /business, /business/how-it-works and
 // /business/features.
@@ -57,7 +58,7 @@ export function FeatureSection({
 export function PrimaryActions({ dark = false }: { dark?: boolean }) {
     return (
         <div className="flex flex-wrap gap-3">
-            <Button render={<Link href="/business/register" />} nativeButton={false} size="lg">
+            <Button render={<RegisterLink />} nativeButton={false} size="lg">
                 Start free
                 <FiArrowRight aria-hidden="true" />
             </Button>
