@@ -88,8 +88,24 @@ function chosenDays(days: number[] | null | undefined) {
     return chosen.length === 0 || chosen.length === 7 ? null : chosen;
 }
 
-// "Mon–Fri, until 10am", "Every day, 2pm–4pm", "Any time · New customers
-// only". The one place this line is assembled.
+// The two sets of days that have a name of their own. Businesses write
+// them that way already — four live offers say "Weekdays" — so the
+// picker should give them back the words they would have typed.
+//
+// Only here: formatSchedule() is the window the till enforces and keeps
+// saying "Mon–Fri", because that is a list of days staff are held to
+// rather than a phrase on a card.
+function namedDays(days: number[]) {
+    const has = (day: number) => days.includes(day);
+
+    if (days.length === 5 && [1, 2, 3, 4, 5].every(has)) return "Weekdays";
+    if (days.length === 2 && has(6) && has(0)) return "Weekends";
+
+    return formatDays(days);
+}
+
+// "Weekdays, until 10am", "Every day, 2pm–4pm", "Any time · New
+// customers only". The one place this line is assembled.
 export function availabilityLine({ days, from, until, audience }: AvailabilityParts): string {
     const chosen = chosenDays(days);
     const times = from && until
@@ -103,9 +119,9 @@ export function availabilityLine({ days, from, until, audience }: AvailabilityPa
     // With a time, the days are always said — "Every day" when they are
     // all of them, because "2pm–4pm" on its own reads like today only.
     const line = times
-        ? `${chosen ? formatDays(chosen) : "Every day"}, ${times}`
+        ? `${chosen ? namedDays(chosen) : "Every day"}, ${times}`
         : chosen
-            ? formatDays(chosen)
+            ? namedDays(chosen)
             : "Any time";
 
     return audience === "new_customers" ? `${line} · New customers only` : line;
