@@ -3,6 +3,7 @@ import Link from "next/link";
 import React from "react";
 import { FiAlertTriangle, FiArrowRight, FiBookOpen, FiZap } from "react-icons/fi";
 
+import { RegisterLink } from "@/components/register-link";
 import { Button } from "@/components/ui/button";
 
 // Blog post content from Keystatic, with its custom blocks.
@@ -21,7 +22,14 @@ function CallToAction({ heading, text, target = "signup" }: { heading?: string; 
         <aside className="not-prose my-10 rounded-3xl bg-[#17233B] p-7 text-white sm:p-9">
             {heading && <p className="text-xl font-semibold sm:text-2xl">{heading}</p>}
             {text && <p className="mt-2 max-w-xl leading-7 text-white/80">{text}</p>}
-            <Button render={<Link href={link.href} />} nativeButton={false} size="lg" className="mt-5">
+            <Button
+                render={
+                    link.href === "/business/register" ? <RegisterLink /> : <Link href={link.href} />
+                }
+                nativeButton={false}
+                size="lg"
+                className="mt-5"
+            >
                 {link.label}
                 <FiArrowRight aria-hidden="true" />
             </Button>

@@ -20,6 +20,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RegisterLink } from "@/components/register-link";
 import {
     FOUNDING_MEMBER_LIMIT,
     FREE_LIVE_OFFER_LIMIT,
@@ -241,7 +242,7 @@ export default function BusinessPricingPage() {
                         </div>
 
                         <Button
-                            render={<Link href="/business/register" />}
+                            render={<RegisterLink />}
                             nativeButton={false}
                             size="lg"
                             className="mt-5 shrink-0 sm:mt-0"
@@ -280,7 +281,7 @@ export default function BusinessPricingPage() {
 
                             <CardContent className="px-7 pb-7 sm:px-9 sm:pb-9">
                                 <Button
-                                    render={<Link href="/business/register" />}
+                                    render={<RegisterLink />}
                                     nativeButton={false}
                                     variant="outline"
                                     size="lg"
@@ -335,7 +336,7 @@ export default function BusinessPricingPage() {
 
                             <CardContent className="px-7 pb-7 sm:px-9 sm:pb-9">
                                 <Button
-                                    render={<Link href="/business/register" />}
+                                    render={<RegisterLink />}
                                     nativeButton={false}
                                     size="lg"
                                     className="w-full"
@@ -395,7 +396,7 @@ export default function BusinessPricingPage() {
 
                             <CardContent className="px-7 pb-7 sm:px-9 sm:pb-9">
                                 <Button
-                                    render={<Link href="/business/register" />}
+                                    render={<RegisterLink />}
                                     nativeButton={false}
                                     variant="outline"
                                     size="lg"
@@ -541,7 +542,7 @@ export default function BusinessPricingPage() {
 
                         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                             <Button
-                                render={<Link href="/business/register" />}
+                                render={<RegisterLink />}
                                 nativeButton={false}
                                 size="lg"
                             >

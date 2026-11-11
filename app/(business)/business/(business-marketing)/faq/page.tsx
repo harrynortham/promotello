@@ -4,6 +4,7 @@ import { FiArrowRight } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RegisterLink } from "@/components/register-link";
 
 export const metadata: Metadata = {
     title: { absolute: "Frequently Asked Questions | Promotello for Business" },
@@ -343,7 +344,7 @@ export default function BusinessFaqPage() {
 
                         <div className="mt-7 flex flex-wrap justify-center gap-3">
                             <Button
-                                render={<Link href="/business/register" />}
+                                render={<RegisterLink />}
                                 nativeButton={false}
                                 size="lg"
                             >

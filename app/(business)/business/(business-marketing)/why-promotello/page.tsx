@@ -15,6 +15,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "./print-button";
+import { RegisterLink } from "@/components/register-link";
 
 // One-page overview for outreach emails: link it, or print it as a PDF.
 
@@ -201,7 +202,7 @@ export default function WhyPromotelloPage() {
                         <Button render={<Link href="/business/demo" />} nativeButton={false} variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
                             Try the demo
                         </Button>
-                        <Button render={<Link href="/business/register" />} nativeButton={false}>
+                        <Button render={<RegisterLink />} nativeButton={false}>
                             Start free
                             <FiArrowRight aria-hidden="true" />
                         </Button>

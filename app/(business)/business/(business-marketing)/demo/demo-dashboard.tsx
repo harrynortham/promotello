@@ -26,6 +26,7 @@ import { QrPoster } from "@/components/qr-poster";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VoucherQr } from "@/components/voucher-qr";
+import { RegisterLink } from "@/components/register-link";
 
 const business = "Harbour Grind";
 
@@ -447,7 +448,7 @@ export function DemoDashboard({ analytics, posterQr, stampQr }: { analytics: Bus
                         <strong>Demo:</strong> you&apos;re looking around a café&apos;s dashboard with made-up data.
                         Click the tabs to explore.
                     </p>
-                    <Button render={<Link href="/business/register" />} nativeButton={false} size="sm">
+                    <Button render={<RegisterLink />} nativeButton={false} size="sm">
                         Start free with your business
                         <FiArrowRight aria-hidden="true" />
                     </Button>
@@ -516,7 +517,7 @@ export function DemoDashboard({ analytics, posterQr, stampQr }: { analytics: Bus
                         >
                             One-page overview
                         </Button>
-                        <Button render={<Link href="/business/register" />} nativeButton={false}>
+                        <Button render={<RegisterLink />} nativeButton={false}>
                             Start free
                         </Button>
                     </div>

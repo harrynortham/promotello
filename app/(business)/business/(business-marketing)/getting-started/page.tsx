@@ -12,6 +12,7 @@ import {
     RedeemMarkArt,
     RedeemScanArt,
 } from "@/components/step-art";
+import { RegisterLink } from "@/components/register-link";
 import {
     Card,
     CardContent,
@@ -181,7 +182,7 @@ export default function BusinessGettingStartedPage() {
 
                         <div className="mt-8 flex flex-wrap gap-3">
                             <Button
-                                render={<Link href="/business/register" />}
+                                render={<RegisterLink />}
                                 nativeButton={false}
                                 size="lg"
                             >
@@ -302,9 +303,11 @@ export default function BusinessGettingStartedPage() {
 
                                                 <Button
                                                     render={
-                                                        <Link
-                                                            href={step.href}
-                                                        />
+                                                        step.href === "/business/register" ? (
+                                                            <RegisterLink />
+                                                        ) : (
+                                                            <Link href={step.href} />
+                                                        )
                                                     }
                                                     nativeButton={false}
                                                     variant="outline"
@@ -373,7 +376,7 @@ export default function BusinessGettingStartedPage() {
 
                         <div className="mt-8 flex flex-wrap justify-center gap-3">
                             <Button
-                                render={<Link href="/business/register" />}
+                                render={<RegisterLink />}
                                 nativeButton={false}
                                 size="lg"
                             >

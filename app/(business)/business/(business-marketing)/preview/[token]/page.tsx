@@ -17,6 +17,7 @@ import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 import { claimPreview } from "./actions";
 import { PreviewClaimed } from "./claimed";
+import { RegisterLink } from "@/components/register-link";
 
 // A private page showing a business how it would look on Promotello,
 // built by us before they've signed up. The token in the link is the key.
@@ -55,7 +56,7 @@ function NotAvailable() {
             <p className="mt-4 text-[#17233B]/65">
                 The link may have expired. You can still add your business to Promotello in a few minutes.
             </p>
-            <Button render={<Link href="/business/register" />} nativeButton={false} size="lg" className="mt-8">
+            <Button render={<RegisterLink />} nativeButton={false} size="lg" className="mt-8">
                 Add your business
             </Button>
         </section>
