@@ -283,7 +283,8 @@ test.describe("business forms", () => {
             // the words rather than changing under the customers.
             await page.locator("#kind").selectOption("freebie");
             await page.locator("#kindItem").fill("pastry");
-            await expect(page.getByText("Free pastry")).toBeVisible();
+            // Exactly: the examples under the field say "Free pastry" too.
+            await expect(page.getByText("Free pastry", { exact: true })).toBeVisible();
 
             await page.getByRole("button", { name: "Save changes" }).click();
             await page.waitForURL(`**/business/${businessId}/offers`);
