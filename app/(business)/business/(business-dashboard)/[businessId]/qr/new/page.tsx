@@ -60,7 +60,7 @@ async function NewQrCode({ params }: PageProps) {
 
                     <AlertDescription>
                         This poster can open your business profile page, which shows whatever
-                        is on at the time. Create an offer and you can point a code
+                        is on at the time. Create an offer and you can point a poster
                         straight at it.
                     </AlertDescription>
                 </Alert>

@@ -67,7 +67,7 @@ const steps = [
     {
         art: <CreateArt />,
         title: "Make a poster",
-        body: "Name it for the spot it will live in, like Front window, and choose whether it opens your business profile page or one offer.",
+        body: "Name it for the spot it will live in, like Front window, and choose whether it opens your business profile page, one offer, or your loyalty card.",
     },
     {
         art: <QrPrintArt />,

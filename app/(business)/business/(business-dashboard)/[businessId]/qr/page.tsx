@@ -184,8 +184,10 @@ async function QrContent({ params, searchParams }: PageProps) {
                         </h1>
                         <p className="mt-3 max-w-2xl text-[#17233B]/65">
                             Put a QR poster in your window, by the till or on
-                            tables. Customers scan it to see your offers, and
-                            you see how many scans each spot gets.
+                            tables. A scan opens whatever you point it at —
+                            your business profile page, one offer, or your
+                            loyalty card — and you see how many scans each
+                            spot gets.
                         </p>
                     </div>
 
