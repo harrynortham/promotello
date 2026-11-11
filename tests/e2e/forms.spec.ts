@@ -41,13 +41,17 @@ test("the contact form asks for a longer message", async ({ page }) => {
 test.describe("business forms", () => {
     test.use({ storageState: BUSINESS_AUTH });
 
-    test("onboarding checks each step before moving on", async ({ page }) => {
+    // The first screen of the setup flow. /onboarding redirects here, and
+    // its old three-step wizard — with its Continue button — is gone.
+    test("adding a business asks for a name and a kind of business", async ({ page }) => {
         await page.goto("/onboarding");
-        await page.getByRole("button", { name: "Continue" }).click();
+        await page.waitForURL("**/business/setup/new");
+
+        await page.getByRole("button", { name: "Add my business" }).click();
 
         await expect(page.getByText("The business name needs at least 2 characters.")).toBeVisible();
-        await expect(page.getByText("Choose what kind of business it is.")).toBeVisible();
-        await expect(page.getByRole("heading", { name: "Your business" })).toBeVisible();
+        await expect(page.getByText("Choose a category.")).toBeVisible();
+        await expect(page.getByRole("heading", { name: /Let's get you set up/ })).toBeVisible();
     });
 
     test("editing a business saves its details", async ({ page }) => {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -12,6 +12,7 @@ import { FieldError, invalidProps } from "@/components/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { email as emailField, requiredText } from "@/lib/validation";
+import { CodeInput } from "@/components/code-input";
 import { CODE_LENGTH, RESEND_SECONDS, codeField, signInProblem } from "@/lib/sign-in-code";
 import { createClient } from "@/utils/supabase/client";
 
@@ -143,6 +144,9 @@ export function EmailCodeForm({
 
     const isSending = emailForm.formState.isSubmitting;
     const isVerifying = codeForm.formState.isSubmitting || isFinishing;
+    const codeRegistration = codeForm.register("code");
+    // useWatch rather than watch(): the compiler can't memoise watch().
+    const typedCode = useWatch({ control: codeForm.control, name: "code" }) ?? "";
 
     if (!sentTo) {
         return (
@@ -238,20 +242,19 @@ export function EmailCodeForm({
             <div className="space-y-2">
                 <Label htmlFor={`${idPrefix}-code`}>Your code</Label>
 
-                <Input
+                <CodeInput
                     id={`${idPrefix}-code`}
-                    // A phone offers the code from the email above the keyboard.
-                    autoComplete="one-time-code"
-                    inputMode="numeric"
-                    maxLength={CODE_LENGTH}
-                    placeholder="123456"
+                    name={codeRegistration.name}
+                    length={CODE_LENGTH}
+                    value={typedCode}
+                    disabled={isVerifying}
+                    invalid={Boolean(codeForm.formState.errors.code)}
+                    describedBy={codeForm.formState.errors.code ? `${idPrefix}-code-error` : undefined}
                     autoFocus
-                    readOnly={isVerifying}
-                    className="text-center text-2xl tracking-[0.5em]"
-                    {...codeForm.register("code")}
-                    {...invalidProps(`${idPrefix}-code-error`, codeForm.formState.errors.code)}
-                    ref={(element) => {
-                        codeForm.register("code").ref(element);
+                    onChange={codeRegistration.onChange}
+                    onBlur={codeRegistration.onBlur}
+                    inputRef={(element) => {
+                        codeRegistration.ref(element);
                         codeRef.current = element;
                     }}
                 />
