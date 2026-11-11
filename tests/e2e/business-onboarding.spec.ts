@@ -227,7 +227,14 @@ test("the setup checklist goes once there is nothing left to do", async ({ brows
             image_url: picture!.cover_image_url,
         });
 
-        await admin.from("qr_codes").insert({ business_id: businessId, label: "Front window" });
+        // Printed, not made: the step ticks on poster_printed_at, which
+        // the poster page sets when somebody prints it or saves the PDF.
+        // A code sitting in the dashboard has never been in a window.
+        await admin.from("qr_codes").insert({
+            business_id: businessId,
+            label: "Front window",
+            poster_printed_at: new Date().toISOString(),
+        });
 
         const { error: loyaltyError } = await admin.from("loyalty_programs").insert({
             business_id: businessId,
