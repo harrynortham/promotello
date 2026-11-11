@@ -22,7 +22,7 @@ Promotello is for independent cafés, bakeries, restaurants, pubs, barbers, hair
 
 - Free: a business page, ${FREE_LIVE_OFFER_LIMIT} live offer and a QR poster, with no time limit.
 - Pro: ${plans.pro_monthly.price} a month (${plans.pro_yearly.price} a year): unlimited offers, a digital loyalty card, QR posters with scan counts, followers and new-offer emails, Google review prompts, staff scanning, team accounts. The first ${FOUNDING_MEMBER_LIMIT} businesses pay ${plans.pro_founding_monthly.price} a month, locked for life.
-- Growth: ${plans.growth_monthly.price} a month: everything in Pro plus automated welcome, birthday and win-back offers, quiet hours enforced at the till and a monthly report.
+- Growth: ${plans.growth_monthly.price} a month: everything in Pro plus automated welcome, birthday and win-back offers, quiet hours that a voucher enforces when staff scan it, and a monthly report.
 - Paid plans start with a ${TRIAL_DAYS}-day free trial. Prices are in GBP; Promotello isn't VAT registered.
 
 ## For businesses

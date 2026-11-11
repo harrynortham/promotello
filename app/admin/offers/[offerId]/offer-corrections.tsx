@@ -145,9 +145,10 @@ export function OfferCorrections({
 
             {enforcedAtTill && (
                 <p className="text-sm text-[#17233B]/65">
-                    Staff are held to this offer&apos;s window at the till. That window
-                    is separate and isn&apos;t changed here — if these days and times
-                    no longer match it, the business needs to save the offer itself.
+                    This offer&apos;s voucher refuses to be marked used outside its
+                    window. That window is separate and isn&apos;t changed here — if
+                    these days and times no longer match it, the business needs to
+                    save the offer itself.
                 </p>
             )}
 

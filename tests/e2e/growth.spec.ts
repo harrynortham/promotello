@@ -152,7 +152,7 @@ test.describe.serial("Growth plan", () => {
         // The tick-box isn't, and it says what it would do and where to
         // get it.
         await expect(page.getByLabel("Only let staff redeem it at these times")).toHaveCount(0);
-        await expect(page.getByText("Want the till to say no for you?")).toBeVisible();
+        await expect(page.getByText("Want the voucher to say no for you?")).toBeVisible();
         await expect(page.getByRole("link", { name: "See Growth" })).toHaveAttribute(
             "href",
             `/business/${freeBusinessId}/billing`,

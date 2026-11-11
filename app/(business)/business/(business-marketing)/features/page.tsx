@@ -177,7 +177,7 @@ export default async function FeaturesPage() {
                 tinted
                 eyebrow="Quiet-hours offers · Growth"
                 title="Fill the hours that are usually quiet."
-                body="Every offer says when it can be used, on any plan. What Growth adds is the till holding people to it: outside the window the voucher won't mark as used and the screen says when to come back. Without that, a Tuesday-afternoon offer quietly becomes a discount on your Saturday night, because nobody behind the counter wants the argument."
+                body="Every offer says when it can be used, on any plan. What Growth adds is holding people to it: scanned outside its window, the voucher shows “Not valid right now” and when to come back, with no button to mark it used. Without that, a Tuesday-afternoon offer quietly becomes a discount on your Saturday night, because nobody behind the counter wants the argument."
                 points={[
                     "Any days of the week, any time window, on every plan",
                     "Outside the window the voucher won't mark as used",

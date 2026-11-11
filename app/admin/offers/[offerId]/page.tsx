@@ -227,7 +227,7 @@ async function Overview({ params }: PageProps) {
                                 ["Headline", offer.discount],
                                 ["Availability", offer.availability],
                                 ["Who it's for", offer.audience === "new_customers" ? "New customers only" : "Everyone"],
-                                ["Enforced at the till", schedule],
+                                ["Enforced when scanned", schedule],
                                 ["Expires", onlyDate(offer.expires_at)],
                                 ["Limit", offer.max_redemptions ? `${offer.max_redemptions} claims` : "Unlimited"],
                             ]}

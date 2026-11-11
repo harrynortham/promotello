@@ -786,7 +786,7 @@ export function OfferAvailabilityFields({
                                 <div className="text-[#17233B]/65">
                                     <p>
                                         <strong className="text-[#17233B]">
-                                            Want the till to say no for you?
+                                            Want the voucher to say no for you?
                                         </strong>{" "}
                                         As it stands these times are a request. Someone can
                                         turn up at six on a Saturday with this voucher, and
@@ -796,10 +796,10 @@ export function OfferAvailabilityFields({
                                     </p>
 
                                     <p className="mt-2">
-                                        On Growth the voucher won&apos;t mark as used
-                                        outside these times. The screen tells the customer
-                                        when to come back, so nobody behind the counter has
-                                        to.{" "}
+                                        On Growth, scanning it outside these times shows
+                                        &ldquo;Not valid right now&rdquo; and when to come
+                                        back, with no button to mark it used. Nobody behind
+                                        the counter has to be the one refusing.{" "}
                                         <Link
                                             href={`/business/${businessId}/billing`}
                                             className="font-medium text-[#FF593F] underline"

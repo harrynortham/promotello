@@ -25,7 +25,7 @@ export const planComparison: ComparisonRow[] = [
     { feature: "Welcome, birthday and win-back automations", free: false, pro: false, growth: true, plus: "Welcome, birthday and win-back emails that run themselves" },
     // Every plan says when an offer runs; Growth is staff being held
     // to it at the till.
-    { feature: "Quiet hours enforced at the till", free: false, pro: false, growth: true, plus: "Quiet hours: outside an offer's times the voucher won't mark as used" },
+    { feature: "Quiet hours enforced when scanned", free: false, pro: false, growth: true, plus: "Quiet hours: outside an offer's times the voucher won't mark as used" },
     { feature: "Monthly value report by email", free: false, pro: false, growth: true, plus: "A monthly value report in your inbox" },
 ];
 
