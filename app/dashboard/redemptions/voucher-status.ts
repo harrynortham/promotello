@@ -1,5 +1,7 @@
 // Shared by the vouchers pages, each voucher's page and the dashboard.
 
+import type { OfferSchedule } from "@/lib/schedule";
+
 export type WalletRedemption = {
     id: string;
     code: string;
@@ -13,6 +15,10 @@ export type WalletRedemption = {
         description: string | null;
         discount: string;
         availability: string;
+        // Set only when staff are held to the offer's times: outside it
+        // the voucher won't mark as used, which the holder should hear
+        // from us rather than from somebody behind a counter.
+        window: OfferSchedule | null;
         expiresAt: string | null;
         terms: string;
         approved: boolean;

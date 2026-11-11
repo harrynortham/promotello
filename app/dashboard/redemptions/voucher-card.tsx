@@ -4,6 +4,7 @@ import { businessPath } from "@/lib/slugs";
 import Link from "next/link";
 import { useState } from "react";
 import {
+    FiAlertTriangle,
     FiClock,
     FiCopy,
     FiMapPin,
@@ -19,6 +20,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatSchedule } from "@/lib/schedule";
 
 import type { VoucherStatus, WalletRedemption } from "./voucher-status";
 
@@ -246,6 +248,20 @@ export function VoucherCard({
                         />
 
                         <p>{offer.availability}</p>
+                    </div>
+                )}
+
+                {/* The offer says when it runs; this one is held to it,
+                    and being turned away at the counter is a worse way
+                    to find that out than being told here. */}
+                {offer?.window && (
+                    <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-6 text-amber-900">
+                        <FiAlertTriangle aria-hidden="true" className="mt-1 size-4 shrink-0" />
+
+                        <p>
+                            Only valid {formatSchedule(offer.window)}. Staff can&apos;t
+                            mark it used at any other time.
+                        </p>
                     </div>
                 )}
 

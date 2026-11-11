@@ -4,6 +4,7 @@ import { addressParts } from "@/lib/address";
 import { createClient } from "@/utils/supabase/server";
 
 import { groupVouchers, type WalletRedemption } from "./voucher-status";
+import { scheduleFrom } from "@/lib/schedule";
 
 // The signed-in customer's vouchers: offers they claimed, and gift vouchers
 // from businesses' automations. Pass an id to load just that one. Rows are
@@ -36,6 +37,9 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                     description,
                     discount,
                     availability,
+                    schedule_days,
+                    schedule_start,
+                    schedule_end,
                     expires_at,
                     terms,
                     approval_status,
@@ -94,6 +98,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                     description: offer.description,
                     discount: offer.discount,
                     availability: offer.availability,
+                    window: scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end),
                     expiresAt: offer.expires_at,
                     terms: offer.terms,
                     approved: offer.approval_status === "approved" && business?.approval_status === "approved",
@@ -120,6 +125,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                 description: null,
                 discount: giftLabels[gift.kind] ?? "Gift",
                 availability: "One use. Show the code or QR to staff.",
+                window: null,
                 expiresAt: gift.expires_at,
                 terms: "A personal gift from the business. It can't be swapped for cash.",
                 approved: true,
