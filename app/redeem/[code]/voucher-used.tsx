@@ -24,6 +24,8 @@ export function VoucherUsed({
     usedAt,
     code,
     usedToday,
+    description,
+    terms,
     businessId,
     showLoyaltyNudge,
 }: {
@@ -34,6 +36,10 @@ export function VoucherUsed({
     code: string;
     // Including this one.
     usedToday: number;
+    // What the offer covers and what it says: still worth having after
+    // the press, because the thing is being handed over now.
+    description: string | null;
+    terms: string | null;
     businessId: string;
     // Free businesses only: the honest next thing, not a billboard.
     showLoyaltyNudge: boolean;
@@ -96,6 +102,32 @@ export function VoucherUsed({
                     {offerTitle} · {when}
                 </p>
             </div>
+
+            {(description || terms) && (
+                <div className="space-y-3 border-t border-white/10 px-7 py-5 text-left">
+                    {description && (
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+                                What they get
+                            </p>
+                            <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white/80">
+                                {description}
+                            </p>
+                        </div>
+                    )}
+
+                    {terms && (
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+                                Terms
+                            </p>
+                            <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white/60">
+                                {terms}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="border-t border-white/10 bg-white/[0.04] px-7 py-5 text-center">
                 <p className="text-sm text-white/75">
