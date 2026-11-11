@@ -255,7 +255,7 @@ const guides: HelpGuide[] = [
             "Open the account menu in the header and choose Account settings.",
             "Use Profile for your name and photo.",
             "Use Security to change the email address you sign in with.",
-            "Use Notifications for optional personal emails.",
+            "Use Email preferences for the optional personal emails, and Notifications in the account menu for what has happened.",
             "Use Privacy to request a copy of your data or delete your account.",
         ],
         note:

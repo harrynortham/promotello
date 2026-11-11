@@ -36,6 +36,7 @@ E2E tests seed isolated test users and data via the Supabase admin API, then tea
 | `(business)/business/(business-marketing)`              | `/business`                                                | Marketing site for businesses considering the platform            |
 | `(business)/business/(business-dashboard)/[businessId]` | `/business/[businessId]/*`                                 | Authenticated per-business management dashboard                   |
 | `app/dashboard`                                         | `/dashboard`                                               | Authenticated customer area (saved offers, redemptions)           |
+| `app/notifications`                                     | `/notifications`                                           | One in-app notification list per user account, both sides         |
 | `app/account`                                           | `/account`                                                 | User account settings (profile, notifications, privacy, security) |
 | `app/admin`                                             | `/admin`                                                   | Platform admin (business/offer approval, audit logs)              |
 
@@ -61,6 +62,11 @@ Migrations live in `supabase/migrations/`. Key tables and their RLS model:
 - **`offer_redemptions`** — one per `(offer_id, user_id)` pair. Created via `redeem_offer()` (SECURITY DEFINER) which validates offer eligibility atomically.
 - **`platform_admins`** — `is_platform_admin()` gates all admin-side mutations and reads.
 - **`business_invitations`** — token-based team invites resolved at `/invite/[token]`.
+- **`notifications`** — one in-app list per **user account**, never per business
+  (`business_id` is context only). No insert policy: rows are written with the
+  service role by `lib/notify.ts`, whose words all come from `lib/notifications.ts`.
+  A person may select their own, update only `read_at` (column grant) and delete
+  their own. Deleted after 90 days by the daily cron.
 
 ### UI component conventions
 

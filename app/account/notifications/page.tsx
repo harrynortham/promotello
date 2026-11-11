@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
@@ -46,11 +47,19 @@ async function NotificationsContent() {
             <section className="space-y-6">
                 <div>
                     <h1 className="text-3xl font-semibold tracking-tight">
-                        Notifications
+                        Email preferences
                     </h1>
 
                     <p className="mt-3 text-muted-foreground">
-                        Manage your personal email preferences.
+                        Which emails we send you, and which you&rsquo;d rather not have.
+                        Everything that happens is on your{" "}
+                        <Link
+                            href="/notifications"
+                            className="font-medium text-foreground underline underline-offset-4"
+                        >
+                            notifications
+                        </Link>{" "}
+                        either way.
                     </p>
                 </div>
 

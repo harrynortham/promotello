@@ -5,6 +5,7 @@ import { submitRecentPosts } from "@/lib/indexnow";
 import { sendMonthlyReports } from "@/lib/monthly-report";
 import { retryOfferAnnouncements } from "@/lib/new-offer-email";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { deleteOldNotifications } from "@/lib/notify";
 
 // Daily job (see vercel.json). Vercel sends CRON_SECRET as a bearer token.
 export async function GET(request: Request) {
@@ -29,11 +30,12 @@ export async function GET(request: Request) {
         return null;
     });
     const { data: expiredPreviews } = await createAdminClient().rpc("delete_expired_business_previews");
+    const oldNotifications = await deleteOldNotifications();
     const indexNow = await submitRecentPosts().catch(() => ({ submitted: 0 }));
 
     // Monthly value reports go out on the 1st (UK date).
     const ukDay = Number(new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone: "Europe/London" }).format(new Date()));
     const reports = ukDay === 1 ? await sendMonthlyReports() : null;
 
-    return Response.json({ automations, lifecycle, signupReminders, dailySummaries, announcements, expiredPreviews, indexNow, reports });
+    return Response.json({ automations, lifecycle, signupReminders, dailySummaries, announcements, expiredPreviews, oldNotifications, indexNow, reports });
 }

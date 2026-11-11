@@ -79,6 +79,15 @@ const sections: LegalSection[] = [
                     unsubscribe requests.
                 </p>
                 <p>
+                    <strong>Notifications.</strong> The list you see at{" "}
+                    <strong>Notifications</strong> in your account menu: a line
+                    of text for each thing that has happened with your offers,
+                    vouchers and the businesses you follow, when it happened,
+                    and whether you have read it. We write it at the same time
+                    as the matching email, keep it for 90 days, and show it to
+                    nobody but you.
+                </p>
+                <p>
                     <strong>Business accounts.</strong> If you run a business on
                     Promotello: the business&apos;s details, locations, opening
                     hours, offers and team members, and your role in the team.
@@ -385,6 +394,10 @@ const sections: LegalSection[] = [
                 <li>
                     Records of sent emails and review clicks: deleted with your
                     account.
+                </li>
+                <li>
+                    Notifications in your account menu: 90 days, then deleted
+                    automatically.
                 </li>
                 <li>
                     Billing and tax records: 6 years, as UK law requires.

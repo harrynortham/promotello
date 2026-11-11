@@ -257,6 +257,35 @@ Mail apps that support BIMI show the Promotello logo next to emails: the logo is
 
 Sent with Resend from `lib/email.ts`, using `brandedEmail()` for the layout. Customer emails from a business show as "_Business_ via Promotello". Every marketing email has an unsubscribe link. Contact form messages go to `CONTACT_EMAIL` (default support@promotello.com) with the sender as reply-to. Every email is sent from the app; there are no Supabase edge functions. Business notifications (daily summary, fully claimed and low inventory alerts) are in `lib/business-notifications.ts`.
 
+## In-app notifications
+
+Everything Promotello emails about an account, it also writes to that person's
+notification list at `/notifications`. Somebody who turned an email off still
+sees what happened; somebody already on the site doesn't have to go to their
+inbox.
+
+The list belongs to the **user account**, not to a business, so a person who is
+a customer and also runs a shop has one list and one dot on their avatar
+wherever they are. `notifications.business_id` only says which of their
+businesses a line is about.
+
+- `lib/notifications.ts` writes the words — one builder per event, pure, covered
+  by `npm run test:unit`. Titles are stored as written, so an old line still
+  reads correctly after the offer is renamed or deleted.
+- `lib/notify.ts` sends them: `notifyUsers()` and `notifyBusinessManagers()`,
+  with the service role, beside the email that already goes out for the same
+  event. Neither throws, and a failure never blocks the approval or claim that
+  caused it. A `dedupe_key` stops the same event telling somebody twice.
+- Nobody inserts from the browser: there is no insert policy. A person can mark
+  their own as read (a column grant on `read_at` only) and delete them.
+- The avatar's coral dot comes from `components/site/use-unread-notifications.ts`,
+  which recounts on navigation and on window focus. There is no Realtime
+  subscription.
+- `/account/notifications` is **Email preferences** and decides email only.
+  There are no in-app preferences yet.
+
+Spec: [docs/NOTIFICATIONS-SPEC.md](docs/NOTIFICATIONS-SPEC.md).
+
 ## Tests
 
 `npm run test:e2e` starts the dev server if it isn't running. The setup creates test users and businesses through the Supabase admin API and removes them afterwards. Test email addresses end in `@test.internal`, which `sendEmails` never sends to. Skip the Stripe portal test with `--grep-invert "billing portal"` if you're not logged in to Stripe test mode.
@@ -288,6 +317,7 @@ correction H scans.
    then sign in as the business and redeem both by scanning. Then do it again
    as a business that never got a preview email, and once more with Google
    sign-in.
+
 2. **The loyalty card, end to end.** Rebuilt in #164 and #165, so the old "all
    broken and wrong" note is stale, but it has not been through a real till:
    join by scanning, stamp, stamp to the reward, and what a customer sees when
@@ -366,7 +396,7 @@ competitor's sheet can show.
 Kept, not forgotten. Nothing here stops a business paying.
 
 - Add custom URL as a premium feature
-- What a customer or owner sees when a voucher offer is claimed, and whether an
+- What a customer sees when a voucher offer is claimed, and whether an
   animation belongs there.
 - The "Promotello isn't in your area yet" bar with an email field, as a
   waitlist rather than a dead end. Note [docs/MULTI-CITY.md](docs/MULTI-CITY.md):
@@ -374,10 +404,6 @@ Kept, not forgotten. Nothing here stops a business paying.
   purpose, so this belongs in the location search where someone names their own
   town, not in a bar that guesses. Needs a decision on how a waitlist is told
   when its city opens, and a VPN test either way.
-- Joining a loyalty card by phone number. Needs an SMS sender first, or a guest
-  who gives only a number has no way back to their card.
-- A hint and a link to the offer QR code, with a prompt someone can paste into
-  ChatGPT to make their own poster.
 - Custom Supabase domain.
 - Secure every social account with keychain passwords and the right phone
   numbers and email addresses.
@@ -387,10 +413,6 @@ Kept, not forgotten. Nothing here stops a business paying.
 - A BIMI mark certificate (VMC or CMC) so Gmail and Apple Mail show the logo.
   The logo and the DNS record are already in place.
 - Apple sign-in on the login and register pages: quicker than verifying email.
-- More poster sizes, including something smaller than the two we offer.
-- Generate a window poster for every business that signs up, printed and posted
-  through an API (Printful: documented REST API, kiss-cut stickers, printed in
-  the UK), and let businesses buy sticker sheets of their own code.
 - Stripe Managed Payments needs a VAT ID we won't have until the £90k
   threshold. At that point registering for VAT and turning on Stripe Tax is far
   cheaper than Managed Payments' extra ~3.5%, and Stripe doesn't have to become
@@ -414,7 +436,6 @@ Create own wallet apps instead of being tied to apple and google. use our own pu
 6. Customer list, segments (lapsed, VIP) and CSV export with consent flags
 7. Customer refer-a-friend
 8. Wallet push messages and location alerts (needs 1)
-9. QR poster sizes and designs + sticker request through AP
 
 Parked on purpose, as feature depth that only invites a comparison with a £10 stamp-card app. Build one when a paying business asks twice:
 
@@ -426,5 +447,3 @@ Parked on purpose, as feature depth that only invites a comparison with a £10 s
 Smaller gaps:
 
 - Business profiles: photo gallery and social links
-- Offer types beyond a discount — scoped in [docs/OFFER-TYPES.md](docs/OFFER-TYPES.md)
-- Admin dashboard: check it shows weekly active businesses, trial-to-paid and repeat visit rate

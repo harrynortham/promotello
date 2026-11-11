@@ -29,7 +29,9 @@ const links = [
         icon: FiLock,
     },
     {
-        label: "Notifications",
+        // "Notifications" is the list at /notifications now. This page
+        // has only ever decided which emails arrive.
+        label: "Email preferences",
         href: "/account/notifications",
         icon: FiBell,
     },
