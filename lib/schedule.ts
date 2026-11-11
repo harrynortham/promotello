@@ -22,6 +22,20 @@ export type OfferSchedule = {
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+// One day on its own gets its whole name, and all of these are plural: a
+// repeating offer runs every Saturday, where "Saturday" would read as
+// the one coming. It is also how businesses write them — "Saturdays",
+// "Fridays", "Weekdays" are all live on cards today.
+const everyDayNames = [
+    "Sundays",
+    "Mondays",
+    "Tuesdays",
+    "Wednesdays",
+    "Thursdays",
+    "Fridays",
+    "Saturdays",
+];
+
 // Week order for display: Monday first.
 export const weekdayOrder = [1, 2, 3, 4, 5, 6, 0];
 
@@ -88,9 +102,10 @@ function chosenDays(days: number[] | null | undefined) {
     return chosen.length === 0 || chosen.length === 7 ? null : chosen;
 }
 
-// The two sets of days that have a name of their own. Businesses write
-// them that way already — four live offers say "Weekdays" — so the
-// picker should give them back the words they would have typed.
+// Days said the way a person would say them: one day in full, Monday to
+// Friday as "Weekdays", Saturday and Sunday as "Weekends". Anything else
+// is a range or a list, which is short enough to read at a glance and
+// has no name of its own.
 //
 // Only here: formatSchedule() is the window the till enforces and keeps
 // saying "Mon–Fri", because that is a list of days staff are held to
@@ -98,6 +113,7 @@ function chosenDays(days: number[] | null | undefined) {
 function namedDays(days: number[]) {
     const has = (day: number) => days.includes(day);
 
+    if (days.length === 1) return everyDayNames[days[0]];
     if (days.length === 5 && [1, 2, 3, 4, 5].every(has)) return "Weekdays";
     if (days.length === 2 && has(6) && has(0)) return "Weekends";
 

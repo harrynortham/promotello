@@ -23,18 +23,24 @@ test("the line says when, in the order the spec sets out", () => {
     assert.equal(availabilityLine({ days: [1, 2, 3, 4], from: "14:00", until: "16:00" }), "Mon–Thu, 2pm–4pm");
 });
 
-// Businesses write these two themselves — four live offers say
-// "Weekdays" — so the picker gives back the words they would have typed.
-test("the two sets of days that have a name are called by it", () => {
+// Businesses write these themselves — "Weekdays", "Saturdays" and
+// "Fridays" are all live on cards — so the picker gives back the words
+// they would have typed. They are plural because the offer repeats:
+// "Saturday" would read as the one coming.
+test("days are said the way a person would say them", () => {
     assert.equal(availabilityLine({ days: weekdays }), "Weekdays");
     assert.equal(availabilityLine({ days: weekend }), "Weekends");
 
-    // One day either side of them is a list again.
+    // One day on its own gets its whole name.
+    assert.equal(availabilityLine({ days: [6] }), "Saturdays");
+    assert.equal(availabilityLine({ days: [0] }), "Sundays");
+    assert.equal(availabilityLine({ days: [3] }), "Wednesdays");
+    assert.equal(availabilityLine({ days: [5], from: "17:00" }), "Fridays, from 5pm");
+
+    // Anything else is a range or a list.
     assert.equal(availabilityLine({ days: [1, 2, 3, 4] }), "Mon–Thu");
     assert.equal(availabilityLine({ days: [1, 2, 3, 4, 5, 6] }), "Mon–Sat");
-    assert.equal(availabilityLine({ days: [6] }), "Sat");
     assert.equal(availabilityLine({ days: [5, 6] }), "Fri, Sat");
-    assert.equal(availabilityLine({ days: [0] }), "Sun");
 
     // The till's window is a list of days staff are held to, not a
     // phrase on a card, so it still spells them out.

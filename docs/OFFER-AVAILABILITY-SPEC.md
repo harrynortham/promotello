@@ -69,18 +69,23 @@ Anything else unusual belongs in the terms.
 | – | 2pm–4pm | `Every day, 2pm–4pm` |
 | Mon–Fri | until 10am | `Weekdays, until 10am` |
 | Sat, Sun | from 5pm | `Weekends, from 5pm` |
+| Sat | – | `Saturdays` |
 | Mon–Thu | 2pm–4pm | `Mon–Thu, 2pm–4pm` |
 
 New customers only appends ` · New customers only` (so `Any time · New
 customers only`). All seven days chosen is the same as none.
 
-Monday to Friday is **Weekdays** and Saturday with Sunday is
-**Weekends**: businesses write them that way already — four live offers
-say "Weekdays" — so the picker gives back the words they would have
-typed. Any other set is a list or a range, as above. This naming is
-`availabilityLine()` only: `formatSchedule()` is the window the till
-enforces and keeps saying `Mon–Fri`, because that is a list of days
-staff are held to rather than a phrase on a card.
+Days are said the way a person would say them. One day on its own gets
+its whole name (`Saturdays`), Monday to Friday is **Weekdays** and
+Saturday with Sunday is **Weekends**; anything else is a range or a list
+(`Mon–Thu`, `Fri, Sat`). All of these are plural, because the offer
+repeats — "Saturday" would read as the one coming — and because it is
+how businesses write them already: "Weekdays", "Saturdays" and "Fridays"
+are all live on cards today.
+
+This naming is `availabilityLine()` only: `formatSchedule()` is the
+window the till enforces and keeps saying `Mon–Fri`, because that is a
+list of days staff are held to rather than a phrase on a card.
 
 Nothing else assembles this line. The form preview, `offerRow()`, the
 sample data and the tests all call `availabilityLine`.
