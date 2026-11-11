@@ -24,6 +24,8 @@ import type { SetupStep, SetupStepId } from "@/lib/setup-steps";
 import { requestBusinessReview } from "@/app/(business)/business/(business-dashboard)/[businessId]/review-actions";
 import { createClient } from "@/utils/supabase/client";
 import { savingProblem, tryToSave } from "@/lib/saving";
+
+import { trackStep } from "./track";
 import type { SetupDraft } from "./setup-flow";
 
 export type BusinessLocation = {
@@ -135,6 +137,8 @@ function ImageStep({
     const [errorMessage, setErrorMessage] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
+    const step = column === "logo_url" ? "logo" : "cover";
+
     async function save() {
         if (!file) return;
 
@@ -156,9 +160,13 @@ function ImageStep({
 
             if (saved.error) throw new Error(savingProblem(saved));
 
+            trackStep(businessId, step, "step_completed");
             onSaved(upload.url);
         } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : "Please try again.");
+            const message = error instanceof Error ? error.message : "Please try again.";
+
+            trackStep(businessId, step, "step_failed", { message });
+            setErrorMessage(message);
             setIsSaving(false);
         }
     }
@@ -300,10 +308,12 @@ export function DescriptionStep({ businessId, draft, setDraft, onDone, ours }: S
         );
 
         if (saved.error) {
+            trackStep(businessId, "description", "step_failed", { message: savingProblem(saved) });
             setErrorMessage(savingProblem(saved));
             return;
         }
 
+        trackStep(businessId, "description", "step_completed");
         onDone();
     }
 
@@ -414,10 +424,12 @@ export function AddressStep({
                   .insert({ ...address, business_id: businessId, name: "Main location" });
 
         if (saved.error) {
+            trackStep(businessId, "address", "step_failed", { message: savingProblem(saved) });
             setErrorMessage(savingProblem(saved));
             return;
         }
 
+        trackStep(businessId, "address", "step_completed");
         setDraft((current) => ({ ...current, area: values.region, city: values.city }));
         onDone();
     }
@@ -510,10 +522,12 @@ export function HoursStep({
         );
 
         if (saved.error) {
+            trackStep(businessId, "hours", "step_failed", { message: savingProblem(saved) });
             setErrorMessage(savingProblem(saved));
             return;
         }
 
+        trackStep(businessId, "hours", "step_completed");
         onDone();
     }
 

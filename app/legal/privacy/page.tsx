@@ -139,6 +139,16 @@ const sections: LegalSection[] = [
                     recognise you tomorrow, or on any other website.
                 </p>
                 <p>
+                    <strong>Setting up a business.</strong> When you set up a
+                    business on Promotello we record the steps you complete and
+                    the ones you don&apos;t — when a page is created, when a
+                    logo or an address is added, when it&apos;s sent for review
+                    — and any error a form showed you. We use it to find where
+                    setting up goes wrong and fix it. It&apos;s recorded on our
+                    own servers, sets nothing on your device, and is only ever
+                    seen by us.
+                </p>
+                <p>
                     <strong>How fast pages are.</strong> Vercel Speed
                     Insights measures how quickly pages load and respond for
                     the people using them, from timings the browser itself
@@ -266,6 +276,12 @@ const sections: LegalSection[] = [
                         those pages are so we can fix the slow ones. Neither
                         sets anything on your device or builds a profile of
                         you, which is why we don&apos;t have to ask.
+                    </li>
+                    <li>
+                        <strong>Improving how businesses get set up (legitimate
+                        interests):</strong> recording which setup steps a
+                        business finishes, and where it stops, so the parts
+                        that go wrong can be found and fixed.
                     </li>
                     <li>
                         <strong>Keeping Promotello safe (legitimate

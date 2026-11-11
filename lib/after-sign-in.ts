@@ -6,6 +6,7 @@ import { claimOffer, offerBeingClaimed, sendVoucherFor } from "@/lib/claim-offer
 import { claimPreview } from "@/lib/claim-preview";
 import { sendEmails } from "@/lib/email";
 import { customerWelcomeDue, isNewAccount } from "@/lib/customer-welcome";
+import { trackOnboarding } from "@/lib/onboarding-events";
 import { businessMemberships, landingFor } from "@/lib/landing";
 import { previewBeingClaimed } from "@/lib/previews";
 import { isBusinessDestination, safeNextPath } from "@/lib/redirects";
@@ -119,6 +120,14 @@ async function markBusinessSignUp(user: User) {
     if (user.app_metadata?.business_signup_at || !isNewAccount(user.created_at)) {
         return;
     }
+
+    // Somebody who signed up without a preview to claim: there was no
+    // button to press before this, so this is the earliest we can honestly
+    // say they started. A claim records its own, earlier.
+    await trackOnboarding("signup_started", {
+        userId: user.id,
+        metadata: { from: "sign_in" },
+    });
 
     const { error } = await createAdminClient().auth.admin.updateUserById(user.id, {
         app_metadata: { business_signup_at: new Date().toISOString() },

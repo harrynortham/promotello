@@ -139,6 +139,7 @@ async function Poster({ params, searchParams }: PageProps) {
 
             <PrintToolbar
                 backHref={`/business/${qr.business_id}/qr`}
+                codeId={qr.id}
                 size={size}
                 sizeHrefs={{ a4: `/poster/${qr.id}?size=a4`, a5: `/poster/${qr.id}?size=a5` }}
             />

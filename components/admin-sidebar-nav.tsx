@@ -7,6 +7,7 @@ import {
     FiBarChart2,
     FiBriefcase,
     FiFileText,
+    FiFilter,
     FiGift,
     FiMessageSquare,
     FiMapPin,
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 
 const links = [
     { label: "Overview", href: "/admin", icon: FiBarChart2 },
+    { label: "Onboarding funnel", href: "/admin/funnel", icon: FiFilter },
     { label: "Businesses", href: "/admin/businesses", icon: FiBriefcase, count: "businesses" },
     { label: "Offers", href: "/admin/offers", icon: FiGift, count: "offers" },
     { label: "Categories", href: "/admin/categories", icon: FiTag },

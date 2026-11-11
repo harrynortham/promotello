@@ -34,6 +34,38 @@ test("business owner can create a QR code, print its poster and see scans", asyn
     await page.goto(posterHref!);
     await expect(page.getByText("Point your phone camera here")).toBeVisible();
     await expect(page.getByRole("button", { name: "Print or save as PDF" })).toBeVisible();
+
+    // Made is not printed: nothing is recorded until the poster is
+    // actually printed or saved, which is what the dashboard checklist and
+    // the onboarding funnel both count.
+    const codeId = posterHref!.split("/").pop()!.split("?")[0];
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const before = await admin.from("qr_codes").select("poster_printed_at").eq("id", codeId).single();
+    expect(before.error?.message ?? "", "apply the onboarding funnel migration first").not.toMatch(
+        /poster_printed_at/,
+    );
+    expect(before.data?.poster_printed_at, "making a code prints nothing").toBeNull();
+
+    // Printing is a browser dialog, so the page's own print handler is
+    // what the test presses — the same one ⌘P reaches.
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
+
+    await expect
+        .poll(async () => {
+            const { data } = await admin.from("qr_codes").select("poster_printed_at").eq("id", codeId).single();
+            return data?.poster_printed_at ?? null;
+        }, { timeout: 15_000 })
+        .not.toBeNull();
+
+    // And that is what ticks "Print a QR poster" on the dashboard: a
+    // finished item is struck through.
+    await page.goto(`/business/${businessId}`);
+    const item = page.getByText("Print a QR poster", { exact: true });
+    await expect(item).toBeVisible({ timeout: 15_000 });
+    await expect(item).toHaveClass(/line-through/);
 });
 
 test("the database limits Free businesses to one QR code", async () => {
