@@ -3,15 +3,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
+import { FiAlertTriangle } from "react-icons/fi";
 
 import { SubmitButton } from "@/components/submit-button";
+import { businessHasPro } from "@/lib/billing";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { formatSchedule, scheduleFrom } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/server";
 import { markVoucherUsed } from "./actions";
 import { GiftVoucher, type StaffGift } from "./gift-voucher";
+import { VoucherUsed } from "./voucher-used";
 
 export const metadata: Metadata = {
     title: "Redeem a voucher",
@@ -112,19 +114,63 @@ async function RedeemContent({ params, searchParams }: PageProps) {
         );
     }
 
+    if (done && voucher.used_at) {
+        // Two small questions worth answering while somebody is looking:
+        // how the day is going, and whether a stamp card is the next
+        // thing for them. Both only asked on the page that celebrates.
+        const midnight = new Date();
+        midnight.setHours(0, 0, 0, 0);
+
+        const [{ count: usedToday }, hasPro] = await Promise.all([
+            supabase
+                .from("offer_redemptions")
+                .select("id, offers!inner ( business_id )", { count: "exact", head: true })
+                .eq("offers.business_id", voucher.business_id)
+                .gte("used_at", midnight.toISOString()),
+            businessHasPro(supabase, voucher.business_id).catch(() => true),
+        ]);
+
+        return (
+            <Shell>
+                <VoucherUsed
+                    discount={voucher.offer_discount}
+                    offerTitle={voucher.offer_title}
+                    customerName={voucher.customer_name}
+                    usedAt={voucher.used_at}
+                    code={voucher.redemption_code}
+                    usedToday={Math.max(usedToday ?? 1, 1)}
+                    businessId={voucher.business_id}
+                    showLoyaltyNudge={!hasPro}
+                />
+            </Shell>
+        );
+    }
+
     const expired = isExpired(voucher.offer_expires_at);
     const schedule = scheduleFrom(voucher.schedule_days, voucher.schedule_start, voucher.schedule_end);
 
     return (
         <Shell>
-            <div className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-                <p className="text-sm font-medium text-[#17233B]/70">{voucher.business_name} voucher</p>
-                <h1 className="mt-1 text-2xl font-semibold leading-tight">{voucher.offer_title}</h1>
-                <p className="mt-2 inline-flex rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white">
-                    {voucher.offer_discount}
-                </p>
+            <div className="overflow-hidden rounded-3xl border border-[#17233B]/10 bg-white shadow-sm">
+                {/* What they are holding up, at the size it is read across
+                    a counter: the discount first, because that is the
+                    thing about to be given away. */}
+                <div className="bg-[#FFF4E8] px-7 pb-6 pt-7 text-center">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        {voucher.business_name} voucher
+                    </p>
 
-                <dl className="mt-6 grid grid-cols-2 gap-3 rounded-2xl bg-[#FFF8F0] p-4 text-sm">
+                    <p className="mt-3 text-4xl font-semibold leading-none tracking-tight text-[#17233B]">
+                        {voucher.offer_discount}
+                    </p>
+
+                    <h1 className="mx-auto mt-3 max-w-xs text-base leading-6 text-[#17233B]/75">
+                        {voucher.offer_title}
+                    </h1>
+                </div>
+
+                <div className="p-7 pt-6">
+                <dl className="grid grid-cols-2 gap-3 rounded-2xl bg-[#FFF8F0] p-4 text-sm">
                     <div>
                         <dt className="text-[#17233B]/70">Customer</dt>
                         <dd className="mt-0.5 font-semibold">{voucher.customer_name ?? "Customer"}</dd>
@@ -146,14 +192,6 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                         </dd>
                     </div>
                 </dl>
-
-                {done && voucher.used_at && (
-                    <Alert className="mt-5 border-emerald-200 bg-emerald-50 text-emerald-900">
-                        <FiCheckCircle aria-hidden="true" />
-                        <AlertTitle>Voucher used</AlertTitle>
-                        <AlertDescription>Apply the discount: {voucher.offer_discount}.</AlertDescription>
-                    </Alert>
-                )}
 
                 {error && (
                     <Alert variant="destructive" className="mt-5">
@@ -193,7 +231,7 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                             <form action={markVoucherUsed} className="mt-6">
                                 <input type="hidden" name="code" value={voucher.redemption_code} />
                                 <input type="hidden" name="redemptionId" value={voucher.redemption_id} />
-                                <SubmitButton pendingLabel="Marking as used…" className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90">
+                                <SubmitButton pendingLabel="Marking as used…" className="h-14 w-full bg-[#FF593F] text-base font-semibold text-white hover:bg-[#FF593F]/90">
                                     Mark as used
                                 </SubmitButton>
                             </form>
@@ -209,6 +247,7 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                 >
                     Back to redemptions
                 </Button>
+                </div>
             </div>
         </Shell>
     );

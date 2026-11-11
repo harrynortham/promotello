@@ -53,6 +53,15 @@ test("staff scan a customer's voucher and mark it used once", async ({ browser }
     await staff.getByRole("button", { name: "Mark as used" }).click();
     await expect(staff.getByText("Voucher used")).toBeVisible({ timeout: 10_000 });
 
+    // What somebody at a till needs in that second is the discount, at a
+    // size they can read with a queue behind them — not a note that a row
+    // was updated.
+    await expect(staff.getByText("10% off", { exact: true })).toBeVisible();
+    await expect(staff.getByText(/voucher used here today|vouchers used here today/)).toBeVisible();
+
+    // The business is on Pro, so it isn't sold anything.
+    await expect(staff.getByRole("link", { name: "Try Pro free" })).toHaveCount(0);
+
     // Scanning again warns instead of offering the button.
     await staff.goto(`/redeem/${code}`);
     await expect(staff.getByText("Already used")).toBeVisible();
