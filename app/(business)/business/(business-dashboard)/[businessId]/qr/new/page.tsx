@@ -59,7 +59,7 @@ async function NewQrCode({ params }: PageProps) {
                     <AlertTitle>No live offers to point at</AlertTitle>
 
                     <AlertDescription>
-                        This code can open your business page, which shows whatever
+                        This poster can open your business profile page, which shows whatever
                         is on at the time. Create an offer and you can point a code
                         straight at it.
                     </AlertDescription>

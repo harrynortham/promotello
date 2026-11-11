@@ -372,10 +372,10 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                 <p className="mt-1 text-sm text-[#17233B]/70">
                                                     Opens{" "}
                                                     {target.kind === "offer" && target.name
-                                                        ? `“${target.name}”`
+                                                        ? `“${target.name}” offer`
                                                         : target.kind === "card"
                                                             ? "your loyalty card"
-                                                            : "your business page"}
+                                                            : "your business profile page"}
                                                 </p>
 
                                                 <a
@@ -456,7 +456,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                         size="sm"
                                                     >
                                                         <FiDownload aria-hidden="true" />
-                                                        Download code
+                                                        Download QR code
                                                     </Button>
 
                                                     <Button
