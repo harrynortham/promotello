@@ -107,6 +107,9 @@ export type StuckBusiness = {
     slug: string | null;
     step: string;
     label: string;
+    // When the clock started: the moment they reached this step, or — if
+    // that step's time was backfilled rather than recorded — the last step
+    // we actually watched happen. See onboarding_funnel().
     at: string;
     waiting_days: number;
 };
