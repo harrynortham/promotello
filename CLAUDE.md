@@ -21,7 +21,21 @@ npm run test:e2e:ui  # Same with the Playwright interactive UI
 
 E2E tests seed isolated test users and data via the Supabase admin API, then tear them down after the run. Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
 
-`tests/e2e/billing.spec.ts` also needs `stripe listen --forward-to localhost:3000/api/stripe/webhook` running, with the `whsec_…` it prints as `STRIPE_WEBHOOK_SECRET`. Without it Checkout is paid but nothing tells the app, and the test fails waiting for a plan.
+`tests/e2e/billing.spec.ts` also needs a Stripe listener running, with the
+`whsec_…` it prints as `STRIPE_WEBHOOK_SECRET`. Without it Checkout is paid but
+nothing tells the app, and the test fails waiting for a plan.
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook \
+  --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.paid,invoice.payment_failed,charge.refunded,charge.dispute.created,radar.early_fraud_warning.created
+```
+
+The events are the ones `app/api/stripe/webhook/route.ts` switches on; the CLI
+refuses to listen without being told which. It also has to be in test mode,
+since `.env.local` holds an `sk_test_` key: `stripe switch` to a sandbox once,
+or pass the key for one run with `STRIPE_API_KEY=$(grep '^STRIPE_SECRET_KEY='
+.env.local | cut -d= -f2-) stripe listen …`, which leaves the CLI's own mode
+alone. "You're in live mode" means neither has happened.
 
 ## Architecture
 
