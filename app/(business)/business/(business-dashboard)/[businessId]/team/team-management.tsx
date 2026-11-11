@@ -286,8 +286,10 @@ export default function TeamManagement({
                             {businessName} team
                         </h1>
 
-                        <p className="mt-3 text-[#17233B]/65">
-                            Invite and manage people who help run your business.
+                        <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                            Anyone serving customers can scan a voucher without borrowing
+                            your login. Invite them here, choose what each person can
+                            reach, and take it back the day they leave.
                         </p>
                     </div>
 

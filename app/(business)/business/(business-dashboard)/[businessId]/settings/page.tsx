@@ -80,7 +80,12 @@ async function SettingsContent({ params, searchParams }: PageProps) {
     return (
         <div>
             <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
-            <p className="mt-2 text-[#17233B]/70">{business.name}</p>
+
+            <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                Who hears from us when a customer claims something, and what happens to
+                {" "}{business.name} if you ever stop. Worth a minute now, so the right
+                person is the one being told.
+            </p>
 
             {error && errorMessages[error] && (
                 <Alert variant="destructive" className="mt-8">
