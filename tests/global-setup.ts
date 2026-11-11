@@ -1,6 +1,21 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import { guessKind } from "@/lib/offer-kinds";
+
+// A seeded offer carries the same kind fields the form would have
+// written, so test data is shaped like real data: the type shows on the
+// admin pages and the offer turns up under the customer's type filter.
+function kindFieldsFor(discount: string) {
+    const guess = guessKind(discount);
+
+    return {
+        kind: guess.kind,
+        kind_value: guess.value,
+        kind_quantity: guess.quantity,
+        kind_item: guess.item,
+    };
+}
 
 export const STATE_PATH = path.join(process.cwd(), "tests", ".test-state.json");
 export const CUSTOMER_AUTH = path.join(process.cwd(), "tests", ".auth", "customer.json");
@@ -85,6 +100,7 @@ async function globalSetup() {
         title: "E2E Free Plan Offer",
         category: "Testing",
         discount: "5% off",
+        ...kindFieldsFor("5% off"),
         description: "The one live offer allowed on the Free plan.",
         availability: "Available now",
         expires_at: "2030-12-31",
@@ -109,6 +125,7 @@ async function globalSetup() {
             title: `E2E Billing ${suffix} offer`,
             category: "Testing",
             discount: "5% off",
+            ...kindFieldsFor("5% off"),
             description: "Offer for the upgrade test.",
             availability: "Available now",
             expires_at: "2030-12-31",
@@ -131,6 +148,7 @@ async function globalSetup() {
             title: "E2E Claim Test Offer",
             category: "Testing",
             discount: "10% off",
+            ...kindFieldsFor("10% off"),
             description: "A test offer for the claim flow.",
             availability: "Available now",
             expires_at: "2030-12-31",
@@ -153,6 +171,7 @@ async function globalSetup() {
             title: "E2E Redeem Test Offer",
             category: "Testing",
             discount: "20% off",
+            ...kindFieldsFor("20% off"),
             description: "A test offer for the redeem flow.",
             availability: "Available now",
             expires_at: "2030-12-31",

@@ -22,6 +22,7 @@ import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 
+import { guessKind } from "../lib/offer-kinds.ts";
 import { sampleBusinesses } from "./sample-data/businesses.mjs";
 import { bathBusinesses, bathCity } from "./sample-data/bath.mjs";
 import { downloadUnsplashPhoto } from "./sample-data/unsplash.mjs";
@@ -33,6 +34,17 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } },
 );
+
+function kindFieldsFor(discount) {
+    const guess = guessKind(discount);
+
+    return {
+        kind: guess.kind,
+        kind_value: guess.value,
+        kind_quantity: guess.quantity,
+        kind_item: guess.item,
+    };
+}
 
 function check(result, what) {
     if (result.error) {
@@ -221,6 +233,10 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
                 slug,
                 title: offer.title,
                 discount: offer.discount,
+                // The type read back out of the headline, by the same
+                // rules the migration's backfill used, so re-seeding
+                // doesn't produce a table of "Something else".
+                ...kindFieldsFor(offer.discount),
                 description: offer.description,
                 availability: offer.availability,
                 // Spread expiry dates so "ending soon" has something to show.

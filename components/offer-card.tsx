@@ -110,7 +110,10 @@ export function OfferCard({
 
                 {/* Kept clear of the "ends" pill on the right, whatever
                     the offer says. */}
-                <span className="absolute left-3 top-3 max-w-[60%] truncate rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white shadow-sm">
+                <span
+                    data-slot="offer-headline"
+                    className="absolute left-3 top-3 max-w-[60%] truncate rounded-full bg-[#FF593F] px-3 py-1 text-sm font-semibold text-white shadow-sm"
+                >
                     {discount}
                 </span>
 
