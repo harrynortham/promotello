@@ -204,12 +204,20 @@ export default function NotificationSettingsForm({
         <section className="space-y-6">
             <div>
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                    Notifications
+                    Email preferences
                 </h1>
 
                 <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
-                    Choose what you’d like to hear from us. You can change
-                    your personal email preferences here at any time.
+                    Which emails we send you, and which you’d rather not have.
+                    Change them whenever you like. Everything that happens is
+                    on your{" "}
+                    <Link
+                        href="/notifications"
+                        className="font-medium text-foreground underline underline-offset-4"
+                    >
+                        notifications
+                    </Link>{" "}
+                    either way.
                 </p>
             </div>
 

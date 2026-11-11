@@ -45,11 +45,11 @@ const settings = [
         icon: FiLock,
     },
     {
-        title: "Notifications",
+        title: "Email preferences",
         description:
-            "Choose which optional updates you would like to receive.",
+            "Choose which of our emails arrive, and which you'd rather not have.",
         href: "/account/notifications",
-        action: "Set preferences",
+        action: "Choose your emails",
         icon: FiBell,
     },
     {
