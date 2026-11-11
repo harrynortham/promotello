@@ -44,13 +44,18 @@ type EditOfferFormProps = {
     canSchedule: boolean;
 };
 
-// The four fields a person has to read before they reach customers.
+// What a person has to read before it reaches customers: the words, and
+// the type the headline was built from.
 type WaitingEdit = {
     id: string;
     title: string;
     description: string;
     discount: string;
     terms: string;
+    kind: string;
+    kind_value: number | null;
+    kind_quantity: number | null;
+    kind_item: string | null;
     submitted_at: string;
 };
 
@@ -59,6 +64,10 @@ type Offer = {
     category: string;
     category_id: string | null;
     discount: string;
+    kind: string;
+    kind_value: number | null;
+    kind_quantity: number | null;
+    kind_item: string | null;
     description: string;
     availability: string;
     expires_at: string;
@@ -102,6 +111,7 @@ export default function EditOfferForm({
         reset,
         setError,
         clearErrors,
+        control,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<OfferInput, unknown, OfferValues>({ resolver: zodResolver(schema) });
 
@@ -122,6 +132,10 @@ export default function EditOfferForm({
             category,
             category_id,
             discount,
+            kind,
+            kind_value,
+            kind_quantity,
+            kind_item,
             description,
             availability,
             expires_at,
@@ -140,7 +154,9 @@ export default function EditOfferForm({
                     .single(),
                 supabase
                     .from("offer_edits")
-                    .select("id, title, description, discount, terms, submitted_at")
+                    .select(
+                        "id, title, description, discount, terms, kind, kind_value, kind_quantity, kind_item, submitted_at",
+                    )
                     .eq("offer_id", offerId)
                     .is("decided_at", null)
                     .maybeSingle(),
@@ -170,10 +186,19 @@ export default function EditOfferForm({
                 // The form shows what they last wrote, even while it is
                 // waiting, so a second save revises it rather than
                 // starting from the published words again.
+                // An offer the backfill could not read opens on
+                // "Something else" with its headline in the box, and can
+                // be moved to a real type from there.
+                const kindOf = sent ?? loaded;
+
                 reset({
                     title: sent?.title ?? loaded.title,
                     category: loaded.category_id ?? "",
-                    discount: sent?.discount ?? loaded.discount,
+                    kind: kindOf.kind,
+                    kindValue: kindOf.kind_value === null ? "" : String(kindOf.kind_value),
+                    kindQuantity: kindOf.kind_quantity === null ? "" : String(kindOf.kind_quantity),
+                    kindItem: kindOf.kind_item ?? "",
+                    discount: kindOf.kind === "other" ? (sent?.discount ?? loaded.discount) : "",
                     description: sent?.description ?? loaded.description,
                     availability: loaded.availability,
                     expiresAt: loaded.expires_at,
@@ -240,13 +265,20 @@ export default function EditOfferForm({
         // it. On a live offer those four fields are sent as a change and
         // the published words stay up meanwhile; everything else saves
         // straight away.
-        const { title, discount, description, terms, ...rest } = row;
+        const { title, discount, description, terms, kind, kind_value, kind_quantity, kind_item, ...rest } =
+            row;
         const isLive = offer.approval_status === "approved";
+        // The type is part of what is promised, so a change to it waits
+        // with the words it built.
         const rewritten =
             title !== offer.title ||
             discount !== offer.discount ||
             description !== offer.description ||
-            terms !== offer.terms;
+            terms !== offer.terms ||
+            kind !== offer.kind ||
+            kind_value !== offer.kind_value ||
+            kind_quantity !== offer.kind_quantity ||
+            kind_item !== offer.kind_item;
         const asChange = isLive && rewritten;
 
         const { error } = await supabase
@@ -267,6 +299,10 @@ export default function EditOfferForm({
                 new_description: description,
                 new_discount: discount,
                 new_terms: terms,
+                new_kind: kind,
+                new_kind_value: kind_value,
+                new_kind_quantity: kind_quantity,
+                new_kind_item: kind_item,
             });
 
             if (editError) {
@@ -356,8 +392,8 @@ export default function EditOfferForm({
 
                     {offer.approval_status === "approved" && (
                         <p className="mt-3 text-sm text-[#17233B]/70">
-                            Changing the headline, title, description or terms sends the
-                            new wording to us for a quick check. Your offer stays live
+                            Changing the type of offer, the headline, title, description
+                            or terms sends the new wording to us for a quick check. Your offer stays live
                             with the words we approved until then, so nothing you have
                             printed stops working. A new photo, availability line,
                             expiry date or claim limit saves straight away.
@@ -426,6 +462,7 @@ export default function EditOfferForm({
                             <OfferFields
                                 register={register}
                                 errors={errors}
+                                control={control}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
                                 schedule={scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)}

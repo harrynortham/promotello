@@ -11,6 +11,7 @@ import { OfferCard } from "@/components/offer-card";
 import { OffersHowItWorks } from "../how-it-works";
 import {
     OfferFields,
+    draftHeadline,
     imageProblem,
     offerRow,
     offerSchema,
@@ -70,6 +71,12 @@ export default function NewOfferForm({
         defaultValues: {
             title: "",
             category: defaultCategoryId ?? "",
+            // No type is chosen for them: the picker opens on "Choose a
+            // type", so nothing is promised by accident.
+            kind: "",
+            kindValue: "",
+            kindQuantity: "",
+            kindItem: "",
             discount: "",
             description: "",
             availability: "",
@@ -101,7 +108,7 @@ export default function NewOfferForm({
 
     // Placeholders keep the card readable before the fields are filled in.
     const preview = {
-        discount: draft.discount?.trim() || "Your discount",
+        discount: draftHeadline(draft) || "Your offer",
         title: draft.title?.trim() || "Your offer title",
         description:
             draft.description?.trim() ||
@@ -326,6 +333,7 @@ export default function NewOfferForm({
                             <OfferFields
                                 register={register}
                                 errors={errors}
+                                control={control}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
                                 schedule={null}
