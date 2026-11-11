@@ -1,6 +1,8 @@
 import { brandedEmail, sendEmails, type Email } from "@/lib/email";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { voucherIssued } from "@/lib/notifications";
+import { notifyUsers } from "@/lib/notify";
 
 export type AutomationKind = "welcome" | "birthday" | "winback";
 
@@ -99,6 +101,32 @@ export function automationEmail(voucher: IssuedVoucher): Email {
     };
 }
 
+async function notifyAboutVouchers(vouchers: IssuedVoucher[]) {
+    if (vouchers.length === 0) return;
+
+    const { data: rows } = await createAdminClient()
+        .from("reward_vouchers")
+        .select("id, user_id")
+        .in("id", vouchers.map((voucher) => voucher.voucher_id));
+
+    const owner = new Map((rows ?? []).map((row) => [row.id, row.user_id]));
+
+    for (const voucher of vouchers) {
+        const userId = owner.get(voucher.voucher_id);
+
+        if (!userId) continue;
+
+        await notifyUsers(
+            [userId],
+            voucherIssued({
+                id: voucher.voucher_id,
+                reward: voucher.reward,
+                businessName: voucher.business_name,
+            }),
+        );
+    }
+}
+
 // Issues any due automation vouchers and emails them. With a business and
 // user, only that follower's welcome is checked (right after following);
 // with nothing, every automation runs (the daily job).
@@ -114,6 +142,13 @@ export async function runAutomations(scope?: { businessId: string; userId: strin
     }
 
     const vouchers = (data ?? []) as IssuedVoucher[];
+
+    // Beside the email, and before it: the voucher is already theirs,
+    // and a failed send must not be the reason nobody hears about it.
+    // The rows carry no user id, so the wallet is asked who they belong
+    // to — one query for the lot rather than a lookup each.
+    await notifyAboutVouchers(vouchers);
+
     const { sent, sentTo } = await sendEmails(vouchers.map(automationEmail));
 
     // The voucher is the customer's reward, so a failed send must never

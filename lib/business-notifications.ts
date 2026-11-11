@@ -3,6 +3,8 @@ import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { offerFullyClaimed, offerLowStock } from "@/lib/notifications";
+import { notifyBusinessManagers } from "@/lib/notify";
 
 // Emails to a business's owners and admins about their offers, chosen in
 // Settings → Notifications: a daily summary (off by default) and alerts
@@ -154,6 +156,29 @@ export async function sendOfferStockAlert(offerId: string) {
     }
 
     const alerts = (data ?? []) as StockAlert[];
+
+    // Beside the email. claim_offer_stock_alert returns nothing when the
+    // business has these switched off, which is why these follow the
+    // email setting for now — that function is left alone.
+    for (const alert of alerts) {
+        await notifyBusinessManagers(
+            alert.business_id,
+            alert.kind === "offer_fully_claimed"
+                ? offerFullyClaimed({
+                    id: offerId,
+                    title: alert.offer_title,
+                    businessId: alert.business_id,
+                    maxRedemptions: alert.max_redemptions,
+                })
+                : offerLowStock({
+                    id: offerId,
+                    title: alert.offer_title,
+                    businessId: alert.business_id,
+                    remaining: alert.remaining,
+                }),
+        );
+    }
+
     const result = await sendEmails(alerts.flatMap((alert) => alert.emails.map((to) => stockAlertEmail(alert, to))));
 
     if (result.failedTo.length > 0) {

@@ -3,6 +3,8 @@ import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { newOfferFromFollowed } from "@/lib/notifications";
+import { notifyUsers } from "@/lib/notify";
 
 type OfferForEmail = {
     title: string;
@@ -84,11 +86,51 @@ ${emailCompanyFooter()}
     };
 }
 
+// Everybody who follows the business, whether or not they take its
+// emails. One per offer, which the dedupe key sees to.
+async function notifyFollowersAboutOffer(offerId: string) {
+    const admin = createAdminClient();
+
+    const { data: offer } = await admin
+        .from("offers")
+        .select("id, title, slug, discount, business_id, businesses ( name )")
+        .eq("id", offerId)
+        .maybeSingle();
+
+    const business = Array.isArray(offer?.businesses) ? offer.businesses[0] : offer?.businesses;
+
+    if (!offer || !business) return;
+
+    const { data: followers } = await admin
+        .from("business_followers")
+        .select("user_id")
+        .eq("business_id", offer.business_id);
+
+    await notifyUsers(
+        (followers ?? []).map((follower) => follower.user_id),
+        newOfferFromFollowed({
+            id: offer.id,
+            title: offer.title,
+            slug: offer.slug,
+            discount: offer.discount,
+            businessName: business.name,
+        }),
+    );
+}
+
 // Emails a newly approved offer to the business's followers. Each follower
 // is emailed at most once per offer. Call only after checking the caller may
 // approve offers.
 export async function emailFollowersAboutOffer(offerId: string) {
     const admin = createAdminClient();
+
+    // Before the email, and on its own list. claim_new_offer_email_recipients
+    // returns only followers whose emails are on, and claims them so the
+    // send can't repeat; a notification goes to everybody who follows,
+    // which is the point of having one. It also has to happen before the
+    // early return below, or a business whose followers all turned emails
+    // off would tell nobody anything.
+    await notifyFollowersAboutOffer(offerId);
 
     const { data: recipients, error } = await admin.rpc("claim_new_offer_email_recipients", {
         requested_offer_id: offerId,

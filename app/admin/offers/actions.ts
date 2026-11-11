@@ -6,8 +6,16 @@ import {
     type ReviewDecision,
 } from "@/lib/business-review-emails";
 import { emailFollowersAboutOffer } from "@/lib/new-offer-email";
+import {
+    offerApproved,
+    offerEditApproved,
+    offerEditRejected,
+    offerRejected,
+} from "@/lib/notifications";
+import { notifyBusinessManagers } from "@/lib/notify";
 import { ITEM_MAX, isOfferKind, kindTakes, offerHeadline } from "@/lib/offer-kinds";
 import { availabilityLine, availabilityParts } from "@/lib/schedule";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 // Called after an admin approves an offer: emails the business's followers.
@@ -33,6 +41,22 @@ export async function notifyBusinessOfOfferReview(offerId: string, decision: Rev
     }
 
     const { sent } = await emailOfferReviewed(offerId, decision);
+
+    const { data: offer } = await createAdminClient()
+        .from("offers")
+        .select("id, title, slug, business_id")
+        .eq("id", offerId)
+        .maybeSingle();
+
+    if (offer) {
+        const content = { id: offer.id, title: offer.title, slug: offer.slug, businessId: offer.business_id };
+
+        await notifyBusinessManagers(
+            offer.business_id,
+            decision === "approved" ? offerApproved(content) : offerRejected(content),
+        );
+    }
+
     return { sent };
 }
 
@@ -46,6 +70,24 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
     }
 
     const { sent } = await emailOfferEditReviewed(editId, decision);
+
+    const { data: edit } = await createAdminClient()
+        .from("offer_edits")
+        .select("id, business_id, offers ( title )")
+        .eq("id", editId)
+        .maybeSingle();
+
+    const edited = Array.isArray(edit?.offers) ? edit.offers[0] : edit?.offers;
+
+    if (edit && edited) {
+        const content = { id: edit.id, offerTitle: edited.title, businessId: edit.business_id };
+
+        await notifyBusinessManagers(
+            edit.business_id,
+            decision === "approved" ? offerEditApproved(content) : offerEditRejected(content),
+        );
+    }
+
     return { sent };
 }
 
