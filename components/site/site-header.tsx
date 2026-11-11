@@ -9,13 +9,17 @@ import { FiArrowRight, FiMenu, FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCurrentUser } from "./use-current-user";
+import { useRunsABusiness } from "./use-runs-a-business";
 import { navIcons, type NavIconName } from "./nav-icons";
 import { UserMenu, type AccountArea } from "./user-menu";
 
 // With an icon, a link shows it to the left of its label.
 export type HeaderLink = { label: string; href: string; icon?: NavIconName };
 
-export type MenuFooter = { text: string; label: string; href: string };
+// needsBusiness: a line about "your business" is only true for somebody
+// who runs one. Without it the menu falls back to the signed-out line,
+// or to nothing where there isn't one.
+export type MenuFooter = { text: string; label: string; href: string; needsBusiness?: boolean };
 
 export type HeaderAction = {
     label: string;
@@ -83,6 +87,8 @@ function HeaderContent({
     const bp = breakpoints[collapseBelow];
     const hasMobileMenu = links.length > 0 || (!user && !isLoading);
 
+    const runsABusiness = useRunsABusiness();
+
     function isActive(href: string) {
         return pathname === href || pathname.startsWith(`${href}/`);
     }
@@ -91,6 +97,7 @@ function HeaderContent({
     // anyone is signed in, so it waits for that to be known rather than
     // offering the wrong one first. Never a link to the page you're on.
     let footer = isLoading ? undefined : user ? signedInMenuFooter : menuFooter;
+    if (footer?.needsBusiness && !runsABusiness) footer = menuFooter;
     if (footer && pathname === footer.href) footer = undefined;
 
     return (
