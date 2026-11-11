@@ -1,7 +1,7 @@
 # In-app notifications: the spec
 
-**Not built yet.** When it is, change this line to "Built." as the other
-specs do, and correct anything below that turned out differently.
+**Built.** Corrections to what is below are marked **As built** where the
+thing that was built differs from the plan.
 
 ## The problem
 
@@ -66,6 +66,13 @@ Indexes:
 - `(user_id) where read_at is null` for the count behind the dot.
 - unique `(user_id, dedupe_key) where dedupe_key is not null`.
 
+**As built.** That last index is partial, and Postgres will not infer a
+partial index from a column list, so `on conflict (user_id, dedupe_key)`
+is rejected outright and `on conflict` naming no columns infers the
+primary key — which a fresh uuid never collides on. `lib/notify.ts` asks
+who has already been told instead, and treats a `23505` from a race as
+the outcome it wanted anyway.
+
 ### Row level security
 
 RLS on. For `authenticated` only:
@@ -92,10 +99,13 @@ granted to `service_role` only.
 ### Tidying up
 
 Notifications older than 90 days are deleted by the existing daily job
-(`app/api/cron/daily/route.ts`). Account deletion removes them through
-the cascade; check `account_deletion_check` and the privacy pages
-(`app/account/privacy`, `app/legal/privacy`) and add a line where they
-list what is stored.
+(`app/api/cron/daily/route.ts`), which reports how many it deleted with
+everything else it reports. Account deletion removes them through
+the cascade. **As built:** `account_deletion_check()` needed nothing — it
+only answers what happens to a business whose only owner is leaving. The
+privacy pages say what is in the list, that it is kept for 90 days, and
+that deleting an account deletes it, and the delete-account warning names
+it alongside vouchers, cards and follows.
 
 ## The code that sends them
 
@@ -135,7 +145,10 @@ notifyUsers(userIds: string[], content: NotificationContent): Promise<void>
 notifyBusinessManagers(businessId: string, content: NotificationContent): Promise<void>
 ```
 
-- Inserts one row per user, `on conflict do nothing` on the dedupe index.
+- Inserts one row per user, one row per person however many times the
+  same call names them. **As built:** it selects the dedupe key first
+  rather than relying on `on conflict do nothing`, for the reason under
+  [the data](#the-data).
 - **Never throws and never blocks the action that caused it.** A failed
   insert is logged with `console.error`, as the email senders do, and
   the approval, claim or follow that triggered it carries on.
@@ -155,9 +168,24 @@ event. Find the call site, don't invent a new one.
 | `offer_approved` / `offer_rejected` | Owners and admins | An admin reviews an offer (`emailOfferReviewed`) | `/business/[id]/offers` | `offer:{id}:{decision}` |
 | `offer_edit_approved` / `offer_edit_rejected` | Owners and admins | An admin answers a change to a live offer (`emailOfferEditReviewed`) | `/business/[id]/offers` | `offer-edit:{editId}` |
 | `offer_fully_claimed` / `offer_low_stock` | Owners and admins | After a claim, when `claim_offer_stock_alert` says so (`sendOfferStockAlert`) | `/business/[id]/offers` | `offer:{id}:{kind}` |
-| `team_member_joined` | Owners and admins, except the person who joined | An invitation is accepted (`accept_business_invitation`) | `/business/[id]/team` | `team:{businessId}:{userId}` |
 | `new_offer_from_followed` | Everybody who follows the business, whether or not they take its emails | An offer is approved (`emailFollowersAboutOffer`) | `/offers/[slug]` | `new-offer:{offerId}` |
-| `voucher_issued` | The customer | An automation gives them a voucher (`issue_automation_vouchers`: welcome, birthday, win-back) | `/dashboard/redemptions` | `voucher:{redemptionId}` |
+| `voucher_issued` | The customer | An automation gives them a voucher (`issue_automation_vouchers`: welcome, birthday, win-back) | `/dashboard/redemptions` | `voucher:{voucherId}` (**as built**: an automation issues a `reward_vouchers` row, not a redemption) |
+
+**As built: `team_member_joined` is not in this version.** An invitation
+is accepted in the browser, by `accept_business_invitation` called from
+`invite-acceptance.tsx`, and nothing on the server runs at that moment:
+no email goes out for it either. Writing the notification would mean
+either inserting from the browser, which there is deliberately no policy
+for, or adding a server action that exists only to send it. It needs the
+sending moved to the server first, which is more than this change.
+
+**As built: `new_offer_from_followed` reads `business_followers`
+itself**, in `notifyFollowersAboutOffer()` inside `lib/new-offer-email.ts`,
+rather than reusing `claim_new_offer_email_recipients`. That function
+leaves out anybody who turned the emails off and marks the rest as
+emailed, and the point of the list is that it tells them anyway. It runs
+before the email sender's early return, so a business with nothing to
+email still tells its followers in the app.
 
 The stock alerts follow the business's existing settings for now,
 because `claim_offer_stock_alert` returns nothing when they are off.
@@ -188,6 +216,11 @@ all get it at once.
   Harry, 3 unread notifications". The dot itself is `aria-hidden`.
 - The dot does not flash on load: nothing is shown until the count
   arrives.
+- **As built:** reading something on `/notifications` changes neither the
+  pathname nor the focus, so the list fires a
+  `promotello:notifications-changed` event on the window after each
+  change and the hook listens for it. Without it the dot sat there
+  saying 1 beside a list with nothing unread.
 
 ### The menu
 
@@ -230,6 +263,12 @@ header and shell as `/account`, since it belongs to neither side.
   They are one-button actions, so plain server-action forms, with
   optimistic updates so the row changes at once. After each, the header
   dot must agree with the list without a reload.
+- **As built:** the dot, the pill and each row carry a `data-slot`
+  (`unread-dot`, `unread-count`, `notification`) so the tests can find
+  them: the dot is `aria-hidden`, which leaves nothing else to point at.
+- **As built:** the time under each row is `#17233B/65`. At `/55` it was
+  3.66:1 on white, which is under AA for text that size, and the
+  accessibility sweep caught it.
 
 ### The other "Notifications"
 
@@ -268,7 +307,14 @@ In `tests/e2e/security.spec.ts`:
 - An authenticated browser client cannot insert a notification.
 - `update` cannot change `title`, `href` or `user_id`.
 
-`tests/e2e/accessibility.spec.ts` covers `/notifications` too.
+`tests/e2e/accessibility.spec.ts` covers `/notifications` too, with rows
+seeded on it: the empty state has nothing on it to get wrong.
+
+**As built:** all of the above is in `tests/e2e/notifications.spec.ts`
+except "Show more", which is left out rather than seed 31 rows to press
+one button. Each test clears that person's notifications first, because
+the rest of the suite claims offers and approves things and every one of
+those tells somebody.
 
 ## Docs to update when it is built
 
