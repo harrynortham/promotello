@@ -37,19 +37,30 @@ function todayInUk() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
 }
 
+// The type and its inputs, as text because that is what an input holds;
+// kindRow() turns them into numbers and nulls. Each is checked by
+// checkKind() below, but only when the chosen type asks for it. Shared
+// so the admin's correction form has the same rules as the business's.
+export const kindFields = {
+    kind: z.string().min(1, "Choose a type of offer."),
+    kindValue: z.string().trim(),
+    kindQuantity: z.string().trim(),
+    kindItem: z.string().trim(),
+    // Only "Something else" writes the headline by hand.
+    discount: z.string().trim(),
+};
+
+export function offerKindSchema() {
+    return z.object(kindFields).superRefine(checkKind);
+}
+
+export type KindInput = z.input<ReturnType<typeof offerKindSchema>>;
+
 export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}) {
     return z.object({
         title: requiredText("The title", { min: 2, max: 160 }),
         category: z.string().min(1, "Choose a category."),
-        kind: z.string().min(1, "Choose a type of offer."),
-        // Text, because these are inputs; offerRow() turns them into
-        // numbers and nulls. Each is checked by checkKind() below, but
-        // only when the chosen type actually asks for it.
-        kindValue: z.string().trim(),
-        kindQuantity: z.string().trim(),
-        kindItem: z.string().trim(),
-        // Only "Something else" writes the headline by hand.
-        discount: z.string().trim(),
+        ...kindFields,
         description: requiredText("The description", { min: 2, max: 5000 }),
         availability: optionalText("Availability", 160),
         expiresAt: z
@@ -174,21 +185,29 @@ export function draftHeadline(values: KindFields) {
     return offerHeadline(kindParts(values));
 }
 
-// The offers row for the values and schedule. Scheduled offers describe
-// their days and times unless the business wrote its own availability.
-export function offerRow(values: OfferValues, schedule: ReturnType<typeof scheduleFromForm>) {
-    const parsed = scheduleFrom(schedule.schedule_days, schedule.schedule_start, schedule.schedule_end);
+// The four columns and the headline built from them.
+export function kindRow(values: KindFields) {
     const parts = kindParts(values);
 
     return {
-        title: values.title,
-        category_id: values.category,
         // Built, never typed, so "20% offer" can't happen.
         discount: offerHeadline(parts),
         kind: parts.kind,
         kind_value: parts.value,
         kind_quantity: parts.quantity,
         kind_item: parts.item,
+    };
+}
+
+// The offers row for the values and schedule. Scheduled offers describe
+// their days and times unless the business wrote its own availability.
+export function offerRow(values: OfferValues, schedule: ReturnType<typeof scheduleFromForm>) {
+    const parsed = scheduleFrom(schedule.schedule_days, schedule.schedule_start, schedule.schedule_end);
+
+    return {
+        title: values.title,
+        category_id: values.category,
+        ...kindRow(values),
         description: values.description,
         availability: values.availability || (parsed ? formatSchedule(parsed) : "Available now"),
         expires_at: values.expiresAt,
@@ -312,15 +331,16 @@ function AmountInput({
 }
 
 // The type, then only the inputs that type needs, then the headline they
-// add up to.
-function OfferKindFields({
+// add up to. Typed on the kind fields alone, so the offer forms and the
+// admin's correction form share it.
+export function OfferKindFields({
     register,
     errors,
     control,
 }: {
-    register: UseFormRegister<OfferInput>;
-    errors: FieldErrors<OfferInput>;
-    control: Control<OfferInput, unknown, OfferValues>;
+    register: UseFormRegister<KindInput>;
+    errors: FieldErrors<KindInput>;
+    control: Control<KindInput, unknown, unknown>;
 }) {
     const draft = useWatch({ control, name: ["kind", "kindValue", "kindQuantity", "kindItem", "discount"] });
     const [kind, kindValue, kindQuantity, kindItem, discount] = draft;
@@ -512,7 +532,16 @@ export function OfferFields({
                     <FieldError id="category-error" message={errors.category?.message} />
                 </div>
 
-                <OfferKindFields register={register} errors={errors} control={control} />
+                {/* react-hook-form's generics are invariant, so the big
+                    form's register and control don't describe themselves
+                    as the smaller form's. The field names and rules are
+                    the same object (kindFields) either way, which is what
+                    makes this safe. */}
+                <OfferKindFields
+                    register={register as unknown as UseFormRegister<KindInput>}
+                    errors={errors as FieldErrors<KindInput>}
+                    control={control as unknown as Control<KindInput, unknown, unknown>}
+                />
             </div>
 
             <div className="space-y-2">

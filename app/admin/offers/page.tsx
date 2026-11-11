@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { storedImage } from "@/lib/images";
+import { isOfferKind, offerKind } from "@/lib/offer-kinds";
 
 import {
     notifyBusinessOfOfferEditReview,
@@ -74,13 +75,29 @@ type OfferEdit = {
     description: string;
     discount: string;
     terms: string;
+    kind: string;
     submitted_at: string;
     offers:
-    | { id: string; title: string; description: string; discount: string; terms: string; slug: string; businesses: Business | Business[] | null }
+    | {
+        id: string;
+        title: string;
+        description: string;
+        discount: string;
+        terms: string;
+        kind: string;
+        slug: string;
+        businesses: Business | Business[] | null;
+    }
     | null;
 };
 
 type Tab = "pending" | "edits" | "all";
+
+// The type in the words the picker uses, so the diff reads the way the
+// business chose it rather than as a column value.
+function kindLabel(kind: string) {
+    return isOfferKind(kind) ? offerKind(kind).label : kind;
+}
 
 const statusLabels: Record<Status, string> = {
     pending: "Waiting",
@@ -160,9 +177,10 @@ export default function AdminOffersPage() {
           description,
           discount,
           terms,
+          kind,
           submitted_at,
           offers (
-            id, title, description, discount, terms, slug,
+            id, title, description, discount, terms, kind, slug,
             businesses ( id, name, approval_status )
           )
         `,
@@ -479,6 +497,7 @@ export default function AdminOffersPage() {
 
                                 const fields: [string, string, string][] = live
                                     ? [
+                                        ["Type", kindLabel(live.kind), kindLabel(edit.kind)],
                                         ["Headline", live.discount, edit.discount],
                                         ["Title", live.title, edit.title],
                                         ["Description", live.description, edit.description],
