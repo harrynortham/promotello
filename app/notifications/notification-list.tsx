@@ -6,6 +6,7 @@ import { useOptimistic, useState, useTransition } from "react";
 import { FiBell, FiTrash2 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import { NOTIFICATIONS_CHANGED } from "@/components/site/use-unread-notifications";
 import { timeAgo } from "@/lib/uk-time";
 import { deleteNotification, markAllNotificationsRead, markNotificationRead } from "./actions";
 
@@ -25,8 +26,8 @@ export type NotificationRow = {
 // at once and is then confirmed by the server: marking something read is
 // not worth watching a spinner for.
 //
-// Reading and deleting also refresh the route, so the dot on the avatar
-// agrees with the list without a reload.
+// Reading and deleting also refresh the route and tell the header, so
+// the dot on the avatar agrees with the list without a reload.
 export function NotificationList({
     notifications,
     showBusinessNames,
@@ -38,6 +39,14 @@ export function NotificationList({
 }) {
     const router = useRouter();
     const [, startTransition] = useTransition();
+
+    // The header is above this list, not inside it, and nothing it
+    // listens to has changed: the route is the same one.
+    function tellTheHeader() {
+        router.refresh();
+        window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
+    }
+
     const [shown, setShown] = useState(pageSize);
 
     type Change = { kind: "read"; id: string } | { kind: "read-all" } | { kind: "delete"; id: string };
@@ -59,7 +68,7 @@ export function NotificationList({
         startTransition(async () => {
             apply({ kind: "read", id });
             await markNotificationRead(id);
-            router.refresh();
+            tellTheHeader();
         });
     }
 
@@ -93,7 +102,7 @@ export function NotificationList({
                             startTransition(async () => {
                                 apply({ kind: "read-all" });
                                 await markAllNotificationsRead();
-                                router.refresh();
+                                tellTheHeader();
                             })
                         }
                     >
@@ -132,7 +141,7 @@ export function NotificationList({
                                     </span>
                                 )}
 
-                                <span className="mt-1.5 block text-xs text-[#17233B]/55">
+                                <span className="mt-1.5 block text-xs text-[#17233B]/65">
                                     {timeAgo(row.createdAt)}
                                     {showBusinessNames && row.businessName && ` · ${row.businessName}`}
                                 </span>
@@ -143,6 +152,7 @@ export function NotificationList({
                     return (
                         <li
                             key={row.id}
+                            data-slot="notification"
                             className="flex items-start gap-3 rounded-xl border border-[#17233B]/10 bg-white p-4"
                         >
                             {row.href ? (
@@ -175,7 +185,7 @@ export function NotificationList({
                                         startTransition(async () => {
                                             apply({ kind: "delete", id: row.id });
                                             await deleteNotification(row.id);
-                                            router.refresh();
+                                            tellTheHeader();
                                         })
                                     }
                                 >

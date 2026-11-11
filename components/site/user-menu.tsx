@@ -183,6 +183,7 @@ export function UserMenu({
                     {unread > 0 && (
                         <span
                             aria-hidden="true"
+                            data-slot="unread-dot"
                             className="absolute -right-0.5 -top-0.5 size-3 rounded-full bg-[#FF593F] ring-2 ring-background"
                         />
                     )}
@@ -214,7 +215,10 @@ export function UserMenu({
                                     {link.label}
 
                                     {link.unread && unread > 0 && (
-                                        <span className="ml-auto rounded-full bg-[#FF593F] px-2 py-0.5 text-xs font-semibold text-white">
+                                        <span
+                                            data-slot="unread-count"
+                                            className="ml-auto rounded-full bg-[#FF593F] px-2 py-0.5 text-xs font-semibold text-white"
+                                        >
                                             {unread > 9 ? "9+" : unread}
                                         </span>
                                     )}
