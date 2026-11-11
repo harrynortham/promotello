@@ -31,11 +31,13 @@ test.describe("Google sign-in", () => {
         expect(url.searchParams.get("redirect_to")).toMatch(/\/auth\/callback\?next=%2Foffers%2Fsome-offer$/);
     });
 
-    test("businesses signing up go on to onboarding", async ({ page }) => {
+    test("businesses signing up go on to setting their business up", async ({ page }) => {
         await page.goto("/business/register");
         const url = await authorizeRequest(page, "Continue with Google");
 
-        expect(url.searchParams.get("redirect_to")).toMatch(/\/auth\/callback\?next=%2Fonboarding$/);
+        expect(url.searchParams.get("redirect_to")).toMatch(
+            /\/auth\/callback\?next=%2Fbusiness%2Fsetup%2Fnew$/,
+        );
     });
 });
 
