@@ -6,6 +6,7 @@ import type {
     Control,
     FieldErrors,
     UseFormRegister,
+    UseFormGetValues,
     UseFormRegisterReturn,
     UseFormSetValue,
 } from "react-hook-form";
@@ -629,6 +630,7 @@ export function OfferAvailabilityFields({
     errors,
     control,
     setValue,
+    getValues,
     businessId,
     canSchedule,
     currentLine,
@@ -637,6 +639,7 @@ export function OfferAvailabilityFields({
     errors: FieldErrors<AvailabilityInput>;
     control: Control<AvailabilityInput, unknown, unknown>;
     setValue: UseFormSetValue<AvailabilityInput>;
+    getValues: UseFormGetValues<AvailabilityInput>;
     businessId: string;
     canSchedule: boolean;
     // An offer whose line was written before these pickers existed. The
@@ -656,8 +659,12 @@ export function OfferAvailabilityFields({
         availabilityParts({ when, availableDays: days, availableFrom, availableUntil, audience }),
     );
 
+    // Read from the form rather than from what was last rendered: two
+    // chips pressed in the same frame would otherwise both start from
+    // the same days, and the first press would be lost.
     function toggleDay(day: number) {
-        const next = days.includes(day) ? days.filter((value) => value !== day) : [...days, day];
+        const current = getValues("availableDays") ?? [];
+        const next = current.includes(day) ? current.filter((value) => value !== day) : [...current, day];
 
         setValue("availableDays", next.sort((a, b) => a - b), { shouldValidate: true, shouldDirty: true });
     }
@@ -842,6 +849,7 @@ export function OfferFields({
     errors,
     control,
     setValue,
+    getValues,
     businessId,
     canSchedule,
     defaultCategoryId,
@@ -852,6 +860,7 @@ export function OfferFields({
     errors: FieldErrors<OfferInput>;
     control: Control<OfferInput, unknown, OfferValues>;
     setValue: UseFormSetValue<OfferInput>;
+    getValues: UseFormGetValues<OfferInput>;
     businessId: string;
     canSchedule: boolean;
     defaultCategoryId?: string | null;
@@ -925,6 +934,7 @@ export function OfferFields({
                 errors={errors as FieldErrors<AvailabilityInput>}
                 control={control as unknown as Control<AvailabilityInput, unknown, unknown>}
                 setValue={setValue as unknown as UseFormSetValue<AvailabilityInput>}
+                getValues={getValues as unknown as UseFormGetValues<AvailabilityInput>}
                 businessId={businessId}
                 canSchedule={canSchedule}
                 currentLine={currentLine}

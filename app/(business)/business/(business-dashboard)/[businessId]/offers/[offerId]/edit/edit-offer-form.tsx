@@ -116,6 +116,7 @@ export default function EditOfferForm({
         clearErrors,
         control,
         setValue,
+        getValues,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<OfferInput, unknown, OfferValues>({ resolver: zodResolver(schema) });
 
@@ -496,6 +497,7 @@ export default function EditOfferForm({
                                 errors={errors}
                                 control={control}
                                 setValue={setValue}
+                                getValues={getValues}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
                                 currentLine={legacyLine}

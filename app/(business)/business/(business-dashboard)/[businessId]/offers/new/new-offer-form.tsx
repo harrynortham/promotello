@@ -67,6 +67,7 @@ export default function NewOfferForm({
         clearErrors,
         control,
         setValue,
+        getValues,
         formState: { errors, isSubmitting },
     } = useForm<OfferInput, unknown, OfferValues>({
         resolver: zodResolver(schema),
@@ -342,6 +343,7 @@ export default function NewOfferForm({
                                 errors={errors}
                                 control={control}
                                 setValue={setValue}
+                                getValues={getValues}
                                 businessId={businessId}
                                 canSchedule={canSchedule}
                                 defaultCategoryId={defaultCategoryId}
