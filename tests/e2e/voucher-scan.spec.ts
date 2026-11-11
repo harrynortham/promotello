@@ -50,6 +50,13 @@ test("staff scan a customer's voucher and mark it used once", async ({ browser }
     const staff = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
     await staff.goto(`/redeem/${code}`);
     await expect(staff.getByRole("heading", { name: "E2E Scan Test Offer" })).toBeVisible();
+
+    // What they are about to give away, and what the offer says about it:
+    // the questions asked at a counter are "what does this cover?" and
+    // "can they use it with the other one?".
+    const needsMigration = "apply supabase/migrations/20261213090000_the_staff_see_what_they_are_giving.sql first";
+    await expect(staff.getByText("A test offer for scan-to-redeem."), needsMigration).toBeVisible();
+    await expect(staff.getByText("For automated tests only."), needsMigration).toBeVisible();
     await staff.getByRole("button", { name: "Mark as used" }).click();
     await expect(staff.getByText("Voucher used")).toBeVisible({ timeout: 10_000 });
 
@@ -61,6 +68,11 @@ test("staff scan a customer's voucher and mark it used once", async ({ browser }
 
     // The business is on Pro, so it isn't sold anything.
     await expect(staff.getByRole("link", { name: "Try Pro free" })).toHaveCount(0);
+
+    // And they are still on screen once it is used, because that is when
+    // the thing is handed over.
+    await expect(staff.getByText("A test offer for scan-to-redeem."), needsMigration).toBeVisible();
+    await expect(staff.getByText("For automated tests only."), needsMigration).toBeVisible();
 
     // Scanning again warns instead of offering the button.
     await staff.goto(`/redeem/${code}`);

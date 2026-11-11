@@ -40,6 +40,10 @@ type StaffVoucher = {
     schedule_start: string | null;
     schedule_end: string | null;
     schedule_open: boolean;
+    // What the offer actually covers, and what it says. Both decide
+    // questions at the counter.
+    offer_description: string | null;
+    offer_terms: string | null;
 };
 
 function formatDateTime(value: string) {
@@ -54,6 +58,41 @@ function formatDateTime(value: string) {
 
 function isExpired(expiresAt: string) {
     return expiresAt < new Date().toISOString().slice(0, 10);
+}
+
+// What they are giving away, under the voucher itself. The terms are
+// what answer "can I use this with the other one?" at the counter, so
+// they are on the page rather than behind a toggle.
+function OfferDetail({ description, terms }: { description: string | null; terms: string | null }) {
+    if (!description && !terms) {
+        return null;
+    }
+
+    return (
+        <div className="mt-5 space-y-4 rounded-2xl border border-[#17233B]/10 p-4">
+            {description && (
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                        What they get
+                    </p>
+                    <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-[#17233B]/80">
+                        {description}
+                    </p>
+                </div>
+            )}
+
+            {terms && (
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                        Terms
+                    </p>
+                    <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-[#17233B]/80">
+                        {terms}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -139,6 +178,8 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                     usedAt={voucher.used_at}
                     code={voucher.redemption_code}
                     usedToday={Math.max(usedToday ?? 1, 1)}
+                    description={voucher.offer_description}
+                    terms={voucher.offer_terms}
                     businessId={voucher.business_id}
                     showLoyaltyNudge={!hasPro}
                 />
@@ -192,6 +233,8 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                         </dd>
                     </div>
                 </dl>
+
+                <OfferDetail description={voucher.offer_description} terms={voucher.offer_terms} />
 
                 {error && (
                     <Alert variant="destructive" className="mt-5">
