@@ -11,7 +11,6 @@ import { OfferCard } from "@/components/offer-card";
 import { OffersHowItWorks } from "../how-it-works";
 import {
     OfferFields,
-    availabilityParts,
     draftHeadline,
     imageProblem,
     offerRow,
@@ -26,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getCategoryGroups } from "@/lib/categories";
-import { availabilityLine } from "@/lib/schedule";
+import { availabilityLine, availabilityParts } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
 import { announceNewOffer } from "./actions";
 

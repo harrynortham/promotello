@@ -30,7 +30,7 @@ import {
     offerKind,
     type OfferKind,
 } from "@/lib/offer-kinds";
-import { availabilityLine, enforcedSchedule, weekdayOrder } from "@/lib/schedule";
+import { availabilityLine, availabilityParts, enforcedSchedule, weekdayOrder } from "@/lib/schedule";
 import { requiredText } from "@/lib/validation";
 
 // The fields, rules and image upload shared by the new and edit offer
@@ -90,6 +90,17 @@ export function offerAvailabilitySchema() {
 }
 
 export type AvailabilityInput = z.input<ReturnType<typeof offerAvailabilitySchema>>;
+
+// What an admin can put right on a live offer without the business: the
+// type, and when it can be used. Same fields, same rules.
+export function offerCorrectionSchema() {
+    return z
+        .object({ ...kindFields, ...availabilityFields })
+        .superRefine(checkKind)
+        .superRefine(checkAvailability);
+}
+
+export type CorrectionInput = z.input<ReturnType<typeof offerCorrectionSchema>>;
 
 function checkAvailability(
     values: { when: string; availableDays: number[]; availableFrom: string; availableUntil: string },
@@ -244,33 +255,6 @@ function kindParts(values: KindFields) {
 // preview card. Empty until there is something true to say.
 export function draftHeadline(values: KindFields) {
     return offerHeadline(kindParts(values));
-}
-
-// What the availability columns hold, with anything the chosen "when"
-// doesn't use cleared: going back to "Any time" takes the days and times
-// with it rather than leaving them to come back later.
-export function availabilityParts(values: {
-    when?: string | null;
-    availableDays?: number[] | null;
-    availableFrom?: string | null;
-    availableUntil?: string | null;
-    audience?: string | null;
-}) {
-    const audience = values.audience === "new_customers" ? "new_customers" : "everyone";
-
-    if (values.when !== "days" && values.when !== "times") {
-        return { days: null, from: null, until: null, audience } as const;
-    }
-
-    const days = weekdayOrder.filter((day) => values.availableDays?.includes(day)).sort((a, b) => a - b);
-    const timed = values.when === "times";
-
-    return {
-        days: days.length > 0 ? days : null,
-        from: (timed && values.availableFrom) || null,
-        until: (timed && values.availableUntil) || null,
-        audience,
-    } as const;
 }
 
 // The four columns and the headline built from them.
@@ -634,6 +618,7 @@ export function OfferAvailabilityFields({
     businessId,
     canSchedule,
     currentLine,
+    hideEnforcement = false,
 }: {
     register: UseFormRegister<AvailabilityInput>;
     errors: FieldErrors<AvailabilityInput>;
@@ -645,6 +630,10 @@ export function OfferAvailabilityFields({
     // An offer whose line was written before these pickers existed. The
     // note says what customers see now, because saving replaces it.
     currentLine?: string | null;
+    // For a form that writes what the card says and nothing else — the
+    // admin's. Whether staff are held to the window is the business's to
+    // ask for, on its own plan.
+    hideEnforcement?: boolean;
 }) {
     // The enforce box isn't watched: it changes nothing on screen, and
     // the line it would affect is the same either way.
@@ -765,7 +754,7 @@ export function OfferAvailabilityFields({
                             </p>
                         )}
 
-                        {canSchedule ? (
+                        {hideEnforcement ? null : canSchedule ? (
                             <label
                                 htmlFor="enforceSchedule"
                                 className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#17233B]/10 p-4 text-sm"

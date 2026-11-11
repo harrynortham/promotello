@@ -13,7 +13,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { storedImage } from "@/lib/images";
 import { isOfferKind, offerKind } from "@/lib/offer-kinds";
-import { OfferKindForm } from "./offer-kind-form";
+import { OfferCorrections } from "./offer-corrections";
 
 // One offer, everything we know about it: what was submitted, what has
 // happened to it since, and what customers have done with it. For when a
@@ -106,6 +106,7 @@ async function Overview({ params }: PageProps) {
             `
                 id, slug, public_id, title, discount, description, availability, terms,
                 kind, kind_value, kind_quantity, kind_item,
+                available_days, available_from, available_until, audience,
                 category, approval_status, created_at, updated_at, expires_at,
                 max_redemptions, redemption_count, image_url, plan_paused_at,
                 schedule_days, schedule_start, schedule_end, created_by,
@@ -225,7 +226,8 @@ async function Overview({ params }: PageProps) {
                                 ["Type", isOfferKind(offer.kind) ? offerKind(offer.kind).label : offer.kind],
                                 ["Headline", offer.discount],
                                 ["Availability", offer.availability],
-                                ["Quiet hours", schedule],
+                                ["Who it's for", offer.audience === "new_customers" ? "New customers only" : "Everyone"],
+                                ["Enforced at the till", schedule],
                                 ["Expires", onlyDate(offer.expires_at)],
                                 ["Limit", offer.max_redemptions ? `${offer.max_redemptions} claims` : "Unlimited"],
                             ]}
@@ -239,23 +241,30 @@ async function Overview({ params }: PageProps) {
 
                 <Card className="border-[#17233B]/10">
                     <CardHeader>
-                        <h2 className="text-lg font-semibold">Set the type</h2>
+                        <h2 className="text-lg font-semibold">Put it right</h2>
 
                         <p className="mt-1 text-sm text-[#17233B]/65">
-                            The headline is built from the type, and the type is what
-                            customers filter by. Saving rewrites the headline and doesn&apos;t
-                            send the offer back for review.
+                            The headline and the availability line are built from the
+                            answers below, and the type is what customers filter by.
+                            Saving rewrites both lines and doesn&apos;t send the offer
+                            back for review.
                         </p>
                     </CardHeader>
 
                     <CardContent>
-                        <OfferKindForm
+                        <OfferCorrections
                             offerId={offer.id}
+                            businessId={business.id}
                             kind={offer.kind}
                             kindValue={offer.kind_value}
                             kindQuantity={offer.kind_quantity}
                             kindItem={offer.kind_item}
                             discount={offer.discount}
+                            availableDays={offer.available_days}
+                            availableFrom={offer.available_from}
+                            availableUntil={offer.available_until}
+                            audience={offer.audience}
+                            enforcedAtTill={offer.schedule_days !== null}
                         />
                     </CardContent>
                 </Card>

@@ -127,6 +127,33 @@ export function availabilityLine({ days, from, until, audience }: AvailabilityPa
     return audience === "new_customers" ? `${line} · New customers only` : line;
 }
 
+// What the availability columns hold, with anything the chosen "when"
+// doesn't use cleared: going back to "Any time" takes the days and times
+// with it rather than leaving them to come back later.
+export function availabilityParts(values: {
+    when?: string | null;
+    availableDays?: number[] | null;
+    availableFrom?: string | null;
+    availableUntil?: string | null;
+    audience?: string | null;
+}) {
+    const audience = values.audience === "new_customers" ? "new_customers" : "everyone";
+
+    if (values.when !== "days" && values.when !== "times") {
+        return { days: null, from: null, until: null, audience } as const;
+    }
+
+    const days = weekdayOrder.filter((day) => values.availableDays?.includes(day)).sort((a, b) => a - b);
+    const timed = values.when === "times";
+
+    return {
+        days: days.length > 0 ? days : null,
+        from: (timed && values.availableFrom) || null,
+        until: (timed && values.availableUntil) || null,
+        audience,
+    } as const;
+}
+
 // The till's window, written from the availability. The schedule check
 // has no room for a gap — it wants days and both ends — so an open end
 // becomes the edge of the day.
