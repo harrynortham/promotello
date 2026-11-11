@@ -418,21 +418,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                             : `Let's get ${business.name} in front of customers.`}
                     </p>
                 </div>
-
-                {/* Opens the public page; before approval only the team can see it. */}
-                <div className="shrink-0">
-                    <Button
-                        render={
-                            <a href={businessPath(business)} target="_blank" rel="noopener noreferrer" />
-                        }
-                        nativeButton={false}
-                        variant="outline"
-                        size="lg"
-                    >
-                        <FiExternalLink aria-hidden="true" />
-                        View profile page
-                    </Button>
-                </div>
             </div>
 
             {isWelcome && !awaitingSend && (
