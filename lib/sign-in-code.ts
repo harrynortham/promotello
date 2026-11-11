@@ -26,24 +26,28 @@ export function signInProblem(message: string, mode: "sign-in" | "sign-up") {
     // what we asked it to do — so this means nobody has this address.
     if (/signups not allowed|user not found/.test(text)) {
         return mode === "sign-in"
-            ? { message: "We couldn't find an account for that email.", otherWay: true }
-            : { message: "We couldn't create your account. Please try again.", otherWay: false };
+            ? { message: "We couldn't find an account for that email.", otherWay: true, rateLimited: false }
+            : { message: "We couldn't create your account. Please try again.", otherWay: false, rateLimited: false };
     }
 
-    // One code a minute, per address.
+    // One code a minute, per address. The form takes somebody who
+    // already has a code back to the box for it rather than showing
+    // this, so this is for an address we have no code outstanding for.
     if (/rate limit|too many requests|for security purposes/.test(text)) {
         return {
-            message: "That's a lot of codes. Wait a minute and try again, or use the last one we sent.",
+            message: "That's a lot of codes. Wait a minute and try again, or use the last one we sent you.",
             otherWay: false,
+            rateLimited: true,
         };
     }
 
     if (/invalid|email address/.test(text) && /email/.test(text)) {
-        return { message: "That email address doesn't look right.", otherWay: false };
+        return { message: "That email address doesn't look right.", otherWay: false, rateLimited: false };
     }
 
     return {
         message: message || "We couldn't send your code. Please try again.",
         otherWay: false,
+        rateLimited: false,
     };
 }
