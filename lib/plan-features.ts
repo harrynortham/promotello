@@ -23,7 +23,9 @@ export const planComparison: ComparisonRow[] = [
     { feature: "Share links, Instagram images and captions", free: true, pro: true, growth: true },
     { feature: "30-day analytics", free: true, pro: true, growth: true },
     { feature: "Welcome, birthday and win-back automations", free: false, pro: false, growth: true, plus: "Welcome, birthday and win-back emails that run themselves" },
-    { feature: "Quiet-hours offers", free: false, pro: false, growth: true, plus: "Quiet-hours offers that repeat on the days and times you choose" },
+    // Every plan says when an offer runs; Growth is staff being held
+    // to it at the till.
+    { feature: "Quiet hours enforced when scanned", free: false, pro: false, growth: true, plus: "Quiet hours: outside an offer's times the voucher won't mark as used" },
     { feature: "Monthly value report by email", free: false, pro: false, growth: true, plus: "A monthly value report in your inbox" },
 ];
 

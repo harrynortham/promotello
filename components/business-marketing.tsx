@@ -115,7 +115,7 @@ export const planSummaries = [
         price: plans.growth_monthly.price,
         note: "a month",
         description: "Marketing that runs without you.",
-        features: ["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet-hours offers", "Monthly value report"],
+        features: ["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet hours enforced when scanned", "Monthly value report"],
     },
 ];
 

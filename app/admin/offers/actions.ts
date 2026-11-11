@@ -7,7 +7,7 @@ import {
 } from "@/lib/business-review-emails";
 import { emailFollowersAboutOffer } from "@/lib/new-offer-email";
 import { ITEM_MAX, isOfferKind, kindTakes, offerHeadline } from "@/lib/offer-kinds";
-import { createAdminClient } from "@/utils/supabase/admin";
+import { availabilityLine, availabilityParts } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/server";
 
 // Called after an admin approves an offer: emails the business's followers.
@@ -49,20 +49,34 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
     return { sent };
 }
 
-// Setting an offer's type by hand, from /admin/offers/[offerId]. This is
-// how the backfill's leftovers — the headlines the rules couldn't read —
-// get a real type and join the customer's type filter.
+// Putting an offer's type and availability right by hand, from
+// /admin/offers/[offerId]. This is how the backfills' leftovers — the
+// headlines and the availability lines the rules couldn't read — get a
+// type that joins the customer's filter and a line like every other.
 //
-// Written with the service key: an admin has row-level access to read
-// every offer but not to write another business's, the same reason that
-// page reads with it. The caller is checked against is_platform_admin()
-// with their own session first.
+// Written through admin_correct_offer(), with the admin's own session
+// rather than the service key: there is no update policy on offers for
+// platform admins, but the service key has no auth.uid(), so the review
+// trigger couldn't see an admin and corrected offers went back to
+// 'pending' — off the site until somebody re-approved them.
 //
-// The headline is rebuilt here from the type rather than taken from the
-// browser, so it can only ever be what lib/offer-kinds.ts would write.
-export async function correctOfferKind(
+// Both lines are rebuilt here from the answers rather than taken from
+// the browser, so they can only ever be what lib/offer-kinds.ts and
+// lib/schedule.ts would write.
+export async function correctOffer(
     offerId: string,
-    values: { kind: string; kindValue: string; kindQuantity: string; kindItem: string; discount: string },
+    values: {
+        kind: string;
+        kindValue: string;
+        kindQuantity: string;
+        kindItem: string;
+        discount: string;
+        when: string;
+        availableDays: number[];
+        availableFrom: string;
+        availableUntil: string;
+        audience: string;
+    },
 ) {
     const supabase = await createClient();
     const { data: isAdmin } = await supabase.rpc("is_platform_admin");
@@ -87,22 +101,32 @@ export async function correctOfferKind(
         return { error: "Fill in what this type needs before saving it." };
     }
 
+    const parts = availabilityParts(values);
+    const availability = availabilityLine(parts);
+
     // Anything this type doesn't use is cleared, so correcting a type
-    // never leaves the number from the last one behind.
-    const { error } = await createAdminClient()
-        .from("offers")
-        .update({
-            kind,
-            kind_value: kindTakes(kind, "value") ? value : null,
-            kind_quantity: kindTakes(kind, "quantity") ? quantity : null,
-            kind_item: kindTakes(kind, "item") ? item : null,
-            discount,
-        })
-        .eq("id", offerId);
+    // never leaves the number from the last one behind. The same goes
+    // for the days and times when the answer goes back to "any time".
+    //
+    // schedule_days/start/end are not touched: whether staff are held to
+    // the window is the business's to ask for, on its own plan.
+    const { error } = await supabase.rpc("admin_correct_offer", {
+        requested_offer_id: offerId,
+        new_kind: kind,
+        new_kind_value: kindTakes(kind, "value") ? value : null,
+        new_kind_quantity: kindTakes(kind, "quantity") ? quantity : null,
+        new_kind_item: kindTakes(kind, "item") ? item : null,
+        new_discount: discount,
+        new_availability: availability,
+        new_available_days: parts.days,
+        new_available_from: parts.from,
+        new_available_until: parts.until,
+        new_audience: parts.audience,
+    });
 
     if (error) {
         return { error: error.message };
     }
 
-    return { discount };
+    return { discount, availability };
 }

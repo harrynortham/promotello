@@ -23,6 +23,7 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 
 import { guessKind } from "../lib/offer-kinds.ts";
+import { availabilityLine } from "../lib/schedule.ts";
 import { sampleBusinesses } from "./sample-data/businesses.mjs";
 import { bathBusinesses, bathCity } from "./sample-data/bath.mjs";
 import { downloadUnsplashPhoto } from "./sample-data/unsplash.mjs";
@@ -34,6 +35,25 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } },
 );
+
+// The days, times and audience the offer carries, and the line built
+// from them — the same one the form would have written.
+function availabilityFieldsFor(offer) {
+    const parts = {
+        days: offer.days ?? null,
+        from: offer.from ?? null,
+        until: offer.until ?? null,
+        audience: offer.audience ?? "everyone",
+    };
+
+    return {
+        availability: availabilityLine(parts),
+        available_days: parts.days,
+        available_from: parts.from,
+        available_until: parts.until,
+        audience: parts.audience,
+    };
+}
 
 function kindFieldsFor(discount) {
     const guess = guessKind(discount);
@@ -238,7 +258,7 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
                 // doesn't produce a table of "Something else".
                 ...kindFieldsFor(offer.discount),
                 description: offer.description,
-                availability: offer.availability,
+                ...availabilityFieldsFor(offer),
                 // Spread expiry dates so "ending soon" has something to show.
                 expires_at: addDays(21 + ((index * 7 + offerIndex * 31) % 120)),
                 terms: "One per customer. Show your Promotello code before paying. Can't be combined with other offers.",

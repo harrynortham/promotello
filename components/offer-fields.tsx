@@ -1,13 +1,21 @@
 "use client";
 
-import type { Control, FieldErrors, UseFormRegister, UseFormRegisterReturn } from "react-hook-form";
+import Link from "next/link";
+import { FiLock } from "react-icons/fi";
+import type {
+    Control,
+    FieldErrors,
+    UseFormRegister,
+    UseFormGetValues,
+    UseFormRegisterReturn,
+    UseFormSetValue,
+} from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { CategorySelect, nativeSelectClassName } from "@/components/category-select";
 import { FieldError, invalidProps } from "@/components/field-error";
-import { OfferScheduleFields, type scheduleFromForm } from "@/components/offer-schedule-fields";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -22,16 +30,24 @@ import {
     offerKind,
     type OfferKind,
 } from "@/lib/offer-kinds";
-import { formatSchedule, scheduleFrom, type OfferSchedule } from "@/lib/schedule";
-import { optionalText, requiredText } from "@/lib/validation";
+import { availabilityLine, availabilityParts, enforcedSchedule, weekdayOrder } from "@/lib/schedule";
+import { requiredText } from "@/lib/validation";
 
 // The fields, rules and image upload shared by the new and edit offer
-// forms. The quiet-hours schedule is its own widget (OfferScheduleFields)
-// and is read from the submitted form with scheduleFromForm().
+// forms.
 //
-// "The offer" used to be one free-text box. It is now a type and only the
-// numbers that type needs; the headline customers read is built from them
-// by lib/offer-kinds.ts, which is the only thing that assembles one.
+// Two things on this form are built rather than typed, for the same
+// reason — a business shouldn't have to word them, and we shouldn't have
+// to read what they wrote:
+//
+// - "The offer" is a type and the numbers that type needs; the headline
+//   comes from lib/offer-kinds.ts.
+// - "When can it be used?" and "Who is it for?" are pickers; the line
+//   comes from availabilityLine() in lib/schedule.ts.
+//
+// The days and times are also what the till enforces, for a business on
+// Growth that asks for it — one answer, not the two the form used to
+// ask for.
 
 function todayInUk() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
@@ -56,13 +72,69 @@ export function offerKindSchema() {
 
 export type KindInput = z.input<ReturnType<typeof offerKindSchema>>;
 
+// When it can be used and who it is for. "when" is the radio; the days
+// and times under it only mean anything for the two it names, and
+// offerRow() clears them when it doesn't.
+export const availabilityFields = {
+    when: z.enum(["any", "days", "times"]),
+    availableDays: z.array(z.number()),
+    availableFrom: z.string(),
+    availableUntil: z.string(),
+    audience: z.enum(["everyone", "new_customers"]),
+    // Growth only: the window the till enforces as well as prints.
+    enforceSchedule: z.boolean(),
+};
+
+export function offerAvailabilitySchema() {
+    return z.object(availabilityFields).superRefine(checkAvailability);
+}
+
+export type AvailabilityInput = z.input<ReturnType<typeof offerAvailabilitySchema>>;
+
+// What an admin can put right on a live offer without the business: the
+// type, and when it can be used. Same fields, same rules.
+export function offerCorrectionSchema() {
+    return z
+        .object({ ...kindFields, ...availabilityFields })
+        .superRefine(checkKind)
+        .superRefine(checkAvailability);
+}
+
+export type CorrectionInput = z.input<ReturnType<typeof offerCorrectionSchema>>;
+
+function checkAvailability(
+    values: { when: string; availableDays: number[]; availableFrom: string; availableUntil: string },
+    ctx: z.RefinementCtx,
+) {
+    if (values.when === "any") return;
+
+    if (values.availableDays.length === 0) {
+        ctx.addIssue({ code: "custom", path: ["availableDays"], message: "Pick at least one day." });
+    }
+
+    if (values.when !== "times") return;
+
+    if (!values.availableFrom && !values.availableUntil) {
+        ctx.addIssue({ code: "custom", path: ["availableFrom"], message: "Add a start or an end time." });
+        return;
+    }
+
+    if (values.availableFrom && values.availableUntil && values.availableFrom >= values.availableUntil) {
+        ctx.addIssue({
+            code: "custom",
+            path: ["availableUntil"],
+            message: "Choose an end time after the start time.",
+        });
+    }
+}
+
 export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}) {
     return z.object({
         title: requiredText("The title", { min: 2, max: 160 }),
         category: z.string().min(1, "Choose a category."),
         ...kindFields,
+        ...availabilityFields,
         description: requiredText("The description", { min: 2, max: 5000 }),
-        availability: optionalText("Availability", 160),
         expiresAt: z
             .string()
             .min(1, "Choose when the offer ends.")
@@ -79,7 +151,7 @@ export function offerSchema({ minRedemptions = 1, allowPastExpiry = false } = {}
                         : "Use a number greater than zero.",
             }),
         terms: requiredText("The terms", { min: 2, max: 5000 }),
-    }).superRefine(checkKind);
+    }).superRefine(checkKind).superRefine(checkAvailability);
 }
 
 export type OfferInput = z.input<ReturnType<typeof offerSchema>>;
@@ -201,19 +273,26 @@ export function kindRow(values: KindFields) {
 
 // The offers row for the values and schedule. Scheduled offers describe
 // their days and times unless the business wrote its own availability.
-export function offerRow(values: OfferValues, schedule: ReturnType<typeof scheduleFromForm>) {
-    const parsed = scheduleFrom(schedule.schedule_days, schedule.schedule_start, schedule.schedule_end);
+export function offerRow(values: OfferValues) {
+    const parts = availabilityParts(values);
 
     return {
         title: values.title,
         category_id: values.category,
         ...kindRow(values),
         description: values.description,
-        availability: values.availability || (parsed ? formatSchedule(parsed) : "Available now"),
+        // Built, never typed, so every card says it the same way.
+        availability: availabilityLine(parts),
+        available_days: parts.days,
+        available_from: parts.from,
+        available_until: parts.until,
+        audience: parts.audience,
+        // The same answer again, in the columns the till reads — only
+        // when the business asked for it to be enforced.
+        ...enforcedSchedule(parts, values.enforceSchedule),
         expires_at: values.expiresAt,
         terms: values.terms,
         max_redemptions: values.maxRedemptions,
-        ...schedule,
     };
 }
 
@@ -481,23 +560,308 @@ export function OfferKindFields({
     );
 }
 
+const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const whenOptions = [
+    { value: "any", label: "Any time you're open" },
+    { value: "days", label: "Certain days" },
+    { value: "times", label: "Certain days and times" },
+] as const;
+
+const audienceOptions = [
+    { value: "everyone", label: "Everyone" },
+    { value: "new_customers", label: "New customers only" },
+] as const;
+
+// A radio that reads as a row you can press anywhere on, rather than a
+// dot with some words beside it.
+function Choice({
+    id,
+    value,
+    label,
+    registration,
+}: {
+    id: string;
+    value: string;
+    label: string;
+    registration: UseFormRegisterReturn;
+}) {
+    return (
+        <label
+            htmlFor={id}
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#17233B]/10 px-3 py-2.5 text-sm transition has-checked:border-[#FF593F] has-checked:bg-[#FF593F]/5"
+        >
+            <input
+                id={id}
+                type="radio"
+                value={value}
+                className="size-4 shrink-0 accent-[#FF593F]"
+                {...registration}
+            />
+            {label}
+        </label>
+    );
+}
+
+// When it can be used, who it is for, and whether the till holds anyone
+// to it. The line underneath is what the card will say.
+//
+// The days and times are not a Growth feature: every business can say
+// when its offer runs. What Growth buys is the tick-box — having staff
+// held to it at the till.
+export function OfferAvailabilityFields({
+    register,
+    errors,
+    control,
+    setValue,
+    getValues,
+    businessId,
+    canSchedule,
+    currentLine,
+    hideEnforcement = false,
+}: {
+    register: UseFormRegister<AvailabilityInput>;
+    errors: FieldErrors<AvailabilityInput>;
+    control: Control<AvailabilityInput, unknown, unknown>;
+    setValue: UseFormSetValue<AvailabilityInput>;
+    getValues: UseFormGetValues<AvailabilityInput>;
+    businessId: string;
+    canSchedule: boolean;
+    // An offer whose line was written before these pickers existed. The
+    // note says what customers see now, because saving replaces it.
+    currentLine?: string | null;
+    // For a form that writes what the card says and nothing else — the
+    // admin's. Whether staff are held to the window is the business's to
+    // ask for, on its own plan.
+    hideEnforcement?: boolean;
+}) {
+    // The enforce box isn't watched: it changes nothing on screen, and
+    // the line it would affect is the same either way.
+    const draft = useWatch({
+        control,
+        name: ["when", "availableDays", "availableFrom", "availableUntil", "audience"],
+    });
+    const [when, availableDays, availableFrom, availableUntil, audience] = draft;
+    const days = availableDays ?? [];
+    const chosen = when === "days" || when === "times";
+    const line = availabilityLine(
+        availabilityParts({ when, availableDays: days, availableFrom, availableUntil, audience }),
+    );
+
+    // Read from the form rather than from what was last rendered: two
+    // chips pressed in the same frame would otherwise both start from
+    // the same days, and the first press would be lost.
+    function toggleDay(day: number) {
+        const current = getValues("availableDays") ?? [];
+        const next = current.includes(day) ? current.filter((value) => value !== day) : [...current, day];
+
+        setValue("availableDays", next.sort((a, b) => a - b), { shouldValidate: true, shouldDirty: true });
+    }
+
+    return (
+        <div className="space-y-5">
+            {currentLine && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6">
+                    Customers currently see: &ldquo;{currentLine}&rdquo;. Choose the days
+                    and times below and saving will replace it.
+                </div>
+            )}
+
+            <fieldset className="space-y-2">
+                <legend className="mb-2 text-sm font-medium">
+                    When can it be used? <Required />
+                </legend>
+
+                <div className="grid gap-2 sm:grid-cols-3">
+                    {whenOptions.map((option) => (
+                        <Choice
+                            key={option.value}
+                            id={`when-${option.value}`}
+                            value={option.value}
+                            label={option.label}
+                            registration={register("when")}
+                        />
+                    ))}
+                </div>
+
+                {chosen && (
+                    <div className="space-y-4 pt-2">
+                        <div>
+                            <p className="text-sm font-medium">Days</p>
+
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {weekdayOrder.map((day) => {
+                                    const on = days.includes(day);
+
+                                    return (
+                                        <button
+                                            key={day}
+                                            type="button"
+                                            aria-pressed={on}
+                                            onClick={() => toggleDay(day)}
+                                            className={`cursor-pointer rounded-full border px-3 py-1 text-sm transition ${on ? "border-[#FF593F] bg-[#FF593F] text-white" : "border-[#17233B]/15 bg-white hover:border-[#17233B]/40"}`}
+                                        >
+                                            {dayLabels[day]}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <FieldError id="availableDays-error" message={errors.availableDays?.message} />
+                        </div>
+
+                        {when === "times" && (
+                            <div className="grid max-w-sm grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="availableFrom">From</Label>
+
+                                    <Input
+                                        id="availableFrom"
+                                        type="time"
+                                        {...register("availableFrom")}
+                                        {...invalidProps("availableFrom-error", errors.availableFrom)}
+                                    />
+
+                                    <FieldError
+                                        id="availableFrom-error"
+                                        message={errors.availableFrom?.message}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="availableUntil">Until</Label>
+
+                                    <Input
+                                        id="availableUntil"
+                                        type="time"
+                                        {...register("availableUntil")}
+                                        {...invalidProps("availableUntil-error", errors.availableUntil)}
+                                    />
+
+                                    <FieldError
+                                        id="availableUntil-error"
+                                        message={errors.availableUntil?.message}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Leaving one end empty is an answer: "until 10am"
+                            runs from opening, "from 5pm" until closing. */}
+                        {when === "times" && (
+                            <p className="text-xs leading-5 text-muted-foreground">
+                                Leave one empty for an open end: until 10am, or from 5pm.
+                            </p>
+                        )}
+
+                        {hideEnforcement ? null : canSchedule ? (
+                            <label
+                                htmlFor="enforceSchedule"
+                                className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#17233B]/10 p-4 text-sm"
+                            >
+                                <input
+                                    id="enforceSchedule"
+                                    type="checkbox"
+                                    className="mt-0.5 size-4 shrink-0 accent-[#FF593F]"
+                                    {...register("enforceSchedule")}
+                                />
+
+                                <span>
+                                    <span className="font-medium">
+                                        Only let staff redeem it at these times
+                                    </span>
+
+                                    <span className="mt-1 block text-[#17233B]/65">
+                                        Anyone can claim it whenever they see it. Outside
+                                        these times their voucher won&apos;t mark as used,
+                                        and the screen tells them when to come back — so
+                                        your staff never have to. Times are UK time.
+                                    </span>
+                                </span>
+                            </label>
+                        ) : (
+                            <div className="flex gap-3 rounded-xl border border-dashed border-[#17233B]/20 p-4 text-sm">
+                                <FiLock aria-hidden="true" className="mt-0.5 shrink-0 text-[#17233B]/65" />
+
+                                <div className="text-[#17233B]/65">
+                                    <p>
+                                        <strong className="text-[#17233B]">
+                                            Want the voucher to say no for you?
+                                        </strong>{" "}
+                                        As it stands these times are a request. Someone can
+                                        turn up at six on a Saturday with this voucher, and
+                                        it is your staff who have to decide whether to
+                                        argue — most will just let it go, and the discount
+                                        lands on your busiest hour instead of your quietest.
+                                    </p>
+
+                                    <p className="mt-2">
+                                        On Growth, scanning it outside these times shows
+                                        &ldquo;Not valid right now&rdquo; and when to come
+                                        back, with no button to mark it used. Nobody behind
+                                        the counter has to be the one refusing.{" "}
+                                        <Link
+                                            href={`/business/${businessId}/billing`}
+                                            className="font-medium text-[#FF593F] underline"
+                                        >
+                                            See Growth
+                                        </Link>
+                                        .
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </fieldset>
+
+            <fieldset className="space-y-2">
+                <legend className="mb-2 text-sm font-medium">Who is it for?</legend>
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                    {audienceOptions.map((option) => (
+                        <Choice
+                            key={option.value}
+                            id={`audience-${option.value}`}
+                            value={option.value}
+                            label={option.label}
+                            registration={register("audience")}
+                        />
+                    ))}
+                </div>
+            </fieldset>
+
+            <p className="text-xs leading-5 text-[#17233B]/70">
+                On your card:{" "}
+                <strong className="font-semibold text-[#17233B]">{line}</strong>
+            </p>
+
+        </div>
+    );
+}
+
 export function OfferFields({
     register,
     errors,
     control,
+    setValue,
+    getValues,
     businessId,
     canSchedule,
-    schedule,
     defaultCategoryId,
+    currentLine,
     minRedemptions = 0,
 }: {
     register: UseFormRegister<OfferInput>;
     errors: FieldErrors<OfferInput>;
     control: Control<OfferInput, unknown, OfferValues>;
+    setValue: UseFormSetValue<OfferInput>;
+    getValues: UseFormGetValues<OfferInput>;
     businessId: string;
     canSchedule: boolean;
-    schedule: OfferSchedule | null;
     defaultCategoryId?: string | null;
+    // The line a legacy offer shows today; see OfferAvailabilityFields.
+    currentLine?: string | null;
     // Already claimed, when editing.
     minRedemptions?: number;
 }) {
@@ -559,12 +923,18 @@ export function OfferFields({
                 <FieldError id="description-error" message={errors.description?.message} />
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="availability">Availability</Label>
-                <Input id="availability" maxLength={160} placeholder="Available this weekend" {...register("availability")} />
-            </div>
-
-            <OfferScheduleFields businessId={businessId} canSchedule={canSchedule} initial={schedule} />
+            {/* Same invariance as the kind picker above: the names and
+                rules are the same object (availabilityFields). */}
+            <OfferAvailabilityFields
+                register={register as unknown as UseFormRegister<AvailabilityInput>}
+                errors={errors as FieldErrors<AvailabilityInput>}
+                control={control as unknown as Control<AvailabilityInput, unknown, unknown>}
+                setValue={setValue as unknown as UseFormSetValue<AvailabilityInput>}
+                getValues={getValues as unknown as UseFormGetValues<AvailabilityInput>}
+                businessId={businessId}
+                canSchedule={canSchedule}
+                currentLine={currentLine}
+            />
 
             <div className="space-y-2">
                 <Label htmlFor="expiresAt">

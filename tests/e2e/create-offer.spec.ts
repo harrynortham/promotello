@@ -22,6 +22,17 @@ async function fillOffer(page: import("@playwright/test").Page, title: string) {
     await page.locator("#terms").fill("Valid during automated tests only. One per customer.");
 }
 
+// Weekdays until 10am, chosen rather than typed.
+async function fillWeekdayMornings(page: import("@playwright/test").Page) {
+    await page.getByLabel("Certain days and times").check();
+
+    for (const day of ["Mon", "Tue", "Wed", "Thu", "Fri"]) {
+        await page.getByRole("button", { name: day, exact: true }).click();
+    }
+
+    await page.locator("#availableUntil").fill("10:00");
+}
+
 test("business owner can create a new offer", async ({ page }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const client = admin();
@@ -30,6 +41,14 @@ test("business owner can create a new offer", async ({ page }) => {
 
     // Without a picture it doesn't save at all.
     await fillOffer(page, "E2E New Offer");
+    await fillWeekdayMornings(page);
+
+    // Said twice on purpose: under the pickers, and on the card beside
+    // the form, which is the one customers will read.
+    await expect(page.getByText("On your card: Weekdays, until 10am")).toBeVisible();
+    await expect(
+        page.locator("[data-slot=offer-card]").getByText("Weekdays, until 10am", { exact: true }),
+    ).toBeVisible();
     await page.locator('button[type="submit"]').click();
     await expect(page.getByText(/Add a photo/)).toBeVisible();
 
@@ -55,7 +74,9 @@ test("business owner can create a new offer", async ({ page }) => {
 
     const { data: made } = await client
         .from("offers")
-        .select("id, image_url, kind, kind_value, kind_item, discount")
+        .select(
+            "id, image_url, kind, kind_value, kind_item, discount, availability, available_days, available_from, available_until, audience, schedule_days",
+        )
         .eq("business_id", businessId)
         .eq("title", "E2E New Offer")
         .order("created_at", { ascending: false })
@@ -71,6 +92,18 @@ test("business owner can create a new offer", async ({ page }) => {
         expect(Number(made!.kind_value)).toBe(15);
         expect(made!.kind_item, "no item was given").toBeNull();
         expect(made!.discount, "built from the type").toBe("15% off");
+
+        // And when it can be used, in the columns and in the one line
+        // customers read.
+        expect(made!.available_days).toEqual([1, 2, 3, 4, 5]);
+        expect(made!.available_from, "an open start").toBeNull();
+        expect(made!.available_until).toBe("10:00:00");
+        expect(made!.audience).toBe("everyone");
+        expect(made!.availability, "built from the days and the time").toBe("Weekdays, until 10am");
+
+        // Saying when it runs isn't asking the till to enforce it, and
+        // this business isn't on the plan that could.
+        expect(made!.schedule_days, "nothing enforced").toBeNull();
     } finally {
         await client.from("offers").delete().eq("id", made!.id);
 
@@ -182,6 +215,53 @@ test("an offer that fits no type is written out in full", async ({ page }) => {
             null,
             null,
         ]);
+    } finally {
+        await client.from("offers").delete().eq("id", made!.id);
+
+        const path = made!.image_url?.split("/offer-images/")[1];
+        if (path) await client.storage.from("offer-images").remove([path]);
+    }
+});
+
+// "Who is it for?" is the other half of the line, and the only thing on
+// the form that says it.
+test("an offer for new customers only says so on its card", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = admin();
+
+    await page.goto(`/business/${businessId}/offers/new`);
+    await expect(page.locator("#title")).toBeVisible({ timeout: 15_000 });
+
+    await fillOffer(page, "E2E New Customers Offer");
+    await page.getByLabel("New customers only").check();
+    await expect(page.getByText("On your card: Any time · New customers only")).toBeVisible();
+    await expect(
+        page.locator("[data-slot=offer-card]").getByText("Any time · New customers only", { exact: true }),
+    ).toBeVisible();
+
+    await page.locator("#image").setInputFiles("tests/fixtures/offer-photo.jpg");
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Use this image" }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.locator('button[type="submit"]').click();
+    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
+        timeout: 20_000,
+    });
+
+    const { data: made } = await client
+        .from("offers")
+        .select("id, image_url, availability, audience, available_days")
+        .eq("business_id", businessId)
+        .eq("title", "E2E New Customers Offer")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    try {
+        expect(made!.audience).toBe("new_customers");
+        expect(made!.available_days, "any time, so no days").toBeNull();
+        expect(made!.availability).toBe("Any time · New customers only");
     } finally {
         await client.from("offers").delete().eq("id", made!.id);
 

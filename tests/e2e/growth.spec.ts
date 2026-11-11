@@ -34,6 +34,14 @@ test.describe.serial("Growth plan", () => {
         const { businessId, businessUserId, businessEmail, customerEmail, testPassword } = state();
         const owner = await signedIn(businessEmail, testPassword);
         const otherDay = (londonWeekday() + 3) % 7;
+        const dayChip = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][otherDay];
+
+        const { data: picture } = await admin()
+            .from("offers")
+            .select("image_url")
+            .not("image_url", "is", null)
+            .limit(1)
+            .single();
 
         // Created approved, because this is about the schedule and not the
         // review: an owner can only write a pending offer, and a pending
@@ -50,17 +58,47 @@ test.describe.serial("Growth plan", () => {
                 category: "Testing",
                 discount: "2 for 1",
                 description: "Quiet hours test.",
-                availability: "Quiet hours",
+                availability: "Any time",
                 expires_at: "2030-12-31",
                 terms: "For automated tests only.",
                 approval_status: "approved",
-                schedule_days: [otherDay],
-                schedule_start: "14:00",
-                schedule_end: "16:00",
+                image_url: picture!.image_url,
             })
             .select("id")
             .single();
         expect(error).toBeNull();
+
+        // The window is asked for on the form, by the same pickers that
+        // write the line on the card — a tick-box on the days and times,
+        // not a widget of its own. Availability isn't reviewed, so this
+        // saves to the live offer there and then.
+        const form = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await form.goto(`/business/${businessId}/offers/${offer!.id}/edit`);
+        await expect(form.locator("#title")).toHaveValue("E2E Quiet Hours Offer", { timeout: 20_000 });
+
+        // Seeded straight into the table, so it has a category name but
+        // no category id for the picker to open on.
+        await form.locator("#category option").nth(1).waitFor({ state: "attached" });
+        await form.locator("#category").selectOption({ index: 1 });
+
+        await form.getByLabel("Certain days and times").check();
+        await form.getByRole("button", { name: dayChip, exact: true }).click();
+        await form.locator("#availableFrom").fill("14:00");
+        await form.locator("#availableUntil").fill("16:00");
+        await form.getByLabel("Only let staff redeem it at these times").check();
+        await form.getByRole("button", { name: "Save changes" }).click();
+        await form.waitForURL(`**/business/${businessId}/offers`, { timeout: 25_000 });
+
+        const { data: windowed } = await admin()
+            .from("offers")
+            .select("schedule_days, schedule_start, schedule_end, available_days, availability")
+            .eq("id", offer!.id)
+            .single();
+
+        expect(windowed!.schedule_days, "the till's window, from the pickers").toEqual([otherDay]);
+        expect(windowed!.schedule_start).toBe("14:00:00");
+        expect(windowed!.schedule_end).toBe("16:00:00");
+        expect(windowed!.available_days, "and the same answer on the card").toEqual([otherDay]);
 
         const customer = await signedIn(customerEmail, testPassword);
         const { data: claim } = await customer.rpc("redeem_offer", { requested_offer_id: offer!.id });
@@ -87,6 +125,38 @@ test.describe.serial("Growth plan", () => {
             .update({ schedule_days: [1], schedule_start: "09:00", schedule_end: "11:00" })
             .eq("id", offer!.id);
         expect(error?.code).toBe("P0004");
+    });
+
+    // Saying when an offer runs is not a paid feature. Having staff held
+    // to it at the till is, and the form says which is which rather than
+    // hiding the days and times behind the lock.
+    test("a business without Growth can still say when its offer runs", async ({ browser }) => {
+        const { freeBusinessId } = state();
+        const { data: offer } = await admin()
+            .from("offers")
+            .select("id")
+            .eq("business_id", freeBusinessId)
+            .limit(1)
+            .single();
+
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/${freeBusinessId}/offers/${offer!.id}/edit`);
+        await expect(page.locator("#title")).toBeVisible({ timeout: 20_000 });
+
+        await page.getByLabel("Certain days and times").check();
+
+        // The days and times are theirs.
+        await expect(page.getByRole("button", { name: "Mon", exact: true })).toBeEnabled();
+        await expect(page.locator("#availableFrom")).toBeEnabled();
+
+        // The tick-box isn't, and it says what it would do and where to
+        // get it.
+        await expect(page.getByLabel("Only let staff redeem it at these times")).toHaveCount(0);
+        await expect(page.getByText("Want the voucher to say no for you?")).toBeVisible();
+        await expect(page.getByRole("link", { name: "See Growth" })).toHaveAttribute(
+            "href",
+            `/business/${freeBusinessId}/billing`,
+        );
     });
 
     test("a welcome automation gives new followers a gift staff can redeem", async ({ browser }) => {

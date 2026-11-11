@@ -177,8 +177,12 @@ export default async function FeaturesPage() {
                 tinted
                 eyebrow="Quiet-hours offers · Growth"
                 title="Fill the hours that are usually quiet."
-                body="Make an offer that only works on the days and times you choose. Customers can claim it any time, but staff can only redeem it in the window."
-                points={["Any days of the week, any time window", "Staff are warned if it's outside the hours"]}
+                body="Every offer says when it can be used, on any plan. What Growth adds is holding people to it: scanned outside its window, the voucher shows “Not valid right now” and when to come back, with no button to mark it used. Without that, a Tuesday-afternoon offer quietly becomes a discount on your Saturday night, because nobody behind the counter wants the argument."
+                points={[
+                    "Any days of the week, any time window, on every plan",
+                    "Outside the window the voucher won't mark as used",
+                    "Your staff are never the ones saying no",
+                ]}
                 visual={<QuietHoursCard />}
             />
 
