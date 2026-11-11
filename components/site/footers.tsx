@@ -198,7 +198,9 @@ const appFooters = {
             { label: "Getting started", href: "/business/getting-started" },
             { label: "Contact support", href: "/business/contact" },
         ],
-        switchTo: { label: "Customer area", href: "/dashboard" },
+        // The front of Promotello, the way a customer arrives at it —
+        // not /dashboard, which is this person's own vouchers.
+        switchTo: { label: "Customer area", href: "/" },
     },
     admin: {
         homeHref: "/admin",
@@ -207,7 +209,7 @@ const appFooters = {
             { label: "Help centre", href: "/business/help" },
             { label: "Privacy policy", href: "/legal/privacy" },
         ],
-        switchTo: { label: "Customer area", href: "/dashboard" },
+        switchTo: { label: "Customer area", href: "/" },
     },
     account: {
         homeHref: "/",
