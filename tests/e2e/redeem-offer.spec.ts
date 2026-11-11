@@ -55,3 +55,32 @@ test("a code is found, checked, and marked used once", async ({ page }) => {
         page.locator("li").filter({ hasText: preClaimedCode }).getByRole("button", { name: "Mark as used" }),
     ).toHaveCount(0);
 });
+
+// From the offer to the vouchers it has produced: the count is on the
+// offer, and the list behind it is this same till page, narrowed.
+test("an offer counts its vouchers and leads to them", async ({ page }) => {
+    const { businessId, preClaimedCode } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/business/${businessId}/offers`);
+
+    const counts = page.getByText(/^\d+ claimed · \d+ used$/);
+    await expect(counts.first()).toBeVisible({ timeout: 25_000 });
+
+    // The offer with a voucher on it is the one that offers to show it.
+    const withVouchers = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: "E2E Redeem Test Offer" })
+        .first();
+
+    await expect(withVouchers.getByText(/^[1-9]\d* claimed/)).toBeVisible();
+    await withVouchers.getByRole("button", { name: "See vouchers" }).click();
+
+    await page.waitForURL(/\/redemptions\?show=all&offer=[0-9a-f-]{36}/, { timeout: 20_000 });
+    await expect(page.getByText("Vouchers for")).toBeVisible();
+    await expect(page.getByText("E2E Redeem Test Offer").first()).toBeVisible();
+    await expect(page.getByText(preClaimedCode).first()).toBeVisible();
+
+    // And a way back out to everything.
+    await page.getByRole("button", { name: "All offers" }).click();
+    await expect(page.getByText("Vouchers for")).toHaveCount(0);
+});
