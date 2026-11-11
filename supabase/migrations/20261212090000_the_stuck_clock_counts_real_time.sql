@@ -8,8 +8,12 @@
 -- truth.
 --
 -- Where a business got to is still the furthest step it reached. How long
--- it has been there is now counted from the latest step with a real time
--- on it, which every business has: its own created_at.
+-- it has been there is counted from that step's own time when we recorded
+-- it, and only when that time was backfilled does it fall back to the last
+-- step we did watch happen — every business has one of those: its own
+-- created_at. Counting from the latest real time in every case would be a
+-- different measurement, "how long since anything happened", and would
+-- under-report a business that stalled after a late burst of activity.
 
 create or replace function public.onboarding_funnel(
   requested_city_id uuid default null,
