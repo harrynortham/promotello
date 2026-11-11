@@ -74,9 +74,9 @@ function LoadingState() {
 
             <Skeleton className="h-64 rounded-xl" />
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((item) => (
-                    <Skeleton key={item} className="h-32 rounded-xl" />
+                    <Skeleton key={item} className="h-28 rounded-xl sm:h-32" />
                 ))}
             </div>
 
@@ -569,7 +569,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             <BusinessOnboardingChecklist groups={checklist} setupHref={`/business/setup/${businessId}`} />
 
             {isLive && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            // Two across on a phone: four counts stacked full width is
+            // most of a screen given over to four numbers.
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-[#17233B]/70">
@@ -578,7 +580,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </CardHeader>
 
                     <CardContent>
-                        <p className="text-4xl font-semibold">
+                        <p className="text-3xl font-semibold sm:text-4xl">
                             {offers.length}
                         </p>
                     </CardContent>
@@ -592,7 +594,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </CardHeader>
 
                     <CardContent>
-                        <p className="text-4xl font-semibold">
+                        <p className="text-3xl font-semibold sm:text-4xl">
                             {approvedOffers.length}
                         </p>
                     </CardContent>
@@ -606,7 +608,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </CardHeader>
 
                     <CardContent>
-                        <p className="text-4xl font-semibold">
+                        <p className="text-3xl font-semibold sm:text-4xl">
                             {totalClaims}
                         </p>
                     </CardContent>
@@ -620,7 +622,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     </CardHeader>
 
                     <CardContent>
-                        <p className="text-4xl font-semibold">
+                        <p className="text-3xl font-semibold sm:text-4xl">
                             {redemptionCount ?? 0}
                         </p>
                     </CardContent>
