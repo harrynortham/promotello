@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { getCityOptions } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/server";
 import AddressForm from "./address-form";
@@ -13,15 +13,6 @@ type PageProps = {
     }>;
 };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-9 w-44 rounded-lg" />
-            <Skeleton className="mt-8 h-12 w-72 rounded-lg" />
-            <Skeleton className="mt-10 h-96 w-full rounded-xl" />
-        </div>
-    );
-}
 
 // Just the address, for the "Add your address" setup step — the same
 // reason the hours and the logo have pages of their own. It also fills a
@@ -79,7 +70,7 @@ async function AddressContent({ params }: PageProps) {
 
 export default function AddressPage({ params }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading back fields={4} eyebrow={false} />}>
             <AddressContent params={params} />
         </Suspense>
     );

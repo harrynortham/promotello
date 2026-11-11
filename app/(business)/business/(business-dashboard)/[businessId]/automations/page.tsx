@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardStackLoading } from "@/components/dashboard-skeletons";
 import { automationDetails, type AutomationKind } from "@/lib/automations";
 import { businessTier } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
@@ -272,12 +272,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
 export default function AutomationsPage(props: PageProps) {
     return (
         <Suspense
-            fallback={
-                <div className="space-y-6">
-                    <Skeleton className="h-10 w-64" />
-                    <Skeleton className="h-64 rounded-xl" />
-                </div>
-            }
+            fallback={<CardStackLoading cards={3} />}
         >
             <AutomationsContent {...props} />
         </Suspense>

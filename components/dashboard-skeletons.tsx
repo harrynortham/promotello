@@ -12,7 +12,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 // for what it loads itself, and a visitor shouldn't be able to tell
 // those two waits apart.
 
-function PageHeading({ back = false }: { back?: boolean }) {
+// Eyebrow, title, the line under it, and whatever sits opposite. Every
+// dashboard page opens this way, some behind a back link.
+function PageHeading({
+    back = false,
+    eyebrow = true,
+    action = true,
+}: {
+    back?: boolean;
+    eyebrow?: boolean;
+    action?: boolean;
+}) {
     return (
         <>
             {back && <Skeleton className="h-9 w-24 rounded-lg" />}
@@ -21,14 +31,162 @@ function PageHeading({ back = false }: { back?: boolean }) {
                 className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${back ? "mt-8" : ""}`}
             >
                 <div className="w-full">
-                    <Skeleton className="h-5 w-24 rounded-lg" />
-                    <Skeleton className="mt-3 h-10 w-72 max-w-full rounded-lg" />
+                    {eyebrow && <Skeleton className="h-5 w-24 rounded-lg" />}
+                    <Skeleton className={`${eyebrow ? "mt-3 " : ""}h-10 w-72 max-w-full rounded-lg`} />
                     <Skeleton className="mt-4 h-5 w-[32rem] max-w-full rounded-lg" />
                 </div>
 
-                <Skeleton className="h-9 w-32 shrink-0 rounded-lg" />
+                {action && <Skeleton className="h-9 w-32 shrink-0 rounded-lg" />}
             </div>
         </>
+    );
+}
+
+// A card of fields: a heading, rows of label-and-box, then the button
+// that saves them.
+function FieldsCard({ fields = 4, heading = true }: { fields?: number; heading?: boolean }) {
+    return (
+        <div className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8">
+            {heading && <Skeleton className="h-6 w-48 rounded-lg" />}
+
+            <div className={`space-y-5 ${heading ? "mt-6" : ""}`}>
+                {Array.from({ length: fields }, (_, field) => (
+                    <div key={field} className="space-y-2">
+                        <Skeleton className="h-4 w-28 rounded-lg" />
+                        <Skeleton className="h-12 w-full rounded-lg" />
+                    </div>
+                ))}
+            </div>
+
+            <Skeleton className="mt-8 h-12 w-40 rounded-lg" />
+        </div>
+    );
+}
+
+// One screen, one form: the profile's own pages, and the pages that make
+// a QR code or a loyalty card.
+export function FormPageLoading({
+    back = false,
+    eyebrow = true,
+    fields = 4,
+}: {
+    back?: boolean;
+    eyebrow?: boolean;
+    fields?: number;
+}) {
+    return (
+        <div className="text-[#17233B]">
+            <div>
+                <PageHeading back={back} eyebrow={eyebrow} action={false} />
+
+                <div className="mt-10">
+                    <FieldsCard fields={fields} heading={false} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// A header and a stack of wide cards: the automations, the events, the
+// settings.
+export function CardStackLoading({
+    cards = 3,
+    eyebrow = true,
+    action = true,
+}: {
+    cards?: number;
+    eyebrow?: boolean;
+    action?: boolean;
+}) {
+    return (
+        <div className="text-[#17233B]">
+            <div>
+                <PageHeading eyebrow={eyebrow} action={action} />
+
+                <div className="mt-10 space-y-5">
+                    {Array.from({ length: cards }, (_, card) => (
+                        <div
+                            key={card}
+                            className="rounded-xl border border-[#17233B]/10 bg-white p-6 sm:p-8"
+                        >
+                            <Skeleton className="h-6 w-56 max-w-full rounded-lg" />
+                            <Skeleton className="mt-3 h-4 w-full max-w-lg rounded-lg" />
+                            <Skeleton className="mt-6 h-12 w-full rounded-lg" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// A header, the tile that makes another one, then what there is: the QR
+// posters, laid out like the offers.
+export function CardGridLoading({ cards = 2 }: { cards?: number }) {
+    return (
+        <div className="text-[#17233B]">
+            <div>
+                <PageHeading />
+
+                <div className="mt-10 grid gap-5 md:grid-cols-2">
+                    <div className="flex h-full min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-[#17233B]/20 bg-white p-8">
+                        <Skeleton className="size-10 rounded-full" />
+                        <Skeleton className="mt-4 h-6 w-40 rounded-lg" />
+                        <Skeleton className="mt-3 h-4 w-56 max-w-full rounded-lg" />
+                        <Skeleton className="mt-5 h-11 w-36 rounded-lg" />
+                    </div>
+
+                    {Array.from({ length: cards }, (_, card) => (
+                        <div
+                            key={card}
+                            className="rounded-xl border border-[#17233B]/10 bg-white p-6"
+                        >
+                            <div className="flex gap-4">
+                                <Skeleton className="size-24 shrink-0 rounded-lg" />
+
+                                <div className="w-full space-y-2">
+                                    <Skeleton className="h-5 w-32 rounded-lg" />
+                                    <Skeleton className="h-4 w-full rounded-lg" />
+                                    <Skeleton className="h-4 w-24 rounded-lg" />
+                                </div>
+                            </div>
+
+                            <div className="mt-6 grid grid-cols-3 gap-3">
+                                {[1, 2, 3].map((stat) => (
+                                    <Skeleton key={stat} className="h-12 rounded-lg" />
+                                ))}
+                            </div>
+
+                            <div className="mt-6 flex gap-3">
+                                <Skeleton className="h-9 w-28 rounded-lg" />
+                                <Skeleton className="h-9 w-24 rounded-lg" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// A form with the thing it makes beside it: the loyalty card.
+export function FormAndPreviewLoading() {
+    return (
+        <div className="text-[#17233B]">
+            <div>
+                <PageHeading />
+
+                <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
+                    <FieldsCard fields={4} />
+
+                    <aside>
+                        <Skeleton className="h-4 w-44 rounded-lg" />
+                        <Skeleton className="mt-3 h-64 w-full rounded-2xl" />
+                        <Skeleton className="mt-3 h-4 w-full rounded-lg" />
+                    </aside>
+                </div>
+            </div>
+        </div>
     );
 }
 

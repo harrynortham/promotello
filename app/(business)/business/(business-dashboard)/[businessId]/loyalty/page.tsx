@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormAndPreviewLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard } from "./actions";
@@ -57,16 +57,6 @@ function weekAgo() {
     return new Date(Date.now() - 7 * 86_400_000).toISOString();
 }
 
-function LoadingState() {
-    return (
-        <div>
-            <div>
-                <Skeleton className="h-10 w-64 rounded-lg" />
-                <Skeleton className="mt-8 h-64 rounded-xl" />
-            </div>
-        </div>
-    );
-}
 
 async function LoyaltyContent({ params, searchParams }: PageProps) {
     await connection();
@@ -442,7 +432,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
 export default function LoyaltyPage(props: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormAndPreviewLoading />}>
             <LoyaltyContent {...props} />
         </Suspense>
     );

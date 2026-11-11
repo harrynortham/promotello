@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { createClient } from "@/utils/supabase/server";
 import { BusinessImageForm } from "@/components/business-image-form";
 
@@ -13,15 +13,6 @@ type PageProps = {
     searchParams: Promise<{ from?: string }>;
 };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-9 w-44 rounded-lg" />
-            <Skeleton className="mt-8 h-12 w-64 rounded-lg" />
-            <Skeleton className="mt-10 h-80 w-full rounded-xl" />
-        </div>
-    );
-}
 
 // Just the cover photo, from Edit business. Everything else is on /edit.
 async function CoverContent({ params, searchParams }: PageProps) {
@@ -71,7 +62,7 @@ async function CoverContent({ params, searchParams }: PageProps) {
 
 export default function CoverPage({ params, searchParams }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading back fields={2} eyebrow={false} />}>
             <CoverContent params={params} searchParams={searchParams} />
         </Suspense>
     );

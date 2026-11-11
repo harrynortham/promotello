@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { hoursToValues, type HoursRow } from "@/lib/business-hours";
 import { createClient } from "@/utils/supabase/server";
 import HoursForm from "./hours-form";
@@ -14,15 +14,6 @@ type PageProps = {
     searchParams: Promise<{ from?: string }>;
 };
 
-function LoadingState() {
-    return (
-        <div>
-            <Skeleton className="h-9 w-44 rounded-lg" />
-            <Skeleton className="mt-8 h-12 w-72 rounded-lg" />
-            <Skeleton className="mt-10 h-[28rem] w-full rounded-xl" />
-        </div>
-    );
-}
 
 // Just the opening hours, for the "Set your opening hours" setup step.
 async function HoursContent({ params, searchParams }: PageProps) {
@@ -72,7 +63,7 @@ async function HoursContent({ params, searchParams }: PageProps) {
 
 export default function HoursPage({ params, searchParams }: PageProps) {
     return (
-        <Suspense fallback={<LoadingState />}>
+        <Suspense fallback={<FormPageLoading back fields={7} eyebrow={false} />}>
             <HoursContent params={params} searchParams={searchParams} />
         </Suspense>
     );
