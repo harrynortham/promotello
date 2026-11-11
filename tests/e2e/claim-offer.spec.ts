@@ -34,6 +34,11 @@ test("signed-in customer can claim an approved offer", async ({ page }) => {
     await page.getByRole("button", { name: "View my voucher" }).click();
     await page.waitForURL(/\/dashboard\/redemptions\/[0-9a-f-]{36}$/, { timeout: 20_000 });
     await expect(page.getByText(code).first()).toBeVisible({ timeout: 15_000 });
+
+    // And what the offer actually covers, which the title only names.
+    // .first(): the offer page it came from is still mounted, hidden.
+    await expect(page.getByText("What you get")).toBeVisible();
+    await expect(page.getByText("A test offer for the claim flow.").first()).toBeVisible();
 });
 
 test.describe("signed out", () => {

@@ -182,6 +182,7 @@ export function brandedEmail({
     paragraphs,
     code,
     voucher,
+    details,
     action,
     footer,
     footerLinks = [],
@@ -198,6 +199,10 @@ export function brandedEmail({
     // code underneath it. Somebody at the till has the email open, not the
     // website, so it has to be the thing itself rather than a link to it.
     voucher?: { code: string; qrUrl: string };
+    // Small labelled blocks under the main message — what an offer covers,
+    // what its terms say. Quieter than a paragraph, because they are read
+    // when a question comes up rather than straight through.
+    details?: { label: string; text: string }[];
     // Left out for notices with nothing to click.
     action?: { label: string; url: string };
     footer: string;
@@ -231,6 +236,14 @@ ${code ? `<tr><td style="padding:20px 28px 4px">
 <p style="margin:14px auto 0;max-width:340px;font-size:13px;line-height:1.6;color:#aab1c2">Show this to staff when you pay. They can scan it or type the code.</p>
 </td></tr></table>
 </td></tr>
+` : ""}${details?.length ? `<tr><td style="padding:18px 28px 0">
+${details
+    .map(
+        (detail) => `<p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a91a3">${e(detail.label)}</p>
+<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#45506a;white-space:pre-line">${e(detail.text)}</p>`,
+    )
+    .join("\n")}
+</td></tr>
 ` : ""}${action ? `<tr><td style="padding:20px 28px 28px">
 <a href="${e(action.url)}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${e(action.label)}</a>
 <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#6b7387;word-break:break-all">Or open this link: ${e(action.url)}</p>
@@ -253,6 +266,7 @@ ${emailCompanyFooter()}
               ]
             : []),
         ...paragraphs.flatMap((p) => [p, ""]),
+        ...(details ?? []).flatMap((detail) => [`${detail.label}: ${detail.text}`, ""]),
         ...(action ? [`${action.label}: ${action.url}`, ""] : []),
         footer,
         ...footerLinks.map((link) => `${link.label}: ${link.url}`),
