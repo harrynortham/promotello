@@ -38,6 +38,17 @@ test("asking for codes too fast is explained, not repeated back", () => {
 
     assert.match(problem.message, /Wait a minute/);
     assert.equal(problem.otherWay, false);
+
+    // The form reads this to decide whether to take somebody back to the
+    // code they already have, rather than leaving them on a screen whose
+    // advice they can't follow.
+    assert.equal(problem.rateLimited, true);
+});
+
+test("only the refusal to send again is a rate limit", () => {
+    assert.equal(signInProblem("Signups not allowed for otp", "sign-in").rateLimited, false);
+    assert.equal(signInProblem("Unable to validate email address: invalid format", "sign-in").rateLimited, false);
+    assert.equal(signInProblem("Email provider is disabled", "sign-in").rateLimited, false);
 });
 
 test("anything else is shown as it came", () => {

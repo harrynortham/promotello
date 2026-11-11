@@ -59,6 +59,14 @@ export function EmailCodeForm({
     otherWayHref: string;
 }) {
     const [sentTo, setSentTo] = useState("");
+    // The address a code is outstanding for, kept even after stepping
+    // back to change it: otherwise asking for the same address again is
+    // a new send, which Supabase refuses for a minute — and the error
+    // said "use the last one we sent" from a screen with nowhere to
+    // enter it.
+    const [codeOutstandingFor, setCodeOutstandingFor] = useState("");
+    // Came back to a code already sent, rather than a new one.
+    const [reusingCode, setReusingCode] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [offerOtherWay, setOfferOtherWay] = useState(false);
     const [resendIn, setResendIn] = useState(0);
@@ -90,6 +98,16 @@ export function EmailCodeForm({
         setErrorMessage("");
         setOfferOtherWay(false);
 
+        // The same address they already have a code for, within the
+        // minute Supabase will not send another: the code in their inbox
+        // is the one they need, so this goes back to the box for it
+        // rather than asking for a code that won't be sent.
+        if (address.toLowerCase() === codeOutstandingFor.toLowerCase() && resendIn > 0) {
+            setReusingCode(true);
+            setSentTo(address);
+            return true;
+        }
+
         const { error } = await createClient().auth.signInWithOtp({
             email: address,
             options: {
@@ -100,12 +118,23 @@ export function EmailCodeForm({
 
         if (error) {
             const problem = signInProblem(error.message, mode);
+
+            // "Use the last one we sent you" is only advice if the box to
+            // type it into is on screen. It is one tap away, so go there.
+            if (problem.rateLimited && address.toLowerCase() === codeOutstandingFor.toLowerCase()) {
+                setReusingCode(true);
+                setSentTo(address);
+                return true;
+            }
+
             setErrorMessage(problem.message);
             setOfferOtherWay(problem.otherWay);
             return false;
         }
 
+        setReusingCode(false);
         setSentTo(address);
+        setCodeOutstandingFor(address);
         setResendIn(RESEND_SECONDS);
         codeForm.reset({ code: "" });
 
@@ -236,7 +265,17 @@ export function EmailCodeForm({
             aria-busy={isVerifying}
         >
             <div role="status" aria-live="polite" className="rounded-xl bg-muted/50 px-4 py-3 text-sm">
-                We&apos;ve sent a {CODE_LENGTH}-digit code to <strong>{sentTo}</strong>. It expires in an hour.
+                {reusingCode ? (
+                    <>
+                        We already sent a {CODE_LENGTH}-digit code to <strong>{sentTo}</strong>. Use
+                        that one — it expires an hour after it was sent.
+                    </>
+                ) : (
+                    <>
+                        We&apos;ve sent a {CODE_LENGTH}-digit code to <strong>{sentTo}</strong>. It
+                        expires in an hour.
+                    </>
+                )}
             </div>
 
             <div className="space-y-2">
