@@ -224,6 +224,20 @@ export function VoucherCard({
                     ) : null}
                 </div>
 
+                {/* What the offer covers, in the business's own words. The
+                    title is a name for it; this is the thing itself, and
+                    it settles what to ask for at the counter. */}
+                {offer?.description && (
+                    <div className="mt-5 rounded-xl bg-[#FFF8F0] p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                            What you get
+                        </p>
+                        <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-[#17233B]/80">
+                            {offer.description}
+                        </p>
+                    </div>
+                )}
+
                 {offer?.availability && (
                     <div className="mt-5 flex items-start gap-2 text-sm leading-7 text-muted-foreground">
                         <FiClock

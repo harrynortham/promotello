@@ -10,6 +10,8 @@ const voucher = () =>
         redemptionId: "964afc4c-4470-4abe-83be-669f023fe75e",
         code: "5280613F90",
         offerTitle: "Get that Friday feeling",
+        description: "Two pints of any draught lager or ale, for the price of one.",
+        terms: "One per customer. Friday from 5pm.",
         discount: "2 for 1 on pints",
         businessName: "Dublin Pub",
         expiresAt: "2026-12-24",
@@ -36,6 +38,37 @@ test("the email carries the voucher, not directions to it", () => {
     assert.match(html, /Open this voucher/);
     assert.match(html, /\/dashboard\/redemptions\/964afc4c-4470-4abe-83be-669f023fe75e/);
     assert.doesNotMatch(html, /\/dashboard\/redemptions"/);
+});
+
+// A voucher on its own is a code. What it covers, and what it says, are
+// the two things somebody checks before they go.
+test("the email says what the offer covers and what it says", () => {
+    const { html, text } = voucher();
+
+    assert.match(html, /What you get/);
+    assert.match(html, /Two pints of any draught lager or ale/);
+    assert.match(html, /Terms/);
+    assert.match(html, /One per customer\. Friday from 5pm\./);
+
+    assert.match(text, /What you get: Two pints/);
+    assert.match(text, /Terms: One per customer/);
+});
+
+test("an offer with neither gets neither", () => {
+    const { html } = voucherConfirmationEmail({
+        to: "someone@example.com",
+        redemptionId: "964afc4c-4470-4abe-83be-669f023fe75e",
+        code: "5280613F90",
+        offerTitle: "Get that Friday feeling",
+        description: "   ",
+        terms: null,
+        discount: "2 for 1 on pints",
+        businessName: "Dublin Pub",
+        expiresAt: null,
+    });
+
+    assert.doesNotMatch(html, /What you get/);
+    assert.doesNotMatch(html, />Terms</);
 });
 
 test("the code reads without pictures, and without HTML", () => {

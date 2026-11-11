@@ -17,6 +17,8 @@ type VoucherRow = {
     offer_id: string;
     offers: {
         title: string;
+        description: string | null;
+        terms: string | null;
         discount: string;
         expires_at: string | null;
         businesses: { name: string } | null;
@@ -86,7 +88,9 @@ export async function sendVoucherFor(supabase: SupabaseClient, user: User, redem
     // RLS: customers can only read their own vouchers.
     const { data: voucher } = await supabase
         .from("offer_redemptions")
-        .select("redemption_code, offer_id, offers ( title, discount, expires_at, businesses ( name ) )")
+        .select(
+            "redemption_code, offer_id, offers ( title, description, terms, discount, expires_at, businesses ( name ) )",
+        )
         .eq("id", redemptionId)
         .eq("user_id", user.id)
         .maybeSingle<VoucherRow>();
@@ -101,6 +105,8 @@ export async function sendVoucherFor(supabase: SupabaseClient, user: User, redem
             redemptionId,
             code: voucher.redemption_code,
             offerTitle: voucher.offers.title,
+            description: voucher.offers.description,
+            terms: voucher.offers.terms,
             discount: voucher.offers.discount,
             businessName: voucher.offers.businesses?.name ?? "the business",
             expiresAt: voucher.offers.expires_at,

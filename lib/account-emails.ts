@@ -63,6 +63,8 @@ export function voucherConfirmationEmail({
     redemptionId,
     code,
     offerTitle,
+    description,
+    terms,
     discount,
     businessName,
     expiresAt,
@@ -74,6 +76,10 @@ export function voucherConfirmationEmail({
     redemptionId: string;
     code: string;
     offerTitle: string;
+    // What the offer covers and what it says: the two things somebody
+    // checks before they go, and asks about at the counter.
+    description?: string | null;
+    terms?: string | null;
     discount: string;
     businessName: string;
     expiresAt: string | null;
@@ -95,6 +101,10 @@ export function voucherConfirmationEmail({
         // The voucher itself, not a line about where to find it: at the
         // till it is this email that is open.
         voucher: { code, qrUrl: absoluteUrl(`/redeem/${code}/qr`) },
+        details: [
+            ...(description?.trim() ? [{ label: "What you get", text: description.trim() }] : []),
+            ...(terms?.trim() ? [{ label: "Terms", text: terms.trim() }] : []),
+        ],
         action: {
             label: "Open this voucher",
             url: absoluteUrl(`/dashboard/redemptions/${redemptionId}`),

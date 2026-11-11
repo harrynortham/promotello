@@ -9,6 +9,8 @@ export type WalletRedemption = {
         // Null for gift vouchers from automations, which have no offer page.
         slug: string | null;
         title: string;
+        // What the offer covers, in the business's own words.
+        description: string | null;
         discount: string;
         availability: string;
         expiresAt: string | null;

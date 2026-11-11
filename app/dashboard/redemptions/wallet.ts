@@ -33,6 +33,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                 offers (
                     slug,
                     title,
+                    description,
                     discount,
                     availability,
                     expires_at,
@@ -90,6 +91,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                 ? {
                     slug: offer.slug,
                     title: offer.title,
+                    description: offer.description,
                     discount: offer.discount,
                     availability: offer.availability,
                     expiresAt: offer.expires_at,
@@ -115,6 +117,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
             offer: {
                 slug: null,
                 title: gift.reward,
+                description: null,
                 discount: giftLabels[gift.kind] ?? "Gift",
                 availability: "One use. Show the code or QR to staff.",
                 expiresAt: gift.expires_at,
