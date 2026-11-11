@@ -19,7 +19,7 @@ type PageProps = {
     params: Promise<{
         businessId: string;
     }>;
-    searchParams: Promise<{ show?: string; code?: string; page?: string; used?: string }>;
+    searchParams: Promise<{ show?: string; code?: string; page?: string; used?: string; offer?: string }>;
 };
 
 // Ten at a time: a till is not a place to scroll.
@@ -160,6 +160,10 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
         notFound();
     }
 
+    // One offer's vouchers, arrived at from the offers page. Everything
+    // else on this page — tabs, counts, pages — narrows with it.
+    const offerId = /^[0-9a-f-]{36}$/i.test(query.offer ?? "") ? query.offer! : null;
+
     const show: Filter = isFilter(query.show) ? query.show : "to-use";
     const code = (query.code ?? "").trim().toUpperCase().slice(0, 16);
     const page = Math.max(Number.parseInt(query.page ?? "1", 10) || 1, 1);
@@ -189,6 +193,10 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
             .from("offer_redemptions")
             .select(select, options?.head ? { count: "exact", head: true } : undefined)
             .eq("offers.business_id", businessId);
+
+        if (offerId) {
+            rows = rows.eq("offer_id", offerId);
+        }
 
         if (filter === "to-use") {
             rows = rows.is("used_at", null).gte("offers.expires_at", today());
@@ -239,6 +247,15 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
         throw new Error("Unable to load redemptions.");
     }
 
+    const { data: chosenOffer } = offerId
+        ? await supabase
+            .from("offers")
+            .select("id, title")
+            .eq("id", offerId)
+            .eq("business_id", businessId)
+            .maybeSingle()
+        : { data: null };
+
     const rows: RedemptionRow[] = ((listed.data ?? []) as unknown as Row[]).map((row) => {
         const offer = Array.isArray(row.offers) ? row.offers[0] : row.offers;
 
@@ -286,10 +303,12 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
     const usedRow = (justUsed as { data: { redemption_code: string; offers: { discount: string } | { discount: string }[] } | null }).data;
     const usedOffer = usedRow ? (Array.isArray(usedRow.offers) ? usedRow.offers[0] : usedRow.offers) : null;
 
-    const linkTo = (next: { show?: Filter; page?: number }) => {
+    const linkTo = (next: { show?: Filter; page?: number; offer?: string | null }) => {
         const params = new URLSearchParams();
         if (next.show && next.show !== "to-use") params.set("show", next.show);
         if (next.page && next.page > 1) params.set("page", String(next.page));
+        const keepOffer = next.offer === undefined ? offerId : next.offer;
+        if (keepOffer) params.set("offer", keepOffer);
         const search = params.toString();
 
         return `/business/${businessId}/redemptions${search ? `?${search}` : ""}`;
@@ -316,6 +335,24 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
             </div>
 
             {usedRow && <JustUsed code={usedRow.redemption_code} discount={usedOffer?.discount ?? null} />}
+
+            {chosenOffer && (
+                <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#17233B]/10 bg-white px-4 py-3">
+                    <p className="text-sm">
+                        <span className="text-[#17233B]/60">Vouchers for</span>{" "}
+                        <span className="font-semibold">{chosenOffer.title}</span>
+                    </p>
+
+                    <Button
+                        render={<Link href={linkTo({ show, offer: null })} />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="sm"
+                    >
+                        All offers
+                    </Button>
+                </div>
+            )}
 
             <div className="mt-8 grid gap-6 rounded-xl border border-[#17233B]/10 bg-white p-6 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center sm:gap-8 sm:p-8">
                 <ScanVoucherIllustration className="mx-auto w-36 sm:w-40" />

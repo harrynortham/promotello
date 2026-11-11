@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FiPlus } from "react-icons/fi";
+import { FiArrowRight, FiPlus } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -253,6 +253,32 @@ async function OffersContent({ params }: PageProps) {
             { views: Number(row.views), sharedViews: Number(row.shared_views) },
         ]),
     );
+    // How many vouchers each offer has, and how many were used. Counted
+    // rather than read off offers.redemption_count: that column is the
+    // limit's counter, kept by redeem_offer(), and what this panel is
+    // about is the vouchers themselves. A business has a handful of
+    // offers, so a count each beats dragging every voucher back here.
+    const voucherCounts = await Promise.all(
+        typedOffers.map(async (offer) => {
+            const forOffer = () =>
+                supabase
+                    .from("offer_redemptions")
+                    .select("id", { count: "exact", head: true })
+                    .eq("offer_id", offer.id);
+
+            const [claimed, used] = await Promise.all([
+                forOffer(),
+                forOffer().not("used_at", "is", null),
+            ]);
+
+            return { id: offer.id, claimed: claimed.count ?? 0, used: used.count ?? 0 };
+        }),
+    );
+
+    const vouchersByOffer = new Map(
+        voucherCounts.map((row) => [row.id, { claimed: row.claimed, used: row.used }]),
+    );
+
     const hasPro = await businessHasPro(supabase, businessId);
     const liveOfferCount = typedOffers.filter(isLiveOffer).length;
     // On Free the one offer slot may already be taken, in which case the
@@ -515,21 +541,40 @@ async function OffersContent({ params }: PageProps) {
                                         </div>
 
                                         <div className="mt-6 rounded-xl bg-[#FFF8F0] p-4">
-                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                <p className="font-semibold">
-                                                    {offer.max_redemptions === null
-                                                        ? "Unlimited redemptions"
-                                                        : isFullyClaimed
-                                                            ? "Fully claimed"
-                                                            : `${remainingRedemptions} redemption${remainingRedemptions === 1 ? "" : "s"
-                                                            } remaining`}
-                                                </p>
-
-                                                {offer.max_redemptions !== null && (
-                                                    <p className="text-sm text-[#17233B]/70">
-                                                        {offer.redemption_count} of{" "}
-                                                        {offer.max_redemptions} claimed
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <div>
+                                                    <p className="font-semibold">
+                                                        {vouchersByOffer.get(offer.id)?.claimed ?? 0} claimed
+                                                        <span className="text-[#17233B]/55"> · </span>
+                                                        {vouchersByOffer.get(offer.id)?.used ?? 0} used
                                                     </p>
+
+                                                    <p className="mt-1 text-sm text-[#17233B]/65">
+                                                        {offer.max_redemptions === null
+                                                            ? "No limit on how many can be claimed"
+                                                            : isFullyClaimed
+                                                                ? `Fully claimed — ${offer.max_redemptions} was the limit`
+                                                                : `${remainingRedemptions} of ${offer.max_redemptions} left to claim`}
+                                                    </p>
+                                                </div>
+
+                                                {/* The vouchers themselves, on the page that
+                                                    marks them used. */}
+                                                {(vouchersByOffer.get(offer.id)?.claimed ?? 0) > 0 && (
+                                                    <Button
+                                                        render={
+                                                            <Link
+                                                                href={`/business/${businessId}/redemptions?show=all&offer=${offer.id}`}
+                                                            />
+                                                        }
+                                                        nativeButton={false}
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="shrink-0"
+                                                    >
+                                                        See vouchers
+                                                        <FiArrowRight aria-hidden="true" />
+                                                    </Button>
                                                 )}
                                             </div>
 
