@@ -52,3 +52,45 @@ export function formatEventTime(startsAt: string, endsAt: string | null) {
             .replace(" ", "");
     return `${day}, ${time(startsAt)}${endsAt ? `–${time(endsAt)}` : ""}`;
 }
+
+// How long ago something happened, for a list somebody scans rather than
+// studies: the newest ones in minutes, then hours, then "Yesterday", and
+// a date once it stops mattering exactly when.
+//
+// `now` is passed in so this is a pure function and the tests don't have
+// to wait for the clock.
+export function timeAgo(iso: string, now = new Date()) {
+    const then = new Date(iso);
+
+    if (Number.isNaN(then.getTime())) return "";
+
+    const seconds = Math.round((now.getTime() - then.getTime()) / 1000);
+
+    // A clock a little ahead of the server shouldn't read "in 3 seconds".
+    if (seconds < 60) return "Just now";
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+
+    // Past a day, counting hours stops helping, and days are UK days
+    // rather than 24-hour blocks so "Yesterday" lands on the day a
+    // person would call yesterday whatever time they read it.
+    const ukDay = (at: Date) =>
+        new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(at);
+    const days = Math.round(
+        (Date.parse(`${ukDay(now)}T00:00:00Z`) - Date.parse(`${ukDay(then)}T00:00:00Z`)) / 86_400_000,
+    );
+
+    if (days <= 1) return "Yesterday";
+    if (days < 7) return `${days} days ago`;
+
+    return new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: ukDay(now).slice(0, 4) === ukDay(then).slice(0, 4) ? undefined : "numeric",
+        timeZone: "Europe/London",
+    }).format(then);
+}

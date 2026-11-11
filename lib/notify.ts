@@ -46,23 +46,53 @@ export async function notifyUsers(userIds: string[], content: NotificationConten
 
     if (rows.length === 0) return { sent: 0 };
 
+    const admin = createAdminClient();
+
     try {
-        // The unique index on (user_id, dedupe_key) is what makes
-        // sending twice safe: the second one is dropped rather than
-        // doubling up in somebody's list.
-        const { error } = await createAdminClient()
-            .from("notifications")
-            .upsert(rows, { onConflict: "user_id,dedupe_key", ignoreDuplicates: true });
+        // Who has already been told. The unique index would catch a
+        // repeat anyway, but it cannot be used to ignore one: it is
+        // partial (`where dedupe_key is not null`), and Postgres will
+        // not infer a partial index from a column list, so an upsert
+        // naming those columns is rejected outright and an upsert naming
+        // none infers the primary key — which a fresh uuid never
+        // collides on. Asking first is plainer than either.
+        const wanted = content.dedupeKey
+            ? await alreadyTold(rows, content.dedupeKey)
+            : rows;
+
+        if (wanted.length === 0) return { sent: 0 };
+
+        const { error } = await admin.from("notifications").insert(wanted);
 
         if (error) {
+            // Two sends at once: the index did its job and the other one
+            // got there first, which is the outcome we wanted anyway.
+            if (error.code === "23505") return { sent: 0 };
+
             console.error(`Notifications: failed to send ${content.type}`, error);
             return { sent: 0 };
         }
 
-        return { sent: rows.length };
+        return { sent: wanted.length };
     } catch (error) {
         console.error(`Notifications: failed to send ${content.type}`, error);
         return { sent: 0 };
+    }
+
+    async function alreadyTold(candidates: Row[], dedupeKey: string) {
+        const { data, error } = await admin
+            .from("notifications")
+            .select("user_id")
+            .eq("dedupe_key", dedupeKey)
+            .in("user_id", candidates.map((row) => row.user_id));
+
+        // Unreadable means unknown, and the index is still there to stop
+        // a duplicate, so this carries on rather than telling nobody.
+        if (error) return candidates;
+
+        const told = new Set((data ?? []).map((row) => row.user_id));
+
+        return candidates.filter((row) => !told.has(row.user_id));
     }
 }
 
