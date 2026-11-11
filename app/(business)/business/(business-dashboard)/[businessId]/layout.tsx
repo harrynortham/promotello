@@ -164,7 +164,7 @@ async function BusinessLayoutContent({
                     />
                 </div>
 
-                <aside className="hidden w-64 shrink-0 lg:sticky lg:top-8 lg:block">
+                <aside className="hidden w-64 shrink-0 lg:sticky lg:top-24 lg:block">
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-5 shadow-sm">
                         <BusinessSwitcher
                             currentBusinessId={businessId}
