@@ -26,9 +26,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { UserProfile } from "@/lib/user-profile";
 import { createClient } from "@/utils/supabase/client";
+import { useRunsABusiness } from "./use-runs-a-business";
 import { UserAvatar } from "./user-avatar";
 
-type AccountLink = { label: string; href: string; icon: IconType };
+// needsBusiness: shown only to somebody who runs one. A customer who
+// signed up to claim an offer has no business dashboard to go to, and a
+// link to one reads as something they have forgotten to set up.
+type AccountLink = { label: string; href: string; icon: IconType; needsBusiness?: boolean };
 
 // The same account links everywhere, so users always know where to find
 // them. Each inner array is a group with a divider between: what you came
@@ -40,7 +44,7 @@ const accountLinks = {
             { label: "My vouchers", href: "/dashboard/redemptions", icon: FiTag },
             { label: "Loyalty cards", href: "/dashboard/loyalty", icon: FiAward },
         ],
-        [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase }],
+        [{ label: "Business dashboard", href: "/business/dashboard", icon: FiBriefcase, needsBusiness: true }],
         [{ label: "Account settings", href: "/account", icon: FiSettings }],
     ],
     // In the business dashboard, the customer side is one link, not three.
@@ -127,8 +131,13 @@ export function UserMenu({
 }) {
     const { signOut, isSigningOut, error } = useSignOut(signOutRedirect);
     const isAdmin = useIsPlatformAdmin();
+    const runsABusiness = useRunsABusiness();
 
-    const groups = accountLinks[area];
+    // A group that empties out goes with its divider, rather than
+    // leaving a line with nothing under it.
+    const groups = (accountLinks[area] as AccountLink[][])
+        .map((group) => group.filter((link) => !link.needsBusiness || runsABusiness))
+        .filter((group) => group.length > 0);
 
     return (
         <DropdownMenu>
