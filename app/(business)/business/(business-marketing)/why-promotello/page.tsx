@@ -127,9 +127,9 @@ export default function WhyPromotelloPage() {
                     <h2 className="mt-3 font-semibold print:mt-2 print:text-sm">Your page in the local directory</h2>
                     <p className="mt-1 max-w-3xl text-sm leading-6 text-[#17233B]/65 print:text-xs print:leading-5">
                         This is the part a loyalty app can&apos;t give you. Customers browse Promotello by
-                        area and category to find somewhere to go, so your offers and your card are seen by
-                        people who have never been in &mdash; and every business that joins your street
-                        brings more of them.
+                        area, by category and by the kind of offer they are after &mdash; freebies, 2 for
+                        1, money off &mdash; so your offers and your card are seen by people who have
+                        never been in, and every business that joins your street brings more of them.
                     </p>
                 </section>
 

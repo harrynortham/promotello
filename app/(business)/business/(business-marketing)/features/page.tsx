@@ -86,8 +86,9 @@ export default async function FeaturesPage() {
                 tinted
                 eyebrow="Offers and vouchers"
                 title="Offers that are simple to claim and quick to redeem."
-                body="Write the offer, set how many can be claimed and when it ends. Each customer gets their own voucher with a QR code; staff scan it and mark it used, and it can't be used twice."
+                body="Pick the kind of offer — a percentage, money off, 2 for 1, a set price, something free — and we write the headline customers see. Set how many can be claimed and when it ends. Each customer gets their own voucher with a QR code; staff scan it and mark it used, and it can't be used twice."
                 points={[
+                    "Customers filter the directory by type, so freebies find the people looking for one",
                     "Claim limits, expiry dates and clear terms",
                     "One voucher per customer per offer",
                     "Run several offers at once",
