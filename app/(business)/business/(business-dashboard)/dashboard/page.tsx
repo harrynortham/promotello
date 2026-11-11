@@ -32,7 +32,7 @@ type BusinessSummary = Business & {
 // straight to its overview.
 function Page({ children }: { children: React.ReactNode }) {
     return (
-        <main className="min-h-screen bg-[#FFF8F0] px-6 py-12 text-[#17233B] sm:py-16">
+        <main className="bg-[#FFF8F0] px-6 py-12 text-[#17233B] sm:py-16">
             <div className="mx-auto max-w-2xl">{children}</div>
         </main>
     );

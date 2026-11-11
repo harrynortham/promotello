@@ -33,7 +33,7 @@ type Business = {
 
 function BusinessLayoutLoading() {
     return (
-        <div className="min-h-screen bg-[#FFF8F0]">
+        <div className="bg-[#FFF8F0]">
             <div className="mx-auto flex max-w-7xl gap-8 px-6 py-8">
                 <aside className="hidden w-64 shrink-0 lg:block">
                     <div className="rounded-xl border border-[#17233B]/10 bg-white p-5">
@@ -137,7 +137,7 @@ async function BusinessLayoutContent({
         membership.role === "owner" || membership.role === "admin";
 
     return (
-        <div className="min-h-screen bg-[#FFF8F0]">
+        <div className="bg-[#FFF8F0]">
             <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8 lg:flex-row lg:items-start">
                 <div className="flex items-center justify-between lg:hidden">
                     <div className="min-w-0">
