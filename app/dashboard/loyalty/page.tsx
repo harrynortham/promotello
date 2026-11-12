@@ -107,6 +107,9 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                         accent={card.cardAccent}
                                         stampIcon={card.stampIcon}
                                         code={card.code}
+                                        // The card's own page, where it
+                                        // is the only thing on screen.
+                                        href={`/loyalty/${card.programId}`}
                                         qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: svgs[index] }} />}
                                         className={joined === card.programId ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}
                                     />

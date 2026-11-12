@@ -80,7 +80,9 @@ export function LoyaltyCallout({
                         <LoyaltyStamps
                             stamps={card?.stamps ?? 0}
                             required={program.stamps_required}
-                            size="sm"
+                            // Big enough to read as the card it is, from
+                            // the width this panel has.
+                            size="md"
                             colour={program.card_colour}
                             header={program.card_header}
                             accent={program.card_accent}
