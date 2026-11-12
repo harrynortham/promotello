@@ -436,3 +436,95 @@ test("a name a closed card is still using is refused", async ({ browser }) => {
         for (const id of made) await admin.from("loyalty_programs").delete().eq("id", id);
     }
 });
+
+// A business's own two colours, and a stamp that looks like what it
+// sells. Both are chosen in the same picker the poster uses.
+test("a card can be saved in the business's own colours, with any stamp", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: onOffer } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of onOffer ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Own colours ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free trim",
+            card_colour: "navy",
+            stamp_icon: "check",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+
+        await page.getByRole("button", { name: "Your own colours" }).click();
+        const dialog = page.getByRole("dialog");
+        await dialog.getByLabel("Band colour, as a hex code").fill("#0B5FFF");
+        await dialog.getByLabel("Stamps colour, as a hex code").fill("#FFD400");
+        await dialog.getByRole("button", { name: "Use these colours" }).click();
+        await expect(dialog).toBeHidden();
+
+        // A stamp for a barber, which the six icons never had.
+        await page.getByRole("button", { name: "Scissors" }).click();
+
+        const preview = page.locator("aside").filter({ hasText: "The card customers carry" });
+        // The band is the card's first child; the aside's is a wrapper.
+        await expect(preview.locator("article > div").first()).toHaveCSS(
+            "background-color",
+            "rgb(11, 95, 255)",
+        );
+
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await page.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 20_000 });
+
+        const { data: saved } = await admin
+            .from("loyalty_programs")
+            .select("card_colour, card_header, card_accent, stamp_icon")
+            .eq("id", program!.id)
+            .single();
+        expect(saved).toEqual({
+            card_colour: "custom",
+            card_header: "#0B5FFF",
+            card_accent: "#FFD400",
+            stamp_icon: "scissors",
+        });
+
+        // And the card a customer would see is drawn in them.
+        await page.goto(`/business/${businessId}/loyalty`);
+        const card = page.locator("article").filter({ hasText: "stamps for a free trim" }).first();
+        await expect(card.locator("div").first()).toHaveCSS("background-color", "rgb(11, 95, 255)");
+
+        // Back on one of the six, the hexes are cleared rather than left
+        // behind for a card that is no longer custom.
+        await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+        await page.getByRole("button", { name: "Forest" }).click();
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await page.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 20_000 });
+
+        const { data: named } = await admin
+            .from("loyalty_programs")
+            .select("card_colour, card_header, card_accent")
+            .eq("id", program!.id)
+            .single();
+        expect(named).toEqual({ card_colour: "forest", card_header: null, card_accent: null });
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
