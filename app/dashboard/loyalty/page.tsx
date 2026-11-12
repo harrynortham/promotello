@@ -102,6 +102,8 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                         active={card.active}
                                         terms={card.terms}
                                         colour={card.cardColour}
+                                        header={card.cardHeader}
+                                        accent={card.cardAccent}
                                         stampIcon={card.stampIcon}
                                         code={card.code}
                                         qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: svgs[index] }} />}

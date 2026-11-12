@@ -34,6 +34,8 @@ type GuestCard = {
     stamps: number;
     rewards_redeemed: number;
     card_colour: string | null;
+    card_header: string | null;
+    card_accent: string | null;
     stamp_icon: string | null;
     logo_url: string | null;
 };
@@ -126,6 +128,8 @@ async function GuestCardView({ params, searchParams }: PageProps) {
                     terms={data.terms}
                     code={data.card_code}
                     colour={data.card_colour}
+                    header={data.card_header}
+                    accent={data.card_accent}
                     stampIcon={data.stamp_icon}
                     qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qr }} />}
                 />

@@ -17,6 +17,8 @@ type LoyaltyCalloutProps = {
         stamps_required: number;
         reward: string;
         card_colour?: string | null;
+        card_header?: string | null;
+        card_accent?: string | null;
         stamp_icon?: string | null;
         terms: string | null;
     };
@@ -75,6 +77,8 @@ export function LoyaltyCallout({
                             required={program.stamps_required}
                             size="sm"
                             colour={program.card_colour}
+                            header={program.card_header}
+                            accent={program.card_accent}
                             icon={program.stamp_icon}
                         />
                     </div>

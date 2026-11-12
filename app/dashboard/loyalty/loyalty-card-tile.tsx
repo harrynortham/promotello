@@ -37,6 +37,8 @@ export function LoyaltyCardTile({ card }: { card: CustomerLoyaltyCard }) {
                         required={card.stampsRequired}
                         size="sm"
                         colour={card.cardColour}
+                        header={card.cardHeader}
+                        accent={card.cardAccent}
                         icon={card.stampIcon}
                     />
                 </div>

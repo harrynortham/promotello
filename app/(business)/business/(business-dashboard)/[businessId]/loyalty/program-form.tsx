@@ -13,9 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    cardColourName,
+    cardColourChoice,
+    CUSTOM_COLOUR,
+    isHexColour,
+    startingCustomColours,
     stampIcon as readStampIcon,
-    type CardColour,
+    type CardChoice,
+    type CustomColours,
     type StampIcon,
 } from "@/lib/loyalty-design";
 import { saveLoyaltyProgram } from "./actions";
@@ -32,6 +36,9 @@ export type Program = {
     terms: string | null;
     is_active: boolean;
     card_colour: string | null;
+    // Their own two colours, where card_colour is "custom".
+    card_header?: string | null;
+    card_accent?: string | null;
     stamp_icon: string | null;
 };
 
@@ -53,6 +60,8 @@ export function ProgramFields({
     setTerms,
     colour,
     setColour,
+    custom,
+    setCustom,
     icon,
     setIcon,
 }: {
@@ -70,8 +79,11 @@ export function ProgramFields({
     setReward: (value: string) => void;
     terms: string;
     setTerms: (value: string) => void;
-    colour: CardColour;
-    setColour: (value: CardColour) => void;
+    colour: CardChoice;
+    setColour: (value: CardChoice) => void;
+    // The business's own two colours, while "custom" is chosen.
+    custom: CustomColours;
+    setCustom: (value: CustomColours) => void;
     icon: StampIcon;
     setIcon: (value: StampIcon) => void;
 }) {
@@ -161,11 +173,30 @@ export function ProgramFields({
                     icon={icon}
                     onColour={setColour}
                     onIcon={setIcon}
+                    custom={colour === CUSTOM_COLOUR ? custom : null}
+                    onCustom={(value) => {
+                        setCustom(value);
+                        setColour(CUSTOM_COLOUR);
+                    }}
+                    customWording={{
+                        header: { label: "Band", hint: "The strip your name sits in, across the top" },
+                        accent: { label: "Stamps", hint: "The stamps customers collect" },
+                        sample: "Stamp",
+                    }}
                 />
             </div>
 
             <input type="hidden" name="cardColour" value={colour} />
             <input type="hidden" name="stampIcon" value={icon} />
+
+            {/* Only meaningful while their own colours are chosen; the
+                server ignores them for any of the six. */}
+            {colour === CUSTOM_COLOUR && (
+                <>
+                    <input type="hidden" name="cardHeader" value={custom.header} />
+                    <input type="hidden" name="cardAccent" value={custom.accent} />
+                </>
+            )}
         </>
     );
 }
@@ -181,6 +212,7 @@ function CardPreview({
     reward,
     terms,
     colour,
+    custom,
     icon,
 }: {
     businessName: string;
@@ -188,7 +220,8 @@ function CardPreview({
     stampsRequired: number;
     reward: string;
     terms: string;
-    colour: CardColour;
+    colour: CardChoice;
+    custom: CustomColours;
     icon: StampIcon;
 }) {
     return (
@@ -208,6 +241,8 @@ function CardPreview({
                     code={SAMPLE_CODE}
                     qr={<StampQr code={SAMPLE_CODE} />}
                     colour={colour}
+                    header={custom.header}
+                    accent={custom.accent}
                     stampIcon={icon}
                     className="border-[#17233B]/10"
                 />
@@ -245,7 +280,12 @@ export function LoyaltyCardBuilder({
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
-    const [colour, setColour] = useState<CardColour>(cardColourName(program?.card_colour));
+    const [colour, setColour] = useState<CardChoice>(cardColourChoice(program?.card_colour));
+    const [custom, setCustom] = useState<CustomColours>(
+        isHexColour(program?.card_header) && isHexColour(program?.card_accent)
+            ? { header: program.card_header, accent: program.card_accent }
+            : startingCustomColours(program?.card_colour),
+    );
     const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     const fields = (
@@ -263,6 +303,8 @@ export function LoyaltyCardBuilder({
             setTerms={setTerms}
             colour={colour}
             setColour={setColour}
+            custom={custom}
+            setCustom={setCustom}
             icon={icon}
             setIcon={setIcon}
         />
@@ -329,6 +371,7 @@ export function LoyaltyCardBuilder({
                 reward={reward}
                 terms={terms}
                 colour={colour}
+                custom={custom}
                 icon={icon}
             />
         </div>
@@ -363,7 +406,12 @@ export function ProgramSettingsForm({
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
-    const [colour, setColour] = useState<CardColour>(cardColourName(program?.card_colour));
+    const [colour, setColour] = useState<CardChoice>(cardColourChoice(program?.card_colour));
+    const [custom, setCustom] = useState<CustomColours>(
+        isHexColour(program?.card_header) && isHexColour(program?.card_accent)
+            ? { header: program.card_header, accent: program.card_accent }
+            : startingCustomColours(program?.card_colour),
+    );
     const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     return (
@@ -391,6 +439,8 @@ export function ProgramSettingsForm({
                             setTerms={setTerms}
                             colour={colour}
                             setColour={setColour}
+                            custom={custom}
+                            setCustom={setCustom}
                             icon={icon}
                             setIcon={setIcon}
                         />
@@ -413,6 +463,7 @@ export function ProgramSettingsForm({
                 reward={reward}
                 terms={terms}
                 colour={colour}
+                custom={custom}
                 icon={icon}
             />
         </div>

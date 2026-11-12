@@ -31,7 +31,7 @@ async function EditLoyaltyCard({ params }: PageProps) {
     const [{ data }, { count: holders }, { data: onOffer }] = await Promise.all([
         editor.supabase
             .from("loyalty_programs")
-            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
+            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
             .eq("id", programId)
             .eq("business_id", businessId)
             .maybeSingle(),

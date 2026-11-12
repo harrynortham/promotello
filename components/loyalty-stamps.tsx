@@ -1,7 +1,8 @@
 import { FiCheck, FiCoffee, FiGift, FiHeart, FiStar } from "react-icons/fi";
 
 import {
-    cardColour,
+    cardTheme,
+    readableInk,
     stampIcon,
     type StampIcon,
 } from "@/lib/loyalty-design";
@@ -22,6 +23,8 @@ export function LoyaltyStamps({
     required,
     size = "md",
     colour,
+    header,
+    accent: customAccent,
     icon: chosenIcon,
 }: {
     stamps: number;
@@ -30,9 +33,15 @@ export function LoyaltyStamps({
     // The business's chosen look; both fall back to the original card.
     colour?: string | null;
     icon?: string | null;
+    // Their own two colours, where colour is "custom".
+    header?: string | null;
+    accent?: string | null;
 }) {
     const filled = Math.min(stamps, required);
-    const accent = cardColour(colour).stamp;
+    const accent = cardTheme({ colour, header, accent: customAccent }).stamp;
+    // The tick sits on the stamp, and a business's own colour might be
+    // a yellow that white disappears into.
+    const stampInk = readableInk(accent);
     const StampIconComponent = icons[stampIcon(chosenIcon)];
     const dimension = { sm: "size-7", md: "size-10", lg: "size-12" }[size];
     const icon = { sm: "size-3.5", md: "size-5", lg: "size-6" }[size];
@@ -52,13 +61,13 @@ export function LoyaltyStamps({
                         key={index}
                         style={
                             isFilled
-                                ? { borderColor: accent, backgroundColor: accent }
+                                ? { borderColor: accent, backgroundColor: accent, color: stampInk }
                                 : isReward
                                     ? { borderColor: `${accent}80`, backgroundColor: `${accent}0d`, color: accent }
                                     : undefined
                         }
                         className={`flex ${dimension} items-center justify-center rounded-full border-2 transition ${isFilled
-                            ? "text-white"
+                            ? ""
                             : isReward
                                 ? "border-dashed"
                                 : "border-dashed border-[#17233B]/20 bg-white text-transparent"

@@ -42,6 +42,8 @@ type Program = {
     terms: string | null;
     is_active: boolean;
     card_colour: string | null;
+    card_header: string | null;
+    card_accent: string | null;
     stamp_icon: string | null;
 };
 
@@ -93,7 +95,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
+            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
             .eq("business_id", businessId)
             .order("is_active", { ascending: false })
             .order("created_at", { ascending: true }),
@@ -275,6 +277,8 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             code={card.id.slice(0, 10).toUpperCase()}
                                             qr={null}
                                             colour={card.card_colour}
+                                            header={card.card_header}
+                                            accent={card.card_accent}
                                             stampIcon={card.stamp_icon}
                                             active={card.is_active}
                                             className="border-[#17233B]/10"
