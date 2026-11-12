@@ -234,10 +234,12 @@ function Title({ children, size }: { children: string; size: string }) {
     );
 }
 
+// Balanced like the headline above it: three lines with one word alone
+// on the last is the commonest way a poster looks unfinished.
 function Body({ children, dark }: { children: string; dark: boolean }) {
     return (
         <p
-            className={`line-clamp-3 max-w-[24em] ${dark ? "opacity-80" : "text-[#17233B]/75"}`}
+            className={`line-clamp-3 max-w-[24em] text-balance ${dark ? "opacity-80" : "text-[#17233B]/75"}`}
             style={{ fontSize: "1.45em", lineHeight: 1.3 }}
         >
             {children}

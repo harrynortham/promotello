@@ -794,6 +794,36 @@ test("a poster keeps the layout and the colours it was made with", async ({ page
     }
 });
 
+// The headline is balanced, and so is the line under it: a description
+// that leaves one word alone on its last line is the commonest way a
+// poster looks unfinished.
+test("the poster's description is balanced across its lines", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/business/${businessId}/qr/new`);
+
+    const target = page.getByLabel("What should it open?");
+    await expect(target).toBeVisible({ timeout: 20_000 });
+
+    // The description belongs to an offer poster.
+    const offer = await target.locator("option").evaluateAll((options) => {
+        const match = options.find(
+            (option) =>
+                option.textContent?.startsWith("Offer:") && !(option as HTMLOptionElement).disabled,
+        ) as HTMLOptionElement | undefined;
+        return match?.value ?? null;
+    });
+    expect(offer, "the test business has an approved offer to point at").not.toBeNull();
+    await target.selectOption(offer!);
+
+    await page.getByLabel("Description").fill(
+        "Every cocktail on the list, Monday to Thursday from five until close, for anyone who scans",
+    );
+
+    const poster = page.locator("article").filter({ hasText: "Point your phone camera here" }).last();
+    await expect(poster.getByText(/Every cocktail on the list/)).toHaveCSS("text-wrap-style", "balance");
+});
+
 // A poster that opens a loyalty card can draw the card. "Get a free
 // coffee" on a window says nothing about how: a row of stamps does.
 test("a loyalty code is offered layouts that draw the card", async ({ browser }) => {
