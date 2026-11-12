@@ -8,7 +8,7 @@ import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { QrPoster } from "@/components/qr-poster";
 import { PrintToolbar } from "./print-toolbar";
-import { posterSize, sheetSize } from "@/lib/poster-sizes";
+import { copiesOn, isLandscape, posterSize, sheetSize } from "@/lib/poster-sizes";
 
 // Saving a poster as a PDF names the file after the page, so a static
 // title gave every poster a business ever printed the same name and a
@@ -142,6 +142,7 @@ async function Poster({ params, searchParams }: PageProps) {
     const svg = await qrSvg(link);
     const dims = size;
     const sheet = sheetSize(size);
+    const copies = copiesOn(size);
     const place = location?.region || location?.city;
 
     return (
@@ -181,28 +182,25 @@ async function Poster({ params, searchParams }: PageProps) {
                 backHref={`/business/${qr.business_id}/qr`}
                 codeId={qr.id}
                 size={size.value}
-                sizeHrefs={{
-                    a4: `/poster/${qr.id}?size=a4`,
-                    a5: `/poster/${qr.id}?size=a5`,
-                    a5x2: `/poster/${qr.id}?size=a5x2`,
-                }}
+                posterId={qr.id}
             />
 
-            {/* Two copies share a landscape sheet, to be cut down the
-                middle. On screen they sit side by side with the cut
-                line between them; on paper the line is all that is
-                added. */}
-            <div
-                className={`flex justify-center bg-[#E9E4DD] py-10 print:bg-white print:py-0 ${
-                    dims.copies > 1 ? "print:flex" : "print:block"
-                }`}
-            >
-                {Array.from({ length: dims.copies }, (_, copy) => (
+            {/* Copies tile the sheet and are cut apart: two A5s down the
+                middle, four table cards into quarters, three till
+                strips across. On screen they sit in that grid with the
+                cut lines between them; on paper the lines are all that
+                is added. */}
+            <div className="flex justify-center bg-[#E9E4DD] py-10 print:bg-white print:py-0">
+                <div
+                    className="grid"
+                    style={{ gridTemplateColumns: `repeat(${dims.across}, max-content)` }}
+                >
+                {Array.from({ length: copies }, (_, copy) => (
                     <div
                         key={copy}
-                        className={
-                            copy > 0 ? "border-l border-dashed border-[#17233B]/30" : undefined
-                        }
+                        className={`${copy % dims.across > 0 ? "border-l border-dashed border-[#17233B]/30" : ""} ${
+                            copy >= dims.across ? "border-t border-dashed border-[#17233B]/30" : ""
+                        }`}
                     >
                     <QrPoster
                         width={dims.width}
@@ -248,10 +246,12 @@ async function Poster({ params, searchParams }: PageProps) {
                         eyebrow={qr.poster_eyebrow}
                         headline={qr.poster_headline}
                         detail={qr.poster_description}
+                        landscape={isLandscape(size)}
                         className="shadow-2xl print:shadow-none"
                     />
                     </div>
                 ))}
+                </div>
             </div>
         </>
     );

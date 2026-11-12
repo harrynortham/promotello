@@ -135,6 +135,9 @@ type PosterProps = {
     // The line under "Point your phone camera here". A claim and a
     // stamp card ask for different things.
     caption?: string | null;
+    // A sheet wider than it is tall — a table card, a till strip —
+    // which has room for one arrangement, read from a foot away.
+    landscape?: boolean;
     // The loyalty card this code opens, for the layouts that draw one.
     // Its own colours, not the poster's: what is on the wall should be
     // what lands in their phone.
@@ -210,7 +213,10 @@ function Pill({
 }) {
     return (
         <p
-            className="rounded-full px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em]"
+            // w-fit: on the landscape sheets the pill is in a column
+            // that stretches, and it came out as a coral bar across the
+            // whole card.
+            className="w-fit rounded-full px-[1em] py-[0.35em] font-semibold uppercase tracking-[0.12em]"
             style={{
                 fontSize: "0.95em",
                 backgroundColor: dark ? "rgba(255,255,255,0.18)" : colour,
@@ -452,6 +458,7 @@ export function QrPoster(props: PosterProps) {
         eyebrowFallback,
         caption,
         card,
+        landscape = false,
         className = "",
     } = props;
 
@@ -491,6 +498,60 @@ export function QrPoster(props: PosterProps) {
         fontSize: `${fontSize}px`,
         ...(dark ? { backgroundColor: theme.header, color: theme.ink } : {}),
     };
+
+    // A card by a till is read from a foot away by somebody already
+    // standing still, so it says the one thing and shows the code. The
+    // business's chosen arrangement is for a sheet with room to fill;
+    // this shape has one good answer, and its colours and words are
+    // still the ones they picked.
+    if (landscape) {
+        return (
+            <article className={sheet} style={style}>
+                <div className="flex flex-1 items-center gap-[2.4em] px-[3em] py-[2em]">
+                    {/* About 40mm on either sheet: a code read from a
+                        foot away, with the rest of the card left for
+                        the one line that sells it. */}
+                    <Code markup={qrMarkup} size="19em" />
+
+                    <div className="flex min-w-0 flex-1 flex-col gap-[0.5em]">
+                        <div className="flex items-center gap-[0.7em]">
+                            <Logo url={logoUrl} size="2.8em" />
+                            <p className="truncate font-semibold" style={{ fontSize: "1.5em" }}>
+                                {businessName}
+                                {place && <span className="opacity-60"> · {place}</span>}
+                            </p>
+                        </div>
+
+                        <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+
+                        <h1
+                            className="text-balance font-semibold tracking-tight"
+                            style={{ fontSize: headline?.trim() ? "2.6em" : "3.4em", lineHeight: 1.05 }}
+                        >
+                            {title}
+                        </h1>
+
+                        {card && (
+                            <StampRow
+                                required={card.stampsRequired}
+                                icon={readStampIcon(card.stampIcon)}
+                                colour={cardStamp}
+                                ink={readableInk(cardStamp)}
+                                size="1.8em"
+                            />
+                        )}
+
+                        <p className={dark ? "opacity-80" : "text-[#17233B]/70"} style={{ fontSize: "1.25em", lineHeight: 1.35 }}>
+                            <span className="font-semibold">Point your phone camera here.</span>{" "}
+                            {scanLine}
+                        </p>
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
 
     if (chosen === "code_first") {
         return (

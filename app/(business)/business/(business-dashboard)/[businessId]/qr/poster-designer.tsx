@@ -352,7 +352,10 @@ export function PosterDesigner({
                 </div>
 
                 <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
-                    Ready to print, with your logo filled in.
+                    Ready to print, with your logo filled in. The paper is
+                    chosen when you print it: a window takes A4 or A5, and a
+                    till or a table corner takes four little landscape cards
+                    or three strips to a sheet.
                 </p>
 
                 {/* The poster is the obvious thing on this page, so the

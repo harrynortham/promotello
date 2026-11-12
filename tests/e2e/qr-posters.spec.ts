@@ -801,6 +801,57 @@ test("a poster keeps the layout and the colours it was made with", async ({ page
     }
 });
 
+// A window takes a sheet of paper. The back of a till and the corner of
+// a table take something small enough that nobody minds it being there,
+// which is a different shape as well as a different size.
+test("the small landscape sizes tile a sheet and read across", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: code } = await client
+        .from("qr_codes")
+        .insert({ business_id: businessId, label: `E2E small ${Date.now()}` })
+        .select("id")
+        .single();
+
+    try {
+        for (const [size, copies, ratio] of [
+            ["table", 4, 148 / 105],
+            ["strip", 3, 210 / 99],
+        ] as const) {
+            await page.goto(`/poster/${code!.id}?size=${size}`);
+
+            const sheets = page.locator("article");
+            await expect(sheets.first()).toBeVisible({ timeout: 20_000 });
+
+            // They tile the sheet, to be cut apart.
+            await expect(sheets).toHaveCount(copies);
+
+            const box = await sheets.first().boundingBox();
+            expect(
+                Math.abs((box!.width / box!.height) - ratio),
+                `${size} is ${ratio.toFixed(2)} wide to tall`,
+            ).toBeLessThan(0.02);
+
+            // Read across, not down: the code sits left of the words.
+            const codeBox = await sheets.first().locator('[class*="rounded-"]').first().boundingBox();
+            const headline = await sheets.first().getByRole("heading").first().boundingBox();
+            expect(codeBox!.x, "the code is beside the headline").toBeLessThan(headline!.x);
+            expect(Math.abs(codeBox!.y - headline!.y), "not above it").toBeLessThan(box!.height);
+
+            // The pill is a pill: in a stretching column it came out as
+            // a coral bar across the whole card.
+            const pill = sheets.first().getByText(/scan for offers/i).first();
+            const pillBox = await pill.boundingBox();
+            expect(pillBox!.width, "the pill fits its words").toBeLessThan(box!.width * 0.6);
+        }
+    } finally {
+        await client.from("qr_codes").delete().eq("id", code!.id);
+    }
+});
+
 // A poster for a loyalty card is an invitation to join it, so a scan
 // ends with the card in somebody's phone rather than on a page
 // describing it.

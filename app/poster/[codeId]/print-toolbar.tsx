@@ -12,12 +12,14 @@ export function PrintToolbar({
     backHref,
     codeId,
     size,
-    sizeHrefs,
+    posterId,
 }: {
     backHref: string;
     codeId: string;
     size: PosterSize;
-    sizeHrefs: Record<PosterSize, string>;
+    // Every size links to itself, so adding one to POSTER_SIZES is the
+    // whole change rather than the first half of it.
+    posterId: string;
 }) {
     // Made is not printed. The dashboard used to tick "Print a QR poster"
     // the moment a code existed, and the funnel wants the poster that
@@ -46,10 +48,11 @@ export function PrintToolbar({
                 {POSTER_SIZES.map((option) => (
                     <Button
                         key={option.value}
-                        render={<Link href={sizeHrefs[option.value]} replace />}
+                        render={<Link href={`/poster/${posterId}?size=${option.value}`} replace />}
                         nativeButton={false}
                         variant={size === option.value ? "default" : "outline"}
                         size="sm"
+                        title={option.hint}
                     >
                         {option.label}
                     </Button>
