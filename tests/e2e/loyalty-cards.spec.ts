@@ -897,3 +897,67 @@ test("a card can be saved in the business's own colours, with any stamp", async 
         await admin.from("loyalty_programs").delete().eq("id", program!.id);
     }
 });
+
+// The moment the whole thing is for: the stamp lands on the customer's
+// phone while they are still holding it out, not the next time they
+// open the page. Staff press the button on their own phone; this proves
+// the other screen answers on its own.
+test("a stamp lands on the customer's open card", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId, customerUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Live stamp ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const { data: card } = await admin
+        .from("loyalty_cards")
+        .insert({ program_id: program!.id, user_id: customerUserId })
+        .select("card_code")
+        .single();
+
+    const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+    const staff = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        // The customer's card, open and left alone from here on.
+        await customer.goto(`/loyalty/${program!.id}`);
+        await expect(customer.getByText("0 of 6 stamps")).toBeVisible({ timeout: 20_000 });
+
+        await staff.goto(`/stamp/${card!.card_code}`);
+        await staff.getByRole("button", { name: "Add a stamp" }).click();
+        await expect(staff.getByText("Stamp added")).toBeVisible({ timeout: 20_000 });
+
+        // No reload, no second press, no navigation.
+        await expect(customer.getByText("1 of 6 stamps"), "the card counted it").toBeVisible({
+            timeout: 20_000,
+        });
+        await expect(customer.getByText("Stamp added"), "and said so").toBeVisible();
+
+        // And it is a moment, not a sticker: the message clears itself.
+        await expect(customer.getByText("Stamp added")).toBeHidden({ timeout: 15_000 });
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});

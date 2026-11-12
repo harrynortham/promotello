@@ -28,6 +28,7 @@ export function LoyaltyStamps({
     header,
     accent: customAccent,
     icon: chosenIcon,
+    landedAt,
 }: {
     stamps: number;
     required: number;
@@ -38,6 +39,9 @@ export function LoyaltyStamps({
     // Their own two colours, where colour is "custom".
     header?: string | null;
     accent?: string | null;
+    // The stamp just added, which lands with a bounce instead of
+    // appearing between one render and the next.
+    landedAt?: number;
 }) {
     const filled = Math.min(stamps, required);
     const accent = cardTheme({ colour, header, accent: customAccent }).stamp;
@@ -80,7 +84,9 @@ export function LoyaltyStamps({
                                     ? { borderColor: `${accent}80`, backgroundColor: `${accent}0d`, color: accent }
                                     : undefined
                         }
-                        className={`flex aspect-square w-full items-center justify-center rounded-full border-2 transition ${isFilled
+                        className={`flex aspect-square w-full items-center justify-center rounded-full border-2 transition duration-500 ${
+                            index === landedAt ? "scale-110" : "scale-100"
+                        } ${isFilled
                             ? ""
                             : isReward
                                 ? "border-dashed"

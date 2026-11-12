@@ -30,6 +30,8 @@ export function LoyaltyCard({
     header,
     accent,
     stampIcon,
+    landedAt,
+    note,
     className = "",
     id,
 }: {
@@ -58,6 +60,12 @@ export function LoyaltyCard({
     header?: string | null;
     accent?: string | null;
     stampIcon?: string | null;
+    // The stamp that has just been added, which arrives rather than
+    // simply being there. Nothing animates without it.
+    landedAt?: number;
+    // Said beside the count, where somebody watching the stamps land is
+    // already looking. Nothing else on the card moves to make room.
+    note?: ReactNode;
     className?: string;
     id?: string;
 }) {
@@ -119,13 +127,17 @@ export function LoyaltyCard({
                     header={header}
                     accent={accent}
                     icon={stampIcon}
+                    landedAt={landedAt}
                 />
 
-                <p className="mt-3 text-sm text-[#17233B]/70">
-                    {stamps} of {stampsRequired} stamps
-                    {rewardsRedeemed > 0 && ` · ${rewardsRedeemed} redeemed`}
-                    {!active && " · paused by the business"}
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <p className="text-sm text-[#17233B]/70">
+                        {stamps} of {stampsRequired} stamps
+                        {rewardsRedeemed > 0 && ` · ${rewardsRedeemed} redeemed`}
+                        {!active && " · paused by the business"}
+                    </p>
+                    {note}
+                </div>
 
                 <div className="mt-6 flex flex-col items-center gap-4 rounded-xl bg-[#FFF8F0] p-5 text-center sm:flex-row sm:gap-5 sm:p-4 sm:text-left">
                     <div className={`shrink-0 rounded-xl bg-white p-2 ${qrSize} [&_svg]:h-full [&_svg]:w-full`}>
