@@ -99,7 +99,7 @@ const steps = [
     {
         art: <RewardArt />,
         title: "The reward is claimed",
-        body: "On the last stamp their card shows Reward ready. Hand over the reward, mark it redeemed, and the card starts again.",
+        body: "On the last stamp their card shows Reward ready. Hand over the reward, mark it redeemed, and the card starts again — unless you've stopped handing that card out, in which case it finishes there and they move to your new one.",
     },
 ];
 

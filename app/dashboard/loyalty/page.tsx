@@ -107,6 +107,13 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                         accent={card.cardAccent}
                                         stampIcon={card.stampIcon}
                                         code={card.code}
+                                        lastOne={card.closed && !card.finished && !card.rewardReady}
+                                        finished={card.finished}
+                                        newCardHref={
+                                            card.newCardProgramId
+                                                ? `/loyalty/${card.newCardProgramId}`
+                                                : undefined
+                                        }
                                         // The card's own page, where it
                                         // is the only thing on screen.
                                         href={`/loyalty/${card.programId}`}

@@ -260,8 +260,9 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
                         <AlertTitle>That card is no longer handed out</AlertTitle>
                         <AlertDescription>
-                            Nobody new can join it. The customers holding one carry on
-                            collecting, and you can hand it out again from the card itself.
+                            Nobody new can join it. The customers holding one finish it
+                            and claim their reward once, then move to the card you hand
+                            out next. You can hand this one out again from the card itself.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -414,8 +415,8 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
                                 <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
                                     Cards you no longer hand out. The customers holding one
-                                    keep collecting on it and claim what they were promised;
-                                    you stamp them the same way.
+                                    fill it and claim what they were promised, once — then
+                                    it&rsquo;s finished and they carry on with your current card.
                                 </p>
 
                                 <ul className="mt-4 space-y-2">

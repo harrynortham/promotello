@@ -27,7 +27,8 @@ export type NotificationType =
     | "offer_fully_claimed"
     | "offer_low_stock"
     | "new_offer_from_followed"
-    | "voucher_issued";
+    | "voucher_issued"
+    | "loyalty_card_issued";
 
 export type NotificationContent = {
     type: NotificationType;
@@ -185,5 +186,28 @@ export function voucherIssued(voucher: {
         body: "It's in your vouchers. Show the code when you're there.",
         href: "/dashboard/redemptions",
         dedupeKey: `voucher:${voucher.id}`,
+    };
+}
+
+// The card a business ran has ended, and the customer filled theirs just
+// as it did. The new one is already in their wallet — this is them being
+// told, not being asked.
+export function newLoyaltyCard(card: {
+    id: string;
+    programId: string;
+    stampsRequired: number;
+    reward: string;
+    businessName: string;
+}): NotificationContent {
+    const reward = card.reward.trim();
+
+    return {
+        type: "loyalty_card_issued",
+        title: `${card.businessName} has a new card: ${card.stampsRequired} stamps for ${
+            reward.charAt(0).toLowerCase() + reward.slice(1)
+        }`,
+        body: "It's in your loyalty cards, with your next stamp waiting to go on it.",
+        href: `/loyalty/${card.programId}`,
+        dedupeKey: `loyalty-card:${card.id}`,
     };
 }
