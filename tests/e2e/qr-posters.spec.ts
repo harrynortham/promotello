@@ -859,6 +859,10 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
         await expect(preview).not.toContainText("Show this to staff");
         await expect(preview).not.toContainText("4F8A2C91D0");
 
+        // One code on the sheet: the card's. A second copy above it
+        // would be the same scan twice.
+        await expect(preview.locator('[class*="rounded-xl"] > svg, svg').nth(0)).toBeVisible();
+
         // Pointing it somewhere else can't leave a layout behind with
         // nothing left to draw.
         await target.selectOption("business");

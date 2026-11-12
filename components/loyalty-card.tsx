@@ -22,6 +22,9 @@ export function LoyaltyCard({
     code,
     scanTitle = "Show this to staff",
     scanHint = "They can scan it or type the code.",
+    // Big enough for a phone held over it. A poster asks for more: it
+    // is read from the other side of a window.
+    qrSize = "size-52 sm:size-32",
     qr,
     colour,
     header,
@@ -47,6 +50,7 @@ export function LoyaltyCard({
     // shown to staff; the same card on a wall is scanned to get one.
     scanTitle?: string;
     scanHint?: string;
+    qrSize?: string;
     qr: ReactNode;
     // The business's chosen look, from its loyalty programme.
     colour?: string | null;
@@ -124,7 +128,7 @@ export function LoyaltyCard({
                 </p>
 
                 <div className="mt-6 flex flex-col items-center gap-4 rounded-xl bg-[#FFF8F0] p-5 text-center sm:flex-row sm:gap-5 sm:p-4 sm:text-left">
-                    <div className="size-52 shrink-0 rounded-xl bg-white p-2 sm:size-32 [&_svg]:h-full [&_svg]:w-full">
+                    <div className={`shrink-0 rounded-xl bg-white p-2 ${qrSize} [&_svg]:h-full [&_svg]:w-full`}>
                         {qr}
                     </div>
 

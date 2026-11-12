@@ -359,6 +359,9 @@ function CardOnPoster({
                     // one on a wall is a code somebody will try to type.
                     scanTitle="Scan to get your own"
                     scanHint="It's free, and your stamps live in your phone."
+                    // The only code on the sheet, and a window is
+                    // further away than a pocket: about 50mm at A4.
+                    qrSize="size-48"
                     // The poster's own code, so scanning the card in the
                     // picture joins the card in the picture.
                     qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qrMarkup }} />}
@@ -562,27 +565,27 @@ export function QrPoster(props: PosterProps) {
                     <Name businessName={businessName} place={place} onColour />
                 </header>
 
-                <div className="flex flex-1 flex-col items-center justify-center gap-[0.7em] px-[2.5em] py-[1em] text-center">
+                <div className="flex flex-1 flex-col items-center justify-center gap-[0.8em] px-[2.5em] py-[1em] text-center">
                     <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
-                    <Title size={headline?.trim() ? "2.6em" : "3.2em"}>{title}</Title>
+                    <Title size={headline?.trim() ? "2.8em" : "3.4em"}>{title}</Title>
 
-                    <div className="mt-[0.3em]">
-                        <Code markup={qrMarkup} size="13.5em" />
-                    </div>
-
-                    <ScanLines caption={scanLine} dark={dark} />
-
-                    {/* The card under the code it joins, so the thing
-                        being offered is the last thing read. */}
-                    <div className="mt-[0.5em]">
+                    {/* One code on the sheet, and it is the one on the
+                        card: a second copy of it above would be the
+                        same scan twice, and the card is the thing worth
+                        looking at. */}
+                    <div className="mt-[0.4em]">
                         <CardOnPoster
                             businessName={businessName}
                             logoUrl={logoUrl}
                             card={card!}
                             qrMarkup={qrMarkup}
                             fontSize={fontSize}
-                            widthEm={21}
+                            widthEm={27}
                         />
+                    </div>
+
+                    <div className="mt-[0.4em]">
+                        <ScanLines caption={scanLine} dark={dark} />
                     </div>
                 </div>
 
