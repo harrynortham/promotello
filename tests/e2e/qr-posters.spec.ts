@@ -604,7 +604,6 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
             stamps_required: 9,
             reward: "A free coffee",
             terms: "One stamp per visit.",
-            terms: "One stamp per visit.",
             is_active: true,
         })
         .select("id")
