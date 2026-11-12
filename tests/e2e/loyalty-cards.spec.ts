@@ -187,6 +187,96 @@ test("a scanned card lands on its own page, all of it on a phone", async ({ brow
     }
 });
 
+test("both lists on the loyalty page turn a page at a time", async ({ browser }) => {
+    test.setTimeout(180_000);
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await client
+        .from("loyalty_programs").select("id")
+        .eq("business_id", businessId).eq("is_active", true).is("closed_at", null);
+    for (const row of open ?? []) {
+        await client.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const stamp = Date.now();
+    const made: string[] = [];
+
+    // Seven closed cards and one on offer, so both lists have pages.
+    for (let index = 0; index < 7; index += 1) {
+        const { data } = await client
+            .from("loyalty_programs")
+            .insert({
+                business_id: businessId,
+                name: `E2E Old card ${stamp}-${index}`,
+                stamps_required: 6,
+                reward: "a free coffee",
+                is_active: true,
+                closed_at: new Date().toISOString(),
+            })
+            .select("id")
+            .single();
+        made.push(data!.id);
+    }
+
+    const { data: live } = await client
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Live card ${stamp}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+    made.push(live!.id);
+
+    // Twelve cards issued, so the issued list has two pages.
+    const holders = Array.from({ length: 12 }, (_, index) => ({
+        program_id: live!.id,
+        guest_token: crypto.randomUUID(),
+        guest_name: `E2E holder ${index}`,
+        guest_email: `e2e_holder_${stamp}_${index}@test.internal`,
+    }));
+    const { error: seeded } = await client.from("loyalty_cards").insert(holders);
+    expect(seeded, "the holders were seeded").toBeNull();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/loyalty`);
+
+        const issued = page.locator("#issued");
+        await expect(issued).toBeVisible({ timeout: 20_000 });
+
+        // Ten to a page, and the date says what happened: a card was
+        // issued to somebody, which is the business's side of joining.
+        await expect(issued.getByRole("listitem")).toHaveCount(10);
+        await expect(issued.getByText("Page 1 of 2")).toBeVisible();
+        await expect(issued.getByText(/^Issued \d+ \w+$/).first()).toBeVisible();
+
+        const collecting = page.locator("#collecting");
+        await expect(collecting.getByRole("listitem")).toHaveCount(5);
+        await expect(collecting.getByText("Page 1 of 2")).toBeVisible();
+
+        // Turning one page leaves the other where it was.
+        await issued.getByRole("button", { name: "Next" }).click();
+        await page.waitForURL(/issued=2/, { timeout: 15_000 });
+        await expect(page.locator("#issued").getByRole("listitem")).toHaveCount(2);
+        await expect(page.locator("#collecting").getByText("Page 1 of 2")).toBeVisible();
+
+        await page.locator("#collecting").getByRole("button", { name: "Next" }).click();
+        await page.waitForURL(/collecting=2/, { timeout: 15_000 });
+        await expect(page.locator("#collecting").getByRole("listitem")).toHaveCount(2);
+        await expect(page.locator("#issued").getByText("Page 2 of 2"), "and keeps the first").toBeVisible();
+    } finally {
+        for (const id of made) await client.from("loyalty_programs").delete().eq("id", id);
+    }
+});
+
 // Staff stamping a card should be looking at the card the customer is
 // holding out, not a drawing of one in the default colours.
 test("the stamping page shows the card itself, and the dashboard links to it", async ({ browser }) => {
@@ -401,11 +491,13 @@ test("a business runs one loyalty card, and stamps from the same page", async ({
     try {
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto(`/business/${businessId}/loyalty`);
-        await expect(page.getByRole("heading", { name: "Your loyalty cards" })).toBeVisible({
-            timeout: 20_000,
-        });
 
-    // Where another card used to be offered, staff stamp one.
+    // Where another card used to be offered, staff stamp one. The panel
+    // is the first thing under the page's own heading now: "Your
+    // loyalty cards" above a single card said nothing twice.
+    await expect(page.getByRole("heading", { name: "Reward your regulars" })).toBeVisible({
+        timeout: 20_000,
+    });
     await expect(page.getByText("Stamp a card")).toBeVisible();
     await expect(page.getByRole("button", { name: "Find card" })).toBeVisible();
 
