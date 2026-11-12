@@ -361,3 +361,78 @@ test("the card on the edit page follows what is typed", async ({ browser }) => {
         await admin.from("loyalty_programs").delete().eq("id", program!.id);
     }
 });
+
+// A closed card keeps hold of its name. Two cards called "Coffee card",
+// one still being collected and one on offer, can only be told apart by
+// where they sit on the page.
+test("a name a closed card is still using is refused", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const taken = `E2E Retired card ${Date.now()}`;
+    const made: string[] = [];
+
+    const { data: onOffer } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of onOffer ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    // One closed card holding the name, and one on offer to rename.
+    const { data: retired } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: taken,
+            stamps_required: 6,
+            reward: "A free tea",
+            is_active: true,
+            closed_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+    made.push(retired!.id);
+
+    const { data: current } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `${taken} two`,
+            stamps_required: 6,
+            reward: "A free tea",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+    made.push(current!.id);
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        // The database refuses it outright.
+        const clash = await admin.from("loyalty_programs").update({ name: taken }).eq("id", current!.id);
+        expect(clash.error?.code, "one name per business, closed cards included").toBe("23505");
+
+        // And the dashboard says so in words rather than failing quietly.
+        await page.goto(`/business/${businessId}/loyalty/${current!.id}/edit`);
+        await page.locator("#card-name").fill(taken);
+        await page.getByRole("button", { name: "Save changes" }).click();
+
+        await page.waitForURL(`**/business/${businessId}/loyalty?error=name`, { timeout: 20_000 });
+        await expect(page.getByText(/You have had a card with that name before/)).toBeVisible();
+
+        const { data: kept } = await admin
+            .from("loyalty_programs")
+            .select("name")
+            .eq("id", current!.id)
+            .single();
+        expect(kept!.name, "the card kept its own name").toBe(`${taken} two`);
+    } finally {
+        for (const id of made) await admin.from("loyalty_programs").delete().eq("id", id);
+    }
+});
