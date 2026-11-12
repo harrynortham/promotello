@@ -18,6 +18,12 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     const robots = { index: false, follow: false };
     const [{ codeId }, { size: sizeParam }] = await Promise.all([params, searchParams]);
 
+    // Who is asking decides what this says, so it is never prerendered.
+    // Without this the title is worked out while the shell is being
+    // built, and the Supabase client reading a token's expiry is
+    // Date.now() during a prerender, which Next refuses.
+    await connection();
+
     const supabase = await createClient();
 
     // RLS: only this code's own team sees it, and a stranger gets the
