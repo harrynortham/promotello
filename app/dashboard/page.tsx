@@ -8,6 +8,7 @@ import { FiArrowRight, FiBriefcase, FiCheckCircle, FiGift, FiStar } from "react-
 import { EmptyState, SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
 import { Button } from "@/components/ui/button";
+import { CustomerAnnouncements } from "@/components/customer-announcements";
 import { Skeleton } from "@/components/ui/skeleton";
 import { placeName } from "@/lib/cities";
 import { getLiveOffers } from "@/lib/listings";
@@ -292,8 +293,24 @@ async function CustomerDashboardContent() {
 
 export default function CustomerDashboardPage() {
     return (
-        <Suspense fallback={<LoadingState />}>
-            <CustomerDashboardContent />
-        </Suspense>
+        <div>
+            {/* At most one suggestion, and only when there is one worth
+                making. It lives here rather than in the shell: the
+                vouchers page and a loyalty card are places somebody is
+                in the middle of something, and a nudge about their
+                birthday is the wrong thing to meet there.
+
+                Its own boundary, so the dashboard doesn't wait on it,
+                and the width of the page under it. */}
+            <div className="mx-auto max-w-6xl">
+                <Suspense fallback={null}>
+                    <CustomerAnnouncements />
+                </Suspense>
+            </div>
+
+            <Suspense fallback={<LoadingState />}>
+                <CustomerDashboardContent />
+            </Suspense>
+        </div>
     );
 }

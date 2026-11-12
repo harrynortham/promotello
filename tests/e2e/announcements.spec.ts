@@ -122,6 +122,27 @@ test("on a phone the close is in the corner, not beside the button", async ({ br
     await page.close();
 });
 
+// It belongs to the dashboard, not to the customer area. The vouchers
+// page and a loyalty card are places somebody is in the middle of
+// something, and a nudge about their birthday is the wrong thing to
+// meet there.
+test("the suggestion is on the dashboard and nowhere else", async ({ browser }) => {
+    const { customerUserId } = state();
+    await startFresh(customerUserId);
+
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+    const bar = page.getByRole("complementary", { name: "Suggestion" });
+
+    await page.goto("/dashboard");
+    await expect(bar).toContainText("Get a birthday treat", { timeout: 20_000 });
+
+    for (const path of ["/dashboard/redemptions", "/dashboard/loyalty", "/account"]) {
+        await page.goto(path);
+        await expect(page.locator("h1").first()).toBeVisible({ timeout: 20_000 });
+        await expect(bar, `no suggestion on ${path}`).toHaveCount(0);
+    }
+});
+
 // The shell the suggestion sits in is wider than any of the pages
 // inside it, so a bar filling the shell hung over both edges of the
 // page it was talking about.
