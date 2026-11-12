@@ -3,6 +3,7 @@ import { after } from "next/server";
 
 import { accountWelcomeEmail } from "@/lib/account-emails";
 import { claimOffer, offerBeingClaimed, sendVoucherFor } from "@/lib/claim-offer";
+import { cardBeingJoined, joinLoyaltyCard } from "@/lib/join-loyalty";
 import { claimPreview } from "@/lib/claim-preview";
 import { sendEmails } from "@/lib/email";
 import { customerWelcomeDue, isNewAccount } from "@/lib/customer-welcome";
@@ -109,6 +110,25 @@ export async function afterSignIn(
         }
 
         return `/offers/${offer}`;
+    }
+
+    // And the same for "Log in to get your card": the card is theirs
+    // before they land, and they land on it rather than back on the
+    // page that offered it.
+    const business = cardBeingJoined(next);
+
+    if (business) {
+        const { joined, programId, error } = await joinLoyaltyCard(supabase, business, user);
+
+        if (error) {
+            console.error("After sign-in: joining the loyalty card failed", error);
+        }
+
+        // The card's own id, so the page they land on rings the one they
+        // just joined rather than saying a card somewhere below is new.
+        // Not joined means it has gone or was never there, and the
+        // business page says so.
+        return joined ? `/dashboard/loyalty?joined=${programId}` : `/businesses/${business}`;
     }
 
     return unasked ? landingFor(user, memberships) : next;

@@ -647,6 +647,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 key={program.id}
                                 businessId={business.id}
                                 businessName={business.name}
+                                returnPath={businessPath(business)}
                                 program={program}
                                 card={progress.get(program.id) ?? null}
                                 isSignedIn={Boolean(viewer)}

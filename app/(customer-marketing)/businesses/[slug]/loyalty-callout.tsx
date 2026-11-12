@@ -5,11 +5,13 @@ import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { joinLoyaltyProgram } from "./actions";
-import { LoyaltyJoin } from "./loyalty-join";
 
 type LoyaltyCalloutProps = {
     businessId: string;
     businessName: string;
+    // This business's own page, which is where somebody comes back to
+    // — or rather, where they were when they asked for the card.
+    returnPath: string;
     program: {
         id: string;
         // A business can run more than one card, so each says which it is.
@@ -34,6 +36,7 @@ type LoyaltyCalloutProps = {
 export function LoyaltyCallout({
     businessId,
     businessName,
+    returnPath,
     program,
     card,
     isSignedIn,
@@ -42,6 +45,8 @@ export function LoyaltyCallout({
 }: LoyaltyCalloutProps) {
     const problems: Record<string, string> = {
         unavailable: "This loyalty card isn't available right now.",
+        // Left from the guest form, which a card emailed to somebody can
+        // still send them back here with.
         details: "We need your name and an email address to make your card.",
         signin: "You already have an account with that email. Log in and your card is there.",
     };
@@ -113,12 +118,31 @@ export function LoyaltyCallout({
                         </SubmitButton>
                     </form>
                 ) : (
-                    <LoyaltyJoin
-                        programId={program.id}
-                        businessId={businessId}
-                        loginHref={`/login?next=${encodeURIComponent(`/businesses/${businessId}`)}`}
-                        startOpen={Boolean(problem && problems[problem])}
-                    />
+                    /* The same two doors as claiming an offer, and the
+                       same promise: ?join=1 says what they pressed, so
+                       the card is theirs by the time they land on it
+                       rather than a button to press a second time. */
+                    <div className="w-full shrink-0 space-y-3 sm:w-auto">
+                        <Button
+                            render={<Link href={`/login?next=${encodeURIComponent(`${returnPath}?join=1`)}`} />}
+                            nativeButton={false}
+                            size="lg"
+                            className="w-full bg-white text-[#17233B] hover:bg-white/90 sm:w-auto"
+                        >
+                            Log in to get your card
+                            <FiArrowRight aria-hidden="true" />
+                        </Button>
+
+                        <p className="text-center text-xs text-white/70 sm:text-right">
+                            New to Promotello?{" "}
+                            <Link
+                                href={`/signup?next=${encodeURIComponent(`${returnPath}?join=1`)}`}
+                                className="font-medium text-white underline underline-offset-4"
+                            >
+                                Create a free account
+                            </Link>
+                        </p>
+                    </div>
                 )}
             </div>
         </section>
