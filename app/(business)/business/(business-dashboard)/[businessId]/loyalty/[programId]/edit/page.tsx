@@ -6,7 +6,6 @@ import { FiArrowLeft } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { loadLoyaltyEditor } from "../../loyalty-data";
 import { ProgramSettingsForm, type Program } from "../../program-form";
@@ -111,13 +110,15 @@ async function EditLoyaltyCard({ params }: PageProps) {
                 </div>
             </header>
 
-            <Card className="mt-8 border-[#17233B]/10">
-                <CardHeader>
-                    <CardTitle>Card settings</CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                    {issued && (
+            <ProgramSettingsForm
+                businessId={businessId}
+                businessName={editor.businessName}
+                businessLogoUrl={editor.businessLogoUrl}
+                program={program}
+                lockTerms={issued}
+                submitLabel="Save changes"
+                notice={
+                    issued ? (
                         <Alert className="mb-6 border-[#17233B]/10 bg-[#FFF8F0]">
                             <AlertTitle>The deal on this card is settled</AlertTitle>
 
@@ -135,16 +136,9 @@ async function EditLoyaltyCard({ params }: PageProps) {
                                 to change the deal.
                             </AlertDescription>
                         </Alert>
-                    )}
-
-                    <ProgramSettingsForm
-                        businessId={businessId}
-                        program={program}
-                        lockTerms={issued}
-                        submitLabel="Save changes"
-                    />
-                </CardContent>
-            </Card>
+                    ) : null
+                }
+            />
         </div>
     );
 }

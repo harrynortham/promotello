@@ -301,3 +301,63 @@ test("changing the deal leaves the old card's holders alone", async ({ browser }
         for (const id of made) await admin.from("loyalty_programs").delete().eq("id", id);
     }
 });
+
+// Editing a card draws it beside the fields, because a colour and a
+// stamp are choices nobody can make from their names alone.
+test("the card on the edit page follows what is typed", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // One card per business takes joiners, so make room for this one.
+    const { data: onOffer } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of onOffer ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Live preview ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free coffee",
+            card_colour: "navy",
+            stamp_icon: "coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+
+        const preview = page.locator("aside").filter({ hasText: "The card customers carry" });
+        await expect(preview).toContainText("9 stamps for a free coffee", { timeout: 20_000 });
+
+        await page.locator("#reward").fill("A free pastry");
+        await expect(preview).toContainText("9 stamps for a free pastry");
+
+        await page.locator("#stamps-required").selectOption("5");
+        await expect(preview).toContainText("5 stamps for a free pastry");
+        await expect(preview).toContainText("3 of 5 stamps");
+
+        // Nothing is saved until it is saved.
+        const { data: unchanged } = await admin
+            .from("loyalty_programs")
+            .select("reward, stamps_required")
+            .eq("id", program!.id)
+            .single();
+        expect(unchanged).toEqual({ reward: "A free coffee", stamps_required: 9 });
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
@@ -170,6 +170,57 @@ export function ProgramFields({
     );
 }
 
+// The card as the customer will carry it, beside whichever form is
+// being filled in. It stays put as the fields go past, the same as the
+// offer and profile previews; top-24 clears the site header, which is
+// sticky and 80px tall.
+function CardPreview({
+    businessName,
+    businessLogoUrl,
+    stampsRequired,
+    reward,
+    terms,
+    colour,
+    icon,
+}: {
+    businessName: string;
+    businessLogoUrl: string | null;
+    stampsRequired: number;
+    reward: string;
+    terms: string;
+    colour: CardColour;
+    icon: StampIcon;
+}) {
+    return (
+        <aside className="h-fit lg:sticky lg:top-24">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
+                The card customers carry
+            </p>
+
+            <div className="mt-3">
+                <LoyaltyCard
+                    businessName={businessName}
+                    logoUrl={businessLogoUrl}
+                    stampsRequired={stampsRequired}
+                    reward={reward}
+                    stamps={Math.min(3, stampsRequired - 1)}
+                    terms={terms}
+                    code={SAMPLE_CODE}
+                    qr={<StampQr code={SAMPLE_CODE} />}
+                    colour={colour}
+                    stampIcon={icon}
+                    className="border-[#17233B]/10"
+                />
+            </div>
+
+            <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
+                An example card with sample stamps. Each customer gets
+                their own code and QR when they join.
+            </p>
+        </aside>
+    );
+}
+
 // Saving is a Pro feature, but anyone can build the card and see it, so
 // the upgrade is a decision about something they have already made.
 export function LoyaltyCardBuilder({
@@ -271,53 +322,42 @@ export function LoyaltyCardBuilder({
                 </CardContent>
             </Card>
 
-            {/* It stays beside the form as the fields go past, the same
-                as the offer and profile previews. top-24 clears the site
-                header, which is sticky and 80px tall. */}
-            <aside className="h-fit lg:sticky lg:top-24">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
-                    The card customers carry
-                </p>
-
-                <div className="mt-3">
-                    <LoyaltyCard
-                        businessName={businessName}
-                        logoUrl={businessLogoUrl}
-                        stampsRequired={stampsRequired}
-                        reward={reward}
-                        stamps={Math.min(3, stampsRequired - 1)}
-                        terms={terms}
-                        code={SAMPLE_CODE}
-                        qr={<StampQr code={SAMPLE_CODE} />}
-                        colour={colour}
-                        stampIcon={icon}
-                        className="border-[#17233B]/10"
-                    />
-                </div>
-
-                <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
-                    An example card with sample stamps. Each customer gets
-                    their own code and QR when they join.
-                </p>
-            </aside>
+            <CardPreview
+                businessName={businessName}
+                businessLogoUrl={businessLogoUrl}
+                stampsRequired={stampsRequired}
+                reward={reward}
+                terms={terms}
+                colour={colour}
+                icon={icon}
+            />
         </div>
     );
 }
 
-// Editing a card that is already live, without the preview column: the
-// page shows the saved card beside it.
+// Editing a card that is already live. The card is drawn beside the
+// fields and changes as they do, because a colour and a stamp are
+// choices nobody can make from their names alone.
 export function ProgramSettingsForm({
     businessId,
+    businessName,
+    businessLogoUrl,
     program,
     lockTerms = false,
     submitLabel,
+    // What the page wants to say above the fields, e.g. that customers
+    // are already collecting this one.
+    notice,
 }: {
     businessId: string;
+    businessName: string;
+    businessLogoUrl: string | null;
     program: Program | null;
     // The stamps, the reward and the terms are the promise: once anyone
     // holds the card they are shown but not changed.
     lockTerms?: boolean;
     submitLabel: string;
+    notice?: ReactNode;
 }) {
     const [name, setName] = useState(program?.name ?? "");
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
@@ -327,32 +367,54 @@ export function ProgramSettingsForm({
     const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     return (
-        <form action={saveLoyaltyProgram} className="space-y-5">
-            <ProgramFields
-                businessId={businessId}
-                program={program}
-                lockTerms={lockTerms}
-                name={name}
-                setName={setName}
-                stampsRequired={stampsRequired}
-                setStampsRequired={setStampsRequired}
-                reward={reward}
-                setReward={setReward}
-                terms={terms}
-                setTerms={setTerms}
-                colour={colour}
-                setColour={setColour}
-                icon={icon}
-                setIcon={setIcon}
-            />
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+            <Card className="border-[#17233B]/10">
+                <CardHeader>
+                    <CardTitle>Card settings</CardTitle>
+                </CardHeader>
 
-            <SubmitButton
-                size="lg"
-                pendingLabel="Saving…"
-                className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-            >
-                {submitLabel}
-            </SubmitButton>
-        </form>
+                <CardContent>
+                    {notice}
+
+                    <form action={saveLoyaltyProgram} className="space-y-5">
+                        <ProgramFields
+                            businessId={businessId}
+                            program={program}
+                            lockTerms={lockTerms}
+                            name={name}
+                            setName={setName}
+                            stampsRequired={stampsRequired}
+                            setStampsRequired={setStampsRequired}
+                            reward={reward}
+                            setReward={setReward}
+                            terms={terms}
+                            setTerms={setTerms}
+                            colour={colour}
+                            setColour={setColour}
+                            icon={icon}
+                            setIcon={setIcon}
+                        />
+
+                        <SubmitButton
+                            size="lg"
+                            pendingLabel="Saving…"
+                            className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        >
+                            {submitLabel}
+                        </SubmitButton>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <CardPreview
+                businessName={businessName}
+                businessLogoUrl={businessLogoUrl}
+                stampsRequired={stampsRequired}
+                reward={reward}
+                terms={terms}
+                colour={colour}
+                icon={icon}
+            />
+        </div>
     );
 }
