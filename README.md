@@ -369,9 +369,7 @@ each tied to a moment in stage 1's walkthrough.
   history when a business asks.
 - **Staff documentation on redemptions**, for the people behind the counter.
   One printable page. The till is where this product fails quietly.
-- **A manual stamp**, for when scanning fails and the customer's phone is dead
-  or the camera won't open. Staff need a way through that doesn't send the
-  customer away.
+
 - **Onboarding when a business fits no category.**
 
 ### Stage 4 — The one build that earns month two

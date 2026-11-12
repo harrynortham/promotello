@@ -612,8 +612,11 @@ test("changing the deal leaves the old card's holders alone", async ({ browser }
 
         // The dashboard says which is which.
         await expect(business.getByText("Still being collected")).toBeVisible({ timeout: 20_000 });
+        // In the list of closed cards. The name is also on each card
+        // somebody holds, under "Loyalty cards issued", now that a
+        // business can be seeing more than one out at a time.
         await expect(
-            business.getByRole("listitem").filter({ hasText: firstName }),
+            business.locator("#collecting li").filter({ hasText: firstName }),
         ).toBeVisible();
         await expect(business.getByText("On offer")).toBeVisible();
 

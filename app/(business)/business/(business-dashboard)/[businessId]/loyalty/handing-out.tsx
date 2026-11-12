@@ -135,7 +135,7 @@ export function StartHandingOutAgain({
                         <DialogDescription>
                             {openCardName
                                 ? `Only one card at a time takes new joiners. Stop handing out ${openCardName} first, then this one can go back on offer.`
-                                : "It goes back on your business page, with the stamps and reward it already promises, and customers can join it again."}
+                                : "It goes back on your business page, with the stamps and reward it already promises, and customers can join it again. Anyone who finished it while it was closed picks it up again from where their stamps stand."}
                         </DialogDescription>
                     </DialogHeader>
 

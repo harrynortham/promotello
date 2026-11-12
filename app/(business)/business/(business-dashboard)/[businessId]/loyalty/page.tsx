@@ -42,6 +42,7 @@ type LoyaltyCardRow = {
     rewards_redeemed: number;
     created_at: string;
     last_stamped_at: string | null;
+    finished_at: string | null;
 };
 
 type Program = {
@@ -193,7 +194,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     if (allCards.length > 0) {
         const { data: holders } = await supabase
             .from("loyalty_cards")
-            .select("id, program_id, card_code, stamps, rewards_redeemed, created_at, last_stamped_at")
+            .select("id, program_id, card_code, stamps, rewards_redeemed, created_at, last_stamped_at, finished_at")
             .in("program_id", allCards.map((card) => card.id))
             .order("created_at", { ascending: false });
 
@@ -272,6 +273,8 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         <AlertTitle>That card is on offer again</AlertTitle>
                         <AlertDescription>
                             It is back on your business page and customers can join it.
+                            Anyone who finished it while it was closed is collecting on
+                            it again.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -294,9 +297,13 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     </>
                 )}
 
-                {cards.length > 0 && (
+                {/* Everything the business has, not only what it is
+                    handing out: with every card closed there is still a
+                    code to look up, numbers to read, and a card to put
+                    back on offer. */}
+                {allCards.length > 0 && (
                     <section className="mt-10">
-                        <div className="grid gap-5 md:grid-cols-2">
+                        <div className={`grid gap-5 ${cards.length > 0 ? "md:grid-cols-2" : ""}`}>
                             {/* One card each for now. The database can hold
                                 more and the screens can show more, so the way
                                 to a second is a decision rather than a build.
@@ -375,7 +382,12 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                         variant="outline"
                                                         size="sm"
                                                     >
-                                                        {holders.length > 0 ? "Name and look" : "Edit card"}
+                                                        {/* "Name and look" was honest about what
+                                                            the terms do once somebody holds the
+                                                            card, and wrong about the page: that is
+                                                            also where the card is taken off offer.
+                                                            The page says what is frozen. */}
+                                                        Edit card
                                                     </Button>
 
                                                     {/* Changing the deal means a new card, so
@@ -416,7 +428,10 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                 <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
                                     Cards you no longer hand out. The customers holding one
                                     fill it and claim what they were promised, once — then
-                                    it&rsquo;s finished and they carry on with your current card.
+                                    it&rsquo;s finished
+                                    {program
+                                        ? " and they carry on with your current card."
+                                        : ". You aren't handing anything out at the moment: start a card above, or open one of these and hand it out again."}
                                 </p>
 
                                 <ul className="mt-4 space-y-2">
@@ -497,7 +512,13 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             <CardContent>
                             <ul className="divide-y divide-[#17233B]/10">
                                 {issuedPage.rows.map((card) => {
-                                    const complete = card.stamps >= (program?.stamps_required ?? 0);
+                                    // The card it is on, which is not
+                                    // always the one being handed out:
+                                    // a business sees out every closed
+                                    // card its customers still hold.
+                                    const its = allCards.find((one) => one.id === card.program_id);
+                                    const finished = card.finished_at !== null;
+                                    const complete = !finished && card.stamps >= (its?.stamps_required ?? 0);
 
                                     return (
                                         <li
@@ -515,6 +536,18 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                     </span>
                                                 )}
 
+                                                {finished && (
+                                                    <span className="rounded-full bg-[#17233B]/5 px-2.5 py-0.5 text-xs font-semibold text-[#17233B]/70">
+                                                        Finished
+                                                    </span>
+                                                )}
+
+                                                {/* Which of them it is on, once there is
+                                                    more than one to be on. */}
+                                                {allCards.length > 1 && its && (
+                                                    <span className="text-xs text-[#17233B]/65">{its.name}</span>
+                                                )}
+
                                                 {card.rewards_redeemed > 0 && (
                                                     <span className="text-xs text-[#17233B]/65">
                                                         {card.rewards_redeemed} redeemed
@@ -524,7 +557,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#17233B]/65">
                                                 <span className="font-medium text-[#17233B]">
-                                                    {card.stamps} of {program?.stamps_required} stamps
+                                                    {card.stamps} of {its?.stamps_required ?? "?"} stamps
                                                 </span>
 
                                                 <span className="text-xs">
