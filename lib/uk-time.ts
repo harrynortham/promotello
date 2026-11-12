@@ -59,6 +59,24 @@ export function formatEventTime(startsAt: string, endsAt: string | null) {
 //
 // `now` is passed in so this is a pure function and the tests don't have
 // to wait for the clock.
+// A date to read rather than count back from: "12 Nov", with the year
+// only when it isn't this one. The same shape timeAgo falls back to.
+export function ukDate(iso: string, now = new Date()) {
+    const then = new Date(iso);
+
+    if (Number.isNaN(then.getTime())) return "";
+
+    const ukYear = (at: Date) =>
+        new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(at).slice(0, 4);
+
+    return new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: ukYear(now) === ukYear(then) ? undefined : "numeric",
+        timeZone: "Europe/London",
+    }).format(then);
+}
+
 export function timeAgo(iso: string, now = new Date()) {
     const then = new Date(iso);
 

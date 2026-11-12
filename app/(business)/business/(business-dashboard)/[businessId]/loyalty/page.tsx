@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormAndPreviewLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
+import { ukDate } from "@/lib/uk-time";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard } from "./actions";
 import { LoyaltyHowItWorks } from "./how-it-works";
@@ -48,7 +49,7 @@ const errorMessages: Record<string, string> = {
     invalid: "Choose between 3 and 20 stamps and describe the reward in 2 to 80 characters.",
     pro: "Loyalty cards are part of Pro. Upgrade to start a stamp card.",
     save: "We couldn't save the loyalty card. Please try again.",
-    name: "You already have a card with that name. Give this one a different one.",
+    name: "You have had a card with that name before, so this one needs a different name — even a closed card keeps hold of its own.",
     frozen: "Customers are collecting that card, so its stamps and reward stay as they are. Start a new card to change the deal.",
     code: "That doesn't look like a card code. Codes are 10 letters and numbers.",
     another: "Another card is on offer, and only one at a time can take new joiners. Stop handing that one out first.",
@@ -362,6 +363,9 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                         {holders.length}{" "}
                                                         {holders.length === 1 ? "holder" : "holders"}
                                                         {unfinished > 0 && `, ${unfinished} still going`}
+                                                        {/* When it stopped, so two cards of a kind
+                                                            are told apart by more than position. */}
+                                                        {card.closed_at && ` · stopped ${ukDate(card.closed_at)}`}
                                                     </p>
                                                 </div>
 
