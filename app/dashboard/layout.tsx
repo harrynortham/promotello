@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { AppFooter } from "@/components/site/footers";
 import { CustomerAppHeader } from "@/components/site/headers";
-import { CustomerAnnouncements } from "@/components/customer-announcements";
 import { DashboardNav } from "@/components/dashboard-nav";
 
 // Signed-in area: keep it out of search results.
@@ -55,17 +54,6 @@ export default function DashboardLayout({
             <div className="flex-1 px-6 pb-12 pt-8 sm:px-10 sm:pt-10">
                 <div className="mx-auto max-w-7xl">
                     <DashboardNav />
-
-                    {/* At most one suggestion, and only when there is one
-                        worth making. Its own boundary so the page doesn't
-                        wait on it, and the same width as the page under
-                        it: the shell is wider than any of its pages, so
-                        a bar filling the shell hung over both edges. */}
-                    <div className="mx-auto max-w-6xl">
-                        <Suspense fallback={null}>
-                            <CustomerAnnouncements />
-                        </Suspense>
-                    </div>
 
                     <Suspense fallback={<DashboardLoading />}>
                         <DashboardShell>{children}</DashboardShell>
