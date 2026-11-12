@@ -121,7 +121,11 @@ test("a business can download its code as an image, and nobody else can", async 
         const png = await page.request.get(href);
         expect(png.status()).toBe(200);
         expect(png.headers()["content-type"]).toBe("image/png");
-        expect(png.headers()["content-disposition"]).toContain('filename="promotello-qr-e2e-download.png"');
+        // The code is on the end, so two spots called the same thing
+        // don't hand back the same file.
+        expect(png.headers()["content-disposition"]).toMatch(
+            /filename="promotello-qr-e2e-download-[a-z0-9]+\.png"/,
+        );
         // A real image, big enough to print rather than a thumbnail.
         expect((await png.body()).length).toBeGreaterThan(5_000);
 
@@ -791,6 +795,56 @@ test("a poster keeps the layout and the colours it was made with", async ({ page
         await expect(page.locator("article")).toHaveCount(2);
     } finally {
         await client.from("qr_codes").delete().eq("id", made!.id);
+    }
+});
+
+// Saving a poster as a PDF names the file after the page. One title for
+// every poster meant a business printing its second one was asked
+// whether to overwrite its first.
+test("every poster and every code file has its own name", async ({ page, request }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const made: string[] = [];
+
+    for (const label of [`E2E window ${Date.now()}`, `E2E till ${Date.now()}`]) {
+        const { data } = await client
+            .from("qr_codes")
+            .insert({ business_id: businessId, label })
+            .select("id")
+            .single();
+        made.push(data!.id);
+    }
+
+    try {
+        const titles: string[] = [];
+
+        for (const id of made) {
+            for (const size of ["a4", "a5"]) {
+                await page.goto(`/poster/${id}?size=${size}`);
+                await expect(page.locator("article").first()).toBeVisible({ timeout: 20_000 });
+                titles.push(await page.title());
+            }
+        }
+
+        // The business, the spot and the paper, and no " | Promotello":
+        // the browser builds a filename out of this.
+        expect(titles[0]).toMatch(/^E2E Test Business - QR poster - E2E window \d+ \(A4\)$/);
+        expect(new Set(titles).size, JSON.stringify(titles)).toBe(titles.length);
+
+        // And the code on its own, where two spots can share a name.
+        const files = await Promise.all(
+            made.map(async (id) => {
+                const response = await request.get(`/business/${businessId}/qr/${id}/image`);
+                return response.headers()["content-disposition"] ?? "";
+            }),
+        );
+
+        expect(files[0]).toMatch(/filename="promotello-qr-e2e-window-\d+-[a-z0-9]+\.png"/);
+        expect(new Set(files).size, JSON.stringify(files)).toBe(files.length);
+    } finally {
+        for (const id of made) await client.from("qr_codes").delete().eq("id", id);
     }
 });
 

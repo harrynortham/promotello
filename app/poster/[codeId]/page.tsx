@@ -10,10 +10,44 @@ import { QrPoster } from "@/components/qr-poster";
 import { PrintToolbar } from "./print-toolbar";
 import { posterSize, sheetSize } from "@/lib/poster-sizes";
 
-export const metadata: Metadata = {
-    title: "QR poster",
-    robots: { index: false, follow: false },
-};
+// Saving a poster as a PDF names the file after the page, so a static
+// title gave every poster a business ever printed the same name and a
+// dialog asking to overwrite the last one. The title says which poster
+// this is: the business, the spot it is for, and the paper.
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+    const robots = { index: false, follow: false };
+    const [{ codeId }, { size: sizeParam }] = await Promise.all([params, searchParams]);
+
+    const supabase = await createClient();
+
+    // RLS: only this code's own team sees it, and a stranger gets the
+    // plain title rather than a business's name.
+    const { data: code } = await supabase
+        .from("qr_codes")
+        .select("label, businesses ( name )")
+        .eq("id", codeId)
+        .maybeSingle();
+
+    // absolute: the site's " | Promotello" suffix would be in the
+    // filename too, and a browser has to mangle the pipe.
+    if (!code) {
+        return { title: { absolute: "QR poster" }, robots };
+    }
+
+    const business = Array.isArray(code.businesses) ? code.businesses[0] : code.businesses;
+    const paper = posterSize(sizeParam).label;
+
+    // Dashes and brackets only: a browser builds the filename out of
+    // this, and a slash or a colon is a filename it has to mangle.
+    const title = [business?.name, "QR poster", code.label]
+        .filter(Boolean)
+        .join(" - ")
+        .replace(/[\\/:*?"<>|]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    return { title: { absolute: `${title} (${paper})` }, robots };
+}
 
 type PageProps = {
     params: Promise<{ codeId: string }>;

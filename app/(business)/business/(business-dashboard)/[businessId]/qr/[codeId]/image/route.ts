@@ -16,13 +16,16 @@ import { createClient } from "@/utils/supabase/server";
 // Big enough to print at any sensible size without going soft.
 const PNG_SIZE = 1024;
 
-function fileName(label: string, extension: string) {
+// Two spots can be called the same thing, and a browser saving the
+// second one asks whether to overwrite the first. The code itself is on
+// the end, so every file is its own.
+function fileName(label: string, code: string, extension: string) {
     const slug = label
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
 
-    return `promotello-qr-${slug || "code"}.${extension}`;
+    return `promotello-qr-${slug ? `${slug}-` : ""}${code.toLowerCase()}.${extension}`;
 }
 
 export async function GET(
@@ -59,7 +62,7 @@ export async function GET(
     return new Response(new Uint8Array(body), {
         headers: {
             "Content-Type": wantsSvg ? "image/svg+xml" : "image/png",
-            "Content-Disposition": `attachment; filename="${fileName(code.label, wantsSvg ? "svg" : "png")}"`,
+            "Content-Disposition": `attachment; filename="${fileName(code.label, code.code, wantsSvg ? "svg" : "png")}"`,
             // A business's own code, and it changes if they rename it.
             "Cache-Control": "private, no-store",
         },
