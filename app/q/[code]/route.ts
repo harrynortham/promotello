@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 
+import { joinLoyaltyCard } from "@/lib/join-loyalty";
 import { deviceFromUserAgent } from "@/lib/qr";
+import { createClient } from "@/utils/supabase/server";
 import { createPublicClient } from "@/utils/supabase/public";
+
+// A poster for a loyalty card is an invitation to join it, so a scan
+// should end with the card in somebody's phone rather than on a page
+// describing it. record_qr_scan answers with the business and the card
+// it is still handing out, in that shape.
+const CARD_SCAN = /^\/businesses\/([^#?]+)#loyalty-([0-9a-f-]+)$/i;
 
 // Short link printed on QR posters: records the scan, then sends the visitor
 // to the business or offer the code points at.
@@ -26,6 +34,12 @@ export async function GET(
 
         if (error) {
             console.error("QR scan: failed to record scan", error);
+        }
+
+        const card = typeof path === "string" ? CARD_SCAN.exec(path) : null;
+
+        if (card) {
+            return NextResponse.redirect(await cardDestination(card[1], card[2], request.url), 307);
         }
 
         if (typeof path === "string" && path.startsWith("/")) {
@@ -53,4 +67,45 @@ export async function GET(
 
     // 307 so browsers don't cache the redirect and skip counting later scans.
     return NextResponse.redirect(destination, 307);
+}
+
+// Where a scanned card poster lands.
+//
+// Signed out, that is the sign-up page — it takes an address, emails a
+// code and lets somebody who already has an account in through the same
+// door — carrying ?join=1 so the card is theirs the moment they are.
+// Signed in, there is nothing to ask: the card is added here and they
+// land on it.
+async function cardDestination(business: string, programId: string, requestUrl: string) {
+    const joining = `/businesses/${business}?join=1`;
+
+    try {
+        const supabase = await createClient();
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+            const { joined } = await joinLoyaltyCard(supabase, business, user);
+
+            if (joined) {
+                return new URL(`/dashboard/loyalty?joined=${programId}&ref=qr`, requestUrl);
+            }
+
+            // The card has gone since the poster went up: the business
+            // page says so, which is where a scan used to land anyway.
+            return new URL(`/businesses/${business}?ref=qr#loyalty-${programId}`, requestUrl);
+        }
+    } catch (error) {
+        // Reading the session is not worth failing a scan over: the
+        // sign-up page is where somebody signed out was going anyway.
+        console.error("QR scan: could not tell who scanned", error);
+    }
+
+    const destination = new URL("/signup", requestUrl);
+    destination.searchParams.set("next", joining);
+    destination.searchParams.set("ref", "qr");
+
+    return destination;
 }

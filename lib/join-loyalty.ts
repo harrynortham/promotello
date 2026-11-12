@@ -26,16 +26,22 @@ export function cardBeingJoined(next: string) {
     return /^[a-z0-9-]+$/i.test(slug) ? slug : null;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Joins the card that business is handing out, unless they are on it
 // already. RLS only shows an approved business, and join_loyalty_program()
 // checks the rest — switched off, closed to new joiners — so a failure
 // here means they land on the business page, which says the same.
+//
+// The business is named by its slug from its own page, and by its id
+// from a scanned poster, which is what record_qr_scan knows it by.
 export async function joinLoyaltyCard(supabase: SupabaseClient, slug: string, user: User) {
-    const { data: business } = await supabase
-        .from("businesses")
-        .select("id")
-        .eq("slug", slug)
-        .maybeSingle();
+    const query = supabase.from("businesses").select("id");
+
+    const { data: business } = await (UUID.test(slug)
+        ? query.eq("id", slug)
+        : query.eq("slug", slug)
+    ).maybeSingle();
 
     if (!business) {
         return { joined: false };
