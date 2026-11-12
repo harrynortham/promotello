@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
+import { enterSignInCode } from "../sign-in";
 
 test("business sets up a loyalty card, customer joins, staff stamp it", async ({ browser }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
@@ -68,13 +69,23 @@ test("a Free business can build a loyalty card, but publishing it needs Pro", as
     await expect(page.getByRole("button", { name: "Start free trial to publish" })).toBeVisible();
 });
 
-test("a visitor who isn't signed in is offered the card, not a form", async ({ page }) => {
+test("a visitor who isn't signed in is offered the two doors, not a form", async ({ page }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
         auth: { autoRefreshToken: false, persistSession: false },
     });
 
     // Its own card, so this doesn't stand on one another test left behind.
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
     const { data: seeded } = await admin
         .from("loyalty_programs")
         .insert({
@@ -88,23 +99,93 @@ test("a visitor who isn't signed in is offered the card, not a form", async ({ p
         .single();
 
     try {
-    await page.goto(`/businesses/${businessId}`);
-    const loyalty = page.locator('[id^="loyalty-"]').first();
-    await expect(loyalty).toBeVisible();
+        await page.goto(`/businesses/${businessId}`);
+        const loyalty = page.locator('[id^="loyalty-"]').first();
+        await expect(loyalty).toBeVisible();
 
-    // The panel's job is to make the offer. Opening with two input boxes and
-    // a "Log in" link shouts louder than the thing being offered, and asks
-    // for an email address before anyone has said they want a card.
-    await expect(loyalty.locator("input[name=name], input[name=email]")).toHaveCount(0);
-    await expect(loyalty.getByRole("link", { name: "Log in" })).toHaveCount(0);
+        // The same two doors as claiming an offer, and no form: nobody
+        // has to type a name and an email before they have said yes.
+        await expect(loyalty.locator("input[name=name], input[name=email]")).toHaveCount(0);
 
-    // Saying yes is what asks for the details.
-    await loyalty.getByRole("button", { name: "Get my card" }).click();
-    await expect(loyalty.locator("input[name=name]")).toBeFocused();
-    await expect(loyalty.locator("input[name=email]")).toBeVisible();
-    await expect(loyalty.getByRole("link", { name: "Log in" })).toBeVisible();
+        const login = loyalty.getByRole("button", { name: "Log in to get your card" });
+        const signUp = loyalty.getByRole("link", { name: "Create a free account" });
+        await expect(login).toBeVisible();
+        await expect(signUp).toBeVisible();
+
+        // Both carry what was pressed, so it can be finished afterwards.
+        for (const door of [login, signUp]) {
+            const href = await door.getAttribute("href");
+            expect(decodeURIComponent(href ?? ""), "carries ?join=1 back to this page").toMatch(
+                /next=\/businesses\/[a-z0-9-]+\?join=1$/,
+            );
+        }
     } finally {
         await admin.from("loyalty_programs").delete().eq("id", seeded!.id);
+    }
+});
+
+// Pressing "Log in to get your card" is one thing asked for, not two:
+// the card is theirs by the time they land on it.
+test("logging in from the card panel joins the card and lands on it", async ({ page }) => {
+    test.setTimeout(120_000);
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Join on sign-in ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const email = `e2e_join_${Date.now()}@test.internal`;
+    const { data: created, error } = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name: "Jo Joiner" },
+    });
+    expect(error).toBeNull();
+
+    try {
+        await page.goto(`/businesses/${businessId}`);
+        const loyalty = page.locator('[id^="loyalty-"]').first();
+        await loyalty.getByRole("button", { name: "Log in to get your card" }).click();
+
+        await page.waitForURL(/\/login\?next=/, { timeout: 20_000 });
+        await enterSignInCode(page, email);
+
+        // Straight to the card, already theirs.
+        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 25_000 });
+        await expect(page.getByText("You've joined")).toBeVisible();
+        await expect(page.getByText("6 stamps for a free coffee")).toBeVisible();
+
+        const { data: card } = await admin
+            .from("loyalty_cards")
+            .select("id")
+            .eq("program_id", program!.id)
+            .eq("user_id", created.user!.id)
+            .maybeSingle();
+        expect(card, "the card was made for them").not.toBeNull();
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+        await admin.auth.admin.deleteUser(created.user!.id);
     }
 });
 
