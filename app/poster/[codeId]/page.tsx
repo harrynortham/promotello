@@ -183,6 +183,7 @@ async function Poster({ params, searchParams }: PageProps) {
                                 ? {
                                     stampsRequired: loyalty.stamps_required,
                                     reward: loyalty.reward,
+                                    terms: loyalty.terms,
                                     colour: loyalty.card_colour,
                                     header: loyalty.card_header,
                                     accent: loyalty.card_accent,

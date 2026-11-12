@@ -1,14 +1,18 @@
 import Image from "next/image";
 import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar } from "react-icons/fi";
 
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { storedImage } from "@/lib/images";
 import {
     cardTheme,
     readableInk,
-    rewardWording,
+    SAMPLE_CARD_CODE,
     stampIcon as readStampIcon,
     type StampIcon,
 } from "@/lib/loyalty-design";
+
+// What LoyaltyCard is laid out at before the poster zooms it.
+const CARD_WIDTH = 380;
 import { posterTheme } from "@/lib/poster-colour";
 
 const stampIcons: Record<StampIcon, typeof FiCheck> = {
@@ -138,6 +142,7 @@ type PosterProps = {
     card?: {
         stampsRequired: number;
         reward: string;
+        terms?: string | null;
         colour?: string | null;
         header?: string | null;
         accent?: string | null;
@@ -312,42 +317,54 @@ function StampRow({
     );
 }
 
-// The card as they will carry it: the band with the shop's name, the
-// stamps to collect, and what the last one is worth.
-function CardFace({
+// The card as they will carry it — the component the dashboard and the
+// customer's own page draw, not a copy of it, so the picture on the
+// wall cannot drift from the thing in their phone.
+//
+// It is built in pixels for a phone, and a poster is built in em from
+// one root size, so it is zoomed to the width the sheet has room for.
+// zoom scales the layout box too, which is what keeps the sheet's own
+// spacing honest; a transform would leave a hole the card's full size.
+function CardOnPoster({
     businessName,
     logoUrl,
     card,
+    qrMarkup,
+    fontSize,
+    widthEm,
 }: {
     businessName: string;
     logoUrl?: string | null;
     card: NonNullable<PosterProps["card"]>;
+    qrMarkup: string;
+    fontSize: number;
+    widthEm: number;
 }) {
-    const theme = cardTheme({ colour: card.colour, header: card.header, accent: card.accent });
-
     return (
-        <div className="w-[28em] overflow-hidden rounded-[1.2em] bg-white shadow-[0_0.5em_1.8em_rgba(23,35,59,0.14)] print:border print:border-[#17233B]/10 print:shadow-none">
-            <div
-                className="flex items-center gap-[0.7em] px-[1.4em] py-[1em]"
-                style={{ backgroundColor: theme.header, color: theme.ink }}
-            >
-                <Logo url={logoUrl} size="2.4em" />
-                <div className="min-w-0 text-left">
-                    <p className="truncate font-semibold" style={{ fontSize: "1.25em", lineHeight: 1.1 }}>
-                        {businessName}
-                    </p>
-                    <p className="truncate" style={{ fontSize: "0.95em", opacity: 0.75 }}>
-                        {card.stampsRequired} stamps for {rewardWording(card.reward)}
-                    </p>
-                </div>
-            </div>
-
-            <div className="px-[1.4em] py-[1.3em]">
-                <StampRow
-                    required={card.stampsRequired}
-                    icon={readStampIcon(card.stampIcon)}
-                    colour={theme.stamp}
-                    ink={readableInk(theme.stamp)}
+        <div style={{ zoom: (widthEm * fontSize) / CARD_WIDTH }}>
+            {/* Back to a page's own 16px: the card's text sizes are rem
+                and px, and the few lines with no size of their own
+                would otherwise inherit the poster's em scale and come
+                out a quarter of the size of everything beside them. */}
+            <div style={{ width: `${CARD_WIDTH}px`, fontSize: "16px" }}>
+                <LoyaltyCard
+                    businessName={businessName}
+                    logoUrl={logoUrl}
+                    stampsRequired={card.stampsRequired}
+                    reward={card.reward}
+                    // The same two the previews show: a card nobody has
+                    // started reads as a form rather than an offer.
+                    stamps={Math.min(2, card.stampsRequired - 1)}
+                    terms={card.terms}
+                    code={SAMPLE_CARD_CODE}
+                    // The poster's own code, so scanning the card in the
+                    // picture joins the card in the picture.
+                    qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qrMarkup }} />}
+                    colour={card.colour}
+                    header={card.header}
+                    accent={card.accent}
+                    stampIcon={card.stampIcon}
+                    className="border-[#17233B]/10"
                 />
             </div>
         </div>
@@ -543,19 +560,27 @@ export function QrPoster(props: PosterProps) {
                     <Name businessName={businessName} place={place} onColour />
                 </header>
 
-                <div className="flex flex-1 flex-col items-center justify-center gap-[0.8em] px-[2.5em] py-[1.2em] text-center">
+                <div className="flex flex-1 flex-col items-center justify-center gap-[0.7em] px-[2.5em] py-[1em] text-center">
                     <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
-                    <Title size={headline?.trim() ? "3em" : "3.6em"}>{title}</Title>
+                    <Title size={headline?.trim() ? "2.6em" : "3.2em"}>{title}</Title>
 
-                    <div className="mt-[0.4em]">
-                        <CardFace businessName={businessName} logoUrl={logoUrl} card={card!} />
+                    <div className="mt-[0.3em]">
+                        <Code markup={qrMarkup} size="13.5em" />
                     </div>
 
-                    <div className="mt-[0.6em] flex items-center gap-[1.4em]">
-                        <Code markup={qrMarkup} size="13em" />
-                        <div className="max-w-[13em] text-left">
-                            <ScanLines caption={scanLine} dark={dark} />
-                        </div>
+                    <ScanLines caption={scanLine} dark={dark} />
+
+                    {/* The card under the code it joins, so the thing
+                        being offered is the last thing read. */}
+                    <div className="mt-[0.5em]">
+                        <CardOnPoster
+                            businessName={businessName}
+                            logoUrl={logoUrl}
+                            card={card!}
+                            qrMarkup={qrMarkup}
+                            fontSize={fontSize}
+                            widthEm={21}
+                        />
                     </div>
                 </div>
 

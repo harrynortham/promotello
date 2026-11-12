@@ -120,6 +120,7 @@ export function PosterDesigner({
             ? {
                 stampsRequired: chosenLoyalty.stamps_required,
                 reward: chosenLoyalty.reward,
+                terms: chosenLoyalty.terms,
                 colour: chosenLoyalty.card_colour,
                 header: chosenLoyalty.card_header,
                 accent: chosenLoyalty.card_accent,
