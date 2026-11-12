@@ -1,10 +1,10 @@
 "use client";
 
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { FiCheckCircle } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
-import { cardTheme } from "@/lib/loyalty-design";
 import { createClient } from "@/utils/supabase/client";
 
 // The card, kept up to date while it is on screen.
@@ -59,65 +59,87 @@ export function LiveLoyaltyCard({
             if (stamped) setJustStamped(true);
         };
 
-        const channel = supabase
-            .channel(`loyalty-card-${cardId}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "UPDATE",
-                    schema: "public",
-                    table: "loyalty_cards",
-                    filter: `id=eq.${cardId}`,
-                },
-                ({ new: row }) =>
+        // What the card says now, asked for rather than waited for.
+        const catchUp = () => {
+            void supabase
+                .from("loyalty_cards")
+                .select("stamps, rewards_redeemed")
+                .eq("id", cardId)
+                .maybeSingle()
+                .then(({ data }) => {
+                    if (!data) return;
+
                     apply({
-                        stamps: Number(row.stamps ?? latest.current.stamps),
-                        rewardsRedeemed: Number(row.rewards_redeemed ?? latest.current.rewardsRedeemed),
-                    }),
-            )
-            .subscribe((status) => {
-                if (status !== "SUBSCRIBED") return;
-
-                // The gap between the server drawing this card and the
-                // channel being ready is a second or two of a phone
-                // waking up at a counter — exactly when somebody is
-                // being served. Anything that happened in it would
-                // otherwise be lost until the next reload, so the card
-                // asks once, now that it is listening.
-                void supabase
-                    .from("loyalty_cards")
-                    .select("stamps, rewards_redeemed")
-                    .eq("id", cardId)
-                    .maybeSingle()
-                    .then(({ data }) => {
-                        if (!data) return;
-
-                        apply({
-                            stamps: Number(data.stamps),
-                            rewardsRedeemed: Number(data.rewards_redeemed ?? 0),
-                        });
+                        stamps: Number(data.stamps),
+                        rewardsRedeemed: Number(data.rewards_redeemed ?? 0),
                     });
-            });
+                });
+        };
+
+        const onVisible = () => {
+            if (document.visibilityState === "visible") catchUp();
+        };
+
+        // Joined after a breath, not on the spot. A component that
+        // mounts, unmounts and mounts again — which is every mount in
+        // development, and any quick step backwards — otherwise joins
+        // and leaves within a few milliseconds, and the second channel
+        // can be handed the subscription the first one is in the middle
+        // of taking down: subscribed, by its own account, to nothing.
+        // Waiting means the first mount never joins at all.
+        let channel: RealtimeChannel | null = null;
+
+        const joining = setTimeout(() => {
+            channel = supabase
+                .channel(`loyalty-card-${cardId}-${Math.random().toString(36).slice(2)}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "UPDATE",
+                        schema: "public",
+                        table: "loyalty_cards",
+                        filter: `id=eq.${cardId}`,
+                    },
+                    ({ new: row }) =>
+                        apply({
+                            stamps: Number(row.stamps ?? latest.current.stamps),
+                            rewardsRedeemed: Number(row.rewards_redeemed ?? latest.current.rewardsRedeemed),
+                        }),
+                )
+                // Realtime says "subscribed" when the channel is joined,
+                // which is a moment before the database subscription behind
+                // it exists; a stamp added in between arrives nowhere. This
+                // system event is the server saying it is really listening,
+                // and the phone waking up in somebody's hand at the counter
+                // is the other time the card may have missed something.
+                .on("system", {}, (payload: { extension?: string; status?: string }) => {
+                    if (payload.extension === "postgres_changes" && payload.status === "ok") catchUp();
+                })
+                .subscribe((status) => {
+                    if (status === "SUBSCRIBED") catchUp();
+                });
+        }, 100);
+
+        document.addEventListener("visibilitychange", onVisible);
 
         return () => {
             watching = false;
-            void supabase.removeChannel(channel);
+            clearTimeout(joining);
+            document.removeEventListener("visibilitychange", onVisible);
+            if (channel) void supabase.removeChannel(channel);
         };
     }, [cardId]);
 
-    // Long enough to be read over somebody's shoulder, short enough that
-    // it is gone before they put the phone away.
+    // Long enough to be noticed by somebody who looked up at the staff
+    // member as it landed, and still gone by the time they next look at
+    // the card.
     useEffect(() => {
         if (!justStamped) return;
 
-        const timer = setTimeout(() => setJustStamped(false), 6_000);
+        const timer = setTimeout(() => setJustStamped(false), 12_000);
 
         return () => clearTimeout(timer);
     }, [justStamped]);
-
-    // The business's own colour, so the message belongs to the card it
-    // lands on rather than to the app.
-    const theme = cardTheme({ colour: card.colour, header: card.header, accent: card.accent });
 
     return (
         <LoyaltyCard
@@ -141,10 +163,12 @@ export function LiveLoyaltyCard({
                 <span
                     role="status"
                     aria-live="polite"
-                    className={`inline-flex items-center gap-1.5 rounded-full text-xs font-semibold transition duration-300 ${
+                    // Coral, not the card's own colour: a card in a
+                    // muted palette washed the message out, and this is
+                    // the one thing on it that has just happened.
+                    className={`inline-flex items-center gap-1.5 rounded-full bg-[#FF593F] text-xs font-semibold text-white transition duration-300 ${
                         justStamped ? "px-2.5 py-1 opacity-100" : "opacity-0"
                     }`}
-                    style={justStamped ? { backgroundColor: `${theme.stamp}1a`, color: theme.stamp } : undefined}
                 >
                     {justStamped && (
                         <>
