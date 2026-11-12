@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageLoading } from "@/components/dashboard-skeletons";
 import { loadLoyaltyEditor } from "../../loyalty-data";
 import { ProgramSettingsForm, type Program } from "../../program-form";
-import { closeLoyaltyProgram } from "../../actions";
+import { StartHandingOutAgain, StopHandingOut } from "../../handing-out";
 
 // One card, to change or pause. Changing the stamps changes everyone's
 // card, which is why this says so where the button is.
@@ -29,7 +29,7 @@ async function EditLoyaltyCard({ params }: PageProps) {
         redirect(back);
     }
 
-    const [{ data }, { count: holders }] = await Promise.all([
+    const [{ data }, { count: holders }, { data: onOffer }] = await Promise.all([
         editor.supabase
             .from("loyalty_programs")
             .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
@@ -40,6 +40,16 @@ async function EditLoyaltyCard({ params }: PageProps) {
             .from("loyalty_cards")
             .select("id", { count: "exact", head: true })
             .eq("program_id", programId),
+        // Whichever card is taking joiners, since only one may: a closed
+        // card can only go back on offer if that is this one or nothing.
+        editor.supabase
+            .from("loyalty_programs")
+            .select("id, name")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .is("closed_at", null)
+            .limit(1)
+            .maybeSingle(),
     ]);
 
     if (!data) {
@@ -79,15 +89,24 @@ async function EditLoyaltyCard({ params }: PageProps) {
                 <div className="flex shrink-0 flex-wrap gap-3">
                     {/* Stopping hands it out no more; the people holding
                         one carry on collecting. There is no un-promising
-                        a card, so there is no pause. */}
+                        a card, so there is no pause — but there is a way
+                        back, while nothing else has taken its place. */}
                     {program.is_active && !program.closed_at && (
-                        <form action={closeLoyaltyProgram}>
-                            <input type="hidden" name="businessId" value={businessId} />
-                            <input type="hidden" name="programId" value={program.id} />
-                            <Button type="submit" variant="outline">
-                                Stop handing this out
-                            </Button>
-                        </form>
+                        <StopHandingOut
+                            businessId={businessId}
+                            programId={program.id}
+                            programName={program.name}
+                            holders={holders ?? 0}
+                        />
+                    )}
+
+                    {program.is_active && program.closed_at && (
+                        <StartHandingOutAgain
+                            businessId={businessId}
+                            programId={program.id}
+                            programName={program.name}
+                            openCardName={onOffer && onOffer.id !== program.id ? onOffer.name : null}
+                        />
                     )}
                 </div>
             </header>

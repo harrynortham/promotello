@@ -109,7 +109,44 @@ export async function closeLoyaltyProgram(formData: FormData) {
     }
 
     revalidatePath(page);
-    redirect(`${page}?saved=1`);
+    redirect(`${page}?closed=1`);
+}
+
+// Handing a closed card out again. Only one card per business takes new
+// joiners — a unique index says so — and the check is here as well, so
+// the answer is a sentence rather than a constraint violation.
+export async function reopenLoyaltyProgram(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const programId = String(formData.get("programId") ?? "");
+    const page = `/business/${businessId}/loyalty`;
+
+    const supabase = await createClient();
+
+    const { data: onOffer } = await supabase
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null)
+        .limit(1)
+        .maybeSingle();
+
+    if (onOffer && onOffer.id !== programId) {
+        redirect(`${page}?error=another`);
+    }
+
+    const { error } = await supabase
+        .from("loyalty_programs")
+        .update({ closed_at: null })
+        .eq("id", programId)
+        .eq("business_id", businessId);
+
+    if (error) {
+        redirect(`${page}?error=${error.code === "23505" ? "another" : "save"}`);
+    }
+
+    revalidatePath(page);
+    redirect(`${page}?reopened=1`);
 }
 
 export async function setLoyaltyProgramActive(formData: FormData) {

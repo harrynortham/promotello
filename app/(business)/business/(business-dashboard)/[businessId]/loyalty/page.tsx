@@ -19,7 +19,7 @@ import { LoyaltyCardBuilder } from "./program-form";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; saved?: string }>;
+    searchParams: Promise<{ error?: string; saved?: string; closed?: string; reopened?: string }>;
 };
 
 type LoyaltyCardRow = {
@@ -51,6 +51,7 @@ const errorMessages: Record<string, string> = {
     name: "You already have a card with that name. Give this one a different one.",
     frozen: "Customers are collecting that card, so its stamps and reward stay as they are. Start a new card to change the deal.",
     code: "That doesn't look like a card code. Codes are 10 letters and numbers.",
+    another: "Another card is on offer, and only one at a time can take new joiners. Stop handing that one out first.",
 };
 
 function weekAgo() {
@@ -61,7 +62,10 @@ function weekAgo() {
 async function LoyaltyContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, saved }] = await Promise.all([params, searchParams]);
+    const [{ businessId }, { error, saved, closed, reopened }] = await Promise.all([
+        params,
+        searchParams,
+    ]);
     const supabase = await createClient();
 
     const {
@@ -171,6 +175,25 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
                         <AlertTitle>Loyalty card saved</AlertTitle>
                         <AlertDescription>Customers can join it from your business page.</AlertDescription>
+                    </Alert>
+                )}
+
+                {closed && !error && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>That card is no longer handed out</AlertTitle>
+                        <AlertDescription>
+                            Nobody new can join it. The customers holding one carry on
+                            collecting, and you can hand it out again from the card itself.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {reopened && !error && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>That card is on offer again</AlertTitle>
+                        <AlertDescription>
+                            It is back on your business page and customers can join it.
+                        </AlertDescription>
                     </Alert>
                 )}
 
