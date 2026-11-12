@@ -950,13 +950,69 @@ test("a stamp lands on the customer's open card", async ({ browser }) => {
         await expect(staff.getByText("Stamp added")).toBeVisible({ timeout: 20_000 });
 
         // No reload, no second press, no navigation.
+        // Allows for the page's own JavaScript arriving from a cold dev
+        // server: the card only listens once it has.
         await expect(customer.getByText("1 of 6 stamps"), "the card counted it").toBeVisible({
-            timeout: 20_000,
+            timeout: 30_000,
         });
         await expect(customer.getByText("Stamp added"), "and said so").toBeVisible();
 
         // And it is a moment, not a sticker: the message clears itself.
-        await expect(customer.getByText("Stamp added")).toBeHidden({ timeout: 15_000 });
+        await expect(customer.getByText("Stamp added")).toBeHidden({ timeout: 20_000 });
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
+
+// A card in the list is a thing to open: somebody at a counter wants it
+// filling the screen, not sharing one with the rest of their wallet.
+test("the card in the list opens its own page, and the name still opens the business", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId, customerUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Opens ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    await admin.from("loyalty_cards").insert({ program_id: program!.id, user_id: customerUserId });
+
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    try {
+        await page.goto("/dashboard/loyalty");
+
+        // A real press on the stamps themselves, which is anywhere on
+        // the card but the name. Nothing there is a link of its own,
+        // so this lands on the card.
+        const stamps = page.getByRole("img", { name: "0 of 6 stamps collected" });
+        const box = await stamps.boundingBox();
+        await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+        await expect(page).toHaveURL(new RegExp(`/loyalty/${program!.id}$`), { timeout: 20_000 });
+
+        await page.goBack();
+        await page.getByRole("link", { name: "E2E Test Business", exact: true }).click();
+        await expect(page).toHaveURL(/\/businesses\//, { timeout: 20_000 });
     } finally {
         await admin.from("loyalty_programs").delete().eq("id", program!.id);
     }

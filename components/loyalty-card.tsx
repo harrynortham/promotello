@@ -1,10 +1,12 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { FiGift } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { cardTheme } from "@/lib/loyalty-design";
 import { storedImage } from "@/lib/images";
+import { cn } from "@/lib/utils";
 
 // A customer's stamp card: the one on /dashboard/loyalty, and the preview
 // a business sees while setting theirs up. Both render this, so what the
@@ -32,6 +34,7 @@ export function LoyaltyCard({
     stampIcon,
     landedAt,
     note,
+    href,
     className = "",
     id,
 }: {
@@ -66,6 +69,9 @@ export function LoyaltyCard({
     // Said beside the count, where somebody watching the stamps land is
     // already looking. Nothing else on the card moves to make room.
     note?: ReactNode;
+    // Where the whole card goes when it is pressed. The business's
+    // name is still its own link; everything else is the card.
+    href?: string;
     className?: string;
     id?: string;
 }) {
@@ -78,8 +84,27 @@ export function LoyaltyCard({
     return (
         <article
             id={id}
-            className={`overflow-hidden rounded-xl border bg-white shadow-sm ${className}`}
+            className={cn(
+                "relative overflow-hidden rounded-xl border bg-white shadow-sm",
+                className,
+                // The same lift every pressable card in the app has.
+                href && "transition duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+            )}
         >
+            {/* A card in a list is a thing to open, and a stamp card
+                has no obvious place to put a "view" link without
+                taking space from the stamps. So the card itself is
+                the link, laid over it rather than around it: the
+                business's name underneath stays a link of its own,
+                which nesting would not allow. */}
+            {href && (
+                <Link
+                    href={href}
+                    className="absolute inset-0 z-10 rounded-xl focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#FF593F]"
+                >
+                    <span className="sr-only">Open your {businessName} card</span>
+                </Link>
+            )}
             {/* The ink follows the band: the six named colours all
                 carry white, and a business's own might not. */}
             <div
@@ -96,7 +121,7 @@ export function LoyaltyCard({
 
                 <div className="min-w-0">
                     {businessHref ? (
-                        <a href={businessHref} className="block truncate font-semibold hover:underline">
+                        <a href={businessHref} className="relative z-20 block w-fit max-w-full truncate font-semibold hover:underline">
                             {businessName}
                         </a>
                     ) : (
