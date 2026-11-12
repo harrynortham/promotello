@@ -6,14 +6,10 @@ import { FiArrowLeft } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { SharePanel } from "@/components/share-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormPageLoading } from "@/components/dashboard-skeletons";
-import { loyaltyShareCaption, shareLink } from "@/lib/share";
 import { loadLoyaltyEditor } from "../../loyalty-data";
 import { ProgramSettingsForm, type Program } from "../../program-form";
-import { closeLoyaltyProgram } from "../../actions";
-import { CardDesign } from "../../card-design";
+import { StartHandingOutAgain, StopHandingOut } from "../../handing-out";
 
 // One card, to change or pause. Changing the stamps changes everyone's
 // card, which is why this says so where the button is.
@@ -32,10 +28,10 @@ async function EditLoyaltyCard({ params }: PageProps) {
         redirect(back);
     }
 
-    const [{ data }, { count: holders }] = await Promise.all([
+    const [{ data }, { count: holders }, { data: onOffer }] = await Promise.all([
         editor.supabase
             .from("loyalty_programs")
-            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
+            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
             .eq("id", programId)
             .eq("business_id", businessId)
             .maybeSingle(),
@@ -43,6 +39,16 @@ async function EditLoyaltyCard({ params }: PageProps) {
             .from("loyalty_cards")
             .select("id", { count: "exact", head: true })
             .eq("program_id", programId),
+        // Whichever card is taking joiners, since only one may: a closed
+        // card can only go back on offer if that is this one or nothing.
+        editor.supabase
+            .from("loyalty_programs")
+            .select("id, name")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .is("closed_at", null)
+            .limit(1)
+            .maybeSingle(),
     ]);
 
     if (!data) {
@@ -80,67 +86,39 @@ async function EditLoyaltyCard({ params }: PageProps) {
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-3">
-                    <CardDesign
-                        businessId={businessId}
-                        programId={program.id}
-                        businessName={editor.businessName}
-                        businessLogoUrl={editor.businessLogoUrl}
-                        stampsRequired={program.stamps_required}
-                        reward={program.reward}
-                        terms={program.terms}
-                        colour={program.card_colour}
-                        stampIcon={program.stamp_icon}
-                    />
-
-                    {program.is_active && editor.businessSlug && editor.isApproved && (
-                        <SharePanel
-                            title="Share this loyalty card"
-                            url={shareLink(`/businesses/${editor.businessSlug}`)}
-                            caption={loyaltyShareCaption({
-                                stampsRequired: program.stamps_required,
-                                reward: program.reward,
-                                businessName: editor.businessName,
-                            })}
-                            images={[
-                                {
-                                    label: "Instagram story",
-                                    href: `/businesses/${editor.businessSlug}/story-image`,
-                                    filename: `${editor.businessSlug}-loyalty-story.png`,
-                                    aspect: "aspect-[9/16]",
-                                },
-                                {
-                                    label: "Post",
-                                    href: `/businesses/${editor.businessSlug}/post-image`,
-                                    filename: `${editor.businessSlug}-loyalty-post.png`,
-                                    aspect: "aspect-square",
-                                },
-                            ]}
-                            triggerLabel="Share card"
+                    {/* Stopping hands it out no more; the people holding
+                        one carry on collecting. There is no un-promising
+                        a card, so there is no pause — but there is a way
+                        back, while nothing else has taken its place. */}
+                    {program.is_active && !program.closed_at && (
+                        <StopHandingOut
+                            businessId={businessId}
+                            programId={program.id}
+                            programName={program.name}
+                            holders={holders ?? 0}
                         />
                     )}
 
-                    {/* Stopping hands it out no more; the people holding
-                        one carry on collecting. There is no un-promising
-                        a card, so there is no pause. */}
-                    {program.is_active && !program.closed_at && (
-                        <form action={closeLoyaltyProgram}>
-                            <input type="hidden" name="businessId" value={businessId} />
-                            <input type="hidden" name="programId" value={program.id} />
-                            <Button type="submit" variant="outline">
-                                Stop handing this out
-                            </Button>
-                        </form>
+                    {program.is_active && program.closed_at && (
+                        <StartHandingOutAgain
+                            businessId={businessId}
+                            programId={program.id}
+                            programName={program.name}
+                            openCardName={onOffer && onOffer.id !== program.id ? onOffer.name : null}
+                        />
                     )}
                 </div>
             </header>
 
-            <Card className="mt-8 border-[#17233B]/10">
-                <CardHeader>
-                    <CardTitle>Card settings</CardTitle>
-                </CardHeader>
-
-                <CardContent>
-                    {issued && (
+            <ProgramSettingsForm
+                businessId={businessId}
+                businessName={editor.businessName}
+                businessLogoUrl={editor.businessLogoUrl}
+                program={program}
+                lockTerms={issued}
+                submitLabel="Save changes"
+                notice={
+                    issued ? (
                         <Alert className="mb-6 border-[#17233B]/10 bg-[#FFF8F0]">
                             <AlertTitle>The deal on this card is settled</AlertTitle>
 
@@ -158,16 +136,9 @@ async function EditLoyaltyCard({ params }: PageProps) {
                                 to change the deal.
                             </AlertDescription>
                         </Alert>
-                    )}
-
-                    <ProgramSettingsForm
-                        businessId={businessId}
-                        program={program}
-                        lockTerms={issued}
-                        submitLabel="Save changes"
-                    />
-                </CardContent>
-            </Card>
+                    ) : null
+                }
+            />
         </div>
     );
 }

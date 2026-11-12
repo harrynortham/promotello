@@ -257,7 +257,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     const [{ data: loyaltyPrograms }, { data: { user: viewer } }] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, name, stamps_required, reward, terms, card_colour, stamp_icon")
+            .select("id, name, stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon")
             .eq("business_id", businessId)
             .eq("is_active", true)
             .is("closed_at", null)

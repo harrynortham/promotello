@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { cardColourChoice, cardTheme } from "@/lib/loyalty-design";
 import {
     isHexColour,
     lightnessOf,
@@ -67,4 +68,34 @@ test("half a custom palette is not one", () => {
 test("the picker opens on whatever they were looking at", () => {
     assert.deepEqual(startingCustom("ocean"), { header: "#13404F", accent: "#2FA3A3" });
     assert.deepEqual(startingCustom(null), { header: "#17233B", accent: "#FF593F" });
+});
+
+test("a card is drawn in the business's own colours, or one of the six", () => {
+    assert.deepEqual(cardTheme({ colour: "navy" }), {
+        header: "#17233B",
+        stamp: "#FF593F",
+        ink: "#FFFFFF",
+    });
+
+    // Their own pair, with ink that can be read on it.
+    assert.deepEqual(cardTheme({ colour: "custom", header: "#0B5FFF", accent: "#FFD400" }), {
+        header: "#0B5FFF",
+        stamp: "#FFD400",
+        ink: "#FFFFFF",
+    });
+
+    // A pale band takes dark type.
+    assert.equal(cardTheme({ colour: "custom", header: "#FFD400", accent: "#111111" }).ink, "#17233B");
+
+    // Half a palette is no palette: back to the name it was saved under.
+    assert.deepEqual(cardTheme({ colour: "custom", header: "#0B5FFF", accent: null }), {
+        header: "#17233B",
+        stamp: "#FF593F",
+        ink: "#FFFFFF",
+    });
+
+    // And a card saved as custom still reads as custom in the picker.
+    assert.equal(cardColourChoice("custom"), "custom");
+    assert.equal(cardColourChoice("forest"), "forest");
+    assert.equal(cardColourChoice("nonsense"), "navy");
 });

@@ -14,6 +14,8 @@ type CardRow = {
         reward: string;
         terms: string | null;
         card_colour: string | null;
+        card_header: string | null;
+        card_accent: string | null;
         stamp_icon: string | null;
         is_active: boolean;
         businesses: CardBusiness | CardBusiness[] | null;
@@ -32,6 +34,9 @@ export type CustomerLoyaltyCard = {
     reward: string;
     terms: string | null;
     cardColour: string | null;
+    // The business's own two colours, where cardColour is "custom".
+    cardHeader: string | null;
+    cardAccent: string | null;
     stampIcon: string | null;
     active: boolean;
     rewardReady: boolean;
@@ -46,7 +51,7 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
         .select(
             `
                 id, card_code, stamps, rewards_redeemed,
-                loyalty_programs ( id, stamps_required, reward, terms, card_colour, stamp_icon, is_active, businesses ( id, slug, name, logo_url ) )
+                loyalty_programs ( id, stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon, is_active, businesses ( id, slug, name, logo_url ) )
             `,
         )
         .eq("user_id", userId)
@@ -69,6 +74,8 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
             reward: program.reward,
             terms: program.terms,
             cardColour: program.card_colour,
+            cardHeader: program.card_header,
+            cardAccent: program.card_accent,
             stampIcon: program.stamp_icon,
             active: program.is_active,
             rewardReady: card.stamps >= program.stamps_required,

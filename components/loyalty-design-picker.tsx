@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { FiCheck, FiCoffee, FiDroplet, FiGift, FiHeart, FiStar } from "react-icons/fi";
+import {
+    FiCheck,
+    FiCoffee,
+    FiDroplet,
+    FiGift,
+    FiHeart,
+    FiScissors,
+    FiShoppingBag,
+    FiStar,
+} from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +38,8 @@ const icons: Record<StampIcon, typeof FiCheck> = {
     heart: FiHeart,
     coffee: FiCoffee,
     gift: FiGift,
+    scissors: FiScissors,
+    bag: FiShoppingBag,
 };
 
 // Choosing how a loyalty card looks: used when setting a card up, and
@@ -42,6 +53,11 @@ export function LoyaltyDesignPicker({
     colourLabel = "Card colour",
     custom,
     onCustom,
+    customWording = {
+        header: { label: "Band", hint: "The block your name sits in" },
+        accent: { label: "Pill", hint: "The small line above the headline" },
+        sample: "Offer",
+    },
     className = "",
 }: {
     colour: CardColour | typeof CUSTOM_COLOUR;
@@ -56,6 +72,13 @@ export function LoyaltyDesignPicker({
     // a loyalty card has.
     custom?: { header: string; accent: string } | null;
     onCustom?: (value: { header: string; accent: string }) => void;
+    // What the two colours are called where they are being chosen. A
+    // poster has a band and a pill; a card has a band and its stamps.
+    customWording?: {
+        header: { label: string; hint: string };
+        accent: { label: string; hint: string };
+        sample: string;
+    };
     className?: string;
 }) {
     const [editing, setEditing] = useState(false);
@@ -171,11 +194,19 @@ export function LoyaltyDesignPicker({
                                         onClick={() => onIcon(key)}
                                         aria-pressed={isChosen}
                                         title={STAMP_ICON_LABELS[key]}
-                                        className={`flex size-12 cursor-pointer items-center justify-center rounded-full border-2 text-white transition ${isChosen
+                                        className={`flex size-12 cursor-pointer items-center justify-center rounded-full border-2 transition ${isChosen
                                             ? "ring-2 ring-[#17233B] ring-offset-2"
                                             : "opacity-70 hover:opacity-100"
                                             }`}
-                                        style={{ backgroundColor: stampColour, borderColor: stampColour }}
+                                        // The icon has to be visible on
+                                        // whatever the stamps are, which
+                                        // for a brand colour might be
+                                        // anything.
+                                        style={{
+                                            backgroundColor: stampColour,
+                                            borderColor: stampColour,
+                                            color: readableInk(stampColour),
+                                        }}
                                     >
                                         <span className="sr-only">{STAMP_ICON_LABELS[key]}</span>
                                         <Icon aria-hidden="true" className="size-5" />
@@ -192,15 +223,16 @@ export function LoyaltyDesignPicker({
                             <DialogHeader>
                                 <DialogTitle>Your own colours</DialogTitle>
                                 <DialogDescription>
-                                    The two colours out of your logo: one for the band,
-                                    one for the pill above the headline.
+                                    The two colours out of your logo: one for the{" "}
+                                    {customWording.header.label.toLowerCase()}, one for the{" "}
+                                    {customWording.accent.label.toLowerCase()}.
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="space-y-4">
                                 {([
-                                    ["header", "Band", "The block your name sits in"],
-                                    ["accent", "Pill", "The small line above the headline"],
+                                    ["header", customWording.header.label, customWording.header.hint],
+                                    ["accent", customWording.accent.label, customWording.accent.hint],
                                 ] as const).map(([key, label, hint]) => (
                                     <div key={key} className="space-y-2">
                                         <Label htmlFor={`custom-${key}`}>{label}</Label>
@@ -251,7 +283,7 @@ export function LoyaltyDesignPicker({
                                             color: readableInk(isHexColour(draft.accent) ? draft.accent : "#FF593F"),
                                         }}
                                     >
-                                        Offer
+                                        {customWording.sample}
                                     </span>
                                 </div>
 

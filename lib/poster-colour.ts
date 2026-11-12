@@ -8,31 +8,19 @@
 // Imports nothing from Next.js or Supabase, so it unit tests on its own
 // (tests/unit/poster-colour.test.ts).
 
-import { CARD_COLOURS, cardColour } from "@/lib/loyalty-design";
+import {
+    CARD_COLOURS,
+    cardColour,
+    CUSTOM_COLOUR,
+    isHexColour,
+    lightnessOf,
+    readableInk,
+} from "@/lib/loyalty-design";
 
-export const CUSTOM_COLOUR = "custom";
-
-// What the picker produces: #rrggbb, either case.
-export function isHexColour(value: string | null | undefined): value is string {
-    return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
-}
-
-// Perceived lightness, 0 (black) to 1 (white), sRGB-weighted. Used to
-// decide what can be read on top of a colour rather than to describe it.
-export function lightnessOf(hex: string) {
-    const [r, g, b] = [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16) / 255);
-    const channel = (value: number) =>
-        value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-
-    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-}
-
-// White on a brand colour is a safe bet until somebody's brand is
-// yellow. The threshold is where white and our navy swap over for
-// contrast against the same background.
-export function readableInk(hex: string) {
-    return lightnessOf(hex) > 0.45 ? "#17233B" : "#FFFFFF";
-}
+// A poster and a card are coloured the same way, so the hex helpers
+// live with the palette and are re-exported here for everything that
+// already asks this module for them.
+export { CUSTOM_COLOUR, isHexColour, lightnessOf, readableInk };
 
 export type PosterTheme = {
     // The band, or the whole sheet on the bold layout.
@@ -78,11 +66,8 @@ export function posterTheme({
 }
 
 // A starting pair for somebody who has never opened the picker: the
-// palette they were already looking at.
-export function startingCustom(colour: string | null | undefined) {
-    const named = cardColour(colour);
-
-    return { header: named.header, accent: named.stamp };
-}
+// palette they were already looking at. The card picker asks the same
+// question, so the answer lives with the palette.
+export { startingCustomColours as startingCustom } from "@/lib/loyalty-design";
 
 export const NAMED_COLOURS = Object.keys(CARD_COLOURS);

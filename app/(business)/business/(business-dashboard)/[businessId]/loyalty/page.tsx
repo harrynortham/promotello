@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormAndPreviewLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
+import { ukDate } from "@/lib/uk-time";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard } from "./actions";
 import { LoyaltyHowItWorks } from "./how-it-works";
@@ -19,7 +20,7 @@ import { LoyaltyCardBuilder } from "./program-form";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; saved?: string }>;
+    searchParams: Promise<{ error?: string; saved?: string; closed?: string; reopened?: string }>;
 };
 
 type LoyaltyCardRow = {
@@ -41,6 +42,8 @@ type Program = {
     terms: string | null;
     is_active: boolean;
     card_colour: string | null;
+    card_header: string | null;
+    card_accent: string | null;
     stamp_icon: string | null;
 };
 
@@ -48,9 +51,10 @@ const errorMessages: Record<string, string> = {
     invalid: "Choose between 3 and 20 stamps and describe the reward in 2 to 80 characters.",
     pro: "Loyalty cards are part of Pro. Upgrade to start a stamp card.",
     save: "We couldn't save the loyalty card. Please try again.",
-    name: "You already have a card with that name. Give this one a different one.",
+    name: "You have had a card with that name before, so this one needs a different name — even a closed card keeps hold of its own.",
     frozen: "Customers are collecting that card, so its stamps and reward stay as they are. Start a new card to change the deal.",
     code: "That doesn't look like a card code. Codes are 10 letters and numbers.",
+    another: "Another card is on offer, and only one at a time can take new joiners. Stop handing that one out first.",
 };
 
 function weekAgo() {
@@ -61,7 +65,10 @@ function weekAgo() {
 async function LoyaltyContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, saved }] = await Promise.all([params, searchParams]);
+    const [{ businessId }, { error, saved, closed, reopened }] = await Promise.all([
+        params,
+        searchParams,
+    ]);
     const supabase = await createClient();
 
     const {
@@ -88,7 +95,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
         supabase
             .from("loyalty_programs")
-            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, stamp_icon")
+            .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
             .eq("business_id", businessId)
             .order("is_active", { ascending: false })
             .order("created_at", { ascending: true }),
@@ -174,6 +181,25 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     </Alert>
                 )}
 
+                {closed && !error && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>That card is no longer handed out</AlertTitle>
+                        <AlertDescription>
+                            Nobody new can join it. The customers holding one carry on
+                            collecting, and you can hand it out again from the card itself.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {reopened && !error && (
+                    <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
+                        <AlertTitle>That card is on offer again</AlertTitle>
+                        <AlertDescription>
+                            It is back on your business page and customers can join it.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 {!program ? (
                     canManage ? (
                         <LoyaltyCardBuilder
@@ -251,6 +277,8 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             code={card.id.slice(0, 10).toUpperCase()}
                                             qr={null}
                                             colour={card.card_colour}
+                                            header={card.card_header}
+                                            accent={card.card_accent}
                                             stampIcon={card.stamp_icon}
                                             active={card.is_active}
                                             className="border-[#17233B]/10"
@@ -339,6 +367,9 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                         {holders.length}{" "}
                                                         {holders.length === 1 ? "holder" : "holders"}
                                                         {unfinished > 0 && `, ${unfinished} still going`}
+                                                        {/* When it stopped, so two cards of a kind
+                                                            are told apart by more than position. */}
+                                                        {card.closed_at && ` · stopped ${ukDate(card.closed_at)}`}
                                                     </p>
                                                 </div>
 

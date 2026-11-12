@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
@@ -13,9 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    cardColourName,
+    cardColourChoice,
+    CUSTOM_COLOUR,
+    isHexColour,
+    startingCustomColours,
     stampIcon as readStampIcon,
-    type CardColour,
+    type CardChoice,
+    type CustomColours,
     type StampIcon,
 } from "@/lib/loyalty-design";
 import { saveLoyaltyProgram } from "./actions";
@@ -32,6 +36,9 @@ export type Program = {
     terms: string | null;
     is_active: boolean;
     card_colour: string | null;
+    // Their own two colours, where card_colour is "custom".
+    card_header?: string | null;
+    card_accent?: string | null;
     stamp_icon: string | null;
 };
 
@@ -53,6 +60,8 @@ export function ProgramFields({
     setTerms,
     colour,
     setColour,
+    custom,
+    setCustom,
     icon,
     setIcon,
 }: {
@@ -70,8 +79,11 @@ export function ProgramFields({
     setReward: (value: string) => void;
     terms: string;
     setTerms: (value: string) => void;
-    colour: CardColour;
-    setColour: (value: CardColour) => void;
+    colour: CardChoice;
+    setColour: (value: CardChoice) => void;
+    // The business's own two colours, while "custom" is chosen.
+    custom: CustomColours;
+    setCustom: (value: CustomColours) => void;
     icon: StampIcon;
     setIcon: (value: StampIcon) => void;
 }) {
@@ -161,12 +173,86 @@ export function ProgramFields({
                     icon={icon}
                     onColour={setColour}
                     onIcon={setIcon}
+                    custom={colour === CUSTOM_COLOUR ? custom : null}
+                    onCustom={(value) => {
+                        setCustom(value);
+                        setColour(CUSTOM_COLOUR);
+                    }}
+                    customWording={{
+                        header: { label: "Band", hint: "The strip your name sits in, across the top" },
+                        accent: { label: "Stamps", hint: "The stamps customers collect" },
+                        sample: "Stamp",
+                    }}
                 />
             </div>
 
             <input type="hidden" name="cardColour" value={colour} />
             <input type="hidden" name="stampIcon" value={icon} />
+
+            {/* Only meaningful while their own colours are chosen; the
+                server ignores them for any of the six. */}
+            {colour === CUSTOM_COLOUR && (
+                <>
+                    <input type="hidden" name="cardHeader" value={custom.header} />
+                    <input type="hidden" name="cardAccent" value={custom.accent} />
+                </>
+            )}
         </>
+    );
+}
+
+// The card as the customer will carry it, beside whichever form is
+// being filled in. It stays put as the fields go past, the same as the
+// offer and profile previews; top-24 clears the site header, which is
+// sticky and 80px tall.
+function CardPreview({
+    businessName,
+    businessLogoUrl,
+    stampsRequired,
+    reward,
+    terms,
+    colour,
+    custom,
+    icon,
+}: {
+    businessName: string;
+    businessLogoUrl: string | null;
+    stampsRequired: number;
+    reward: string;
+    terms: string;
+    colour: CardChoice;
+    custom: CustomColours;
+    icon: StampIcon;
+}) {
+    return (
+        <aside className="h-fit lg:sticky lg:top-24">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
+                The card customers carry
+            </p>
+
+            <div className="mt-3">
+                <LoyaltyCard
+                    businessName={businessName}
+                    logoUrl={businessLogoUrl}
+                    stampsRequired={stampsRequired}
+                    reward={reward}
+                    stamps={Math.min(3, stampsRequired - 1)}
+                    terms={terms}
+                    code={SAMPLE_CODE}
+                    qr={<StampQr code={SAMPLE_CODE} />}
+                    colour={colour}
+                    header={custom.header}
+                    accent={custom.accent}
+                    stampIcon={icon}
+                    className="border-[#17233B]/10"
+                />
+            </div>
+
+            <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
+                An example card with sample stamps. Each customer gets
+                their own code and QR when they join.
+            </p>
+        </aside>
     );
 }
 
@@ -194,7 +280,12 @@ export function LoyaltyCardBuilder({
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
-    const [colour, setColour] = useState<CardColour>(cardColourName(program?.card_colour));
+    const [colour, setColour] = useState<CardChoice>(cardColourChoice(program?.card_colour));
+    const [custom, setCustom] = useState<CustomColours>(
+        isHexColour(program?.card_header) && isHexColour(program?.card_accent)
+            ? { header: program.card_header, accent: program.card_accent }
+            : startingCustomColours(program?.card_colour),
+    );
     const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     const fields = (
@@ -212,6 +303,8 @@ export function LoyaltyCardBuilder({
             setTerms={setTerms}
             colour={colour}
             setColour={setColour}
+            custom={custom}
+            setCustom={setCustom}
             icon={icon}
             setIcon={setIcon}
         />
@@ -271,88 +364,108 @@ export function LoyaltyCardBuilder({
                 </CardContent>
             </Card>
 
-            {/* It stays beside the form as the fields go past, the same
-                as the offer and profile previews. top-24 clears the site
-                header, which is sticky and 80px tall. */}
-            <aside className="h-fit lg:sticky lg:top-24">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#17233B]/65">
-                    The card customers carry
-                </p>
-
-                <div className="mt-3">
-                    <LoyaltyCard
-                        businessName={businessName}
-                        logoUrl={businessLogoUrl}
-                        stampsRequired={stampsRequired}
-                        reward={reward}
-                        stamps={Math.min(3, stampsRequired - 1)}
-                        terms={terms}
-                        code={SAMPLE_CODE}
-                        qr={<StampQr code={SAMPLE_CODE} />}
-                        colour={colour}
-                        stampIcon={icon}
-                        className="border-[#17233B]/10"
-                    />
-                </div>
-
-                <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
-                    An example card with sample stamps. Each customer gets
-                    their own code and QR when they join.
-                </p>
-            </aside>
+            <CardPreview
+                businessName={businessName}
+                businessLogoUrl={businessLogoUrl}
+                stampsRequired={stampsRequired}
+                reward={reward}
+                terms={terms}
+                colour={colour}
+                custom={custom}
+                icon={icon}
+            />
         </div>
     );
 }
 
-// Editing a card that is already live, without the preview column: the
-// page shows the saved card beside it.
+// Editing a card that is already live. The card is drawn beside the
+// fields and changes as they do, because a colour and a stamp are
+// choices nobody can make from their names alone.
 export function ProgramSettingsForm({
     businessId,
+    businessName,
+    businessLogoUrl,
     program,
     lockTerms = false,
     submitLabel,
+    // What the page wants to say above the fields, e.g. that customers
+    // are already collecting this one.
+    notice,
 }: {
     businessId: string;
+    businessName: string;
+    businessLogoUrl: string | null;
     program: Program | null;
     // The stamps, the reward and the terms are the promise: once anyone
     // holds the card they are shown but not changed.
     lockTerms?: boolean;
     submitLabel: string;
+    notice?: ReactNode;
 }) {
     const [name, setName] = useState(program?.name ?? "");
     const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
     const [reward, setReward] = useState(program?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
-    const [colour, setColour] = useState<CardColour>(cardColourName(program?.card_colour));
+    const [colour, setColour] = useState<CardChoice>(cardColourChoice(program?.card_colour));
+    const [custom, setCustom] = useState<CustomColours>(
+        isHexColour(program?.card_header) && isHexColour(program?.card_accent)
+            ? { header: program.card_header, accent: program.card_accent }
+            : startingCustomColours(program?.card_colour),
+    );
     const [icon, setIcon] = useState<StampIcon>(readStampIcon(program?.stamp_icon));
 
     return (
-        <form action={saveLoyaltyProgram} className="space-y-5">
-            <ProgramFields
-                businessId={businessId}
-                program={program}
-                lockTerms={lockTerms}
-                name={name}
-                setName={setName}
-                stampsRequired={stampsRequired}
-                setStampsRequired={setStampsRequired}
-                reward={reward}
-                setReward={setReward}
-                terms={terms}
-                setTerms={setTerms}
-                colour={colour}
-                setColour={setColour}
-                icon={icon}
-                setIcon={setIcon}
-            />
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+            <Card className="border-[#17233B]/10">
+                <CardHeader>
+                    <CardTitle>Card settings</CardTitle>
+                </CardHeader>
 
-            <SubmitButton
-                size="lg"
-                pendingLabel="Saving…"
-                className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
-            >
-                {submitLabel}
-            </SubmitButton>
-        </form>
+                <CardContent>
+                    {notice}
+
+                    <form action={saveLoyaltyProgram} className="space-y-5">
+                        <ProgramFields
+                            businessId={businessId}
+                            program={program}
+                            lockTerms={lockTerms}
+                            name={name}
+                            setName={setName}
+                            stampsRequired={stampsRequired}
+                            setStampsRequired={setStampsRequired}
+                            reward={reward}
+                            setReward={setReward}
+                            terms={terms}
+                            setTerms={setTerms}
+                            colour={colour}
+                            setColour={setColour}
+                            custom={custom}
+                            setCustom={setCustom}
+                            icon={icon}
+                            setIcon={setIcon}
+                        />
+
+                        <SubmitButton
+                            size="lg"
+                            pendingLabel="Saving…"
+                            className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        >
+                            {submitLabel}
+                        </SubmitButton>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <CardPreview
+                businessName={businessName}
+                businessLogoUrl={businessLogoUrl}
+                stampsRequired={stampsRequired}
+                reward={reward}
+                terms={terms}
+                colour={colour}
+                custom={custom}
+                icon={icon}
+            />
+        </div>
     );
 }

@@ -301,3 +301,230 @@ test("changing the deal leaves the old card's holders alone", async ({ browser }
         for (const id of made) await admin.from("loyalty_programs").delete().eq("id", id);
     }
 });
+
+// Editing a card draws it beside the fields, because a colour and a
+// stamp are choices nobody can make from their names alone.
+test("the card on the edit page follows what is typed", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // One card per business takes joiners, so make room for this one.
+    const { data: onOffer } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of onOffer ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Live preview ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free coffee",
+            card_colour: "navy",
+            stamp_icon: "coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+
+        const preview = page.locator("aside").filter({ hasText: "The card customers carry" });
+        await expect(preview).toContainText("9 stamps for a free coffee", { timeout: 20_000 });
+
+        await page.locator("#reward").fill("A free pastry");
+        await expect(preview).toContainText("9 stamps for a free pastry");
+
+        await page.locator("#stamps-required").selectOption("5");
+        await expect(preview).toContainText("5 stamps for a free pastry");
+        await expect(preview).toContainText("3 of 5 stamps");
+
+        // Nothing is saved until it is saved.
+        const { data: unchanged } = await admin
+            .from("loyalty_programs")
+            .select("reward, stamps_required")
+            .eq("id", program!.id)
+            .single();
+        expect(unchanged).toEqual({ reward: "A free coffee", stamps_required: 9 });
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
+
+// A closed card keeps hold of its name. Two cards called "Coffee card",
+// one still being collected and one on offer, can only be told apart by
+// where they sit on the page.
+test("a name a closed card is still using is refused", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const taken = `E2E Retired card ${Date.now()}`;
+    const made: string[] = [];
+
+    const { data: onOffer } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of onOffer ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    // One closed card holding the name, and one on offer to rename.
+    const { data: retired } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: taken,
+            stamps_required: 6,
+            reward: "A free tea",
+            is_active: true,
+            closed_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+    made.push(retired!.id);
+
+    const { data: current } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `${taken} two`,
+            stamps_required: 6,
+            reward: "A free tea",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+    made.push(current!.id);
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        // The database refuses it outright.
+        const clash = await admin.from("loyalty_programs").update({ name: taken }).eq("id", current!.id);
+        expect(clash.error?.code, "one name per business, closed cards included").toBe("23505");
+
+        // And the dashboard says so in words rather than failing quietly.
+        await page.goto(`/business/${businessId}/loyalty/${current!.id}/edit`);
+        await page.locator("#card-name").fill(taken);
+        await page.getByRole("button", { name: "Save changes" }).click();
+
+        await page.waitForURL(`**/business/${businessId}/loyalty?error=name`, { timeout: 20_000 });
+        await expect(page.getByText(/You have had a card with that name before/)).toBeVisible();
+
+        const { data: kept } = await admin
+            .from("loyalty_programs")
+            .select("name")
+            .eq("id", current!.id)
+            .single();
+        expect(kept!.name, "the card kept its own name").toBe(`${taken} two`);
+    } finally {
+        for (const id of made) await admin.from("loyalty_programs").delete().eq("id", id);
+    }
+});
+
+// A business's own two colours, and a stamp that looks like what it
+// sells. Both are chosen in the same picker the poster uses.
+test("a card can be saved in the business's own colours, with any stamp", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: onOffer } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of onOffer ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Own colours ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free trim",
+            card_colour: "navy",
+            stamp_icon: "check",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+
+        await page.getByRole("button", { name: "Your own colours" }).click();
+        const dialog = page.getByRole("dialog");
+        await dialog.getByLabel("Band colour, as a hex code").fill("#0B5FFF");
+        await dialog.getByLabel("Stamps colour, as a hex code").fill("#FFD400");
+        await dialog.getByRole("button", { name: "Use these colours" }).click();
+        await expect(dialog).toBeHidden();
+
+        // A stamp for a barber, which the six icons never had.
+        await page.getByRole("button", { name: "Scissors" }).click();
+
+        const preview = page.locator("aside").filter({ hasText: "The card customers carry" });
+        // The band is the card's first child; the aside's is a wrapper.
+        await expect(preview.locator("article > div").first()).toHaveCSS(
+            "background-color",
+            "rgb(11, 95, 255)",
+        );
+
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await page.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 20_000 });
+
+        const { data: saved } = await admin
+            .from("loyalty_programs")
+            .select("card_colour, card_header, card_accent, stamp_icon")
+            .eq("id", program!.id)
+            .single();
+        expect(saved).toEqual({
+            card_colour: "custom",
+            card_header: "#0B5FFF",
+            card_accent: "#FFD400",
+            stamp_icon: "scissors",
+        });
+
+        // And the card a customer would see is drawn in them.
+        await page.goto(`/business/${businessId}/loyalty`);
+        const card = page.locator("article").filter({ hasText: "stamps for a free trim" }).first();
+        await expect(card.locator("div").first()).toHaveCSS("background-color", "rgb(11, 95, 255)");
+
+        // Back on one of the six, the hexes are cleared rather than left
+        // behind for a card that is no longer custom.
+        await page.goto(`/business/${businessId}/loyalty/${program!.id}/edit`);
+        await page.getByRole("button", { name: "Forest" }).click();
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await page.waitForURL(`**/business/${businessId}/loyalty?saved=1`, { timeout: 20_000 });
+
+        const { data: named } = await admin
+            .from("loyalty_programs")
+            .select("card_colour, card_header, card_accent")
+            .eq("id", program!.id)
+            .single();
+        expect(named).toEqual({ card_colour: "forest", card_header: null, card_accent: null });
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});

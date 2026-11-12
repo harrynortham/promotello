@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { timeAgo } from "@/lib/uk-time";
+import { timeAgo, ukDate } from "@/lib/uk-time";
 
 // A Tuesday afternoon in winter, so UK time is GMT.
 const now = new Date("2026-01-20T14:00:00Z");
@@ -45,4 +45,14 @@ test("after a week it is a date, with the year only when it isn't this one", () 
 
 test("a date nobody can read is no date at all", () => {
     assert.equal(timeAgo("not a date", now), "");
+});
+
+test("a plain date drops the year only while it is this one", () => {
+    assert.equal(ukDate("2026-11-12T09:00:00Z", now), "12 Nov");
+    assert.equal(ukDate("2025-11-12T09:00:00Z", now), "12 Nov 2025");
+
+    // Late on the 31st in BST is still the 1st nowhere: UK time, not UTC.
+    assert.equal(ukDate("2026-06-30T23:30:00Z", now), "1 Jul");
+
+    assert.equal(ukDate("not a date", now), "");
 });

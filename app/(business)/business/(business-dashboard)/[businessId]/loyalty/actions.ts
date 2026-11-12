@@ -6,9 +6,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
 // Kept as plain lists so this server file does not pull in the palette's
-// React-facing helpers.
+// React-facing helpers. "custom" is the business's own two colours,
+// which have to arrive with it.
 const CARD_COLOUR_NAMES = ["navy", "coral", "forest", "plum", "ocean", "charcoal"];
-const STAMP_ICON_NAMES = ["check", "star", "heart", "coffee", "gift"];
+const CUSTOM = "custom";
+const STAMP_ICON_NAMES = ["check", "star", "heart", "coffee", "gift", "scissors", "bag"];
+const HEX = /^#[0-9a-f]{6}$/i;
 
 function readProgramFields(formData: FormData) {
     const name = String(formData.get("name") ?? "").trim();
@@ -17,6 +20,13 @@ function readProgramFields(formData: FormData) {
     const terms = String(formData.get("terms") ?? "").trim();
     const cardColour = String(formData.get("cardColour") ?? "navy");
     const stampIcon = String(formData.get("stampIcon") ?? "check");
+    const cardHeader = String(formData.get("cardHeader") ?? "").toUpperCase();
+    const cardAccent = String(formData.get("cardAccent") ?? "").toUpperCase();
+
+    const isCustom = cardColour === CUSTOM;
+    const colourValid = isCustom
+        ? HEX.test(cardHeader) && HEX.test(cardAccent)
+        : CARD_COLOUR_NAMES.includes(cardColour);
 
     const valid =
         name.length >= 2 &&
@@ -27,7 +37,7 @@ function readProgramFields(formData: FormData) {
         reward.length >= 2 &&
         reward.length <= 80 &&
         terms.length <= 500 &&
-        CARD_COLOUR_NAMES.includes(cardColour) &&
+        colourValid &&
         STAMP_ICON_NAMES.includes(stampIcon);
 
     return valid
@@ -38,6 +48,10 @@ function readProgramFields(formData: FormData) {
             terms: terms || null,
             card_colour: cardColour,
             stamp_icon: stampIcon,
+            // Cleared for a named palette, so a card that was custom and
+            // isn't any more doesn't keep half an old brand around.
+            card_header: isCustom ? cardHeader : null,
+            card_accent: isCustom ? cardAccent : null,
         }
         : null;
 }
@@ -70,6 +84,8 @@ export async function saveLoyaltyProgram(formData: FormData) {
                 new_terms: fields.terms,
                 new_card_colour: fields.card_colour,
                 new_stamp_icon: fields.stamp_icon,
+                new_card_header: fields.card_header,
+                new_card_accent: fields.card_accent,
             })
             : await supabase.from("loyalty_programs").insert({ ...fields, business_id: businessId });
 
@@ -109,7 +125,44 @@ export async function closeLoyaltyProgram(formData: FormData) {
     }
 
     revalidatePath(page);
-    redirect(`${page}?saved=1`);
+    redirect(`${page}?closed=1`);
+}
+
+// Handing a closed card out again. Only one card per business takes new
+// joiners — a unique index says so — and the check is here as well, so
+// the answer is a sentence rather than a constraint violation.
+export async function reopenLoyaltyProgram(formData: FormData) {
+    const businessId = String(formData.get("businessId") ?? "");
+    const programId = String(formData.get("programId") ?? "");
+    const page = `/business/${businessId}/loyalty`;
+
+    const supabase = await createClient();
+
+    const { data: onOffer } = await supabase
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null)
+        .limit(1)
+        .maybeSingle();
+
+    if (onOffer && onOffer.id !== programId) {
+        redirect(`${page}?error=another`);
+    }
+
+    const { error } = await supabase
+        .from("loyalty_programs")
+        .update({ closed_at: null })
+        .eq("id", programId)
+        .eq("business_id", businessId);
+
+    if (error) {
+        redirect(`${page}?error=${error.code === "23505" ? "another" : "save"}`);
+    }
+
+    revalidatePath(page);
+    redirect(`${page}?reopened=1`);
 }
 
 export async function setLoyaltyProgramActive(formData: FormData) {

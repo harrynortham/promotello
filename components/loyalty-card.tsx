@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { FiGift } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
-import { cardColour } from "@/lib/loyalty-design";
+import { cardTheme } from "@/lib/loyalty-design";
 import { storedImage } from "@/lib/images";
 
 // A customer's stamp card: the one on /dashboard/loyalty, and the preview
@@ -22,6 +22,8 @@ export function LoyaltyCard({
     code,
     qr,
     colour,
+    header,
+    accent,
     stampIcon,
     className = "",
     id,
@@ -40,6 +42,9 @@ export function LoyaltyCard({
     qr: ReactNode;
     // The business's chosen look, from its loyalty programme.
     colour?: string | null;
+    // Their own two colours, where colour is "custom".
+    header?: string | null;
+    accent?: string | null;
     stampIcon?: string | null;
     className?: string;
     id?: string;
@@ -48,21 +53,23 @@ export function LoyaltyCard({
         ? reward.trim().charAt(0).toLowerCase() + reward.trim().slice(1)
         : "your reward";
     const rewardReady = stamps >= stampsRequired;
-    const theme = cardColour(colour);
+    const theme = cardTheme({ colour, header, accent });
 
     return (
         <article
             id={id}
             className={`overflow-hidden rounded-xl border bg-white shadow-sm ${className}`}
         >
+            {/* The ink follows the band: the six named colours all
+                carry white, and a business's own might not. */}
             <div
-                className="flex items-center gap-3 px-6 py-4 text-white"
-                style={{ backgroundColor: theme.header }}
+                className="flex items-center gap-3 px-6 py-4"
+                style={{ backgroundColor: theme.header, color: theme.ink }}
             >
                 {storedImage(logoUrl) ? (
                     <Image src={storedImage(logoUrl)!} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
                 ) : (
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 font-semibold">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-current/10 font-semibold">
                         {businessName.charAt(0).toUpperCase()}
                     </span>
                 )}
@@ -76,7 +83,7 @@ export function LoyaltyCard({
                         <p className="truncate font-semibold">{businessName}</p>
                     )}
 
-                    <p className="text-sm text-white/70">
+                    <p className="text-sm" style={{ color: theme.ink, opacity: 0.7 }}>
                         {stampsRequired} stamps for {rewardWording}
                     </p>
                 </div>
@@ -97,6 +104,8 @@ export function LoyaltyCard({
                     stamps={stamps}
                     required={stampsRequired}
                     colour={colour}
+                    header={header}
+                    accent={accent}
                     icon={stampIcon}
                 />
 
