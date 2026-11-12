@@ -37,11 +37,17 @@ const details: Record<Provider, { label: string; icon: React.ReactNode; classNam
 export function SocialSignIn({
     next,
     dividerLabel = "or use your email",
+    // Off where these are not the top of a form: on a loyalty card
+    // panel they are one way in among two, not the first of several.
+    divider = true,
+    className = "mt-8 space-y-3",
 }: {
     // Where to go after signing in; a function is called on click (for
     // pages that read ?next= from the address bar then).
     next: string | (() => string);
     dividerLabel?: string;
+    divider?: boolean;
+    className?: string;
 }) {
     const [pending, setPending] = useState<Provider | null>(null);
     const [errorMessage, setErrorMessage] = useState("");
@@ -69,7 +75,7 @@ export function SocialSignIn({
     }
 
     return (
-        <div className="mt-8 space-y-3">
+        <div className={className}>
             {authProviders.map((provider) => (
                 <Button
                     key={provider}
@@ -91,11 +97,13 @@ export function SocialSignIn({
                 </p>
             )}
 
-            <div className="flex items-center gap-3 pt-3 text-xs text-muted-foreground" aria-hidden="true">
-                <span className="h-px flex-1 bg-border" />
-                {dividerLabel}
-                <span className="h-px flex-1 bg-border" />
-            </div>
+            {divider && (
+                <div className="flex items-center gap-3 pt-3 text-xs text-muted-foreground" aria-hidden="true">
+                    <span className="h-px flex-1 bg-border" />
+                    {dividerLabel}
+                    <span className="h-px flex-1 bg-border" />
+                </div>
+            )}
         </div>
     );
 }

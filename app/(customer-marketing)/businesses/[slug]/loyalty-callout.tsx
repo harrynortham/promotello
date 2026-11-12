@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { SocialSignIn } from "@/components/social-sign-in";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { joinLoyaltyProgram } from "./actions";
@@ -122,18 +123,29 @@ export function LoyaltyCallout({
                        same promise: ?join=1 says what they pressed, so
                        the card is theirs by the time they land on it
                        rather than a button to press a second time. */
-                    <div className="w-full shrink-0 space-y-3 sm:w-auto">
+                    <div className="w-full shrink-0 space-y-2 sm:w-64">
+                        {/* Google — and Apple when it is switched on —
+                            is the whole thing in one press: it signs
+                            them in, the card is theirs, and they land on
+                            it. The email door is under it for anyone
+                            without one. */}
+                        <SocialSignIn
+                            next={`${returnPath}?join=1`}
+                            divider={false}
+                            className="space-y-2"
+                        />
+
                         <Button
                             render={<Link href={`/login?next=${encodeURIComponent(`${returnPath}?join=1`)}`} />}
                             nativeButton={false}
                             size="lg"
-                            className="w-full bg-white text-[#17233B] hover:bg-white/90 sm:w-auto"
+                            className="h-12 w-full bg-white text-base text-[#17233B] hover:bg-white/90"
                         >
                             Log in to get your card
                             <FiArrowRight aria-hidden="true" />
                         </Button>
 
-                        <p className="text-center text-xs text-white/70 sm:text-right">
+                        <p className="pt-1 text-center text-xs text-white/70">
                             New to Promotello?{" "}
                             <Link
                                 href={`/signup?next=${encodeURIComponent(`${returnPath}?join=1`)}`}
