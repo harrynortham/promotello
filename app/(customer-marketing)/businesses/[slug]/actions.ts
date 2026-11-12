@@ -29,7 +29,7 @@ export async function joinLoyaltyProgram(formData: FormData) {
         redirect(`/businesses/${businessId}?loyalty=unavailable#loyalty-${programId}`);
     }
 
-    redirect(`/dashboard/loyalty?joined=${programId}`);
+    redirect(`/loyalty/${programId}`);
 }
 
 // Joining without an account: a name and an email are enough, and the card

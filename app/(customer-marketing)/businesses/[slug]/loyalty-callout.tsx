@@ -101,7 +101,7 @@ export function LoyaltyCallout({
                     </p>
                 ) : card ? (
                     <Button
-                        render={<Link href="/dashboard/loyalty" />}
+                        render={<Link href={`/loyalty/${program.id}`} />}
                         nativeButton={false}
                         size="lg"
                         className="shrink-0 bg-white text-[#17233B] hover:bg-white/90"
