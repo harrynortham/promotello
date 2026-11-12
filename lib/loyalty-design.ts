@@ -13,7 +13,9 @@ export const CARD_COLOURS = {
 
 export type CardColour = keyof typeof CARD_COLOURS;
 
-export const STAMP_ICONS = ["check", "star", "heart", "coffee", "gift"] as const;
+// A stamp that looks like what the shop sells beats a tick, so the
+// list leans towards the trades on a high street rather than shapes.
+export const STAMP_ICONS = ["check", "star", "heart", "coffee", "gift", "scissors", "bag"] as const;
 
 export type StampIcon = (typeof STAMP_ICONS)[number];
 
@@ -23,6 +25,8 @@ export const STAMP_ICON_LABELS: Record<StampIcon, string> = {
     heart: "Heart",
     coffee: "Coffee",
     gift: "Gift",
+    scissors: "Scissors",
+    bag: "Bag",
 };
 
 export const DEFAULT_CARD_COLOUR: CardColour = "navy";

@@ -10,7 +10,7 @@ import { createClient } from "@/utils/supabase/server";
 // which have to arrive with it.
 const CARD_COLOUR_NAMES = ["navy", "coral", "forest", "plum", "ocean", "charcoal"];
 const CUSTOM = "custom";
-const STAMP_ICON_NAMES = ["check", "star", "heart", "coffee", "gift"];
+const STAMP_ICON_NAMES = ["check", "star", "heart", "coffee", "gift", "scissors", "bag"];
 const HEX = /^#[0-9a-f]{6}$/i;
 
 function readProgramFields(formData: FormData) {

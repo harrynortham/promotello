@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { FiCheck, FiCoffee, FiDroplet, FiGift, FiHeart, FiStar } from "react-icons/fi";
+import {
+    FiCheck,
+    FiCoffee,
+    FiDroplet,
+    FiGift,
+    FiHeart,
+    FiScissors,
+    FiShoppingBag,
+    FiStar,
+} from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +38,8 @@ const icons: Record<StampIcon, typeof FiCheck> = {
     heart: FiHeart,
     coffee: FiCoffee,
     gift: FiGift,
+    scissors: FiScissors,
+    bag: FiShoppingBag,
 };
 
 // Choosing how a loyalty card looks: used when setting a card up, and

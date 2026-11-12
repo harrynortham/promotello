@@ -1,4 +1,4 @@
-import { FiCheck, FiCoffee, FiGift, FiHeart, FiStar } from "react-icons/fi";
+import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar } from "react-icons/fi";
 
 import {
     cardTheme,
@@ -13,6 +13,8 @@ const icons: Record<StampIcon, typeof FiCheck> = {
     heart: FiHeart,
     coffee: FiCoffee,
     gift: FiGift,
+    scissors: FiScissors,
+    bag: FiShoppingBag,
 };
 
 // A stamp card: one circle per stamp, the last one marked as the reward.
