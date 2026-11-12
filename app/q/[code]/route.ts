@@ -90,7 +90,7 @@ async function cardDestination(business: string, programId: string, requestUrl: 
             const { joined } = await joinLoyaltyCard(supabase, business, user);
 
             if (joined) {
-                return new URL(`/dashboard/loyalty?joined=${programId}&ref=qr`, requestUrl);
+                return new URL(`/loyalty/${programId}?ref=qr`, requestUrl);
             }
 
             // The card has gone since the poster went up: the business

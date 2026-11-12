@@ -657,7 +657,7 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
         // handed straight to their cards.
         const scan = await request.get(`/q/${made!.code}`, { maxRedirects: 0 });
         expect(scan.status()).toBe(307);
-        expect(scan.headers()["location"]).toContain(`/dashboard/loyalty?joined=${card!.id}`);
+        expect(scan.headers()["location"]).toContain(`/loyalty/${card!.id}`);
     } finally {
         if (codeId) await admin.from("qr_codes").delete().eq("id", codeId);
         await admin.from("loyalty_programs").delete().eq("id", card!.id);
@@ -879,7 +879,8 @@ test("scanning a card poster signed out: sign up, and the card is waiting", asyn
         await page.getByRole("button", { name: "Sign in" }).click();
 
         // Straight to the card, already theirs.
-        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 25_000 });
+        // The card on its own page, in the first screenful.
+        await page.waitForURL(/\/loyalty\/[0-9a-f-]+/, { timeout: 25_000 });
         await expect(page.getByText("6 stamps for a free coffee")).toBeVisible();
 
         const { data: card } = await client
@@ -904,7 +905,7 @@ test("scanning it signed in: no form, just the card", async ({ browser }) => {
 
     try {
         await page.goto(`/q/${code.code}`);
-        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 25_000 });
+        await page.waitForURL(/\/loyalty\/[0-9a-f-]+/, { timeout: 25_000 });
 
         const { data: card } = await client
             .from("loyalty_cards")

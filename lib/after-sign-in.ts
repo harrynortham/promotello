@@ -124,11 +124,11 @@ export async function afterSignIn(
             console.error("After sign-in: joining the loyalty card failed", error);
         }
 
-        // The card's own id, so the page they land on rings the one they
-        // just joined rather than saying a card somewhere below is new.
-        // Not joined means it has gone or was never there, and the
-        // business page says so.
-        return joined ? `/dashboard/loyalty?joined=${programId}` : `/businesses/${business}`;
+        // The card on its own page: somebody who has just scanned a
+        // poster is standing at a counter, and a list to scroll is the
+        // wrong answer. Not joined means it has gone or was never
+        // there, and the business page says so.
+        return joined ? `/loyalty/${programId}` : `/businesses/${business}`;
     }
 
     return unasked ? landingFor(user, memberships) : next;

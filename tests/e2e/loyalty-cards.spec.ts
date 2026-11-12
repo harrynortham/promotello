@@ -29,8 +29,8 @@ test("business sets up a loyalty card, customer joins, staff stamp it", async ({
     await customer.goto(`/businesses/${businessId}`);
     await expect(customer.getByText("Collect 5 stamps, get a free coffee")).toBeVisible();
     await customer.getByRole("button", { name: "Join the loyalty card" }).click();
-    await customer.waitForURL("**/dashboard/loyalty?joined=*", { timeout: 10_000 });
-    await expect(customer.getByText("You've joined")).toBeVisible();
+    // Joining lands on that card's own page, with the code on it.
+    await customer.waitForURL(/\/loyalty\/[0-9a-f-]+$/, { timeout: 10_000 });
 
     const code = (await customer.locator("p.font-mono").first().textContent())?.trim() ?? "";
     expect(code).toMatch(/^[A-Z0-9]{10}$/);
@@ -124,6 +124,125 @@ test("a visitor who isn't signed in is offered the two doors, not a form", async
     }
 });
 
+test("a scanned card lands on its own page, all of it on a phone", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await client
+        .from("loyalty_programs").select("id")
+        .eq("business_id", businessId).eq("is_active", true).is("closed_at", null);
+    for (const row of open ?? []) {
+        await client.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await client
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Card page ${Date.now()}`,
+            stamps_required: 8,
+            reward: "a free coffee",
+            terms: "One stamp per visit.",
+            card_colour: "navy",
+            stamp_icon: "coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const { data: code } = await client
+        .from("qr_codes")
+        .insert({ business_id: businessId, label: `E2E card page ${Date.now()}`, loyalty_program_id: program!.id })
+        .select("code")
+        .single();
+
+    try {
+        // The shortest phone anybody is holding at a counter.
+        const page = await (
+            await browser.newContext({ storageState: CUSTOMER_AUTH, viewport: { width: 375, height: 667 } })
+        ).newPage();
+
+        await page.goto(`/q/${code!.code}`);
+        await page.waitForURL(/\/loyalty\//, { timeout: 25_000 });
+
+        const card = page.locator("article").first();
+        await expect(card).toBeVisible({ timeout: 20_000 });
+
+        // The whole card — the stamps, the code and the QR under it —
+        // inside the screen of the shortest phone anybody is holding,
+        // without scrolling.
+        const box = await card.boundingBox();
+        expect(box!.y, "nothing above it but the header").toBeLessThan(120);
+        expect(box!.y + box!.height, "and its last line is on screen").toBeLessThan(667);
+
+        // Nothing else on the page to read past.
+        await expect(page.getByText("Get a birthday treat")).toHaveCount(0);
+        await expect(page.getByRole("link", { name: "All my loyalty cards" })).toBeVisible();
+    } finally {
+        await client.from("qr_codes").delete().eq("code", code!.code);
+        await client.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
+
+// All three ways of asking end in the same place, and asking for a card
+// somebody already holds is not a failure — a page left open in another
+// tab, or a poster scanned on the way past every week.
+test("asking twice for the same card is not an error", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId, customerUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Twice ${Date.now()}`,
+            stamps_required: 5,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    try {
+        await page.goto(`/businesses/${businessId}`);
+        await page.getByRole("button", { name: "Join the loyalty card" }).click();
+        await page.waitForURL(/\/loyalty\/[0-9a-f-]+$/, { timeout: 20_000 });
+
+        // The same press again, from a page that hasn't caught up.
+        await page.goBack();
+        await page.getByRole("button", { name: "Join the loyalty card" }).click();
+        await page.waitForURL(/\/loyalty\/[0-9a-f-]+$/, { timeout: 20_000 });
+        await expect(page.getByText(/isn't available right now/)).toHaveCount(0);
+
+        const { count } = await admin
+            .from("loyalty_cards")
+            .select("id", { count: "exact", head: true })
+            .eq("program_id", program!.id)
+            .eq("user_id", customerUserId);
+        expect(count, "one card, not two").toBe(1);
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
+
 // Pressing "Log in to get your card" is one thing asked for, not two:
 // the card is theirs by the time they land on it.
 test("logging in from the card panel joins the card and lands on it", async ({ page }) => {
@@ -172,8 +291,7 @@ test("logging in from the card panel joins the card and lands on it", async ({ p
         await enterSignInCode(page, email);
 
         // Straight to the card, already theirs.
-        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 25_000 });
-        await expect(page.getByText("You've joined")).toBeVisible();
+        await page.waitForURL(/\/loyalty\/[0-9a-f-]+$/, { timeout: 25_000 });
         await expect(page.getByText("6 stamps for a free coffee")).toBeVisible();
 
         const { data: card } = await admin
@@ -295,7 +413,7 @@ test("changing the deal leaves the old card's holders alone", async ({ browser }
 
         await customer.goto(`/businesses/${businessSlug}`);
         await customer.getByRole("button", { name: "Join the loyalty card" }).click();
-        await customer.waitForURL("**/dashboard/loyalty?joined=*", { timeout: 20_000 });
+        await customer.waitForURL(/\/loyalty\/[0-9a-f-]+$/, { timeout: 20_000 });
 
         const code = (await customer.locator("p.font-mono").first().textContent())?.trim() ?? "";
         expect(code).toMatch(/^[A-Z0-9]{10}$/);
