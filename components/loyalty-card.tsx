@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { FiArrowRight, FiCheck, FiGift } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
-import { cardTheme } from "@/lib/loyalty-design";
+import { cardTheme, readableAccent, tint } from "@/lib/loyalty-design";
 import { storedImage } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +90,7 @@ export function LoyaltyCard({
         : "your reward";
     const rewardReady = stamps >= stampsRequired && !finished;
     const theme = cardTheme({ colour, header, accent });
+    const rewardTint = tint(theme.stamp, 0.1);
 
     return (
         <article
@@ -155,7 +156,10 @@ export function LoyaltyCard({
                 {rewardReady && (
                     <p
                         className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold"
-                        style={{ backgroundColor: `${theme.stamp}1a`, color: theme.stamp }}
+                        // The accent as it reads rather than as it is: a
+                        // pale gold or a teal is picked to carry white
+                        // on a stamp, and disappears as words.
+                        style={{ backgroundColor: rewardTint, color: readableAccent(theme.stamp, rewardTint) }}
                     >
                         <FiGift aria-hidden="true" />
                         Reward ready: ask staff to redeem it

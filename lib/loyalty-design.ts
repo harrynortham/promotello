@@ -58,8 +58,55 @@ export function lightnessOf(hex: string) {
 // White on a brand colour is a safe bet until somebody's brand is
 // yellow. The threshold is where white and our navy swap over for
 // contrast against the same background.
+// How far apart two colours are to read, the WCAG way: 4.5 is the line
+// for ordinary text.
+export function contrastRatio(a: string, b: string) {
+    const [lighter, darker] = [lightnessOf(a), lightnessOf(b)].sort((x, y) => y - x);
+
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
+// A colour laid over white at some fraction of itself, as a hex of its
+// own: what a 10% tint actually looks like, rather than a guess.
+export function tint(hex: string, strength: number) {
+    return toHex(channelsOf(hex).map((value) => value * strength + 255 * (1 - strength)));
+}
+
+// The business's accent, dark enough to be read as words.
+//
+// Several of the palettes — the gold, the teal — are chosen to look
+// good as a filled stamp, where they carry white. As text on the
+// card's near-white body the same colour is barely there, and a
+// business picking its own can be far worse. So it is taken down in
+// steps until it can be read on the background it sits on, which
+// leaves a dark gold looking like the gold rather than like ink.
+export function readableAccent(hex: string, background = "#FFFFFF") {
+    let colour = hex;
+
+    for (let step = 0; step < 16 && contrastRatio(colour, background) < 4.5; step += 1) {
+        colour = toHex(channelsOf(colour).map((value) => value * 0.86));
+    }
+
+    return colour;
+}
+
+function channelsOf(hex: string) {
+    return [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
+}
+
+function toHex(channels: number[]) {
+    return `#${channels
+        .map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0"))
+        .join("")}`;
+}
+
+// White on the band and on a filled stamp, which is how the brand
+// looks and how white-on-coral is meant to look — until the colour is
+// light enough that white stops being a mark on it at all. Three to one
+// is the line for something you look at rather than read, and only a
+// pale gold or a yellow somebody has chosen themselves falls under it.
 export function readableInk(hex: string) {
-    return lightnessOf(hex) > 0.45 ? "#17233B" : "#FFFFFF";
+    return contrastRatio("#FFFFFF", hex) < 3 ? "#17233B" : "#FFFFFF";
 }
 
 // What the picker can have chosen, and the pair behind "custom".
