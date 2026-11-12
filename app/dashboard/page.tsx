@@ -187,9 +187,9 @@ async function CustomerDashboardContent() {
                     </section>
                 )}
 
-                <section className="mt-12">
+                <section className="mt-10">
                     <SectionHeading
-                        title="Ready to use"
+                        title="Vouchers"
                         href="/dashboard/redemptions"
                         linkLabel="All my vouchers"
                     />
@@ -208,7 +208,7 @@ async function CustomerDashboardContent() {
                     </div>
                 </section>
 
-                <section className="mt-12">
+                <section className="mt-10">
                     <SectionHeading
                         title="Loyalty cards"
                         href="/dashboard/loyalty"
@@ -234,7 +234,7 @@ async function CustomerDashboardContent() {
                 </section>
 
                 {suggestions.length > 0 && (
-                    <section className="mt-14">
+                    <section className="mt-10">
                         <SectionHeading title="New offers to try" href="/offers" linkLabel="Browse all offers" />
 
                         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

@@ -121,3 +121,30 @@ test("on a phone the close is in the corner, not beside the button", async ({ br
 
     await page.close();
 });
+
+// The shell the suggestion sits in is wider than any of the pages
+// inside it, so a bar filling the shell hung over both edges of the
+// page it was talking about.
+test("the suggestion is the width of the page under it", async ({ browser }) => {
+    const { customerUserId } = state();
+    await startFresh(customerUserId);
+
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/dashboard");
+
+    const bar = page.getByRole("complementary", { name: "Suggestion" });
+    await expect(bar).toContainText("Get a birthday treat");
+
+    const vouchers = page.getByRole("heading", { name: "Vouchers", level: 2 });
+    const [barBox, sectionBox] = await Promise.all([
+        bar.boundingBox(),
+        page.locator("section").filter({ has: vouchers }).boundingBox(),
+    ]);
+
+    expect(Math.abs((barBox?.x ?? 0) - (sectionBox?.x ?? 1)), "same left edge").toBeLessThan(1);
+    expect(
+        Math.abs((barBox?.width ?? 0) - (sectionBox?.width ?? 1)),
+        "same width",
+    ).toBeLessThan(1);
+});

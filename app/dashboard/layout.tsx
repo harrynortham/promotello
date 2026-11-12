@@ -58,10 +58,14 @@ export default function DashboardLayout({
 
                     {/* At most one suggestion, and only when there is one
                         worth making. Its own boundary so the page doesn't
-                        wait on it. */}
-                    <Suspense fallback={null}>
-                        <CustomerAnnouncements />
-                    </Suspense>
+                        wait on it, and the same width as the page under
+                        it: the shell is wider than any of its pages, so
+                        a bar filling the shell hung over both edges. */}
+                    <div className="mx-auto max-w-6xl">
+                        <Suspense fallback={null}>
+                            <CustomerAnnouncements />
+                        </Suspense>
+                    </div>
 
                     <Suspense fallback={<DashboardLoading />}>
                         <DashboardShell>{children}</DashboardShell>
