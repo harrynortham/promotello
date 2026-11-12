@@ -372,7 +372,11 @@ function CardOnPoster({
                     header={card.header}
                     accent={card.accent}
                     stampIcon={card.stampIcon}
-                    className="border-[#17233B]/10"
+                    // No shadow on paper, for the reason the code's
+                    // tile has none: a printer flattens the blur into a
+                    // solid grey rectangle round the card. The hairline
+                    // border it already has keeps its edge.
+                    className="border-[#17233B]/10 print:shadow-none"
                 />
             </div>
         </div>

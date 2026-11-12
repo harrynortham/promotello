@@ -948,6 +948,22 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
         // would be the same scan twice.
         await expect(preview.locator('[class*="rounded-xl"] > svg, svg').nth(0)).toBeVisible();
 
+        // A printer flattens a blur into a solid grey rectangle, so the
+        // card's shadow comes off on paper and its hairline border is
+        // what keeps the edge — the same deal the code's tile has.
+        const cardFace = preview.locator("article").first();
+        expect(
+            await cardFace.evaluate((el) => getComputedStyle(el).boxShadow),
+            "a shadow on screen",
+        ).not.toBe("none");
+
+        await page.emulateMedia({ media: "print" });
+        expect(
+            await cardFace.evaluate((el) => getComputedStyle(el).boxShadow.replace(/rgba?\([^)]*\) 0px 0px 0px 0px,? ?/g, "").trim()),
+            "and none on paper",
+        ).toBe("");
+        await page.emulateMedia({ media: "screen" });
+
         // The card is the app's card, so its band ranges left behind the
         // logo. The sheet's text is centred, and the card inherited that
         // until it was told not to: the name floated over the line under
