@@ -82,7 +82,7 @@ async function Poster({ params, searchParams }: PageProps) {
     const loyaltyQuery = qr.loyalty_program_id
         ? supabase
             .from("loyalty_programs")
-            .select("stamps_required, reward, terms")
+            .select("stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon")
             .eq("id", qr.loyalty_program_id)
             .eq("is_active", true)
             .is("closed_at", null)
@@ -178,6 +178,18 @@ async function Poster({ params, searchParams }: PageProps) {
                                 : null)
                         }
                         eyebrowFallback={loyalty ? `Collect ${loyalty.stamps_required} stamps` : null}
+                        card={
+                            loyalty
+                                ? {
+                                    stampsRequired: loyalty.stamps_required,
+                                    reward: loyalty.reward,
+                                    colour: loyalty.card_colour,
+                                    header: loyalty.card_header,
+                                    accent: loyalty.card_accent,
+                                    stampIcon: loyalty.stamp_icon,
+                                }
+                                : null
+                        }
                         caption={
                             loyalty
                                 ? "Join free on Promotello and collect a stamp every time you visit."

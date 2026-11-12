@@ -793,3 +793,72 @@ test("a poster keeps the layout and the colours it was made with", async ({ page
         await client.from("qr_codes").delete().eq("id", made!.id);
     }
 });
+
+// A poster that opens a loyalty card can draw the card. "Get a free
+// coffee" on a window says nothing about how: a row of stamps does.
+test("a loyalty code is offered layouts that draw the card", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await client
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await client.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await client
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Poster card ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free coffee",
+            card_colour: "custom",
+            card_header: "#0B5FFF",
+            card_accent: "#FFD400",
+            stamp_icon: "coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/qr/new`);
+        const target = page.getByLabel("What should it open?");
+        await expect(target).toBeVisible({ timeout: 20_000 });
+
+        // Nothing to draw a card from: four layouts, as before.
+        await expect(page.getByRole("button", { name: "Stamp card" })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Stamp strip" })).toHaveCount(0);
+
+        await target.selectOption("loyalty");
+
+        // Six now, and the one that shows the card is already chosen.
+        const stampCard = page.getByRole("button", { name: "Stamp card" });
+        await expect(stampCard).toBeVisible();
+        await expect(page.getByRole("button", { name: "Stamp strip" })).toBeVisible();
+        await expect(stampCard).toHaveAttribute("aria-pressed", "true");
+
+        // The card is drawn in its own colours, not the poster's.
+        const preview = page.locator("article").filter({ hasText: "Point your phone camera here" }).last();
+        await expect(
+            preview.locator('[style*="rgb(11, 95, 255)"], [style*="#0B5FFF"]').first(),
+        ).toBeVisible();
+
+        // Pointing it somewhere else can't leave a layout behind with
+        // nothing left to draw.
+        await target.selectOption("business");
+        await expect(page.getByRole("button", { name: "Stamp card" })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Classic" })).toHaveAttribute("aria-pressed", "true");
+    } finally {
+        await client.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});

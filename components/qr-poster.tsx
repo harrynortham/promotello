@@ -1,7 +1,25 @@
 import Image from "next/image";
+import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar } from "react-icons/fi";
 
 import { storedImage } from "@/lib/images";
+import {
+    cardTheme,
+    readableInk,
+    rewardWording,
+    stampIcon as readStampIcon,
+    type StampIcon,
+} from "@/lib/loyalty-design";
 import { posterTheme } from "@/lib/poster-colour";
+
+const stampIcons: Record<StampIcon, typeof FiCheck> = {
+    check: FiCheck,
+    star: FiStar,
+    heart: FiHeart,
+    coffee: FiCoffee,
+    gift: FiGift,
+    scissors: FiScissors,
+    bag: FiShoppingBag,
+};
 
 // The printable QR poster (app/poster/[codeId]), also shown small on the
 // QR page so a business can see what it is about to make. Everything is
@@ -15,6 +33,16 @@ import { posterTheme } from "@/lib/poster-colour";
 //   code_first  the code on a colour panel at the top, words beneath
 //   bold        the whole sheet in colour, read from the pavement
 //   minimal     no colour block at all, for a window that wants quiet
+//
+// And two more for a code that opens a loyalty card, which draw the
+// card itself. A passer-by reading "Get a free coffee" has no idea
+// whether that is today's offer or nine visits away; a row of empty
+// stamps says it without a sentence:
+//
+//   stamp_card  the card drawn whole, the way they will carry it
+//   stamp_strip a quieter sheet with the stamps in a line across it
+//
+// Both need `card`, so they fall back to classic without one.
 //
 // Paper is not decided here. Any of them prints at A4, A5 or two to a
 // sheet.
@@ -40,9 +68,30 @@ export const POSTER_LAYOUTS = [
         label: "Minimal",
         hint: "No colour block. Quiet enough for a smart window.",
     },
+    {
+        value: "stamp_card",
+        label: "Stamp card",
+        hint: "The card itself, so people see what they are collecting.",
+        forLoyalty: true,
+    },
+    {
+        value: "stamp_strip",
+        label: "Stamp strip",
+        hint: "A line of stamps across the sheet, with the reward above it.",
+        forLoyalty: true,
+    },
 ] as const;
 
 export type PosterLayout = (typeof POSTER_LAYOUTS)[number]["value"];
+
+// The two that draw a card are offered only where there is one to draw.
+export const LOYALTY_LAYOUTS = POSTER_LAYOUTS.filter(
+    (option) => "forLoyalty" in option && option.forLoyalty,
+).map((option) => option.value) as readonly PosterLayout[];
+
+export function isLoyaltyLayout(value: string | null | undefined) {
+    return LOYALTY_LAYOUTS.includes(value as PosterLayout);
+}
 
 export function posterLayout(value: string | null | undefined): PosterLayout {
     return POSTER_LAYOUTS.some((option) => option.value === value)
@@ -83,6 +132,17 @@ type PosterProps = {
     // The line under "Point your phone camera here". A claim and a
     // stamp card ask for different things.
     caption?: string | null;
+    // The loyalty card this code opens, for the layouts that draw one.
+    // Its own colours, not the poster's: what is on the wall should be
+    // what lands in their phone.
+    card?: {
+        stampsRequired: number;
+        reward: string;
+        colour?: string | null;
+        header?: string | null;
+        accent?: string | null;
+        stampIcon?: string | null;
+    } | null;
     className?: string;
 };
 
@@ -181,6 +241,119 @@ function Body({ children, dark }: { children: string; dark: boolean }) {
     );
 }
 
+// A row of empty stamps, the last one the reward. Drawn here rather
+// than with components/loyalty-card.tsx because a poster is sized in em
+// from one root font size — the same markup has to hold at A4, at A5
+// and in a 72px thumbnail — while the card in the app is sized in
+// pixels for a phone. The palette and the icons come from
+// lib/loyalty-design.ts either way, so the two can't drift apart on the
+// thing that matters: what the stamps look like.
+function StampRow({
+    required,
+    icon,
+    colour,
+    ink,
+    size = "2.6em",
+}: {
+    required: number;
+    icon: StampIcon;
+    colour: string;
+    ink: string;
+    size?: string;
+}) {
+    const Icon = stampIcons[icon];
+    // A couple already collected, the way every preview in the app
+    // draws a card: a row of empty rings reads as a form to fill in,
+    // and these are what a customer is being offered.
+    const filled = Math.min(2, required - 1);
+    // Nine in a line is a line; nine wrapped 7 and 2 is a mistake. Two
+    // even rows once there are more than six.
+    const columns = required > 6 ? Math.ceil(required / 2) : required;
+
+    // Width enough for exactly one row, so the wrap lands where it was
+    // meant to and the short last row centres under the long one. A
+    // grid would hang those four off the left.
+    const gap = 0.45;
+    const across = Number.parseFloat(size);
+
+    return (
+        <div
+            className="mx-auto flex flex-wrap justify-center"
+            style={{
+                gap: `${gap}em`,
+                width: `${columns * across + (columns - 1) * gap}em`,
+            }}
+        >
+            {Array.from({ length: required }, (_, index) => {
+                const isFilled = index < filled;
+                const isReward = index === required - 1;
+
+                return (
+                    <span
+                        key={index}
+                        className={`flex items-center justify-center rounded-full border-[0.12em] ${isFilled ? "" : "border-dashed"}`}
+                        style={{
+                            width: size,
+                            height: size,
+                            borderColor: isFilled || isReward ? colour : "rgba(23,35,59,0.22)",
+                            backgroundColor: isFilled ? colour : isReward ? `${colour}1a` : "transparent",
+                            color: isFilled ? ink : colour,
+                        }}
+                    >
+                        {isReward ? (
+                            <FiGift aria-hidden="true" style={{ width: "55%", height: "55%" }} />
+                        ) : (
+                            isFilled && <Icon aria-hidden="true" style={{ width: "52%", height: "52%" }} />
+                        )}
+                    </span>
+                );
+            })}
+        </div>
+    );
+}
+
+// The card as they will carry it: the band with the shop's name, the
+// stamps to collect, and what the last one is worth.
+function CardFace({
+    businessName,
+    logoUrl,
+    card,
+}: {
+    businessName: string;
+    logoUrl?: string | null;
+    card: NonNullable<PosterProps["card"]>;
+}) {
+    const theme = cardTheme({ colour: card.colour, header: card.header, accent: card.accent });
+
+    return (
+        <div className="w-[28em] overflow-hidden rounded-[1.2em] bg-white shadow-[0_0.5em_1.8em_rgba(23,35,59,0.14)] print:border print:border-[#17233B]/10 print:shadow-none">
+            <div
+                className="flex items-center gap-[0.7em] px-[1.4em] py-[1em]"
+                style={{ backgroundColor: theme.header, color: theme.ink }}
+            >
+                <Logo url={logoUrl} size="2.4em" />
+                <div className="min-w-0 text-left">
+                    <p className="truncate font-semibold" style={{ fontSize: "1.25em", lineHeight: 1.1 }}>
+                        {businessName}
+                    </p>
+                    <p className="truncate" style={{ fontSize: "0.95em", opacity: 0.75 }}>
+                        {card.stampsRequired} stamps for {rewardWording(card.reward)}
+                    </p>
+                </div>
+            </div>
+
+            <div className="px-[1.4em] py-[1.3em]">
+                <StampRow
+                    required={card.stampsRequired}
+                    icon={readStampIcon(card.stampIcon)}
+                    colour={theme.stamp}
+                    ink={readableInk(theme.stamp)}
+                />
+            </div>
+        </div>
+    );
+}
+
 // No shadow on paper: a printer flattens the blur into a solid grey
 // rectangle around the code, which reads as the words above and below
 // running into it. A hairline keeps the card's edge instead.
@@ -249,13 +422,25 @@ export function QrPoster(props: PosterProps) {
         detail,
         eyebrowFallback,
         caption,
+        card,
         className = "",
     } = props;
 
     // A code that opens the business page lands on a list of offers, so
     // "claim it" has nothing to point at yet.
     const theme = posterTheme({ colour, header: headerColour, accent: accentColour });
-    const chosen = posterLayout(layout);
+    // A card layout with no card to draw is a classic poster: a code
+    // saved as a stamp card and later pointed somewhere else still has
+    // to print.
+    const asked = posterLayout(layout);
+    const chosen = isLoyaltyLayout(asked) && !card ? "classic" : asked;
+    // The card's own stamp colour, for the layout that draws the stamps
+    // without the card around them.
+    const cardStamp = cardTheme({
+        colour: card?.colour,
+        header: card?.header,
+        accent: card?.accent,
+    }).stamp;
     const dark = chosen === "bold";
     const pill =
         eyebrow?.trim() || eyebrowFallback?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
@@ -336,6 +521,80 @@ export function QrPoster(props: PosterProps) {
                             {businessName}
                             {place && <span className="opacity-70"> · {place}</span>}
                         </p>
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
+
+    if (chosen === "stamp_card") {
+        return (
+            <article className={sheet} style={style}>
+                {/* The card is the picture on this one: a row of empty
+                    circles says "nine visits" faster than any line of
+                    type can. */}
+                <header
+                    className="flex items-center gap-[1em] px-[2.5em] py-[1.4em]"
+                    style={{ backgroundColor: theme.header, color: theme.ink }}
+                >
+                    <Logo url={logoUrl} size="3.2em" />
+                    <Name businessName={businessName} place={place} onColour />
+                </header>
+
+                <div className="flex flex-1 flex-col items-center justify-center gap-[0.8em] px-[2.5em] py-[1.2em] text-center">
+                    <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+                    <Title size={headline?.trim() ? "3em" : "3.6em"}>{title}</Title>
+
+                    <div className="mt-[0.4em]">
+                        <CardFace businessName={businessName} logoUrl={logoUrl} card={card!} />
+                    </div>
+
+                    <div className="mt-[0.6em] flex items-center gap-[1.4em]">
+                        <Code markup={qrMarkup} size="13em" />
+                        <div className="max-w-[13em] text-left">
+                            <ScanLines caption={scanLine} dark={dark} />
+                        </div>
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
+
+    if (chosen === "stamp_strip") {
+        return (
+            <article className={sheet} style={style}>
+                {/* No band and no card: the stamps themselves are the
+                    whole middle of the sheet, big enough to count from
+                    across a room. */}
+                <header className="flex items-center gap-[1em] px-[2.5em] pt-[2.4em]">
+                    <Logo url={logoUrl} size="3.4em" />
+                    <Name businessName={businessName} place={place} onColour={false} />
+                </header>
+
+                <div className="flex flex-1 flex-col items-center justify-center gap-[1em] px-[2.5em] text-center">
+                    <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+                    <Title size={headline?.trim() ? "3em" : "4em"}>{title}</Title>
+
+                    <div className="mt-[0.3em] w-full">
+                        <StampRow
+                            required={card!.stampsRequired}
+                            icon={readStampIcon(card!.stampIcon)}
+                            colour={cardStamp}
+                            ink={readableInk(cardStamp)}
+                            size="3.4em"
+                        />
+                    </div>
+
+                    <div className="mt-[0.8em]">
+                        <Code markup={qrMarkup} size="19em" />
+                    </div>
+
+                    <div className="mt-[0.2em]">
+                        <ScanLines caption={scanLine} dark={dark} />
                     </div>
                 </div>
 
