@@ -187,6 +187,75 @@ test("a scanned card lands on its own page, all of it on a phone", async ({ brow
     }
 });
 
+// Staff stamping a card should be looking at the card the customer is
+// holding out, not a drawing of one in the default colours.
+test("the stamping page shows the card itself, and the dashboard links to it", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await client
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await client.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await client
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Staff view ${Date.now()}`,
+            stamps_required: 8,
+            reward: "a free coffee",
+            terms: "One stamp per visit.",
+            card_colour: "custom",
+            card_header: "#0B5FFF",
+            card_accent: "#FFD400",
+            stamp_icon: "coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    // A customer holding one.
+    const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+    await customer.goto(`/businesses/${businessId}`);
+    await customer.getByRole("button", { name: "Join the loyalty card" }).click();
+    await customer.waitForURL(/\/loyalty\/[0-9a-f-]+$/, { timeout: 20_000 });
+    const code = (await customer.locator("p.font-mono").first().textContent())?.trim() ?? "";
+
+    const staff = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        // The dashboard lists it, with a way to open it.
+        await staff.goto(`/business/${businessId}/loyalty`);
+        const row = staff.getByRole("listitem").filter({ hasText: code });
+        await expect(row).toBeVisible({ timeout: 20_000 });
+        await row.getByRole("button", { name: "Show card" }).click();
+
+        await staff.waitForURL(`**/stamp/${code}`, { timeout: 20_000 });
+
+        // The card as the customer carries it: their colours, their
+        // stamp, their code — and the button to stamp it.
+        const card = staff.locator("article").first();
+        await expect(card).toContainText("8 stamps for a free coffee");
+        await expect(card).toContainText(code);
+        await expect(card.locator("div").first()).toHaveCSS("background-color", "rgb(11, 95, 255)");
+        await expect(staff.getByRole("button", { name: "Add a stamp" })).toBeVisible();
+
+        // The business's own header and footer, not the customer's.
+        await expect(staff.getByRole("contentinfo").getByRole("button", { name: "Customer area" })).toBeVisible();
+    } finally {
+        await client.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
+
 // All three ways of asking end in the same place, and asking for a card
 // somebody already holds is not a failure — a page left open in another
 // tab, or a poster scanned on the way past every week.

@@ -449,6 +449,17 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                 <span className="text-xs">
                                                     Joined {new Date(card.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                                                 </span>
+
+                                                {/* The card itself, and the stamp button with
+                                                    it: the same page their phone's QR opens. */}
+                                                <Button
+                                                    render={<Link href={`/stamp/${card.card_code}`} />}
+                                                    nativeButton={false}
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Show card
+                                                </Button>
                                             </div>
                                         </li>
                                     );
