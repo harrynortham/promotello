@@ -3,12 +3,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { FiCheckCircle, FiGift } from "react-icons/fi";
+import { FiArrowLeft, FiCheckCircle, FiGift } from "react-icons/fi";
 
-import { LoyaltyStamps } from "@/components/loyalty-stamps";
+import { LoyaltyCard } from "@/components/loyalty-card";
+import { AppFooter } from "@/components/site/footers";
+import { BusinessAppHeader } from "@/components/site/headers";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { qrSvg } from "@/lib/qr";
+import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { addStamp, redeemReward } from "./actions";
 
@@ -24,12 +28,19 @@ type PageProps = {
 
 type StaffCard = {
     card_code: string;
+    program_id: string;
     business_id: string;
     business_name: string;
+    business_logo_url: string | null;
     reward: string;
     stamps_required: number;
     stamps: number;
     rewards_redeemed: number;
+    terms: string | null;
+    card_colour: string | null;
+    card_header: string | null;
+    card_accent: string | null;
+    stamp_icon: string | null;
     customer_name: string | null;
     is_own_card: boolean;
 };
@@ -43,11 +54,20 @@ const errorMessages: Record<string, string> = {
     failed: "That didn't work. Please try again.",
 };
 
+// The business's own header and footer: whoever is holding this phone
+// works here, and a page with neither looks like it belongs to the
+// customer whose card is on it.
 function Shell({ children }: { children: React.ReactNode }) {
     return (
-        <main className="flex min-h-dvh items-start justify-center bg-[#FFF8F0] px-5 py-10 text-[#17233B] sm:items-center">
-            <div className="w-full max-w-md">{children}</div>
-        </main>
+        <div className="flex min-h-dvh flex-col bg-[#FFF8F0] text-[#17233B]">
+            <BusinessAppHeader />
+
+            <main className="flex-1 px-5 py-6 sm:py-10">
+                <div className="mx-auto w-full max-w-md">{children}</div>
+            </main>
+
+            <AppFooter variant="business" />
+        </div>
     );
 }
 
@@ -90,17 +110,59 @@ async function StampContent({ params, searchParams }: PageProps) {
     const rewardReady = card.stamps >= card.stamps_required;
     const remaining = Math.max(card.stamps_required - card.stamps, 0);
 
+    // The card as it is on the customer's phone, including the code
+    // they just held out: staff and customer looking at one thing.
+    const origin = await requestOrigin();
+    const qr = await qrSvg(`${origin}/stamp/${card.card_code}`);
+
     return (
         <Shell>
-            <div className="rounded-3xl border border-[#17233B]/10 bg-white p-7 shadow-sm">
-                <p className="text-sm font-medium text-[#17233B]/70">{card.business_name} loyalty card</p>
-                <h1 className="mt-1 text-2xl font-semibold">
-                    {card.customer_name ? `${card.customer_name}'s card` : "Customer card"}
-                </h1>
-                <p className="mt-1 font-mono text-sm tracking-widest text-[#17233B]/65">{card.card_code}</p>
+            {/* The card says whose shop it is and the customer is
+                standing there, so the heading said nothing twice. The
+                way back goes where it was. */}
+            <Button
+                render={<Link href={`/business/${card.business_id}/loyalty`} />}
+                nativeButton={false}
+                variant="ghost"
+                size="sm"
+                className="-ml-2"
+            >
+                <FiArrowLeft aria-hidden="true" />
+                Back to loyalty dashboard
+            </Button>
+
+            <h1 className="sr-only">
+                {card.customer_name
+                    ? `${card.customer_name}'s loyalty card at ${card.business_name}`
+                    : `A loyalty card at ${card.business_name}`}
+            </h1>
+
+            <div className="mt-3">
+                <LoyaltyCard
+                    businessName={card.business_name}
+                    logoUrl={card.business_logo_url}
+                    stampsRequired={card.stamps_required}
+                    reward={card.reward}
+                    stamps={card.stamps}
+                    rewardsRedeemed={card.rewards_redeemed}
+                    terms={card.terms}
+                    colour={card.card_colour}
+                    header={card.card_header}
+                    accent={card.card_accent}
+                    stampIcon={card.stamp_icon}
+                    code={card.card_code}
+                    qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qr }} />}
+                    scanTitle="Their code"
+                    scanHint="The one they showed you."
+                    qrSize="size-28"
+                    className="border-[#17233B]/10"
+                />
+            </div>
+
+            <div className="mt-5 rounded-3xl border border-[#17233B]/10 bg-white p-6 shadow-sm">
 
                 {done && !error && (
-                    <Alert className="mt-5 border-emerald-200 bg-emerald-50 text-emerald-900">
+                    <Alert className="mb-5 border-emerald-200 bg-emerald-50 text-emerald-900">
                         <FiCheckCircle aria-hidden="true" />
                         <AlertTitle>{done === "stamp" ? "Stamp added" : "Reward redeemed"}</AlertTitle>
                         <AlertDescription>
@@ -114,32 +176,18 @@ async function StampContent({ params, searchParams }: PageProps) {
                 )}
 
                 {error && errorMessages[error] && (
-                    <Alert variant="destructive" className="mt-5">
+                    <Alert variant="destructive" className="mb-5">
                         <AlertTitle>Not done</AlertTitle>
                         <AlertDescription>{errorMessages[error]}</AlertDescription>
                     </Alert>
                 )}
 
-                <div className="mt-6 rounded-2xl bg-[#FFF8F0] p-5">
-                    <p className="text-sm font-medium">
-                        {card.stamps} of {card.stamps_required} stamps · reward: {card.reward}
-                    </p>
-                    <div className="mt-4">
-                        <LoyaltyStamps stamps={card.stamps} required={card.stamps_required} />
-                    </div>
-                    {card.rewards_redeemed > 0 && (
-                        <p className="mt-4 text-xs text-[#17233B]/70">
-                            {card.rewards_redeemed} {card.rewards_redeemed === 1 ? "reward" : "rewards"} redeemed so far
-                        </p>
-                    )}
-                </div>
-
                 {card.is_own_card ? (
-                    <p className="mt-6 text-sm text-[#17233B]/65">
+                    <p className="text-sm text-[#17233B]/65">
                         This is your own card. Ask a colleague to stamp it.
                     </p>
                 ) : (
-                    <div className="mt-6 space-y-3">
+                    <div className="space-y-3">
                         {rewardReady && (
                             <form action={redeemReward}>
                                 <input type="hidden" name="code" value={card.card_code} />
@@ -162,15 +210,6 @@ async function StampContent({ params, searchParams }: PageProps) {
                         </form>
                     </div>
                 )}
-
-                <Button
-                    render={<Link href={`/business/${card.business_id}/loyalty`} />}
-                    nativeButton={false}
-                    variant="ghost"
-                    className="mt-4 w-full"
-                >
-                    Back to loyalty dashboard
-                </Button>
             </div>
         </Shell>
     );
