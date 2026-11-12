@@ -863,6 +863,15 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
         // would be the same scan twice.
         await expect(preview.locator('[class*="rounded-xl"] > svg, svg').nth(0)).toBeVisible();
 
+        // The card is the app's card, so its band ranges left behind the
+        // logo. The sheet's text is centred, and the card inherited that
+        // until it was told not to: the name floated over the line under
+        // it, lined up with neither it nor the logo.
+        const name = preview.getByText("E2E Test Business", { exact: true }).last();
+        const under = preview.getByText(/stamps for a free coffee/).last();
+        const [nameBox, underBox] = await Promise.all([name.boundingBox(), under.boundingBox()]);
+        expect(Math.abs((nameBox?.x ?? 0) - (underBox?.x ?? 1))).toBeLessThan(1);
+
         // Pointing it somewhere else can't leave a layout behind with
         // nothing left to draw.
         await target.selectOption("business");

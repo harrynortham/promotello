@@ -340,11 +340,13 @@ function CardOnPoster({
 }) {
     return (
         <div style={{ zoom: (widthEm * fontSize) / CARD_WIDTH }}>
-            {/* Back to a page's own 16px: the card's text sizes are rem
-                and px, and the few lines with no size of their own
-                would otherwise inherit the poster's em scale and come
-                out a quarter of the size of everything beside them. */}
-            <div style={{ width: `${CARD_WIDTH}px`, fontSize: "16px" }}>
+            {/* Back to a page's own defaults: the card's text sizes are
+                rem and px, so the few lines with no size of their own
+                would inherit the poster's em scale and come out a
+                quarter the size of everything beside them — and the
+                sheet's centred text would centre the name over the line
+                under it instead of ranging both left of the logo. */}
+            <div className="text-left" style={{ width: `${CARD_WIDTH}px`, fontSize: "16px" }}>
                 <LoyaltyCard
                     businessName={businessName}
                     logoUrl={logoUrl}
