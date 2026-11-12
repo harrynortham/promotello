@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { guestCardEmail } from "@/lib/guest-card-email";
+import { joinCard } from "@/lib/join-loyalty";
 import { sendEmails } from "@/lib/email";
 import { createClient } from "@/utils/supabase/server";
 
@@ -15,15 +16,16 @@ export async function joinLoyaltyProgram(formData: FormData) {
         data: { user },
     } = await supabase.auth.getUser();
 
+    // The button only shows to somebody signed in, so this is a session
+    // that ended while the page was open. ?join=1 keeps the promise the
+    // panel's other doors make: sign in, and the card is yours.
     if (!user) {
-        redirect(`/login?next=${encodeURIComponent(`/businesses/${businessId}`)}`);
+        redirect(`/login?next=${encodeURIComponent(`/businesses/${businessId}?join=1`)}`);
     }
 
-    const { error } = await supabase.rpc("join_loyalty_program", {
-        requested_program_id: programId,
-    });
+    const { joined } = await joinCard(supabase, programId, user);
 
-    if (error) {
+    if (!joined) {
         redirect(`/businesses/${businessId}?loyalty=unavailable#loyalty-${programId}`);
     }
 

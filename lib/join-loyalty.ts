@@ -1,12 +1,15 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
-// Joining a loyalty card happens two ways, and they end the same.
+// Joining a loyalty card happens three ways, and they end the same.
 //
 // Signed in, the button on the business page does it. Signed out, the
 // same button says "Log in to get your card" — both halves of that
 // sentence — and carries ?join=1 to the sign-in, which finishes it
 // here. Handing the button back to be pressed a second time asks twice
 // for the same thing, which is what claiming an offer used to do.
+//
+// And a poster scanned in a window is the third: app/q/[code] asks for
+// the business's open card, signed in, or sends them to sign up first.
 //
 // The same shape as lib/claim-offer.ts, because it is the same promise:
 // what somebody pressed before signing in is done for them after.
@@ -61,24 +64,35 @@ export async function joinLoyaltyCard(supabase: SupabaseClient, slug: string, us
         return { joined: false };
     }
 
+    const { joined, error } = await joinCard(supabase, program.id, user);
+
+    return joined ? { joined, programId: program.id } : { joined, error };
+}
+
+// The join itself, for the three ways of asking: the button on a
+// business page, which knows the card; a scan or a sign-in, which know
+// the business and work the card out above.
+//
+// Being on it already is not a failure. Somebody pressing a second time,
+// or scanning the poster on their way past every week, asked for a card
+// they have — and they have it.
+export async function joinCard(supabase: SupabaseClient, programId: string, user: User) {
     const { data: existing } = await supabase
         .from("loyalty_cards")
         .select("id")
-        .eq("program_id", program.id)
+        .eq("program_id", programId)
         .eq("user_id", user.id)
         .maybeSingle();
 
     if (existing) {
-        return { joined: true, programId: program.id };
+        return { joined: true };
     }
 
+    // Switched off, closed to new joiners, or a business not approved:
+    // join_loyalty_program() is the one that knows, and says so.
     const { error } = await supabase.rpc("join_loyalty_program", {
-        requested_program_id: program.id,
+        requested_program_id: programId,
     });
 
-    if (error) {
-        return { joined: false, error };
-    }
-
-    return { joined: true, programId: program.id };
+    return error ? { joined: false, error } : { joined: true };
 }

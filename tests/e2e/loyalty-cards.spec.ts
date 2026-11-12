@@ -124,6 +124,62 @@ test("a visitor who isn't signed in is offered the two doors, not a form", async
     }
 });
 
+// All three ways of asking end in the same place, and asking for a card
+// somebody already holds is not a failure — a page left open in another
+// tab, or a poster scanned on the way past every week.
+test("asking twice for the same card is not an error", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId, customerUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Twice ${Date.now()}`,
+            stamps_required: 5,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    try {
+        await page.goto(`/businesses/${businessId}`);
+        await page.getByRole("button", { name: "Join the loyalty card" }).click();
+        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 20_000 });
+
+        // The same press again, from a page that hasn't caught up.
+        await page.goBack();
+        await page.getByRole("button", { name: "Join the loyalty card" }).click();
+        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 20_000 });
+        await expect(page.getByText(/isn't available right now/)).toHaveCount(0);
+
+        const { count } = await admin
+            .from("loyalty_cards")
+            .select("id", { count: "exact", head: true })
+            .eq("program_id", program!.id)
+            .eq("user_id", customerUserId);
+        expect(count, "one card, not two").toBe(1);
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
+
 // Pressing "Log in to get your card" is one thing asked for, not two:
 // the card is theirs by the time they land on it.
 test("logging in from the card panel joins the card and lands on it", async ({ page }) => {
