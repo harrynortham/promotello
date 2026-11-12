@@ -6,6 +6,9 @@ How Promotello works in more than one city: docs/MULTI-CITY.md (read before
 touching anything that groups, counts or links by area, or copy that names a
 place)
 
+What Wallet passes will need from the loyalty card: docs/WALLET-PASSES.md (read
+before changing how a card is stamped, finished or handed over)
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands

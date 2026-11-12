@@ -491,3 +491,58 @@ test("the staff page offers the reward on the old card and the stamp on the new"
         await client.from("loyalty_programs").delete().eq("id", next.id);
     }
 });
+
+// Everything a card can have happen to it has to show up in one place,
+// because that is the question a Wallet pass will ask: what has changed
+// since I last looked (20261227090000_a_card_says_when_it_changed.sql).
+test("a stamp, a reward and a handover all move the card's updated_at", async () => {
+    test.setTimeout(120_000);
+    const { businessId, customerUserId } = state();
+    const client = admin();
+    const staff = await asStaff();
+
+    const changedAt = async (code: string) => {
+        const { data } = await client
+            .from("loyalty_cards")
+            .select("updated_at")
+            .eq("card_code", code)
+            .single();
+
+        return new Date(data!.updated_at).getTime();
+    };
+
+    await closeEverything(client, businessId);
+    const ending = await makeCard(client, businessId, { name: `E2E Changed ${Date.now()}`, closed: true });
+    const next = await makeCard(client, businessId, { name: `E2E Changed next ${Date.now()}` });
+    const card = await giveTo(client, ending.id, { userId: customerUserId }, 1);
+
+    try {
+        const made = await changedAt(card.card_code);
+        expect(made, "the migration needs running").toBeGreaterThan(0);
+
+        await stamp(staff, card.card_code);
+        const stamped = await changedAt(card.card_code);
+        expect(stamped).toBeGreaterThan(made);
+
+        // The last stamp: the card fills and the new one is handed over.
+        await comeBackTomorrow(client, card.card_code);
+        await stamp(staff, card.card_code);
+        const { data: given } = await client
+            .from("loyalty_cards")
+            .select("card_code, updated_at")
+            .eq("program_id", next.id)
+            .eq("user_id", customerUserId)
+            .single();
+        expect(given, "a card to carry a new pass").not.toBeNull();
+        expect(new Date(given!.updated_at).getTime()).toBeGreaterThanOrEqual(made);
+
+        const filled = await changedAt(card.card_code);
+        expect(filled).toBeGreaterThan(stamped);
+
+        await redeem(staff, card.card_code);
+        expect(await changedAt(card.card_code), "finished is a change too").toBeGreaterThan(filled);
+    } finally {
+        await client.from("loyalty_programs").delete().eq("id", ending.id);
+        await client.from("loyalty_programs").delete().eq("id", next.id);
+    }
+});
