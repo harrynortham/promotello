@@ -22,7 +22,16 @@ import { LoyaltyCardBuilder } from "./program-form";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; saved?: string; closed?: string; reopened?: string }>;
+    searchParams: Promise<{
+        error?: string;
+        saved?: string;
+        closed?: string;
+        reopened?: string;
+        // One page each, because the two lists are read for different
+        // reasons and nobody wants the other one jumping.
+        collecting?: string;
+        issued?: string;
+    }>;
 };
 
 type LoyaltyCardRow = {
@@ -63,11 +72,71 @@ function weekAgo() {
     return new Date(Date.now() - 7 * 86_400_000).toISOString();
 }
 
+// A page of a list, and what to say underneath it. Both lists on this
+// page are short enough to hold in memory — the stats above them are
+// counted from the same rows — so this is about what a person can read
+// at once, not about what the database hands back.
+const PER_PAGE = { collecting: 5, issued: 10 };
+
+function pageOf<Row>(rows: Row[], requested: string | undefined, size: number) {
+    const totalPages = Math.max(1, Math.ceil(rows.length / size));
+    const asked = Number(requested ?? "1");
+    const page = Number.isInteger(asked) && asked >= 1 && asked <= totalPages ? asked : 1;
+
+    return { page, totalPages, rows: rows.slice((page - 1) * size, page * size) };
+}
+
+// Prev and next, with the other list's page carried along so moving
+// down one doesn't reset the other.
+function Pager({
+    label,
+    basePath,
+    param,
+    page,
+    totalPages,
+    keep,
+}: {
+    label: string;
+    basePath: string;
+    param: "collecting" | "issued";
+    page: number;
+    totalPages: number;
+    keep: string;
+}) {
+    if (totalPages <= 1) return null;
+
+    const href = (to: number) => `${basePath}?${param}=${to}${keep}#${param}`;
+
+    return (
+        <nav aria-label={label} className="mt-5 flex items-center justify-between gap-3">
+            {page > 1 ? (
+                <Button render={<Link href={href(page - 1)} />} nativeButton={false} variant="outline" size="sm">
+                    Previous
+                </Button>
+            ) : (
+                <span />
+            )}
+
+            <span className="text-sm text-[#17233B]/65">
+                Page {page} of {totalPages}
+            </span>
+
+            {page < totalPages ? (
+                <Button render={<Link href={href(page + 1)} />} nativeButton={false} variant="outline" size="sm">
+                    Next
+                </Button>
+            ) : (
+                <span />
+            )}
+        </nav>
+    );
+}
+
 
 async function LoyaltyContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, saved, closed, reopened }] = await Promise.all([
+    const [{ businessId }, { error, saved, closed, reopened, collecting, issued }] = await Promise.all([
         params,
         searchParams,
     ]);
@@ -116,6 +185,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     const program = allCards.find((card) => card.is_active && !card.closed_at) ?? null;
     const cards = program ? [program] : [];
     const stillCollecting = allCards.filter((card) => card.id !== program?.id);
+    const collectingPage = pageOf(stillCollecting, collecting, PER_PAGE.collecting);
 
     let stats = { members: 0, stampsThisWeek: 0, rewards: 0 };
     let cardList: LoyaltyCardRow[] = [];
@@ -145,6 +215,9 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
             rewards: cardList.reduce((sum, holder) => sum + holder.rewards_redeemed, 0),
         };
     }
+
+    const issuedPage = pageOf(cardList, issued, PER_PAGE.issued);
+    const basePath = `/business/${businessId}/loyalty`;
 
     return (
         <div className="text-[#17233B]">
@@ -222,9 +295,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
                 {cards.length > 0 && (
                     <section className="mt-10">
-                        <h2 className="text-xl font-semibold">Your loyalty cards</h2>
-
-                        <div className="mt-4 grid gap-5 md:grid-cols-2">
+                        <div className="grid gap-5 md:grid-cols-2">
                             {/* One card each for now. The database can hold
                                 more and the screens can show more, so the way
                                 to a second is a decision rather than a build.
@@ -338,7 +409,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         </dl>
 
                         {stillCollecting.length > 0 && (
-                            <div className="mt-8">
+                            <div id="collecting" className="mt-8 scroll-mt-24">
                                 <h3 className="text-lg font-semibold">Still being collected</h3>
 
                                 <p className="mt-1 max-w-2xl text-sm text-[#17233B]/65">
@@ -348,7 +419,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                 </p>
 
                                 <ul className="mt-4 space-y-2">
-                                    {stillCollecting.map((card) => {
+                                    {collectingPage.rows.map((card) => {
                                         const holders = cardList.filter(
                                             (holder) => holder.program_id === card.id,
                                         );
@@ -389,13 +460,22 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                         );
                                     })}
                                 </ul>
+
+                                <Pager
+                                    label="Cards still being collected"
+                                    basePath={basePath}
+                                    param="collecting"
+                                    page={collectingPage.page}
+                                    totalPages={collectingPage.totalPages}
+                                    keep={issuedPage.page > 1 ? `&issued=${issuedPage.page}` : ""}
+                                />
                             </div>
                         )}
                     </section>
                 )}
 
                 {cardList.length > 0 && (
-                    <section className="mt-10">
+                    <section id="issued" className="mt-10 scroll-mt-24">
                         <div className="flex flex-wrap items-end justify-between gap-3">
                             <div>
                                 <h3 className="text-lg font-semibold">Loyalty cards issued</h3>
@@ -415,7 +495,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         <Card className="mt-4 border-[#17233B]/10">
                             <CardContent>
                             <ul className="divide-y divide-[#17233B]/10">
-                                {cardList.map((card) => {
+                                {issuedPage.rows.map((card) => {
                                     const complete = card.stamps >= (program?.stamps_required ?? 0);
 
                                     return (
@@ -447,7 +527,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                                 </span>
 
                                                 <span className="text-xs">
-                                                    Joined {new Date(card.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                                                    Issued {new Date(card.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                                                 </span>
 
                                                 {/* The card itself, and the stamp button with
@@ -465,6 +545,15 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                     );
                                 })}
                                 </ul>
+
+                                <Pager
+                                    label="Loyalty cards issued"
+                                    basePath={basePath}
+                                    param="issued"
+                                    page={issuedPage.page}
+                                    totalPages={issuedPage.totalPages}
+                                    keep={collectingPage.page > 1 ? `&collecting=${collectingPage.page}` : ""}
+                                />
                             </CardContent>
                         </Card>
                     </section>
