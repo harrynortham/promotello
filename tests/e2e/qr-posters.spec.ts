@@ -830,7 +830,9 @@ test("every poster and every code file has its own name", async ({ page, request
 
         // The business, the spot and the paper, and no " | Promotello":
         // the browser builds a filename out of this.
-        expect(titles[0]).toMatch(/^E2E Test Business - QR poster - E2E window \d+ \(A4\)$/);
+        // The business, the spot, the paper and the code: two spots
+        // called the same thing still save under their own names.
+        expect(titles[0]).toMatch(/^E2E Test Business - QR poster - E2E window \d+ \(A4\) - [a-z0-9]+$/);
         expect(new Set(titles).size, JSON.stringify(titles)).toBe(titles.length);
 
         // And the code on its own, where two spots can share a name.

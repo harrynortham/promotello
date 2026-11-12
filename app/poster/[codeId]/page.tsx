@@ -30,7 +30,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     // plain title rather than a business's name.
     const { data: code } = await supabase
         .from("qr_codes")
-        .select("label, businesses ( name )")
+        .select("code, label, businesses ( name )")
         .eq("id", codeId)
         .maybeSingle();
 
@@ -52,7 +52,10 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         .replace(/\s+/g, " ")
         .trim();
 
-    return { title: { absolute: `${title} (${paper})` }, robots };
+    // The code on the end, as the downloaded image carries it: two
+    // spots can be called the same thing, and a business saving its
+    // second Till poster shouldn't be asked to overwrite its first.
+    return { title: { absolute: `${title} (${paper}) - ${code.code}` }, robots };
 }
 
 type PageProps = {
