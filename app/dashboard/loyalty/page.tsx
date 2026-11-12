@@ -5,7 +5,7 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/listing-ui";
-import { LoyaltyCard } from "@/components/loyalty-card";
+import { LiveLoyaltyCard } from "@/components/live-loyalty-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { qrSvg } from "@/lib/qr";
@@ -89,8 +89,9 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                                 const business = card.business;
 
                                 return (
-                                    <LoyaltyCard
+                                    <LiveLoyaltyCard
                                         key={card.id}
+                                        cardId={card.id}
                                         id={card.programId}
                                         businessName={business?.name ?? "Business"}
                                         businessHref={business ? businessPath(business) : "/businesses"}

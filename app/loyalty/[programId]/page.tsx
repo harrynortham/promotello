@@ -7,7 +7,7 @@ import { FiArrowRight } from "react-icons/fi";
 
 import { AppFooter } from "@/components/site/footers";
 import { CustomerAppHeader } from "@/components/site/headers";
-import { LoyaltyCard } from "@/components/loyalty-card";
+import { LiveLoyaltyCard } from "@/components/live-loyalty-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLoyaltyCards } from "@/app/dashboard/loyalty/cards";
 import { qrSvg } from "@/lib/qr";
@@ -83,7 +83,8 @@ async function Card({ params }: PageProps) {
             </h1>
 
             <div>
-                <LoyaltyCard
+                <LiveLoyaltyCard
+                    cardId={card.id}
                     id={card.programId}
                     businessName={business?.name ?? "Business"}
                     businessHref={business ? businessPath(business) : "/businesses"}
