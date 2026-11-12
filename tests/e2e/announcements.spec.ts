@@ -125,7 +125,7 @@ test("on a phone the close is in the corner, not beside the button", async ({ br
 // The shell the suggestion sits in is wider than any of the pages
 // inside it, so a bar filling the shell hung over both edges of the
 // page it was talking about.
-test("the suggestion is the width of the page under it", async ({ browser }) => {
+test("the suggestion is the width of the page under it, and the page is evenly spaced", async ({ browser }) => {
     const { customerUserId } = state();
     await startFresh(customerUserId);
 
@@ -147,4 +147,34 @@ test("the suggestion is the width of the page under it", async ({ browser }) => 
         Math.abs((barBox?.width ?? 0) - (sectionBox?.width ?? 1)),
         "same width",
     ).toBeLessThan(1);
+
+    // And one gap all the way down, rather than three sizes of air
+    // between blocks that are all doing the same job.
+    const gaps = await page.evaluate(() => {
+        const boxes: { label: string; top: number; bottom: number }[] = [];
+        const add = (label: string, el: Element | null | undefined) => {
+            if (!el) return;
+            const box = el.getBoundingClientRect();
+            boxes.push({ label, top: box.top, bottom: box.bottom });
+        };
+
+        add("suggestion", document.querySelector("[aria-label='Suggestion']"));
+        add("header", document.querySelector("main h1")?.closest("div.flex.flex-col"));
+        add("stats", document.querySelector("main .grid.gap-4"));
+        document
+            .querySelectorAll("main section")
+            .forEach((section) =>
+                add(section.querySelector("h2")?.textContent ?? "section", section),
+            );
+
+        return boxes
+            .slice(1)
+            .map((box, index) => ({
+                between: `${boxes[index].label} → ${box.label}`,
+                gap: Math.round(box.top - boxes[index].bottom),
+            }));
+    });
+
+    expect(gaps.length, "the dashboard has its blocks").toBeGreaterThan(3);
+    expect(gaps.filter((gap) => gap.gap !== 32), JSON.stringify(gaps)).toEqual([]);
 });

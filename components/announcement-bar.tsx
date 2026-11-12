@@ -177,7 +177,7 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
     return (
         <aside
             aria-label="Suggestion"
-            className="relative mb-6 flex flex-col gap-4 rounded-2xl border border-[#FF593F]/20 bg-[#FFF4E8] p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5"
+            className="relative mb-8 flex flex-col gap-4 rounded-2xl border border-[#FF593F]/20 bg-[#FFF4E8] p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5"
         >
             <span
                 aria-hidden="true"
