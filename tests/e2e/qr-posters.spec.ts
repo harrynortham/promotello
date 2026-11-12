@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
-import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
+import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
+import { codeFor } from "../sign-in";
 
 test.use({ storageState: BUSINESS_AUTH });
 
@@ -651,10 +652,12 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
         await expect(page.getByText(/Join free on Promotello and collect a stamp/)).toBeVisible();
         await expect(page.getByText(/Claim it free on Promotello/)).toHaveCount(0);
 
-        // And a scan lands on the card, not the top of the page.
+        // And a scan ends with the card, not a page describing it:
+        // this request carries the owner's session, so it is joined and
+        // handed straight to their cards.
         const scan = await request.get(`/q/${made!.code}`, { maxRedirects: 0 });
         expect(scan.status()).toBe(307);
-        expect(scan.headers()["location"]).toContain(`#loyalty-${card!.id}`);
+        expect(scan.headers()["location"]).toContain(`/dashboard/loyalty?joined=${card!.id}`);
     } finally {
         if (codeId) await admin.from("qr_codes").delete().eq("id", codeId);
         await admin.from("loyalty_programs").delete().eq("id", card!.id);
@@ -795,6 +798,123 @@ test("a poster keeps the layout and the colours it was made with", async ({ page
         await expect(page.locator("article")).toHaveCount(2);
     } finally {
         await client.from("qr_codes").delete().eq("id", made!.id);
+    }
+});
+
+// A poster for a loyalty card is an invitation to join it, so a scan
+// ends with the card in somebody's phone rather than on a page
+// describing it.
+async function cardPoster() {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await client
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await client.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await client
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Scan ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const { data: code } = await client
+        .from("qr_codes")
+        .insert({
+            business_id: businessId,
+            label: `E2E scan ${Date.now()}`,
+            loyalty_program_id: program!.id,
+        })
+        .select("id, code")
+        .single();
+
+    return {
+        client,
+        program: program!,
+        code: code!,
+        async clearUp() {
+            await client.from("qr_codes").delete().eq("id", code!.id);
+            await client.from("loyalty_programs").delete().eq("id", program!.id);
+        },
+    };
+}
+
+test("scanning a card poster signed out: sign up, and the card is waiting", async ({ page }) => {
+    test.setTimeout(120_000);
+    const { client, program, code, clearUp } = await cardPoster();
+
+    const email = `e2e_scan_${Date.now()}@test.internal`;
+    const { data: created } = await client.auth.admin.createUser({ email, email_confirm: true });
+
+    try {
+        await page.context().clearCookies();
+        await page.goto(`/q/${code.code}`);
+
+        // The sign-up page takes a new address and an old one alike, and
+        // carries what was scanned with it.
+        await page.waitForURL(/\/signup\?/, { timeout: 20_000 });
+        expect(decodeURIComponent(page.url())).toContain(`?join=1`);
+
+        await page.route(/\/auth\/v1\/otp/, (route) =>
+            route.fulfill({ status: 200, contentType: "application/json", body: "{}" }),
+        );
+        await page.locator("#signup-email").fill(email);
+        await page.getByRole("button", { name: "Email me a code" }).click();
+        await page.locator("#signup-code").waitFor({ timeout: 15_000 });
+        await page.locator("#signup-code").fill(await codeFor(email));
+        await page.getByRole("button", { name: "Sign in" }).click();
+
+        // Straight to the card, already theirs.
+        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 25_000 });
+        await expect(page.getByText("6 stamps for a free coffee")).toBeVisible();
+
+        const { data: card } = await client
+            .from("loyalty_cards")
+            .select("id")
+            .eq("program_id", program.id)
+            .eq("user_id", created!.user!.id)
+            .maybeSingle();
+        expect(card, "the card is theirs").not.toBeNull();
+    } finally {
+        await clearUp();
+        await client.auth.admin.deleteUser(created!.user!.id);
+    }
+});
+
+test("scanning it signed in: no form, just the card", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { customerUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const { client, program, code, clearUp } = await cardPoster();
+
+    const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    try {
+        await page.goto(`/q/${code.code}`);
+        await page.waitForURL(/\/dashboard\/loyalty\?joined=/, { timeout: 25_000 });
+
+        const { data: card } = await client
+            .from("loyalty_cards")
+            .select("id")
+            .eq("program_id", program.id)
+            .eq("user_id", customerUserId)
+            .maybeSingle();
+        expect(card, "the card is theirs").not.toBeNull();
+    } finally {
+        await clearUp();
     }
 });
 
