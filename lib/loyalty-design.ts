@@ -29,6 +29,11 @@ export const STAMP_ICON_LABELS: Record<StampIcon, string> = {
     bag: "Bag",
 };
 
+// The code on a card nobody holds yet: the previews a business sees
+// while setting one up, and the card on its dashboard. One constant, so
+// the two are the same card rather than two cards that nearly match.
+export const SAMPLE_CARD_CODE = "4F8A2C91D0";
+
 export const DEFAULT_CARD_COLOUR: CardColour = "navy";
 export const DEFAULT_STAMP_ICON: StampIcon = "check";
 

@@ -793,3 +793,131 @@ test("a poster keeps the layout and the colours it was made with", async ({ page
         await client.from("qr_codes").delete().eq("id", made!.id);
     }
 });
+
+// The headline is balanced, and so is the line under it: a description
+// that leaves one word alone on its last line is the commonest way a
+// poster looks unfinished.
+test("the poster's description is balanced across its lines", async ({ page }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/business/${businessId}/qr/new`);
+
+    const target = page.getByLabel("What should it open?");
+    await expect(target).toBeVisible({ timeout: 20_000 });
+
+    // The description belongs to an offer poster.
+    const offer = await target.locator("option").evaluateAll((options) => {
+        const match = options.find(
+            (option) =>
+                option.textContent?.startsWith("Offer:") && !(option as HTMLOptionElement).disabled,
+        ) as HTMLOptionElement | undefined;
+        return match?.value ?? null;
+    });
+    expect(offer, "the test business has an approved offer to point at").not.toBeNull();
+    await target.selectOption(offer!);
+
+    await page.getByLabel("Description").fill(
+        "Every cocktail on the list, Monday to Thursday from five until close, for anyone who scans",
+    );
+
+    const poster = page.locator("article").filter({ hasText: "Point your phone camera here" }).last();
+    await expect(poster.getByText(/Every cocktail on the list/)).toHaveCSS("text-wrap-style", "balance");
+});
+
+// A poster that opens a loyalty card can draw the card. "Get a free
+// coffee" on a window says nothing about how: a row of stamps does.
+test("a loyalty code is offered layouts that draw the card", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await client
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await client.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await client
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Poster card ${Date.now()}`,
+            stamps_required: 9,
+            reward: "A free coffee",
+            terms: "One stamp per visit.",
+            card_colour: "custom",
+            card_header: "#0B5FFF",
+            card_accent: "#FFD400",
+            stamp_icon: "coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        await page.goto(`/business/${businessId}/qr/new`);
+        const target = page.getByLabel("What should it open?");
+        await expect(target).toBeVisible({ timeout: 20_000 });
+
+        // Nothing to draw a card from: four layouts, as before.
+        await expect(page.getByRole("button", { name: "Stamp card" })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Stamp strip" })).toHaveCount(0);
+
+        await target.selectOption("loyalty");
+
+        // Six now, and the one that shows the card is already chosen.
+        const stampCard = page.getByRole("button", { name: "Stamp card" });
+        await expect(stampCard).toBeVisible();
+        await expect(page.getByRole("button", { name: "Stamp strip" })).toBeVisible();
+        await expect(stampCard).toHaveAttribute("aria-pressed", "true");
+
+        // The card is drawn in its own colours, not the poster's.
+        const preview = page.locator("article").filter({ hasText: "Point your phone camera here" }).last();
+        await expect(
+            preview.locator('[style*="rgb(11, 95, 255)"], [style*="#0B5FFF"]').first(),
+        ).toBeVisible();
+
+        // On a wall the card's panel invites a scan; a card in somebody's
+        // phone is the one shown to staff, with a code on it.
+        await expect(preview).toContainText("Scan to get your own");
+        await expect(preview).not.toContainText("Show this to staff");
+        await expect(preview).not.toContainText("4F8A2C91D0");
+
+        // One code on the sheet: the card's. A second copy above it
+        // would be the same scan twice.
+        await expect(preview.locator('[class*="rounded-xl"] > svg, svg').nth(0)).toBeVisible();
+
+        // The card is the app's card, so its band ranges left behind the
+        // logo. The sheet's text is centred, and the card inherited that
+        // until it was told not to: the name floated over the line under
+        // it, lined up with neither it nor the logo.
+        const name = preview.getByText("E2E Test Business", { exact: true }).last();
+        const under = preview.getByText(/stamps for a free coffee/).last();
+        const [nameBox, underBox] = await Promise.all([name.boundingBox(), under.boundingBox()]);
+        expect(Math.abs((nameBox?.x ?? 0) - (underBox?.x ?? 1))).toBeLessThan(1);
+
+        // The strip doesn't draw the card, so it carries the words the
+        // card would have said, balanced like the headline above them.
+        await page.getByRole("button", { name: "Stamp strip" }).click();
+        await expect(preview.getByText(/One stamp per visit/)).toHaveCSS(
+            "text-wrap-style",
+            "balance",
+        );
+        await page.getByRole("button", { name: "Stamp card" }).click();
+
+        // Pointing it somewhere else can't leave a layout behind with
+        // nothing left to draw.
+        await target.selectOption("business");
+        await expect(page.getByRole("button", { name: "Stamp card" })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Classic" })).toHaveAttribute("aria-pressed", "true");
+    } finally {
+        await client.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});

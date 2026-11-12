@@ -118,7 +118,7 @@ async function QrContent({ params, searchParams }: PageProps) {
         // The card being handed out, for a poster by the till.
         supabase
             .from("loyalty_programs")
-            .select("id, name, stamps_required, reward, terms")
+            .select("id, name, stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon")
             .eq("business_id", businessId)
             .eq("is_active", true)
             .is("closed_at", null)

@@ -1,7 +1,28 @@
 import Image from "next/image";
+import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar } from "react-icons/fi";
 
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { storedImage } from "@/lib/images";
+import {
+    cardTheme,
+    readableInk,
+    stampIcon as readStampIcon,
+    type StampIcon,
+} from "@/lib/loyalty-design";
+
+// What LoyaltyCard is laid out at before the poster zooms it.
+const CARD_WIDTH = 380;
 import { posterTheme } from "@/lib/poster-colour";
+
+const stampIcons: Record<StampIcon, typeof FiCheck> = {
+    check: FiCheck,
+    star: FiStar,
+    heart: FiHeart,
+    coffee: FiCoffee,
+    gift: FiGift,
+    scissors: FiScissors,
+    bag: FiShoppingBag,
+};
 
 // The printable QR poster (app/poster/[codeId]), also shown small on the
 // QR page so a business can see what it is about to make. Everything is
@@ -15,6 +36,16 @@ import { posterTheme } from "@/lib/poster-colour";
 //   code_first  the code on a colour panel at the top, words beneath
 //   bold        the whole sheet in colour, read from the pavement
 //   minimal     no colour block at all, for a window that wants quiet
+//
+// And two more for a code that opens a loyalty card, which draw the
+// card itself. A passer-by reading "Get a free coffee" has no idea
+// whether that is today's offer or nine visits away; a row of empty
+// stamps says it without a sentence:
+//
+//   stamp_card  the card drawn whole, the way they will carry it
+//   stamp_strip a quieter sheet with the stamps in a line across it
+//
+// Both need `card`, so they fall back to classic without one.
 //
 // Paper is not decided here. Any of them prints at A4, A5 or two to a
 // sheet.
@@ -40,9 +71,30 @@ export const POSTER_LAYOUTS = [
         label: "Minimal",
         hint: "No colour block. Quiet enough for a smart window.",
     },
+    {
+        value: "stamp_card",
+        label: "Stamp card",
+        hint: "The card itself, so people see what they are collecting.",
+        forLoyalty: true,
+    },
+    {
+        value: "stamp_strip",
+        label: "Stamp strip",
+        hint: "A line of stamps across the sheet, with the reward above it.",
+        forLoyalty: true,
+    },
 ] as const;
 
 export type PosterLayout = (typeof POSTER_LAYOUTS)[number]["value"];
+
+// The two that draw a card are offered only where there is one to draw.
+export const LOYALTY_LAYOUTS = POSTER_LAYOUTS.filter(
+    (option) => "forLoyalty" in option && option.forLoyalty,
+).map((option) => option.value) as readonly PosterLayout[];
+
+export function isLoyaltyLayout(value: string | null | undefined) {
+    return LOYALTY_LAYOUTS.includes(value as PosterLayout);
+}
 
 export function posterLayout(value: string | null | undefined): PosterLayout {
     return POSTER_LAYOUTS.some((option) => option.value === value)
@@ -83,6 +135,18 @@ type PosterProps = {
     // The line under "Point your phone camera here". A claim and a
     // stamp card ask for different things.
     caption?: string | null;
+    // The loyalty card this code opens, for the layouts that draw one.
+    // Its own colours, not the poster's: what is on the wall should be
+    // what lands in their phone.
+    card?: {
+        stampsRequired: number;
+        reward: string;
+        terms?: string | null;
+        colour?: string | null;
+        header?: string | null;
+        accent?: string | null;
+        stampIcon?: string | null;
+    } | null;
     className?: string;
 };
 
@@ -170,14 +234,148 @@ function Title({ children, size }: { children: string; size: string }) {
     );
 }
 
+// Balanced like the headline above it: three lines with one word alone
+// on the last is the commonest way a poster looks unfinished.
 function Body({ children, dark }: { children: string; dark: boolean }) {
     return (
         <p
-            className={`line-clamp-3 max-w-[24em] ${dark ? "opacity-80" : "text-[#17233B]/75"}`}
+            className={`line-clamp-3 max-w-[24em] text-balance ${dark ? "opacity-80" : "text-[#17233B]/75"}`}
             style={{ fontSize: "1.45em", lineHeight: 1.3 }}
         >
             {children}
         </p>
+    );
+}
+
+// A row of empty stamps, the last one the reward. Drawn here rather
+// than with components/loyalty-card.tsx because a poster is sized in em
+// from one root font size — the same markup has to hold at A4, at A5
+// and in a 72px thumbnail — while the card in the app is sized in
+// pixels for a phone. The palette and the icons come from
+// lib/loyalty-design.ts either way, so the two can't drift apart on the
+// thing that matters: what the stamps look like.
+function StampRow({
+    required,
+    icon,
+    colour,
+    ink,
+    size = "2.6em",
+}: {
+    required: number;
+    icon: StampIcon;
+    colour: string;
+    ink: string;
+    size?: string;
+}) {
+    const Icon = stampIcons[icon];
+    // A couple already collected, the way every preview in the app
+    // draws a card: a row of empty rings reads as a form to fill in,
+    // and these are what a customer is being offered.
+    const filled = Math.min(2, required - 1);
+    // Eight to a row, as the card itself lays them out.
+    const columns = Math.min(required, 8);
+
+    // Width enough for exactly one row, so the wrap lands where it was
+    // meant to and the short last row centres under the long one. A
+    // grid would hang those four off the left.
+    const gap = 0.45;
+    const across = Number.parseFloat(size);
+
+    return (
+        <div
+            className="mx-auto flex flex-wrap justify-center"
+            style={{
+                gap: `${gap}em`,
+                width: `${columns * across + (columns - 1) * gap}em`,
+            }}
+        >
+            {Array.from({ length: required }, (_, index) => {
+                const isFilled = index < filled;
+                const isReward = index === required - 1;
+
+                return (
+                    <span
+                        key={index}
+                        className={`flex items-center justify-center rounded-full border-[0.12em] ${isFilled ? "" : "border-dashed"}`}
+                        style={{
+                            width: size,
+                            height: size,
+                            borderColor: isFilled || isReward ? colour : "rgba(23,35,59,0.22)",
+                            backgroundColor: isFilled ? colour : isReward ? `${colour}1a` : "transparent",
+                            color: isFilled ? ink : colour,
+                        }}
+                    >
+                        {isReward ? (
+                            <FiGift aria-hidden="true" style={{ width: "55%", height: "55%" }} />
+                        ) : (
+                            isFilled && <Icon aria-hidden="true" style={{ width: "52%", height: "52%" }} />
+                        )}
+                    </span>
+                );
+            })}
+        </div>
+    );
+}
+
+// The card as they will carry it — the component the dashboard and the
+// customer's own page draw, not a copy of it, so the picture on the
+// wall cannot drift from the thing in their phone.
+//
+// It is built in pixels for a phone, and a poster is built in em from
+// one root size, so it is zoomed to the width the sheet has room for.
+// zoom scales the layout box too, which is what keeps the sheet's own
+// spacing honest; a transform would leave a hole the card's full size.
+function CardOnPoster({
+    businessName,
+    logoUrl,
+    card,
+    qrMarkup,
+    fontSize,
+    widthEm,
+}: {
+    businessName: string;
+    logoUrl?: string | null;
+    card: NonNullable<PosterProps["card"]>;
+    qrMarkup: string;
+    fontSize: number;
+    widthEm: number;
+}) {
+    return (
+        <div style={{ zoom: (widthEm * fontSize) / CARD_WIDTH }}>
+            {/* Back to a page's own defaults: the card's text sizes are
+                rem and px, so the few lines with no size of their own
+                would inherit the poster's em scale and come out a
+                quarter the size of everything beside them — and the
+                sheet's centred text would centre the name over the line
+                under it instead of ranging both left of the logo. */}
+            <div className="text-left" style={{ width: `${CARD_WIDTH}px`, fontSize: "16px" }}>
+                <LoyaltyCard
+                    businessName={businessName}
+                    logoUrl={logoUrl}
+                    stampsRequired={card.stampsRequired}
+                    reward={card.reward}
+                    // The same two the previews show: a card nobody has
+                    // started reads as a form rather than an offer.
+                    stamps={Math.min(2, card.stampsRequired - 1)}
+                    terms={card.terms}
+                    // No code: nobody holds this one yet, and a made-up
+                    // one on a wall is a code somebody will try to type.
+                    scanTitle="Scan to get your own"
+                    scanHint="It's free, and your stamps live in your phone."
+                    // The only code on the sheet, and a window is
+                    // further away than a pocket: about 50mm at A4.
+                    qrSize="size-48"
+                    // The poster's own code, so scanning the card in the
+                    // picture joins the card in the picture.
+                    qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qrMarkup }} />}
+                    colour={card.colour}
+                    header={card.header}
+                    accent={card.accent}
+                    stampIcon={card.stampIcon}
+                    className="border-[#17233B]/10"
+                />
+            </div>
+        </div>
     );
 }
 
@@ -249,13 +447,25 @@ export function QrPoster(props: PosterProps) {
         detail,
         eyebrowFallback,
         caption,
+        card,
         className = "",
     } = props;
 
     // A code that opens the business page lands on a list of offers, so
     // "claim it" has nothing to point at yet.
     const theme = posterTheme({ colour, header: headerColour, accent: accentColour });
-    const chosen = posterLayout(layout);
+    // A card layout with no card to draw is a classic poster: a code
+    // saved as a stamp card and later pointed somewhere else still has
+    // to print.
+    const asked = posterLayout(layout);
+    const chosen = isLoyaltyLayout(asked) && !card ? "classic" : asked;
+    // The card's own stamp colour, for the layout that draws the stamps
+    // without the card around them.
+    const cardStamp = cardTheme({
+        colour: card?.colour,
+        header: card?.header,
+        accent: card?.accent,
+    }).stamp;
     const dark = chosen === "bold";
     const pill =
         eyebrow?.trim() || eyebrowFallback?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
@@ -336,6 +546,93 @@ export function QrPoster(props: PosterProps) {
                             {businessName}
                             {place && <span className="opacity-70"> · {place}</span>}
                         </p>
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
+
+    if (chosen === "stamp_card") {
+        return (
+            <article className={sheet} style={style}>
+                {/* The card is the picture on this one: a row of empty
+                    circles says "nine visits" faster than any line of
+                    type can. */}
+                <header
+                    className="flex items-center gap-[1em] px-[2.5em] py-[1.4em]"
+                    style={{ backgroundColor: theme.header, color: theme.ink }}
+                >
+                    <Logo url={logoUrl} size="3.2em" />
+                    <Name businessName={businessName} place={place} onColour />
+                </header>
+
+                <div className="flex flex-1 flex-col items-center justify-center gap-[0.8em] px-[2.5em] py-[1em] text-center">
+                    <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+                    <Title size={headline?.trim() ? "2.8em" : "3.4em"}>{title}</Title>
+
+                    {/* One code on the sheet, and it is the one on the
+                        card: a second copy of it above would be the
+                        same scan twice, and the card is the thing worth
+                        looking at. */}
+                    <div className="mt-[0.4em]">
+                        <CardOnPoster
+                            businessName={businessName}
+                            logoUrl={logoUrl}
+                            card={card!}
+                            qrMarkup={qrMarkup}
+                            fontSize={fontSize}
+                            widthEm={27}
+                        />
+                    </div>
+
+                    <div className="mt-[0.4em]">
+                        <ScanLines caption={scanLine} dark={dark} />
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
+
+    if (chosen === "stamp_strip") {
+        return (
+            <article className={sheet} style={style}>
+                {/* No band and no card: the stamps themselves are the
+                    whole middle of the sheet, big enough to count from
+                    across a room. */}
+                <header className="flex items-center gap-[1em] px-[2.5em] pt-[2.4em]">
+                    <Logo url={logoUrl} size="3.4em" />
+                    <Name businessName={businessName} place={place} onColour={false} />
+                </header>
+
+                <div className="flex flex-1 flex-col items-center justify-center gap-[1em] px-[2.5em] text-center">
+                    <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+                    <Title size={headline?.trim() ? "3em" : "4em"}>{title}</Title>
+
+                    {/* What the card asks for in the business's own
+                        words, where the card itself isn't drawn to say
+                        it. */}
+                    {body && <Body dark={dark}>{body}</Body>}
+
+                    <div className="mt-[0.3em] w-full">
+                        <StampRow
+                            required={card!.stampsRequired}
+                            icon={readStampIcon(card!.stampIcon)}
+                            colour={cardStamp}
+                            ink={readableInk(cardStamp)}
+                            size="3.4em"
+                        />
+                    </div>
+
+                    <div className="mt-[0.8em]">
+                        <Code markup={qrMarkup} size="19em" />
+                    </div>
+
+                    <div className="mt-[0.2em]">
+                        <ScanLines caption={scanLine} dark={dark} />
                     </div>
                 </div>
 

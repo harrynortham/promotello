@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
-import { POSTER_LAYOUTS, QrPoster, type PosterLayout } from "@/components/qr-poster";
+import { isLoyaltyLayout, POSTER_LAYOUTS, QrPoster, type PosterLayout } from "@/components/qr-poster";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,7 +46,17 @@ export function PosterDesigner({
     }[];
     // The card being handed out, if there is one. A poster by the till
     // is the strongest thing a business has for it.
-    loyalty: { id: string; name: string; stamps_required: number; reward: string; terms: string | null } | null;
+    loyalty: {
+        id: string;
+        name: string;
+        stamps_required: number;
+        reward: string;
+        terms: string | null;
+        card_colour: string | null;
+        card_header: string | null;
+        card_accent: string | null;
+        stamp_icon: string | null;
+    } | null;
     previewSvg: string;
     previewLink: string;
 }) {
@@ -85,6 +95,11 @@ export function PosterDesigner({
 
     const description = detail ?? chosenOffer?.description ?? chosenLoyalty?.terms ?? "";
 
+    // Four arrangements for anything, and two more that draw the card.
+    const layoutsOnOffer = POSTER_LAYOUTS.filter(
+        (option) => !("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty),
+    );
+
     const width = PREVIEW_WIDTH;
 
     // The same poster for the big preview and for each layout thumbnail,
@@ -99,6 +114,18 @@ export function PosterDesigner({
         eyebrowFallback: suggestedEyebrow,
         caption: chosenLoyalty
             ? "Join free on Promotello and collect a stamp every time you visit."
+            : null,
+        // What the stamp layouts draw: the card in its own colours.
+        card: chosenLoyalty
+            ? {
+                stampsRequired: chosenLoyalty.stamps_required,
+                reward: chosenLoyalty.reward,
+                terms: chosenLoyalty.terms,
+                colour: chosenLoyalty.card_colour,
+                header: chosenLoyalty.card_header,
+                accent: chosenLoyalty.card_accent,
+                stampIcon: chosenLoyalty.stamp_icon,
+            }
             : null,
         qrMarkup: previewSvg,
         link: previewLink,
@@ -145,8 +172,20 @@ export function PosterDesigner({
                         name="target"
                         value={target}
                         onChange={(event) => {
-                            setTarget(event.target.value);
+                            const next = event.target.value;
+                            setTarget(next);
                             setDetail(null);
+
+                            // The stamp layouts only exist where there
+                            // is a card: pointing a poster at one leads
+                            // with the card, and pointing it away from
+                            // one can't leave a layout behind that has
+                            // nothing left to draw.
+                            if (next === "loyalty") {
+                                setLayout("stamp_card");
+                            } else if (isLoyaltyLayout(layout)) {
+                                setLayout("classic");
+                            }
                         }}
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
@@ -198,7 +237,7 @@ export function PosterDesigner({
                     <Label>Layout</Label>
 
                     <div className="grid grid-cols-4 gap-3">
-                        {POSTER_LAYOUTS.map((option) => (
+                        {layoutsOnOffer.map((option) => (
                             <button
                                 key={option.value}
                                 type="button"
@@ -229,7 +268,7 @@ export function PosterDesigner({
                     </div>
 
                     <p className="text-xs leading-5 text-[#17233B]/65">
-                        {POSTER_LAYOUTS.find((option) => option.value === layout)?.hint}
+                        {layoutsOnOffer.find((option) => option.value === layout)?.hint}
                     </p>
                 </div>
 

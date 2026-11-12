@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { StampQr } from "@/components/stamp-qr";
 import { ScanQrButton } from "@/components/scan-qr-button";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -12,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormAndPreviewLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
+import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
 import { ukDate } from "@/lib/uk-time";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard } from "./actions";
@@ -274,8 +276,8 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             reward={card.reward}
                                             stamps={Math.min(3, card.stamps_required - 1)}
                                             terms={card.terms}
-                                            code={card.id.slice(0, 10).toUpperCase()}
-                                            qr={null}
+                                            code={SAMPLE_CARD_CODE}
+                                            qr={<StampQr code={SAMPLE_CARD_CODE} />}
                                             colour={card.card_colour}
                                             header={card.card_header}
                                             accent={card.card_accent}

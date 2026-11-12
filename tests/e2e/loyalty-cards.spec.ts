@@ -350,6 +350,12 @@ test("the card on the edit page follows what is typed", async ({ browser }) => {
         await expect(preview).toContainText("5 stamps for a free pastry");
         await expect(preview).toContainText("3 of 5 stamps");
 
+        // Eight to a row, so a card of eight is one row and nine is
+        // eight and one, rather than wherever the width ran out.
+        await page.locator("#stamps-required").selectOption("12");
+        const stampRow = preview.getByRole("img", { name: /of 12 stamps collected/ });
+        await expect(stampRow).toHaveCSS("grid-template-columns", /(\S+ ){7}\S+$/);
+
         // Nothing is saved until it is saved.
         const { data: unchanged } = await admin
             .from("loyalty_programs")
@@ -506,10 +512,13 @@ test("a card can be saved in the business's own colours, with any stamp", async 
             stamp_icon: "scissors",
         });
 
-        // And the card a customer would see is drawn in them.
+        // And the card a customer would see is drawn in them — the same
+        // card as the preview, down to the sample code and its QR.
         await page.goto(`/business/${businessId}/loyalty`);
         const card = page.locator("article").filter({ hasText: "stamps for a free trim" }).first();
         await expect(card.locator("div").first()).toHaveCSS("background-color", "rgb(11, 95, 255)");
+        await expect(card).toContainText("4F8A2C91D0");
+        await expect(card.locator("svg").last()).toBeVisible();
 
         // Back on one of the six, the hexes are cleared rather than left
         // behind for a card that is no longer custom.
