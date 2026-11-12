@@ -6,7 +6,6 @@ import { storedImage } from "@/lib/images";
 import {
     cardTheme,
     readableInk,
-    SAMPLE_CARD_CODE,
     stampIcon as readStampIcon,
     type StampIcon,
 } from "@/lib/loyalty-design";
@@ -356,7 +355,10 @@ function CardOnPoster({
                     // started reads as a form rather than an offer.
                     stamps={Math.min(2, card.stampsRequired - 1)}
                     terms={card.terms}
-                    code={SAMPLE_CARD_CODE}
+                    // No code: nobody holds this one yet, and a made-up
+                    // one on a wall is a code somebody will try to type.
+                    scanTitle="Scan to get your own"
+                    scanHint="It's free, and your stamps live in your phone."
                     // The poster's own code, so scanning the card in the
                     // picture joins the card in the picture.
                     qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qrMarkup }} />}

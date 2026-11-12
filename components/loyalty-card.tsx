@@ -20,6 +20,8 @@ export function LoyaltyCard({
     active = true,
     terms,
     code,
+    scanTitle = "Show this to staff",
+    scanHint = "They can scan it or type the code.",
     qr,
     colour,
     header,
@@ -38,7 +40,13 @@ export function LoyaltyCard({
     rewardsRedeemed?: number;
     active?: boolean;
     terms?: string | null;
-    code: string;
+    // The customer's own card code. Empty on a poster, where the card
+    // is a picture of one nobody holds yet.
+    code?: string;
+    // What the panel beside the QR says. A card in somebody's phone is
+    // shown to staff; the same card on a wall is scanned to get one.
+    scanTitle?: string;
+    scanHint?: string;
     qr: ReactNode;
     // The business's chosen look, from its loyalty programme.
     colour?: string | null;
@@ -121,9 +129,11 @@ export function LoyaltyCard({
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-sm font-medium">Show this to staff</p>
-                        <p className="mt-2 font-mono text-lg font-semibold tracking-[0.2em]">{code}</p>
-                        <p className="mt-1 text-xs text-[#17233B]/70">They can scan it or type the code.</p>
+                        <p className="text-sm font-medium">{scanTitle}</p>
+                        {code && (
+                            <p className="mt-2 font-mono text-lg font-semibold tracking-[0.2em]">{code}</p>
+                        )}
+                        <p className={`text-xs text-[#17233B]/70 ${code ? "mt-1" : "mt-2"}`}>{scanHint}</p>
                     </div>
                 </div>
 

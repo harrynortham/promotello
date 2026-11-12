@@ -853,6 +853,12 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
             preview.locator('[style*="rgb(11, 95, 255)"], [style*="#0B5FFF"]').first(),
         ).toBeVisible();
 
+        // On a wall the card's panel invites a scan; a card in somebody's
+        // phone is the one shown to staff, with a code on it.
+        await expect(preview).toContainText("Scan to get your own");
+        await expect(preview).not.toContainText("Show this to staff");
+        await expect(preview).not.toContainText("4F8A2C91D0");
+
         // Pointing it somewhere else can't leave a layout behind with
         // nothing left to draw.
         await target.selectOption("business");
