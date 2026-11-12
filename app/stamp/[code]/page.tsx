@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { FiArrowLeft, FiCheckCircle, FiGift } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { cardState } from "@/lib/loyalty-state";
 import { AppFooter } from "@/components/site/footers";
 import { BusinessAppHeader } from "@/components/site/headers";
 import { SubmitButton } from "@/components/submit-button";
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 
 type PageProps = {
     params: Promise<{ code: string }>;
-    searchParams: Promise<{ done?: string; error?: string }>;
+    searchParams: Promise<{ done?: string; error?: string; handed?: string; finished?: string }>;
 };
 
 type StaffCard = {
@@ -43,11 +44,24 @@ type StaffCard = {
     stamp_icon: string | null;
     customer_name: string | null;
     is_own_card: boolean;
+    // A card nobody can join any more: it fills once, pays out once and
+    // is then finished for good.
+    program_closed: boolean;
+    card_finished: boolean;
+    // The same customer's card on the card being handed out now, where
+    // they hold one, so a single scan can serve both.
+    open_card_code: string | null;
+    open_card_name: string | null;
+    open_card_stamps: number | null;
+    open_card_stamps_required: number | null;
+    open_card_stamped_recently: boolean | null;
 };
 
 const errorMessages: Record<string, string> = {
     cooldown: "This card was stamped in the last 10 minutes, so this looks like a double scan.",
     "not-ready": "There aren't enough stamps for a reward yet.",
+    full: "This card is full and isn't handed out any more, so it takes no more stamps. Redeem the reward.",
+    finished: "This card is finished: its reward has been claimed and it was the last one.",
     "own-card": "You can't stamp or redeem your own card. Ask a colleague to do it.",
     forbidden: "This card belongs to a business you don't work at.",
     "not-found": "We couldn't find that card.",
@@ -74,7 +88,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 async function StampContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ code }, { done, error }] = await Promise.all([params, searchParams]);
+    const [{ code }, { done, error, handed, finished }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
 
     const {
@@ -107,8 +121,31 @@ async function StampContent({ params, searchParams }: PageProps) {
         );
     }
 
-    const rewardReady = card.stamps >= card.stamps_required;
+    const state = cardState({
+        stamps: card.stamps,
+        stampsRequired: card.stamps_required,
+        closed: card.program_closed,
+        finished: card.card_finished,
+    });
+    const rewardReady = state === "reward-ready";
     const remaining = Math.max(card.stamps_required - card.stamps, 0);
+
+    // A closed card takes no more stamps once it is full: it is being
+    // seen out, not run. Their stamps go on the card the business hands
+    // out now, which one press from here can reach.
+    const takesStamps = state === "collecting" || state === "last-lap";
+    const newCard = card.open_card_code && !takesStamps
+        ? {
+            code: card.open_card_code,
+            name: card.open_card_name ?? "their new card",
+            stamps: card.open_card_stamps ?? 0,
+            stampsRequired: card.open_card_stamps_required ?? 0,
+            // The new card is handed over with this visit's stamp
+            // already spent on the card it replaced. Saying so beats
+            // offering a button that answers "double scan".
+            stampedThisVisit: card.open_card_stamped_recently === true,
+        }
+        : null;
 
     // The card as it is on the customer's phone, including the code
     // they just held out: staff and customer looking at one thing.
@@ -155,6 +192,8 @@ async function StampContent({ params, searchParams }: PageProps) {
                     scanTitle="Their code"
                     scanHint="The one they showed you."
                     qrSize="size-28"
+                    lastOne={state === "last-lap"}
+                    finished={state === "finished"}
                     className="border-[#17233B]/10"
                 />
             </div>
@@ -168,9 +207,13 @@ async function StampContent({ params, searchParams }: PageProps) {
                         <AlertDescription>
                             {done === "stamp"
                                 ? rewardReady
-                                    ? "The card is full. They can redeem their reward now or on their next visit."
+                                    ? handed
+                                        ? "The card is full. They've been given the new card, and their next stamp goes on it."
+                                        : "The card is full. They can redeem their reward now or on their next visit."
                                     : `${remaining} more ${remaining === 1 ? "stamp" : "stamps"} to go.`
-                                : `Give them ${card.reward.charAt(0).toLowerCase() + card.reward.slice(1)}.`}
+                                : finished
+                                    ? `Give them ${card.reward.charAt(0).toLowerCase() + card.reward.slice(1)}. This card is finished.`
+                                    : `Give them ${card.reward.charAt(0).toLowerCase() + card.reward.slice(1)}.`}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -180,6 +223,38 @@ async function StampContent({ params, searchParams }: PageProps) {
                         <AlertTitle>Not done</AlertTitle>
                         <AlertDescription>{errorMessages[error]}</AlertDescription>
                     </Alert>
+                )}
+
+                {/* Where the card is being seen out, say so before the
+                    buttons do: staff are explaining this to somebody
+                    standing in front of them. */}
+                {state === "finished" && (
+                    <p className="mb-5 text-sm text-[#17233B]/65">
+                        This card is finished — its reward has been claimed and it
+                        was the last one.
+                        {newCard
+                            ? ` Their stamps go on ${newCard.name} now.`
+                            : " There's no card on offer here at the moment."}
+                    </p>
+                )}
+
+                {state === "reward-ready" && card.program_closed && (
+                    <p className="mb-5 text-sm text-[#17233B]/65">
+                        This card is full and isn&apos;t handed out any more, so it
+                        takes no more stamps.
+                        {newCard && !newCard.stampedThisVisit
+                            ? ` Redeem the reward, and their stamps go on ${newCard.name}.`
+                            : newCard
+                                ? " Redeem the reward."
+                                : " Redeem the reward and it's finished."}
+                    </p>
+                )}
+
+                {newCard?.stampedThisVisit && (
+                    <p className="mb-5 text-sm text-[#17233B]/65">
+                        This visit&apos;s stamp is on the card that just filled, so{" "}
+                        {newCard.name} takes its first one next time they&apos;re in.
+                    </p>
                 )}
 
                 {card.is_own_card ? (
@@ -198,16 +273,44 @@ async function StampContent({ params, searchParams }: PageProps) {
                             </form>
                         )}
 
-                        <form action={addStamp}>
-                            <input type="hidden" name="code" value={card.card_code} />
-                            <SubmitButton
-                                pendingLabel="Stamping…"
-                                variant={rewardReady ? "outline" : "default"}
-                                className={rewardReady ? "h-12 w-full text-base" : "h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90"}
+                        {takesStamps && (
+                            <form action={addStamp}>
+                                <input type="hidden" name="code" value={card.card_code} />
+                                <SubmitButton
+                                    pendingLabel="Stamping…"
+                                    variant={rewardReady ? "outline" : "default"}
+                                    className={rewardReady ? "h-12 w-full text-base" : "h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90"}
+                                >
+                                    Add a stamp
+                                </SubmitButton>
+                            </form>
+                        )}
+
+                        {/* The customer holds the new card and is standing
+                            here: one press rather than a different code. */}
+                        {newCard && !newCard.stampedThisVisit && (
+                            <form action={addStamp}>
+                                <input type="hidden" name="code" value={newCard.code} />
+                                <SubmitButton
+                                    pendingLabel="Stamping…"
+                                    variant={rewardReady ? "outline" : "default"}
+                                    className={rewardReady ? "h-12 w-full text-base" : "h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90"}
+                                >
+                                    Add a stamp on {newCard.name}
+                                </SubmitButton>
+                            </form>
+                        )}
+
+                        {!takesStamps && !newCard && !rewardReady && (
+                            <Button
+                                render={<Link href={`/business/${card.business_id}/loyalty`} />}
+                                nativeButton={false}
+                                variant="outline"
+                                className="h-12 w-full text-base"
                             >
-                                Add a stamp
-                            </SubmitButton>
-                        </form>
+                                Back to loyalty dashboard
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>

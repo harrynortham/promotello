@@ -68,7 +68,7 @@ export function StopHandingOut({
                             </strong>{" "}
                             {holders === 0
                                 ? "Nothing is lost either way."
-                                : "They keep collecting stamps and claim what they were promised, and you stamp them exactly as before."}
+                                : "They fill it and claim what they were promised, once. It doesn't start again: when it's full they're given whatever card you're handing out then, and their next stamp goes on that."}
                         </li>
 
                         <li>

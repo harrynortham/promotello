@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { cardState } from "@/lib/loyalty-state";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +39,12 @@ type GuestCard = {
     card_accent: string | null;
     stamp_icon: string | null;
     logo_url: string | null;
+    // A card nobody can join any more: one last lap, one reward, done.
+    program_closed: boolean;
+    card_finished: boolean;
+    // Their card on the one being handed out now. A guest has no list,
+    // so this address is the only way they can be shown it.
+    new_card_token: string | null;
 };
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -94,6 +101,13 @@ async function GuestCardView({ params, searchParams }: PageProps) {
     const origin = await requestOrigin();
     const qr = await qrSvg(`${origin}/stamp/${data.card_code}`);
 
+    const state = cardState({
+        stamps: data.stamps,
+        stampsRequired: data.stamps_required,
+        closed: data.program_closed,
+        finished: data.card_finished,
+    });
+
     return (
         <div className="mx-auto max-w-xl px-6 py-12 sm:px-10">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
@@ -103,7 +117,9 @@ async function GuestCardView({ params, searchParams }: PageProps) {
                 {data.business_name}
             </h1>
             <p className="mt-2 text-[#17233B]/65">
-                Show this when you pay and staff will scan it to add a stamp.
+                {state === "finished"
+                    ? "This card is done: the reward on it has been claimed."
+                    : "Show this when you pay and staff will scan it to add a stamp."}
             </p>
 
             {joined && (
@@ -131,6 +147,13 @@ async function GuestCardView({ params, searchParams }: PageProps) {
                     header={data.card_header}
                     accent={data.card_accent}
                     stampIcon={data.stamp_icon}
+                    lastOne={state === "last-lap"}
+                    finished={state === "finished"}
+                    newCardHref={
+                        data.new_card_token && state !== "collecting" && state !== "last-lap"
+                            ? `/card/${data.new_card_token}`
+                            : undefined
+                    }
                     qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qr }} />}
                 />
             </div>

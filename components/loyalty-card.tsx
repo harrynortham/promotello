@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FiGift } from "react-icons/fi";
+import { FiArrowRight, FiCheck, FiGift } from "react-icons/fi";
 
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { cardTheme } from "@/lib/loyalty-design";
@@ -35,6 +35,9 @@ export function LoyaltyCard({
     landedAt,
     note,
     href,
+    lastOne = false,
+    finished = false,
+    newCardHref,
     className = "",
     id,
 }: {
@@ -72,13 +75,20 @@ export function LoyaltyCard({
     // Where the whole card goes when it is pressed. The business's
     // name is still its own link; everything else is the card.
     href?: string;
+    // The business has stopped handing this card out. It fills once,
+    // pays out once, and is then finished for good — so say so while
+    // there is still something to collect.
+    lastOne?: boolean;
+    finished?: boolean;
+    // The card they hold now, where there is one.
+    newCardHref?: string;
     className?: string;
     id?: string;
 }) {
     const rewardWording = reward.trim()
         ? reward.trim().charAt(0).toLowerCase() + reward.trim().slice(1)
         : "your reward";
-    const rewardReady = stamps >= stampsRequired;
+    const rewardReady = stamps >= stampsRequired && !finished;
     const theme = cardTheme({ colour, header, accent });
 
     return (
@@ -135,6 +145,13 @@ export function LoyaltyCard({
             </div>
 
             <div className="p-6">
+                {finished && (
+                    <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#17233B]/5 px-3 py-2 text-sm font-semibold text-[#17233B]/70">
+                        <FiCheck aria-hidden="true" />
+                        Finished: you claimed the reward on this one
+                    </p>
+                )}
+
                 {rewardReady && (
                     <p
                         className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold"
@@ -164,6 +181,18 @@ export function LoyaltyCard({
                     {note}
                 </div>
 
+                {/* The ending, said while there is still something to
+                    collect rather than sprung at the till. */}
+                {lastOne && (
+                    <p className="mt-2 text-xs text-[#17233B]/55">
+                        Last one: this card won&apos;t restart.
+                    </p>
+                )}
+
+                {/* A finished card has nothing to show anybody: no code
+                    to scan, no stamp to collect. It stays in the list
+                    as what it is, something they finished. */}
+                {!finished && (
                 <div className="mt-6 flex flex-col items-center gap-4 rounded-xl bg-[#FFF8F0] p-5 text-center sm:flex-row sm:gap-5 sm:p-4 sm:text-left">
                     <div className={`shrink-0 rounded-xl bg-white p-2 ${qrSize} [&_svg]:h-full [&_svg]:w-full`}>
                         {qr}
@@ -177,6 +206,19 @@ export function LoyaltyCard({
                         <p className={`text-xs text-[#17233B]/70 ${code ? "mt-1" : "mt-2"}`}>{scanHint}</p>
                     </div>
                 </div>
+                )}
+
+                {/* Above the overlay link, where the whole card is one:
+                    this goes somewhere else. */}
+                {newCardHref && (
+                    <Link
+                        href={newCardHref}
+                        className="relative z-20 mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#FF593F] underline-offset-4 hover:underline"
+                    >
+                        Your new card here
+                        <FiArrowRight aria-hidden="true" className="size-4" />
+                    </Link>
+                )}
 
                 {terms?.trim() && (
                     <p className="mt-4 text-xs leading-5 text-[#17233B]/65">{terms.trim()}</p>

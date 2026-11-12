@@ -76,7 +76,7 @@ async function NewLoyaltyCard({ params }: PageProps) {
 
                     <AlertDescription>
                         {holders
-                            ? `${holders} ${holders === 1 ? "customer is" : "customers are"} collecting ${current.stamps_required} stamps for ${current.reward.charAt(0).toLowerCase() + current.reward.slice(1)}. They keep that card, keep being stamped and claim what they were promised — they simply won't be joined by anyone new.`
+                            ? `${holders} ${holders === 1 ? "customer is" : "customers are"} collecting ${current.stamps_required} stamps for ${current.reward.charAt(0).toLowerCase() + current.reward.slice(1)}. They finish that card and claim what they were promised, once: it doesn't start again, and the moment it's full they're given this new one, with their next stamp going on it.`
                             : `Nobody is collecting it yet, so nothing is lost. It stops being offered the moment this one starts.`}
                     </AlertDescription>
                 </Alert>

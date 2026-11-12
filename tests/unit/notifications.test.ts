@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
     businessApproved,
     businessRejected,
+    newLoyaltyCard,
     newOfferFromFollowed,
     offerApproved,
     offerEditApproved,
@@ -39,6 +40,16 @@ const everything: [string, NotificationContent][] = [
         }),
     ],
     ["voucherIssued", voucherIssued({ id: "v-1", reward: "a free coffee", businessName: "Dublin Pub" })],
+    [
+        "newLoyaltyCard",
+        newLoyaltyCard({
+            id: "c-1",
+            programId: "p-2",
+            stampsRequired: 8,
+            reward: "A free coffee",
+            businessName: "Dublin Pub",
+        }),
+    ],
 ];
 
 test("a business hears what happened to its page", () => {
@@ -139,4 +150,22 @@ test("every notification is one line, somewhere in this app, told once", () => {
     // No two builders share a key for different events.
     const keys = everything.map(([, content]) => content.dedupeKey);
     assert.equal(new Set(keys).size, keys.length - 1, "only the two edit answers share one");
+});
+
+// Handed the new card as the old one filled: the card is already theirs,
+// so this says where it is rather than asking them to do anything.
+test("the new loyalty card names the deal and leads to the card", () => {
+    const told = newLoyaltyCard({
+        id: "c-1",
+        programId: "p-2",
+        stampsRequired: 8,
+        reward: "A free coffee",
+        businessName: "Dublin Pub",
+    });
+
+    assert.equal(told.title, "Dublin Pub has a new card: 8 stamps for a free coffee");
+    assert.equal(told.href, "/loyalty/p-2");
+    // Keyed on the card they were given, so a second stamping attempt
+    // on the old card cannot tell them twice.
+    assert.equal(told.dedupeKey, "loyalty-card:c-1");
 });

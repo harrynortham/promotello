@@ -100,6 +100,11 @@ async function Card({ params }: PageProps) {
                     accent={card.cardAccent}
                     stampIcon={card.stampIcon}
                     code={card.code}
+                    lastOne={card.closed && !card.finished && !card.rewardReady}
+                    finished={card.finished}
+                    newCardHref={
+                        card.newCardProgramId ? `/loyalty/${card.newCardProgramId}` : undefined
+                    }
                     qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: qr }} />}
                     // A shade smaller than the list's, so the whole
                     // card lands inside the shortest phone's screen.
@@ -109,9 +114,9 @@ async function Card({ params }: PageProps) {
             </div>
 
             <p className="mt-5 text-sm leading-6 text-[#17233B]/70">
-                Show this when you pay and staff scan the code to add a stamp.
-                Add the page to your home screen and it is one tap away at the
-                till.
+                {card.finished
+                    ? "This card is done: the reward on it has been claimed, and it stays here as part of your history."
+                    : "Show this when you pay and staff scan the code to add a stamp. Add the page to your home screen and it is one tap away at the till."}
             </p>
 
             <Link
