@@ -350,6 +350,12 @@ test("the card on the edit page follows what is typed", async ({ browser }) => {
         await expect(preview).toContainText("5 stamps for a free pastry");
         await expect(preview).toContainText("3 of 5 stamps");
 
+        // Eight to a row, so a card of eight is one row and nine is
+        // eight and one, rather than wherever the width ran out.
+        await page.locator("#stamps-required").selectOption("12");
+        const stampRow = preview.getByRole("img", { name: /of 12 stamps collected/ });
+        await expect(stampRow).toHaveCSS("grid-template-columns", /(\S+ ){7}\S+$/);
+
         // Nothing is saved until it is saved.
         const { data: unchanged } = await admin
             .from("loyalty_programs")

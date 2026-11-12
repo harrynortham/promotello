@@ -45,12 +45,20 @@ export function LoyaltyStamps({
     // a yellow that white disappears into.
     const stampInk = readableInk(accent);
     const StampIconComponent = icons[stampIcon(chosenIcon)];
-    const dimension = { sm: "size-7", md: "size-10", lg: "size-12" }[size];
+    const widest = { sm: 28, md: 40, lg: 48 }[size];
     const icon = { sm: "size-3.5", md: "size-5", lg: "size-6" }[size];
+
+    // Eight to a row. Wrapping wherever the width ran out put seven on
+    // one line and two on the next, which reads as a mistake; a grid of
+    // eight columns keeps the rows even and lets the stamps shrink a
+    // little on a narrow card rather than spill onto a line of their
+    // own. A card of eight — what most of them are — is one row.
+    const columns = Math.min(required, 8);
 
     return (
         <div
-            className="flex flex-wrap gap-2"
+            className="grid justify-center gap-2"
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, ${widest}px))` }}
             role="img"
             aria-label={`${filled} of ${required} stamps collected`}
         >
@@ -68,7 +76,7 @@ export function LoyaltyStamps({
                                     ? { borderColor: `${accent}80`, backgroundColor: `${accent}0d`, color: accent }
                                     : undefined
                         }
-                        className={`flex ${dimension} items-center justify-center rounded-full border-2 transition ${isFilled
+                        className={`flex aspect-square w-full items-center justify-center rounded-full border-2 transition ${isFilled
                             ? ""
                             : isReward
                                 ? "border-dashed"

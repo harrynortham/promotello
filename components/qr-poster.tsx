@@ -270,9 +270,8 @@ function StampRow({
     // draws a card: a row of empty rings reads as a form to fill in,
     // and these are what a customer is being offered.
     const filled = Math.min(2, required - 1);
-    // Nine in a line is a line; nine wrapped 7 and 2 is a mistake. Two
-    // even rows once there are more than six.
-    const columns = required > 6 ? Math.ceil(required / 2) : required;
+    // Eight to a row, as the card itself lays them out.
+    const columns = Math.min(required, 8);
 
     // Width enough for exactly one row, so the wrap lands where it was
     // meant to and the short last row centres under the long one. A
