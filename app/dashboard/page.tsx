@@ -150,7 +150,7 @@ async function CustomerDashboardContent() {
                 </div>
 
                 {prompts.length > 0 && (
-                    <section className="mt-12 space-y-3" aria-label="Review your recent visits">
+                    <section className="mt-8 space-y-3" aria-label="Review your recent visits">
                         {prompts.map((prompt) => (
                             <div
                                 key={prompt.business_id}
@@ -187,9 +187,9 @@ async function CustomerDashboardContent() {
                     </section>
                 )}
 
-                <section className="mt-12">
+                <section className="mt-8">
                     <SectionHeading
-                        title="Ready to use"
+                        title="Vouchers"
                         href="/dashboard/redemptions"
                         linkLabel="All my vouchers"
                     />
@@ -208,7 +208,7 @@ async function CustomerDashboardContent() {
                     </div>
                 </section>
 
-                <section className="mt-12">
+                <section className="mt-8">
                     <SectionHeading
                         title="Loyalty cards"
                         href="/dashboard/loyalty"
@@ -234,7 +234,7 @@ async function CustomerDashboardContent() {
                 </section>
 
                 {suggestions.length > 0 && (
-                    <section className="mt-14">
+                    <section className="mt-8">
                         <SectionHeading title="New offers to try" href="/offers" linkLabel="Browse all offers" />
 
                         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -258,7 +258,7 @@ async function CustomerDashboardContent() {
                     </section>
                 )}
 
-                <section className="mt-14 flex flex-col gap-5 rounded-xl bg-[#17233B] p-8 text-white sm:flex-row sm:items-center sm:justify-between">
+                <section className="mt-8 flex flex-col gap-5 rounded-xl bg-[#17233B] p-8 text-white sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4">
                         <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
                             <FiBriefcase aria-hidden="true" className="size-5" />
