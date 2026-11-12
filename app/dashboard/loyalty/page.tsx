@@ -25,7 +25,7 @@ type PageProps = {
 function LoadingState() {
     return (
         <div>
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-6xl">
                 <Skeleton className="h-10 w-64 rounded-lg" />
                 <div className="mt-8 grid gap-5 md:grid-cols-2">
                     <Skeleton className="h-96 rounded-xl" />
@@ -59,7 +59,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
 
     return (
         <div className="text-[#17233B]">
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-6xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Your wallet</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">My loyalty cards</h1>
                 <p className="mt-2 max-w-2xl text-[#17233B]/65">

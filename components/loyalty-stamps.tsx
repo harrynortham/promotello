@@ -57,7 +57,11 @@ export function LoyaltyStamps({
 
     return (
         <div
-            className="grid justify-center gap-2"
+            // Packed from the left, so the row starts where the words
+            // above it start. On a card the columns fill the width and
+            // it makes no odds; anywhere wider than the row, centring
+            // floated the stamps away from everything else.
+            className="grid justify-start gap-2"
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, ${widest}px))` }}
             role="img"
             aria-label={`${filled} of ${required} stamps collected`}
