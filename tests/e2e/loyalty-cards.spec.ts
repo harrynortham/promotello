@@ -506,10 +506,13 @@ test("a card can be saved in the business's own colours, with any stamp", async 
             stamp_icon: "scissors",
         });
 
-        // And the card a customer would see is drawn in them.
+        // And the card a customer would see is drawn in them — the same
+        // card as the preview, down to the sample code and its QR.
         await page.goto(`/business/${businessId}/loyalty`);
         const card = page.locator("article").filter({ hasText: "stamps for a free trim" }).first();
         await expect(card.locator("div").first()).toHaveCSS("background-color", "rgb(11, 95, 255)");
+        await expect(card).toContainText("4F8A2C91D0");
+        await expect(card.locator("svg").last()).toBeVisible();
 
         // Back on one of the six, the hexes are cleared rather than left
         // behind for a card that is no longer custom.

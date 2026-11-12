@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
     cardColourChoice,
+    SAMPLE_CARD_CODE,
     CUSTOM_COLOUR,
     isHexColour,
     startingCustomColours,
@@ -43,7 +44,6 @@ export type Program = {
 };
 
 // A sample code, so the preview carries a real QR like the live card.
-const SAMPLE_CODE = "4F8A2C91D0";
 
 export function ProgramFields({
     businessId,
@@ -238,8 +238,8 @@ function CardPreview({
                     reward={reward}
                     stamps={Math.min(3, stampsRequired - 1)}
                     terms={terms}
-                    code={SAMPLE_CODE}
-                    qr={<StampQr code={SAMPLE_CODE} />}
+                    code={SAMPLE_CARD_CODE}
+                    qr={<StampQr code={SAMPLE_CARD_CODE} />}
                     colour={colour}
                     header={custom.header}
                     accent={custom.accent}
