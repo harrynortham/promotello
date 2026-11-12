@@ -612,6 +612,11 @@ export function QrPoster(props: PosterProps) {
                     <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
                     <Title size={headline?.trim() ? "3em" : "4em"}>{title}</Title>
 
+                    {/* What the card asks for in the business's own
+                        words, where the card itself isn't drawn to say
+                        it. */}
+                    {body && <Body dark={dark}>{body}</Body>}
+
                     <div className="mt-[0.3em] w-full">
                         <StampRow
                             required={card!.stampsRequired}

@@ -604,6 +604,7 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
             stamps_required: 9,
             reward: "A free coffee",
             terms: "One stamp per visit.",
+            terms: "One stamp per visit.",
             is_active: true,
         })
         .select("id")
@@ -849,6 +850,7 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
             name: `E2E Poster card ${Date.now()}`,
             stamps_required: 9,
             reward: "A free coffee",
+            terms: "One stamp per visit.",
             card_colour: "custom",
             card_header: "#0B5FFF",
             card_accent: "#FFD400",
@@ -901,6 +903,15 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
         const under = preview.getByText(/stamps for a free coffee/).last();
         const [nameBox, underBox] = await Promise.all([name.boundingBox(), under.boundingBox()]);
         expect(Math.abs((nameBox?.x ?? 0) - (underBox?.x ?? 1))).toBeLessThan(1);
+
+        // The strip doesn't draw the card, so it carries the words the
+        // card would have said, balanced like the headline above them.
+        await page.getByRole("button", { name: "Stamp strip" }).click();
+        await expect(preview.getByText(/One stamp per visit/)).toHaveCSS(
+            "text-wrap-style",
+            "balance",
+        );
+        await page.getByRole("button", { name: "Stamp card" }).click();
 
         // Pointing it somewhere else can't leave a layout behind with
         // nothing left to draw.
