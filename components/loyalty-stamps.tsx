@@ -90,7 +90,10 @@ export function LoyaltyStamps({
                             ? ""
                             : isReward
                                 ? "border-dashed"
-                                : "border-dashed border-[#17233B]/20 bg-white text-transparent"
+                                // No fill: an empty stamp is the dotted
+                                // outline of one, on a white card or on
+                                // a dark panel alike.
+                                : "border-dashed border-[#17233B]/20 text-transparent"
                             }`}
                     >
                         {isReward ? (
