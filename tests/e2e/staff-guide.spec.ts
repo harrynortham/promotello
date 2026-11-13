@@ -47,7 +47,8 @@ test("the till sheet says what to do, in the business's own terms", async ({ bro
     const staff = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
 
     try {
-        // The way in is from where staff already are.
+        // The way in is from where staff already are, whether or not a
+        // card is on offer: it sits in the header, not inside a card.
         await staff.goto(`/business/${businessId}/loyalty`);
         await staff.getByRole("link", { name: "Print the till guide" }).click();
         await staff.waitForURL(new RegExp(`/staff-guide/${businessId}$`), { timeout: 60_000 });
@@ -85,4 +86,27 @@ test("a customer who doesn't work there cannot open it", async ({ browser }) => 
     await expect(customer.getByText(/404|not be found|Page not found/i).first()).toBeVisible({
         timeout: 30_000,
     });
+});
+
+// The help centre is where somebody looks when they are not at the
+// till, so it has to say the same things.
+test("the help centre says how a card is stamped, and where the till sheet is", async ({ page }) => {
+    test.setTimeout(120_000);
+
+    await page.goto("/business/help");
+
+    // Each guide is a details/summary that opens on press.
+    const till = page.locator("summary").filter({ hasText: "Print the guide for your till" });
+    await expect(till).toBeVisible({ timeout: 60_000 });
+    await till.click();
+    await expect(page.getByText("Choose Print the till guide.")).toBeVisible();
+
+    const stamping = page.locator("summary").filter({ hasText: "Stamp a customer\u2019s card" });
+    await stamping.click();
+    await expect(page.getByText(/Tap Add a stamp\. One stamp per visit/)).toBeVisible();
+
+    const deal = page.locator("summary").filter({ hasText: "Change the deal without breaking a promise" });
+    await expect(deal).toBeVisible();
+    await deal.click();
+    await expect(page.getByText(/it does not start again/)).toBeVisible();
 });

@@ -363,10 +363,6 @@ each tied to a moment in stage 1's walkthrough.
   messages for declining a business or an offer, with matching help-centre
   wording, plus a log of approval reasons and resubmissions so there's a
   history when a business asks.
-- ~~**Staff documentation on redemptions**, for the people behind the counter.
-  One printable page. The till is where this product fails quietly.~~ Built:
-  `/staff-guide/<businessId>`, one A4 sheet covering vouchers and loyalty
-  cards, linked from the Redemptions and Loyalty pages.
 
 - **Onboarding when a business fits no category.**
 

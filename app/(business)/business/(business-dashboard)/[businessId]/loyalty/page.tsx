@@ -239,8 +239,18 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         </p>
                     </div>
 
-                    <div className="flex shrink-0 flex-wrap gap-3">
+                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                         <LoyaltyHowItWorks />
+
+                        {/* For whoever is on the counter rather than on
+                            this page: one sheet, printed once, stuck up. */}
+                        <Link
+                            href={`/staff-guide/${businessId}`}
+                            className="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                        >
+                            <FiPrinter aria-hidden="true" className="size-4" />
+                            Print the till guide
+                        </Link>
                     </div>
                 </div>
 
@@ -342,15 +352,6 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                         </SubmitButton>
                                     </form>
 
-                                    {/* For whoever is on the counter
-                                        rather than on this page. */}
-                                    <Link
-                                        href={`/staff-guide/${businessId}`}
-                                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
-                                    >
-                                        <FiPrinter aria-hidden="true" className="size-4" />
-                                        Print the till guide
-                                    </Link>
                                 </CardContent>
                             </Card>
 
