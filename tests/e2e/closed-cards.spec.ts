@@ -554,3 +554,55 @@ test("a stamp, a reward and a handover all move the card's updated_at", async ()
         await client.from("loyalty_programs").delete().eq("id", next.id);
     }
 });
+
+// The whole point of the handover is that it happens while they are
+// standing there. A card that goes grey only on the next reload, and a
+// new card they have to go looking for, is the same confusion the
+// handover exists to avoid.
+test("the card finishes and the new one arrives without a reload", async ({ browser }) => {
+    test.setTimeout(180_000);
+    const { businessId, customerUserId } = state();
+    const client = admin();
+    const staff = await asStaff();
+
+    await closeEverything(client, businessId);
+    const ending = await makeCard(client, businessId, { name: `E2E Live finish ${Date.now()}`, closed: true });
+    const next = await makeCard(client, businessId, { name: `E2E Live next ${Date.now()}`, stampsRequired: 5 });
+    const card = await giveTo(client, ending.id, { userId: customerUserId }, 2);
+
+    const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    try {
+        await customer.goto("/dashboard/loyalty");
+        await expect(customer.getByText("2 of 3 stamps")).toBeVisible({ timeout: 30_000 });
+        await expect(customer.locator("article")).toHaveCount(1);
+
+        // Staff fill it on their own phone. The new card is theirs in
+        // the same transaction, and the wallet should say so.
+        const filled = await stamp(staff, card.card_code);
+        expect(filled.error, needsMigration).toBeNull();
+
+        await expect(customer.getByText("3 of 3 stamps"), "the stamp lands").toBeVisible({ timeout: 30_000 });
+        await expect(customer.locator("article"), "and the new card arrives with it").toHaveCount(2, {
+            timeout: 30_000,
+        });
+        await expect(customer.getByText("0 of 5 stamps")).toBeVisible();
+
+        // Staff hand over the reward: the old card finishes, goes grey
+        // where it stands, and drops under the one still being filled.
+        await redeem(staff, card.card_code);
+
+        await expect(
+            customer.getByText("Finished: you claimed the reward on this one"),
+            "the card says it is done",
+        ).toBeVisible({ timeout: 30_000 });
+
+        const done = customer.locator("article").filter({ hasText: "Finished" });
+        await expect(done).toHaveCSS("opacity", "0.9");
+        await expect(done.locator("div").first()).toHaveCSS("filter", "grayscale(1)");
+        await expect(customer.locator("article").last()).toContainText("Finished");
+    } finally {
+        await client.from("loyalty_programs").delete().eq("id", ending.id);
+        await client.from("loyalty_programs").delete().eq("id", next.id);
+    }
+});

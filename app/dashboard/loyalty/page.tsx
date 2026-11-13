@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/listing-ui";
 import { LiveLoyaltyCard } from "@/components/live-loyalty-card";
+import { LoyaltyCardsLive } from "@/components/loyalty-cards-live";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { qrSvg } from "@/lib/qr";
@@ -59,6 +60,10 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
 
     return (
         <div className="text-[#17233B]">
+            {/* A card arriving, or one finishing: both change the list
+                rather than a card in it. */}
+            <LoyaltyCardsLive userId={user.id} />
+
             <div className="mx-auto max-w-6xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Your wallet</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">My loyalty cards</h1>
