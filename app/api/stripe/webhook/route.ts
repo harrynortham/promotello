@@ -2,6 +2,12 @@ import type Stripe from "stripe";
 import { sendTrialStartedEmail } from "@/lib/business-lifecycle";
 import { trackOnboarding } from "@/lib/onboarding-events";
 import { createStripeClient } from "@/utils/stripe/server";
+import {
+  cameBack,
+  cancellationLanded,
+  forgetTheEnding,
+  tellThemWhatStops,
+} from "@/lib/plan-ending";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -256,6 +262,20 @@ async function syncSubscription(
 
   const item = subscription.items.data[0];
 
+  // What we thought before this event, so an ending can be told apart
+  // from a renewal, a card update or a change of price.
+  const { data: before } = await supabase
+    .from("subscriptions")
+    .select("status, cancel_at_period_end")
+    .eq("stripe_subscription_id", subscription.id)
+    .maybeSingle();
+
+  const after = {
+    status: subscription.status,
+    cancel_at_period_end:
+      subscription.cancel_at_period_end || subscription.cancel_at !== null,
+  };
+
   const { error } = await supabase.from("subscriptions").upsert(
     {
       business_id: customer.business_id,
@@ -268,8 +288,7 @@ async function syncSubscription(
       current_period_end: toTimestamp(item?.current_period_end),
       // The portal cancels by setting cancel_at to the period end and
       // leaves cancel_at_period_end false.
-      cancel_at_period_end:
-        subscription.cancel_at_period_end || subscription.cancel_at !== null,
+      cancel_at_period_end: after.cancel_at_period_end,
       trial_end: toTimestamp(subscription.trial_end),
       canceled_at: toTimestamp(subscription.canceled_at),
       updated_at: new Date().toISOString(),
@@ -306,6 +325,24 @@ async function syncSubscription(
 
   if (planError) {
     throw planError;
+  }
+
+  // Say what stops, and when. Once per ending, and never for a renewal
+  // or a change of plan — a failure here must not fail the webhook,
+  // because Stripe would send the whole event again and the
+  // subscription is already saved.
+  try {
+    if (cancellationLanded(before, after)) {
+      await tellThemWhatStops({
+        businessId: customer.business_id,
+        endsAt: toTimestamp(item?.current_period_end),
+        tier: item?.price.lookup_key?.startsWith("growth") ? "growth" : "pro",
+      });
+    } else if (cameBack(after)) {
+      await forgetTheEnding(customer.business_id);
+    }
+  } catch (error) {
+    console.error("Stripe webhook: could not say what a plan ending changes", error);
   }
 }
 

@@ -16,17 +16,28 @@ import { Label } from "@/components/ui/label";
 import { confirmsName } from "@/lib/close-business";
 import { closeBusiness } from "./actions";
 
+const plural = (count: number, one: string, many: string) =>
+    `${count} ${count === 1 ? one : many}`;
+
 export function CloseBusiness({
     businessId,
     businessName,
     teammates,
     hasSubscription,
+    cardHolders,
+    posters,
+    followers,
 }: {
     businessId: string;
     businessName: string;
     // Everyone who loses access, named before anyone confirms.
     teammates: string[];
     hasSubscription: boolean;
+    // Closing is abstract until it is counted. These are the people on
+    // the other side of it, and the things already in windows.
+    cardHolders: number;
+    posters: number;
+    followers: number;
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [typed, setTyped] = useState("");
@@ -50,6 +61,26 @@ export function CloseBusiness({
                         </DialogDescription>
                     </DialogHeader>
 
+                    {(cardHolders > 0 || followers > 0 || posters > 0) && (
+                        <p className="rounded-xl bg-[#FFF8F0] px-4 py-3 text-sm leading-6">
+                            <span className="font-semibold">Right now: </span>
+                            {[
+                                cardHolders > 0
+                                    ? `${plural(cardHolders, "person is", "people are")} collecting stamps`
+                                    : null,
+                                followers > 0
+                                    ? `${plural(followers, "person follows", "people follow")} you`
+                                    : null,
+                                posters > 0
+                                    ? `${plural(posters, "poster is", "posters are")} up`
+                                    : null,
+                            ]
+                                .filter(Boolean)
+                                .join(", ")}
+                            .
+                        </p>
+                    )}
+
                     <ul className="space-y-2 text-sm text-[#17233B]/75">
                         <li>
                             <strong className="font-semibold text-[#17233B]">
@@ -64,9 +95,10 @@ export function CloseBusiness({
                             <strong className="font-semibold text-[#17233B]">
                                 Nothing is deleted.
                             </strong>{" "}
-                            The stamps and vouchers customers are holding stay theirs, and
-                            posters already in your window still open a page that explains
-                            you&rsquo;ve left.
+                            The stamps and vouchers customers are holding stay theirs. The
+                            {posters > 0 ? ` ${plural(posters, "poster", "posters")} in your windows` : " posters in your windows"}
+                            {" "}still scan, but what they open is a page saying you have
+                            left — so take them down.
                         </li>
 
                         {hasSubscription && (
