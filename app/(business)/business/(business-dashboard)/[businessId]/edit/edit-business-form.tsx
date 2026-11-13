@@ -13,7 +13,7 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { BusinessCard } from "@/components/business-card";
-import { CategorySelect } from "@/components/category-select";
+import { CategorySelect, OTHER_CATEGORY } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { FiExternalLink, FiUpload } from "react-icons/fi";
@@ -75,6 +75,10 @@ const reviewLink = /^https:\/\/(g\.page|maps\.app\.goo\.gl|(www\.|search\.)?goog
 const businessShape = {
     businessName: requiredText("The business name", { min: 2, max: 160 }),
     category: z.string().min(1, "Choose a category."),
+    // Asked for only when nothing on the list fits, and then required:
+    // their words stand in for a category until we have one
+    // (20261231090000_a_business_we_have_no_category_for.sql).
+    otherCategory: z.string().max(100, "Keep it under 100 characters."),
     description: optionalText("The description", 5000),
     website: optionalUrl,
     contactEmail: optionalEmail,
@@ -91,20 +95,41 @@ const locationFieldsShape = {
     ...locationShape,
 };
 
+// A business the list had nothing for has to be able to edit its page
+// without being made to pick the nearest wrong category, so this form
+// offers the same way out as the one it signed up through.
+function saidItThemselves(
+    values: { category: string; otherCategory: string },
+    ctx: z.RefinementCtx,
+) {
+    if (values.category === OTHER_CATEGORY && values.otherCategory.trim().length < 2) {
+        ctx.addIssue({
+            code: "custom",
+            path: ["otherCategory"],
+            message: "Tell us in a few words what you do.",
+        });
+    }
+}
+
 function withLocation(cities: CityOption[]) {
-    return z.object({ ...businessShape, ...locationFieldsShape }).superRefine(postcodeInCity(cities));
+    return z
+        .object({ ...businessShape, ...locationFieldsShape })
+        .superRefine(postcodeInCity(cities))
+        .superRefine(saidItThemselves);
 }
 
 // A business without a location (rare) has no location fields to check.
-const withoutLocation = z.object({
-    ...businessShape,
-    locationName: z.string(),
-    addressLine1: z.string(),
-    addressLine2: z.string(),
-    city: z.string(),
-    region: z.string(),
-    postalCode: z.string(),
-});
+const withoutLocation = z
+    .object({
+        ...businessShape,
+        locationName: z.string(),
+        addressLine1: z.string(),
+        addressLine2: z.string(),
+        city: z.string(),
+        region: z.string(),
+        postalCode: z.string(),
+    })
+    .superRefine(saidItThemselves);
 
 type Values = z.input<ReturnType<typeof withLocation>>;
 type Output = z.output<ReturnType<typeof withLocation>>;
@@ -234,7 +259,11 @@ function BusinessForm({
         resolver: location ? zodResolver(withLocation(cities)) : zodResolver(withoutLocation),
         defaultValues: {
             businessName: business.name,
-            category: business.category_id ?? "",
+            // No category, but words of their own: the select shows
+            // "Something else" with those words beside it, rather than
+            // an empty box that will not save.
+            category: business.category_id ?? (business.category ? OTHER_CATEGORY : ""),
+            otherCategory: business.category_id ? "" : (business.category ?? ""),
             description: business.description ?? "",
             website: business.website_url ?? "",
             contactEmail: business.contact_email ?? "",
@@ -272,8 +301,11 @@ function BusinessForm({
         name: draft.businessName?.trim() || business.name,
         description: draft.description?.trim() || null,
         logoUrl: business.logo_url,
-        categoryId: draft.category ?? null,
-        categoryName: categoryNames.get(draft.category ?? "") ?? business.category ?? "",
+        categoryId: draft.category === OTHER_CATEGORY ? null : (draft.category ?? null),
+        categoryName:
+            draft.category === OTHER_CATEGORY
+                ? draft.otherCategory?.trim() || ""
+                : (categoryNames.get(draft.category ?? "") ?? business.category ?? ""),
         area: draft.region?.trim() || draft.city?.trim() || null,
         areaId: null,
         city: draft.city?.trim() || null,
@@ -304,7 +336,12 @@ function BusinessForm({
             .from("businesses")
             .update({
                 name: values.businessName,
-                category_id: values.category,
+                // Their own words are kept as they are: the category
+                // text only follows a category once there is one
+                // (apply_category_choice()).
+                ...(values.category === OTHER_CATEGORY
+                    ? { category_id: null, category: values.otherCategory.trim() }
+                    : { category_id: values.category }),
                 description: values.description || null,
                 website_url: values.website || null,
                 contact_email: values.contactEmail || null,
@@ -507,11 +544,42 @@ function BusinessForm({
                                     <CategorySelect
                                         id="category"
                                         name="category"
-                                        defaultValue={business.category_id}
+                                        allowOther
+                                        defaultValue={
+                                            business.category_id ??
+                                            (business.category ? OTHER_CATEGORY : null)
+                                        }
                                         registration={register("category")}
                                         invalid={invalidProps("category-error", errors.category)}
                                     />
                                     <FieldError id="category-error" message={errors.category?.message} />
+
+                                    {draft.category === OTHER_CATEGORY && (
+                                        <div className="space-y-2 pt-2">
+                                            <Label htmlFor="otherCategory">
+                                                Tell us in a few words what you do
+                                            </Label>
+
+                                            <Input
+                                                id="otherCategory"
+                                                placeholder="e.g. tattoo studio, car garage, nursery"
+                                                {...register("otherCategory")}
+                                                {...invalidProps(
+                                                    "otherCategory-error",
+                                                    errors.otherCategory,
+                                                )}
+                                            />
+                                            <FieldError
+                                                id="otherCategory-error"
+                                                message={errors.otherCategory?.message}
+                                            />
+
+                                            <p className="text-sm text-[#17233B]/65">
+                                                Your page says this until we add a category for
+                                                you.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">

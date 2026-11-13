@@ -99,6 +99,9 @@ export default function AdminBusinessesPage() {
     // Edits a business made to its own page after we approved it. They
     // are already live; this is how many nobody has read yet.
     const [unreadEdits, setUnreadEdits] = useState(0);
+    // Businesses still describing themselves in their own words,
+    // because the list had nothing for them.
+    const [withoutCategory, setWithoutCategory] = useState(0);
     const [errorMessage, setErrorMessage] = useState("");
     const [reviewAction, setReviewAction] =
         useState<ReviewAction>(null);
@@ -223,11 +226,17 @@ export default function AdminBusinessesPage() {
     useEffect(() => {
         if (!isAllowed) return;
 
-        void createClient()
+        const supabase = createClient();
+
+        void supabase
             .from("business_edits")
             .select("id", { count: "exact", head: true })
             .is("reviewed_at", null)
             .then(({ count }) => setUnreadEdits(count ?? 0));
+
+        void supabase
+            .rpc("businesses_without_a_category")
+            .then(({ data }) => setWithoutCategory((data ?? []).length));
     }, [isAllowed, refreshKey]);
 
     // One load, for whatever the page is currently asking to see.
@@ -288,6 +297,15 @@ export default function AdminBusinessesPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                        {withoutCategory > 0 && (
+                            <Button
+                                render={<Link href="/admin/businesses/categories" />}
+                                nativeButton={false}
+                            >
+                                {withoutCategory} without a category
+                            </Button>
+                        )}
+
                         <Button
                             render={<Link href="/admin/businesses/edits" />}
                             nativeButton={false}

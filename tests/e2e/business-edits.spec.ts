@@ -69,11 +69,11 @@ test("what a business changes after approval is written down, and read in admin"
         await description.fill(`A description written at ${run}.`);
 
         // The form wants a category before it will save anything, and
-        // the seeded business has never had one chosen in it.
-        const category = business.locator("#category");
-        const options = await category.locator("option").all();
-        const choice = await options[options.length - 1].getAttribute("value");
-        await category.selectOption(choice!);
+        // the seeded business has never had one chosen in it. By name,
+        // not by position: the last option is now "Something else",
+        // which asks for words of their own instead
+        // (business-categories.spec.ts).
+        await business.locator("#category").selectOption({ label: "Bakeries" });
 
         await business.getByRole("button", { name: "Save changes" }).click({ timeout: 30_000 });
 
