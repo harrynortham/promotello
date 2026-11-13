@@ -141,6 +141,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { count: printedPosterCount },
         { count: loyaltyCount },
         hasPro,
+        { data: isPlatformAdmin },
     ] = await Promise.all([
         supabase
             .from("offers")
@@ -213,6 +214,10 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .eq("business_id", businessId),
 
         businessHasPro(supabase, businessId),
+
+        // Only for us: the sales pack is a sheet for selling, and a
+        // business that already pays has no use for a page of prices.
+        supabase.rpc("is_platform_admin"),
     ]);
 
     const offers = (offerRows ?? []) as OfferSummary[];
@@ -799,6 +804,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     >
                         View analytics
                     </Button>
+
+                    {isPlatformAdmin && (
+                        <Button
+                            render={<Link href={`/sales-pack/${businessId}`} />}
+                            nativeButton={false}
+                            size="sm"
+                        >
+                            Sales pack
+                        </Button>
+                    )}
                 </CardContent>
             </Card>
         </div>
