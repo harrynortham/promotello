@@ -43,6 +43,16 @@ export function LoyaltyCardsLive({ userId }: { userId: string }) {
             filter: `user_id=eq.${userId}`,
         } as const;
 
+        // A phone that went into a pocket and came out again: the
+        // socket may have gone with it, and what was handed over in
+        // between is exactly what they are holding the phone out to
+        // show. The card itself does the same (live-loyalty-card.tsx).
+        const onVisible = () => {
+            if (document.visibilityState === "visible") catchUp();
+        };
+
+        document.addEventListener("visibilitychange", onVisible);
+
         // Joined after a breath: a component that mounts, unmounts and
         // mounts again hands the second channel the subscription the
         // first is taking down, and it then hears nothing. The same
@@ -70,6 +80,7 @@ export function LoyaltyCardsLive({ userId }: { userId: string }) {
         return () => {
             watching = false;
             clearTimeout(joining);
+            document.removeEventListener("visibilitychange", onVisible);
             if (channel) void supabase.removeChannel(channel);
         };
     }, [userId, router]);
