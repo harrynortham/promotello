@@ -8,6 +8,7 @@ import { FiArrowRight } from "react-icons/fi";
 import { AppFooter } from "@/components/site/footers";
 import { CustomerAppHeader } from "@/components/site/headers";
 import { LiveLoyaltyCard } from "@/components/live-loyalty-card";
+import { LoyaltyCardsLive } from "@/components/loyalty-cards-live";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLoyaltyCards } from "@/app/dashboard/loyalty/cards";
 import { qrSvg } from "@/lib/qr";
@@ -73,6 +74,10 @@ async function Card({ params }: PageProps) {
 
     return (
         <>
+            {/* The card going grey is its own doing; the way on to the
+                card that replaced it comes from the server. */}
+            <LoyaltyCardsLive userId={user.id} />
+
             {/* The card is the first thing under the header and the
                 words come after it: on a small phone anything above it
                 pushes the code off the bottom of the screen, and the

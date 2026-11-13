@@ -24,6 +24,7 @@ export function LiveLoyaltyCard({
     cardId,
     stamps,
     rewardsRedeemed,
+    finished = false,
     qr,
     ...card
 }: CardProps & {
@@ -31,22 +32,22 @@ export function LiveLoyaltyCard({
     cardId: string;
     qr: ReactNode;
 }) {
-    const [live, setLive] = useState({ stamps, rewardsRedeemed: rewardsRedeemed ?? 0 });
+    const [live, setLive] = useState({ stamps, rewardsRedeemed: rewardsRedeemed ?? 0, finished });
     const [justStamped, setJustStamped] = useState(false);
     const latest = useRef(live);
 
     // A page rendered again by the server — a reload, or a revalidate —
     // is the truth, so it wins over whatever arrived before it.
     useEffect(() => {
-        latest.current = { stamps, rewardsRedeemed: rewardsRedeemed ?? 0 };
+        latest.current = { stamps, rewardsRedeemed: rewardsRedeemed ?? 0, finished };
         setLive(latest.current);
-    }, [stamps, rewardsRedeemed]);
+    }, [stamps, rewardsRedeemed, finished]);
 
     useEffect(() => {
         const supabase = createClient();
         let watching = true;
 
-        const apply = (next: { stamps: number; rewardsRedeemed: number }) => {
+        const apply = (next: { stamps: number; rewardsRedeemed: number; finished: boolean }) => {
             if (!watching) return;
 
             // A stamp is worth saying so about; a reward being redeemed
@@ -63,7 +64,7 @@ export function LiveLoyaltyCard({
         const catchUp = () => {
             void supabase
                 .from("loyalty_cards")
-                .select("stamps, rewards_redeemed")
+                .select("stamps, rewards_redeemed, finished_at")
                 .eq("id", cardId)
                 .maybeSingle()
                 .then(({ data }) => {
@@ -72,6 +73,7 @@ export function LiveLoyaltyCard({
                     apply({
                         stamps: Number(data.stamps),
                         rewardsRedeemed: Number(data.rewards_redeemed ?? 0),
+                        finished: data.finished_at !== null,
                     });
                 });
         };
@@ -104,6 +106,10 @@ export function LiveLoyaltyCard({
                         apply({
                             stamps: Number(row.stamps ?? latest.current.stamps),
                             rewardsRedeemed: Number(row.rewards_redeemed ?? latest.current.rewardsRedeemed),
+                            // The last reward claimed on a card nobody
+                            // can join any more: it goes grey where it
+                            // stands, rather than at the next reload.
+                            finished: row.finished_at != null,
                         }),
                 )
                 // Realtime says "subscribed" when the channel is joined,
@@ -146,6 +152,7 @@ export function LiveLoyaltyCard({
             {...card}
             stamps={live.stamps}
             rewardsRedeemed={live.rewardsRedeemed}
+            finished={live.finished}
             qr={qr}
             // The whole card answers, so somebody looking at the QR
             // sees something happen even if the new stamp is at the
