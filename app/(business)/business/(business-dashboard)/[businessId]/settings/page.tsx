@@ -63,15 +63,41 @@ async function SettingsContent({ params, searchParams }: PageProps) {
 
     const isOwner = membership.role === "owner";
 
-    const [{ data: members }, { data: subscription }] = await Promise.all([
-        supabase.rpc("get_business_team_members", { requested_business_id: businessId }),
-        supabase
-            .from("subscriptions")
-            .select("status")
-            .eq("business_id", businessId)
-            .in("status", CURRENT_SUBSCRIPTION_STATUSES)
-            .maybeSingle(),
-    ]);
+    const [{ data: members }, { data: subscription }, { count: posters }, { count: followers }, { data: programs }] =
+        await Promise.all([
+            supabase.rpc("get_business_team_members", { requested_business_id: businessId }),
+            supabase
+                .from("subscriptions")
+                .select("status")
+                .eq("business_id", businessId)
+                .in("status", CURRENT_SUBSCRIPTION_STATUSES)
+                .maybeSingle(),
+            // Closing is abstract until it is counted: these are the
+            // people and the things in windows it reaches.
+            supabase
+                .from("qr_codes")
+                .select("id", { count: "exact", head: true })
+                .eq("business_id", businessId)
+                .is("archived_at", null),
+            supabase
+                .from("business_followers")
+                .select("user_id", { count: "exact", head: true })
+                .eq("business_id", businessId),
+            supabase
+                .from("loyalty_programs")
+                .select("id")
+                .eq("business_id", businessId),
+        ]);
+
+    const programIds = (programs ?? []).map((program) => program.id);
+
+    const { count: cardHolders } = programIds.length
+        ? await supabase
+              .from("loyalty_cards")
+              .select("id", { count: "exact", head: true })
+              .in("program_id", programIds)
+              .is("finished_at", null)
+        : { count: 0 };
 
     const teammates = ((members ?? []) as { user_id: string; email: string }[])
         .filter((member) => member.user_id !== user.id)
@@ -142,6 +168,9 @@ async function SettingsContent({ params, searchParams }: PageProps) {
                             businessName={business.name}
                             teammates={teammates}
                             hasSubscription={Boolean(subscription)}
+                            cardHolders={cardHolders ?? 0}
+                            posters={posters ?? 0}
+                            followers={followers ?? 0}
                         />
                     </div>
                 </section>

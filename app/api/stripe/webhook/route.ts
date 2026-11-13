@@ -6,6 +6,12 @@ import {
   tellThemThePaymentFailed,
   tellThemTheirOffersArePaused,
 } from "@/lib/billing-notices";
+import {
+  cameBack,
+  cancellationLanded,
+  forgetTheEnding,
+  tellThemWhatStops,
+} from "@/lib/plan-ending";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -260,6 +266,20 @@ async function syncSubscription(
 
   const item = subscription.items.data[0];
 
+  // What we thought before this event, so an ending can be told apart
+  // from a renewal, a card update or a change of price.
+  const { data: before } = await supabase
+    .from("subscriptions")
+    .select("status, cancel_at_period_end")
+    .eq("stripe_subscription_id", subscription.id)
+    .maybeSingle();
+
+  const after = {
+    status: subscription.status,
+    cancel_at_period_end:
+      subscription.cancel_at_period_end || subscription.cancel_at !== null,
+  };
+
   const { error } = await supabase.from("subscriptions").upsert(
     {
       business_id: customer.business_id,
@@ -272,8 +292,7 @@ async function syncSubscription(
       current_period_end: toTimestamp(item?.current_period_end),
       // The portal cancels by setting cancel_at to the period end and
       // leaves cancel_at_period_end false.
-      cancel_at_period_end:
-        subscription.cancel_at_period_end || subscription.cancel_at !== null,
+      cancel_at_period_end: after.cancel_at_period_end,
       trial_end: toTimestamp(subscription.trial_end),
       canceled_at: toTimestamp(subscription.canceled_at),
       updated_at: new Date().toISOString(),
@@ -312,14 +331,29 @@ async function syncSubscription(
     throw planError;
   }
 
-  // What the plan just did to them, said once. A failure here is logged
-  // rather than thrown: the subscription is saved, and Stripe resending
-  // the event would only repeat the work.
+  // What the plan just did to them, said once each. A failure here is
+  // logged rather than thrown: the subscription is already saved, and
+  // Stripe resending the whole event would only repeat the work.
   try {
+    // The ending first, because it is the one with a date on it.
+    if (cancellationLanded(before, after)) {
+      await tellThemWhatStops({
+        businessId: customer.business_id,
+        endsAt: toTimestamp(item?.current_period_end),
+        tier: item?.price.lookup_key?.startsWith("growth") ? "growth" : "pro",
+      });
+    } else if (cameBack(after)) {
+      await forgetTheEnding(customer.business_id);
+    }
+
+    // Stripe retries a declined card for days before anything actually
+    // stops, which is exactly the window this is for.
     if (subscription.status === "past_due" || subscription.status === "unpaid") {
       await tellThemThePaymentFailed(customer.business_id);
     }
 
+    // And what dropping to Free did to their offers, which the
+    // database has just done silently above.
     await tellThemTheirOffersArePaused(customer.business_id);
   } catch (error) {
     console.error("Stripe webhook: could not pass on what the plan changed", error);

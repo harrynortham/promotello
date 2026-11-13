@@ -270,7 +270,11 @@ export function AppFooter({ variant }: { variant: keyof typeof appFooters }) {
                 </div>
 
                 <div className="mt-7 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-1 text-xs leading-5 text-muted-foreground">
+                    {/* The registered-office line is one long sentence,
+                        and left to itself it runs most of the way across
+                        a wide screen and pushes the legal links into two
+                        rows. Half the footer is as far as it goes. */}
+                    <div className="space-y-1 text-xs leading-5 text-muted-foreground sm:max-w-[50%]">
                         <p>&copy; 2026 {company.name}. All rights reserved.</p>
                         <p>{companyDisclosure()}</p>
                     </div>

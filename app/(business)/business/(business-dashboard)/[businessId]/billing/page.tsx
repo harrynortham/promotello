@@ -236,7 +236,7 @@ async function CurrentPlan({
     let detail: string | null = null;
 
     if (subscription.cancel_at_period_end && periodEnd) {
-        detail = `Cancels on ${periodEnd}. You keep access until then.`;
+        detail = `Cancels on ${periodEnd}. You keep everything until then.`;
     } else if (subscription.status === "trialing" && trialEnd) {
         detail = `Your free trial ends on ${trialEnd}, when your first payment is taken.`;
     } else if (subscription.status === "active" && periodEnd) {
@@ -297,6 +297,21 @@ async function CurrentPlan({
                         refund and cancellation policy
                     </Link>
                     .
+                </p>
+
+                {/* Quiet, and before the portal rather than after it:
+                    the portal is also where people update a card, so
+                    this is the only place we can say what cancelling
+                    costs while it still makes a difference. */}
+                <p className="text-sm">
+                    <Link
+                        href={`/business/${businessId}/billing/cancel`}
+                        className="font-medium text-[#17233B]/70 underline underline-offset-4 hover:text-[#FF593F]"
+                    >
+                        {subscription.cancel_at_period_end
+                            ? "See what stops when it ends"
+                            : "Thinking of cancelling?"}
+                    </Link>
                 </p>
             </CardContent>
         </Card>

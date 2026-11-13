@@ -36,7 +36,8 @@ export type NotificationType =
     | "reward_ready"
     | "voucher_expiring"
     | "followed_business_closed"
-    | "admin_queue";
+    | "admin_queue"
+    | "plan_ending";
 
 export type NotificationContent = {
     type: NotificationType;
@@ -158,6 +159,27 @@ export function offerLowStock(offer: {
         href: `/business/${offer.businessId}/offers`,
         businessId: offer.businessId,
         dedupeKey: `offer:${offer.id}:offer_low_stock`,
+    };
+}
+
+// A plan ending, said in the app as well as by email: the people who
+// run a business are not all the person whose card Stripe has
+// (lib/plan-ending.ts).
+export function planEnding(plan: {
+    businessId: string;
+    businessName: string;
+    ends: string | null;
+    stopping: number;
+}): NotificationContent {
+    return {
+        type: "plan_ending",
+        title: plan.ends
+            ? `${plan.businessName}'s plan ends on ${plan.ends}`
+            : `${plan.businessName}'s plan has ended`,
+        body: `${plan.stopping === 1 ? "One thing" : `${plan.stopping} things`} change, and your stamp card is not one of them. We've emailed you the lot.`,
+        href: `/business/${plan.businessId}/billing`,
+        businessId: plan.businessId,
+        dedupeKey: `plan-ending:${plan.businessId}`,
     };
 }
 
