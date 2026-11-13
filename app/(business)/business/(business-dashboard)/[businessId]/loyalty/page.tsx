@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
+import { FiPrinter } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { StampQr } from "@/components/stamp-qr";
@@ -340,6 +341,16 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             Find card
                                         </SubmitButton>
                                     </form>
+
+                                    {/* For whoever is on the counter
+                                        rather than on this page. */}
+                                    <Link
+                                        href={`/staff-guide/${businessId}`}
+                                        className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                                    >
+                                        <FiPrinter aria-hidden="true" className="size-4" />
+                                        Print the till guide
+                                    </Link>
                                 </CardContent>
                             </Card>
 
