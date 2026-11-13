@@ -288,10 +288,40 @@ const guides: HelpGuide[] = [
         steps: [
             "Ask the customer to open their loyalty card on their phone.",
             "Scan the QR code on their card with your phone camera and open the link.",
-            "Tap Add stamp.",
-            "When the card is full, give them the reward and it starts again.",
+            "Tap Add a stamp. One stamp per visit, however much they spend.",
+            "When the card is full it says Reward ready. Give them the reward, then tap Redeem reward and the card starts again.",
         ],
-        note: "Only members of your team can add stamps. Customers can’t stamp their own cards.",
+        note:
+            "Only members of your team can add stamps, and nobody can stamp their own card. Scanning the same card twice within ten minutes is treated as a double scan and refused.",
+    },
+    {
+        id: "till-guide",
+        category: "Loyalty cards",
+        title: "Print the guide for your till",
+        description: "One page for whoever is on the counter.",
+        steps: [
+            "Open your business and choose Loyalty card or Redemptions.",
+            "Choose Print the till guide.",
+            "Print it, or save it as a PDF and send it to your team.",
+        ],
+        note:
+            "One sheet of A4: what to do when somebody holds out a voucher or a loyalty card, and what each message on the screen means. It names your own card, so whoever reads it knows what they are promising, and it carries a QR code that opens the till tools on their phone.",
+        link: { label: "Open business dashboard", href: "/business/dashboard" },
+    },
+    {
+        id: "card-finishes",
+        category: "Loyalty cards",
+        title: "Change the deal without breaking a promise",
+        description: "What happens to the cards people are already holding.",
+        steps: [
+            "Start a new card, or stop handing out the one you have. Either way the old card comes off your page and nobody new can join it.",
+            "The customers holding one carry on collecting until it is full.",
+            "When it fills, they claim the reward once and that card is finished — it does not start again.",
+            "The moment it fills they are given the card you hand out now, and their next stamp goes on that one.",
+            "If you have no card on offer at that moment, they are given one as soon as you start the next.",
+        ],
+        note:
+            "At the till, a full card that is no longer handed out says “This card is full”: redeem the reward rather than stamping it. Hand the old card out again and everybody holding one picks it up from where their stamps stand.",
     },
     {
         id: "qr-posters",

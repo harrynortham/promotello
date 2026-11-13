@@ -161,7 +161,7 @@ const guides: HelpGuide[] = [
             "The card starts again, so you can work towards the next one.",
         ],
         note:
-            "Your card keeps a count of the rewards you have had from that business.",
+            "Your card keeps a count of the rewards you have had from that business. If the business has stopped handing that card out, it finishes when you claim your reward instead of starting again — and the card they run now is already in My loyalty cards, with your next stamp going on it.",
     },
     {
         id: "loyalty-new-phone",

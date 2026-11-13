@@ -318,11 +318,7 @@ correction H scans.
    as a business that never got a preview email, and once more with Google
    sign-in.
 
-2. **The loyalty card, end to end.** Rebuilt in #164 and #165, so the old "all
-   broken and wrong" note is stale, but it has not been through a real till:
-   join by scanning, stamp, stamp to the reward, and what a customer sees when
-   the card is full.
-3. **Admin approval and decline.** Approve and decline both a business and an
+2. **Admin approval and decline.** Approve and decline both a business and an
    offer, and write down exactly what the business receives at each step. That
    note becomes the work in stage 3.
 
@@ -367,8 +363,6 @@ each tied to a moment in stage 1's walkthrough.
   messages for declining a business or an offer, with matching help-centre
   wording, plus a log of approval reasons and resubmissions so there's a
   history when a business asks.
-- **Staff documentation on redemptions**, for the people behind the counter.
-  One printable page. The till is where this product fails quietly.
 
 - **Onboarding when a business fits no category.**
 

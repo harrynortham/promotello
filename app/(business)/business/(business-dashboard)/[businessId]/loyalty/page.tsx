@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
+import { FiPrinter } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { StampQr } from "@/components/stamp-qr";
@@ -238,8 +239,18 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                         </p>
                     </div>
 
-                    <div className="flex shrink-0 flex-wrap gap-3">
+                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                         <LoyaltyHowItWorks />
+
+                        {/* For whoever is on the counter rather than on
+                            this page: one sheet, printed once, stuck up. */}
+                        <Link
+                            href={`/staff-guide/${businessId}`}
+                            className="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                        >
+                            <FiPrinter aria-hidden="true" className="size-4" />
+                            Print the till guide
+                        </Link>
                     </div>
                 </div>
 
@@ -340,6 +351,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             Find card
                                         </SubmitButton>
                                     </form>
+
                                 </CardContent>
                             </Card>
 

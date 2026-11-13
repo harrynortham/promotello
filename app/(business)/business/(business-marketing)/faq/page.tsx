@@ -96,7 +96,7 @@ const sections = [
             {
                 question: "How does the loyalty card work?",
                 answer:
-                    "Choose how many stamps it takes (3 to 20) and the reward. Customers join from your page and keep the card on their phone. Staff scan the customer's card and tap \"Add stamp\". Loyalty cards are part of Pro.",
+                    "Choose how many stamps it takes (3 to 20) and the reward. Customers join from your page and keep the card on their phone. Staff scan the customer's card and tap \"Add a stamp\" — one per visit. Change the deal whenever you like: the people holding the old card finish it and claim what they were promised once, then move to your new one. Loyalty cards are part of Pro.",
             },
             {
                 question: "Can customers stamp their own cards?",

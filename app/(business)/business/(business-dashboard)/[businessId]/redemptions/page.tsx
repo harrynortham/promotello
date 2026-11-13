@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { FiArrowLeft, FiArrowRight, FiCamera, FiSearch } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight, FiCamera, FiPrinter, FiSearch } from "react-icons/fi";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
@@ -331,8 +331,18 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
                     </p>
                 </div>
 
-                <div className="shrink-0">
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                     <RedemptionsHowItWorks />
+
+                    {/* For whoever is on the counter rather than on this
+                        page: one sheet, printed once, stuck up. */}
+                    <Link
+                        href={`/staff-guide/${businessId}`}
+                        className="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                    >
+                        <FiPrinter aria-hidden="true" className="size-4" />
+                        Print the till guide
+                    </Link>
                 </div>
             </div>
 
