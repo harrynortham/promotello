@@ -166,6 +166,18 @@ async function Demo() {
                             {business ? "Put it back" : "Build the demo business"}
                         </SubmitButton>
                     </form>
+
+                    {/* It is the same button either way, and pressing
+                        it a second time is a reset rather than a
+                        second business. Say what that costs before
+                        somebody finds out by pressing it. */}
+                    {business && (
+                        <p className="mt-3 text-sm text-[#17233B]/65">
+                            Rebuilds the card, its twelve holders and the three offers from
+                            scratch — for after a demo has stamped them. Your logo and cover
+                            stay; the card links and the poster code change.
+                        </p>
+                    )}
                 </CardContent>
             </Card>
 
