@@ -20,8 +20,29 @@ const admin = () =>
         auth: { autoRefreshToken: false, persistSession: false },
     });
 
+// A request to Supabase has no timeout of its own, and one that never
+// answers would hang a poll for ever rather than being retried — which
+// is how this test used to fail, with nothing to show for it. Each
+// attempt gets its own stopwatch and the next one starts fresh.
+async function soon<T>(work: PromiseLike<T>, fallback: T, ms = 8_000): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const giveUp = new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), ms);
+    });
+
+    try {
+        return await Promise.race([Promise.resolve(work), giveUp]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 test("what a business changes after approval is written down, and read in admin", async ({ browser }) => {
-    test.setTimeout(240_000);
+    // The business profile form and the admin page behind it are both
+    // big enough that a dev server compiling them cold can take a
+    // while, and this test opens one after the other.
+    test.setTimeout(300_000);
     const { businessId, businessUserId } = state();
     const client = admin();
     const run = String(Date.now());
@@ -42,7 +63,7 @@ test("what a business changes after approval is written down, and read in admin"
         await client.from("business_edits").delete().eq("business_id", businessId);
 
         // The business changes its own page, through its own form.
-        await business.goto(`/business/${businessId}/edit`);
+        await business.goto(`/business/${businessId}/edit`, { timeout: 90_000 });
         const description = business.locator("#description");
         await expect(description).toBeVisible({ timeout: 60_000 });
         await description.fill(`A description written at ${run}.`);
@@ -60,9 +81,16 @@ test("what a business changes after approval is written down, and read in admin"
         await expect
             .poll(
                 async () =>
-                    (await client.from("businesses").select("description").eq("id", businessId).single())
-                        .data?.description ?? "",
-                { timeout: 30_000 },
+                    soon(
+                        client
+                            .from("businesses")
+                            .select("description")
+                            .eq("id", businessId)
+                            .single()
+                            .then(({ data }) => data?.description ?? ""),
+                        "",
+                    ),
+                { timeout: 60_000 },
             )
             .toContain(run);
 
