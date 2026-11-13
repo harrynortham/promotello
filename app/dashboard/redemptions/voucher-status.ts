@@ -82,6 +82,44 @@ export function groupVouchers(vouchers: WalletRedemption[], today = todayInUk())
     return { ready, used, expired: of("expired"), unavailable: of("unavailable") };
 }
 
+// The wallet as one list: the one they just claimed, then the ones
+// running out, then everything they can no longer use. The same shape
+// the loyalty wallet is in (lib/loyalty-state.ts) — a list somebody
+// reads from the top rather than a page of headings to get past.
+//
+// The newest goes first on its own. Somebody who has just scanned a
+// poster or claimed an offer is holding the phone out to show it, and
+// a voucher claimed thirty seconds ago is not the one ending soonest,
+// so sorting by expiry alone buries exactly the one they want. After
+// it, the ones running out are the ones worth using next, and a
+// voucher with no end date falls back to when they claimed it.
+export function sortVouchers(vouchers: StatusedVoucher[]) {
+    const rank: Record<VoucherStatus, number> = { ready: 0, unavailable: 1, used: 2, expired: 3 };
+
+    // When it last mattered: claimed for one they can still use, used
+    // for one they have.
+    const when = ({ voucher, status }: StatusedVoucher) =>
+        (status === "used" ? voucher.usedAt : voucher.claimedAt) ?? "";
+
+    const ending = ({ voucher }: StatusedVoucher) => voucher.offer?.expiresAt ?? "9999";
+
+    const ready = vouchers
+        .filter((item) => item.status === "ready")
+        .sort((a, b) => when(b).localeCompare(when(a)));
+
+    const [newest, ...rest] = ready;
+
+    const inOrder = [
+        ...(newest ? [newest] : []),
+        ...rest.sort((a, b) => ending(a).localeCompare(ending(b)) || when(b).localeCompare(when(a))),
+        ...vouchers
+            .filter((item) => item.status !== "ready")
+            .sort((a, b) => rank[a.status] - rank[b.status] || when(b).localeCompare(when(a))),
+    ];
+
+    return inOrder;
+}
+
 const shortDate = (value: string) =>
     new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(value));
 

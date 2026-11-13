@@ -1,27 +1,28 @@
-import { businessPath } from "@/lib/slugs";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { redirect } from "next/navigation";
 
-import { EmptyState } from "@/components/listing-ui";
-import { LiveLoyaltyCard } from "@/components/live-loyalty-card";
+import { EmptyState, ShowMore } from "@/components/listing-ui";
 import { LoyaltyCardsLive } from "@/components/loyalty-cards-live";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { qrSvg } from "@/lib/qr";
-import { requestOrigin } from "@/lib/request-origin";
-import { createClient } from "@/utils/supabase/server";
+import { pageOf } from "@/lib/listing-filters";
+import { sortCards } from "@/lib/loyalty-state";
 
-import { getLoyaltyCards } from "./cards";
+import { getGroupedCards } from "./loyalty-wallet";
+import { LoyaltyCardGrid, LoyaltyFilter } from "./wallet";
 
 export const metadata: Metadata = {
     title: "My loyalty cards",
 };
 
 type PageProps = {
-    searchParams: Promise<{ joined?: string }>;
+    searchParams: Promise<{ joined?: string; show?: string }>;
 };
+
+// A screenful at a time: somebody with thirty cards should not be
+// handed thirty, and pressing for more keeps their place.
+const PER_SCREEN = 8;
 
 function LoadingState() {
     return (
@@ -40,36 +41,33 @@ function LoadingState() {
 async function LoyaltyCardsContent({ searchParams }: PageProps) {
     await connection();
 
-    const { joined } = await searchParams;
-    const supabase = await createClient();
+    const { joined, show } = await searchParams;
+    const { userId, origin, total, cards, counts } = await getGroupedCards("/dashboard/loyalty");
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-        redirect("/login?next=/dashboard/loyalty");
-    }
-
-    // Cards they joined as a guest with this email become theirs here. It is
-    // safe to call every time: there is usually nothing to claim.
-    await supabase.rpc("claim_guest_loyalty_cards");
-
-    const [cards, origin] = await Promise.all([getLoyaltyCards(user.id), requestOrigin()]);
-    const svgs = await Promise.all(cards.map((card) => qrSvg(`${origin}/stamp/${card.code}`)));
+    // One list, in the order somebody would put them in themselves: the
+    // rewards they can claim, then the cards closest to one, then the
+    // ones they can no longer collect on.
+    const page = pageOf(sortCards(cards), show, PER_SCREEN);
 
     return (
         <div className="text-[#17233B]">
             {/* A card arriving, or one finishing: both change the list
                 rather than a card in it. */}
-            <LoyaltyCardsLive userId={user.id} />
+            <LoyaltyCardsLive userId={userId} />
 
             <div className="mx-auto max-w-6xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Your wallet</p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">My loyalty cards</h1>
-                <p className="mt-2 max-w-2xl text-[#17233B]/65">
-                    Show your card when you pay. Staff scan the code to add a stamp.
-                </p>
+                <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">Your wallet</p>
+                        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">My loyalty cards</h1>
+                        <p className="mt-2 max-w-2xl text-[#17233B]/65">
+                            Show your card when you pay. Staff scan the code to add a stamp.
+                            Rewards you can claim are first.
+                        </p>
+                    </div>
+
+                    {total > 0 && <LoyaltyFilter active="all" counts={counts} />}
+                </div>
 
                 {joined && (
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
@@ -81,7 +79,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                 )}
 
                 <div className="mt-8">
-                    {cards.length === 0 ? (
+                    {total === 0 ? (
                         <EmptyState
                             title="No loyalty cards yet"
                             description="Look for the loyalty card on a business's page and join it to start collecting stamps."
@@ -89,45 +87,18 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                             linkLabel="Find businesses"
                         />
                     ) : (
-                        <div className="grid gap-5 md:grid-cols-2">
-                            {cards.map((card, index) => {
-                                const business = card.business;
+                        <>
+                            <LoyaltyCardGrid cards={page.shown} origin={origin} joined={joined} />
 
-                                return (
-                                    <LiveLoyaltyCard
-                                        key={card.id}
-                                        cardId={card.id}
-                                        id={card.programId}
-                                        businessName={business?.name ?? "Business"}
-                                        businessHref={business ? businessPath(business) : "/businesses"}
-                                        logoUrl={business?.logo_url}
-                                        stampsRequired={card.stampsRequired}
-                                        reward={card.reward}
-                                        stamps={card.stamps}
-                                        rewardsRedeemed={card.rewardsRedeemed}
-                                        active={card.active}
-                                        terms={card.terms}
-                                        colour={card.cardColour}
-                                        header={card.cardHeader}
-                                        accent={card.cardAccent}
-                                        stampIcon={card.stampIcon}
-                                        code={card.code}
-                                        lastOne={card.closed && !card.finished && !card.rewardReady}
-                                        finished={card.finished}
-                                        newCardHref={
-                                            card.newCardProgramId
-                                                ? `/loyalty/${card.newCardProgramId}`
-                                                : undefined
-                                        }
-                                        // The card's own page, where it
-                                        // is the only thing on screen.
-                                        href={`/loyalty/${card.programId}`}
-                                        qr={<span className="block size-full" dangerouslySetInnerHTML={{ __html: svgs[index] }} />}
-                                        className={joined === card.programId ? "border-[#FF593F] ring-2 ring-[#FF593F]/20" : "border-[#17233B]/10"}
-                                    />
-                                );
-                            })}
-                        </div>
+                            <ShowMore
+                                shown={page.shown.length}
+                                total={page.total}
+                                paged={page.paged}
+                                capped={page.capped}
+                                nextHref={page.more ? `/dashboard/loyalty?show=${page.more}` : null}
+                                noun="cards"
+                            />
+                        </>
                     )}
                 </div>
             </div>

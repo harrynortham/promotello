@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { addressParts } from "@/lib/address";
 import { createClient } from "@/utils/supabase/server";
 
-import { groupVouchers, type WalletRedemption } from "./voucher-status";
+import { groupVouchers, sortVouchers, type WalletRedemption } from "./voucher-status";
 import { scheduleFrom } from "@/lib/schedule";
 
 // The signed-in customer's vouchers: offers they claimed, and gift vouchers
@@ -159,6 +159,9 @@ export async function getGroupedWallet(next: string) {
     return {
         error,
         total: vouchers.length,
+        // The wallet as one list, and as its groups: the page shows the
+        // list, the filter counts the groups.
+        all: sortVouchers([...groups.ready, ...groups.unavailable, ...groups.used, ...groups.expired]),
         groups,
         counts: { ready: groups.ready.length, used: groups.used.length, expired: groups.expired.length },
     };

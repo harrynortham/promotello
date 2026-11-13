@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { FiArrowRight, FiBriefcase, FiCheckCircle, FiGift, FiStar } from "react-icons/fi";
+import { FiArrowRight, FiBriefcase, FiGift, FiStar } from "react-icons/fi";
 
 import { EmptyState, SectionHeading } from "@/components/listing-ui";
 import { OfferCard } from "@/components/offer-card";
@@ -18,7 +18,7 @@ import { createClient } from "@/utils/supabase/server";
 
 import { byNextReward, getLoyaltyCards } from "./loyalty/cards";
 import { LoyaltyCardTile } from "./loyalty/loyalty-card-tile";
-import { VoucherGrid, statusPages } from "./redemptions/voucher-list";
+import { VoucherGrid } from "./redemptions/voucher-list";
 import { groupVouchers } from "./redemptions/voucher-status";
 import { getWallet } from "./redemptions/wallet";
 
@@ -83,7 +83,7 @@ async function CustomerDashboardContent() {
 
     const prompts = (reviewPrompts ?? []) as ReviewPrompt[];
 
-    const { ready, used } = groupVouchers(vouchers);
+    const { ready } = groupVouchers(vouchers);
     const claimedSlugs = new Set(vouchers.map((voucher) => voucher.offer?.slug));
     const suggestions = liveOffers.filter((offer) => !claimedSlugs.has(offer.slug)).slice(0, 4);
     const hasBusiness = (businessCount ?? 0) > 0;
@@ -92,10 +92,18 @@ async function CustomerDashboardContent() {
         (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.split(" ")[0]) ||
         null;
 
+    // What they can use, not what they have had: a count of spent
+    // vouchers and finished cards is history, and this is the top of
+    // the page somebody opens at a counter.
     const stats = [
-        { icon: FiGift, label: "Vouchers ready to use", value: ready.length, href: statusPages.ready.href, action: "View vouchers" },
-        { icon: FiCheckCircle, label: "Vouchers used", value: used.length, href: statusPages.used.href, action: "View history" },
-        { icon: FiStar, label: "Loyalty cards", value: loyaltyCards.length, href: "/dashboard/loyalty", action: "View cards" },
+        { icon: FiGift, label: "Vouchers", value: ready.length, href: "/dashboard/redemptions", action: "View vouchers" },
+        {
+            icon: FiStar,
+            label: "Loyalty cards",
+            value: loyaltyCards.filter((card) => !card.finished).length,
+            href: "/dashboard/loyalty",
+            action: "View cards",
+        },
     ];
 
     return (
@@ -120,7 +128,7 @@ async function CustomerDashboardContent() {
                     </Button>
                 </div>
 
-                <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <div className="mt-8 grid grid-cols-2 gap-4">
                     {stats.map((stat) => {
                         const Icon = stat.icon;
 
