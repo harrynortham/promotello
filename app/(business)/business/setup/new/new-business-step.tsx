@@ -9,7 +9,7 @@ import { FiArrowRight } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { CategorySelect } from "@/components/category-select";
+import { CategorySelect, OTHER_CATEGORY } from "@/components/category-select";
 import { FieldError, invalidProps } from "@/components/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,10 +19,20 @@ import { createClient } from "@/utils/supabase/client";
 import { welcomeNewBusiness } from "@/app/(business)/onboarding/actions";
 import { SetupShell } from "../setup-shell";
 
-const schema = z.object({
-    businessName: requiredText("The business name", { min: 2, max: 160 }),
-    category: z.string().min(1, "Choose a category."),
-});
+const schema = z
+    .object({
+        businessName: requiredText("The business name", { min: 2, max: 160 }),
+        category: z.string().min(1, "Choose a category."),
+        // Only asked for, and only required, when nothing on the list
+        // fits. The database keeps these words until we have a
+        // category for them.
+        otherCategory: z.string().max(100, "Keep it under 100 characters.").optional(),
+    })
+    .refine(
+        (values) =>
+            values.category !== OTHER_CATEGORY || (values.otherCategory ?? "").trim().length >= 2,
+        { path: ["otherCategory"], message: "Tell us in a few words what you do." },
+    );
 
 type Values = z.infer<typeof schema>;
 
@@ -51,8 +61,12 @@ export function NewBusinessStep({ firstName }: { firstName: string | null }) {
         formState: { errors, isSubmitting },
     } = useForm<Values>({
         resolver: zodResolver(schema),
-        defaultValues: { businessName: "", category: "" },
+        defaultValues: { businessName: "", category: "", otherCategory: "" },
     });
+
+    // The one answer that asks another question. Kept here rather than
+    // watched, the way the name beside it is.
+    const [chosenCategory, setChosenCategory] = useState("");
 
     async function create(values: Values) {
         setErrorMessage("");
@@ -61,7 +75,12 @@ export function NewBusinessStep({ firstName }: { firstName: string | null }) {
         // makes the business, and the flow does the page.
         const { data, error } = await createClient().rpc("create_business_with_owner", {
             business_name: values.businessName,
-            business_category: values.category,
+            // Their own words where the list had nothing: the database
+            // finds no category for them and keeps what they said.
+            business_category:
+                values.category === OTHER_CATEGORY
+                    ? values.otherCategory!.trim()
+                    : values.category,
         });
 
         if (error || !data) {
@@ -121,10 +140,41 @@ export function NewBusinessStep({ firstName }: { firstName: string | null }) {
                             <CategorySelect
                                 id="category"
                                 name="category"
-                                registration={register("category")}
+                                allowOther
+                                registration={register("category", {
+                                    onChange: (event) => setChosenCategory(event.target.value),
+                                })}
                                 invalid={invalidProps("category-error", errors.category)}
                             />
                             <FieldError id="category-error" message={errors.category?.message} />
+
+                            {/* Nothing on the list is them. Rather than
+                                making them pick the nearest wrong one,
+                                we ask — and sort it out at our end. */}
+                            {chosenCategory === OTHER_CATEGORY && (
+                                <div className="space-y-2 pt-2">
+                                    <Label htmlFor="otherCategory">
+                                        Tell us in a few words what you do
+                                    </Label>
+
+                                    <Input
+                                        id="otherCategory"
+                                        placeholder="e.g. tattoo studio, car garage, nursery"
+                                        readOnly={busy}
+                                        {...register("otherCategory")}
+                                        {...invalidProps("otherCategory-error", errors.otherCategory)}
+                                    />
+                                    <FieldError
+                                        id="otherCategory-error"
+                                        message={errors.otherCategory?.message}
+                                    />
+
+                                    <p className="text-sm text-[#17233B]/65">
+                                        Your page says this until we add a category for you,
+                                        which we do when we check your business over.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
 

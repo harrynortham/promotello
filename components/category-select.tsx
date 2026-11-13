@@ -17,7 +17,16 @@ type CategorySelectProps = {
     // In a react-hook-form form: register("category").
     registration?: UseFormRegisterReturn;
     invalid?: { "aria-invalid"?: true; "aria-describedby"?: string };
+    // Lets somebody say they are none of these. The form that asks is
+    // the one that takes the words
+    // (20261231090000_a_business_we_have_no_category_for.sql).
+    allowOther?: boolean;
 };
+
+// What the select submits when nothing on the list fits. Not a uuid
+// and not a slug, so the database finds no category for it and keeps
+// the words instead — which is exactly what should happen.
+export const OTHER_CATEGORY = "other";
 
 // A native select dressed like our Input, shared with the other native
 // selects on the offer form so they don't drift apart.
@@ -35,6 +44,7 @@ export function CategorySelect({
     className,
     registration,
     invalid,
+    allowOther = false,
 }: CategorySelectProps) {
     const [groups, setGroups] = useState<CategoryGroup[] | null>(null);
     const [failed, setFailed] = useState(false);
@@ -75,6 +85,12 @@ export function CategorySelect({
                     ))}
                 </optgroup>
             ))}
+
+            {/* Last, where somebody looks once they have read the rest
+                and found themselves missing. */}
+            {allowOther && groups && (
+                <option value={OTHER_CATEGORY}>Something else</option>
+            )}
         </select>
     );
 }
