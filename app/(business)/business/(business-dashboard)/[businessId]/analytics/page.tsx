@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { businessHasPro } from "@/lib/billing";
+import { businessHasPro, businessTier } from "@/lib/billing";
+import { readRepeatVisits } from "@/lib/repeat-visits";
+import { RepeatVisitsPanel } from "./repeat-visits-panel";
 import { createClient } from "@/utils/supabase/server";
 import { AnalyticsHowItWorks } from "./how-it-works";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -145,10 +147,16 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
         days: 30,
     });
 
-    const [{ data: followerCount }, hasPro] = await Promise.all([
+    const [{ data: followerCount }, hasPro, tier, { data: repeatRows }] = await Promise.all([
         supabase.rpc("business_follower_count", { requested_business_id: businessId }),
         businessHasPro(supabase, businessId).catch(() => false),
+        businessTier(supabase, businessId).catch(() => "free" as const),
+        // The one number a loyalty app can't print. Three months is the
+        // quarter a business talks in.
+        supabase.rpc("business_repeat_visits", { requested_business_id: businessId, months: 3 }),
     ]);
+
+    const repeatVisits = readRepeatVisits(repeatRows);
 
     if (analyticsError) {
         console.error("Analytics: failed to load summary", analyticsError);
@@ -331,6 +339,12 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                         </CardContent>
                     </Card>
                 </section>
+
+                <RepeatVisitsPanel
+                    report={repeatVisits}
+                    businessId={businessId}
+                    locked={tier !== "growth"}
+                />
 
                 <Card className="mt-8 border-[#17233B]/10">
                     <CardHeader>

@@ -27,6 +27,15 @@ export const planComparison: ComparisonRow[] = [
     // to it at the till.
     { feature: "Quiet hours enforced when scanned", free: false, pro: false, growth: true, plus: "Quiet hours: outside an offer's times the voucher won't mark as used" },
     { feature: "Monthly value report by email", free: false, pro: false, growth: true, plus: "A monthly value report in your inbox" },
+    // The one a loyalty app can't print: it was never there for the
+    // first visit.
+    {
+        feature: "First-time customers and who came back",
+        free: false,
+        pro: false,
+        growth: true,
+        plus: "First-time customers Promotello sent you, and how many came back",
+    },
 ];
 
 // What a plan adds over the one below it.
