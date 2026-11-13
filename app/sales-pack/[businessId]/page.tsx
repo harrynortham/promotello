@@ -421,26 +421,17 @@ async function Pack({ params }: PageProps) {
                                 colour={program?.card_colour ?? "navy"}
                                 headerColour={program?.card_header}
                                 accentColour={program?.card_accent}
-                                layout={program ? "stamp_card" : "classic"}
-                                card={
-                                    program
-                                        ? {
-                                              stampsRequired: program.stamps_required,
-                                              reward: program.reward,
-                                              terms: program.terms,
-                                              colour: program.card_colour,
-                                              header: program.card_header,
-                                              accent: program.card_accent,
-                                              stampIcon: program.stamp_icon,
-                                          }
-                                        : {
-                                              stampsRequired: EXAMPLE.card.stampsRequired,
-                                              reward: EXAMPLE.card.reward,
-                                              terms: EXAMPLE.card.terms,
-                                              colour: "charcoal",
-                                              stampIcon: "coffee",
-                                          }
-                                }
+                                // The plainest of the six layouts.
+                                // The stamp-card one draws the whole
+                                // card inside the poster, which is a
+                                // fine thing in a window at A4 and
+                                // mush at the size of a picture on
+                                // another sheet. This page is about
+                                // what a poster is for, not about
+                                // which arrangement to pick — that
+                                // choice is in the dashboard, with all
+                                // six drawn big enough to judge.
+                                layout="classic"
                                 className="shadow-sm"
                             />
 

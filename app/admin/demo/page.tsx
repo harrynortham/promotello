@@ -51,7 +51,7 @@ async function Demo() {
     let steps: Step[] = [];
 
     if (business) {
-        const [{ data: offer }, { data: program }] = await Promise.all([
+        const [{ data: offer }, { data: program }, { data: poster }] = await Promise.all([
             supabase
                 .from("offers")
                 .select("slug")
@@ -66,6 +66,14 @@ async function Demo() {
                 .eq("business_id", business.id)
                 .eq("is_active", true)
                 .is("closed_at", null)
+                .maybeSingle(),
+            supabase
+                .from("qr_codes")
+                .select("id, label")
+                .eq("business_id", business.id)
+                .is("archived_at", null)
+                .order("created_at")
+                .limit(1)
                 .maybeSingle(),
         ]);
 
@@ -88,6 +96,13 @@ async function Demo() {
                 href: `/businesses/${business.slug ?? business.id}`,
                 detail: "What somebody finds in the directory: photos, hours, the offers and the card.",
             },
+            poster
+                ? {
+                      label: "The poster for the window",
+                      href: `/poster/${poster.id}`,
+                      detail: "Ready to print, in their name and colours. Hand them your phone and let them scan it.",
+                  }
+                : null,
             offer
                 ? {
                       label: "An offer",

@@ -161,7 +161,7 @@ export const posterSheet = {
     // The poster on the sheet is drawn from their own name and colours,
     // but it opens their page rather than carrying a live code: a scan
     // off a sales sheet would land in their poster's own count.
-    caption: "Made from your name, your logo and your card. Yours prints with its own code on it.",
+    caption: "Made from your name, your logo and your colours. Yours prints with its own code on it, and there are six arrangements to choose from.",
 };
 
 export const priceSheet = {
