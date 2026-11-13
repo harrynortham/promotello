@@ -322,6 +322,12 @@ correction H scans.
    offer, and write down exactly what the business receives at each step. That
    note becomes the work in stage 3.
 
+3. **Lifecycle and onboarding emails** Update email templates to look more modern, include social media links for trust. Check each email in business lifecycle, check text is ok and add imagery to make emails more interesting.
+
+4. **Transactional emails** Update the templates to match above. Define which events trigger emails and if we are missing any or doing too many we dont need.
+
+5. **Account/business closure** Ensure business are notified of risk and loss when unsubscribr or close account, that qr and loyalty cards no longer accessible etc. we want to retain the businesses
+
 ### Stage 2 — True before you email a single business
 
 Each of these is an afternoon or a form, and each one is painful to discover
@@ -338,9 +344,11 @@ after outreach has started.
   1st of the month adds every monthly report. Supabase's sign-in emails come
   out of the same quota. Move to Pro ($20/mo) before daily sends reach ~70, or
   before the first business with more than ~80 followers announces an offer.
+
 - **A second Supabase project for development**, so tests stop running against
   the live database. One accidental e2e run during launch week is worse than
   the day this costs.
+
 - **Decide the email volume.** A business that signs up and does nothing gets 7
   emails in 21 days (welcome, setup nudge, loyalty pitch, second nudge,
   founding places, results, check-in). All verified working, there are just a
@@ -356,9 +364,11 @@ after outreach has started.
 These are the places the product breaks in front of someone. Small builds,
 each tied to a moment in stage 1's walkthrough.
 
-- **Decide whether editing a business page needs review**, the way an offer
-  edit does ([docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)). If it
-  does, reuse that flow so the page never goes offline while it's reviewed.
+- ~~**Decide whether editing a business page needs review**, the way an offer
+  edit does ([docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)).~~
+  Decided: record, don't gate. An edit to the name, description or either
+  picture goes live as it always did and writes down what changed, read at
+  `/admin/businesses/edits` — [docs/BUSINESS-EDITS.md](docs/BUSINESS-EDITS.md).
 - **Decline messages, and a history.** A set of polite, helpful, ready-to-send
   messages for declining a business or an offer, with matching help-centre
   wording, plus a log of approval reasons and resubmissions so there's a
@@ -367,16 +377,6 @@ each tied to a moment in stage 1's walkthrough.
 - **Onboarding when a business fits no category.**
 
 ### Stage 4 — The one build that earns month two
-
-**The attributed repeat-visit report.** First visits Promotello sent, how many
-came back, how many became regulars, per business. It is the only number a
-loyalty app can't print, the reason a business renews rather than cancels in
-month two, and the thing that makes £24 a month read as cheap rather than
-expensive — see [Positioning](docs/ROADMAP.md#positioning-what-a-loyalty-app-cant-copy).
-Everything it needs is already tracked: views, claims, redemptions, stamps, QR
-scans, repeat visit rate and cross-visits. This is a reporting job, not new
-instrumentation. Covers the old note about tracking conversion per business and
-wanting a profile for each customer.
 
 With it done: **the offline sales pack.** Sales sheets showing a live QR code
 for a loyalty card, how it looks on a customer's phone, the offers, the

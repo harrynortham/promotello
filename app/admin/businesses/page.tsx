@@ -96,6 +96,9 @@ export default function AdminBusinessesPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [activeBusinessId, setActiveBusinessId] = useState("");
+    // Edits a business made to its own page after we approved it. They
+    // are already live; this is how many nobody has read yet.
+    const [unreadEdits, setUnreadEdits] = useState(0);
     const [errorMessage, setErrorMessage] = useState("");
     const [reviewAction, setReviewAction] =
         useState<ReviewAction>(null);
@@ -215,6 +218,18 @@ export default function AdminBusinessesPage() {
         checkAccess();
     }, [router]);
 
+    // How many edits to an approved page nobody has read. The page
+    // itself is already changed; this is only the prompt to look.
+    useEffect(() => {
+        if (!isAllowed) return;
+
+        void createClient()
+            .from("business_edits")
+            .select("id", { count: "exact", head: true })
+            .is("reviewed_at", null)
+            .then(({ count }) => setUnreadEdits(count ?? 0));
+    }, [isAllowed, refreshKey]);
+
     // One load, for whatever the page is currently asking to see.
     useEffect(() => {
         if (!isAllowed) return;
@@ -272,13 +287,25 @@ export default function AdminBusinessesPage() {
                         </p>
                     </div>
 
-                    <Button
-                        render={<Link href="/business/setup/new" />}
-                        nativeButton={false}
-                        variant="outline"
-                    >
-                        Set up a business for an owner
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            render={<Link href="/admin/businesses/edits" />}
+                            nativeButton={false}
+                            variant={unreadEdits > 0 ? "default" : "outline"}
+                        >
+                            {unreadEdits > 0
+                                ? `${unreadEdits} edited since approval`
+                                : "Edited since approval"}
+                        </Button>
+
+                        <Button
+                            render={<Link href="/business/setup/new" />}
+                            nativeButton={false}
+                            variant="outline"
+                        >
+                            Set up a business for an owner
+                        </Button>
+                    </div>
                 </header>
 
                 <div className="mt-8 flex flex-wrap gap-2">
