@@ -8,6 +8,7 @@ import { AppFooter } from "@/components/site/footers";
 import { CustomerAppHeader } from "@/components/site/headers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
+import { NotificationsLive } from "@/components/site/notifications-live";
 import { NotificationList, type NotificationRow } from "./notification-list";
 
 // One list per person, whichever side of the site they came from: a
@@ -74,13 +75,19 @@ async function Notifications() {
     });
 
     return (
-        <NotificationList
-            notifications={notifications}
+        <>
+            {/* Anything landing while this page is open lands on the
+                page too, rather than waiting for a click. */}
+            <NotificationsLive userId={user.id} />
+
+            <NotificationList
+                notifications={notifications}
             // Which business a row is about only helps somebody with
             // more than one.
-            showBusinessNames={(businessCount ?? 0) > 1}
-            pageSize={PAGE_SIZE}
-        />
+                showBusinessNames={(businessCount ?? 0) > 1}
+                pageSize={PAGE_SIZE}
+            />
+        </>
     );
 }
 

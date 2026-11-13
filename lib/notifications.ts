@@ -29,6 +29,14 @@ export type NotificationType =
     | "new_offer_from_followed"
     | "voucher_issued"
     | "loyalty_card_issued"
+    | "offers_paused"
+    | "offer_expiring"
+    | "payment_failed"
+    | "poster_pointing_nowhere"
+    | "reward_ready"
+    | "voucher_expiring"
+    | "followed_business_closed"
+    | "admin_queue"
     | "plan_ending";
 
 export type NotificationContent = {
@@ -176,8 +184,162 @@ export function planEnding(plan: {
 }
 
 // ---------------------------------------------------------------------------
+// The plan, and what it was holding up
+// ---------------------------------------------------------------------------
+
+// A downgrade takes every offer but the newest off the directory
+// (apply_business_plan), and until this it happened without a word.
+export function offersPaused(plan: {
+    businessId: string;
+    paused: number;
+}): NotificationContent {
+    return {
+        type: "offers_paused",
+        title:
+            plan.paused === 1
+                ? "An offer has come off the directory"
+                : `${plan.paused} offers have come off the directory`,
+        body: "Free keeps your newest offer live and pauses the rest. They go back up the moment you're on a paid plan again — nothing is deleted.",
+        href: `/business/${plan.businessId}/billing`,
+        businessId: plan.businessId,
+        // Per downgrade, not per offer: one line, not four.
+        dedupeKey: `offers-paused:${plan.businessId}:${plan.paused}`,
+    };
+}
+
+export function paymentFailed(business: Business): NotificationContent {
+    return {
+        type: "payment_failed",
+        title: `We couldn't take the payment for ${business.name}`,
+        body: "Your card was declined. Update it in billing and we'll try again — nothing stops while there's still time.",
+        href: `/business/${business.id}/billing`,
+        businessId: business.id,
+        dedupeKey: `payment-failed:${business.id}`,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Things running out
+// ---------------------------------------------------------------------------
+
+export function offerExpiring(offer: {
+    id: string;
+    title: string;
+    businessId: string;
+    days: number;
+}): NotificationContent {
+    return {
+        type: "offer_expiring",
+        title:
+            offer.days <= 1
+                ? `“${offer.title}” ends tomorrow`
+                : `“${offer.title}” ends in ${offer.days} days`,
+        body: "Give it longer, or let it finish and write the next one. Anything already claimed can still be used.",
+        href: `/business/${offer.businessId}/offers`,
+        businessId: offer.businessId,
+        dedupeKey: `offer-expiring:${offer.id}`,
+    };
+}
+
+// A sheet in a window outlives the offer it was printed for. The scan
+// never dead-ends — it falls back to the business page — but the
+// business is the only one who can put it right (lib/qr-target.ts).
+export function posterPointingNowhere(poster: {
+    id: string;
+    label: string;
+    businessId: string;
+    problem: string;
+}): NotificationContent {
+    return {
+        type: "poster_pointing_nowhere",
+        title: `The poster “${poster.label}” is advertising something that has ended`,
+        body: `${poster.problem} Whoever scans it lands on your page instead. Print a new one, or take it down.`,
+        href: `/business/${poster.businessId}/qr`,
+        businessId: poster.businessId,
+        dedupeKey: `poster-nowhere:${poster.id}`,
+    };
+}
+
+// ---------------------------------------------------------------------------
 // The customer's side
 // ---------------------------------------------------------------------------
+
+export function rewardReady(card: {
+    id: string;
+    programId: string;
+    businessName: string;
+    reward: string;
+    // An open card fills again and again, and each round is its own
+    // reward: the count of rewards already claimed keeps the second one
+    // from being read as a repeat of the first.
+    round: number;
+}): NotificationContent {
+    const reward = card.reward.trim();
+
+    return {
+        type: "reward_ready",
+        title: `Your card at ${card.businessName} is full`,
+        body: `Ask for ${reward.charAt(0).toLowerCase() + reward.slice(1)} next time you're in. Show them the card and they'll do the rest.`,
+        href: `/loyalty/${card.programId}`,
+        dedupeKey: `reward-ready:${card.id}:${card.round}`,
+    };
+}
+
+export function voucherExpiring(voucher: {
+    id: string;
+    offerTitle: string;
+    offerSlug: string;
+    businessName: string;
+}): NotificationContent {
+    return {
+        type: "voucher_expiring",
+        title: `Your voucher at ${voucher.businessName} runs out tomorrow`,
+        body: `“${voucher.offerTitle}” — today or tomorrow is the last of it.`,
+        href: `/offers/${voucher.offerSlug}`,
+        dedupeKey: `voucher-expiring:${voucher.id}`,
+    };
+}
+
+export function followedBusinessClosed(business: Business): NotificationContent {
+    return {
+        type: "followed_business_closed",
+        title: `${business.name} has left Promotello`,
+        body: "Anything you were holding for them won't be honoured here any more. Worth checking before you make the trip.",
+        href: "/dashboard",
+        dedupeKey: `business-closed:${business.id}`,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Ours
+// ---------------------------------------------------------------------------
+
+// Four queues that only ever spoke when somebody went looking. One line
+// a day, with the counts, and only when there is something in them.
+export function adminQueue(waiting: {
+    day: string;
+    businesses: number;
+    offers: number;
+    edits: number;
+    categories: number;
+}): NotificationContent {
+    const parts = [
+        waiting.businesses > 0 ? `${waiting.businesses} business${waiting.businesses === 1 ? "" : "es"} to review` : null,
+        waiting.offers > 0 ? `${waiting.offers} offer${waiting.offers === 1 ? "" : "s"} to review` : null,
+        waiting.edits > 0 ? `${waiting.edits} edit${waiting.edits === 1 ? "" : "s"} to read` : null,
+        waiting.categories > 0 ? `${waiting.categories} without a category` : null,
+    ].filter(Boolean);
+
+    const total = waiting.businesses + waiting.offers + waiting.edits + waiting.categories;
+
+    return {
+        type: "admin_queue",
+        title: total === 1 ? "One thing is waiting for you" : `${total} things are waiting for you`,
+        body: parts.join(", ") + ".",
+        href: "/admin",
+        dedupeKey: `admin-queue:${waiting.day}`,
+    };
+}
 
 export function newOfferFromFollowed(offer: {
     id: string;

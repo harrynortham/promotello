@@ -2,19 +2,28 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+    adminQueue,
     businessApproved,
     businessRejected,
     newLoyaltyCard,
     newOfferFromFollowed,
+    followedBusinessClosed,
     offerApproved,
     offerEditApproved,
+    offerExpiring,
     offerEditRejected,
     offerFullyClaimed,
     offerLowStock,
     offerRejected,
+    offersPaused,
+    paymentFailed,
+    posterPointingNowhere,
+    rewardReady,
+    voucherExpiring,
     voucherIssued,
     type NotificationContent,
 } from "@/lib/notifications";
+import { daysUntil } from "@/lib/daily-notices";
 
 const business = { id: "b-1", name: "Dublin Pub" };
 const offer = { id: "o-1", title: "Free pastry", slug: "dublin-pub-free-pastry", businessId: "b-1" };
@@ -168,4 +177,128 @@ test("the new loyalty card names the deal and leads to the card", () => {
     // Keyed on the card they were given, so a second stamping attempt
     // on the old card cannot tell them twice.
     assert.equal(told.dedupeKey, "loyalty-card:c-1");
+});
+
+// ---------------------------------------------------------------------------
+// The ones added when the dot went live
+// ---------------------------------------------------------------------------
+
+// Every notification is somebody's interruption, so the words carry the
+// thing itself — the number, the name, the date — rather than "something
+// has happened, go and look".
+
+test("a downgrade says how many offers went dark, and that they come back", () => {
+    const many = offersPaused({ businessId: "b1", paused: 4 });
+
+    assert.equal(many.title, "4 offers have come off the directory");
+    assert.match(many.body!, /go back up the moment/);
+    assert.equal(many.href, "/business/b1/billing");
+
+    assert.equal(
+        offersPaused({ businessId: "b1", paused: 1 }).title,
+        "An offer has come off the directory",
+    );
+});
+
+// One line per downgrade, not one per offer — and a later downgrade
+// that pauses a different number is a different thing to say.
+test("the paused-offers line is told once per downgrade", () => {
+    assert.equal(
+        offersPaused({ businessId: "b1", paused: 4 }).dedupeKey,
+        offersPaused({ businessId: "b1", paused: 4 }).dedupeKey,
+    );
+    assert.notEqual(
+        offersPaused({ businessId: "b1", paused: 4 }).dedupeKey,
+        offersPaused({ businessId: "b1", paused: 2 }).dedupeKey,
+    );
+});
+
+test("an expiring offer is counted in days, and tomorrow is said as tomorrow", () => {
+    assert.equal(
+        offerExpiring({ id: "o1", title: "Free pastry", businessId: "b1", days: 3 }).title,
+        "“Free pastry” ends in 3 days",
+    );
+    assert.equal(
+        offerExpiring({ id: "o1", title: "Free pastry", businessId: "b1", days: 1 }).title,
+        "“Free pastry” ends tomorrow",
+    );
+    // Today, or a clock that disagrees with itself: still not "in 0 days".
+    assert.equal(
+        offerExpiring({ id: "o1", title: "Free pastry", businessId: "b1", days: 0 }).title,
+        "“Free pastry” ends tomorrow",
+    );
+});
+
+test("days until an offer ends is counted in whole days, from the UK's today", () => {
+    assert.equal(daysUntil("2026-11-16", "2026-11-13"), 3);
+    assert.equal(daysUntil("2026-11-14", "2026-11-13"), 1);
+    assert.equal(daysUntil("2026-11-13", "2026-11-13"), 0);
+    // Across a clock change, which is why this is not hours divided.
+    assert.equal(daysUntil("2026-10-26", "2026-10-24"), 2);
+});
+
+test("a failed payment says what to do and where, while there is still time", () => {
+    const notice = paymentFailed({ id: "b1", name: "Quayside Coffee" });
+
+    assert.match(notice.title, /Quayside Coffee/);
+    assert.match(notice.body!, /nothing stops while there's still time/);
+    assert.equal(notice.href, "/business/b1/billing");
+});
+
+test("a poster pointing nowhere repeats the reason it is dead", () => {
+    const notice = posterPointingNowhere({
+        id: "q1",
+        label: "Front window",
+        businessId: "b1",
+        problem: "The offer ended on 3 March.",
+    });
+
+    assert.match(notice.title, /“Front window”/);
+    assert.match(notice.body!, /The offer ended on 3 March\./);
+    assert.equal(notice.href, "/business/b1/qr");
+});
+
+// A card fills again and again, and each round earns its own reward.
+test("a ready reward is told once a round, not once a card", () => {
+    const card = { id: "c1", programId: "p1", businessName: "Quayside Coffee", reward: "A free coffee" };
+
+    assert.equal(rewardReady({ ...card, round: 0 }).title, "Your card at Quayside Coffee is full");
+    assert.match(rewardReady({ ...card, round: 0 }).body!, /Ask for a free coffee/);
+    assert.notEqual(
+        rewardReady({ ...card, round: 0 }).dedupeKey,
+        rewardReady({ ...card, round: 1 }).dedupeKey,
+    );
+});
+
+test("an expiring voucher names the shop, because that is the trip", () => {
+    const notice = voucherExpiring({
+        id: "r1",
+        offerTitle: "Free pastry before 10am",
+        offerSlug: "quayside-free-pastry",
+        businessName: "Quayside Coffee",
+    });
+
+    assert.match(notice.title, /Quayside Coffee runs out tomorrow/);
+    assert.equal(notice.href, "/offers/quayside-free-pastry");
+});
+
+test("a business leaving is said to the people who followed it", () => {
+    const notice = followedBusinessClosed({ id: "b1", name: "Quayside Coffee" });
+
+    assert.match(notice.title, /Quayside Coffee has left/);
+    assert.equal(notice.href, "/dashboard");
+    assert.equal(notice.dedupeKey, "business-closed:b1");
+});
+
+test("our own queue is one line a day, with the counts in it", () => {
+    const notice = adminQueue({ day: "2026-11-13", businesses: 2, offers: 1, edits: 0, categories: 3 });
+
+    assert.equal(notice.title, "6 things are waiting for you");
+    assert.equal(notice.body, "2 businesses to review, 1 offer to review, 3 without a category.");
+    assert.equal(notice.dedupeKey, "admin-queue:2026-11-13");
+
+    assert.equal(
+        adminQueue({ day: "2026-11-13", businesses: 1, offers: 0, edits: 0, categories: 0 }).title,
+        "One thing is waiting for you",
+    );
 });

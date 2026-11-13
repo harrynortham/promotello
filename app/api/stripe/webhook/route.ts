@@ -3,6 +3,10 @@ import { sendTrialStartedEmail } from "@/lib/business-lifecycle";
 import { trackOnboarding } from "@/lib/onboarding-events";
 import { createStripeClient } from "@/utils/stripe/server";
 import {
+  tellThemThePaymentFailed,
+  tellThemTheirOffersArePaused,
+} from "@/lib/billing-notices";
+import {
   cameBack,
   cancellationLanded,
   forgetTheEnding,
@@ -327,11 +331,11 @@ async function syncSubscription(
     throw planError;
   }
 
-  // Say what stops, and when. Once per ending, and never for a renewal
-  // or a change of plan — a failure here must not fail the webhook,
-  // because Stripe would send the whole event again and the
-  // subscription is already saved.
+  // What the plan just did to them, said once each. A failure here is
+  // logged rather than thrown: the subscription is already saved, and
+  // Stripe resending the whole event would only repeat the work.
   try {
+    // The ending first, because it is the one with a date on it.
     if (cancellationLanded(before, after)) {
       await tellThemWhatStops({
         businessId: customer.business_id,
@@ -341,8 +345,18 @@ async function syncSubscription(
     } else if (cameBack(after)) {
       await forgetTheEnding(customer.business_id);
     }
+
+    // Stripe retries a declined card for days before anything actually
+    // stops, which is exactly the window this is for.
+    if (subscription.status === "past_due" || subscription.status === "unpaid") {
+      await tellThemThePaymentFailed(customer.business_id);
+    }
+
+    // And what dropping to Free did to their offers, which the
+    // database has just done silently above.
+    await tellThemTheirOffersArePaused(customer.business_id);
   } catch (error) {
-    console.error("Stripe webhook: could not say what a plan ending changes", error);
+    console.error("Stripe webhook: could not pass on what the plan changed", error);
   }
 }
 

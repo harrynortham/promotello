@@ -116,6 +116,24 @@ export async function notifyBusinessManagers(businessId: string, content: Notifi
     }
 }
 
+// Us. The service role reads the table directly: there is no RPC for
+// this because nothing but a server job ever needs the list.
+export async function notifyPlatformAdmins(content: NotificationContent) {
+    try {
+        const { data, error } = await createAdminClient().from("platform_admins").select("user_id");
+
+        if (error) {
+            console.error("Notifications: failed to load the platform admins", error);
+            return { sent: 0 };
+        }
+
+        return await notifyUsers((data ?? []).map((row) => row.user_id as string), content);
+    } catch (error) {
+        console.error("Notifications: failed to load the platform admins", error);
+        return { sent: 0 };
+    }
+}
+
 // Notifications older than 90 days go in the daily job. Nobody scrolls
 // back a season, and the list is cheaper to read without them.
 export async function deleteOldNotifications() {
