@@ -112,7 +112,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 function Step({ number, children }: { number: number; children: React.ReactNode }) {
     return (
         <li className="flex gap-3">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FF593F] text-xs font-bold text-white print:bg-white print:text-[#17233B] print:outline print:outline-1 print:outline-[#17233B]">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FF593F] text-xs font-bold text-white">
                 {number}
             </span>
             <span className="leading-6">{children}</span>
@@ -122,7 +122,7 @@ function Step({ number, children }: { number: number; children: React.ReactNode 
 
 function Aside({ heading, body }: { heading: string; body: string }) {
     return (
-        <div className="rounded-xl bg-[#FFF8F0] p-4 print:bg-white print:p-0">
+        <div className="rounded-xl bg-[#FFF8F0] p-4">
             <h3 className="text-sm font-semibold">{heading}</h3>
             <p className="mt-1 text-sm leading-6 text-[#17233B]/75">{body}</p>
         </div>
@@ -277,6 +277,25 @@ async function Pack({ params }: PageProps) {
 
     return (
         <>
+            {/* This is a leave-behind, not a sheet for the wall, so it
+                has to come off a printer looking like the thing it is
+                selling. Browsers drop every background when printing
+                unless they are told not to — the box is unticked by
+                default in Chrome's dialog — and without this the navy
+                blocks, the coral and the card's own colours all come
+                out white. Same rule as the QR poster
+                (app/poster/[codeId]/page.tsx). */}
+            <style>{`
+                @media print {
+                    html, body { background: #fff !important; }
+
+                    body * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                }
+            `}</style>
+
             <PrintToolbar backHref={`/business/${businessId}`} />
 
             <main className="px-6 py-10 print:p-0">
@@ -329,7 +348,7 @@ async function Pack({ params }: PageProps) {
                         ))}
                     </div>
 
-                    <p className="mt-8 rounded-xl bg-[#17233B] px-5 py-4 font-medium text-white print:bg-white print:px-0 print:text-[#17233B] print:outline print:outline-1 print:outline-[#17233B]">
+                    <p className="mt-8 rounded-xl bg-[#17233B] px-5 py-4 font-medium text-white">
                         {cover.footer}
                     </p>
                 </Sheet>
@@ -354,7 +373,7 @@ async function Pack({ params }: PageProps) {
                     </div>
 
                     {business.slug && !business.demo_at && (
-                        <p className="mt-6 rounded-xl bg-[#FFF8F0] px-5 py-4 text-sm print:bg-white print:px-0">
+                        <p className="mt-6 rounded-xl bg-[#FFF8F0] px-5 py-4 text-sm">
                             <span className="font-semibold">Your page: </span>
                             promotello.com/businesses/{business.slug}
                         </p>
@@ -608,7 +627,7 @@ async function Pack({ params }: PageProps) {
 
                     <p className="mt-4 text-xs text-[#17233B]/65">{priceSheet.note}</p>
 
-                    <p className="mt-6 rounded-xl bg-[#FFF8F0] px-5 py-4 text-sm print:bg-white print:px-0 print:outline print:outline-1 print:outline-[#17233B]">
+                    <p className="mt-6 rounded-xl bg-[#FFF8F0] px-5 py-4 text-sm">
                         <span className="font-semibold">
                             {plans.pro_founding_monthly.name}, {plans.pro_founding_monthly.price} a{" "}
                             {plans.pro_founding_monthly.interval}:{" "}
@@ -626,7 +645,7 @@ async function Pack({ params }: PageProps) {
                     </h2>
                     <p className="mt-2 leading-7 text-[#17233B]/75">{reportSheet.blurb}</p>
 
-                    <blockquote className="mt-6 rounded-2xl bg-[#17233B] px-6 py-5 text-xl font-semibold leading-8 text-white print:bg-white print:px-0 print:text-[#17233B] print:outline print:outline-1 print:outline-[#17233B]">
+                    <blockquote className="mt-6 rounded-2xl bg-[#17233B] px-6 py-5 text-xl font-semibold leading-8 text-white">
                         {visits ? repeatVisitSentence(visits) : EXAMPLE.report}
                     </blockquote>
 

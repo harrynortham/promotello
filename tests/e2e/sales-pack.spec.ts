@@ -178,6 +178,23 @@ test("the pack prints seven sheets off a business's own card, offer and report",
             "The numbers",
         ]);
 
+        // It is a leave-behind, so it has to come off a printer
+        // looking like the thing it is selling. Browsers drop every
+        // background when printing unless they are told not to, and
+        // the sheets used to throw their own colour away on top of
+        // that.
+        const quote = page.locator("blockquote").first();
+        const printed = await quote.evaluate((element) => {
+            const style = getComputedStyle(element);
+            return {
+                background: style.backgroundColor,
+                adjust: style.printColorAdjust,
+            };
+        });
+
+        expect(printed.background, "the navy block is still navy on paper").toBe("rgb(23, 35, 59)");
+        expect(printed.adjust, "and the browser is told to print it").toBe("exact");
+
         // The features and the prices are read from the product, not
         // typed onto the sheet.
         await expect(page.getByText("Monthly value report by email")).toBeVisible();
