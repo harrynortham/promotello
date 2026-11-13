@@ -485,7 +485,15 @@ test("the staff page offers the reward on the old card and the stamp on the new"
         });
 
         const cards = customer.locator("article");
-        await expect(cards.last()).toContainText("Finished");
+        const done = cards.last();
+        await expect(done).toContainText("Finished");
+
+        // And it looks spent, the way a used voucher does next door:
+        // the business's colours drain out of it and the card it was
+        // replaced by is the one with colour in the list.
+        await expect(done).toHaveCSS("opacity", "0.9");
+        await expect(done.locator("div").first()).toHaveCSS("filter", "grayscale(1)");
+        await expect(cards.first()).toHaveCSS("opacity", "1");
     } finally {
         await client.from("loyalty_programs").delete().eq("id", ending.id);
         await client.from("loyalty_programs").delete().eq("id", next.id);

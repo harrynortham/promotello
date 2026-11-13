@@ -100,6 +100,9 @@ export function LoyaltyCard({
                 className,
                 // The same lift every pressable card in the app has.
                 href && "transition duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+                // Spent, and it looks it — the same as a used voucher
+                // in the wallet next door.
+                finished && "opacity-90 hover:opacity-100",
             )}
         >
             {/* A card in a list is a thing to open, and a stamp card
@@ -117,9 +120,12 @@ export function LoyaltyCard({
                 </Link>
             )}
             {/* The ink follows the band: the six named colours all
-                carry white, and a business's own might not. */}
+                carry white, and a business's own might not. The colour
+                drains out of a finished card: it is history, and the
+                one still being collected should be the one that
+                catches the eye in a list of them. */}
             <div
-                className="flex items-center gap-3 px-6 py-4"
+                className={cn("flex items-center gap-3 px-6 py-4", finished && "grayscale")}
                 style={{ backgroundColor: theme.header, color: theme.ink }}
             >
                 {storedImage(logoUrl) ? (
@@ -166,15 +172,17 @@ export function LoyaltyCard({
                     </p>
                 )}
 
-                <LoyaltyStamps
-                    stamps={stamps}
-                    required={stampsRequired}
-                    colour={colour}
-                    header={header}
-                    accent={accent}
-                    icon={stampIcon}
-                    landedAt={landedAt}
-                />
+                <div className={finished ? "grayscale" : undefined}>
+                    <LoyaltyStamps
+                        stamps={stamps}
+                        required={stampsRequired}
+                        colour={colour}
+                        header={header}
+                        accent={accent}
+                        icon={stampIcon}
+                        landedAt={landedAt}
+                    />
+                </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                     <p className="text-sm text-[#17233B]/70">
