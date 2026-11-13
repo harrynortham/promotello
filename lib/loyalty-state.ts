@@ -46,3 +46,74 @@ export function liveCardsFirst(
 ) {
     return Number(a.finished ?? false) - Number(b.finished ?? false);
 }
+
+// ---------------------------------------------------------------------------
+// A wallet with more than a couple of cards in it
+// ---------------------------------------------------------------------------
+//
+// Three groups, the way the vouchers wallet next door has three: what
+// can be claimed now, what is being collected, and what is done. The
+// order inside each is the question somebody opening their phone at a
+// counter is asking — which can I use, and which am I closest to — so
+// no screen has to decide it for itself.
+
+export type LoyaltyGroup = "ready" | "collecting" | "finished";
+
+export const LOYALTY_GROUPS: LoyaltyGroup[] = ["ready", "collecting", "finished"];
+
+type Groupable = {
+    stamps: number;
+    stampsRequired: number;
+    closed?: boolean;
+    finished?: boolean;
+    // When it was last stamped, and when it was finished, as ISO
+    // strings. Both are only ever compared with each other.
+    lastStampedAt?: string | null;
+    finishedAt?: string | null;
+};
+
+export function groupOf(card: Groupable): LoyaltyGroup {
+    const state = cardState(card);
+
+    if (state === "finished") return "finished";
+    if (state === "reward-ready") return "ready";
+
+    return "collecting";
+}
+
+// How far round the card they are, as a fraction. A card past full is
+// still one card's worth: what matters is that it is ready.
+function progress(card: Groupable) {
+    return card.stampsRequired > 0 ? Math.min(card.stamps / card.stampsRequired, 1) : 0;
+}
+
+// Most recently touched first, and a card nobody has stamped yet last.
+function byLatest(a: string | null | undefined, b: string | null | undefined) {
+    return (b ?? "").localeCompare(a ?? "");
+}
+
+export function groupCards<T extends Groupable>(cards: T[]): Record<LoyaltyGroup, T[]> {
+    const of = (group: LoyaltyGroup) => cards.filter((card) => groupOf(card) === group);
+
+    return {
+        // The one they were last stamped on is the shop they were in
+        // last, which is the reward they are most likely there to claim.
+        ready: of("ready").sort((a, b) => byLatest(a.lastStampedAt, b.lastStampedAt)),
+        // Closest to a reward first: the card worth getting out.
+        collecting: of("collecting").sort(
+            (a, b) => progress(b) - progress(a) || byLatest(a.lastStampedAt, b.lastStampedAt),
+        ),
+        // History, newest first.
+        finished: of("finished").sort((a, b) => byLatest(a.finishedAt, b.finishedAt)),
+    };
+}
+
+// The wallet as one list: what can be claimed, then what is closest to
+// being claimed, then what is done with. A full card has the most
+// stamps on it, so this is simply the order somebody would put them in
+// themselves, with the cards they can no longer collect on at the end.
+export function sortCards<T extends Groupable>(cards: T[]): T[] {
+    const groups = groupCards(cards);
+
+    return [...groups.ready, ...groups.collecting, ...groups.finished];
+}

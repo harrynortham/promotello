@@ -9,6 +9,7 @@ type CardRow = {
     card_code: string;
     stamps: number;
     rewards_redeemed: number;
+    last_stamped_at: string | null;
     finished_at: string | null;
     loyalty_programs: {
         id: string;
@@ -48,6 +49,10 @@ export type CustomerLoyaltyCard = {
     // (20261226090000_a_closed_card_gets_one_last_lap.sql).
     closed: boolean;
     finished: boolean;
+    // When the wallet was last used, and when this card was done with:
+    // what the list is put in order by (lib/loyalty-state.ts).
+    lastStampedAt: string | null;
+    finishedAt: string | null;
     // The card they hold now at the same business, where the closed one
     // has been handed over.
     newCardProgramId: string | null;
@@ -61,7 +66,7 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
         .from("loyalty_cards")
         .select(
             `
-                id, card_code, stamps, rewards_redeemed, finished_at,
+                id, card_code, stamps, rewards_redeemed, last_stamped_at, finished_at,
                 loyalty_programs ( id, closed_at, stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon, is_active, businesses ( id, slug, name, logo_url ) )
             `,
         )
@@ -92,6 +97,8 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
             rewardReady: card.stamps >= program.stamps_required && card.finished_at === null,
             closed: program.closed_at !== null,
             finished: card.finished_at !== null,
+            lastStampedAt: card.last_stamped_at,
+            finishedAt: card.finished_at,
             newCardProgramId: null,
             business: Array.isArray(program.businesses) ? program.businesses[0] ?? null : program.businesses,
         }];

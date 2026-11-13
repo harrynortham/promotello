@@ -82,6 +82,24 @@ export function groupVouchers(vouchers: WalletRedemption[], today = todayInUk())
     return { ready, used, expired: of("expired"), unavailable: of("unavailable") };
 }
 
+// The wallet as one list: what they can use, newest first, then the
+// ones they can't — used, expired, or an offer the business has
+// paused — at the end. The same order the loyalty wallet is in
+// (lib/loyalty-state.ts), for the same reason: a list somebody can
+// read from the top rather than a page of headings to get past.
+export function sortVouchers(vouchers: StatusedVoucher[]) {
+    const rank: Record<VoucherStatus, number> = { ready: 0, unavailable: 1, used: 2, expired: 3 };
+
+    // When it last mattered: claimed for one they can still use, used
+    // for one they have.
+    const when = ({ voucher, status }: StatusedVoucher) =>
+        (status === "used" ? voucher.usedAt : voucher.claimedAt) ?? "";
+
+    return [...vouchers].sort(
+        (a, b) => rank[a.status] - rank[b.status] || when(b).localeCompare(when(a)),
+    );
+}
+
 const shortDate = (value: string) =>
     new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(value));
 
