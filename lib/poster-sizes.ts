@@ -33,3 +33,15 @@ export function sheetSize(size: (typeof POSTER_SIZES)[number]) {
         ? { width: "296mm", height: "210mm" }
         : { width: size.width, height: size.height };
 }
+
+// The same sheet drawn small: a preview, or a picture of a poster on
+// another page. Everything in QrPoster is sized in em from the root
+// size, so one number scales the whole thing — 16px is A4's 794px
+// across.
+export function posterAtWidth(pixels: number) {
+    return {
+        width: `${pixels}px`,
+        height: `${Math.round(pixels * (297 / 210))}px`,
+        fontSize: 16 * (pixels / 794),
+    };
+}

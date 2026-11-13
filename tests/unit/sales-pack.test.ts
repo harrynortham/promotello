@@ -8,15 +8,29 @@ import {
     EXAMPLE,
     examplesNeeded,
     offerSheet,
+    posterSheet,
     priceSheet,
     printableName,
     reportSheet,
     SHEETS,
 } from "@/lib/sales-pack";
 
-test("the pack is six sheets, and the page draws them in that order", () => {
-    assert.equal(SHEETS.length, 6);
-    assert.equal(new Set(SHEETS).size, 6);
+test("the pack is seven sheets, and the page draws them in that order", () => {
+    assert.equal(SHEETS.length, 7);
+    assert.equal(new Set(SHEETS).size, 7);
+});
+
+// The README's "What to show, in this order": what they already have,
+// then something physical, then a customer claiming, then a customer
+// joining the card, then the price, then the numbers.
+test("an offer comes before the card, and the poster before both", () => {
+    const at = (label: string) => SHEETS.indexOf(label as (typeof SHEETS)[number]);
+
+    assert.ok(at("The directory") < at("The poster"));
+    assert.ok(at("The poster") < at("The offers"));
+    assert.ok(at("The offers") < at("The card"));
+    assert.ok(at("The card") < at("What you get"));
+    assert.equal(at("The numbers"), SHEETS.length - 1);
 });
 
 test("a business's own card, offer and report are used where it has them", () => {
@@ -62,6 +76,11 @@ const words = [
     cardSheet.scanHint,
     ...cardSheet.steps,
     ...cardSheet.asides.flatMap((aside) => [aside.heading, aside.body]),
+    posterSheet.heading,
+    posterSheet.problem,
+    posterSheet.caption,
+    ...posterSheet.steps,
+    ...posterSheet.asides.flatMap((aside) => [aside.heading, aside.body]),
     offerSheet.heading,
     offerSheet.problem,
     ...offerSheet.steps,

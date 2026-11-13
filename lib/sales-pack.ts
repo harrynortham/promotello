@@ -12,13 +12,24 @@
 // they already have, not with what we built. Staff scan on a phone;
 // there is no hardware and nothing to install.
 
+// The order is the one in the README's "What to show, in this
+// order": the page they already have, then something physical in the
+// window, then a customer claiming, then a customer joining the card,
+// then the price, then the numbers that turn a trial into a renewal.
+// Offers come before the card on purpose — an offer is what puts
+// somebody through the door the first time; the card is what brings
+// them back.
+//
+// Short labels: they are the eyebrow over each sheet, so they say
+// which sheet it is rather than repeating its heading.
 export const SHEETS = [
     "What this does",
-    "The card",
+    "The directory",
+    "The poster",
     "The offers",
-    "Where people find you",
+    "The card",
     "What you get",
-    "The number nobody else can print",
+    "The numbers",
 ] as const;
 
 export const cover = {
@@ -115,11 +126,42 @@ export const directorySheet = {
             body: "Your page and every offer get their own search-engine listing, written properly, with your name on it.",
         },
     ],
+    // The poster had a line here until it earned a sheet of its own,
+    // which is the very next one.
     extras: [
-        "A QR poster for your window, your counter or your receipts — with a count of how many people scanned each one.",
         "Share links and ready-made images for Instagram, so putting an offer out takes a minute.",
         "An email to everybody following you, every time you publish something new.",
     ],
+};
+
+export const posterSheet = {
+    heading: "A poster in your window, and who scanned it",
+    problem:
+        "The people already walking past your door are the cheapest customers you will ever get, and nothing in your window tells them there is an offer inside.",
+    steps: [
+        "We make the poster: your name, your logo, your colours, and a code that belongs to you.",
+        "Print it on your own printer — A4 for the window, A5 for the counter, or two to a sheet for tables.",
+        "Somebody points their phone camera at it and lands on your page, your offer or your card. Nothing to download.",
+        "Every scan is counted, poster by poster, so you can see which spot is pulling and which one is wallpaper.",
+    ],
+    asides: [
+        {
+            heading: "One for every spot",
+            body: "The window, the counter, the tables, the back of the receipt. Each one is counted separately, so you find out where people actually look.",
+        },
+        {
+            heading: "A scan never dead-ends",
+            body: "If the offer a poster points at has finished, the code opens your page instead. The sheet on the wall keeps working.",
+        },
+        {
+            heading: "Nothing to buy",
+            body: "Your own printer and a bit of tape. No stickers to order, no stands, no hardware with a monthly fee attached.",
+        },
+    ],
+    // The poster on the sheet is drawn from their own name and colours,
+    // but it opens their page rather than carrying a live code: a scan
+    // off a sales sheet would land in their poster's own count.
+    caption: "Made from your name, your logo and your card. Yours prints with its own code on it.",
 };
 
 export const priceSheet = {

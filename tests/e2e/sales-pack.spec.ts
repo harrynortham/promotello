@@ -128,7 +128,7 @@ test("a business with demo_at set is ours alone, in the API and on the page", as
     }
 });
 
-test("the pack prints six sheets off a business's own card, offer and report", async ({ browser }) => {
+test("the pack prints seven sheets off a business's own card, offer and report", async ({ browser }) => {
     test.setTimeout(300_000);
     const { businessUserId, businessId } = state();
 
@@ -150,6 +150,7 @@ test("the pack prints six sheets off a business's own card, offer and report", a
         await expect(page).toHaveTitle(/Promotello$/, { timeout: 60_000 });
 
         for (const heading of [
+            "A poster in your window, and who scanned it",
             "The card they keep on their phone",
             "An offer that puts somebody through the door this week",
             "Where people find you",
@@ -159,8 +160,23 @@ test("the pack prints six sheets off a business's own card, offer and report", a
             await expect(page.getByRole("heading", { name: heading })).toBeVisible();
         }
 
-        // Six sheets, each with its own footer.
-        await expect(page.getByText("of 6 · promotello.com")).toHaveCount(6);
+        // Seven sheets, each with its own footer, in the order the
+        // README sells in: an offer puts somebody through the door, the
+        // card brings them back.
+        await expect(page.getByText("of 7 · promotello.com")).toHaveCount(7);
+
+        const sheets = await page.locator("main > section").evaluateAll((all) =>
+            all.map((sheet) => sheet.getAttribute("aria-label")),
+        );
+        expect(sheets).toEqual([
+            "What this does",
+            "The directory",
+            "The poster",
+            "The offers",
+            "The card",
+            "What you get",
+            "The numbers",
+        ]);
 
         // The features and the prices are read from the product, not
         // typed onto the sheet.

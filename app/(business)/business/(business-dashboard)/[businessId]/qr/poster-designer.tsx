@@ -14,6 +14,7 @@ import {
     type CardColour,
 } from "@/lib/loyalty-design";
 import { CUSTOM_COLOUR } from "@/lib/poster-colour";
+import { posterAtWidth } from "@/lib/poster-sizes";
 import { createQrCode } from "./actions";
 
 // A4 is 794px wide at 96dpi, and the preview is a quarter of that. The
@@ -137,14 +138,6 @@ export function PosterDesigner({
         detail: description,
     };
 
-    function sheet(pixels: number) {
-        return {
-            width: `${pixels}px`,
-            height: `${Math.round(pixels * (297 / 210))}px`,
-            fontSize: 16 * (pixels / 794),
-        };
-    }
-
     return (
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
             <form action={createQrCode} className="flex-1 space-y-5">
@@ -257,7 +250,7 @@ export function PosterDesigner({
                                     aria-hidden="true"
                                     className="mx-auto block w-fit overflow-hidden rounded border border-[#17233B]/10"
                                 >
-                                    <QrPoster {...poster} {...sheet(72)} layout={option.value} />
+                                    <QrPoster {...poster} {...posterAtWidth(72)} layout={option.value} />
                                 </span>
 
                                 <span className="mt-1.5 block text-[11px] font-medium leading-4">
@@ -348,7 +341,7 @@ export function PosterDesigner({
                     className="mt-3 overflow-hidden rounded-xl border border-[#17233B]/10 shadow-sm"
                     style={{ width }}
                 >
-                    <QrPoster {...poster} {...sheet(width)} layout={layout} />
+                    <QrPoster {...poster} {...posterAtWidth(width)} layout={layout} />
                 </div>
 
                 <p className="mt-3 text-xs leading-5 text-[#17233B]/65">

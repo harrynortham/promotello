@@ -6,10 +6,12 @@ import { notFound, redirect } from "next/navigation";
 import { FiCheck, FiMinus } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { QrPoster } from "@/components/qr-poster";
 import { Skeleton } from "@/components/ui/skeleton";
 import { plans } from "@/lib/billing";
 import { storedImage } from "@/lib/images";
 import { planComparison, type Availability } from "@/lib/plan-features";
+import { posterAtWidth } from "@/lib/poster-sizes";
 import { qrSvg } from "@/lib/qr";
 import { readRepeatVisits, repeatVisitSentence } from "@/lib/repeat-visits";
 import { requestOrigin } from "@/lib/request-origin";
@@ -20,6 +22,7 @@ import {
     EXAMPLE,
     examplesNeeded,
     offerSheet,
+    posterSheet,
     priceSheet,
     printableName,
     reportSheet,
@@ -255,11 +258,12 @@ async function Pack({ params }: PageProps) {
     // works in a stranger's hand. The demo business is invisible
     // without an admin signed in, so its sheet sends them to the tour
     // instead of to a page they cannot see.
-    const qr = await qrSvg(
+    const seeItWorking =
         business.demo_at || !business.slug
             ? `${origin}/business/demo`
-            : `${origin}/businesses/${business.slug}`,
-    );
+            : `${origin}/businesses/${business.slug}`;
+
+    const qr = await qrSvg(seeItWorking);
 
     // Every code on the pack has to work in a stranger's hand, so the
     // card's one opens the card where there is a card, and the tour
@@ -330,9 +334,164 @@ async function Pack({ params }: PageProps) {
                     </p>
                 </Sheet>
 
-                {/* 2 — The card */}
+                {/* 2 — The directory */}
                 <Sheet number={2} businessName={business.name}>
                     <Eyebrow>{SHEETS[1]}</Eyebrow>
+                    <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+                        {directorySheet.heading}
+                    </h2>
+                    <p className="mt-2 leading-7 text-[#17233B]/75">{directorySheet.problem}</p>
+
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2 print:grid-cols-2">
+                        {directorySheet.places.map((place) => (
+                            <div key={place.heading} className="rounded-xl border border-[#17233B]/10 p-5">
+                                <h3 className="font-semibold">{place.heading}</h3>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/75">
+                                    {place.body}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {business.slug && !business.demo_at && (
+                        <p className="mt-6 rounded-xl bg-[#FFF8F0] px-5 py-4 text-sm print:bg-white print:px-0">
+                            <span className="font-semibold">Your page: </span>
+                            promotello.com/businesses/{business.slug}
+                        </p>
+                    )}
+
+                    <h3 className="mt-8 text-lg font-semibold">And to get people to it</h3>
+                    <ul className="mt-3 space-y-2 text-sm">
+                        {directorySheet.extras.map((extra) => (
+                            <li key={extra} className="flex gap-3 leading-6">
+                                <FiCheck aria-hidden="true" className="mt-1 size-4 shrink-0 text-[#FF593F]" />
+                                <span>{extra}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </Sheet>
+
+                {/* 3 — The poster */}
+                <Sheet number={3} businessName={business.name}>
+                    <Eyebrow>{SHEETS[2]}</Eyebrow>
+                    <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+                        {posterSheet.heading}
+                    </h2>
+                    <p className="mt-2 leading-7 text-[#17233B]/75">{posterSheet.problem}</p>
+
+                    <div className="mt-6 grid gap-8 sm:grid-cols-[1fr_auto] print:grid-cols-[1fr_auto]">
+                        <ol className="space-y-3 text-sm">
+                            {posterSheet.steps.map((step, index) => (
+                                <Step key={step} number={index + 1}>
+                                    {step}
+                                </Step>
+                            ))}
+                        </ol>
+
+                        <div className="w-[220px]">
+                            {/* The real poster component, at a fifth of
+                                A4: what they print is what is on this
+                                sheet, drawn by the same code. */}
+                            <QrPoster
+                                {...posterAtWidth(220)}
+                                businessName={business.name}
+                                place={business.category}
+                                logoUrl={business.logo_url}
+                                qrMarkup={qr}
+                                link={seeItWorking.replace(/^https?:\/\//, "")}
+                                colour={program?.card_colour ?? "navy"}
+                                headerColour={program?.card_header}
+                                accentColour={program?.card_accent}
+                                layout={program ? "stamp_card" : "classic"}
+                                card={
+                                    program
+                                        ? {
+                                              stampsRequired: program.stamps_required,
+                                              reward: program.reward,
+                                              terms: program.terms,
+                                              colour: program.card_colour,
+                                              header: program.card_header,
+                                              accent: program.card_accent,
+                                              stampIcon: program.stamp_icon,
+                                          }
+                                        : {
+                                              stampsRequired: EXAMPLE.card.stampsRequired,
+                                              reward: EXAMPLE.card.reward,
+                                              terms: EXAMPLE.card.terms,
+                                              colour: "charcoal",
+                                              stampIcon: "coffee",
+                                          }
+                                }
+                                className="shadow-sm"
+                            />
+
+                            <p className="mt-3 text-xs leading-5 text-[#17233B]/65">
+                                {posterSheet.caption}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 grid gap-4 sm:grid-cols-3 print:grid-cols-3">
+                        {posterSheet.asides.map((aside) => (
+                            <Aside key={aside.heading} {...aside} />
+                        ))}
+                    </div>
+                </Sheet>
+
+                {/* 4 — The offers */}
+                <Sheet number={4} businessName={business.name}>
+                    <Eyebrow>{SHEETS[3]}</Eyebrow>
+                    <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+                        {offerSheet.heading}
+                    </h2>
+                    <p className="mt-2 leading-7 text-[#17233B]/75">{offerSheet.problem}</p>
+
+                    <div className="mt-6 grid gap-8 sm:grid-cols-[1fr_auto] print:grid-cols-[1fr_auto]">
+                        <ol className="space-y-3 text-sm">
+                            {offerSheet.steps.map((step, index) => (
+                                <Step key={step} number={index + 1}>
+                                    {step}
+                                </Step>
+                            ))}
+                        </ol>
+
+                        <div className="w-full max-w-xs">
+                            <div className="rounded-2xl border border-[#17233B]/10 p-5">
+                                <p className="text-2xl font-semibold tracking-tight text-[#FF593F]">
+                                    {(offer ?? EXAMPLE.offer).discount}
+                                </p>
+                                <h3 className="mt-2 font-semibold leading-6">
+                                    {(offer ?? EXAMPLE.offer).title}
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-[#17233B]/75">
+                                    {(offer ?? EXAMPLE.offer).description}
+                                </p>
+                                <dl className="mt-4 space-y-1 text-xs text-[#17233B]/65">
+                                    <div>
+                                        <dt className="inline font-semibold">When: </dt>
+                                        <dd className="inline">{(offer ?? EXAMPLE.offer).availability}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="inline font-semibold">Terms: </dt>
+                                        <dd className="inline">{(offer ?? EXAMPLE.offer).terms}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+
+                            {example.offer && <Example>{EXAMPLE.label}</Example>}
+                        </div>
+                    </div>
+
+                    <div className="mt-8 grid gap-4 sm:grid-cols-2 print:grid-cols-2">
+                        {offerSheet.asides.map((aside) => (
+                            <Aside key={aside.heading} {...aside} />
+                        ))}
+                    </div>
+                </Sheet>
+
+                {/* 5 — The card */}
+                <Sheet number={5} businessName={business.name}>
+                    <Eyebrow>{SHEETS[4]}</Eyebrow>
                     <h2 className="mt-1 text-3xl font-semibold tracking-tight">
                         {cardSheet.heading}
                     </h2>
@@ -395,97 +554,9 @@ async function Pack({ params }: PageProps) {
                     </div>
                 </Sheet>
 
-                {/* 3 — The offers */}
-                <Sheet number={3} businessName={business.name}>
-                    <Eyebrow>{SHEETS[2]}</Eyebrow>
-                    <h2 className="mt-1 text-3xl font-semibold tracking-tight">
-                        {offerSheet.heading}
-                    </h2>
-                    <p className="mt-2 leading-7 text-[#17233B]/75">{offerSheet.problem}</p>
-
-                    <div className="mt-6 grid gap-8 sm:grid-cols-[1fr_auto] print:grid-cols-[1fr_auto]">
-                        <ol className="space-y-3 text-sm">
-                            {offerSheet.steps.map((step, index) => (
-                                <Step key={step} number={index + 1}>
-                                    {step}
-                                </Step>
-                            ))}
-                        </ol>
-
-                        <div className="w-full max-w-xs">
-                            <div className="rounded-2xl border border-[#17233B]/10 p-5">
-                                <p className="text-2xl font-semibold tracking-tight text-[#FF593F]">
-                                    {(offer ?? EXAMPLE.offer).discount}
-                                </p>
-                                <h3 className="mt-2 font-semibold leading-6">
-                                    {(offer ?? EXAMPLE.offer).title}
-                                </h3>
-                                <p className="mt-2 text-sm leading-6 text-[#17233B]/75">
-                                    {(offer ?? EXAMPLE.offer).description}
-                                </p>
-                                <dl className="mt-4 space-y-1 text-xs text-[#17233B]/65">
-                                    <div>
-                                        <dt className="inline font-semibold">When: </dt>
-                                        <dd className="inline">{(offer ?? EXAMPLE.offer).availability}</dd>
-                                    </div>
-                                    <div>
-                                        <dt className="inline font-semibold">Terms: </dt>
-                                        <dd className="inline">{(offer ?? EXAMPLE.offer).terms}</dd>
-                                    </div>
-                                </dl>
-                            </div>
-
-                            {example.offer && <Example>{EXAMPLE.label}</Example>}
-                        </div>
-                    </div>
-
-                    <div className="mt-8 grid gap-4 sm:grid-cols-2 print:grid-cols-2">
-                        {offerSheet.asides.map((aside) => (
-                            <Aside key={aside.heading} {...aside} />
-                        ))}
-                    </div>
-                </Sheet>
-
-                {/* 4 — Where people find you */}
-                <Sheet number={4} businessName={business.name}>
-                    <Eyebrow>{SHEETS[3]}</Eyebrow>
-                    <h2 className="mt-1 text-3xl font-semibold tracking-tight">
-                        {directorySheet.heading}
-                    </h2>
-                    <p className="mt-2 leading-7 text-[#17233B]/75">{directorySheet.problem}</p>
-
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2 print:grid-cols-2">
-                        {directorySheet.places.map((place) => (
-                            <div key={place.heading} className="rounded-xl border border-[#17233B]/10 p-5">
-                                <h3 className="font-semibold">{place.heading}</h3>
-                                <p className="mt-1 text-sm leading-6 text-[#17233B]/75">
-                                    {place.body}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {business.slug && !business.demo_at && (
-                        <p className="mt-6 rounded-xl bg-[#FFF8F0] px-5 py-4 text-sm print:bg-white print:px-0">
-                            <span className="font-semibold">Your page: </span>
-                            promotello.com/businesses/{business.slug}
-                        </p>
-                    )}
-
-                    <h3 className="mt-8 text-lg font-semibold">And to get people to it</h3>
-                    <ul className="mt-3 space-y-2 text-sm">
-                        {directorySheet.extras.map((extra) => (
-                            <li key={extra} className="flex gap-3 leading-6">
-                                <FiCheck aria-hidden="true" className="mt-1 size-4 shrink-0 text-[#FF593F]" />
-                                <span>{extra}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </Sheet>
-
-                {/* 5 — What you get */}
-                <Sheet number={5} businessName={business.name}>
-                    <Eyebrow>{SHEETS[4]}</Eyebrow>
+                {/* 6 — What you get */}
+                <Sheet number={6} businessName={business.name}>
+                    <Eyebrow>{SHEETS[5]}</Eyebrow>
                     <h2 className="mt-1 text-3xl font-semibold tracking-tight">
                         {priceSheet.heading}
                     </h2>
@@ -547,9 +618,9 @@ async function Pack({ params }: PageProps) {
                     </p>
                 </Sheet>
 
-                {/* 6 — The report */}
-                <Sheet number={6} businessName={business.name}>
-                    <Eyebrow>{SHEETS[5]}</Eyebrow>
+                {/* 7 — The numbers */}
+                <Sheet number={7} businessName={business.name}>
+                    <Eyebrow>{SHEETS[6]}</Eyebrow>
                     <h2 className="mt-1 text-3xl font-semibold tracking-tight">
                         {reportSheet.heading}
                     </h2>
