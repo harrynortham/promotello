@@ -1,6 +1,9 @@
 import type { User } from "@supabase/supabase-js";
 
 export type UserProfile = {
+    // Their own id, for the realtime subscription behind the dot on the
+    // avatar (components/site/use-unread-notifications.ts).
+    id: string;
     email: string;
     name: string;
     avatarUrl: string;
@@ -37,6 +40,7 @@ export function profileFromUser(
     const avatarPath = readText(user.user_metadata?.avatar_path);
 
     return {
+        id: user.id,
         email,
         name,
         avatarUrl: avatarPath ? publicUrlFor(avatarPath) : "",

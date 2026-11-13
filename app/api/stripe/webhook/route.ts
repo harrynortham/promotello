@@ -2,6 +2,10 @@ import type Stripe from "stripe";
 import { sendTrialStartedEmail } from "@/lib/business-lifecycle";
 import { trackOnboarding } from "@/lib/onboarding-events";
 import { createStripeClient } from "@/utils/stripe/server";
+import {
+  tellThemThePaymentFailed,
+  tellThemTheirOffersArePaused,
+} from "@/lib/billing-notices";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -306,6 +310,19 @@ async function syncSubscription(
 
   if (planError) {
     throw planError;
+  }
+
+  // What the plan just did to them, said once. A failure here is logged
+  // rather than thrown: the subscription is saved, and Stripe resending
+  // the event would only repeat the work.
+  try {
+    if (subscription.status === "past_due" || subscription.status === "unpaid") {
+      await tellThemThePaymentFailed(customer.business_id);
+    }
+
+    await tellThemTheirOffersArePaused(customer.business_id);
+  } catch (error) {
+    console.error("Stripe webhook: could not pass on what the plan changed", error);
   }
 }
 

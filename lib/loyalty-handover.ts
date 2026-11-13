@@ -1,4 +1,4 @@
-import { newLoyaltyCard } from "@/lib/notifications";
+import { newLoyaltyCard, rewardReady } from "@/lib/notifications";
 import { notifyUsers } from "@/lib/notify";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -56,5 +56,55 @@ export async function tellThemAboutTheNewCard(cardId: string | null | undefined)
         );
     } catch (error) {
         console.error("Could not tell a customer about their new loyalty card", error);
+    }
+}
+
+// And telling somebody the stamp that just landed was the last one.
+//
+// The till screen already says so to whoever is holding the phone, but
+// the person it belongs to is usually putting their coat on. This is
+// the line they find later, with the reward named in it.
+//
+// Same rules as above: never throws, and a guest card has nobody to
+// tell.
+export async function tellThemTheRewardIsReady(cardCode: string | null | undefined) {
+    if (!cardCode) return;
+
+    try {
+        const admin = createAdminClient();
+
+        const { data: card } = await admin
+            .from("loyalty_cards")
+            .select(
+                `
+                    id, user_id, finished_at, rewards_redeemed,
+                    loyalty_programs ( id, reward, businesses ( name ) )
+                `,
+            )
+            .eq("card_code", cardCode)
+            .maybeSingle();
+
+        const program = card?.loyalty_programs as
+            | { id: string; reward: string; businesses: { name: string } | { name: string }[] | null }
+            | null
+            | undefined;
+
+        // A finished card has nothing left to claim.
+        if (!card?.user_id || card.finished_at || !program) return;
+
+        const business = Array.isArray(program.businesses) ? program.businesses[0] : program.businesses;
+
+        await notifyUsers(
+            [card.user_id],
+            rewardReady({
+                id: card.id,
+                programId: program.id,
+                businessName: business?.name ?? "The business",
+                reward: program.reward,
+                round: card.rewards_redeemed ?? 0,
+            }),
+        );
+    } catch (error) {
+        console.error("Could not tell a customer their reward is ready", error);
     }
 }

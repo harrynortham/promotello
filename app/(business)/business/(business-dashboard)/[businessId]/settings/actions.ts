@@ -7,6 +7,7 @@ import { CURRENT_SUBSCRIPTION_STATUSES } from "@/lib/billing";
 import { confirmsName } from "@/lib/close-business";
 import { createStripeClient } from "@/utils/stripe/server";
 import { createClient } from "@/utils/supabase/server";
+import { tellFollowersItHasClosed } from "@/lib/closing-notices";
 
 // Closing one business, for someone who runs several. Nothing is deleted:
 // the listing goes, nobody new can join or claim, and the stamps and
@@ -93,6 +94,11 @@ export async function closeBusiness(formData: FormData) {
         const reason = { "42501": "owner", P0008: "already" }[error.code ?? ""] ?? "close";
         redirect(`${page}?error=${reason}`);
     }
+
+    // The people who asked to hear from this business, told that there
+    // is nothing more to hear. A voucher in a wallet for a shop that
+    // has gone is a wasted trip.
+    await tellFollowersItHasClosed(businessId);
 
     revalidatePath("/business/dashboard");
     revalidatePath(`/business/${businessId}`);

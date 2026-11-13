@@ -150,7 +150,7 @@ export function UserMenu({
     const { signOut, isSigningOut, error } = useSignOut(signOutRedirect);
     const isAdmin = useIsPlatformAdmin();
     const runsABusiness = useRunsABusiness();
-    const unread = useUnreadNotifications();
+    const unread = useUnreadNotifications(user.id);
 
     // A group that empties out goes with its divider, rather than
     // leaving a line with nothing under it.

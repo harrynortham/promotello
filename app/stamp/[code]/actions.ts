@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { tellThemAboutTheNewCard } from "@/lib/loyalty-handover";
+import { tellThemAboutTheNewCard, tellThemTheRewardIsReady } from "@/lib/loyalty-handover";
 import { createClient } from "@/utils/supabase/server";
 
 const knownErrors: Record<string, string> = {
@@ -42,6 +42,13 @@ async function runCardAction(rpc: "add_loyalty_stamp" | "redeem_loyalty_reward",
     // The card is theirs either way; this is only the telling.
     if (result?.issued_is_new) {
         await tellThemAboutTheNewCard(result.issued_card_id);
+    }
+
+    // The screen says "reward ready" to whoever is holding the phone,
+    // which is usually not the person whose card it is — they are
+    // putting their coat on. This is the line they find afterwards.
+    if (rpc === "add_loyalty_stamp" && result?.card_full) {
+        await tellThemTheRewardIsReady(code);
     }
 
     // The code scanned is still the code to come back to: the page
