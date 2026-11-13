@@ -331,18 +331,23 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
                     </p>
                 </div>
 
-                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                {/* Stacked on a phone, the guide under "How it works";
+                    side by side on anything wider, with the guide to its
+                    left — which is what the reversed row is for. */}
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row-reverse sm:items-center sm:gap-3">
                     <RedemptionsHowItWorks />
 
                     {/* For whoever is on the counter rather than on this
                         page: one sheet, printed once, stuck up. */}
-                    <Link
-                        href={`/staff-guide/${businessId}`}
-                        className="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
+                    <Button
+                        render={<Link href={`/staff-guide/${businessId}`} />}
+                        nativeButton={false}
+                        variant="ghost"
+                        size="lg"
                     >
-                        <FiPrinter aria-hidden="true" className="size-4" />
+                        <FiPrinter aria-hidden="true" />
                         Print the till guide
-                    </Link>
+                    </Button>
                 </div>
             </div>
 
