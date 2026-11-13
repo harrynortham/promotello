@@ -29,7 +29,7 @@ async function WalletOverview({ searchParams }: PageProps) {
         <section className="mx-auto max-w-6xl space-y-8 text-[#17233B]">
             <WalletHeader
                 title="My vouchers"
-                description="Tap a voucher to show its QR code at the till. The newest are first, and the ones you've used are at the end."
+                description="Tap a voucher to show its QR code at the till. The one you claimed last is first, then the ones ending soonest."
                 filter={<VoucherFilter active="all" counts={counts} />}
             />
 
