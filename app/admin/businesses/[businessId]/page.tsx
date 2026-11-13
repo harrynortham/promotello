@@ -94,7 +94,7 @@ async function Overview({ params }: PageProps) {
         await Promise.all([
             admin
                 .from("businesses")
-                .select("id, name, slug, category, description, website_url, contact_email, approval_status, created_at, is_sample, business_locations ( address_line_1, city, region, postal_code )")
+                .select("id, name, slug, category, description, website_url, contact_email, approval_status, created_at, is_sample, demo_at, business_locations ( address_line_1, city, region, postal_code )")
                 .eq("id", businessId)
                 .maybeSingle(),
             admin
@@ -160,6 +160,9 @@ async function Overview({ params }: PageProps) {
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                         <BusinessStatusBadge status={row.approval_status} />
                         {row.is_sample && <Badge variant="outline">Sample</Badge>}
+                        {/* Ours, for selling with, so it is never read
+                            as a customer who signed up. */}
+                        {row.demo_at && <Badge variant="outline">Demo</Badge>}
                         <span className="text-sm text-[#17233B]/65">Joined {when(row.created_at)}</span>
                     </div>
                 </div>

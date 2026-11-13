@@ -400,6 +400,26 @@ async function OverviewContent() {
                     </div>
                 )}
             </Section>
+
+            {/* Not a number: the thing to open when somebody is about
+                to be sold to. */}
+            <Section title="Selling" description="A business of our own to show, and a pack to leave behind.">
+                <Link
+                    href="/admin/demo"
+                    className="group flex items-center gap-4 rounded-xl border border-[#17233B]/10 bg-white p-4 transition-colors hover:border-[#FF593F]/40 sm:max-w-md"
+                >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#17233B]/5 text-[#17233B]/65">
+                        <FiBriefcase />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">The demo business</span>
+                        <span className="block text-sm text-[#17233B]/70">
+                            Real offers, a real card, and a report — invisible to everybody else.
+                        </span>
+                    </span>
+                    <FiArrowRight aria-hidden="true" className="text-[#17233B]/30 transition-colors group-hover:text-[#FF593F]" />
+                </Link>
+            </Section>
         </div>
     );
 }
