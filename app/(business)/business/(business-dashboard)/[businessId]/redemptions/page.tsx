@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JustUsed, Redemption, type RedemptionRow } from "./redemption-rows";
+import { tellThemTheVoucherWasUsed } from "@/lib/receipts";
 
 type Filter = "all" | "to-use" | "used" | "expired";
 
@@ -90,6 +91,9 @@ async function markRedemptionUsed(formData: FormData) {
     if (error) {
         throw new Error(error.message);
     }
+
+    // The customer's own record of it (lib/receipts.ts).
+    await tellThemTheVoucherWasUsed(redemptionId);
 
     // Back to the list, which says what just happened at the top of it.
     const code = String(formData.get("code") ?? "");

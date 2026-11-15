@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { tellThemAboutTheNewCard, tellThemTheRewardIsReady } from "@/lib/loyalty-handover";
+import { tellThemTheRewardWasGiven } from "@/lib/receipts";
 import { createClient } from "@/utils/supabase/server";
 
 const knownErrors: Record<string, string> = {
@@ -49,6 +50,13 @@ async function runCardAction(rpc: "add_loyalty_stamp" | "redeem_loyalty_reward",
     // putting their coat on. This is the line they find afterwards.
     if (rpc === "add_loyalty_stamp" && result?.card_full) {
         await tellThemTheRewardIsReady(code);
+    }
+
+    // And when it is actually handed over, the receipt for it: six
+    // visits of stamps turning into the thing they were collecting for
+    // (lib/receipts.ts).
+    if (rpc === "redeem_loyalty_reward") {
+        await tellThemTheRewardWasGiven(code);
     }
 
     // The code scanned is still the code to come back to: the page
