@@ -160,6 +160,14 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
 
 // "Three things", not "3 things": these are sentences, and the list is
 // never long enough to need a numeral.
+// Bare numerals for a count that already has its noun in the sentence
+// around it: "three more", not "three things more".
+function numberInWords(count: number) {
+    const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+    return words[count] ?? String(count);
+}
+
 function countInWords(count: number) {
     const words = ["No things", "One thing", "Two things", "Three things", "Four things", "Five things"];
 
@@ -321,7 +329,7 @@ export function lifecycleEmail(
                 `Thanks for signing up. Your page is started — here is what it needs before customers can find you${rest > 0 ? ", and your dashboard counts off the rest as you go" : ""}:`,
                 ...first.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
                 rest > 0
-                    ? `Then ${countInWords(rest).toLowerCase()} more, none of them long: your dashboard keeps the list.`
+                    ? `Then ${numberInWords(rest)} more, none of them long: your dashboard keeps the list.`
                     : "Your dashboard keeps the list, and you can work through it at your own pace.",
                 ...(due.approved
                     ? []
