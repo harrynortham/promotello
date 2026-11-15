@@ -48,7 +48,11 @@ test.describe("business setup and trial emails", () => {
 
         const email = lifecycleEmail(first[0], first[0].emails[0])!;
         expect(email.subject).toContain("Welcome to Promotello");
-        expect(email.text).toContain("Post your first offer");
+        // The first three of the seven the dashboard counts, in its
+        // order, and the rest left to the checklist.
+        expect(email.text).toContain("1. Add your logo");
+        expect(email.text).toContain("2. Say what you're known for");
+        expect(email.text).toContain("3. Add your address");
 
         expect(await claim(businessId)).toEqual([]);
     });
@@ -59,42 +63,43 @@ test.describe("business setup and trial emails", () => {
         const [nudge] = await claim(businessId);
         expect(nudge.kind).toBe("setup_nudge_1");
 
-        // The cover photo comes first: an offer sends people to a page,
-        // and the page should be worth arriving at.
+        // Whatever the dashboard would ask for first, which for a page
+        // with nothing on it is the logo.
         const email = lifecycleEmail(nudge, nudge.emails[0])!;
-        expect(email.subject).toMatch(/^Add a cover photo for E2E Lifecycle/);
-        expect(email.text).toContain(`/business/${businessId}/cover`);
+        expect(email.subject).toMatch(/^Add your logo for E2E Lifecycle/);
+        expect(email.text).toContain(`/business/${businessId}/logo`);
         expect(email.text).toContain("Turn off setup tips");
 
-        // With a cover, sending the page is next: nothing on it reaches a
-        // customer until the business has looked it over and sent it.
-        const withCover = { ...nudge, details: { ...nudge.details, has_cover: true } };
-        expect(lifecycleEmail(withCover, "a@b.c")!.subject).toMatch(/^Send your page for review/);
+        // Then down the list, in the dashboard's order.
+        const profile = { ...nudge.details, has_logo: true, has_description: true, has_address: true, has_hours: true };
+
+        expect(lifecycleEmail({ ...nudge, details: { ...profile, has_logo: false } }, "a@b.c")!.subject)
+            .toMatch(/^Add your logo/);
+        expect(lifecycleEmail({ ...nudge, details: profile }, "a@b.c")!.subject)
+            .toMatch(/^Add a cover photo/);
+
+        // With the page finished, sending it is next: nothing on it
+        // reaches a customer until the business has looked it over.
+        const ready = { ...profile, has_cover: true, profile_ready: true };
+        expect(lifecycleEmail({ ...nudge, details: ready }, "a@b.c")!.subject)
+            .toMatch(/^Send your page for review/);
 
         // Once it is sent, the offer.
-        const sent = { ...withCover, details: { ...withCover.details, sent_for_review: true } };
-        expect(lifecycleEmail(sent, "a@b.c")!.subject).toMatch(/^Post your first offer/);
+        const sent = { ...ready, sent_for_review: true };
+        expect(lifecycleEmail({ ...nudge, details: sent }, "a@b.c")!.subject)
+            .toMatch(/^Post your first offer/);
 
-        // Fully set up: nothing to nudge about.
+        // Set up, on Free: the loyalty card is part of Pro, so there is
+        // nothing left to nudge about and nothing is sent.
         expect(
             lifecycleEmail(
-                {
-                    ...nudge,
-                    details: {
-                        ...nudge.details,
-                        has_cover: true,
-                        has_offer: true,
-                        has_loyalty: true,
-                        has_poster: true,
-                        sent_for_review: true,
-                    },
-                },
+                { ...nudge, hasPro: false, details: { ...sent, has_offer: true, has_poster: true } },
                 "a@b.c",
             ),
         ).toBeNull();
     });
 
-    test("the loyalty step offers a free business the Pro trial, and goes straight to loyalty on Pro", async () => {
+    test("the loyalty card is a step only for a business that can start one", async () => {
         await admin().from("businesses").update({ created_at: daysAgo(3) }).eq("id", businessId);
 
         const [claimed] = await claim(businessId);
@@ -103,12 +108,26 @@ test.describe("business setup and trial emails", () => {
         // card is next.
         const nudge = {
             ...claimed,
-            details: { ...claimed.details, has_cover: true, has_offer: true, sent_for_review: true },
+            details: {
+                ...claimed.details,
+                has_logo: true,
+                has_description: true,
+                has_address: true,
+                has_hours: true,
+                has_cover: true,
+                profile_ready: true,
+                has_offer: true,
+                sent_for_review: true,
+            },
         };
 
+        // On Free it is not an unfinished page, it is a thing to buy,
+        // and enforce_loyalty_plan will not let them start one — so the
+        // nudge moves on to the poster rather than selling in a
+        // checklist. The loyalty_pitch email makes that case on its own.
         const free = lifecycleEmail({ ...nudge, hasPro: false, approved: true }, "a@b.c")!;
-        expect(free.subject).toMatch(/^Start a loyalty card with a free Pro trial/);
-        expect(free.text).toContain(`/business/${businessId}/billing`);
+        expect(free.subject).toMatch(/^Print your QR poster/);
+        expect(free.text).not.toContain("loyalty card");
 
         const pro = lifecycleEmail({ ...nudge, hasPro: true, approved: true }, "a@b.c")!;
         expect(pro.subject).toMatch(/^Set up your loyalty card/);
@@ -172,8 +191,15 @@ test.describe("business setup and trial emails", () => {
         expect(founding.text).toContain("There are 12 places left.");
         expect(lifecycleEmail(due("founding_places"), "a@b.c", { foundingPlacesLeft: 0 })!.text).not.toContain("founding");
 
-        const results = lifecycleEmail(due("results", { views: 40, claims: 3 }), "a@b.c")!;
-        expect(results.text).toContain("3 vouchers claimed, 40 page views");
+        // A visit is what makes the numbers worth reciting. Claims and
+        // page views without one are interest, and say so.
+        const results = lifecycleEmail(due("results", { visits: 6, views: 40, claims: 3 }), "a@b.c")!;
+        expect(results.text).toContain("6 customer visits, 3 vouchers claimed, 40 page views");
+
+        const interest = lifecycleEmail(due("results", { views: 40, claims: 3 }), "a@b.c")!;
+        expect(interest.subject).toMatch(/^People are finding /);
+        expect(interest.text).toContain("3 vouchers have been claimed");
+        expect(interest.text).not.toContain("40 page views");
         const quiet = lifecycleEmail(due("results", { has_poster: false }), "a@b.c")!;
         expect(quiet.text).toContain(`/business/${businessId}/qr`);
 
@@ -272,9 +298,10 @@ test.describe("approval emails", () => {
     });
 });
 
-// The welcome email lists the steps, so it counts them rather than
-// saying a number that was true when it was written.
-test("the welcome email counts the steps it lists", async () => {
+// The welcome names the first few and leaves the rest to the dashboard,
+// so it says how many are left rather than a number that was true when
+// it was written.
+test("the welcome counts what it leaves to the checklist", async () => {
     const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const { data: created } = await admin()
         .from("businesses")
@@ -288,10 +315,16 @@ test("the welcome email counts the steps it lists", async () => {
         const [welcome] = (await admin().rpc("claim_business_lifecycle_emails", { only_business: created!.id })).data as LifecycleDue[];
         const email = lifecycleEmail({ ...welcome, hasPro: false, approved: true }, "a@b.c")!;
 
-        // A cover photo, an offer, a loyalty card and a poster.
-        expect(email.text).toContain("Four things get you ready");
-        expect(email.text).toContain("Add a cover photo");
-        expect(email.text.indexOf("Add a cover photo")).toBeLessThan(email.text.indexOf("Post your first offer"));
+        // The dashboard's first three, in its order.
+        expect(email.text).toContain("1. Add your logo");
+        expect(email.text.indexOf("Add your logo")).toBeLessThan(email.text.indexOf("Add your address"));
+
+        // And the rest counted rather than listed. This one is already
+        // approved, so sending the page is behind it: hours, cover,
+        // offer and poster are what is left, with no loyalty card
+        // because it is on Free.
+        expect(email.text).toMatch(/Then four more, none of them long/);
+        expect(email.text).not.toMatch(/things more/);
     } finally {
         await admin().from("businesses").delete().eq("id", created!.id);
     }

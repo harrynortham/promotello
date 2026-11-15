@@ -160,6 +160,14 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
 
 // "Three things", not "3 things": these are sentences, and the list is
 // never long enough to need a numeral.
+// Bare numerals for a count that already has its noun in the sentence
+// around it: "three more", not "three things more".
+function numberInWords(count: number) {
+    const words = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+    return words[count] ?? String(count);
+}
+
 function countInWords(count: number) {
     const words = ["No things", "One thing", "Two things", "Three things", "Four things", "Five things"];
 
@@ -208,6 +216,35 @@ function formatDate(value: string) {
 
 function plural(count: number, one: string, many: string) {
     return `${count} ${count === 1 ? one : many}`;
+}
+
+// How much of a case the numbers make for themselves.
+//
+// Reciting whatever is above zero is how a business gets told it has
+// had "3 page views" and is then asked for a card. A thin list is worse
+// than no list: it is a month of evidence that nothing happened, in our
+// own words, at the moment somebody is deciding whether to keep paying.
+//
+// A visit — a voucher used or a stamp added — is the only number that
+// proves the thing worked, because somebody walked in. Claims, card
+// members and followers are people who decided something, so they are
+// interest. Views and scans are neither: they are anonymous by design
+// (20261229090000), and nobody ever renewed over a page view.
+export function resultsStrength(d: LifecycleDue["details"]) {
+    if (d.visits > 0) return "visits" as const;
+
+    if (d.claims > 0 || d.loyalty_members > 0 || d.followers > 0) return "interest" as const;
+
+    return "nothing" as const;
+}
+
+// The interest, for the email that has no visits to talk about.
+function interestList(d: LifecycleDue["details"]) {
+    return [
+        d.loyalty_members > 0 && plural(d.loyalty_members, "person is", "people are") + " carrying your loyalty card",
+        d.followers > 0 && plural(d.followers, "person follows", "people follow") + " you for new offers",
+        d.claims > 0 && plural(d.claims, "voucher has", "vouchers have") + " been claimed",
+    ].filter(Boolean) as string[];
 }
 
 // What it's had through Promotello, e.g. ["3 customer visits", "12 page views"].
@@ -292,7 +329,7 @@ export function lifecycleEmail(
                 `Thanks for signing up. Your page is started — here is what it needs before customers can find you${rest > 0 ? ", and your dashboard counts off the rest as you go" : ""}:`,
                 ...first.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
                 rest > 0
-                    ? `Then ${countInWords(rest).toLowerCase()} more, none of them long: your dashboard keeps the list.`
+                    ? `Then ${numberInWords(rest)} more, none of them long: your dashboard keeps the list.`
                     : "Your dashboard keeps the list, and you can work through it at your own pace.",
                 ...(due.approved
                     ? []
@@ -382,9 +419,15 @@ export function lifecycleEmail(
             eyebrow: "Your free trial",
             title: `Your trial ends on ${trialEnd}`,
             paragraphs: [
-                results.length > 0
+                // The same rule as the results email, and it matters
+                // more here: this is the last thing somebody reads
+                // before a card is charged, and a thin list of page
+                // views is an argument for cancelling.
+                resultsStrength(d) === "visits"
                     ? `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`
-                    : `${name} hasn't had customers through Promotello yet. ${missing.length > 0 ? `${missing[0].label} to get started: ${missing[0].why}` : "Mention your loyalty card when you serve somebody — that is where the first sign-ups come from."}`,
+                    : resultsStrength(d) === "interest"
+                        ? `${interestList(d).join(", and ")} since ${formatDate(d.since)}. Nobody has been in and used one yet — the next stamp or voucher is the one that starts it.`
+                        : `${name} hasn't had customers through Promotello yet. ${missing.length > 0 ? `${missing[0].label} to get started: ${missing[0].why}` : "Mention your loyalty card when you serve somebody — that is where the first sign-ups come from."}`,
                 "Your plan carries on automatically when the trial ends, so you don't need to do anything. You can change or cancel your plan in Billing before then.",
             ],
             action: { label: "Review your plan", url: absoluteUrl(`/business/${due.business_id}/billing`) },
@@ -451,14 +494,15 @@ export function lifecycleEmail(
 
     if (due.kind === "results") {
         const d = due.details;
-        const results = resultsList(d);
+        const strength = resultsStrength(d);
 
-        if (results.length > 0) {
+        // Somebody walked in. That is the whole case, so lead with it.
+        if (strength === "visits") {
             const { html, text } = brandedEmail({
                 eyebrow: "Your first two weeks",
                 title: `How ${name} is doing on Promotello`,
                 paragraphs: [
-                    `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`,
+                    `Since ${formatDate(d.since)}, ${name} has had ${resultsList(d).join(", ")} through Promotello.`,
                     `Pro helps bring those customers back: they join your loyalty card and return for their next stamp, and your followers hear about every new offer. It's ${plans.pro_monthly.price} a month.`,
                     trialTerms.results,
                 ],
@@ -467,6 +511,30 @@ export function lifecycleEmail(
             });
 
             return { to, subject: `${name}'s first two weeks on Promotello`, html, text, headers: unsubscribeHeaders(optOutToken) };
+        }
+
+        // People have decided something — joined the card, followed,
+        // claimed — but nobody has been in yet. That is a real thing to
+        // say, and it is nearly a customer rather than nearly nothing.
+        if (strength === "interest") {
+            const interest = interestList(d);
+
+            const { html, text } = brandedEmail({
+                eyebrow: "Your first two weeks",
+                title: `People are finding ${name}`,
+                paragraphs: [
+                    `${interest.join(", and ")} — all since ${formatDate(d.since)}. Nobody has been in and used one yet, which is the next thing to change.`,
+                    d.claims > 0
+                        ? "A claimed voucher is somebody who meant to come. Mentioning the offer when you serve people, and keeping your poster where they wait, is usually what turns the last few into a visit."
+                        : "The quickest nudge is a reason to come in this week: an offer with an end date on it, mentioned when you serve somebody and on the poster by your counter.",
+                ],
+                action: d.has_offer
+                    ? { label: "Open your dashboard", url: dashboard }
+                    : { label: "Create an offer", url: absoluteUrl(`/business/${due.business_id}/offers/new`) },
+                ...tipsFooter(optOutToken),
+            });
+
+            return { to, subject: `People are finding ${name}`, html, text, headers: unsubscribeHeaders(optOutToken) };
         }
 
         const { html, text } = brandedEmail({
