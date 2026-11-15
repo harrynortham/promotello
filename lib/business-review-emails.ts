@@ -1,4 +1,5 @@
 import { brandedEmail, contactInbox, isDeliverable, sendEmails, type Email } from "@/lib/email";
+import { businessRecipients, greeting } from "@/lib/recipients";
 import {
     declineLines,
     findReason,
@@ -67,24 +68,31 @@ function declineParts(
     };
 }
 
-type BusinessForEmail = { id: string; name: string; slug: string };
+type BusinessForEmail = { id: string; name: string; slug: string; logo_url?: string | null };
 
 export function businessReviewedEmail(
     business: BusinessForEmail,
     decision: ReviewDecision,
     to: string,
     review?: Review,
+    name?: string | null,
 ): Email {
+    // Their logo over every one of these, and their name in the first
+    // line where they gave us one.
+    const mark = { name: business.name, logoUrl: business.logo_url };
+    const hello = greeting(name);
+
     if (decision === "approved") {
         // Back after a suspension is not the same event as being
         // approved for the first time, and telling somebody who has
         // been open a year to print their first poster reads as broken.
         if (review?.previous === "suspended") {
             const { html, text } = brandedEmail({
-                eyebrow: "Back up",
+            business: mark,
+            eyebrow: "Back up",
                 title: `${business.name} is back on Promotello`,
                 paragraphs: [
-                    `Thanks for sorting that out. ${business.name} is visible to customers again, along with every offer that was live before.`,
+                    `${hello}Thanks for sorting that out. ${business.name} is visible to customers again, along with every offer that was live before.`,
                     "Nothing was lost while it was down: your loyalty cards kept their stamps, your posters still point at the same places, and your followers are still following.",
                 ],
                 action: { label: "See your page", url: absoluteUrl(`/businesses/${business.slug}`) },
@@ -95,10 +103,11 @@ export function businessReviewedEmail(
         }
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "You're live",
             title: `${business.name} is live on Promotello`,
             paragraphs: [
-                `Customers can now find ${business.name} on Promotello, along with your offers once each one is approved.`,
+                `${hello}Customers can now find ${business.name} on Promotello, along with your offers once each one is approved.`,
                 "Next, print your QR poster from your dashboard and put it in your window or by the counter. It's how passers-by find your offers and loyalty card.",
             ],
             action: { label: "See your page", url: absoluteUrl(`/businesses/${business.slug}`) },
@@ -115,11 +124,12 @@ export function businessReviewedEmail(
             "business",
             "suspended",
             review,
-            `We've taken ${business.name} off Promotello for now, and this is why.`,
+            `${hello}We've taken ${business.name} off Promotello for now, and this is why.`,
             "Nothing is deleted: your profile, your offers, your loyalty cards and their stamps are all exactly as you left them, and they come back the moment this is settled. Reply to this email and we'll deal with it today.",
         );
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Taken down",
             title: `${business.name} is off Promotello for now`,
             paragraphs: parts.paragraphs,
@@ -136,11 +146,12 @@ export function businessReviewedEmail(
         "business",
         "rejected",
         review,
-        `Thanks for signing up. We weren't able to approve ${business.name} as it stands, and this is what stopped us.`,
+        `${hello}Thanks for signing up. We weren't able to approve ${business.name} as it stands, and this is what stopped us.`,
         "Send the page back to us from your dashboard when it's done and we'll look again the same day. Reply to this email if anything here is unclear — it reaches a person, not a form.",
     );
 
     const { html, text } = brandedEmail({
+        business: mark,
         eyebrow: "Your sign-up",
         title: `We couldn't approve ${business.name} yet`,
         paragraphs: parts.paragraphs,
@@ -153,21 +164,40 @@ export function businessReviewedEmail(
     return { to, subject: `About ${business.name} on Promotello`, html, text };
 }
 
-type OfferForEmail = { id: string; title: string; slug: string; business: { id: string; name: string } };
+type OfferForEmail = {
+    id: string;
+    title: string;
+    slug: string;
+    // The offer's own photograph, where it has one: this is an email
+    // about that offer, and a picture of it is the quickest way to know
+    // which one.
+    imageUrl?: string | null;
+    business: { id: string; name: string; logo_url?: string | null };
+};
 
 export function offerReviewedEmail(
     offer: OfferForEmail,
     decision: ReviewDecision,
     to: string,
     review?: Review,
+    name?: string | null,
 ): Email {
+    const mark = { name: offer.business.name, logoUrl: offer.business.logo_url };
+    const hello = greeting(name);
+    // The offer's own picture, on the two that are about it going live
+    // or coming back. Not on a decline: a photograph of the thing we
+    // just turned down reads as a taunt.
+    const picture = offer.imageUrl ? { url: offer.imageUrl, alt: offer.title } : undefined;
+
     if (decision === "approved") {
         if (review?.previous === "suspended") {
             const { html, text } = brandedEmail({
+                business: mark,
+                picture,
                 eyebrow: "Back up",
                 title: `"${offer.title}" is back`,
                 paragraphs: [
-                    `It's on ${offer.business.name}'s page and in the offers directory again. Any poster or QR code printed for it works again too, without reprinting anything.`,
+                    `${hello}It's on ${offer.business.name}'s page and in the offers directory again. Any poster or QR code printed for it works again too, without reprinting anything.`,
                     "Vouchers claimed before it came down were never cancelled, so anybody turning up with one is holding something real.",
                 ],
                 action: { label: "See your offer", url: absoluteUrl(`/offers/${offer.slug}`) },
@@ -178,10 +208,12 @@ export function offerReviewedEmail(
         }
 
         const { html, text } = brandedEmail({
+            business: mark,
+            picture,
             eyebrow: "Offer approved",
             title: `"${offer.title}" is live`,
             paragraphs: [
-                `Customers can now see and claim it on ${offer.business.name}'s page and in the Promotello offers directory.`,
+                `${hello}Customers can now see and claim it on ${offer.business.name}'s page and in the Promotello offers directory.`,
                 "Mention it when you serve somebody, or put your QR poster up so passers-by can claim it too.",
             ],
             action: { label: "See your offer", url: absoluteUrl(`/offers/${offer.slug}`) },
@@ -196,11 +228,12 @@ export function offerReviewedEmail(
             "offer",
             "suspended",
             review,
-            `We've taken "${offer.title}" off the site for now, and this is why.`,
+            `${hello}We've taken "${offer.title}" off the site for now, and this is why.`,
             "The rest of your page is untouched and still live. Vouchers people already claimed still work, so nobody is turned away at the counter over this. Reply to this email and we'll deal with it today.",
         );
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Offer taken down",
             title: `"${offer.title}" is off the site for now`,
             paragraphs: parts.paragraphs,
@@ -217,11 +250,12 @@ export function offerReviewedEmail(
         "offer",
         "rejected",
         review,
-        "We couldn't approve this offer as written, and this is why.",
+        `${hello}We couldn't approve this offer as written, and this is why.`,
         "Editing it sends it straight back to us, and we answer the same day. Reply to this email if you'd rather we suggested the wording.",
     );
 
     const { html, text } = brandedEmail({
+        business: mark,
         eyebrow: "Offer not approved",
         title: `"${offer.title}" wasn't approved`,
         paragraphs: parts.paragraphs,
@@ -481,16 +515,18 @@ export async function emailBusinessReviewed(
 ) {
     const { data: business } = await createAdminClient()
         .from("businesses")
-        .select("id, name, slug, review_reason, review_note")
+        .select("id, name, slug, logo_url, review_reason, review_note")
         .eq("id", businessId)
         .maybeSingle();
 
     if (!business) return { sent: 0 };
 
-    const emails = await managerEmails(businessId);
     const review = { reason: business.review_reason, note: business.review_note, previous };
+    const people = await businessRecipients(businessId);
 
-    return sendEmails(emails.map((to) => businessReviewedEmail(business, decision, to, review)));
+    return sendEmails(
+        people.map((person) => businessReviewedEmail(business, decision, person.email, review, person.name)),
+    );
 }
 
 export async function emailOfferReviewed(
@@ -500,7 +536,7 @@ export async function emailOfferReviewed(
 ) {
     const { data } = await createAdminClient()
         .from("offers")
-        .select("id, title, slug, review_reason, review_note, businesses ( id, name )")
+        .select("id, title, slug, image_url, review_reason, review_note, businesses ( id, name, logo_url )")
         .eq("id", offerId)
         .maybeSingle();
 
@@ -508,11 +544,13 @@ export async function emailOfferReviewed(
 
     if (!data || !business) return { sent: 0 };
 
-    const offer = { id: data.id, title: data.title, slug: data.slug, business };
-    const emails = await managerEmails(business.id);
+    const offer = { id: data.id, title: data.title, slug: data.slug, imageUrl: data.image_url, business };
     const review = { reason: data.review_reason, note: data.review_note, previous };
+    const people = await businessRecipients(business.id);
 
-    return sendEmails(emails.map((to) => offerReviewedEmail(offer, decision, to, review)));
+    return sendEmails(
+        people.map((person) => offerReviewedEmail(offer, decision, person.email, review, person.name)),
+    );
 }
 
 export async function alertNewBusiness(businessId: string, owner: string, claimedPreview = false) {

@@ -2,6 +2,7 @@ import { businessHasPro, TRIAL_DAYS } from "@/lib/billing";
 import { brandedEmail, sendEmails } from "@/lib/email";
 import { firstCustomer } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
+import { businessRecipients, greeting } from "@/lib/recipients";
 import { absoluteUrl } from "@/lib/site";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -23,10 +24,11 @@ export type FirstCustomer =
     | { kind: "card"; what: string };
 
 export function firstCustomerEmail(
-    business: { id: string; name: string },
+    business: { id: string; name: string; logo_url?: string | null },
     customer: FirstCustomer,
     hasPro: boolean,
     to: string,
+    name?: string | null,
 ) {
     const base = `/business/${business.id}`;
 
@@ -44,9 +46,10 @@ export function firstCustomerEmail(
             : `That's one customer, and the card is already doing its job. Unlimited offers and emails to your followers are the rest of Pro — free for ${TRIAL_DAYS} days, and starting takes no card.`;
 
     const { html, text } = brandedEmail({
+        business: { name: business.name, logoUrl: business.logo_url },
         eyebrow: "First customer",
         title: `${business.name} has its first customer on Promotello`,
-        paragraphs: [what, next],
+        paragraphs: [`${greeting(name)}${what}`, next],
         action: {
             label: customer.kind === "voucher" ? "See your vouchers" : "See your loyalty card",
             url: absoluteUrl(customer.kind === "voucher" ? `${base}/redemptions` : `${base}/loyalty`),
@@ -78,20 +81,20 @@ async function announce(businessId: string, customer: FirstCustomer) {
 
     const { data: business } = await admin
         .from("businesses")
-        .select("id, name")
+        .select("id, name, logo_url")
         .eq("id", businessId)
         .maybeSingle();
 
     if (!business) return { told: 0 };
 
-    const [{ sent }, hasPro, { data: emails }] = await Promise.all([
+    const [{ sent }, hasPro, people] = await Promise.all([
         notifyBusinessManagers(businessId, firstCustomer(business, customer)),
         businessHasPro(admin, businessId).catch(() => true),
-        admin.rpc("business_manager_emails", { requested_business_id: businessId }),
+        businessRecipients(businessId),
     ]);
 
     await sendEmails(
-        ((emails ?? []) as string[]).map((to) => firstCustomerEmail(business, customer, hasPro, to)),
+        people.map((person) => firstCustomerEmail(business, customer, hasPro, person.email, person.name)),
     );
 
     return { told: sent };

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { localImage, storedImage } from "@/lib/images";
+import { encodingFor, localImage, storedImage } from "@/lib/images";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
 
@@ -39,4 +39,29 @@ test("nothing from anywhere else gets in that way", () => {
     assert.equal(localImage("javascript:alert(1)"), null);
     assert.equal(localImage(null), null);
     assert.equal(localImage(""), null);
+});
+
+// What a cropped image is encoded as.
+//
+// Never WebP: Outlook on Windows renders mail through Word, which has
+// never supported it, so a .webp logo arrives in an email as a red
+// cross and lib/email.ts refuses to send one.
+test("a logo is PNG only when it actually needs to be", () => {
+    assert.equal(encodingFor("auto", true), "image/png");
+
+    // A type says a file *can* carry transparency, not that it does.
+    // Both WebP logos we had were fully opaque, and as PNG they came out
+    // four and eight times bigger for nothing.
+    assert.equal(encodingFor("auto", false), "image/jpeg");
+});
+
+test("a photograph is JPEG whatever its pixels say", () => {
+    assert.equal(encodingFor("image/jpeg", true), "image/jpeg");
+    assert.equal(encodingFor("image/jpeg", false), "image/jpeg");
+});
+
+test("nothing can ask for a format an email client won't draw", () => {
+    for (const transparent of [true, false]) {
+        assert.notEqual(encodingFor("auto", transparent), "image/webp");
+    }
 });

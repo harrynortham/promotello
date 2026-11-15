@@ -105,11 +105,13 @@ export function ImagePicker({
     async function useThisImage() {
         if (!chosen || !chosenUrl || !cropArea) return;
 
-        const type = convertToJpeg || chosen.type === "image/jpeg" ? "image/jpeg" : chosen.type;
-
         try {
-            const blob = await cropImage(chosenUrl, cropArea, { type, maxSize });
-            const name = chosen.name.replace(/\.[^.]+$/, "") + (type === "image/jpeg" ? ".jpg" : "");
+            const blob = await cropImage(chosenUrl, cropArea, {
+                type: convertToJpeg ? "image/jpeg" : "auto",
+                maxSize,
+            });
+            const type = blob.type;
+            const name = chosen.name.replace(/\.[^.]+$/, "") + (type === "image/jpeg" ? ".jpg" : ".png");
 
             const url = URL.createObjectURL(blob);
 

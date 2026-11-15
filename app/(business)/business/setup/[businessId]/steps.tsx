@@ -147,8 +147,9 @@ function ImageStep({
 
         try {
             const supabase = createClient();
-            const type = convertToJpeg ? "image/jpeg" : file.type;
-            const upload = await uploadBusinessImage(supabase, businessId, kind, new File([file], file.name, { type }));
+            // The picker already cropped and encoded it. Relabelling the
+            // type here only ever disagreed with the bytes.
+            const upload = await uploadBusinessImage(supabase, businessId, kind, file);
 
             if ("error" in upload) {
                 throw new Error(upload.error ?? `Your ${label.toLowerCase()} couldn't be uploaded.`);

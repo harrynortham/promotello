@@ -22,7 +22,8 @@ type VoucherRow = {
         terms: string | null;
         discount: string;
         expires_at: string | null;
-        businesses: { name: string } | null;
+        image_url: string | null;
+        businesses: { name: string; logo_url: string | null } | null;
     } | null;
 };
 
@@ -90,7 +91,7 @@ export async function sendVoucherFor(supabase: SupabaseClient, user: User, redem
     const { data: voucher } = await supabase
         .from("offer_redemptions")
         .select(
-            "redemption_code, offer_id, offers ( title, description, terms, discount, expires_at, businesses ( name ) )",
+            "redemption_code, offer_id, offers ( title, description, terms, discount, expires_at, image_url, businesses ( name, logo_url ) )",
         )
         .eq("id", redemptionId)
         .eq("user_id", user.id)
@@ -110,6 +111,8 @@ export async function sendVoucherFor(supabase: SupabaseClient, user: User, redem
             terms: voucher.offers.terms,
             discount: voucher.offers.discount,
             businessName: voucher.offers.businesses?.name ?? "the business",
+            businessLogoUrl: voucher.offers.businesses?.logo_url ?? null,
+            offerImageUrl: voucher.offers.image_url,
             expiresAt: voucher.offers.expires_at,
         }),
     ]);
