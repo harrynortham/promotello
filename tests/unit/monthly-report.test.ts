@@ -65,3 +65,78 @@ test("a month of nothing gets a sentence, not a grid of noughts", () => {
     // And one thing to do instead.
     assert.match(email.text, /A live offer with an end date/);
 });
+
+// The report is the proof, and the business that most needs it is the
+// one deciding whether to pay — so it now goes to everyone, and what
+// Growth buys is the detail (docs/LAUNCH-FUNNEL.md).
+test("a short report leads with the same headline and drops the table", () => {
+    const month = {
+        business_id: "b-1",
+        business_name: "Little Loaf",
+        emails: ["sam@example.com"],
+        figures: {
+            full_report: false,
+            followers: 12,
+            metrics: {
+                visits: { current: 9, previous: 4 },
+                claims: { current: 14, previous: 6 },
+                views: { current: 80, previous: 40 },
+            },
+        },
+    };
+
+    const short = monthlyReportEmail(month, "sam@example.com", "October");
+
+    assert.match(short.text, /9 customer visits came through Promotello in October/);
+    assert.ok(!short.text.includes("Views of your page and offers"), "no table of seven");
+    assert.match(short.text, /Followers: 12/);
+    assert.match(short.html, /Growth puts the whole month in this email/);
+
+    // The same month on Growth: the headline, and every number with
+    // last month beside it.
+    const full = monthlyReportEmail(
+        { ...month, figures: { ...month.figures, full_report: true } },
+        "sam@example.com",
+        "October",
+    );
+
+    assert.match(full.text, /9 customer visits came through Promotello in October/);
+    assert.match(full.text, /Views of your page and offers: 80/);
+    assert.ok(!full.html.includes("Growth puts the whole month in this email"));
+});
+
+// Written before the flag existed, when only Growth got one at all.
+test("a payload with no flag is the full report", () => {
+    const email = monthlyReportEmail(
+        {
+            business_id: "b-1",
+            business_name: "Little Loaf",
+            emails: [],
+            figures: { followers: 3, metrics: { visits: { current: 2, previous: 1 } } },
+        },
+        "sam@example.com",
+        "October",
+    );
+
+    assert.match(email.text, /Customer visits \(vouchers used and loyalty stamps\): 2/);
+});
+
+// A month of nothing is a sentence and a nudge on either plan: a grid
+// of noughts is a monthly reminder that nothing is working.
+test("a month of nothing reads the same on both", () => {
+    for (const full_report of [true, false]) {
+        const email = monthlyReportEmail(
+            {
+                business_id: "b-1",
+                business_name: "Little Loaf",
+                emails: [],
+                figures: { full_report, followers: 0, metrics: {} },
+            },
+            "sam@example.com",
+            "October",
+        );
+
+        assert.match(email.text, /Nothing came through Promotello in October/);
+        assert.ok(!email.text.includes("Views of your page and offers"));
+    }
+});

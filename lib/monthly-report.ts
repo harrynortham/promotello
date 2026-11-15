@@ -12,6 +12,11 @@ type Report = {
     business_name: string;
     emails: string[];
     figures: {
+        // Growth gets every number with last month beside it; everyone
+        // else gets the headline, who came back, and one thing to do.
+        // Absent on a payload written before 20270112090000, and absent
+        // means full: only Growth got one at all back then.
+        full_report?: boolean;
         followers: number;
         metrics: Partial<
             Record<"views" | "qr_scans" | "claims" | "visits" | "loyalty_rewards" | "new_followers" | "review_clicks", Change>
@@ -85,6 +90,12 @@ export function monthlyReportEmail(
         : null;
 
     const strength = monthStrength(report);
+
+    // Growth gets every number with last month beside it. Everyone else
+    // gets the headline, who came back, and the one thing to do next:
+    // the proof without the detail, which is what the detail is for
+    // (docs/LAUNCH-FUNNEL.md).
+    const full = report.figures.full_report !== false;
     const claims = report.figures.metrics.claims ?? empty;
     const looks = (report.figures.metrics.views ?? empty).current + (report.figures.metrics.qr_scans ?? empty).current;
 
@@ -113,14 +124,17 @@ export function monthlyReportEmail(
 <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#45506a">${
         strength === "nothing"
             ? e(nudge ?? "")
-            : `You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}. Changes are against the month before.`
+            : full
+                ? `You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}. Changes are against the month before.`
+                : `You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}.`
     }</p>
-${strength === "nothing" ? "" : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">${tableRows}</table>`}
+${strength === "nothing" || !full ? "" : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">${tableRows}</table>`}
 ${nudge && strength !== "nothing" ? `<p style="margin:20px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(nudge)}</p>` : ""}
+${full ? "" : `<p style="margin:20px 0 0;font-size:14px;line-height:1.6;color:#6b7387">Every number behind this — scans, claims, views and where they came from — is on your analytics page, and Growth puts the whole month in this email with last month beside it.</p>`}
 ${firstTimers ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#FFF4EE;border-radius:12px"><tr><td style="padding:18px 20px"><p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">First-timers, and who came back</p><p style="margin:8px 0 0;font-size:15px;line-height:1.6">${e(firstTimers)}</p></td></tr></table>` : ""}
 <a href="${analyticsUrl}" style="display:inline-block;margin-top:24px;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">See full analytics</a>
 </td></tr>`,
-        footer: `<p style="max-width:${EMAIL_WIDTH}px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">Your monthly report from Promotello, sent to business owners on Growth.</p>`,
+        footer: `<p style="max-width:${EMAIL_WIDTH}px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">Your monthly report from Promotello, sent to business owners once a month.</p>`,
     });
 
     const text = [
@@ -130,15 +144,23 @@ ${firstTimers ? `<table role="presentation" width="100%" cellpadding="0" cellspa
         ...(strength === "nothing"
             ? [nudge ?? ""]
             : [
-                ...rows.map(({ key, label }) => {
-                    const metric = report.figures.metrics[key] ?? empty;
-                    return `${label}: ${metric.current} (${changeText(metric)})`;
-                }),
-                "",
+                ...(full
+                    ? rows.map(({ key, label }) => {
+                        const metric = report.figures.metrics[key] ?? empty;
+                        return `${label}: ${metric.current} (${changeText(metric)})`;
+                    })
+                    : []),
+                ...(full ? [""] : []),
                 `Followers: ${report.figures.followers}`,
                 ...(nudge ? ["", nudge] : []),
             ]),
         ...(firstTimers ? ["", firstTimers] : []),
+        ...(full
+            ? []
+            : [
+                "",
+                "Every number behind this — scans, claims, views and where they came from — is on your analytics page, and Growth puts the whole month in this email with last month beside it.",
+            ]),
         `Full analytics: ${analyticsUrl}`,
         "",
         companyDisclosure(),
