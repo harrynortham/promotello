@@ -112,10 +112,14 @@ Growth. **Charge for the actions, never for the proof.**
 built and vetted ourselves** still has to finish a checklist, press
 "Send your page for review", and wait for us.
 
-**Do:** approve a claimed preview on claim. Keep review for cold
-self-signups. It takes a dead day out of the most fragile part of the
-funnel, and it removes the one checklist step the business cannot do
-anything about.
+**Do:** ~~approve a claimed preview on claim~~ — wrong, and worth saying
+why: the claim button promises "Free, and nothing goes public until you
+say so", and that promise is the reason it is safe to press. So take the
+wait rather than the choice. **Sending** a page we built is the moment it
+goes live, provided the profile is the five things the send button is
+locked behind. A cold sign-up has never been read by anyone and still
+queues. It takes a dead day out of the most fragile part of the funnel
+without taking the decision off the business.
 
 ## Cheaper, still worth it
 
@@ -154,4 +158,4 @@ answer is 2 and 3 rather than the price.
 - [x] 2 · The sample offer and card follow them in
 - [x] 3 · The first customer is told to the business
 - [x] 4 · Proof on Free and Pro
-- [ ] 5 · A claimed preview is already approved
+- [x] 5 · A claimed preview goes live when they send it

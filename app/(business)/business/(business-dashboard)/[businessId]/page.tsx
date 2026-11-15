@@ -550,9 +550,16 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
             {search?.sent && (
                 <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
-                    <AlertTitle>Sent for review</AlertTitle>
+                    {/* A page we built was read when we built it, so
+                        sending it is the moment it goes live rather than
+                        the moment it joins a queue (20270113090000). */}
+                    <AlertTitle>
+                        {search.sent === "live" ? "You're live" : "Sent for review"}
+                    </AlertTitle>
                     <AlertDescription>
-                        We usually look the same day, and we&apos;ll email you either way.
+                        {search.sent === "live"
+                            ? "Your page is on the directory now — we'd already read it, so there was nothing to wait for. Your offers are still read one by one before they appear."
+                            : "We usually look the same day, and we'll email you either way."}
                     </AlertDescription>
                 </Alert>
             )}

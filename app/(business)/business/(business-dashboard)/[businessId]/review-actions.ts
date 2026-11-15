@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 
-import { alertBusinessReady } from "@/lib/business-review-emails";
+import { alertBusinessReady, emailBusinessReviewed } from "@/lib/business-review-emails";
+import { businessApproved } from "@/lib/notifications";
+import { notifyBusinessManagers } from "@/lib/notify";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 // Nobody's page is sent for them. A page we built carries our words and
@@ -26,7 +29,7 @@ export async function requestBusinessReview(formData: FormData) {
         redirect("/login?next=/business/dashboard");
     }
 
-    const { error } = await supabase.rpc("request_business_review", {
+    const { data: reviewed, error } = await supabase.rpc("request_business_review", {
         requested_business_id: businessId,
     });
 
@@ -38,17 +41,42 @@ export async function requestBusinessReview(formData: FormData) {
         );
     }
 
+    // A page we built goes live the moment they send it, so nothing
+    // else is ever going to tell them (20270113090000). The admin page's
+    // notifyBusinessReviewed can't: it checks for a platform admin, and
+    // the person who just pressed this is the business.
+    const live = (reviewed as { approval_status?: string } | null)?.approval_status === "approved";
+
     // P0009 is "already asked", so this only fires the once.
     if (!error && user.email) {
         const email = user.email;
-        after(() => alertBusinessReady(businessId, email).catch(() => undefined));
+
+        after(async () => {
+            if (live) {
+                await emailBusinessReviewed(businessId, "approved").catch(() => undefined);
+
+                const { data: business } = await createAdminClient()
+                    .from("businesses")
+                    .select("id, name")
+                    .eq("id", businessId)
+                    .maybeSingle();
+
+                if (business) {
+                    await notifyBusinessManagers(businessId, businessApproved(business)).catch(
+                        () => undefined,
+                    );
+                }
+            }
+
+            await alertBusinessReady(businessId, email, live).catch(() => undefined);
+        });
     }
 
     revalidatePath(`/business/${businessId}`);
 
     redirect(
         fromSetup
-            ? `/business/setup/${businessId}?step=offer&sent=1`
-            : `/business/${businessId}?sent=1`,
+            ? `/business/setup/${businessId}?step=offer&sent=${live ? "live" : "1"}`
+            : `/business/${businessId}?sent=${live ? "live" : "1"}`,
     );
 }

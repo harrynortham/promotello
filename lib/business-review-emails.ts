@@ -262,20 +262,32 @@ export function newBusinessAlertEmail(
 export function businessReadyAlertEmail(
     business: { name: string; category: string | null; city: string | null },
     owner: string,
+    // A page we built and they claimed goes live the moment they send
+    // it, so this one is news rather than a job (20270113090000).
+    live = false,
 ): Email {
     const what = [business.category, business.city].filter(Boolean).join(", ");
     const { html, text } = brandedEmail({
-        eyebrow: "Ready for review",
-        title: `${business.name} is waiting for approval`,
+        eyebrow: live ? "Live" : "Ready for review",
+        title: live
+            ? `${business.name} sent its page and went live`
+            : `${business.name} is waiting for approval`,
         paragraphs: [
-            `${business.name}${what ? ` (${what})` : ""} has finished its page and sent it to us. It's hidden from customers until it's approved.`,
+            live
+                ? `${business.name}${what ? ` (${what})` : ""} claimed the page we built and has just sent it. It was already read when we built it, so it went straight onto the directory — nothing to approve. Worth a look to see what they changed.`
+                : `${business.name}${what ? ` (${what})` : ""} has finished its page and sent it to us. It's hidden from customers until it's approved.`,
             `Owner: ${owner}`,
         ],
-        action: { label: "Review it", url: absoluteUrl("/admin/businesses") },
+        action: { label: live ? "See the business" : "Review it", url: absoluteUrl("/admin/businesses") },
         footer: "Sent to the Promotello inbox when a business asks for a review.",
     });
 
-    return { to: contactInbox, subject: `Ready for review: ${business.name}`, html, text };
+    return {
+        to: contactInbox,
+        subject: live ? `Live: ${business.name}` : `Ready for review: ${business.name}`,
+        html,
+        text,
+    };
 }
 
 export function newOfferAlertEmail(
@@ -509,8 +521,8 @@ export async function alertNewBusiness(businessId: string, owner: string, claime
     );
 }
 
-export async function alertBusinessReady(businessId: string, owner: string) {
-    return alertAbout(businessId, owner, (business) => businessReadyAlertEmail(business, owner));
+export async function alertBusinessReady(businessId: string, owner: string, live = false) {
+    return alertAbout(businessId, owner, (business) => businessReadyAlertEmail(business, owner, live));
 }
 
 async function alertAbout(
