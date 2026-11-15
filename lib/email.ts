@@ -174,21 +174,23 @@ export function escapeHtml(value: string) {
 // file names are the network keys — nothing to keep in step by hand.
 //
 // A business deciding whether to put its name next to ours looks for
-// signs we are a real company, and these are one of them — which is a
-// reason for them to be there, not a reason for them to be loud. They
-// are the glyphs alone, in the grey the footer text is already in, so
-// the row reads as small print rather than six buttons.
+// signs we are a real company, and a row of accounts it can go and
+// look at is one of them — which is also why this is switched off at
+// the moment. An account with a handful of followers is evidence
+// against the thing it was put there to prove, so these go back when
+// there is a following worth sending somebody to. See emailShell().
 //
-// Drawn at half their size so they stay sharp on a phone, and every
-// one carries its name in alt text for the clients that block images
-// by default.
+// The badges are the circle in the footer's grey with the glyph in
+// white, drawn at half their size so they stay sharp on a phone, and
+// every one carries its name in alt text for the clients that block
+// images by default.
 export function emailSocialRow() {
     const icons = socialProfiles
         .map(
             (profile) =>
-                `<td style="padding:0 8px"><a href="${profile.url}" style="text-decoration:none"><img src="${absoluteUrl(
+                `<td style="padding:0 5px"><a href="${profile.url}" style="text-decoration:none"><img src="${absoluteUrl(
                     `/email/social/${profile.network}.png`,
-                )}" width="28" height="28" alt="${escapeHtml(profile.label)}" style="display:block;width:28px;height:28px;border:0;outline:none"></a></td>`,
+                )}" width="30" height="30" alt="${escapeHtml(profile.label)}" style="display:block;width:30px;height:30px;border:0;outline:none"></a></td>`,
         )
         .join("");
 
@@ -220,15 +222,17 @@ export function emailShell({
     rows,
     footer = "",
     width = EMAIL_WIDTH,
-    social = true,
+    social = false,
 }: {
     rows: string;
     footer?: string;
     width?: number;
-    // Off for anything whose only job is to carry a code or a link
-    // somebody is waiting on, where another six places to click is six
-    // ways to miss the point. Nothing opts out today: our sign-in codes
-    // are sent by Supabase, not from here.
+    // The row of accounts at the foot of the email, off everywhere
+    // until there is a following worth sending anybody to — sending a
+    // business to an account with nine followers argues against us.
+    // Turn it back on by making this true: the icons, the links and
+    // the test that keeps them in step with lib/site.ts are all still
+    // here, and the artwork is the grey badges.
     social?: boolean;
 }) {
     return `<!doctype html>

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
-import { emailSocialRow } from "@/lib/email";
+import { brandedEmail, emailShell, emailSocialRow } from "@/lib/email";
 import { socialProfiles } from "@/lib/site";
 
 // The icons in every email's footer are the same six accounts the
@@ -44,4 +44,27 @@ test("the links are absolute, because an email has no site to be relative to", (
 
     assert.ok(!/src="\//.test(row), "no root-relative image");
     assert.match(row, /src="https?:\/\//);
+});
+
+// Switched off until there is a following worth sending anybody to.
+// The row is built and tested all the same, so turning it back on is
+// one word rather than an afternoon.
+test("no email carries the accounts at the moment", () => {
+    const sent = brandedEmail({
+        eyebrow: "Quayside Coffee",
+        title: "Quayside Coffee is live on Promotello",
+        paragraphs: ["Customers can find your page now."],
+        footer: "You're getting this because you run a business on Promotello.",
+    }).html;
+
+    for (const network of ["instagram", "tiktok", "x"]) {
+        assert.ok(!sent.includes(`/email/social/${network}.png`), `${network} is not in it`);
+    }
+});
+
+test("and asking for them puts them back", () => {
+    const withRow = emailShell({ rows: "<tr><td>Anything</td></tr>", social: true });
+
+    assert.ok(withRow.includes("/email/social/instagram.png"));
+    assert.ok(withRow.includes("https://www.instagram.com/promotello/"));
 });
