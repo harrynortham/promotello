@@ -82,3 +82,73 @@ test.describe("signed out", () => {
         expect(claimed, "the voucher is theirs").not.toBeNull();
     });
 });
+
+// The one ask worth making on this page: somebody who has just claimed
+// something from a business is the likeliest person there is to want to
+// hear when it posts another. Asked once, in the voucher itself, and
+// never in front of the claim.
+test("a fresh voucher asks whether to follow, and only then", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: offer } = await client
+        .from("offers")
+        .insert({
+            business_id: state.businessId,
+            created_by: state.businessUserId,
+            slug: `e2e-follow-ask-${Date.now()}`,
+            title: "E2E Follow Ask Offer",
+            category: "Testing",
+            discount: "15% off",
+            description: "A test offer for the follow prompt.",
+            availability: "Any time",
+            expires_at: "2030-12-31",
+            terms: "For automated tests only.",
+            approval_status: "approved",
+        })
+        .select("id, slug")
+        .single();
+
+    await client.from("business_followers").delete().eq("business_id", state.businessId).eq("user_id", state.customerUserId);
+
+    try {
+        await page.goto(`/offers/${offer!.slug}`, { timeout: 120_000 });
+
+        // Nothing is asked before the claim: the page has one job.
+        await expect(page.getByText(/Want to know when/)).toHaveCount(0);
+
+        await page.getByRole("button", { name: "Get this deal" }).click({ timeout: 60_000 });
+        await expect(page.getByText("Your claimed voucher")).toBeVisible({ timeout: 60_000 });
+
+        // And now, in the voucher, once.
+        const ask = page.getByText(/Want to know when .* posts another\?/);
+        await expect(ask).toBeVisible();
+
+        // The business block further down has a Follow button of its
+        // own; this is the one inside the voucher.
+        await ask.locator("..").getByRole("button", { name: "Follow" }).click();
+
+        await expect
+            .poll(async () => {
+                const { count } = await client
+                    .from("business_followers")
+                    .select("user_id", { count: "exact", head: true })
+                    .eq("business_id", state.businessId)
+                    .eq("user_id", state.customerUserId);
+
+                return count ?? 0;
+            }, { timeout: 30_000 })
+            .toBe(1);
+
+        // Asked once: a reload finds them following, so it is not asked
+        // again on top of the voucher they already have.
+        await page.reload();
+        await expect(page.getByText("Your claimed voucher")).toBeVisible({ timeout: 60_000 });
+        await expect(page.getByText(/Want to know when/)).toHaveCount(0);
+    } finally {
+        await client.from("business_followers").delete().eq("business_id", state.businessId).eq("user_id", state.customerUserId);
+        await client.from("offers").delete().eq("id", offer!.id);
+    }
+});

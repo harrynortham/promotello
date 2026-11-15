@@ -15,6 +15,7 @@ import { VoucherQr } from "@/components/voucher-qr";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 import { sendVoucherConfirmation } from "./actions";
+import { FollowButton } from "@/components/follow-button";
 
 type Redemption = {
     id: string;
@@ -28,6 +29,12 @@ type RedeemButtonProps = {
     isFullyClaimed?: boolean;
     isExpired?: boolean;
     initialRedemption: Redemption | null;
+    // For the one ask worth making here: somebody who has just claimed
+    // something from this business is the likeliest person in the world
+    // to want to hear when it posts another.
+    businessId: string;
+    businessName: string;
+    isFollowing: boolean;
     // Where to come back to after signing in or creating an account.
     returnPath: string;
 };
@@ -64,6 +71,9 @@ export default function RedeemButton({
     isFullyClaimed = false,
     isExpired = false,
     initialRedemption,
+    businessId,
+    businessName,
+    isFollowing,
     returnPath,
 }: RedeemButtonProps) {
     const router = useRouter();
@@ -228,6 +238,27 @@ export default function RedeemButton({
                     >
                         View my voucher
                     </Button>
+
+                    {/* Asked once, here, and never again: somebody who
+                        already follows is not asked, and a voucher
+                        that has been used or has expired is a receipt
+                        rather than a moment. */}
+                    {!isUsed && !isExpired && !isFollowing && (
+                        <div className="mt-6 border-t border-white/15 pt-5">
+                            <p className="text-sm text-white/70">
+                                Want to know when {businessName} posts another?
+                            </p>
+
+                            <div className="mt-3 flex justify-center [&_button]:border-white/25 [&_button]:bg-white/10 [&_button]:text-white [&_button:hover]:bg-white/20">
+                                <FollowButton
+                                    businessId={businessId}
+                                    initialFollowing={false}
+                                    isSignedIn
+                                    size="sm"
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {emailWarning && (
                         <Alert className="mt-5 border-amber-300/30 bg-amber-400/10 text-left text-amber-200">
