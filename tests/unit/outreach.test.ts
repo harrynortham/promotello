@@ -3,13 +3,12 @@ import { test } from "node:test";
 
 import {
     DEFAULT_SENDER,
-    guarantee,
+    ownNumbers,
     outreachDm,
     outreachMessage,
     outreachSubject,
     signOff,
 } from "@/app/admin/previews/preview-shared";
-import { plans } from "@/lib/billing";
 
 const preview = {
     businesses: {
@@ -117,32 +116,54 @@ test("without a name it is the team, and it says thanks rather than cheers", () 
     assert.deepEqual(signOff("  Harry  "), ["Cheers,", "Harry"]);
 });
 
-// The promise that stands in for reviews we do not have yet. There are
-// no testimonials and inventing them is out, so the honest substitute is
-// to carry the risk and say so (docs/LAUNCH-FUNNEL.md).
-test("the guarantee is about the price they were actually offered", () => {
-    assert.match(guarantee(37), new RegExp(plans.pro_founding_monthly.price));
-    assert.match(guarantee(1), new RegExp(plans.pro_founding_monthly.price));
+// What stands in for reviews we do not have yet: the number on their
+// own dashboard, not a promise they would have to trust
+// (docs/LAUNCH-FUNNEL.md).
+test("it sends them to their own numbers, and promises nothing to adjudicate", () => {
+    const line = ownNumbers("Harry Northam");
 
-    // Founding places gone, or a count we could not read: the sentence
-    // must not quote a price nobody can have.
-    assert.match(guarantee(0), new RegExp(plans.pro_monthly.price));
-    assert.match(guarantee(null), new RegExp(plans.pro_monthly.price));
+    assert.match(line, /take my word for any of it/);
+    assert.match(line, /how many customers Promotello actually sent you/);
+
+    // A refund has to be adjudicated, and "nobody came in through it"
+    // is a judgement two people can read differently.
+    assert.ok(!/refund|money back|guarantee/i.test(line));
 });
 
-test("the email carries the guarantee and the offer to finish it for them", () => {
+// introduction() already splits these two voices; this has to as well,
+// or a sentence signed "The Promotello team" says "I'll".
+test("it speaks as a person or as the team, like the introduction does", () => {
+    const person = ownNumbers("Harry Northam");
+    const team = ownNumbers(DEFAULT_SENDER);
+
+    assert.match(person, /take my word/);
+    assert.match(person, /tell me/);
+
+    assert.match(team, /take our word/);
+    assert.match(team, /tell us/);
+    assert.ok(!/take my word|\btell me\b/.test(team));
+});
+
+test("the email carries it, and the offer to finish the page for them", () => {
     const message = outreachMessage(preview, "Harry Northam", 37);
 
-    assert.match(message, /I'll refund you/);
+    assert.match(message, /take my word for any of it/);
+
+    // introduction() already says the company is new; saying it again
+    // three paragraphs later sounds unsure.
+    assert.equal(message.match(/It's new/g)?.length, 1);
     assert.match(message, /photo of the shop and your hours and I'll finish it for you/);
 });
 
 // A DM is read on a phone in a second, so it carries the short version
 // of the same two things, and no guarantee: a refund promise in a DM
 // reads as a sales line rather than a commitment.
-test("the DM offers to finish it, and leaves the guarantee to the email", () => {
+// A DM is read on a phone in a second, so it carries the short version
+// of the pitch and leaves this to the email, where there is room to say
+// which number and why it is theirs rather than ours.
+test("the DM offers to finish it, and leaves the numbers line to the email", () => {
     const dm = outreachDm(preview, "Harry Northam", 37);
 
     assert.match(dm, /send me a photo of the shop and your hours/);
-    assert.ok(!dm.includes("refund"));
+    assert.ok(!dm.includes("take my word"));
 });
