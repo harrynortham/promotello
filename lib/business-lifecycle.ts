@@ -3,6 +3,7 @@ import { brandedEmail, emailCompanyFooter, escapeHtml, sendEmails, type Email } 
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
+import { readStarterRow, starterToShow } from "@/lib/starter";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Emails that guide a new business through setup, on to a free Pro trial
@@ -50,6 +51,11 @@ export type LifecycleDue = {
         // payloads, and absent means yes: every trial started before
         // 20270109090000 took a card to begin.
         trial_has_card?: boolean;
+        // What we drew in their preview email. Absent for a cold
+        // sign-up, and for any payload written before 20270115090000.
+        sample_offer?: string | null;
+        sample_reward?: string | null;
+        sample_stamps?: number | null;
         since: string;
         followers: number;
         loyalty_members: number;
@@ -321,6 +327,32 @@ export function lifecycleEmail(
     const optOutToken = due.kind === "welcome" || due.kind === "trial_ending" ? undefined : unsubscribeToken;
 
     if (due.kind === "welcome") {
+        const d = due.details;
+
+        // What we put in their preview email, named rather than
+        // described. The dashboard hands the same two things back the
+        // moment they claim (components/from-your-email.tsx), and this
+        // is the other thing they get on that day — so both read from
+        // the same rule, and a half they have already done themselves
+        // drops out of both.
+        const theirs = starterToShow(
+            readStarterRow({
+                sample_offer: d.sample_offer,
+                sample_reward: d.sample_reward,
+                sample_stamps: d.sample_stamps,
+            }),
+            { hasOffer: d.has_offer, hasLoyalty: d.has_loyalty },
+        );
+
+        const waiting = [
+            theirs.offer && `your offer, “${theirs.offer}”`,
+            theirs.card && `your loyalty card (${theirs.card.stamps} stamps, then ${theirs.card.reward})`,
+        ].filter(Boolean) as string[];
+
+        // Joined, then capitalised: the pieces are written lowercase so
+        // either can be the one that comes first.
+        const waitingFor = waiting.join(", and ").replace(/^./, (first) => first.toUpperCase());
+
         // The first few, named, and the rest left to the checklist: a
         // welcome that lists nine things is a wall rather than a
         // beginning, and the dashboard counts them off anyway.
@@ -332,7 +364,13 @@ export function lifecycleEmail(
             eyebrow: "Welcome to Promotello",
             title: `${name} is on Promotello`,
             paragraphs: [
-                `Thanks for signing up. Your page is started — here is what it needs before customers can find you${rest > 0 ? ", and your dashboard counts off the rest as you go" : ""}:`,
+                // Named where we drew them one, described where we
+                // didn't. Either way the greeting comes first: leading
+                // with the sample reads like a system notice.
+                waiting.length > 0
+                    ? `Thanks for signing up. ${waitingFor} ${waiting.length === 1 ? "is" : "are"} waiting on your dashboard. Nothing is live yet, and ${waiting.length === 1 ? "it opens" : "each one opens"} filled in, ready to change or publish.`
+                    : "Thanks for signing up. Your page is started.",
+                `Here is what it needs before customers can find you${rest > 0 ? ", and your dashboard counts off the rest as you go" : ""}:`,
                 ...first.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
                 rest > 0
                     ? `Then ${numberInWords(rest)} more, none of them long: your dashboard keeps the list.`
