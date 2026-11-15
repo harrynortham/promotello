@@ -292,106 +292,141 @@ Spec: [docs/NOTIFICATIONS-SPEC.md](docs/NOTIFICATIONS-SPEC.md).
 
 ## Still to do
 
-Five stages, in order. Stage 1 can change what everything below it says, so it
-goes first, and nothing in a later stage starts while an earlier one is open.
-Only stage 4 is a feature build. Things get deleted when they're done rather
-than ticked.
+Re-cut 16 November 2026 against [docs/ROADMAP.md](docs/ROADMAP.md), which was
+re-cut at the same time. The old list was mostly a loyalty-card build plan; the
+model is a local channel that can prove what it sent, so the order changed. The
+tracks referred to below are the ones in the roadmap.
 
-The ordering rule, from [docs/ROADMAP.md](docs/ROADMAP.md): _the biggest risk is
-building too long before selling._ With 487 commits in the last 30 days and no
-paying business yet, the product is not what's behind.
+Things get deleted when they're done rather than ticked.
+
+**The ordering rule has not changed, and is now the whole of stage 1:** the
+biggest risk is building too long before selling. Roughly 500 commits since
+October, zero outreach emails sent, five offers ever claimed. The product is not
+what's behind.
 
 Harry's own: upgrade to Claude Max.
 
-### Stage 1 — Prove the chain works. No new features.
+### Stage 1 — Send the previews
 
-None of this is a build. It's a day or two with a phone, and any of it can
-invalidate the rest of the list, which is why nothing else starts first. The
-real-phone scan is done: a printed code with the brand badge at error
-correction H scans.
+Not a build. Nothing below is worth another commit until this is underway, and
+most of stage 3 is guesswork until it is.
 
-1. **Walk the whole flow, start to finish, and take notes on the onboarding.**
-   Send the preview email, claim the business profile, update the profile,
-   create a QR code for the business page, create a QR code for an offer, claim
-   the offer and scan the QR, create a voucher and a QR code for it, scan that,
-   then sign in as the business and redeem both by scanning. Then do it again
-   as a business that never got a preview email, and once more with Google
-   sign-in.
+1. **Walk the whole flow once on a phone.** Preview email, claim, profile, QR
+   for the page, QR for an offer, claim and scan it, voucher and its QR, scan
+   that, then sign in as the business and redeem both. Again as a business that
+   never got a preview email, and once with Google sign-in. The November funnel
+   work changed five things in this path and none of it has been walked
+   (docs/LAUNCH-FUNNEL.md).
+2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
+   the legal gate, the preview tooling and the copy are all finished.
+3. **Record why anyone says no** — a reason on `business_previews` beside the
+   status, the way a decline now carries one. Track D2, and the only way the
+   pitch improves.
 
 ### Stage 2 — True before you email a single business
 
-Each of these is an afternoon or a form, and each one is painful to discover
-after outreach has started.
-
 - **ICO registration.** A UK data controller processing names, emails,
-  birthdays and visit history. A fee and a form, not a project, but not
-  optional: ico.org.uk/for-organisations/data-protection-fee, then add the
-  number to the privacy policy and the other legal pages (company number is
-  already in `lib/legal.ts`).
+  birthdays and visit history. A fee and a form:
+  ico.org.uk/for-organisations/data-protection-fee, then the number into the
+  privacy policy and the other legal pages (company number is already in
+  `lib/legal.ts`).
 
 - **Resend's limits.** The free plan is 3,000 a month _and_ 100 a day, and the
   daily cap goes first: daily summaries alone are about 75 a day at 50 active
   businesses, one offer announced to 150 followers is 150 in a burst, and the
-  1st of the month adds every monthly report. Supabase's sign-in emails come
-  out of the same quota. Move to Pro ($20/mo) before daily sends reach ~70, or
-  before the first business with more than ~80 followers announces an offer.
+  1st of the month adds every monthly report. Supabase's sign-in emails come out
+  of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
 
 - **A second Supabase project for development**, so tests stop running against
-  the live database. One accidental e2e run during launch week is worse than
-  the day this costs.
+  the live database. One accidental e2e run during launch week is worse than the
+  day this costs. There are already stray `logos/e2e.png` rows in production from
+  runs that failed before their cleanup.
 
-- **Apply for the Apple Developer and Google Wallet issuer accounts.** The
-  build is post-launch (app improvements, 1), but approval takes weeks, so the
-  applications go in now.
+- ~~Apply for the Apple Developer and Google Wallet issuer accounts.~~ Moved to
+  stage 5: Wallet passes went from first on the build list to track C2, so the
+  weeks of approval are no longer on the critical path. Apply when C2 is next.
 
-### Stage 3 — The gaps that lose a customer
+### Stage 3 — The half that doesn't exist
 
-### Stage 4 — The one build that earns month two
+Track B in the roadmap, and the largest hole in the product. One follower and
+five claims is not a cold start, it is an empty room — and the pitch, the
+pricing and three of our own claims all assume customers browsing a directory.
+
+- **Decide the consumer acquisition plan.** Not a build and not a feature: local
+  Instagram, press, the businesses' own channels, or paid. Everything else in
+  this stage is worth less until this is answered, because there is no point
+  building a weekly email with nobody to send it to.
+- **A reason to come back.** A weekly "new near you" by area, from the offers
+  that went live that week. The per-business follower email already does the
+  hard half.
+- **Open now, and near me.** Hours are stored; the listings don't use them. The
+  one filter that makes a directory worth opening at six o'clock.
+- **The claim that never became a visit.** Three in five claims here have never
+  been used, and each one is the cheapest attributed visit available. A nudge a
+  couple of days after claiming, not just before expiry.
+- **One wallet for the street** — group the customer's vouchers and cards by
+  area rather than by business. Claim 2 of the three in "How we sell it", still
+  unbuilt, and cheap.
+
+### Stage 4 — Make the number real
+
+Track A. It is what we sell, what the guarantee is written against, and it is
+thinner than the pitch implies.
+
+- **Harden what counts as sent by us.** `sentByPromotello` only counts a claim
+  or join an hour before the first visit, so a stranger who scans a window
+  poster and walks straight in counts as nothing — the poster working, recorded
+  as the poster not working.
+- **A first visit without a claim.** Most people who find a business through us
+  never claim anything. Decide what we will and won't claim as ours, and say it
+  on the analytics page where the number is read.
+- **A walk-in a member of staff can attribute.** One tap on the staff screen.
+  The only way a barber or a salon ever shows a number.
 
 ### Stage 5 — Not before launch
 
 Kept, not forgotten. Nothing here stops a business paying.
 
-- new pro + growth features
-- The "Promotello isn't in your area yet" bar with an email field, as a
-  waitlist rather than a dead end. Note [docs/MULTI-CITY.md](docs/MULTI-CITY.md):
-  the IP lookup names the wrong town often enough that it was removed on
-  purpose, so this belongs in the location search where someone names their own
-  town, not in a bar that guesses. Needs a decision on how a waitlist is told
-  when its city opens, and a VPN test either way.
+- **Wallet passes (Apple and Google), and the developer accounts for them.**
+  Demoted from first to track C2: weeks of work for parity on a comparison we
+  refuse, and it moves nothing in track A. The "our own wallet app with our own
+  push and scanning" idea is a bigger version of the same trade — same evidence
+  needed, from a paying business asking twice.
+- **The wheel.** A spin at the counter, one per device per day, prizes and
+  quantities set by the business, a branded poster beside the till. The one
+  parked idea with a poster behind it, which is why it unparks first — and it
+  belongs to stage 3's problem, not to loyalty. Needs a view on whether a prize
+  draw is a lottery under the Gambling Act before any of it is built.
+- Card design and multi-stamp, then the switching kit (import members and paper
+  balances). Cheap, and they close deals once there are deals to close.
+- Customer list, segments and CSV export.
+- Refer-a-friend on the card.
+- The passport trail and group/BID accounts — behind stage 3's gate. A trail
+  across businesses nobody visits has no users.
+- Business profiles: photo gallery and social links.
+- The "Promotello isn't in your area yet" bar with an email field, as a waitlist
+  rather than a dead end. Note [docs/MULTI-CITY.md](docs/MULTI-CITY.md): the IP
+  lookup names the wrong town often enough that it was removed on purpose, so
+  this belongs in the location search where someone names their own town. Needs
+  a decision on how a waitlist is told when its city opens.
 - Custom Supabase domain.
 - Secure every social account with keychain passwords and the right phone
   numbers and email addresses.
-- 3 December: transfer the YouTube channel to harry@promotello.com (not
-  possible until the Google account is out of trial — set up YouTube for the
-  user, make them a manager, wait 7 days), then add YouTube to Search Console.
+- 3 December: transfer the YouTube channel to harry@promotello.com (not possible
+  until the Google account is out of trial — set up YouTube for the user, make
+  them a manager, wait 7 days), then add YouTube to Search Console.
 - A BIMI mark certificate (VMC or CMC) so Gmail and Apple Mail show the logo.
   The logo and the DNS record are already in place.
 - Apple sign-in on the login and register pages: quicker than verifying email.
-- Stripe Managed Payments needs a VAT ID we won't have until the £90k
-  threshold. At that point registering for VAT and turning on Stripe Tax is far
-  cheaper than Managed Payments' extra ~3.5%, and Stripe doesn't have to become
-  the seller. Nothing to do now.
+- Stripe Managed Payments needs a VAT ID we won't have until the £90k threshold.
+  At that point registering for VAT and turning on Stripe Tax is far cheaper
+  than Managed Payments' extra ~3.5%. Nothing to do now.
 - Events: built and hidden until there are enough customers (`lib/features.ts`).
 - Security and email preference guides in both help centres are still in the
   older formal voice. Left that way on purpose.
+- Three real names on `/business/testimonials`, which redirects until they
+  exist. The guarantee in the outreach email stands in for them meanwhile.
+- Social icons in email footers, once there's a following worth sending anyone
+  to. The artwork, the links and the test are all still there — `social` in
+  `emailShell()` turns them back on.
 - Android and iOS apps with notifications.
-- Once business has decent social following at the social icons to email footers
-
-### App improvements
-
-From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them, re-cut on 9 November 2026 against [Positioning](docs/ROADMAP.md#positioning-what-a-loyalty-app-cant-copy). Joining without an account is built, by email. A guest card should go straight into the Wallet once passes exist, so 1 finishes that thought.
-
-Create own wallet apps instead of being tied to apple and google. use our own push and scanning
-
-1. Apple and Google Wallet passes. Apply for an Apple Developer account and a Google Wallet issuer account first, as approval takes time
-2. Loyalty in discovery: cards on the offers and businesses listings with a filter for them, so a card is seen by people who have never been in
-3. One wallet for the street, then the Bristol passport trail: every nearby independent in one place, then stamps collected across members
-4. Customer refer-a-friend
-5. Wallet push messages and location alerts (needs 1)
-
-- Surprise rewards and scratch-to-win / wheel spin daily - check if prize to claim. business lists prizes and quantities, spin without account, claim needs created account. Is it gambling? Create nice branded wheel poster to put next to bar, 1 spin per device per day? (your note, kept: the wheel is the one parked idea with a poster behind it, which makes it the first to unpark)
-
-Smaller gaps:
-
-- Business profiles: photo gallery and social links
