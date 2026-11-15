@@ -9,6 +9,10 @@ place)
 What Wallet passes will need from the loyalty card: docs/WALLET-PASSES.md (read
 before changing how a card is stamped, finished or handed over)
 
+What a business is told when it is approved or turned down:
+docs/APPROVAL-AND-DECLINE.md (read before changing a review decision, the
+words a decline sends, or the help articles it links to)
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { findReason } from "@/lib/review-reasons";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { storedImage } from "@/lib/images";
@@ -25,6 +26,23 @@ import { OfferCorrections } from "./offer-corrections";
 // that reads with the service key should say who it lets in.
 
 type PageProps = { params: Promise<{ offerId: string }> };
+
+// The reason a decline or a suspension carried, where there is one.
+// Rows written before 20270107090000 have only the status change in
+// them. Which list the code came from depends on the action, so a
+// suspension's cause is never read off the rejection list.
+function declineOf(action: string, metadata: unknown) {
+    if (action !== "offer_rejected" && action !== "offer_suspended") return null;
+
+    const held = (metadata ?? {}) as { reason?: string | null; note?: string | null };
+    const label = findReason(
+        "offer",
+        action === "offer_suspended" ? "suspended" : "rejected",
+        held.reason,
+    )?.label;
+
+    return [label, held.note].filter(Boolean).join(" — ") || null;
+}
 
 const statusLabels: Record<string, string> = {
     pending: "Waiting for review",
@@ -306,6 +324,15 @@ async function Overview({ params }: PageProps) {
                                             {entry.actor_user_id && (
                                                 <span className="block text-xs font-normal text-[#17233B]/65">
                                                     {actors.get(entry.actor_user_id)}
+                                                </span>
+                                            )}
+
+                                            {/* What we told them, so a reply
+                                                about it doesn't rely on
+                                                anybody remembering. */}
+                                            {declineOf(entry.action, entry.metadata) && (
+                                                <span className="mt-1 block text-xs font-normal text-[#17233B]/65">
+                                                    {declineOf(entry.action, entry.metadata)}
                                                 </span>
                                             )}
                                         </span>
