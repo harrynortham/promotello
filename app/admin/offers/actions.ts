@@ -11,6 +11,8 @@ import {
     offerEditApproved,
     offerEditRejected,
     offerRejected,
+    offerRestored,
+    offerSuspended,
 } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
 import { ITEM_MAX, isOfferKind, kindTakes, offerHeadline } from "@/lib/offer-kinds";
@@ -31,8 +33,14 @@ export async function notifyFollowersOfApprovedOffer(offerId: string) {
     return { sent };
 }
 
-// Called after an admin approves or rejects an offer: tells the business.
-export async function notifyBusinessOfOfferReview(offerId: string, decision: ReviewDecision) {
+// Called after an admin approves, rejects or suspends an offer: tells
+// the business. `previous` is the status it came from, which the row no
+// longer knows — approving a suspended offer is putting it back.
+export async function notifyBusinessOfOfferReview(
+    offerId: string,
+    decision: ReviewDecision,
+    previous?: string | null,
+) {
     const supabase = await createClient();
     const { data: isAdmin } = await supabase.rpc("is_platform_admin");
 
@@ -40,20 +48,31 @@ export async function notifyBusinessOfOfferReview(offerId: string, decision: Rev
         return { sent: 0 };
     }
 
-    const { sent } = await emailOfferReviewed(offerId, decision);
+    const { sent } = await emailOfferReviewed(offerId, decision, previous);
 
     const { data: offer } = await createAdminClient()
         .from("offers")
-        .select("id, title, slug, business_id")
+        .select("id, title, slug, business_id, review_reason, review_note, updated_at")
         .eq("id", offerId)
         .maybeSingle();
 
     if (offer) {
         const content = { id: offer.id, title: offer.title, slug: offer.slug, businessId: offer.business_id };
+        const review = { reason: offer.review_reason, note: offer.review_note };
+
+        // Keyed on the moment: one offer can come down and go back up
+        // more than once, and each time is worth telling them.
+        const at = offer.updated_at ?? new Date().toISOString();
 
         await notifyBusinessManagers(
             offer.business_id,
-            decision === "approved" ? offerApproved(content) : offerRejected(content),
+            decision === "suspended"
+                ? offerSuspended(content, at, review)
+                : decision === "rejected"
+                    ? offerRejected(content, review)
+                    : previous === "suspended"
+                        ? offerRestored(content, at)
+                        : offerApproved(content),
         );
     }
 
@@ -73,7 +92,7 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
 
     const { data: edit } = await createAdminClient()
         .from("offer_edits")
-        .select("id, business_id, offers ( title )")
+        .select("id, business_id, review_reason, review_note, offers ( title )")
         .eq("id", editId)
         .maybeSingle();
 
@@ -81,10 +100,11 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
 
     if (edit && edited) {
         const content = { id: edit.id, offerTitle: edited.title, businessId: edit.business_id };
+        const review = { reason: edit.review_reason, note: edit.review_note };
 
         await notifyBusinessManagers(
             edit.business_id,
-            decision === "approved" ? offerEditApproved(content) : offerEditRejected(content),
+            decision === "approved" ? offerEditApproved(content) : offerEditRejected(content, review),
         );
     }
 

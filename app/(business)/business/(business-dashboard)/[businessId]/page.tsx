@@ -10,6 +10,7 @@ import {
     type ChecklistGroup,
 } from "@/components/business-onboarding-checklist";
 import { BusinessRecentRedemptions } from "@/components/business-recent-redemptions";
+import { WhyNotApproved } from "@/components/why-not-approved";
 import { reopenBusiness } from "./settings/actions";
 import { requestBusinessReview } from "./review-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -119,6 +120,8 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 website_url,
                 contact_email,
                 approval_status,
+                review_reason,
+                review_note,
                 closed_at,
                 review_requested_at,
                 google_review_url
@@ -548,18 +551,33 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             )}
 
             {(business.approval_status === "rejected" || business.approval_status === "suspended") && (
-                <Alert variant="destructive">
-                    <AlertTitle>
-                        {business.approval_status === "rejected" ? "Your business wasn't approved" : "Your business is suspended"}
-                    </AlertTitle>
-                    <AlertDescription>
-                        It isn&apos;t visible to customers.{" "}
-                        <Link href="/business/contact" className="underline underline-offset-4">
-                            Contact us
-                        </Link>{" "}
-                        and we&apos;ll help sort it out.
-                    </AlertDescription>
-                </Alert>
+                <div className="space-y-3">
+                    <Alert variant="destructive">
+                        <AlertTitle>
+                            {business.approval_status === "rejected" ? "Your business wasn't approved" : "Your business is suspended"}
+                        </AlertTitle>
+                        <AlertDescription>
+                            It isn&apos;t visible to customers.{" "}
+                            {business.approval_status === "suspended"
+                                ? "Nothing is deleted: your offers, your loyalty cards and their stamps are all still here."
+                                : null}{" "}
+                            <Link href="/business/contact" className="underline underline-offset-4">
+                                Contact us
+                            </Link>{" "}
+                            and we&apos;ll help sort it out.
+                        </AlertDescription>
+                    </Alert>
+
+                    {/* The reason, where they are when they read the
+                        banner — rather than in an email they have to go
+                        and find. */}
+                    <WhyNotApproved
+                        of="business"
+                        action={business.approval_status === "suspended" ? "suspended" : "rejected"}
+                        reason={business.review_reason}
+                        note={business.review_note}
+                    />
+                </div>
             )}
 
             <BusinessOnboardingChecklist groups={checklist} setupHref={`/business/setup/${businessId}`} />

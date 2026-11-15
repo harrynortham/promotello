@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     FiArrowRight,
     FiBookOpen,
@@ -26,6 +26,10 @@ export type HelpGuide = {
     title: string;
     description: string;
     steps: string[];
+    // Lists that aren't sequences — the reasons something gets turned
+    // down, what a suspension does and doesn't do. Steps are numbered,
+    // and numbering a list of causes reads as an order to do them in.
+    lists?: { title: string; items: string[] }[];
     note?: string;
     link?: {
         label: string;
@@ -59,6 +63,27 @@ export default function HelpCentre({
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState("All topics");
 
+    // An email that says "why an offer isn't approved" links straight at
+    // the article. Without this the page scrolls to a closed accordion,
+    // so the answer is one click further away than the link promised.
+    useEffect(() => {
+        function openTheLinkedOne() {
+            const id = window.location.hash.slice(1);
+            if (!id) return;
+
+            const article = document.getElementById(id);
+            if (!(article instanceof HTMLDetailsElement)) return;
+
+            article.open = true;
+            article.scrollIntoView({ block: "start" });
+        }
+
+        openTheLinkedOne();
+        window.addEventListener("hashchange", openTheLinkedOne);
+
+        return () => window.removeEventListener("hashchange", openTheLinkedOne);
+    }, []);
+
     const categories = [
         "All topics",
         ...new Set(guides.map((guide) => guide.category)),
@@ -75,6 +100,7 @@ export default function HelpCentre({
             guide.description,
             guide.category,
             ...guide.steps,
+            ...(guide.lists ?? []).flatMap((list) => [list.title, ...list.items]),
             guide.note ?? "",
         ]
             .join(" ")
@@ -297,6 +323,22 @@ export default function HelpCentre({
                                                             ),
                                                         )}
                                                     </ol>
+
+                                                    {(guide.lists ?? []).map((list) => (
+                                                        <div key={list.title} className="mt-5">
+                                                            <p className="text-sm font-semibold text-foreground">
+                                                                {list.title}
+                                                            </p>
+
+                                                            <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
+                                                                {list.items.map((item, index) => (
+                                                                    <li key={index} className="pl-1">
+                                                                        {item}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    ))}
 
                                                     {guide.note && (
                                                         <p className="mt-5 rounded-xl bg-muted/50 p-4 text-sm leading-7 text-muted-foreground">

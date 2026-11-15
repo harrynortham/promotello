@@ -17,11 +17,17 @@
 // Imports nothing from Next.js or Supabase, so it unit tests on its own
 // (tests/unit/notifications.test.ts).
 
+import { declineSummary, type ReviewAction, type ReviewOf } from "@/lib/review-reasons";
+
 export type NotificationType =
     | "business_approved"
     | "business_rejected"
+    | "business_suspended"
+    | "business_restored"
     | "offer_approved"
     | "offer_rejected"
+    | "offer_suspended"
+    | "offer_restored"
     | "offer_edit_approved"
     | "offer_edit_rejected"
     | "offer_fully_claimed"
@@ -56,6 +62,16 @@ export type NotificationContent = {
 type Business = { id: string; name: string };
 type Offer = { id: string; title: string; slug: string; businessId: string };
 
+// Why it wasn't approved, as the review function wrote it down.
+export type Review = { reason?: string | null; note?: string | null };
+
+// A decline used to say "we've emailed you why", which was a promise the
+// email did not keep: it listed what the reason might have been. So the
+// reason itself goes in the body, and the list stands on its own.
+function whyNot(of: ReviewOf, action: ReviewAction, review: Review | undefined, fallback: string) {
+    return declineSummary(of, action, review?.reason, review?.note) ?? fallback;
+}
+
 // ---------------------------------------------------------------------------
 // Reviews
 // ---------------------------------------------------------------------------
@@ -71,12 +87,20 @@ export function businessApproved(business: Business): NotificationContent {
     };
 }
 
-export function businessRejected(business: Business): NotificationContent {
+export function businessRejected(business: Business, review?: Review): NotificationContent {
     return {
         type: "business_rejected",
         title: `We couldn't approve ${business.name} yet`,
-        body: "We've emailed you what needs changing. Reply to that email if anything is unclear.",
-        href: "/business/contact",
+        body: whyNot(
+            "business",
+            "rejected",
+            review,
+            "Reply to the email we've sent and we'll tell you what's needed.",
+        ),
+        // The overview says the same thing, with what to change and a
+        // way to reach us. Sending them to a contact form instead made
+        // asking us the only thing they could do.
+        href: `/business/${business.id}`,
         businessId: business.id,
         dedupeKey: `business:${business.id}:rejected`,
     };
@@ -93,14 +117,79 @@ export function offerApproved(offer: Offer): NotificationContent {
     };
 }
 
-export function offerRejected(offer: Offer): NotificationContent {
+export function offerRejected(offer: Offer, review?: Review): NotificationContent {
     return {
         type: "offer_rejected",
         title: `“${offer.title}” wasn't approved`,
-        body: "We've emailed you why. Change it and send it back whenever you're ready.",
+        body: whyNot(
+            "offer",
+            "rejected",
+            review,
+            "We've emailed you why. Change it and send it back whenever you're ready.",
+        ),
         href: `/business/${offer.businessId}/offers`,
         businessId: offer.businessId,
         dedupeKey: `offer:${offer.id}:rejected`,
+    };
+}
+
+// Taken down after it was live, and put back.
+//
+// Both are keyed on the moment rather than on the thing, because a
+// business can be suspended and restored more than once and must hear
+// about each one — a key of "business:{id}:suspended" would silence
+// every suspension after the first.
+export function businessSuspended(business: Business, at: string, review?: Review): NotificationContent {
+    return {
+        type: "business_suspended",
+        title: `${business.name} is off Promotello for now`,
+        body: whyNot(
+            "business",
+            "suspended",
+            review,
+            "We've emailed you why. Nothing is deleted — reply to that email and we'll sort it out.",
+        ),
+        href: `/business/${business.id}`,
+        businessId: business.id,
+        dedupeKey: `business:${business.id}:suspended:${at}`,
+    };
+}
+
+export function businessRestored(business: Business, at: string): NotificationContent {
+    return {
+        type: "business_restored",
+        title: `${business.name} is back on Promotello`,
+        body: "Customers can find you again, and every offer that was live before is back with it.",
+        href: `/business/${business.id}`,
+        businessId: business.id,
+        dedupeKey: `business:${business.id}:restored:${at}`,
+    };
+}
+
+export function offerSuspended(offer: Offer, at: string, review?: Review): NotificationContent {
+    return {
+        type: "offer_suspended",
+        title: `“${offer.title}” is off the site for now`,
+        body: whyNot(
+            "offer",
+            "suspended",
+            review,
+            "We've emailed you why. Vouchers people already claimed still work.",
+        ),
+        href: `/business/${offer.businessId}/offers`,
+        businessId: offer.businessId,
+        dedupeKey: `offer:${offer.id}:suspended:${at}`,
+    };
+}
+
+export function offerRestored(offer: Offer, at: string): NotificationContent {
+    return {
+        type: "offer_restored",
+        title: `“${offer.title}” is back`,
+        body: "It's on your page and in the directory again, and anything printed with its QR code works again too.",
+        href: `/business/${offer.businessId}/offers`,
+        businessId: offer.businessId,
+        dedupeKey: `offer:${offer.id}:restored:${at}`,
     };
 }
 
@@ -117,11 +206,19 @@ export function offerEditApproved(edit: { id: string; offerTitle: string; busine
     };
 }
 
-export function offerEditRejected(edit: { id: string; offerTitle: string; businessId: string }): NotificationContent {
+export function offerEditRejected(
+    edit: { id: string; offerTitle: string; businessId: string },
+    review?: Review,
+): NotificationContent {
     return {
         type: "offer_edit_rejected",
         title: `We couldn't approve the new wording for “${edit.offerTitle}”`,
-        body: "The offer is still live with the words we approved. We've emailed you what to change.",
+        body: whyNot(
+            "offer",
+            "rejected",
+            review,
+            "The offer is still live with the words we approved. We've emailed you what to change.",
+        ),
         href: `/business/${edit.businessId}/offers`,
         businessId: edit.businessId,
         dedupeKey: `offer-edit:${edit.id}`,
