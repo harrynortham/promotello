@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { firstCustomerFromCard } from "@/lib/first-customer";
 import { guestCardEmail } from "@/lib/guest-card-email";
 import { joinCard } from "@/lib/join-loyalty";
 import { sendEmails } from "@/lib/email";
@@ -80,6 +81,12 @@ export async function joinLoyaltyAsGuest(formData: FormData) {
         // The card exists either way; they are about to see it.
         console.error("Guest loyalty card: could not email the link", emailError);
     });
+
+    // Somebody who joined without an account is still their first
+    // customer (lib/first-customer.ts).
+    await firstCustomerFromCard(programId).catch((failure) =>
+        console.error("First customer announcement failed", failure),
+    );
 
     redirect(`/card/${data.guest_token}?joined=1`);
 }

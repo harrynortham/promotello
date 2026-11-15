@@ -1,5 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 
+import { firstCustomerFromCard } from "@/lib/first-customer";
+
 // Joining a loyalty card happens three ways, and they end the same.
 //
 // Signed in, the button on the business page does it. Signed out, the
@@ -94,5 +96,15 @@ export async function joinCard(supabase: SupabaseClient, programId: string, user
         requested_program_id: programId,
     });
 
-    return error ? { joined: false, error } : { joined: true };
+    if (error) {
+        return { joined: false, error };
+    }
+
+    // Somebody giving their name to come back is a customer by any
+    // reading, so it counts as the first one (lib/first-customer.ts).
+    await firstCustomerFromCard(programId).catch((failure) =>
+        console.error("First customer announcement failed", failure),
+    );
+
+    return { joined: true };
 }

@@ -36,6 +36,7 @@ export type NotificationType =
     | "reward_ready"
     | "voucher_expiring"
     | "followed_business_closed"
+    | "first_customer"
     | "admin_queue"
     | "plan_ending"
     | "voucher_used"
@@ -125,6 +126,31 @@ export function offerEditRejected(edit: { id: string; offerTitle: string; busine
         href: `/business/${edit.businessId}/offers`,
         businessId: edit.businessId,
         dedupeKey: `offer-edit:${edit.id}`,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// The first one through the door
+// ---------------------------------------------------------------------------
+
+// Everything else a business hears from us is an approval, an expiry, a
+// stock alert or a bill. This is the only one that is good news about a
+// customer, and it is sent once, ever (lib/first-customer.ts).
+export function firstCustomer(
+    business: Business,
+    customer: { kind: "voucher" | "card"; what: string },
+): NotificationContent {
+    return {
+        type: "first_customer",
+        title: `Your first customer at ${business.name}`,
+        body: customer.kind === "voucher"
+            ? `Somebody claimed “${customer.what}”. They'll show a code on their phone — scan it when they're in.`
+            : `Somebody joined your loyalty card for “${customer.what}”. Scan their phone to add a stamp when they're in.`,
+        href: customer.kind === "voucher"
+            ? `/business/${business.id}/redemptions`
+            : `/business/${business.id}/loyalty`,
+        businessId: business.id,
+        dedupeKey: `business:${business.id}:first-customer`,
     };
 }
 

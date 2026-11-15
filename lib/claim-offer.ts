@@ -2,6 +2,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { voucherConfirmationEmail } from "@/lib/account-emails";
 import { sendOfferStockAlert } from "@/lib/business-notifications";
+import { firstCustomerFromVoucher } from "@/lib/first-customer";
 import { sendEmails } from "@/lib/email";
 
 // Claiming an offer happens two ways, and they end the same.
@@ -117,6 +118,14 @@ export async function sendVoucherFor(supabase: SupabaseClient, user: User, redem
     // failure mustn't affect the customer.
     await sendOfferStockAlert(voucher.offer_id).catch((error) =>
         console.error("Offer stock alert failed", error),
+    );
+
+    // And if this is the first customer they have ever had, which is
+    // the one message of ours that is good news (lib/first-customer.ts).
+    // Claimed in the database, so it goes once however many land at
+    // once, and it never reaches the customer either way.
+    await firstCustomerFromVoucher(voucher.offer_id).catch((error) =>
+        console.error("First customer announcement failed", error),
     );
 
     // Skipped sends (sending not set up, test addresses) aren't failures.
