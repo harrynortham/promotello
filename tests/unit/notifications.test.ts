@@ -73,10 +73,31 @@ test("a business hears what happened to its page", () => {
         dedupeKey: "business:b-1:approved",
     });
 
-    const no = businessRejected(business);
+    const no = businessRejected(business, { reason: "address", note: null });
     assert.equal(no.title, "We couldn't approve Dublin Pub yet");
-    assert.equal(no.href, "/business/contact", "nowhere to go but to us");
+    // It used to send them to the contact form: asking us was the only
+    // thing they could do. The overview now has the reason, what to
+    // change, and a way to reach us.
+    assert.equal(no.href, "/business/b-1", "to the page that says why");
     assert.equal(no.dedupeKey, "business:b-1:rejected");
+
+    // The body used to say "we've emailed you what needs changing",
+    // which the email did not do: it listed what the reason might have
+    // been. It carries the reason itself now.
+    assert.match(no.body!, /couldn't place your address/);
+    assert.ok(!no.body!.includes("We've emailed you"), "no promise to keep elsewhere");
+
+    // What they wrote about this one in particular wins over the stock
+    // sentence, because it was written about them.
+    const written = businessRejected(business, {
+        reason: "address",
+        note: "The street number doesn't exist on that road.",
+    });
+    assert.equal(written.body, "The street number doesn't exist on that road.");
+
+    // Declined before declines carried a reason: the old words, rather
+    // than a cause we never recorded.
+    assert.match(businessRejected(business).body!, /Reply to the email/);
 });
 
 test("an offer's answer leads to the offers page either way", () => {

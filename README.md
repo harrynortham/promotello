@@ -318,15 +318,15 @@ correction H scans.
    as a business that never got a preview email, and once more with Google
    sign-in.
 
-2. **Admin approval and decline.** Approve and decline both a business and an
-   offer, and write down exactly what the business receives at each step. That
-   note becomes the work in stage 3.
-
-3. **Lifecycle and onboarding emails** Update email templates to look more modern, include social media links for trust. Check each email in business lifecycle, check text is ok and add imagery to make emails more interesting.
-
-4. **Transactional emails** Update the templates to match above. Define which events trigger emails and if we are missing any or doing too many we dont need.
-
-5. **Account/business closure** Ensure business are notified of risk and loss when unsubscribr or close account, that qr and loyalty cards no longer accessible etc. we want to retain the businesses
+2. **Admin approval and decline.** Done, and written down:
+   `docs/APPROVAL-AND-DECLINE.md` lists what the business gets at each of the
+   six decisions. A decline now carries a cause and a note, picked in the
+   reject dialog and read back off the row, so the email, the notification and
+   the dashboard say the same thing and both help articles exist. Still to walk
+   by hand once: approve and decline a real business and a real offer, and
+   check the emails read well on a phone. Suspension still sends nothing —
+   decide whether it gets a control and a message, or comes off the admin
+   surface.
 
 ### Stage 2 — True before you email a single business
 
@@ -338,6 +338,7 @@ after outreach has started.
   optional: ico.org.uk/for-organisations/data-protection-fee, then add the
   number to the privacy policy and the other legal pages (company number is
   already in `lib/legal.ts`).
+
 - **Resend's limits.** The free plan is 3,000 a month _and_ 100 a day, and the
   daily cap goes first: daily summaries alone are about 75 a day at 50 active
   businesses, one offer announced to 150 followers is 150 in a burst, and the
@@ -349,12 +350,6 @@ after outreach has started.
   the live database. One accidental e2e run during launch week is worse than
   the day this costs.
 
-- **Decide the email volume.** A business that signs up and does nothing gets 7
-  emails in 21 days (welcome, setup nudge, loyalty pitch, second nudge,
-  founding places, results, check-in). All verified working, there are just a
-  lot of them. Related: do we prompt a customer to follow the business when
-  they claim an offer, and does a business with a lot of followers become
-  expensive to email?
 - **Apply for the Apple Developer and Google Wallet issuer accounts.** The
   build is post-launch (app improvements, 1), but approval takes weeks, so the
   applications go in now.
@@ -364,24 +359,12 @@ after outreach has started.
 These are the places the product breaks in front of someone. Small builds,
 each tied to a moment in stage 1's walkthrough.
 
-- ~~**Decide whether editing a business page needs review**, the way an offer
-  edit does ([docs/OFFER-EDIT-REVIEW.md](docs/OFFER-EDIT-REVIEW.md)).~~
-  Decided: record, don't gate. An edit to the name, description or either
-  picture goes live as it always did and writes down what changed, read at
-  `/admin/businesses/edits` — [docs/BUSINESS-EDITS.md](docs/BUSINESS-EDITS.md).
 - **Decline messages, and a history.** A set of polite, helpful, ready-to-send
   messages for declining a business or an offer, with matching help-centre
   wording, plus a log of approval reasons and resubmissions so there's a
   history when a business asks.
 
-- **Onboarding when a business fits no category.**
-
 ### Stage 4 — The one build that earns month two
-
-With it done: **the offline sales pack.** Sales sheets showing a live QR code
-for a loyalty card, how it looks on a customer's phone, the offers, the
-directory page, the pricing — and a page of the report, which is the part no
-competitor's sheet can show.
 
 ### Stage 5 — Not before launch
 
@@ -413,6 +396,7 @@ Kept, not forgotten. Nothing here stops a business paying.
 - Security and email preference guides in both help centres are still in the
   older formal voice. Left that way on purpose.
 - Android and iOS apps with notifications.
+- Once business has decent social following at the social icons to email footers
 
 ### App improvements
 

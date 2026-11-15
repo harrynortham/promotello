@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import HelpCentre, {
     type HelpGuide,
 } from "@/components/help-centre";
+import { BUSINESS_REASONS, OFFER_REASONS, HELP_ANCHORS } from "@/lib/review-reasons";
 
 export const metadata: Metadata = {
     title: "Business Help Centre",
@@ -117,7 +118,7 @@ const guides: HelpGuide[] = [
             "Check your business has been approved.",
             "Check the offer itself has been approved.",
             "Check the offer has not passed its end date.",
-            "Read any feedback we sent and change what it asks for.",
+            "If it says Rejected, the reason is on the offer itself in Offers — read it and change what it asks for.",
             "Still looks wrong? Contact support and we will take a look.",
         ],
         note:
@@ -126,6 +127,47 @@ const guides: HelpGuide[] = [
             label: "Contact business support",
             href: "/business/contact",
         },
+    },
+    {
+        id: HELP_ANCHORS.business,
+        category: "Business setup",
+        title: "Why a business wasn't approved",
+        description: "What we look for, and how to get it live.",
+        steps: [
+            "Open your business dashboard: the reason is on your overview, under the banner.",
+            "Read what it asks for and change it in Business profile.",
+            "Send the page for review again from your overview.",
+            "We answer the same day. Reply to the email we sent if anything is unclear.",
+        ],
+        list: {
+            title: "The reasons we turn a business down",
+            items: BUSINESS_REASONS.filter((reason) => reason.says !== "").map(
+                (reason) => `${reason.says} ${reason.fix}`,
+            ),
+        },
+        note:
+            "Being turned down is not the end of it: nothing is deleted, your page stays exactly as you left it, and most businesses are live the same week. We would rather tell you what is missing than lose you.",
+        link: { label: "Open business dashboard", href: "/business/dashboard" },
+    },
+    {
+        id: HELP_ANCHORS.offer,
+        category: "Offers",
+        title: "Why an offer wasn't approved",
+        description: "What we check, and what to change.",
+        steps: [
+            "Open your business and choose Offers.",
+            "Find the offer marked Rejected: the reason and what to change are on it.",
+            "Choose Edit offer, make the change and save.",
+            "Saving sends it back to us. We read it the same day.",
+        ],
+        list: {
+            title: "The reasons we turn an offer down",
+            items: OFFER_REASONS.filter((reason) => reason.says !== "").map(
+                (reason) => `${reason.says} ${reason.fix}`,
+            ),
+        },
+        note:
+            "Every one of these comes down to the same thing: a customer should know what they get before they walk in, and your staff should be able to check it in a second. Reply to the email and we will write the wording for you.",
     },
     {
         id: "edit-promotion",

@@ -27,6 +27,13 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/client";
 
+import {
+    DeclineReason,
+    declineReady,
+    emptyDecline,
+    type Decline,
+} from "@/components/decline-reason";
+
 import { notifyBusinessReviewed } from "./actions";
 
 type Business = {
@@ -105,6 +112,9 @@ export default function AdminBusinessesPage() {
     const [errorMessage, setErrorMessage] = useState("");
     const [reviewAction, setReviewAction] =
         useState<ReviewAction>(null);
+    // Why it wasn't approved. Cleared whenever the dialog closes, so a
+    // reason never carries over to the next business in the queue.
+    const [decline, setDecline] = useState<Decline>(emptyDecline);
 
     // Only the newest request may write to the page, and the state is the
     // only description of what to show: see the same change in
@@ -254,6 +264,13 @@ export default function AdminBusinessesPage() {
         businessId: string,
         decision: "approved" | "rejected",
     ) {
+        // A decline carries its reason into the row, so the email, the
+        // notification and their dashboard all read the same words.
+        if (decision === "rejected" && !declineReady("business", decline)) {
+            setErrorMessage("Choose why it wasn't approved.");
+            return;
+        }
+
         setActiveBusinessId(businessId);
         setErrorMessage("");
 
@@ -262,6 +279,8 @@ export default function AdminBusinessesPage() {
         const { error } = await supabase.rpc("review_business", {
             business_id: businessId,
             decision,
+            reason: decision === "rejected" ? decline.reason : null,
+            note: decision === "rejected" ? decline.note.trim() : null,
         });
 
         if (error) {
@@ -275,6 +294,7 @@ export default function AdminBusinessesPage() {
         );
 
         setReviewAction(null);
+        setDecline(emptyDecline);
         setRefreshKey((key) => key + 1);
         setActiveBusinessId("");
     }
@@ -623,6 +643,7 @@ export default function AdminBusinessesPage() {
                 onOpenChange={(open) => {
                     if (!open) {
                         setReviewAction(null);
+                        setDecline(emptyDecline);
                     }
                 }}
             >
@@ -637,9 +658,18 @@ export default function AdminBusinessesPage() {
                         <DialogDescription>
                             {reviewAction?.decision === "approved"
                                 ? "This business will be eligible to appear publicly."
-                                : "This business will not be allowed to operate publicly."}
+                                : "It stays hidden from customers, and its owners are told why."}
                         </DialogDescription>
                     </DialogHeader>
+
+                    {reviewAction?.decision === "rejected" && (
+                        <DeclineReason
+                            of="business"
+                            value={decline}
+                            onChange={setDecline}
+                            disabled={activeBusinessId !== ""}
+                        />
+                    )}
 
                     <DialogFooter>
                         <Button
@@ -658,7 +688,11 @@ export default function AdminBusinessesPage() {
                                     ? "default"
                                     : "destructive"
                             }
-                            disabled={activeBusinessId !== ""}
+                            disabled={
+                                activeBusinessId !== ""
+                                || (reviewAction?.decision === "rejected"
+                                    && !declineReady("business", decline))
+                            }
                             onClick={() => {
                                 if (reviewAction) {
                                     reviewBusiness(

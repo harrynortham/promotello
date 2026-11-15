@@ -44,16 +44,17 @@ export async function notifyBusinessOfOfferReview(offerId: string, decision: Rev
 
     const { data: offer } = await createAdminClient()
         .from("offers")
-        .select("id, title, slug, business_id")
+        .select("id, title, slug, business_id, review_reason, review_note")
         .eq("id", offerId)
         .maybeSingle();
 
     if (offer) {
         const content = { id: offer.id, title: offer.title, slug: offer.slug, businessId: offer.business_id };
+        const review = { reason: offer.review_reason, note: offer.review_note };
 
         await notifyBusinessManagers(
             offer.business_id,
-            decision === "approved" ? offerApproved(content) : offerRejected(content),
+            decision === "approved" ? offerApproved(content) : offerRejected(content, review),
         );
     }
 
@@ -73,7 +74,7 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
 
     const { data: edit } = await createAdminClient()
         .from("offer_edits")
-        .select("id, business_id, offers ( title )")
+        .select("id, business_id, review_reason, review_note, offers ( title )")
         .eq("id", editId)
         .maybeSingle();
 
@@ -81,10 +82,11 @@ export async function notifyBusinessOfOfferEditReview(editId: string, decision: 
 
     if (edit && edited) {
         const content = { id: edit.id, offerTitle: edited.title, businessId: edit.business_id };
+        const review = { reason: edit.review_reason, note: edit.review_note };
 
         await notifyBusinessManagers(
             edit.business_id,
-            decision === "approved" ? offerEditApproved(content) : offerEditRejected(content),
+            decision === "approved" ? offerEditApproved(content) : offerEditRejected(content, review),
         );
     }
 

@@ -22,6 +22,7 @@ import {
 } from "@/components/step-art";
 import { OffersHowItWorks } from "./how-it-works";
 import { SharePanel } from "@/components/share-panel";
+import { WhyNotApproved } from "@/components/why-not-approved";
 import { offerShareCaption, shareLink } from "@/lib/share";
 import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
@@ -47,6 +48,8 @@ type Offer = {
     terms: string;
     image_url: string | null;
     approval_status: OfferStatus;
+    review_reason: string | null;
+    review_note: string | null;
     max_redemptions: number | null;
     redemption_count: number;
     plan_paused_at: string | null;
@@ -170,6 +173,8 @@ async function OffersContent({ params }: PageProps) {
         terms,
         image_url,
         approval_status,
+        review_reason,
+        review_note,
         max_redemptions,
         redemption_count,
         plan_paused_at
@@ -475,6 +480,20 @@ async function OffersContent({ params }: PageProps) {
                                     </CardHeader>
 
                                     <CardContent>
+                                        {/* A red chip told them it had been
+                                            turned down and nothing else. The
+                                            reason goes above the offer, where
+                                            the Edit button is — editing sends
+                                            it straight back to us. */}
+                                        {offer.approval_status === "rejected" && (
+                                            <WhyNotApproved
+                                                of="offer"
+                                                reason={offer.review_reason}
+                                                note={offer.review_note}
+                                                className="mb-5"
+                                            />
+                                        )}
+
                                         <p className="leading-7 text-[#17233B]/65">
                                             {offer.description}
                                         </p>

@@ -21,14 +21,18 @@ export async function notifyBusinessReviewed(businessId: string, decision: Revie
     // off still hears, and a failed send doesn't take this with it.
     const { data: business } = await createAdminClient()
         .from("businesses")
-        .select("id, name")
+        .select("id, name, review_reason, review_note")
         .eq("id", businessId)
         .maybeSingle();
 
     if (business) {
+        // The reason comes off the row rather than from the browser:
+        // review_business() has already checked there is one.
+        const review = { reason: business.review_reason, note: business.review_note };
+
         await notifyBusinessManagers(
             businessId,
-            decision === "approved" ? businessApproved(business) : businessRejected(business),
+            decision === "approved" ? businessApproved(business) : businessRejected(business, review),
         );
     }
 

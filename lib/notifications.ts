@@ -17,6 +17,8 @@
 // Imports nothing from Next.js or Supabase, so it unit tests on its own
 // (tests/unit/notifications.test.ts).
 
+import { declineSummary, type ReviewOf } from "@/lib/review-reasons";
+
 export type NotificationType =
     | "business_approved"
     | "business_rejected"
@@ -56,6 +58,16 @@ export type NotificationContent = {
 type Business = { id: string; name: string };
 type Offer = { id: string; title: string; slug: string; businessId: string };
 
+// Why it wasn't approved, as the review function wrote it down.
+export type Review = { reason?: string | null; note?: string | null };
+
+// A decline used to say "we've emailed you why", which was a promise the
+// email did not keep: it listed what the reason might have been. So the
+// reason itself goes in the body, and the list stands on its own.
+function whyNot(of: ReviewOf, review: Review | undefined, fallback: string) {
+    return declineSummary(of, review?.reason, review?.note) ?? fallback;
+}
+
 // ---------------------------------------------------------------------------
 // Reviews
 // ---------------------------------------------------------------------------
@@ -71,12 +83,19 @@ export function businessApproved(business: Business): NotificationContent {
     };
 }
 
-export function businessRejected(business: Business): NotificationContent {
+export function businessRejected(business: Business, review?: Review): NotificationContent {
     return {
         type: "business_rejected",
         title: `We couldn't approve ${business.name} yet`,
-        body: "We've emailed you what needs changing. Reply to that email if anything is unclear.",
-        href: "/business/contact",
+        body: whyNot(
+            "business",
+            review,
+            "Reply to the email we've sent and we'll tell you what's needed.",
+        ),
+        // The overview says the same thing, with what to change and a
+        // way to reach us. Sending them to a contact form instead made
+        // asking us the only thing they could do.
+        href: `/business/${business.id}`,
         businessId: business.id,
         dedupeKey: `business:${business.id}:rejected`,
     };
@@ -93,11 +112,15 @@ export function offerApproved(offer: Offer): NotificationContent {
     };
 }
 
-export function offerRejected(offer: Offer): NotificationContent {
+export function offerRejected(offer: Offer, review?: Review): NotificationContent {
     return {
         type: "offer_rejected",
         title: `“${offer.title}” wasn't approved`,
-        body: "We've emailed you why. Change it and send it back whenever you're ready.",
+        body: whyNot(
+            "offer",
+            review,
+            "We've emailed you why. Change it and send it back whenever you're ready.",
+        ),
         href: `/business/${offer.businessId}/offers`,
         businessId: offer.businessId,
         dedupeKey: `offer:${offer.id}:rejected`,
@@ -117,11 +140,18 @@ export function offerEditApproved(edit: { id: string; offerTitle: string; busine
     };
 }
 
-export function offerEditRejected(edit: { id: string; offerTitle: string; businessId: string }): NotificationContent {
+export function offerEditRejected(
+    edit: { id: string; offerTitle: string; businessId: string },
+    review?: Review,
+): NotificationContent {
     return {
         type: "offer_edit_rejected",
         title: `We couldn't approve the new wording for “${edit.offerTitle}”`,
-        body: "The offer is still live with the words we approved. We've emailed you what to change.",
+        body: whyNot(
+            "offer",
+            review,
+            "The offer is still live with the words we approved. We've emailed you what to change.",
+        ),
         href: `/business/${edit.businessId}/offers`,
         businessId: edit.businessId,
         dedupeKey: `offer-edit:${edit.id}`,
