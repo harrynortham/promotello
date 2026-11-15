@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 
 import { companyDisclosure } from "@/lib/legal";
+import { socialProfiles } from "@/lib/site";
 import { absoluteUrl } from "@/lib/site";
 
 // Sends email through Resend. Needs RESEND_API_KEY and EMAIL_FROM (a sender
@@ -168,6 +169,27 @@ export function escapeHtml(value: string) {
         .replace(/'/g, "&#39;");
 }
 
+// Where Promotello is, elsewhere. The same six accounts the website's
+// footer links to (socialProfiles), so the two never disagree, and the
+// file names are the network keys — nothing to keep in step by hand.
+//
+// A business deciding whether to put its name next to ours looks for
+// signs we are a real company, and these are one of them. Drawn at
+// half their size so they stay sharp on a phone, and every one carries
+// its name in alt text for the clients that block images by default.
+export function emailSocialRow() {
+    const icons = socialProfiles
+        .map(
+            (profile) =>
+                `<td style="padding:0 5px"><a href="${profile.url}" style="text-decoration:none"><img src="${absoluteUrl(
+                    `/email/social/${profile.network}.png`,
+                )}" width="30" height="30" alt="${escapeHtml(profile.label)}" style="display:block;width:30px;height:30px;border:0;outline:none"></a></td>`,
+        )
+        .join("");
+
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr>${icons}</tr></table>`;
+}
+
 // The company's registered details, at the foot of every email: UK law
 // requires them in business emails.
 export function emailCompanyFooter(width = EMAIL_WIDTH) {
@@ -193,10 +215,16 @@ export function emailShell({
     rows,
     footer = "",
     width = EMAIL_WIDTH,
+    social = true,
 }: {
     rows: string;
     footer?: string;
     width?: number;
+    // Off for anything whose only job is to carry a code or a link
+    // somebody is waiting on, where another six places to click is six
+    // ways to miss the point. Nothing opts out today: our sign-in codes
+    // are sent by Supabase, not from here.
+    social?: boolean;
 }) {
     return `<!doctype html>
 <html><body style="margin:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
@@ -206,6 +234,7 @@ ${emailLogoRow()}
 ${rows}
 </table>
 ${footer}
+${social ? emailSocialRow() : ""}
 ${emailCompanyFooter(width)}
 </td></tr></table>
 </body></html>`;
