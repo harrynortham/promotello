@@ -15,11 +15,21 @@ test("no two emails say the trial terms the same way", () => {
     assert.equal(new Set(openings).size, openings.length, `openings repeat: ${openings.join(" | ")}`);
 });
 
-test("each one still says all four things", () => {
+// These used to have to say a card was taken at the start. A trial
+// takes no card now (docs/LAUNCH-FUNNEL.md), and the thing that must
+// never go missing is the opposite: that starting one costs nothing and
+// commits nothing.
+test("each one still says all three things", () => {
     for (const [name, line] of Object.entries(trialTerms)) {
         assert.match(line, new RegExp(`${TRIAL_DAYS} days`), `${name}: how long it is free`);
-        assert.match(line, /card/i, `${name}: that a card is taken`);
-        assert.match(line, /charge|leaves it/i, `${name}: when the charge happens`);
-        assert.match(line, /cancel|stop/i, `${name}: that it can be stopped`);
+        assert.match(line, /no card|without a card/i, `${name}: that starting takes no card`);
+        assert.match(line, /stop|keep it|carry on/i, `${name}: what happens at the end`);
+    }
+});
+
+// The old promise, which would now be a lie in Checkout.
+test("none of them still asks for a card up front", () => {
+    for (const [name, line] of Object.entries(trialTerms)) {
+        assert.ok(!/we ask for a card|takes a card|a card to begin/i.test(line), `${name}`);
     }
 });

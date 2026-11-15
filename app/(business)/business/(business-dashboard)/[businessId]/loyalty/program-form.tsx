@@ -334,8 +334,8 @@ export function LoyaltyCardBuilder({
                                 <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
                                     Publishing puts it on your business page,
                                     so customers can start collecting stamps
-                                    today. It is included in Pro, with a 30-day
-                                    free trial.
+                                    today. It is included in Pro, free for 30
+                                    days and no card to start.
                                 </p>
 
                                 <Button

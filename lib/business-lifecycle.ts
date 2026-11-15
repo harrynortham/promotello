@@ -46,6 +46,10 @@ export type LifecycleDue = {
         // asked to send a page they already did.
         sent_for_review?: boolean;
         trial_end: string | null;
+        // Whether the ending trial has a card behind it. Absent on older
+        // payloads, and absent means yes: every trial started before
+        // 20270109090000 took a card to begin.
+        trial_has_card?: boolean;
         since: string;
         followers: number;
         loyalty_members: number;
@@ -260,17 +264,19 @@ function resultsList(d: LifecycleDue["details"]) {
 }
 
 // A business that signs up and does nothing reads several of these within
-// three weeks, so they say the same four things in different words rather
-// than the same sentence four times: how long it's free, that a card is
-// taken at the start, that nothing is charged until it ends, and that
-// cancelling before then costs nothing. Shortening any of them to "free
-// for ${TRIAL_DAYS} days" would drop the card, which is the part people
-// mind finding out about later.
+// three weeks, so they say the same three things in different words rather
+// than the same sentence four times: how long it's free, that starting
+// takes no card, and that it stops by itself unless they decide to keep
+// it. Shortening any of them to "free for ${TRIAL_DAYS} days" would drop
+// the no-card part, which is the whole of the objection being answered.
+//
+// These used to say a card was taken at the start, because it was.
+// docs/LAUNCH-FUNNEL.md is why it isn't.
 export const trialTerms = {
-    pitch: `Pro is free for ${TRIAL_DAYS} days. We ask for a card when you start, but don't charge it until the trial ends, and you can cancel any time before then.`,
-    founding: `A place is held the moment you start the trial. That takes a card, though nothing leaves it for ${TRIAL_DAYS} days, and cancelling before then costs nothing.`,
-    adds: `The first ${TRIAL_DAYS} days are free. Starting takes a card, the first charge is the day the trial ends, and you can stop before it in Billing.`,
-    results: `Trying it is free for ${TRIAL_DAYS} days — a card to begin, no charge until the trial is up, and cancelling before then from your Billing page.`,
+    pitch: `Pro is free for ${TRIAL_DAYS} days and starting takes no card. Add one before the end to keep it, or let it stop on its own — either way nothing is charged in the meantime.`,
+    founding: `A place is held the moment you start the trial — ${TRIAL_DAYS} days free, no card to start it, and nothing charged unless you decide at the end to keep it.`,
+    adds: `The first ${TRIAL_DAYS} days are free and there's no card to start. Add one before the trial is up to carry on, or do nothing and it stops by itself.`,
+    results: `Trying it is free for ${TRIAL_DAYS} days with no card to begin, and it stops by itself unless you add one — so there's nothing to remember to cancel.`,
 };
 
 // The token lets someone stop these without signing in, which is what the
@@ -415,26 +421,49 @@ export function lifecycleEmail(
         const trialEnd = formatDate(due.details.trial_end);
         const results = resultsList(d);
 
+        // A trial started without a card ends by stopping, not by
+        // charging, so this is two different emails. Older payloads
+        // carry no flag and every one of those trials took a card.
+        const hasCard = d.trial_has_card !== false;
+
         const { html, text } = brandedEmail({
             eyebrow: "Your free trial",
-            title: `Your trial ends on ${trialEnd}`,
+            title: hasCard
+                ? `Your trial ends on ${trialEnd}`
+                : `${name} goes back to Free on ${trialEnd}`,
             paragraphs: [
                 // The same rule as the results email, and it matters
                 // more here: this is the last thing somebody reads
-                // before a card is charged, and a thin list of page
-                // views is an argument for cancelling.
+                // before deciding, and a thin list of page views is an
+                // argument for letting it lapse.
                 resultsStrength(d) === "visits"
                     ? `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`
                     : resultsStrength(d) === "interest"
                         ? `${interestList(d).join(", and ")} since ${formatDate(d.since)}. Nobody has been in and used one yet — the next stamp or voucher is the one that starts it.`
                         : `${name} hasn't had customers through Promotello yet. ${missing.length > 0 ? `${missing[0].label} to get started: ${missing[0].why}` : "Mention your loyalty card when you serve somebody — that is where the first sign-ups come from."}`,
-                "Your plan carries on automatically when the trial ends, so you don't need to do anything. You can change or cancel your plan in Billing before then.",
+                hasCard
+                    ? "Your plan carries on automatically when the trial ends, so you don't need to do anything. You can change or cancel your plan in Billing before then."
+                    : "You started this without a card, so nothing is charged and nothing will be: it simply stops on that date unless you add one.",
+                ...(hasCard
+                    ? []
+                    : ["On Free your page stays up and your stamp card keeps working for everyone already on it — but you can't start another card, offers past the first come off the directory, and your followers stop hearing about new ones."]),
             ],
-            action: { label: "Review your plan", url: absoluteUrl(`/business/${due.business_id}/billing`) },
+            action: {
+                label: hasCard ? "Review your plan" : "Add a card and keep it",
+                url: absoluteUrl(`/business/${due.business_id}/billing`),
+            },
             footer: "You're getting this because your business is on a Promotello free trial.",
         });
 
-        return { to, subject: `Your Promotello trial ends on ${trialEnd}`, html, text, headers: unsubscribeHeaders(optOutToken) };
+        return {
+            to,
+            subject: hasCard
+                ? `Your Promotello trial ends on ${trialEnd}`
+                : `Keep ${name} on Pro — your trial ends on ${trialEnd}`,
+            html,
+            text,
+            headers: unsubscribeHeaders(optOutToken),
+        };
     }
 
     const billing = absoluteUrl(`/business/${due.business_id}/billing`);
@@ -687,7 +716,15 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
 // webhook): what it's unlocked and the first thing to set up.
 export function trialStartedEmail(
     business: { id: string; name: string },
-    { tier, trialEnd, hasLoyalty }: { tier: "pro" | "growth"; trialEnd: string; hasLoyalty: boolean },
+    { tier, trialEnd, hasLoyalty, hasCard = true }: {
+        tier: "pro" | "growth";
+        trialEnd: string;
+        hasLoyalty: boolean;
+        // Started without one, which is the usual way now. "Cancel any
+        // time" is the wrong thing to tell somebody who has nothing to
+        // cancel — it invents a job for them and implies a charge.
+        hasCard?: boolean;
+    },
     to: string,
 ): Email {
     const plan = tier === "growth" ? "Growth" : "Pro";
@@ -703,7 +740,9 @@ export function trialStartedEmail(
         eyebrow: "Your free trial",
         title: `${business.name} is on ${plan}`,
         paragraphs: [
-            `Your ${plan} trial runs until ${formatDate(trialEnd)}. You won't be charged before then, and you can cancel any time from Billing.`,
+            hasCard
+                ? `Your ${plan} trial runs until ${formatDate(trialEnd)}. You won't be charged before then, and you can cancel any time from Billing.`
+                : `Your ${plan} trial runs until ${formatDate(trialEnd)}. There's no card on it and nothing to cancel: on that date it stops unless you decide to keep it.`,
             ...unlocked,
             hasLoyalty
                 ? "Your loyalty card is ready. Put your QR poster by the counter so customers can join, and add a stamp each visit by scanning their phone with yours."
@@ -722,7 +761,7 @@ export async function sendTrialStartedEmail(stripeSubscriptionId: string) {
     const admin = createAdminClient();
     const { data: subscription } = await admin
         .from("subscriptions")
-        .select("status, tier, trial_end, businesses ( id, name )")
+        .select("status, tier, trial_end, has_payment_method, businesses ( id, name )")
         .eq("stripe_subscription_id", stripeSubscriptionId)
         .maybeSingle();
 
@@ -740,6 +779,7 @@ export async function sendTrialStartedEmail(stripeSubscriptionId: string) {
         tier: subscription.tier === "growth" ? "growth" as const : "pro" as const,
         trialEnd: subscription.trial_end,
         hasLoyalty: (loyaltyPrograms ?? 0) > 0,
+        hasCard: subscription.has_payment_method !== false,
     };
 
     return sendEmails(((emails ?? []) as string[]).map((to) => trialStartedEmail(business, details, to)));
