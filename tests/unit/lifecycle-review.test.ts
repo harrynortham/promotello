@@ -318,3 +318,56 @@ test("an older payload with no flag reads as a trial with a card", () => {
 
     assert.match(email.text, /carries on automatically/);
 });
+
+// The dashboard hands back the offer and the card from their preview
+// email the moment they claim (20270110090000). The welcome is the
+// other thing they get that day, so it names the same two things rather
+// than describing a blank page (docs/LAUNCH-FUNNEL.md).
+test("the welcome names the offer and the card we drew for them", () => {
+    const email = lifecycleEmail(
+        due("welcome", {
+            has_offer: false,
+            has_loyalty: false,
+            sample_offer: "2 for 1 on coffee",
+            sample_reward: "a free flat white",
+            sample_stamps: 9,
+        }),
+        "sam@example.com",
+    )!;
+
+    // The greeting first: leading with the sample reads like a system
+    // notice, and the pieces are written lowercase so either can come
+    // first, then capitalised once joined.
+    assert.match(email.text, /Thanks for signing up\. Your offer, “2 for 1 on coffee”/);
+    assert.match(email.text, /your loyalty card \(9 stamps, then a free flat white\) are waiting/);
+    assert.match(email.text, /Nothing is live yet/);
+});
+
+// A cold sign-up was never a preview, so there is nothing to name and
+// the welcome reads exactly as it did.
+test("a welcome with nothing to hand back is the old welcome", () => {
+    const email = lifecycleEmail(due("welcome", { has_offer: false, has_loyalty: false }), "sam@example.com")!;
+
+    assert.ok(!email.text.includes("waiting on your dashboard"));
+    assert.match(email.text, /Thanks for signing up/);
+});
+
+// One rule for both surfaces: a half they have already done drops out
+// of the email exactly as it drops off the dashboard.
+test("a half they have already done is not offered back", () => {
+    const email = lifecycleEmail(
+        due("welcome", {
+            has_offer: true,
+            has_loyalty: false,
+            sample_offer: "2 for 1 on coffee",
+            sample_reward: "a free flat white",
+            sample_stamps: 9,
+        }),
+        "sam@example.com",
+    )!;
+
+    assert.ok(!email.text.includes("2 for 1 on coffee"));
+    assert.match(email.text, /Your loyalty card \(9 stamps/, "capitalised when it leads");
+    assert.match(email.text, /is waiting on your dashboard/, "one thing, so singular");
+    assert.match(email.text, /it opens filled in/, "and singular all the way through");
+});
