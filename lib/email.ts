@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 
+import { storedImage } from "@/lib/images";
 import { companyDisclosure } from "@/lib/legal";
 import { socialProfiles } from "@/lib/site";
 import { absoluteUrl } from "@/lib/site";
@@ -249,12 +250,84 @@ ${emailCompanyFooter(width)}
 </body></html>`;
 }
 
+// Whose email this is, drawn above everything else: their logo and
+// their name.
+//
+// Two rules, both from how email actually arrives. Images are blocked by
+// default in a lot of clients, so the name is live text beside the
+// picture rather than inside it — blocked, this still reads as an email
+// about their business. And the URL goes through storedImage(), so
+// anything that is not a public file on our own storage renders as no
+// logo at all rather than as a broken box.
+//
+// The initials stand in where there is no logo, the way
+// components/business-initial.tsx does on screen.
+export function emailBusinessRow(business: { name: string; logoUrl?: string | null }) {
+    const e = escapeHtml;
+    const logo = emailSafeImage(business.logoUrl);
+
+    const mark = logo
+        ? `<img src="${e(logo)}" width="44" height="44" alt="" style="display:block;width:44px;height:44px;border:0;outline:none;border-radius:10px;object-fit:cover;background:#FFF4EE">`
+        : `<table role="presentation" cellpadding="0" cellspacing="0" style="width:44px;height:44px;background:#FFF4EE;border-radius:10px"><tr><td align="center" style="font-size:16px;font-weight:700;color:#FF593F">${e(initialsFrom(business.name))}</td></tr></table>`;
+
+    return `<tr><td style="padding:4px 0 2px">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td style="padding-right:12px">${mark}</td>
+<td style="font-size:15px;font-weight:600;color:#17233B">${e(business.name)}</td>
+</tr></table>
+</td></tr>`;
+}
+
+// Up to two initials, for the block that stands in for a missing logo.
+function initialsFrom(name: string) {
+    return (
+        name
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part.charAt(0).toUpperCase())
+            .join("") || "P"
+    );
+}
+
+// A stored image an email client will actually draw.
+//
+// storedImage() settles whether it is ours and public. This settles the
+// format: Outlook on Windows renders mail through Word, which has never
+// supported WebP, so a .webp logo arrives as a red cross rather than as
+// a logo. Our uploader keeps whatever was given to it (lib/
+// business-images.ts), so these exist — only a couple today, but the
+// failure is ugly and the fallback is free.
+export function emailSafeImage(url: string | null | undefined) {
+    const stored = storedImage(url);
+
+    if (!stored) return null;
+
+    return new URL(stored).pathname.toLowerCase().endsWith(".webp") ? null : stored;
+}
+
+// A picture of the thing the email is about — an offer's own photograph.
+// It decorates: every email below reads the same with images turned off,
+// so nothing here may carry meaning the words do not.
+export function emailPictureRow(picture: { url: string; alt: string }, width = EMAIL_WIDTH) {
+    const e = escapeHtml;
+    const src = emailSafeImage(picture.url);
+
+    if (!src) return "";
+
+    return `<tr><td style="padding:20px 0 0">
+<img src="${e(src)}" width="${width}" alt="${e(picture.alt)}" style="display:block;width:100%;max-width:${width}px;height:auto;border:0;outline:none;border-radius:14px">
+</td></tr>`;
+}
+
 // A simple branded email: heading, paragraphs and one button. Text is
 // escaped here, so pass plain strings.
 export function brandedEmail({
     eyebrow,
     title,
     paragraphs,
+    business,
+    picture,
     code,
     voucher,
     details,
@@ -265,6 +338,11 @@ export function brandedEmail({
     eyebrow: string;
     title: string;
     paragraphs: string[];
+    // Whose business this email is about: their logo and their name,
+    // above the eyebrow. Left out for anything that is about us.
+    business?: { name: string; logoUrl?: string | null };
+    // A picture of the thing — an offer's photograph, under the words.
+    picture?: { url: string; alt: string };
     // A one-time code, shown big enough to read off a phone and copy. It
     // is the whole point of the email it appears in, so it sits above
     // anything else and there is nothing to press.
@@ -287,11 +365,12 @@ export function brandedEmail({
     const e = escapeHtml;
 
     const html = emailShell({
-        rows: `<tr><td style="padding:16px 0 8px">
+        rows: `${business ? emailBusinessRow(business) : ""}<tr><td style="padding:16px 0 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(eyebrow)}</p>
 <h1 style="margin:12px 0 0;font-size:26px;line-height:1.25">${e(title)}</h1>
 ${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:16px;line-height:1.65;color:#45506a">${e(text)}</p>`).join("\n")}
 </td></tr>
+${picture ? emailPictureRow(picture) : ""}
 ${code ? `<tr><td style="padding:20px 0 4px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;border-radius:12px"><tr><td align="center" style="padding:18px 16px">
 <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7387">Your code</p>

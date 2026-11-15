@@ -67,6 +67,8 @@ export function voucherConfirmationEmail({
     terms,
     discount,
     businessName,
+    businessLogoUrl,
+    offerImageUrl,
     expiresAt,
 }: {
     to: string;
@@ -82,6 +84,10 @@ export function voucherConfirmationEmail({
     terms?: string | null;
     discount: string;
     businessName: string;
+    // Whose voucher it is, so the email looks like the shop rather than
+    // like us, and the offer's own photograph where it has one.
+    businessLogoUrl?: string | null;
+    offerImageUrl?: string | null;
     expiresAt: string | null;
 }): Email {
     const until = expiresAt
@@ -93,6 +99,10 @@ export function voucherConfirmationEmail({
         : null;
 
     const { html, text } = brandedEmail({
+        business: { name: businessName, logoUrl: businessLogoUrl },
+        // The thing itself, above the code for it. The voucher card is
+        // still the hero — this is what they are going in for.
+        picture: offerImageUrl ? { url: offerImageUrl, alt: offerTitle } : undefined,
         eyebrow: `Your voucher for ${businessName}`,
         title: `${discount}: ${offerTitle}`,
         paragraphs: until

@@ -3,6 +3,7 @@ import { brandedEmail, emailCompanyFooter, escapeHtml, sendEmails, type Email } 
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
+import { firstNameOf, greeting } from "@/lib/recipients";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -56,6 +57,11 @@ export type LifecycleDue = {
         sample_offer?: string | null;
         sample_reward?: string | null;
         sample_stamps?: number | null;
+        // Their logo, over every one of these, and what to call each
+        // recipient, by address. Both absent on a payload written
+        // before 20270117090000.
+        logo_url?: string | null;
+        owner_names?: Record<string, string | null> | null;
         since: string;
         followers: number;
         loyalty_members: number;
@@ -319,6 +325,11 @@ export function lifecycleEmail(
 ): Email | null {
     const name = due.business_name;
     const dashboard = absoluteUrl(`/business/${due.business_id}`);
+    // Their logo over all of these, and this reader's own name where
+    // they gave us one — looked up by address, because a business with
+    // two owners gets two emails and one name would be wrong on one.
+    const mark = { name, logoUrl: due.details.logo_url };
+    const hello = greeting(due.details.owner_names?.[to]);
     const missing = missingSteps(due);
 
     // welcome and trial_ending always send, whatever the setting says (see
@@ -361,6 +372,7 @@ export function lifecycleEmail(
         const rest = steps.length - first.length;
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Welcome to Promotello",
             title: `${name} is on Promotello`,
             paragraphs: [
@@ -368,8 +380,8 @@ export function lifecycleEmail(
                 // didn't. Either way the greeting comes first: leading
                 // with the sample reads like a system notice.
                 waiting.length > 0
-                    ? `Thanks for signing up. ${waitingFor} ${waiting.length === 1 ? "is" : "are"} waiting on your dashboard. Nothing is live yet, and ${waiting.length === 1 ? "it opens" : "each one opens"} filled in, ready to change or publish.`
-                    : "Thanks for signing up. Your page is started.",
+                    ? `${hello}Thanks for signing up. ${waitingFor} ${waiting.length === 1 ? "is" : "are"} waiting on your dashboard. Nothing is live yet, and ${waiting.length === 1 ? "it opens" : "each one opens"} filled in, ready to change or publish.`
+                    : `${hello}Thanks for signing up. Your page is started.`,
                 `Here is what it needs before customers can find you${rest > 0 ? ", and your dashboard counts off the rest as you go" : ""}:`,
                 ...first.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
                 rest > 0
@@ -398,10 +410,11 @@ export function lifecycleEmail(
 
         const others = missing.slice(1).map((step) => step.label.toLowerCase());
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Your next step",
             title: `${next.label} for ${name}`,
             paragraphs: [
-                next.why,
+                `${hello}${next.why}`,
                 others.length > 0
                     ? `After that: ${others.join(" and ")}. Then you're ready for customers.`
                     : "That's the last step, and then you're ready for customers.",
@@ -438,11 +451,12 @@ export function lifecycleEmail(
             : `${remaining.slice(0, -1).join(", ")} and ${remaining[remaining.length - 1]}`;
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Still to do",
             title,
             paragraphs: [
                 oneClick
-                    ? `Nothing on your page is public until you send it to us, and you haven't yet. Have a look through it, change anything that isn't right, and send it — we usually look the same day.`
+                    ? `${hello}Nothing on your page is public until you send it to us, and you haven't yet. Have a look through it, change anything that isn't right, and send it — we usually look the same day.`
                     : unsent
                         ? `Nothing on your page is public until you send it to us, and there is a little to finish first: ${list}. Then the button is there on your dashboard, and we usually look the same day.`
                         : remaining.length === 1
@@ -470,6 +484,7 @@ export function lifecycleEmail(
         const hasCard = d.trial_has_card !== false;
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Your free trial",
             title: hasCard
                 ? `Your trial ends on ${trialEnd}`
@@ -514,6 +529,7 @@ export function lifecycleEmail(
 
     if (due.kind === "loyalty_pitch") {
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Loyalty cards",
             title: `Turn ${name}'s first-time visitors into regulars`,
             paragraphs: [
@@ -535,6 +551,7 @@ export function lifecycleEmail(
 
         const { html, text } = foundingPlacesLeft && foundingPlacesLeft > 0
             ? brandedEmail({
+                business: mark,
                 eyebrow: "Founding members",
                 title: `Lock in ${founding} a month for ${name}, for life`,
                 paragraphs: [
@@ -546,6 +563,7 @@ export function lifecycleEmail(
                 ...tipsFooter(optOutToken),
             })
             : brandedEmail({
+                business: mark,
                 eyebrow: "Promotello Pro",
                 title: `What Pro adds for ${name}`,
                 paragraphs: [proAdds, trialTerms.adds],
@@ -571,6 +589,7 @@ export function lifecycleEmail(
         // Somebody walked in. That is the whole case, so lead with it.
         if (strength === "visits") {
             const { html, text } = brandedEmail({
+                business: mark,
                 eyebrow: "Your first two weeks",
                 title: `How ${name} is doing on Promotello`,
                 paragraphs: [
@@ -592,6 +611,7 @@ export function lifecycleEmail(
             const interest = interestList(d);
 
             const { html, text } = brandedEmail({
+                business: mark,
                 eyebrow: "Your first two weeks",
                 title: `People are finding ${name}`,
                 paragraphs: [
@@ -610,6 +630,7 @@ export function lifecycleEmail(
         }
 
         const { html, text } = brandedEmail({
+            business: mark,
             eyebrow: "Your first customers",
             title: `Getting ${name}'s first customers`,
             paragraphs: [
@@ -633,7 +654,9 @@ export function lifecycleEmail(
             to,
             subject: "Anything I can help with?",
             paragraphs: [
-                "Hi,",
+                // The one email here written as a person rather than as
+                // a company, so it is the one a bare "Hi," costs most.
+                `Hi${firstNameOf(due.details.owner_names?.[to]) ? ` ${firstNameOf(due.details.owner_names?.[to])}` : ""},`,
                 `I'm ${FOUNDER.name}, and I started Promotello. I noticed ${name} isn't quite set up yet, so I wanted to check in.`,
                 "Is anything getting in the way? If something's confusing, or Promotello isn't right for you, I'd really like to know. Just reply to this email, I read every one.",
                 `If you'd like to pick up where you left off, your dashboard shows what's left: ${dashboard}`,
