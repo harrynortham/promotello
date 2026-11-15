@@ -1,38 +1,81 @@
 # Promotello Product Roadmap
 
-Gates: Phase 0 → 1 = first paying business; Phase 1 → 2 = 25 paying in Bristol; Phase 2 → 3 = 100 paying, churn under 5%.
-
-Oct 23, 2026, updated Oct 29, 2026 · @Harry
+Gates are results, not dates: track B before the trail, 10 live businesses on one
+street before a second one. Oct 23, 2026, re-cut 16 Nov 2026 · @Harry
 
 ## Summary
 
-Promotello will launch in Bristol as a retention toolkit for independent businesses, with the local directory growing on top of it. A business should get value in week one from its own customers: loyalty cards, QR posters, a follower list and automated offers. It should not depend on Promotello already having consumer traffic.
+Promotello sells a local business one thing: **customers it can see us send, and
+proof of how many came back.** A directory people browse, offers they claim on
+their phone, posters in the window, and a stamp card that brings them back —
+with attribution running through all four.
 
-**Positioning shift:** from "get discovered" to **"Turn first-time visitors into regulars."** Discovery through the directory becomes the bonus that grows as more Bristol businesses join.
+**The shift, 16 November 2026.** The plan below used to be a loyalty-card build
+plan with a directory attached. Four of the five "build next" items were card
+features, and the order they were in came from a comparison with Stamp Me that
+the Positioning section already says we should refuse. That has been re-cut. The
+card is one of several things that bring a customer back. It is not the product,
+and it is no longer the spine of the roadmap.
 
-**What we are not:** a digital loyalty card app. That category is a dozen vendors deep — LoyBee, TapStamp, Loyaltify, LoyalStamps, Passcard, UpCard, Inkmark, Lovely Loyalty, Oappso — several of them under £15 a month and some free. A feature-for-feature fight there is unwinnable, and winning it would only earn the right to sell a £24 product into a £10 market. Loyalty is the second half of Promotello, never the headline. See [Positioning](#positioning-what-a-loyalty-app-cant-copy).
+**What is:** can we prove we sent them, is there anyone to send, and do they come
+back. See [The four tracks](#the-four-tracks).
 
-**The plan in one line:** billing, loyalty, QR and followers are live. Now take the friction out of the card (Wallet passes, joining without an account), sign 50 paying businesses on two or three Bristol high streets, and build the cross-business layer that only that density makes possible.
+**What we are not:** a digital loyalty card app. That category is a dozen vendors
+deep, several under £15 a month and some free. A feature-for-feature fight there
+is unwinnable, and winning it would only earn the right to sell a £24 product
+into a £10 market.
 
 ## Where we are today
 
-Updated 29 October 2026. Phase 0 is done and most of Phase 1 and 2 is built: about 215 commits, Stripe billing live, and loyalty, QR, followers, automations and reports working. The product is ahead of the sales. The next job is getting the first paying businesses on Gloucester Road, and closing the loyalty-card gaps the competitor analysis found (Wallet passes and joining without an account).
+Updated 16 November 2026. The business side is close to finished. The consumer
+side barely exists, and nothing has been sold.
 
-| Area              | Built                                                                                                           | Gap                                                                              |
-| ----------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Business accounts | Registration, onboarding checklist and emails, business switcher, locations, opening hours, sign-up reminders  | Photo gallery, social links, image cropping                                      |
-| Teams             | Invitations, roles (owner, admin, member), team management                                                      | None for launch                                                                  |
-| Offers            | Create and edit, offer types (the headline is built from one), when it can be used and who it is for (the availability line is built from those), images, terms, claim limits, expiry, quiet hours enforced at the till, approval (every offer, whatever the plan), reviewing an edit without taking the offer down | An "open now" filter on the listings                                             |
-| Redemptions       | Unique codes, voucher QR that staff scan with the phone camera, staff lookup, redemption list                   | None for launch                                                                  |
-| Loyalty           | One stamp card per business, staff-scanned card codes, rewards, Google review prompt                           | Wallet passes, joining without an account, card design, multi-stamp, import      |
-| Marketing tools   | QR posters with scan tracking, followers and new-offer emails, welcome, birthday and win-back automations, events, Instagram story images | Wallet push, SMS, referrals, scratch-to-win                    |
-| Analytics         | Views, claims, redemptions, shares, followers, monthly value report email                                       | Customer list, segments, CSV export                                              |
-| Consumer side     | Explore by city, area and category, offers, events, follow, voucher list, loyalty cards, in-app notifications, account pages | Apple and Google Wallet                                                          |
-| Admin             | Business and offer approval, audit logs, billing overview, platform metrics, cities and areas, sales previews  | None for launch                                                                  |
-| Billing           | Stripe Checkout and Portal, free tier, Pro £24, Growth £39, yearly plans, £19 founding price, 30-day trial      | None for launch                                                                  |
-| Marketing site    | Business and consumer pages, pricing, demo, help centre, legal, blog, sitemap and page metadata                 | More blog posts, mobile login and sign-up layout                                 |
+| | Count |
+| --- | --- |
+| Outreach emails sent | **0** |
+| Paying businesses | 0 |
+| Customer accounts | 8 |
+| Offers claimed, ever | 5 |
+| Claims that became a visit | 2 |
+| People following a business | 1 |
 
-The remaining README to-dos are mostly launch admin (accounts, YouTube, analytics, social posts) plus a few UI fixes. They sit under Phase 0 below.
+Those are the only numbers that matter and they are all about zero. Roughly 500
+commits have gone in since October. **The product is not what is behind.**
+
+Two things follow, and they are the organising facts of everything below.
+
+**First: the funnel has never carried a real business.** Five findings from
+reading it end to end were fixed in November — see
+[docs/LAUNCH-FUNNEL.md](LAUNCH-FUNNEL.md) — but fixed against a funnel nobody has
+walked. Until previews go out, every further change to it is a guess.
+
+**Second: there is no demand side.** One follower and five claims is not a cold
+start, it is an empty room. The pitch, the pricing, the guarantee and three of
+the roadmap's own claims all assume customers browsing a directory. Nothing in
+the old plan built a reason for a single customer to come back to Promotello a
+second time. That is the largest hole in the product, and it was not on the list.
+
+## What the model actually is
+
+Worth stating plainly, because the build plan now follows from it rather than
+from a competitor table.
+
+A business pays us because **we can show it customers it would not otherwise
+have had.** Everything else is in service of that:
+
+- the **directory, SEO pages and posters** are how a stranger finds them;
+- the **offer** is why the stranger walks in;
+- the **card, followers and automations** are why they come back;
+- the **attribution report** is the receipt, and it is what gets renewed.
+
+The sales promise now says so out loud: *"your dashboard shows how many customers
+Promotello actually sent you, and if that's zero after a month, tell me and we'll
+sort it out"* (`ownNumbers()` in `app/admin/previews/preview-shared.ts`). We have
+staked the pitch on attribution. The roadmap should be staked on it too.
+
+**The test for any feature below:** does it increase the number of customers we
+can prove we sent, make that number more trustworthy, or make the business see
+it? If not, it is a nice-to-have, whatever the competitor table says.
 
 ## Strategy: solving the cold start
 
@@ -130,49 +173,90 @@ the deal can be edited under the customer, a card that cannot be changed once
 someone holds it is a trust position, not a missing feature. Don't let the parity
 list talk you out of it.
 
-## Roadmap
+## The four tracks
 
-Four phases over about 11 months. Phase 1 is where Promotello becomes worth £19+ a month. The dates assume you are building solo with Claude Code. Each gate is a business result, not a date: don't start the next phase until the gate is met. **Parked** means deliberately not building it — see [Positioning](#positioning-what-a-loyalty-app-cant-copy) for why, and build it only when a paying business asks twice.
+Replaces the old phase table. Four questions, in dependency order: **B** feeds
+**A**, **A** is what we sell, **C** is why they renew, **D** is how any of it
+reaches a business. Each track has a gate — a result, not a date.
 
-&#91;embedded content: roadmap · 4 phases, 3 gates\]
+### A · Can we prove we sent them?
 
-| Phase | Status      | Feature                                    | Why it sells                                                     | Build notes                                                                                                           |
-| ----- | ----------- | ------------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| 0     | Built       | Stripe billing, 30-day free trial          | Nothing is validated until someone pays                          | Stripe Checkout and Customer Portal; a webhook writes to a new `subscriptions` table; gate dashboard features on plan |
-| 0     | Built       | Free tier (profile and 1 live offer)       | Fills the directory and gives a no-risk first step               | Plan limits checked in Postgres functions, not just the UI                                                            |
-| 0     | Built       | SEO for business and offer pages           | Bristol customers find listings on Google                        | `generateMetadata`, sitemap, LocalBusiness structured data                                                            |
-| 0     | In progress | README todos                               | Polish before businesses see it                                  | Styled emails, logged-in redirects, Zod forms, sheet mobile menus                                                     |
-| 1     | Built       | QR posters with scan tracking              | A tangible thing in the shop window on day one                   | `qr_codes` and `qr_scans` tables; one code per placement; printable A4 and A5 PDF                                     |
-| 1     | Built       | Loyalty stamp cards                        | The clearest monthly-value tool for cafés, barbers and takeaways | `loyalty_programs`, `loyalty_cards`, `loyalty_stamps`; staff scan the customer's card QR to stop self-stamping        |
-| 1     | Built       | Staff camera scanner                       | Redeeming must take seconds at a busy till                       | Mobile-first page in the dashboard; camera scanning replaces typing codes into the lookup                             |
-| 1     | Built       | Follow a business and offer emails         | Gives the business a customer list it owns                       | `business_followers`; new-offer email to followers via a Supabase edge function                                       |
-| 1     | Built       | In-app notifications                       | Somebody who turned an email off still hears, and nobody has to check an inbox | `notifications` table, one list per user account; written beside each email. Follow-ups: a Realtime subscription instead of recounting on navigation, and per-type in-app preferences |
-| 1     | Built       | Google review prompt                       | Owners care a lot about reviews                                  | Store the Google Place ID; prompt after a redemption or stamp                                                         |
-| 1     | To do       | Apple and Google Wallet passes (moved up from Phase 2) | Loopy and Square both put the card in the phone's wallet; ours lives in a web account | Apple Developer account plus Google Wallet issuer account; `.pkpass` signed in an edge function; pass updates on every stamp via APNs. What the card already does for this, and what is left, is in [docs/WALLET-PASSES.md](WALLET-PASSES.md) |
-| 1     | To do       | Join a card without an account             | Square joins in 10 seconds with a phone number; we make customers sign up first | Name plus email (or phone) creates a guest card straight into Wallet; claim it into a full account later |
-| 1     | To do       | Card design and multi-stamp                | Owners want the card to look like their shop; a round of 3 coffees should earn 3 stamps | Colours, logo and stamp icon on `loyalty_programs`; quantity on `add_loyalty_stamp` with a per-scan cap |
-| 1     | To do       | Switching kit: import members and paper stamps | Removes the cost of leaving Stamp Me, Loopy or paper cards | CSV import of name, email and stamp balance; staff can set a starting balance from a paper card once |
-| 2     | Built       | Welcome, birthday and win-back automations | Marketing that runs without the owner                            | Scheduled job (Supabase cron) checks rules daily                                                                      |
-| 2     | Built       | Quiet-hours recurring offers               | "Fill your dead hours" is a concrete pitch                       | Offer schedules by weekday and time window                                                                            |
-| 2     | To do       | Wallet push messages and location alerts   | Free lock-screen messages, instead of Stamp Me's SMS            | Send messages through the pass update; up to 10 shop locations on the pass for nearby alerts                          |
-| 2     | Parked      | Multiple cards and reward ladders          | Stamp Me includes multiple cards on every plan; Loopy offers up to 10 designs | Drop the one-active-programme index; rewards at several stamp counts (5 = pastry, 10 = coffee)        |
-| 2     | Parked      | Double-stamp days and bonus promotions     | Square sells bonus-point promotions; pairs with quiet hours     | Stamp multiplier on a weekday and time schedule, reusing offer schedules                                              |
-| 2     | Parked      | Surprise rewards and scratch-to-win        | Stamp Me's Scratch & Win gives customers a reason to open the card | Random reward on join or the Nth stamp, chance set by the owner; reuses `reward_vouchers`                    |
-| 2     | To do       | Attributed repeat-visit report             | The one number no loyalty app can print: first visits we sent, and who came back | First visit vs returning per business, attributed to a QR scan, offer claim or directory view; monthly email and a dashboard panel |
-| 2     | To do       | Loyalty in discovery                       | Makes the card an acquisition asset: joined before the first visit, not after    | Card on the offers and businesses listings and a "has a loyalty card" filter; reuses `loyalty-callout.tsx` and the public join flow |
-| 2     | To do       | One wallet for the street                  | Every business signed makes the consumer side better — the loop rivals can't build | One place holding every nearby independent's card and vouchers; group by area, not by business |
-| 2     | To do       | Bristol passport trail                     | Gets customers visiting several members                          | Collect stamps across participating businesses for a prize                                                            |
-| 2     | To do       | Customer list, segments and CSV export     | Loopy and Square sell a customer view; owners want to own their list | One customer page joining followers, cards, redemptions and vouchers; filters such as lapsed and VIP; export with consent flags |
-| 2     | To do       | Customer refer-a-friend                    | None of the three rewards referrals well, so this is a selling point | Personal referral link on the card; both people get a stamp after the friend's first stamp                  |
-| 2     | Built       | Value report and analytics funnel          | Proves ROI and stops cancellations                               | Track offer views; monthly email: visits, repeat customers, estimated value                                           |
-| 2     | Built       | Events and social share images             | Extra reasons to post and come back                              | Events table; generated Instagram story image per offer                                                               |
-| 3     | To do       | Group accounts for BIDs and associations   | Larger contracts, many businesses per sale                       | Group dashboard across member businesses                                                                              |
-| 3     | To do       | Referrals and multi-location plan          | Growth from existing customers                                   | Referral credits; per-location stats                                                                                  |
-| 3     | To do       | Till integrations (Square, SumUp, Shopify POS) | Square stamps automatically at checkout; we should too, on any till | Auto-stamp on payment webhooks matched to a customer; start with the till most Bristol members use |
-| 3     | Parked      | Zapier, Make and a public API              | Stamp Me and Loopy both connect to Zapier                       | Webhooks for join, stamp and reward; API keys per business                                                            |
-| 3     | Parked      | Spend-based points and VIP tiers           | Square earns on spend, items and categories with VIP levels     | Only if larger customers ask; stamps stay the default                                                                 |
-| 3     | Parked      | SMS credits and NFC stamp tags             | Stamp Me sells SMS and tap-to-stamp hardware                    | Paid add-ons; an NFC tag opens a signed one-time stamp link, rate-limited per card                                    |
-| 3     | To do       | Second city                                | Repeat the Bristol playbook                                      | Choose from what Phase 1 and 2 data shows                                                                             |
+This is the product's centre now and it is thinner than the pitch implies.
+
+| | What | Why it matters | Notes |
+| --- | --- | --- | --- |
+| A1 | **Harden what counts as "sent by Promotello"** | It is the number we guarantee on, and today it under-reports the flow our own posters create | `sentByPromotello` only counts a claim or join **an hour before** the first visit. A stranger who scans a window poster and walks straight in is the poster working, and is counted as nothing. Needs a scan-then-visit window and a written definition the business can read |
+| A2 | **A first visit without a claim** | Most people who find a business through us never claim anything — they just turn up | Today an attributed visit requires a voucher or a stamp. A directory view or a poster scan followed by a card join is evidence too. Decide what we will and will not claim, and say it on the analytics page |
+| A3 | **The business sees the number without being emailed** | A monthly email is a reminder; the dashboard is where they go when they wonder | Done for the monthly report (now on every plan). The dashboard panel exists; it needs the same prominence as the counts above it |
+| A4 | **Attribution for walk-ins staff can record** | Barbers and salons book by phone; nothing we track sees that visit | A one-tap "came from Promotello" on the staff screen. Low effort, and it is the only way some trades ever show a number |
+
+**Gate:** a business can open its dashboard and read a number it believes, and we
+would be comfortable showing that same number to the business next door.
+
+### B · Is there anyone to send?
+
+The hole. Nothing here existed on the old plan, and it is the half the pitch
+assumes.
+
+| | What | Why it matters | Notes |
+| --- | --- | --- | --- |
+| B1 | **A reason to come back to Promotello** | Nothing brings a customer back today. One follower, five claims | A weekly "new near you" email, by area, from offers that went live that week. The follower email exists per-business; this is the same machinery across a street |
+| B2 | **Open now, and near me** | The single most useful thing a directory does, and the one listings gap the old roadmap already admitted | Opening hours are stored. An "open now" filter and distance sort turns a list into something worth opening at 6pm |
+| B3 | **The claim that never became a visit** | Three in five claims here have never been used. That is the cheapest attributed visit available | A reminder before expiry exists; what is missing is the nudge two days after a claim, and a reason to go this week |
+| B4 | **One wallet for the street** | Claim 2 of three in the README, still unbuilt. Every business signed makes the customer side better | Group the customer's vouchers and cards by area rather than by business. Cheap, and it is the loop no single-tenant rival can copy |
+| B5 | **A consumer acquisition plan at all** | We have SEO pages and no traffic, and no written plan to get any | Not a build: decide whether it is local Instagram, press, the businesses' own channels, or paid. Then build to it. This is a decision owed before B1 is worth sending |
+
+**Gate:** a customer who found one business through Promotello comes back and
+finds a second. Cross-visits above zero is the whole of this gate.
+
+### C · Do they come back?
+
+Retention for the business's customer. This is where loyalty lives now — one
+mechanism among several, sized accordingly.
+
+| | What | Why it matters | Notes |
+| --- | --- | --- | --- |
+| C1 | **Loyalty in discovery** | Makes the card an acquisition asset rather than a retention one: joined before the first visit | Cards on the listings and a filter. Was Phase 2, still right, and it belongs to track A as much as C — a join before a first visit is an attributed arrival |
+| C2 | **Wallet passes (Apple and Google)** | Table stakes against rivals, and a free lock-screen channel afterwards | **Demoted from first to here.** It is weeks of work — developer accounts, signing, APNs — for parity on a comparison we refuse, and it moves no number in track A. Build it when a paying business asks twice, or when the push channel is the point. [docs/WALLET-PASSES.md](WALLET-PASSES.md) |
+| C3 | **Card design and multi-stamp** | Cheap, closes deals, owners ask for it | Unchanged, and still worth doing before C2 |
+| C4 | **Switching kit: import members and paper balances** | Removes the cost of leaving a competitor or a paper card | Unchanged. Matters only once we are talking to businesses that already have one |
+| C5 | **Customer list, segments and export** | Owners want to own their list, and it answers "what if I leave?" | Unchanged |
+| C6 | **The wheel** | The one parked idea with a poster behind it, which is why it unparks first | A spin at the counter, one per device per day, prizes and quantities set by the business. Needs a view on whether a prize draw is a lottery under the Gambling Act before any of it is built |
+
+**Gate:** repeat-visit rate above 30% at businesses that have been live a month.
+
+### D · Can we sell it at all?
+
+Mostly done in November, and listed so it is not re-opened.
+
+Built: the card-less trial, the preview's offer and card following the business
+in, the first-customer email, proof on every plan, a page we built going live
+when its owner sends it, and the decline reasons.
+See [docs/LAUNCH-FUNNEL.md](LAUNCH-FUNNEL.md).
+
+| | What | Why it matters | Notes |
+| --- | --- | --- | --- |
+| D1 | **Send the previews** | Nothing above is worth another commit until this happens | Not a build. [docs/OUTREACH.md](OUTREACH.md) is written and the tooling is finished |
+| D2 | **Record why they said no** | The only way the pitch improves. Today a "no thanks" leaves a status and nothing else | A reason on `business_previews` beside the status, the way a decline now carries one |
+| D3 | **Names on the wall** | `/business/testimonials` redirects because there is nothing real. The guarantee stands in for it meanwhile | Three live businesses, with permission, is enough to stop it redirecting |
+
+**Gate:** 10 live businesses on one street, and one of them paying.
+
+## What this de-prioritises, and why
+
+Said plainly so it is a decision rather than a drift:
+
+- **Wallet passes**, from first to C2. A card in a wallet does not move the number
+  we sell on. The custom-wallet idea in the README ("our own push and scanning")
+  is a bigger version of the same trade and should wait for the same evidence.
+- **The whole loyalty parity list** — multiple cards, reward ladders,
+  double-stamp days, spend-based points, VIP tiers, SMS, NFC, Zapier — stays
+  parked, as before.
+- **Till integrations** stay in the far column. They matter to shops already on
+  Square, and we have no shops at all.
+- **The passport trail and group/BID accounts** move behind track B's gate. A
+  trail across businesses nobody visits is a feature with no users; it becomes
+  obvious the moment cross-visits are non-zero.
 
 ## Competitor analysis (October 2026)
 
@@ -193,16 +277,17 @@ Stamp Me, Square Loyalty and Loopy Loyalty are the loyalty tools a Bristol café
 | Integrations | Zapier | Square App Marketplace | Zapier, Make, API | None |
 | Directory, offers, events, QR posters, review prompts | None | None | None | Yes |
 
-**What to build, in order** (re-cut 9 November 2026 against [Positioning](#positioning-what-a-loyalty-app-cant-copy)):
+**How to read this table.** As reference for what a business might have heard
+of, and nothing more. The ordered build list that used to sit here was derived
+from it — four of its five items were card features — which is exactly the
+spec-sheet comparison the Positioning section above says to refuse. The build
+plan is now [The four tracks](#the-four-tracks), and it is derived from what we
+sell instead.
 
-1. **Wallet passes, now (Phase 1, moved up from Phase 2).** It is the main thing Loopy sells, and Square has it too. A card in Apple or Google Wallet also opens up free lock-screen messages later.
-2. **Join without signing up (Phase 1).** Requiring an account is the biggest piece of friction at a busy till. Square joins a customer in about 10 seconds with a phone number.
-3. **Card design, multi-stamp and a switching kit (Phase 1).** These are cheap to build and help close deals. Importing members and paper-card balances removes the cost of leaving a competitor.
-4. **The attributed repeat-visit report (Phase 2).** First visits Promotello sent, how many came back, how many became regulars. The one number no loyalty app can print, and the reason a business renews.
-5. **Loyalty in discovery (Phase 2).** Cards on the listing pages and a filter for them, so a card is seen by people who have never been in. Turns the card from a retention tool into an acquisition one.
-6. **One wallet for the street, then the passport trail (Phase 2).** Every nearby independent in one place, then stamps collected across members. Each business signed makes the consumer side better — the loop no single-tenant tool has.
-7. **Customer list and export (Phase 2).** Owners want to own their customer data, and an export also answers the "what if I leave?" objection.
-8. **Till integrations (Phase 3), if asked for.** Stamping automatically from the till takes away Square's one real advantage, but only matters to shops already on Square.
+The one thing worth taking from the table: **none of the three has a directory,
+public offers, events, QR posters or review prompts, and none has a free plan.**
+That bundle is the edge. Every gap it shows is inside the loyalty card, which is
+the part we have decided not to compete on.
 
 **What not to copy, and what to park.** Not Stamp Me's native app (Wallet passes cover it), not Square's per-location pricing based on visits (owners dislike unpredictable bills), and no paid hardware before there's demand. **Parked outright**, as feature depth that only invites a spec-sheet comparison we lose: scratch-to-win, SMS credits, NFC tags, spend-based points, VIP tiers, reward ladders, multiple cards and Zapier. Build any of them when a paying business asks twice, not to fill a column in the table above.
 
@@ -212,14 +297,18 @@ Move from one £19 plan to a free tier plus two paid tiers, with a founding pric
 
 | Tier   | Price (ex. VAT)             | What's included                                                                                                                       | Available from             |
 | ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Free   | £0                          | Directory profile, 1 live offer, redemption codes                                                                                     | Phase 0                    |
-| Pro    | £24/month, or £240/year     | Unlimited offers, loyalty card, QR posters with scan stats, followers and offer emails, review prompts, staff scanner, unlimited team, Apple and Google Wallet card, card design, member import | Phase 0 (grows in Phase 1) |
-| Growth | £39/month                   | Everything in Pro plus automations, quiet-hours offers, the attributed repeat-visit report, customer list and export, loyalty in discovery, events                                 | Phase 2                    |
-| Groups | Custom, per member business | Group dashboard, Bristol passport trail, shared campaigns for BIDs and associations                                                   | Phase 2 (trail), Phase 3 (group dashboard) |
+| Free   | £0                          | Directory profile, 1 live offer, redemption codes, **the short monthly report and who came back**                                      | Now                        |
+| Pro    | £24/month, or £240/year     | Unlimited offers, loyalty card, QR posters with scan stats, followers and offer emails, review prompts, staff scanner, unlimited team, the short monthly report | Now (card design and import in track C) |
+| Growth | £39/month                   | Everything in Pro plus automations, quiet-hours offers, the **full** monthly report with every number against last month, first-timers month by month, customer list and export, events | Now (grows with track C) |
+| Groups | Custom, per member business | Group dashboard, passport trail, shared campaigns for BIDs and associations                                                           | Behind track B's gate      |
 
 **Founding member offer:** the first 50 Bristol businesses get Pro at £19/month, locked for life. This keeps your current price point, rewards early risk and creates a deadline ("only 12 founding spots left").
 
-Every paid tier starts with a 30-day free trial, card required at sign-up.
+Every paid tier starts with a 30-day free trial, and **starting one takes no
+card** — it stops by itself unless they add one before the end
+(docs/LAUNCH-FUNNEL.md). Card-up-front converts better per trial started and
+worse per business emailed, and on one road with fifty shops the second number
+is the one we have.
 
 ## Bristol go-to-market
 
@@ -245,20 +334,32 @@ Start on Gloucester Road and win it street by street before moving across the ci
 
 ## Metrics to track
 
-Weekly active businesses is the number that matters most. A business that stamps or redeems every week rarely cancels. Build these into the admin dashboard in Phase 1.
+Two of these are the business. The rest are diagnosis.
 
-| Metric                    | Definition                                                    | Target by end of Phase 2 |
-| ------------------------- | ------------------------------------------------------------- | ------------------------ |
-| Paying businesses         | Active paid subscriptions                                     | 100                      |
-| Monthly recurring revenue | Sum of monthly subscription value                             | about £2,200             |
-| Weekly active businesses  | Paid businesses with at least 1 stamp or redemption that week | 70%                      |
-| Monthly churn             | Paid businesses cancelling per month                          | under 5%                 |
-| Trial to paid             | Trials that convert after 30 days                             | 40%                      |
-| Customers per business    | Followers plus loyalty card holders                           | 150                      |
-| Repeat visit rate         | Customers with 2+ visits in 30 days                           | 35%                      |
-| Cross-visits              | Customers active at 2+ Promotello businesses                  | 15%                      |
+**The number that decides everything: customers we can prove we sent, per
+business, per month.** It is what the pitch promises, what the guarantee is
+written against, and what a renewal is bought with. If it is zero we have a
+product problem; if it is good and they still cancel we have a reporting problem.
 
-The targets are starting assumptions. Reset them after the first 25 businesses have been live for two months.
+**The number that says the network is real: cross-visits.** A customer active at
+two Promotello businesses is the only evidence that any of this is more than
+fifty separate shops with the same software. It is zero today.
+
+| Metric | Definition | Target |
+| --- | --- | --- |
+| Attributed customers per business | First-time customers we can show we sent, per month | 10 by month two of a business being live |
+| Cross-visits | Customers active at 2+ Promotello businesses | Above zero, then 15% |
+| Paying businesses | Active paid subscriptions | 10 on one street, then 25 in Bristol |
+| Weekly active businesses | Paid businesses with a stamp, claim or redemption that week | 70% |
+| Monthly churn | Paid businesses cancelling per month | under 5% |
+| Trial to paid | Trials that convert after 30 days | 40% — expect it to fall now the trial takes no card, and the number of trials started to rise by more |
+| Claim-to-visit rate | Claimed vouchers that get used | 60%. It is 40% today on tiny numbers, and every unused claim is an attributed visit we nearly had |
+| Repeat visit rate | Customers with 2+ visits in 30 days | 35% |
+| Customers per business | Followers plus loyalty card holders | 150 |
+
+The targets are starting assumptions. Reset them after the first 25 businesses
+have been live for two months — and treat the first two rows as the only ones
+worth reporting to yourself weekly.
 
 ## Building it with Claude Code
 
