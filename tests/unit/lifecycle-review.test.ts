@@ -77,7 +77,7 @@ test("sending comes before writing an offer", () => {
 
 // A business that has just signed up: nothing done, nothing sent, and
 // not paying for anything.
-function fresh(kind: LifecycleDue["kind"], overrides: Partial<LifecycleDue["details"]> = {}): LifecycleDue {
+function fresh(kind: LifecycleDue["kind"]): LifecycleDue {
     return {
         ...due(kind),
         hasPro: false,
