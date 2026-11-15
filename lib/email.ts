@@ -156,7 +156,7 @@ export async function sendEmails(emails: Email[]): Promise<SendResult> {
 // don't show SVG), at twice its display size for sharp screens, with alt
 // text for apps that block images.
 export function emailLogoRow() {
-    return `<tr><td style="padding:24px 28px 0"><img src="${absoluteUrl("/brand/promotello-email-logo.png")}" width="150" height="40" alt="Promotello" style="display:block;width:150px;height:auto;border:0;outline:none;text-decoration:none;color:#FF593F;font-size:20px;font-weight:700"></td></tr>`;
+    return `<tr><td style="padding:0 0 4px"><img src="${absoluteUrl("/brand/promotello-email-logo.png")}" width="150" height="40" alt="Promotello" style="display:block;width:150px;height:auto;border:0;outline:none;text-decoration:none;color:#FF593F;font-size:20px;font-weight:700"></td></tr>`;
 }
 
 export function escapeHtml(value: string) {
@@ -170,8 +170,45 @@ export function escapeHtml(value: string) {
 
 // The company's registered details, at the foot of every email: UK law
 // requires them in business emails.
-export function emailCompanyFooter(width = 520) {
+export function emailCompanyFooter(width = EMAIL_WIDTH) {
     return `<p style="max-width:${width}px;margin:12px auto 0;font-size:11px;line-height:1.6;color:#8a91a3">${escapeHtml(companyDisclosure())}</p>`;
+}
+
+// How wide an email's words are allowed to get. One number, shared,
+// because the four templates had drifted to 520 and 560 apiece.
+export const EMAIL_WIDTH = 600;
+
+// The shell every email is drawn in: the logo, one column of content,
+// and the legal footer under it.
+//
+// There is no card and no coloured page behind it. A white email on a
+// white background is the shape every email an ordinary person gets
+// has — a border and a tinted page say "marketing" before a word is
+// read, and they cost about 60px of width on a phone, which is where
+// nearly all of these are opened.
+//
+// `rows` are table rows, because that is the only layout every mail
+// client agrees on.
+export function emailShell({
+    rows,
+    footer = "",
+    width = EMAIL_WIDTH,
+}: {
+    rows: string;
+    footer?: string;
+    width?: number;
+}) {
+    return `<!doctype html>
+<html><body style="margin:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 16px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:${width}px">
+${emailLogoRow()}
+${rows}
+</table>
+${footer}
+${emailCompanyFooter(width)}
+</td></tr></table>
+</body></html>`;
 }
 
 // A simple branded email: heading, paragraphs and one button. Text is
@@ -211,23 +248,19 @@ export function brandedEmail({
 }) {
     const e = escapeHtml;
 
-    const html = `<!doctype html>
-<html><body style="margin:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
-${emailLogoRow()}
-<tr><td style="padding:20px 28px 8px">
+    const html = emailShell({
+        rows: `<tr><td style="padding:16px 0 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(eyebrow)}</p>
-<h1 style="margin:12px 0 0;font-size:24px;line-height:1.25">${e(title)}</h1>
-${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(text)}</p>`).join("\n")}
+<h1 style="margin:12px 0 0;font-size:26px;line-height:1.25">${e(title)}</h1>
+${paragraphs.map((text) => `<p style="margin:14px 0 0;font-size:16px;line-height:1.65;color:#45506a">${e(text)}</p>`).join("\n")}
 </td></tr>
-${code ? `<tr><td style="padding:20px 28px 4px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;border:1px solid #e8e2da;border-radius:12px"><tr><td align="center" style="padding:18px 16px">
+${code ? `<tr><td style="padding:20px 0 4px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;border-radius:12px"><tr><td align="center" style="padding:18px 16px">
 <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b7387">Your code</p>
 <p style="margin:10px 0 0;font-size:34px;font-weight:700;line-height:1.2;letter-spacing:.18em;text-indent:.18em;color:#17233B">${e(code)}</p>
 </td></tr></table>
 </td></tr>
-` : ""}${voucher ? `<tr><td style="padding:20px 28px 4px">
+` : ""}${voucher ? `<tr><td style="padding:20px 0 4px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#17233B;border-radius:16px"><tr><td align="center" style="padding:26px 20px">
 <span style="display:inline-block;padding:5px 12px;border:1px solid #3a4258;border-radius:999px;font-size:12px;font-weight:600;color:#c6cbd8">Your claimed voucher</span>
 <p style="margin:18px 0 0;font-size:13px;color:#aab1c2">Your redemption code</p>
@@ -236,23 +269,20 @@ ${code ? `<tr><td style="padding:20px 28px 4px">
 <p style="margin:14px auto 0;max-width:340px;font-size:13px;line-height:1.6;color:#aab1c2">Show this to staff when you pay. They can scan it or type the code.</p>
 </td></tr></table>
 </td></tr>
-` : ""}${details?.length ? `<tr><td style="padding:18px 28px 0">
+` : ""}${details?.length ? `<tr><td style="padding:18px 0 0">
 ${details
     .map(
         (detail) => `<p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a91a3">${e(detail.label)}</p>
-<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#45506a;white-space:pre-line">${e(detail.text)}</p>`,
+<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#45506a;white-space:pre-line">${e(detail.text)}</p>`,
     )
     .join("\n")}
 </td></tr>
-` : ""}${action ? `<tr><td style="padding:20px 28px 28px">
-<a href="${e(action.url)}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${e(action.label)}</a>
+` : ""}${action ? `<tr><td style="padding:20px 0 8px">
+<a href="${e(action.url)}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 24px;border-radius:10px">${e(action.label)}</a>
 <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#6b7387;word-break:break-all">Or open this link: ${e(action.url)}</p>
-</td></tr>` : `<tr><td style="padding:0 0 28px"></td></tr>`}
-</table>
-<p style="max-width:520px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">${e(footer)}${footerLinks.length ? "<br>" + footerLinks.map((link) => `<a href="${e(link.url)}" style="color:#6b7387">${e(link.label)}</a>`).join(" · ") : ""}</p>
-${emailCompanyFooter()}
-</td></tr></table>
-</body></html>`;
+</td></tr>` : ""}`,
+        footer: `<p style="max-width:${EMAIL_WIDTH}px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">${e(footer)}${footerLinks.length ? "<br>" + footerLinks.map((link) => `<a href="${e(link.url)}" style="color:#6b7387">${e(link.label)}</a>`).join(" · ") : ""}</p>`,
+    });
 
     const text = [
         title,

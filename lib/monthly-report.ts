@@ -1,4 +1,4 @@
-import { emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { EMAIL_WIDTH, emailShell, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
@@ -65,22 +65,17 @@ export function monthlyReportEmail(
         ? `${visits.current} customer ${visits.current === 1 ? "visit" : "visits"} came through Promotello in ${monthName}.`
         : `Here's how ${monthName} went on Promotello.`;
 
-    const html = `<!doctype html>
-<html><body style="margin:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
-${emailLogoRow()}
-<tr><td style="padding:20px 28px 28px">
+    const html = emailShell({
+        rows: `<tr><td style="padding:16px 0 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(report.business_name)} · ${e(monthName)}</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.3">${e(headline)}</h1>
 <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#45506a">You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}. Changes are against the month before.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">${tableRows}</table>
 ${firstTimers ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#FFF4EE;border-radius:12px"><tr><td style="padding:18px 20px"><p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">First-timers, and who came back</p><p style="margin:8px 0 0;font-size:15px;line-height:1.6">${e(firstTimers)}</p></td></tr></table>` : ""}
 <a href="${analyticsUrl}" style="display:inline-block;margin-top:24px;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">See full analytics</a>
-</td></tr></table>
-<p style="max-width:560px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">Your monthly report from Promotello, sent to business owners on Growth.</p>
-${emailCompanyFooter(560)}
-</td></tr></table></body></html>`;
+</td></tr>`,
+        footer: `<p style="max-width:${EMAIL_WIDTH}px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">Your monthly report from Promotello, sent to business owners on Growth.</p>`,
+    });
 
     const text = [
         `${report.business_name} · ${monthName}`,

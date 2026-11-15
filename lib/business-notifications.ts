@@ -1,4 +1,4 @@
-import { brandedEmail, emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { EMAIL_WIDTH, emailShell, brandedEmail, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
@@ -52,12 +52,8 @@ export function dailySummaryEmail(summary: DailySummary, to: string, dayName: st
         )
         .join("");
 
-    const html = `<!doctype html>
-<html><body style="margin:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
-${emailLogoRow()}
-<tr><td style="padding:20px 28px 28px">
+    const html = emailShell({
+        rows: `<tr><td style="padding:16px 0 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(summary.business_name)} · Daily summary</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.3">${e(headline)}</h1>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">
@@ -65,10 +61,9 @@ ${emailLogoRow()}
 ${rows}
 </table>
 <a href="${redemptionsUrl}" style="display:inline-block;margin-top:24px;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">See redemptions</a>
-</td></tr></table>
-<p style="max-width:560px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">You're getting this because the daily summary is on for ${e(summary.business_name)}.<br><a href="${settingsUrl}" style="color:#6b7387">Notification settings</a></p>
-${emailCompanyFooter(560)}
-</td></tr></table></body></html>`;
+</td></tr>`,
+        footer: `<p style="max-width:${EMAIL_WIDTH}px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">You're getting this because the daily summary is on for ${e(summary.business_name)}.<br><a href="${settingsUrl}" style="color:#6b7387">Notification settings</a></p>`,
+    });
 
     const text = [
         `${summary.business_name} · Daily summary`,

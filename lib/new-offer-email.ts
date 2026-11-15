@@ -1,4 +1,4 @@
-import { emailCompanyFooter, emailLogoRow, escapeHtml, sendEmails, type Email } from "@/lib/email";
+import { EMAIL_WIDTH, emailShell, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
@@ -32,29 +32,22 @@ export function newOfferEmail(offer: OfferForEmail, to: string, unsubscribeToken
     const until = expiryLabel(offer.expires_at);
     const e = escapeHtml;
 
-    const html = `<!doctype html>
-<html><body style="margin:0;background:#FFF8F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#17233B">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:32px 16px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid #e8e2da">
-${emailLogoRow()}
-<tr><td style="padding:20px 28px 8px">
+    const html = emailShell({
+        rows: `<tr><td style="padding:16px 0 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">New from ${e(business)}</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.25">${e(offer.title)}</h1>
 <p style="margin:12px 0 0;display:inline-block;background:#FFF0EC;color:#C2341F;font-weight:700;font-size:15px;padding:6px 12px;border-radius:999px">${e(offer.discount)}</p>
 <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(offer.description)}</p>
 ${until ? `<p style="margin:12px 0 0;font-size:13px;color:#6b7387">Available until ${e(until)}.</p>` : ""}
 </td></tr>
-<tr><td style="padding:20px 28px 28px">
+<tr><td style="padding:16px 0 8px">
 <a href="${offerUrl}" style="display:inline-block;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">Claim this offer</a>
-</td></tr>
-</table>
-<p style="max-width:520px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">
+</td></tr>`,
+        footer: `<p style="max-width:${EMAIL_WIDTH}px;margin:20px auto 0;font-size:12px;line-height:1.6;color:#6b7387">
 You're getting this because you follow ${e(business)} on Promotello.<br>
 <a href="${unsubscribeUrl}" style="color:#6b7387">Unsubscribe from ${e(business)}</a> · <a href="${settingsUrl}" style="color:#6b7387">Email settings</a>
-</p>
-${emailCompanyFooter()}
-</td></tr></table>
-</body></html>`;
+</p>`,
+    });
 
     const text = [
         `New from ${business}: ${offer.title}`,
