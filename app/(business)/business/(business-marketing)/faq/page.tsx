@@ -182,7 +182,7 @@ const sections = [
             {
                 question: "How does the free trial work?",
                 answer:
-                    "Pro and Growth start with a 30-day free trial. We ask for a card but don't charge it until the trial ends, and each business gets one trial.",
+                    "Pro and Growth start with a 30-day free trial, and starting one takes no card. Add one before it ends to carry on, or let it stop by itself. Each business gets one trial.",
             },
             {
                 question: "Are there fees per claim or per customer?",

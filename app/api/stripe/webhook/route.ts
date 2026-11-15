@@ -243,8 +243,24 @@ async function syncSubscription(
   supabase: AdminClient,
   subscriptionId: string,
 ) {
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  // The customer comes back with it so we can see whether there is a
+  // card behind the subscription: Stripe leaves the subscription's own
+  // default_payment_method null when the customer's default is the one
+  // that would be charged.
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+    expand: ["customer"],
+  });
   const customerId = idOf(subscription.customer);
+
+  const stripeCustomer =
+    typeof subscription.customer === "object" && !subscription.customer.deleted
+      ? subscription.customer
+      : null;
+
+  const hasPaymentMethod = Boolean(
+    subscription.default_payment_method
+      ?? stripeCustomer?.invoice_settings?.default_payment_method,
+  );
 
   const { data: customer, error: customerError } = await supabase
     .from("billing_customers")
@@ -294,6 +310,12 @@ async function syncSubscription(
       // leaves cancel_at_period_end false.
       cancel_at_period_end: after.cancel_at_period_end,
       trial_end: toTimestamp(subscription.trial_end),
+      // Whether there is anything to charge when the trial ends. A trial
+      // now starts without a card (docs/LAUNCH-FUNNEL.md), so this is
+      // the difference between "your plan carries on" and "add a card to
+      // keep it" — and sending the wrong one of those is the worst email
+      // we could write.
+      has_payment_method: hasPaymentMethod,
       canceled_at: toTimestamp(subscription.canceled_at),
       updated_at: new Date().toISOString(),
     },

@@ -84,7 +84,7 @@ const principles = [
 const questions = [
     {
         question: "How does the free trial work?",
-        answer: `Pro and Growth start with a ${TRIAL_DAYS}-day free trial. We ask for a card when you start, but don't charge it until the trial ends. Cancel any time before then from your billing page and you won't pay anything. Each business can have one free trial.`,
+        answer: `Pro and Growth start with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. If you want to carry on, add a card before the trial ends; if you don't, it stops by itself and nothing is charged — there's nothing to remember to cancel. Each business can have one free trial.`,
     },
     {
         question: "What is the founding member price?",

@@ -273,3 +273,48 @@ test("the trial-ending email follows the same rule", () => {
     assert.ok(real);
     assert.match(real!.text, /18 customer visits/);
 });
+
+// The end of a trial is now two different events: a card on it is
+// charged, and a trial started without one simply stops
+// (docs/LAUNCH-FUNNEL.md). Telling somebody their plan carries on
+// automatically when it is about to lapse is the worst email we could
+// send, so each branch is pinned.
+test("a trial with a card is told it carries on", () => {
+    const email = lifecycleEmail(
+        due("trial_ending", { trial_end: "2027-01-20T00:00:00Z", trial_has_card: true, visits: 4 }),
+        "sam@example.com",
+    )!;
+
+    assert.match(email.subject, /trial ends on 20 January/);
+    assert.match(email.text, /carries on automatically/);
+    assert.ok(!email.text.includes("no card"));
+});
+
+test("a trial with no card is asked for one, and told what stops", () => {
+    const email = lifecycleEmail(
+        due("trial_ending", { trial_end: "2027-01-20T00:00:00Z", trial_has_card: false, visits: 4 }),
+        "sam@example.com",
+    )!;
+
+    assert.match(email.subject, /Keep Little Loaf on Pro/);
+    assert.match(email.text, /nothing is charged and nothing will be/);
+    assert.match(email.text, /Add a card and keep it/);
+
+    // The promise that would now be false.
+    assert.ok(!email.text.includes("carries on automatically"));
+
+    // And what Free actually costs them, which is the argument for the
+    // card. It must not overstate: the stamp card keeps working.
+    assert.match(email.text, /stamp card keeps working/);
+});
+
+// Every trial started before the flag existed took a card, so a payload
+// without it must read as one that did.
+test("an older payload with no flag reads as a trial with a card", () => {
+    const email = lifecycleEmail(
+        due("trial_ending", { trial_end: "2027-01-20T00:00:00Z", visits: 1 }),
+        "sam@example.com",
+    )!;
+
+    assert.match(email.text, /carries on automatically/);
+});

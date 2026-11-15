@@ -457,7 +457,7 @@ async function PlanOptions({
                 You&apos;re on the Free plan: your business page and{" "}
                 {FREE_LIVE_OFFER_LIMIT} live offer.{" "}
                 {trialEligible
-                    ? `Pro and Growth start with a ${TRIAL_DAYS}-day free trial. We'll ask for a card, but won't charge it until the trial ends, and you can cancel any time.`
+                    ? `Pro and Growth start with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. Add one before it ends to carry on, or do nothing and it stops by itself.`
                     : "Pick a plan to reactivate your subscription."}
             </p>
 

@@ -80,7 +80,7 @@ const steps = [
     {
         art: <TrialArt />,
         title: "Your free trial",
-        body: "The trial runs for 30 days and your first payment is taken the day it ends. Cancel before then and you are not charged.",
+        body: "The trial runs for 30 days and takes no card to start. Add one before the last day to carry on; leave it and the plan stops on its own, with nothing charged.",
     },
     {
         art: <CardArt />,

@@ -67,13 +67,32 @@ export async function startCheckout(formData: FormData) {
     const trialEligible = existing.length === 0;
     const origin = await getOrigin();
 
+    // A trial takes no card (docs/LAUNCH-FUNNEL.md).
+    //
+    // The loyalty card is the half of the pitch that sells the product,
+    // and it is behind Pro — so a card form stood between a business and
+    // the only thing that would convince it. Card-up-front converts
+    // better per trial started and worse per business emailed, and on
+    // one road with fifty shops the second number is the one we have.
+    //
+    // With nothing to charge, Stripe cancels when the trial ends rather
+    // than billing a card that was never given. That makes the
+    // trial-ending email the ask ("add a card to keep it"), which is a
+    // better email than a warning about a charge.
+    //
+    // Anybody who has already had their free trial pays today, so that
+    // checkout still needs a card.
     const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         client_reference_id: businessId,
         line_items: [{ price: priceIds[plan], quantity: 1 }],
+        payment_method_collection: trialEligible ? "if_required" : "always",
         subscription_data: {
             trial_period_days: trialEligible ? TRIAL_DAYS : undefined,
+            trial_settings: trialEligible
+                ? { end_behavior: { missing_payment_method: "cancel" } }
+                : undefined,
             metadata: { business_id: businessId },
         },
         success_url: `${origin}${billingPath}?checkout=success`,
