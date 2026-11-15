@@ -24,6 +24,10 @@ import {
     voucherIssued,
     voucherUsed,
     type NotificationContent,
+    businessRestored,
+    businessSuspended,
+    offerRestored,
+    offerSuspended,
 } from "@/lib/notifications";
 import { daysUntil } from "@/lib/daily-notices";
 
@@ -374,4 +378,36 @@ test("a card that fills twice leaves two receipts, not one", () => {
         rewardGiven({ ...card, round: 1 }).dedupeKey,
         rewardGiven({ ...card, round: 2 }).dedupeKey,
     );
+});
+
+
+// Suspension and restoration are keyed on the moment rather than on the
+// thing, because one business can come down and go back up more than
+// once — and a key of "business:{id}:suspended" would silence every
+// suspension after the first.
+test("a business hears about every time it comes down, not only the first", () => {
+    const first = businessSuspended(business, "2026-11-15T09:00:00Z", { reason: "unreachable" });
+    const second = businessSuspended(business, "2027-02-03T09:00:00Z", { reason: "complaints" });
+
+    assert.notEqual(first.dedupeKey, second.dedupeKey);
+    assert.match(first.body!, /haven't heard back/);
+    assert.match(second.body!, /wasn't honoured/);
+    assert.equal(first.href, "/business/b-1", "to the page that says why");
+
+    const back = businessRestored(business, "2026-11-16T09:00:00Z");
+    assert.notEqual(back.dedupeKey, first.dedupeKey);
+    assert.equal(back.title, "Dublin Pub is back on Promotello");
+});
+
+test("a suspended offer is told the cause and keeps its claimed vouchers", () => {
+    const down = offerSuspended(offer, "2026-11-15T09:00:00Z", { reason: "no-longer-available" });
+
+    assert.equal(down.title, "“Free pastry” is off the site for now");
+    assert.match(down.body!, /doesn't look to be available/);
+    assert.equal(down.href, "/business/b-1/offers");
+
+    // No reason recorded at all still says the true thing.
+    assert.match(offerSuspended(offer, "x").body!, /already claimed still work/);
+
+    assert.equal(offerRestored(offer, "x").title, "“Free pastry” is back");
 });

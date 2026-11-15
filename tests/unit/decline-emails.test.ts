@@ -19,7 +19,7 @@ const offer = { id: "o-1", title: "Free pastry", slug: "free-pastry", business: 
 const edit = { id: "o-1", businessId: "b-1", title: "Free pastry", slug: "free-pastry", business: "Dublin Pub" };
 
 test("a declined business is told the cause and what to change", () => {
-    const reason = findReason("business", "thin-profile")!;
+    const reason = findReason("business", "rejected", "thin-profile")!;
     const email = businessReviewedEmail(business, "rejected", "owner@example.com", {
         reason: "thin-profile",
         note: "There's a logo and nothing else yet.",
@@ -35,7 +35,7 @@ test("a declined business is told the cause and what to change", () => {
 });
 
 test("a declined offer goes to its own editor, because saving re-queues it", () => {
-    const reason = findReason("offer", "hard-to-check")!;
+    const reason = findReason("offer", "rejected", "hard-to-check")!;
     const email = offerReviewedEmail(offer, "rejected", "owner@example.com", {
         reason: "hard-to-check",
         note: null,
@@ -75,4 +75,68 @@ test("an approval is untouched by any of this", () => {
 
     assert.equal(yes.subject, "Your offer is live: Free pastry");
     assert.ok(!yes.text.includes("What to change"));
+});
+
+// Taken down after it was live. The message has one job beyond saying
+// why: making it plain that nothing of theirs is gone, because a
+// business that thinks it has lost its customers cancels rather than
+// replies.
+test("a suspended business is told what it still has", () => {
+    const reason = findReason("business", "suspended", "complaints")!;
+    const email = businessReviewedEmail(business, "suspended", "owner@example.com", {
+        reason: "complaints",
+        note: "Two people said the 2-for-1 wasn't given on a Saturday.",
+    });
+
+    assert.equal(email.subject, "Dublin Pub is off Promotello for now");
+    assert.ok(email.text.includes(reason.says));
+    assert.ok(email.text.includes("Two people said"));
+    assert.match(email.text, /Nothing is deleted/);
+    assert.match(email.text, /stamps are all exactly as you left them/);
+    assert.ok(email.html.includes("help#suspended"), "the article about getting back");
+
+    // What to change is the wrong label for something that was fine
+    // yesterday.
+    assert.ok(email.text.includes("What puts it back"));
+    assert.ok(!email.text.includes("What to change"));
+});
+
+test("a suspended offer says claimed vouchers still work", () => {
+    const email = offerReviewedEmail(offer, "suspended", "owner@example.com", {
+        reason: "no-longer-available",
+        note: null,
+    });
+
+    assert.equal(email.subject, "Your offer is off the site: Free pastry");
+    assert.match(email.text, /Vouchers people already claimed still work/);
+    assert.ok(email.html.includes("/business/b-1/offers/o-1/edit"));
+});
+
+// Coming back is not the same event as arriving.
+test("a restored business is not told to print its first poster", () => {
+    const back = businessReviewedEmail(business, "approved", "owner@example.com", {
+        previous: "suspended",
+    });
+
+    assert.equal(back.subject, "Dublin Pub is back on Promotello");
+    assert.ok(!back.text.includes("print your QR poster"));
+    assert.match(back.text, /kept their stamps/);
+
+    const first = businessReviewedEmail(business, "approved", "owner@example.com");
+    assert.equal(first.subject, "Dublin Pub is live on Promotello");
+    assert.match(first.text, /print your QR poster/);
+});
+
+test("a restored offer says the printed codes work again", () => {
+    const back = offerReviewedEmail(offer, "approved", "owner@example.com", {
+        previous: "suspended",
+    });
+
+    assert.equal(back.subject, "Your offer is back: Free pastry");
+    assert.match(back.text, /without reprinting anything/);
+
+    assert.equal(
+        offerReviewedEmail(offer, "approved", "owner@example.com").subject,
+        "Your offer is live: Free pastry",
+    );
 });

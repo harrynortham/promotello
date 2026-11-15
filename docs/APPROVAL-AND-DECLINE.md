@@ -21,9 +21,15 @@ business replied to ask, we had to remember.
 
 ## Where the words live
 
-`lib/review-reasons.ts` holds eight causes for a business and eight for an
-offer. Each is a code, the admin's label, the sentence the business reads
+`lib/review-reasons.ts` holds four lists: eight causes for turning a business
+down, eight for an offer, and five each for taking a live business or offer
+**down**. Each is a code, the admin's label, the sentence the business reads
 (`says`) and what to do about it (`fix`).
+
+Rejection and suspension are never the same list. "The end date won't work" is
+not why a live offer comes off the site, and "we couldn't reach you" is not
+why a sign-up is refused. The lookup takes both the subject and the action, so
+a suspension can never render a rejection's words.
 
 The **code** is stored on the row. The **sentences are not**: they are
 rebuilt on every read, so the wording can be improved without a migration
@@ -49,7 +55,9 @@ words, and the dashboard says we didn't record a reason and to ask us.
 | **Offer declined** | "{Title} wasn't approved" — cause, note, **What to change**, → that offer's editor | The cause itself → their offers | The cause above the offer, beside **Edit offer** |
 | **Change to a live offer approved** | "Your changes are live" | Same | New wording on the offer |
 | **Change declined** | "We couldn't approve the new wording" — says the offer is still up, then the cause → that offer's editor | The cause itself | Offer unchanged and still live |
-| **Suspended** | Nothing | Nothing | Banner says suspended, no reason |
+| **Business suspended** | "{Name} is off Promotello for now" — cause, note, **What puts it back**, and what is *not* lost | The cause itself → `/business/{id}` | Banner, then the cause and what puts it back |
+| **Offer suspended** | "Your offer is off the site" — cause, note, and that claimed vouchers still work | The cause itself → their offers | The cause above the offer |
+| **Business or offer restored** | "{Name} is back on Promotello" / "Your offer is back" | Same | Banner gone |
 
 Both declined-offer emails now open the **business's own editor**
 (`/business/{id}/offers/{offerId}/edit`), not the customer's page. Saving
@@ -96,14 +104,39 @@ scroll to a closed accordion. "Check why an offer is not public" said "read
 any feedback we sent", which was feedback that did not exist; it now points at
 the offer itself.
 
-## Not in this
+## Suspension
 
-**Suspension.** `review_business` and `review_offer` both accept
-`'suspended'`, the audit trigger logs it and the dashboard has a banner for
-it, but there is no control for it in `/admin` and nothing is sent when it
-happens — it is reachable only by hand in SQL. Either it gets a control and a
-message or it should come off the admin surface. Said here so it is a decision
-rather than an oversight.
+`20270108090000_a_suspension_says_why_too.sql`. Suspension was accepted by
+both functions, logged by the trigger and drawn as a banner — and reachable
+only by hand in SQL, sending nothing. Something that was live could come off
+the site without a word to the business whose page it was.
+
+**Take it down** sits on an approved business and an approved offer, **Put it
+back** on a suspended one, and both open the same dialog with the suspension
+list. The database requires a reason for `suspended` exactly as it does for
+`rejected`, including through the old two-argument call.
+
+Two things make this message different from a decline:
+
+- **What is not lost is the point.** Nothing is deleted; offers, loyalty cards
+  and the stamps on them survive; posters go on working; claimed vouchers are
+  never cancelled and should still be honoured at the counter. A business that
+  believes it has lost its customers cancels, and a business that understands
+  it is paused replies. `tests/unit/review-reasons.test.ts` holds every
+  suspension sentence to that — none of them may say deleted, removed for
+  good, or cancelled.
+- **Coming back is its own event.** Approving a suspended row is a
+  restoration, which the row cannot tell you once it is written — so the
+  caller passes the status it came from. Without it, a business open for a
+  year gets told to print its first QR poster.
+
+The two notifications are keyed on the moment (`…:suspended:{updated_at}`),
+not on the thing, because one business can go down and come back more than
+once and must hear about each. `/business/help#suspended` is the article both
+messages link to: what a suspension does, what it doesn't, and the causes,
+built from the same lists the reviewer picks from.
+
+## Not in this
 
 **A rejected change on the offers page.** A declined edit is covered by its
 email and its notification, and the offer itself stays live, so there is no

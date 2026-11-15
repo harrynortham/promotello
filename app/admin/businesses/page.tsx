@@ -79,7 +79,10 @@ const statusStyles: Record<Status, string> = {
 
 type ReviewAction = {
     businessId: string;
-    decision: "approved" | "rejected";
+    decision: "approved" | "rejected" | "suspended";
+    // What it is coming from. "Approve" on a suspended business is a
+    // restoration, and reads nothing like a first approval.
+    previous: Status;
 } | null;
 
 const pageSize = 25;
@@ -262,12 +265,20 @@ export default function AdminBusinessesPage() {
 
     async function reviewBusiness(
         businessId: string,
-        decision: "approved" | "rejected",
+        decision: "approved" | "rejected" | "suspended",
+        previous: Status,
     ) {
-        // A decline carries its reason into the row, so the email, the
-        // notification and their dashboard all read the same words.
-        if (decision === "rejected" && !declineReady("business", decline)) {
-            setErrorMessage("Choose why it wasn't approved.");
+        // A decline or a suspension carries its reason into the row, so
+        // the email, the notification and their dashboard all read the
+        // same words.
+        const saying = decision === "approved" ? null : decision;
+
+        if (saying && !declineReady("business", saying, decline)) {
+            setErrorMessage(
+                saying === "suspended"
+                    ? "Choose why it's coming down."
+                    : "Choose why it wasn't approved.",
+            );
             return;
         }
 
@@ -279,8 +290,8 @@ export default function AdminBusinessesPage() {
         const { error } = await supabase.rpc("review_business", {
             business_id: businessId,
             decision,
-            reason: decision === "rejected" ? decline.reason : null,
-            note: decision === "rejected" ? decline.note.trim() : null,
+            reason: saying ? decline.reason : null,
+            note: saying ? decline.note.trim() : null,
         });
 
         if (error) {
@@ -289,7 +300,7 @@ export default function AdminBusinessesPage() {
             return;
         }
 
-        await notifyBusinessReviewed(businessId, decision).catch((notifyError) =>
+        await notifyBusinessReviewed(businessId, decision, previous).catch((notifyError) =>
             console.error("Could not email the business", notifyError),
         );
 
@@ -573,6 +584,7 @@ export default function AdminBusinessesPage() {
                                                                 setReviewAction({
                                                                     businessId: business.id,
                                                                     decision: "approved",
+                                                                    previous: business.approval_status,
                                                                 })
                                                             }
                                                         >
@@ -587,12 +599,50 @@ export default function AdminBusinessesPage() {
                                                                 setReviewAction({
                                                                     businessId: business.id,
                                                                     decision: "rejected",
+                                                                    previous: business.approval_status,
                                                                 })
                                                             }
                                                         >
                                                             Reject business
                                                         </Button>
                                                     </>
+                                                )}
+
+                                                {/* Taking a live business down, and putting it
+                                                    back. Suspension used to be reachable only by
+                                                    hand in SQL, which meant it happened without
+                                                    anybody being told. */}
+                                                {business.approval_status === "approved" && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        disabled={activeBusinessId === business.id}
+                                                        onClick={() =>
+                                                            setReviewAction({
+                                                                businessId: business.id,
+                                                                decision: "suspended",
+                                                                previous: business.approval_status,
+                                                            })
+                                                        }
+                                                    >
+                                                        Take it down
+                                                    </Button>
+                                                )}
+
+                                                {business.approval_status === "suspended" && (
+                                                    <Button
+                                                        type="button"
+                                                        disabled={activeBusinessId === business.id}
+                                                        onClick={() =>
+                                                            setReviewAction({
+                                                                businessId: business.id,
+                                                                decision: "approved",
+                                                                previous: business.approval_status,
+                                                            })
+                                                        }
+                                                    >
+                                                        Put it back
+                                                    </Button>
                                                 )}
                                             </div>
                                         </CardContent>
@@ -650,21 +700,30 @@ export default function AdminBusinessesPage() {
                 <DialogContent className="max-h-[85dvh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
-                            {reviewAction?.decision === "approved"
-                                ? "Approve this business?"
-                                : "Reject this business?"}
+                            {reviewAction?.decision === "suspended"
+                                ? "Take this business down?"
+                                : reviewAction?.decision === "rejected"
+                                    ? "Reject this business?"
+                                    : reviewAction?.previous === "suspended"
+                                        ? "Put this business back?"
+                                        : "Approve this business?"}
                         </DialogTitle>
 
                         <DialogDescription>
-                            {reviewAction?.decision === "approved"
-                                ? "This business will be eligible to appear publicly."
-                                : "It stays hidden from customers, and its owners are told why."}
+                            {reviewAction?.decision === "suspended"
+                                ? "It comes off the directory with its offers, and its owners are told why. Nothing is deleted."
+                                : reviewAction?.decision === "rejected"
+                                    ? "It stays hidden from customers, and its owners are told why."
+                                    : reviewAction?.previous === "suspended"
+                                        ? "It goes back on the directory with the offers that were live before, and its owners are told."
+                                        : "This business will be eligible to appear publicly."}
                         </DialogDescription>
                     </DialogHeader>
 
-                    {reviewAction?.decision === "rejected" && (
+                    {reviewAction && reviewAction.decision !== "approved" && (
                         <DeclineReason
                             of="business"
+                            action={reviewAction.decision}
                             value={decline}
                             onChange={setDecline}
                             disabled={activeBusinessId !== ""}
@@ -690,23 +749,29 @@ export default function AdminBusinessesPage() {
                             }
                             disabled={
                                 activeBusinessId !== ""
-                                || (reviewAction?.decision === "rejected"
-                                    && !declineReady("business", decline))
+                                || (reviewAction !== null
+                                    && reviewAction.decision !== "approved"
+                                    && !declineReady("business", reviewAction.decision, decline))
                             }
                             onClick={() => {
                                 if (reviewAction) {
                                     reviewBusiness(
                                         reviewAction.businessId,
                                         reviewAction.decision,
+                                        reviewAction.previous,
                                     );
                                 }
                             }}
                         >
                             {activeBusinessId !== ""
                                 ? "Saving…"
-                                : reviewAction?.decision === "approved"
-                                    ? "Approve business"
-                                    : "Reject business"}
+                                : reviewAction?.decision === "suspended"
+                                    ? "Take it down"
+                                    : reviewAction?.decision === "rejected"
+                                        ? "Reject business"
+                                        : reviewAction?.previous === "suspended"
+                                            ? "Put it back"
+                                            : "Approve business"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -26,12 +26,19 @@ export type ReviewReason = {
 
 export type ReviewOf = "business" | "offer";
 
+// Turned down before it was ever live, or taken down after it was.
+// Different causes, a different message, and for a suspension a page
+// that was working yesterday — so they are never the same list.
+export type ReviewAction = "rejected" | "suspended";
+
 // The anchors in /business/help. The help article and the email say the
-// same thing, so the link has somewhere to land.
-export const HELP_ANCHORS: Record<ReviewOf, string> = {
+// same thing, so the link has somewhere to land. Suspension is one
+// article for both sides: what it means and how to get back.
+export const HELP_ANCHORS = {
     business: "business-declined",
     offer: "offer-declined",
-};
+    suspended: "suspended",
+} as const;
 
 export const BUSINESS_REASONS: ReviewReason[] = [
     {
@@ -135,13 +142,98 @@ export const OFFER_REASONS: ReviewReason[] = [
     },
 ];
 
-export function reasonsFor(of: ReviewOf) {
+// Taking down something that was live is a different conversation. The
+// causes are about what has happened since, not about the writing, and
+// the business is standing in front of a page that worked yesterday.
+export const BUSINESS_SUSPENSIONS: ReviewReason[] = [
+    {
+        code: "complaints",
+        label: "Customers say an offer wasn't honoured",
+        says: "Customers have told us an offer here wasn't honoured the way it was written, so we've taken the page down while we sort it out.",
+        fix: "Reply to this email and tell us what happened. Most of these are a misunderstanding at the counter and are back up the same day.",
+    },
+    {
+        code: "unreachable",
+        label: "We couldn't reach you",
+        says: "We've tried to reach you about this page and haven't heard back, so we've taken it down rather than leave customers walking into something out of date.",
+        fix: "Reply to this email and we'll put it straight back up.",
+    },
+    {
+        code: "details-changed",
+        label: "The business has changed",
+        says: "The business looks to have moved, closed or changed hands, and the page no longer describes it.",
+        fix: "Tell us what's changed, or put the profile right yourself, and we'll put it back.",
+    },
+    {
+        code: "at-your-request",
+        label: "You asked us to",
+        says: "You asked us to take the page down.",
+        fix: "Reply to this email whenever you want it back and we'll restore it, offers and all.",
+    },
+    {
+        code: "under-review",
+        label: "Something reported, under review",
+        says: "Something has been reported to us and we've paused the page while we look at it. This isn't a decision.",
+        fix: "Reply to this email and we'll tell you exactly what was reported.",
+    },
+    {
+        code: "other",
+        label: "Something else (write it below)",
+        says: "",
+        fix: "Reply to this email and we'll sort it out with you.",
+    },
+];
+
+export const OFFER_SUSPENSIONS: ReviewReason[] = [
+    {
+        code: "not-honoured",
+        label: "Customers say it wasn't honoured",
+        says: "Customers have told us this offer wasn't honoured the way it reads, so we've taken it off the site while we sort it out.",
+        fix: "Reply to this email and tell us what happened, or edit the offer so it says what you can give.",
+    },
+    {
+        code: "no-longer-available",
+        label: "What's on offer has gone",
+        says: "The thing this offer gives doesn't look to be available any more.",
+        fix: "Edit the offer to something you can give today, and it goes back up when we've read it.",
+    },
+    {
+        code: "misleading",
+        label: "Promises more than it gives",
+        says: "Reading it again, it promises more than it turns out to give, and somebody claiming it would arrive expecting something else.",
+        fix: "Edit the headline so it matches what happens at the counter.",
+    },
+    {
+        code: "at-your-request",
+        label: "You asked us to",
+        says: "You asked us to take this offer down.",
+        fix: "Reply to this email whenever you want it back, or write a new one in its place.",
+    },
+    {
+        code: "under-review",
+        label: "Something reported, under review",
+        says: "Something has been reported to us about this offer and we've paused it while we look. This isn't a decision.",
+        fix: "Reply to this email and we'll tell you exactly what was reported.",
+    },
+    {
+        code: "other",
+        label: "Something else (write it below)",
+        says: "",
+        fix: "Reply to this email and we'll sort it out with you.",
+    },
+];
+
+export function reasonsFor(of: ReviewOf, action: ReviewAction) {
+    if (action === "suspended") {
+        return of === "business" ? BUSINESS_SUSPENSIONS : OFFER_SUSPENSIONS;
+    }
+
     return of === "business" ? BUSINESS_REASONS : OFFER_REASONS;
 }
 
-export function findReason(of: ReviewOf, code: string | null | undefined) {
+export function findReason(of: ReviewOf, action: ReviewAction, code: string | null | undefined) {
     if (!code) return null;
-    return reasonsFor(of).find((reason) => reason.code === code) ?? null;
+    return reasonsFor(of, action).find((reason) => reason.code === code) ?? null;
 }
 
 // A note is only text somebody typed, so it is trimmed, capped and —
@@ -158,8 +250,13 @@ export function noteIsRequired(code: string) {
     return code === "other";
 }
 
-export function declineIsComplete(of: ReviewOf, code: string, note: string | null | undefined) {
-    const reason = findReason(of, code);
+export function declineIsComplete(
+    of: ReviewOf,
+    action: ReviewAction,
+    code: string,
+    note: string | null | undefined,
+) {
+    const reason = findReason(of, action, code);
     if (!reason) return false;
     return !noteIsRequired(code) || tidyNote(note) !== null;
 }
@@ -169,10 +266,11 @@ export function declineIsComplete(of: ReviewOf, code: string, note: string | nul
 // about this business, and the fix is what to do about it.
 export function declineLines(
     of: ReviewOf,
+    action: ReviewAction,
     code: string | null | undefined,
     note?: string | null,
 ): string[] {
-    const reason = findReason(of, code);
+    const reason = findReason(of, action, code);
     const written = tidyNote(note);
 
     if (!reason) {
@@ -188,10 +286,11 @@ export function declineLines(
 // note wins over the stock sentence: it was written about them.
 export function declineSummary(
     of: ReviewOf,
+    action: ReviewAction,
     code: string | null | undefined,
     note?: string | null,
 ): string | null {
-    const reason = findReason(of, code);
+    const reason = findReason(of, action, code);
     const written = tidyNote(note);
 
     if (!reason) return written;
@@ -200,6 +299,6 @@ export function declineSummary(
     return written ?? reason.says;
 }
 
-export function helpAnchor(of: ReviewOf) {
-    return `/business/help#${HELP_ANCHORS[of]}`;
+export function helpAnchor(of: ReviewOf, action: ReviewAction) {
+    return `/business/help#${action === "suspended" ? HELP_ANCHORS.suspended : HELP_ANCHORS[of]}`;
 }

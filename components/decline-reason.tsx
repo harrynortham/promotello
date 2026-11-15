@@ -2,7 +2,13 @@
 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { NOTE_MAX, noteIsRequired, reasonsFor, type ReviewOf } from "@/lib/review-reasons";
+import {
+    NOTE_MAX,
+    noteIsRequired,
+    reasonsFor,
+    type ReviewAction,
+    type ReviewOf,
+} from "@/lib/review-reasons";
 
 // The reason, asked for at the moment of the decision.
 //
@@ -21,23 +27,25 @@ export type Decline = { reason: string; note: string };
 
 export const emptyDecline: Decline = { reason: "", note: "" };
 
-export function declineReady(of: ReviewOf, decline: Decline) {
+export function declineReady(of: ReviewOf, action: ReviewAction, decline: Decline) {
     if (decline.reason === "") return false;
     return !noteIsRequired(decline.reason) || decline.note.trim() !== "";
 }
 
 export function DeclineReason({
     of,
+    action,
     value,
     onChange,
     disabled = false,
 }: {
     of: ReviewOf;
+    action: ReviewAction;
     value: Decline;
     onChange: (next: Decline) => void;
     disabled?: boolean;
 }) {
-    const reasons = reasonsFor(of);
+    const reasons = reasonsFor(of, action);
     const chosen = reasons.find((reason) => reason.code === value.reason);
     const needsNote = value.reason !== "" && noteIsRequired(value.reason);
 
@@ -63,7 +71,7 @@ export function DeclineReason({
                         >
                             <input
                                 type="radio"
-                                name={`decline-${of}`}
+                                name={`decline-${of}-${action}`}
                                 value={reason.code}
                                 checked={value.reason === reason.code}
                                 onChange={() => onChange({ ...value, reason: reason.code })}
@@ -86,12 +94,12 @@ export function DeclineReason({
             )}
 
             <div className="space-y-2">
-                <Label htmlFor={`decline-note-${of}`}>
+                <Label htmlFor={`decline-note-${of}-${action}`}>
                     {needsNote ? "What to tell them" : "Anything to add (optional)"}
                 </Label>
 
                 <Textarea
-                    id={`decline-note-${of}`}
+                    id={`decline-note-${of}-${action}`}
                     rows={3}
                     maxLength={NOTE_MAX}
                     disabled={disabled}

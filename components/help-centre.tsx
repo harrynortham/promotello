@@ -26,10 +26,10 @@ export type HelpGuide = {
     title: string;
     description: string;
     steps: string[];
-    // A list that isn't a sequence — the reasons something gets turned
-    // down, say. Steps are numbered, and numbering a list of causes
-    // reads as an order to do them in.
-    list?: { title: string; items: string[] };
+    // Lists that aren't sequences — the reasons something gets turned
+    // down, what a suspension does and doesn't do. Steps are numbered,
+    // and numbering a list of causes reads as an order to do them in.
+    lists?: { title: string; items: string[] }[];
     note?: string;
     link?: {
         label: string;
@@ -100,8 +100,7 @@ export default function HelpCentre({
             guide.description,
             guide.category,
             ...guide.steps,
-            guide.list?.title ?? "",
-            ...(guide.list?.items ?? []),
+            ...(guide.lists ?? []).flatMap((list) => [list.title, ...list.items]),
             guide.note ?? "",
         ]
             .join(" ")
@@ -325,21 +324,21 @@ export default function HelpCentre({
                                                         )}
                                                     </ol>
 
-                                                    {guide.list && (
-                                                        <div className="mt-5">
+                                                    {(guide.lists ?? []).map((list) => (
+                                                        <div key={list.title} className="mt-5">
                                                             <p className="text-sm font-semibold text-foreground">
-                                                                {guide.list.title}
+                                                                {list.title}
                                                             </p>
 
                                                             <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
-                                                                {guide.list.items.map((item, index) => (
+                                                                {list.items.map((item, index) => (
                                                                     <li key={index} className="pl-1">
                                                                         {item}
                                                                     </li>
                                                                 ))}
                                                             </ul>
                                                         </div>
-                                                    )}
+                                                    ))}
 
                                                     {guide.note && (
                                                         <p className="mt-5 rounded-xl bg-muted/50 p-4 text-sm leading-7 text-muted-foreground">

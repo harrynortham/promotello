@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-import { declineLines, findReason, helpAnchor, type ReviewOf } from "@/lib/review-reasons";
+import {
+    declineLines,
+    findReason,
+    helpAnchor,
+    type ReviewAction,
+    type ReviewOf,
+} from "@/lib/review-reasons";
 
 // What we couldn't approve, where they are standing when they find out.
 //
@@ -14,23 +20,31 @@ import { declineLines, findReason, helpAnchor, type ReviewOf } from "@/lib/revie
 
 export function WhyNotApproved({
     of,
+    action,
     reason,
     note,
     className = "",
 }: {
     of: ReviewOf;
+    action: ReviewAction;
     reason: string | null | undefined;
     note: string | null | undefined;
     className?: string;
 }) {
-    const lines = declineLines(of, reason, note);
-    const fix = findReason(of, reason)?.fix;
+    const lines = declineLines(of, action, reason, note);
+    const fix = findReason(of, action, reason)?.fix;
     const said = lines.filter((line) => line !== fix);
 
     return (
         <div className={`rounded-xl border border-red-100 bg-red-50/60 p-4 ${className}`}>
             <p className="text-sm font-semibold text-[#17233B]">
-                {of === "business" ? "Why it wasn't approved" : "Why this offer wasn't approved"}
+                {action === "suspended"
+                    ? of === "business"
+                        ? "Why it was taken down"
+                        : "Why this offer was taken down"
+                    : of === "business"
+                        ? "Why it wasn't approved"
+                        : "Why this offer wasn't approved"}
             </p>
 
             {said.length > 0 ? (
@@ -49,15 +63,19 @@ export function WhyNotApproved({
             {fix && (
                 <div className="mt-3 rounded-lg bg-white/70 p-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-[#FF593F]">
-                        What to change
+                        {action === "suspended" ? "What puts it back" : "What to change"}
                     </p>
                     <p className="mt-1 text-sm leading-6 text-[#17233B]/80">{fix}</p>
                 </div>
             )}
 
             <p className="mt-3 text-sm text-[#17233B]/70">
-                <Link href={helpAnchor(of)} className="font-medium underline underline-offset-4">
-                    {of === "business" ? "Why a business isn't approved" : "Why an offer isn't approved"}
+                <Link href={helpAnchor(of, action)} className="font-medium underline underline-offset-4">
+                    {action === "suspended"
+                        ? "What suspended means"
+                        : of === "business"
+                            ? "Why a business isn't approved"
+                            : "Why an offer isn't approved"}
                 </Link>
                 {" · "}
                 <Link

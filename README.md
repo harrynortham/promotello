@@ -385,20 +385,12 @@ From [docs/ROADMAP.md](docs/ROADMAP.md), in the order to build them, re-cut on 9
 Create own wallet apps instead of being tied to apple and google. use our own push and scanning
 
 1. Apple and Google Wallet passes. Apply for an Apple Developer account and a Google Wallet issuer account first, as approval takes time
-2. Switching kit: CSV import of members and stamp balances, and a one-time starting balance from a paper card
-3. The attributed repeat-visit report: first visits Promotello sent, how many came back, how many became regulars. The one number no loyalty app can print, and the reason a business renews
-4. Loyalty in discovery: cards on the offers and businesses listings with a filter for them, so a card is seen by people who have never been in
-5. One wallet for the street, then the Bristol passport trail: every nearby independent in one place, then stamps collected across members
-6. Customer list, segments (lapsed, VIP) and CSV export with consent flags
-7. Customer refer-a-friend
-8. Wallet push messages and location alerts (needs 1)
+2. Loyalty in discovery: cards on the offers and businesses listings with a filter for them, so a card is seen by people who have never been in
+3. One wallet for the street, then the Bristol passport trail: every nearby independent in one place, then stamps collected across members
+4. Customer refer-a-friend
+5. Wallet push messages and location alerts (needs 1)
 
-Parked on purpose, as feature depth that only invites a comparison with a £10 stamp-card app. Build one when a paying business asks twice:
-
-- Multiple cards and reward ladders (5 stamps = pastry, 10 = coffee)
-- Double-stamp days, reusing the quiet-hours schedules
 - Surprise rewards and scratch-to-win / wheel spin daily - check if prize to claim. business lists prizes and quantities, spin without account, claim needs created account. Is it gambling? Create nice branded wheel poster to put next to bar, 1 spin per device per day? (your note, kept: the wheel is the one parked idea with a poster behind it, which makes it the first to unpark)
-- SMS credits, NFC stamp tags, spend-based points, VIP tiers, Zapier
 
 Smaller gaps:
 

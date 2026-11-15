@@ -558,6 +558,9 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         </AlertTitle>
                         <AlertDescription>
                             It isn&apos;t visible to customers.{" "}
+                            {business.approval_status === "suspended"
+                                ? "Nothing is deleted: your offers, your loyalty cards and their stamps are all still here."
+                                : null}{" "}
                             <Link href="/business/contact" className="underline underline-offset-4">
                                 Contact us
                             </Link>{" "}
@@ -568,13 +571,12 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     {/* The reason, where they are when they read the
                         banner — rather than in an email they have to go
                         and find. */}
-                    {business.approval_status === "rejected" && (
-                        <WhyNotApproved
-                            of="business"
-                            reason={business.review_reason}
-                            note={business.review_note}
-                        />
-                    )}
+                    <WhyNotApproved
+                        of="business"
+                        action={business.approval_status === "suspended" ? "suspended" : "rejected"}
+                        reason={business.review_reason}
+                        note={business.review_note}
+                    />
                 </div>
             )}
 

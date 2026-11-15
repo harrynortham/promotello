@@ -27,11 +27,19 @@ import { OfferCorrections } from "./offer-corrections";
 
 type PageProps = { params: Promise<{ offerId: string }> };
 
-// The reason a decline carried, where there is one. Rows written before
-// 20270107090000 have only the status change in them.
-function declineOf(metadata: unknown) {
+// The reason a decline or a suspension carried, where there is one.
+// Rows written before 20270107090000 have only the status change in
+// them. Which list the code came from depends on the action, so a
+// suspension's cause is never read off the rejection list.
+function declineOf(action: string, metadata: unknown) {
+    if (action !== "offer_rejected" && action !== "offer_suspended") return null;
+
     const held = (metadata ?? {}) as { reason?: string | null; note?: string | null };
-    const label = findReason("offer", held.reason)?.label;
+    const label = findReason(
+        "offer",
+        action === "offer_suspended" ? "suspended" : "rejected",
+        held.reason,
+    )?.label;
 
     return [label, held.note].filter(Boolean).join(" — ") || null;
 }
@@ -322,9 +330,9 @@ async function Overview({ params }: PageProps) {
                                             {/* What we told them, so a reply
                                                 about it doesn't rely on
                                                 anybody remembering. */}
-                                            {declineOf(entry.metadata) && (
+                                            {declineOf(entry.action, entry.metadata) && (
                                                 <span className="mt-1 block text-xs font-normal text-[#17233B]/65">
-                                                    {declineOf(entry.metadata)}
+                                                    {declineOf(entry.action, entry.metadata)}
                                                 </span>
                                             )}
                                         </span>

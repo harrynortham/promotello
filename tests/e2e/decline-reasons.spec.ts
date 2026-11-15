@@ -18,7 +18,15 @@ const admin = () =>
 
 const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
 
-async function seedPendingOffer(businessId: string, businessUserId: string) {
+// Seeded at the status it needs to be at, never updated into it:
+// require_review_of_edited_offer exempts platform admins by auth.uid(),
+// and the service role has none — so an update to 'approved' lands back
+// on 'pending' and the test waits for a button that isn't there.
+async function seedOffer(
+    businessId: string,
+    businessUserId: string,
+    approval: "pending" | "approved" = "pending",
+) {
     const { data, error } = await admin()
         .from("offers")
         .insert({
@@ -32,7 +40,7 @@ async function seedPendingOffer(businessId: string, businessUserId: string) {
             availability: "Any time",
             expires_at: "2030-12-31",
             terms: "For automated tests only.",
-            approval_status: "pending",
+            approval_status: approval,
         })
         .select("id, title")
         .single();
@@ -45,7 +53,7 @@ test("an offer cannot be declined without a reason, and the reason reaches the b
     test.setTimeout(300_000);
     const { businessId, businessUserId } = state();
 
-    const offer = await seedPendingOffer(businessId, businessUserId);
+    const offer = await seedOffer(businessId, businessUserId);
     await admin().from("platform_admins").insert({ user_id: businessUserId });
 
     try {
@@ -129,7 +137,7 @@ test("an offer cannot be declined without a reason, and the reason reaches the b
 test("the database refuses a decline with no reason, and clears one on approval", async () => {
     const { businessId, businessUserId, businessEmail, testPassword } = state();
 
-    const offer = await seedPendingOffer(businessId, businessUserId);
+    const offer = await seedOffer(businessId, businessUserId);
     await admin().from("platform_admins").insert({ user_id: businessUserId });
 
     const reviewer = createClient(
@@ -206,4 +214,119 @@ test("the help article the email links to opens on arrival", async ({ page }) =>
     const article = page.locator("details#offer-declined");
     await expect(article).toHaveAttribute("open", "", { timeout: 60_000 });
     await expect(article.getByText("The reasons we turn an offer down")).toBeVisible();
+});
+
+// Taking down something that was live. The control did not exist before
+// this: suspension happened in SQL, so it happened silently.
+test("a live offer can be taken down with a reason, and put back", async ({ browser }) => {
+    test.setTimeout(300_000);
+    const { businessId, businessUserId } = state();
+
+    const offer = await seedOffer(businessId, businessUserId, "approved");
+    await admin().from("platform_admins").insert({ user_id: businessUserId });
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto("/admin/offers", { timeout: 120_000 });
+
+        await expect(page.getByRole("heading", { name: "Offers", level: 1 })).toBeVisible({ timeout: 90_000 });
+        await page.getByRole("button", { name: "All offers" }).click();
+        await page.getByRole("textbox", { name: "Search offers" }).fill(offer.title);
+        await page.getByRole("button", { name: "Search", exact: true }).click();
+
+        await expect(page.getByText(offer.title)).toBeVisible({ timeout: 60_000 });
+        await page.getByRole("button", { name: "Take it down", exact: true }).click();
+
+        const confirm = page.getByRole("button", { name: "Take it down", exact: true }).last();
+        await expect(confirm).toBeDisabled();
+
+        // The suspension list, not the rejection one: "End date won't
+        // work" is not why a live offer comes off the site.
+        await expect(page.getByRole("radio", { name: /End date won't work/ })).toHaveCount(0);
+        await page.getByRole("radio", { name: /What's on offer has gone/ }).check();
+
+        await expect(confirm).toBeEnabled();
+        await confirm.click({ timeout: 30_000 });
+        await expect(page.getByRole("dialog")).toBeHidden({ timeout: 120_000 });
+
+        const { data: down } = await admin()
+            .from("offers")
+            .select("approval_status, review_reason")
+            .eq("id", offer.id)
+            .single();
+
+        expect(down?.approval_status).toBe("suspended");
+        expect(down?.review_reason).toBe("no-longer-available");
+
+        // The business reads the same words, under the heading that
+        // belongs to something taken down rather than refused.
+        const business = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await business.goto(`/business/${businessId}/offers`, { timeout: 120_000 });
+
+        await expect(business.getByText("Why this offer was taken down").first())
+            .toBeVisible({ timeout: 90_000 });
+        await expect(business.getByText("What puts it back").first()).toBeVisible();
+
+        // And back again.
+        await page.getByRole("button", { name: "Put it back", exact: true }).click();
+        await page.getByRole("button", { name: "Put it back", exact: true }).last().click({ timeout: 30_000 });
+        await expect(page.getByRole("dialog")).toBeHidden({ timeout: 120_000 });
+
+        const { data: up } = await admin()
+            .from("offers")
+            .select("approval_status, review_reason, review_note")
+            .eq("id", offer.id)
+            .single();
+
+        expect(up?.approval_status).toBe("approved");
+        expect(up?.review_reason, "and the reason goes with it").toBeNull();
+        expect(up?.review_note).toBeNull();
+    } finally {
+        await admin().from("platform_admins").delete().eq("user_id", businessUserId);
+        await admin().from("offers").delete().eq("id", offer.id);
+    }
+});
+
+test("the database refuses a suspension with no reason", async () => {
+    const { businessId, businessUserId, businessEmail, testPassword } = state();
+
+    const offer = await seedOffer(businessId, businessUserId, "approved");
+    await admin().from("platform_admins").insert({ user_id: businessUserId });
+
+    const reviewer = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    try {
+        await reviewer.auth.signInWithPassword({ email: businessEmail, password: testPassword });
+
+        const bare = await reviewer.rpc("review_offer", {
+            offer_id: offer.id,
+            decision: "suspended",
+            reason: null,
+            note: null,
+        });
+        expect(bare.error?.message).toMatch(/Say why/);
+
+        // Including by the old two-argument call, which is how a
+        // suspension used to happen with nothing said.
+        const legacy = await reviewer.rpc("review_offer", {
+            offer_id: offer.id,
+            decision: "suspended",
+        });
+        expect(legacy.error?.message).toMatch(/Say why/);
+
+        const { data: still } = await admin()
+            .from("offers")
+            .select("approval_status")
+            .eq("id", offer.id)
+            .single();
+
+        expect(still?.approval_status, "and it stayed up").toBe("approved");
+    } finally {
+        await admin().from("platform_admins").delete().eq("user_id", businessUserId);
+        await admin().from("offers").delete().eq("id", offer.id);
+    }
 });

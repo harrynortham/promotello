@@ -485,9 +485,11 @@ async function OffersContent({ params }: PageProps) {
                                             reason goes above the offer, where
                                             the Edit button is — editing sends
                                             it straight back to us. */}
-                                        {offer.approval_status === "rejected" && (
+                                        {(offer.approval_status === "rejected"
+                                            || offer.approval_status === "suspended") && (
                                             <WhyNotApproved
                                                 of="offer"
+                                                action={offer.approval_status === "suspended" ? "suspended" : "rejected"}
                                                 reason={offer.review_reason}
                                                 note={offer.review_note}
                                                 className="mb-5"
