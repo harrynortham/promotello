@@ -18,7 +18,7 @@ export function businessReviewedEmail(business: BusinessForEmail, decision: Revi
             title: `${business.name} is live on Promotello`,
             paragraphs: [
                 `Customers can now find ${business.name} on Promotello, along with your offers once each one is approved.`,
-                "Next, print your QR poster from your dashboard and put it in your window or by the till. It's how passers-by find your offers and loyalty card.",
+                "Next, print your QR poster from your dashboard and put it in your window or by the counter. It's how passers-by find your offers and loyalty card.",
             ],
             action: { label: "See your page", url: absoluteUrl(`/businesses/${business.slug}`) },
             footer: "You're getting this because you run a business on Promotello.",
@@ -50,7 +50,7 @@ export function offerReviewedEmail(offer: OfferForEmail, decision: ReviewDecisio
             title: `"${offer.title}" is live`,
             paragraphs: [
                 `Customers can now see and claim it on ${offer.business.name}'s page and in the Promotello offers directory.`,
-                "Mention it to customers at the till, or put your QR poster up so passers-by can claim it too.",
+                "Mention it when you serve somebody, or put your QR poster up so passers-by can claim it too.",
             ],
             action: { label: "See your offer", url: absoluteUrl(`/offers/${offer.slug}`) },
             footer: `You're getting this because you manage ${offer.business.name} on Promotello.`,
@@ -63,7 +63,7 @@ export function offerReviewedEmail(offer: OfferForEmail, decision: ReviewDecisio
         eyebrow: "Offer not approved",
         title: `"${offer.title}" wasn't approved`,
         paragraphs: [
-            "We couldn't approve this offer as written. The usual reasons are unclear terms, or a discount that's hard to check at the till.",
+            "We couldn't approve this offer as written. The usual reasons are unclear terms, or a discount that's hard to check while somebody is being served.",
             "Reply to this email and we'll tell you what to change.",
         ],
         action: { label: "Open your offers", url: absoluteUrl(`/business/${offer.business.id}/offers`) },

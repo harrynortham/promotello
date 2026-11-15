@@ -24,7 +24,7 @@ export function teamInvitationEmail({
             `${inviterName} has invited you to join ${businessName} as ${role === "admin" ? "an admin" : "a team member"}.`,
             role === "admin"
                 ? "Admins can manage offers, redeem vouchers and stamp loyalty cards."
-                : "Team members can redeem vouchers and stamp loyalty cards at the till.",
+                : "Team members can redeem vouchers and add stamps to loyalty cards, by scanning a customer's phone with their own.",
             "Sign in or create an account with this email address to accept. The invitation lasts 7 days.",
         ],
         action: { label: "Accept invitation", url: absoluteUrl(`/invite/${token}`) },
