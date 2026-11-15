@@ -266,6 +266,7 @@ export function LoyaltyCardBuilder({
     program,
     submitLabel,
     locked = false,
+    suggested = null,
 }: {
     businessId: string;
     businessName: string;
@@ -275,10 +276,16 @@ export function LoyaltyCardBuilder({
     replacing?: boolean;
     submitLabel: string;
     locked?: boolean;
+    // The card we drew in their preview email. Only ever the starting
+    // state of a first card, never anything already saved
+    // (docs/LAUNCH-FUNNEL.md).
+    suggested?: { reward: string; stamps: number } | null;
 }) {
     const [name, setName] = useState(program?.name ?? "");
-    const [stampsRequired, setStampsRequired] = useState(program?.stamps_required ?? 8);
-    const [reward, setReward] = useState(program?.reward ?? "");
+    const [stampsRequired, setStampsRequired] = useState(
+        program?.stamps_required ?? suggested?.stamps ?? 8,
+    );
+    const [reward, setReward] = useState(program?.reward ?? suggested?.reward ?? "");
     const [terms, setTerms] = useState(program?.terms ?? "");
     const [colour, setColour] = useState<CardChoice>(cardColourChoice(program?.card_colour));
     const [custom, setCustom] = useState<CustomColours>(

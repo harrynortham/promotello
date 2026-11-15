@@ -12,6 +12,7 @@ import {
     isLiveOffer,
     businessTier,
 } from "@/lib/billing";
+import { readStarter } from "@/lib/starter";
 import { createClient } from "@/utils/supabase/server";
 import NewOfferForm from "./new-offer-form";
 
@@ -21,13 +22,15 @@ type PageProps = {
     }>;
     searchParams: Promise<{
         created?: string;
+        // Arrived from "Use this offer" on the dashboard.
+        from?: string;
     }>;
 };
 
 async function NewOfferPageContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { created }] = await Promise.all([params, searchParams]);
+    const [{ businessId }, { created, from }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
 
     const {
@@ -87,12 +90,21 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
         .eq("id", businessId)
         .maybeSingle();
 
+    // The line from their preview email, where they followed the button
+    // that offers it. Only the title: the type decides what the offer
+    // promises, and guessing that from a sentence would put a promise on
+    // their page that they never made (docs/LAUNCH-FUNNEL.md).
+    const suggestedTitle = from === "email"
+        ? (await readStarter(supabase, businessId)).offer
+        : null;
+
     return (
         <NewOfferForm
             businessId={businessId}
             businessName={business?.name ?? "Your business"}
             businessLogoUrl={business?.logo_url ?? null}
             defaultCategoryId={business?.category_id ?? null}
+            suggestedTitle={suggestedTitle}
             canSchedule={(await businessTier(supabase, businessId).catch(() => "free")) === "growth"}
         />
     );
