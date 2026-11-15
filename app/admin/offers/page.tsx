@@ -15,6 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+    DeclineReason,
+    declineReady,
+    emptyDecline,
+    type Decline,
+} from "@/components/decline-reason";
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -64,6 +70,16 @@ type Offer = {
 
 type ReviewAction = {
     offerId: string;
+    decision: "approved" | "rejected" | "suspended";
+    // What it is coming from. "Approve" on a suspended offer is a
+    // restoration, and reads nothing like a first approval.
+    previous: Status;
+} | null;
+
+// Turning a change down is a decision like any other, so it is asked
+// the same way: a reason, and the dialog won't send without one.
+type EditAction = {
+    editId: string;
     decision: "approved" | "rejected";
 } | null;
 
@@ -154,6 +170,10 @@ export default function AdminOffersPage() {
     const [activeOfferId, setActiveOfferId] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [reviewAction, setReviewAction] = useState<ReviewAction>(null);
+    const [editAction, setEditAction] = useState<EditAction>(null);
+    // Why it wasn't approved. Cleared when either dialog closes, so a
+    // reason never carries over to the next one in the queue.
+    const [decline, setDecline] = useState<Decline>(emptyDecline);
     // The offer being read in full, rather than scrolling past every
     // description in the queue.
     const [reading, setReading] = useState<Offer | null>(null);
@@ -323,12 +343,19 @@ export default function AdminOffersPage() {
     }, [isAllowed, appliedSearch, page, tab, status, refreshKey, loadOffers]);
 
     async function reviewEdit(editId: string, decision: "approved" | "rejected") {
+        if (decision === "rejected" && !declineReady("offer", "rejected", decline)) {
+            setErrorMessage("Choose why the new wording wasn't approved.");
+            return;
+        }
+
         setActiveEditId(editId);
         setErrorMessage("");
 
         const { error } = await createClient().rpc("apply_offer_edit", {
             edit_id: editId,
             decision,
+            reason: decision === "rejected" ? decline.reason : null,
+            note: decision === "rejected" ? decline.note.trim() : null,
         });
 
         if (error) {
@@ -341,14 +368,28 @@ export default function AdminOffersPage() {
             console.error("Could not email the business", notifyError),
         );
 
+        setEditAction(null);
+        setDecline(emptyDecline);
         setRefreshKey((key) => key + 1);
         setActiveEditId("");
     }
 
     async function reviewOffer(
         offerId: string,
-        decision: "approved" | "rejected",
+        decision: "approved" | "rejected" | "suspended",
+        previous: Status,
     ) {
+        const saying = decision === "approved" ? null : decision;
+
+        if (saying && !declineReady("offer", saying, decline)) {
+            setErrorMessage(
+                saying === "suspended"
+                    ? "Choose why it's coming down."
+                    : "Choose why it wasn't approved.",
+            );
+            return;
+        }
+
         setActiveOfferId(offerId);
         setErrorMessage("");
 
@@ -357,6 +398,8 @@ export default function AdminOffersPage() {
         const { error } = await supabase.rpc("review_offer", {
             offer_id: offerId,
             decision,
+            reason: saying ? decline.reason : null,
+            note: saying ? decline.note.trim() : null,
         });
 
         if (error) {
@@ -372,11 +415,12 @@ export default function AdminOffersPage() {
             );
         }
 
-        await notifyBusinessOfOfferReview(offerId, decision).catch((notifyError) =>
+        await notifyBusinessOfOfferReview(offerId, decision, previous).catch((notifyError) =>
             console.error("Could not email the business", notifyError),
         );
 
         setReviewAction(null);
+        setDecline(emptyDecline);
         setReading(null);
         setRefreshKey((key) => key + 1);
         setActiveOfferId("");
@@ -569,7 +613,12 @@ export default function AdminOffersPage() {
                                                     type="button"
                                                     variant="destructive"
                                                     disabled={activeEditId === edit.id}
-                                                    onClick={() => reviewEdit(edit.id, "rejected")}
+                                                    onClick={() =>
+                                                        setEditAction({
+                                                            editId: edit.id,
+                                                            decision: "rejected",
+                                                        })
+                                                    }
                                                 >
                                                     Keep the old wording
                                                 </Button>
@@ -709,6 +758,7 @@ export default function AdminOffersPage() {
                                                                 setReviewAction({
                                                                     offerId: offer.id,
                                                                     decision: "approved",
+                                                                    previous: offer.approval_status,
                                                                 })
                                                             }
                                                         >
@@ -725,12 +775,50 @@ export default function AdminOffersPage() {
                                                                 setReviewAction({
                                                                     offerId: offer.id,
                                                                     decision: "rejected",
+                                                                    previous: offer.approval_status,
                                                                 })
                                                             }
                                                         >
                                                             Reject
                                                         </Button>
                                                     </>
+                                                )}
+
+                                                {/* Taking a live offer down, and putting it
+                                                    back. Suspension used to be reachable only
+                                                    by hand in SQL, so it happened without
+                                                    anybody being told. */}
+                                                {offer.approval_status === "approved" && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        disabled={activeOfferId === offer.id}
+                                                        onClick={() =>
+                                                            setReviewAction({
+                                                                offerId: offer.id,
+                                                                decision: "suspended",
+                                                                previous: offer.approval_status,
+                                                            })
+                                                        }
+                                                    >
+                                                        Take it down
+                                                    </Button>
+                                                )}
+
+                                                {offer.approval_status === "suspended" && (
+                                                    <Button
+                                                        type="button"
+                                                        disabled={activeOfferId === offer.id || !businessLive}
+                                                        onClick={() =>
+                                                            setReviewAction({
+                                                                offerId: offer.id,
+                                                                decision: "approved",
+                                                                previous: offer.approval_status,
+                                                            })
+                                                        }
+                                                    >
+                                                        Put it back
+                                                    </Button>
                                                 )}
                                             </div>
                                         </CardContent>
@@ -854,7 +942,11 @@ export default function AdminOffersPage() {
                                         type="button"
                                         disabled={getBusiness(reading)?.approval_status !== "approved"}
                                         onClick={() =>
-                                            setReviewAction({ offerId: reading.id, decision: "approved" })
+                                            setReviewAction({
+                                                offerId: reading.id,
+                                                decision: "approved",
+                                                previous: reading.approval_status,
+                                            })
                                         }
                                     >
                                         Approve
@@ -871,23 +963,42 @@ export default function AdminOffersPage() {
                 onOpenChange={(open) => {
                     if (!open) {
                         setReviewAction(null);
+                        setDecline(emptyDecline);
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent className="max-h-[85dvh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
-                            {reviewAction?.decision === "approved"
-                                ? "Approve this offer?"
-                                : "Reject this offer?"}
+                            {reviewAction?.decision === "suspended"
+                                ? "Take this offer down?"
+                                : reviewAction?.decision === "rejected"
+                                    ? "Reject this offer?"
+                                    : reviewAction?.previous === "suspended"
+                                        ? "Put this offer back?"
+                                        : "Approve this offer?"}
                         </DialogTitle>
 
                         <DialogDescription>
-                            {reviewAction?.decision === "approved"
-                                ? "This offer will become eligible to appear publicly."
-                                : "This offer will not appear publicly to customers."}
+                            {reviewAction?.decision === "suspended"
+                                ? "It comes off the site and the business is told why. Vouchers already claimed are not cancelled."
+                                : reviewAction?.decision === "rejected"
+                                    ? "It stays hidden from customers, and the business is told why."
+                                    : reviewAction?.previous === "suspended"
+                                        ? "It goes back on the site, and anything printed with its QR code works again."
+                                        : "This offer will become eligible to appear publicly."}
                         </DialogDescription>
                     </DialogHeader>
+
+                    {reviewAction && reviewAction.decision !== "approved" && (
+                        <DeclineReason
+                            of="offer"
+                            action={reviewAction.decision}
+                            value={decline}
+                            onChange={setDecline}
+                            disabled={activeOfferId !== ""}
+                        />
+                    )}
 
                     <DialogFooter>
                         <Button
@@ -911,16 +1022,85 @@ export default function AdminOffersPage() {
                                     reviewOffer(
                                         reviewAction.offerId,
                                         reviewAction.decision,
+                                        reviewAction.previous,
                                     );
                                 }
                             }}
-                            disabled={activeOfferId !== ""}
+                            disabled={
+                                activeOfferId !== ""
+                                || (reviewAction !== null
+                                    && reviewAction.decision !== "approved"
+                                    && !declineReady("offer", reviewAction.decision, decline))
+                            }
                         >
                             {activeOfferId !== ""
                                 ? "Saving…"
-                                : reviewAction?.decision === "approved"
-                                    ? "Approve offer"
-                                    : "Reject offer"}
+                                : reviewAction?.decision === "suspended"
+                                    ? "Take it down"
+                                    : reviewAction?.decision === "rejected"
+                                        ? "Reject offer"
+                                        : reviewAction?.previous === "suspended"
+                                            ? "Put it back"
+                                            : "Approve offer"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Turning down a change to a live offer. The offer itself
+                stays up either way, which is the part the business is
+                told first — this says what was wrong with the words. */}
+            <Dialog
+                open={editAction !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setEditAction(null);
+                        setDecline(emptyDecline);
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[85dvh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Keep the old wording?</DialogTitle>
+
+                        <DialogDescription>
+                            The offer stays live exactly as it is. The business
+                            is told what we couldn&apos;t approve in the new
+                            version.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DeclineReason
+                        of="offer"
+                        action="rejected"
+                        value={decline}
+                        onChange={setDecline}
+                        disabled={activeEditId !== ""}
+                    />
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setEditAction(null)}
+                            disabled={activeEditId !== ""}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => {
+                                if (editAction) {
+                                    reviewEdit(editAction.editId, editAction.decision);
+                                }
+                            }}
+                            disabled={
+                                activeEditId !== "" || !declineReady("offer", "rejected", decline)
+                            }
+                        >
+                            {activeEditId !== "" ? "Saving…" : "Keep the old wording"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

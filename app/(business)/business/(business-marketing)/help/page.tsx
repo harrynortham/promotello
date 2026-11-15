@@ -3,6 +3,13 @@ import type { Metadata } from "next";
 import HelpCentre, {
     type HelpGuide,
 } from "@/components/help-centre";
+import {
+    BUSINESS_REASONS,
+    BUSINESS_SUSPENSIONS,
+    HELP_ANCHORS,
+    OFFER_REASONS,
+    OFFER_SUSPENSIONS,
+} from "@/lib/review-reasons";
 
 export const metadata: Metadata = {
     title: "Business Help Centre",
@@ -117,7 +124,7 @@ const guides: HelpGuide[] = [
             "Check your business has been approved.",
             "Check the offer itself has been approved.",
             "Check the offer has not passed its end date.",
-            "Read any feedback we sent and change what it asks for.",
+            "If it says Rejected, the reason is on the offer itself in Offers — read it and change what it asks for.",
             "Still looks wrong? Contact support and we will take a look.",
         ],
         note:
@@ -126,6 +133,89 @@ const guides: HelpGuide[] = [
             label: "Contact business support",
             href: "/business/contact",
         },
+    },
+    {
+        id: HELP_ANCHORS.business,
+        category: "Business setup",
+        title: "Why a business wasn't approved",
+        description: "What we look for, and how to get it live.",
+        steps: [
+            "Open your business dashboard: the reason is on your overview, under the banner.",
+            "Read what it asks for and change it in Business profile.",
+            "Send the page for review again from your overview.",
+            "We answer the same day. Reply to the email we sent if anything is unclear.",
+        ],
+        lists: [
+            {
+                title: "The reasons we turn a business down",
+                items: BUSINESS_REASONS.filter((reason) => reason.says !== "").map(
+                    (reason) => `${reason.says} ${reason.fix}`,
+                ),
+            },
+        ],
+        note:
+            "Being turned down is not the end of it: nothing is deleted, your page stays exactly as you left it, and most businesses are live the same week. We would rather tell you what is missing than lose you.",
+        link: { label: "Open business dashboard", href: "/business/dashboard" },
+    },
+    {
+        id: HELP_ANCHORS.offer,
+        category: "Offers",
+        title: "Why an offer wasn't approved",
+        description: "What we check, and what to change.",
+        steps: [
+            "Open your business and choose Offers.",
+            "Find the offer marked Rejected: the reason and what to change are on it.",
+            "Choose Edit offer, make the change and save.",
+            "Saving sends it back to us. We read it the same day.",
+        ],
+        lists: [
+            {
+                title: "The reasons we turn an offer down",
+                items: OFFER_REASONS.filter((reason) => reason.says !== "").map(
+                    (reason) => `${reason.says} ${reason.fix}`,
+                ),
+            },
+        ],
+        note:
+            "Every one of these comes down to the same thing: a customer should know what they get before they walk in, and your staff should be able to check it in a second. Reply to the email and we will write the wording for you.",
+    },
+    {
+        id: HELP_ANCHORS.suspended,
+        category: "Offers",
+        title: "What suspended means, and how to get back",
+        description: "Taken down after being live, and what it costs you.",
+        steps: [
+            "Read the reason: it is on your dashboard, on the business or the offer it is about.",
+            "Do the one thing it asks for, or reply to the email we sent.",
+            "We answer the same day, and put it back as soon as it is settled.",
+        ],
+        lists: [
+            {
+                title: "What a suspension does and doesn't do",
+                items: [
+                "Your page or offer comes off the directory, and a poster pointing at a suspended offer sends people to your page instead of nowhere.",
+                "Vouchers customers already claimed are not cancelled. Somebody turning up with one is holding something real, and you should honour it.",
+                "Loyalty cards keep running: stamps already collected stay collected, and nobody loses a reward over this.",
+                "Nothing is deleted. Your profile, offers, photos, followers and analytics are all exactly as you left them.",
+                    "It is not a cancellation and it does not touch your plan or your billing.",
+                ],
+            },
+            {
+                title: "Why we take something down",
+                items: [...BUSINESS_SUSPENSIONS, ...OFFER_SUSPENSIONS]
+                    .filter((reason) => reason.says !== "")
+                    // Both sides share causes word for word in places
+                    // ("you asked us to"), and the article is one list.
+                    .filter(
+                        (reason, index, all) =>
+                            all.findIndex((other) => other.label === reason.label) === index,
+                    )
+                    .map((reason) => reason.says),
+            },
+        ],
+        note:
+            "Most suspensions are a complaint we need your side of, or an offer that has run out of whatever it gave away. They are usually settled the same day. Reply to the email, or contact us, and we will tell you exactly what was reported.",
+        link: { label: "Contact business support", href: "/business/contact" },
     },
     {
         id: "edit-promotion",
