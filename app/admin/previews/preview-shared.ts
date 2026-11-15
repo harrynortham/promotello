@@ -55,25 +55,30 @@ export function introduction(sender: string, town: string, street: string | null
     return street ? `${who}. It's new, and I'm starting with ${street}.` : `${who}, and it's new.`;
 }
 
-// The promise that stands in for reviews we do not have yet.
+// What stands in for reviews we do not have yet.
 //
 // A cold email from an unknown company asks a business to believe two
 // things: that this works, and that we will still be here. There are no
-// testimonials to settle it and inventing them is out, so the honest
-// substitute is to carry the risk ourselves and say so in one sentence
+// testimonials to settle it and inventing them is out
 // (docs/LAUNCH-FUNNEL.md).
 //
-// Bounded on purpose: it is about a paid plan, after the free trial, and
-// about customers rather than revenue — a number we can both see. Change
-// the wording here and it changes everywhere it is offered.
-export function guarantee(placesLeft: number | null) {
-    // The price they would actually be paying, so the sentence is never
-    // about a number they were not offered.
-    const price = placesLeft !== null && placesLeft > 0
-        ? plans.pro_founding_monthly.price
-        : plans.pro_monthly.price;
+// So it points at the one number they can check themselves rather than
+// at a promise they would have to trust. Their analytics page says how
+// many first-time customers Promotello sent them — people who claimed
+// an offer or joined the card at least an hour before their first
+// visit, so somebody joining at the counter is not counted — and since
+// 20270112090000 it says it on every plan, which is what makes this
+// sentence true rather than a nice line.
+//
+// Deliberately not a refund promise. A refund has to be adjudicated,
+// and "nobody came in through it" is a judgement two people can read
+// differently; this is a number we would both be looking at.
+export function ownNumbers(sender: string) {
+    const team = sender === DEFAULT_SENDER;
 
-    return `And if you pay for a month and nobody comes in through it, tell me and I'll refund you. I'd rather have the feedback than the ${price}.`;
+    // Not "it's new, so…": introduction() has already said that, two
+    // paragraphs up, and an email that says it twice sounds unsure.
+    return `You don't have to take ${team ? "our" : "my"} word for any of it: your dashboard shows how many customers Promotello actually sent you, and if that's zero after a month, tell ${team ? "us" : "me"} and we'll sort it out.`;
 }
 
 export function signOff(sender: string) {
@@ -235,7 +240,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         `It's free to use with one offer and a QR poster. ${founding}`,
         "",
-        guarantee(placesLeft),
+        ownNumbers(sender),
         "",
         `Worth a look? It takes about two minutes to make it yours — or reply with a photo of the shop and your hours and I'll finish it for you. If it's not for you, reply "no thanks" and I won't email again.`,
         "",

@@ -126,9 +126,14 @@ without taking the decision off the business.
 - ~~**No social proof, honestly handled.**~~ Done, except the part we
   cannot do yet: `/business/testimonials` still redirects, because there
   is nothing real to show and inventing it is out. The substitute is in
-  the outreach email — `guarantee()` in `preview-shared.ts`, which
-  carries the risk ourselves and quotes the price they were actually
-  offered. The first names on the wall go up when they exist.
+  the outreach email — `ownNumbers()` in `preview-shared.ts`, which
+  points at the one number they can check themselves rather than at a
+  promise they would have to trust. Deliberately not a refund: a refund
+  has to be adjudicated, and "nobody came in through it" is a judgement
+  two people read differently, while "Promotello sent you 41 first-time
+  customers" is a number on their own screen. It is only true because
+  item 4 put that number on every plan. The first names on the wall go
+  up when they exist.
 - ~~**No concierge offer anywhere.**~~ Done: on the preview page under
   the plans, and in the welcome email. "Send us a photo of your shop and
   your hours and we'll finish it for you." At fifty businesses it costs
