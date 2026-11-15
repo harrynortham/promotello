@@ -522,6 +522,9 @@ async function OfferContent({ params }: OfferPageProps) {
                                 isExpired={isExpired}
                                 initialRedemption={existingResult.data}
                                 returnPath={`/offers/${offer.slug}`}
+                                businessId={business.id}
+                                businessName={business.name}
+                                isFollowing={Boolean(follow)}
                             />
                         )}
 
