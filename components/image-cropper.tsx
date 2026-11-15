@@ -5,6 +5,7 @@ import Cropper, { type Area } from "react-easy-crop";
 import { FiMinus, FiPlus } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
+import { encodingFor } from "@/lib/images";
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 3;
@@ -115,10 +116,25 @@ function loadImage(src: string) {
 
 // Draws the cropped area onto a canvas, at most `maxSize` pixels wide. Areas
 // outside the image stay transparent (white for JPEGs, which can't be).
+// Whether anything in the canvas is see-through. The only question that
+// decides PNG or JPEG, and the only honest way to answer it: a file's
+// type says it *can* carry transparency, not that it does. Both of the
+// WebP logos we had were fully opaque, and as PNG they came out four and
+// eight times bigger than they needed to be.
+function hasTransparency(context: CanvasRenderingContext2D, width: number, height: number) {
+    const { data } = context.getImageData(0, 0, width, height);
+
+    for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 255) return true;
+    }
+
+    return false;
+}
+
 export async function cropImage(
     src: string,
     area: Area,
-    { type = "image/png", maxSize = 1024 }: { type?: string; maxSize?: number } = {},
+    { type = "auto", maxSize = 1024 }: { type?: string; maxSize?: number } = {},
 ) {
     const image = await loadImage(src);
     const scale = Math.min(1, maxSize / Math.max(area.width, area.height));
@@ -142,10 +158,29 @@ export async function cropImage(
         0, 0, canvas.width, canvas.height,
     );
 
+    // "auto" is a logo: PNG where it needs transparency, JPEG where it
+    // doesn't. Never WebP, whatever was chosen — Outlook on Windows
+    // renders mail through Word, which has never supported it, so a
+    // .webp logo arrives in an email as a red cross and lib/email.ts
+    // refuses to send one (docs/LAUNCH-FUNNEL.md).
+    const encodeAs = encodingFor(
+        type,
+        type === "auto" && hasTransparency(context, canvas.width, canvas.height),
+    );
+
+    // Chosen after the fact, so the white behind a flattened logo has to
+    // go in now rather than before the draw.
+    if (encodeAs === "image/jpeg" && type === "auto") {
+        context.globalCompositeOperation = "destination-over";
+        context.fillStyle = "#FFFFFF";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.globalCompositeOperation = "source-over";
+    }
+
     return new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
             (blob) => (blob ? resolve(blob) : reject(new Error("The image couldn't be cropped."))),
-            type,
+            encodeAs,
             0.92,
         );
     });

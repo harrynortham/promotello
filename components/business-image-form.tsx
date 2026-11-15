@@ -112,10 +112,18 @@ export function BusinessImageForm({
         setErrorMessage("");
 
         try {
-            // Photos become JPEG to keep them small; a logo keeps PNG or WebP transparency.
-            const type = kind === "cover" || file.type === "image/jpeg" ? "image/jpeg" : file.type;
-            const blob = await cropImage(previewUrl, cropArea, { type, maxSize: config.maxSize });
-            const upload = await uploadBusinessImage(createClient(), businessId, kind, new File([blob], file.name, { type }));
+            // A photograph is always JPEG; a logo is whatever the crop
+            // turned out to need, which cropImage decides from the pixels.
+            const blob = await cropImage(previewUrl, cropArea, {
+                type: kind === "cover" ? "image/jpeg" : "auto",
+                maxSize: config.maxSize,
+            });
+            const upload = await uploadBusinessImage(
+                createClient(),
+                businessId,
+                kind,
+                new File([blob], file.name, { type: blob.type }),
+            );
 
             if ("error" in upload) {
                 throw new Error(upload.error ?? `The ${config.name} couldn't be uploaded.`);

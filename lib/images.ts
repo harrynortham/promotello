@@ -48,3 +48,22 @@ export function localImage(url: string | null | undefined) {
 
     return url.startsWith("blob:") || url.startsWith("data:image/") ? url : null;
 }
+
+// What to encode a cropped image as, given whether it turned out to
+// need transparency.
+//
+// Pure, so the rule is pinned by a test while the pixel-reading that
+// answers `transparent` stays in the canvas code that can see them
+// (components/image-cropper.tsx).
+//
+// "auto" is a logo. A file's type says it *can* carry transparency, not
+// that it does: both WebP logos we had were fully opaque, and as PNG
+// they came out four and eight times bigger for nothing. Never WebP
+// whatever was chosen — Outlook on Windows renders mail through Word,
+// which has never supported it, so a .webp logo arrives in an email as
+// a red cross and lib/email.ts refuses to send one.
+export function encodingFor(requested: string, transparent: boolean) {
+    if (requested !== "auto") return requested;
+
+    return transparent ? "image/png" : "image/jpeg";
+}

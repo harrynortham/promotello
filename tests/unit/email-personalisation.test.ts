@@ -7,7 +7,12 @@ import { firstNameOf, greeting } from "@/lib/recipients";
 // Their logo and their name on the emails we send them, so an email
 // about their business looks like their business.
 
-const host = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example.supabase.co";
+// Set here rather than read from the environment: storedImage() checks
+// against it at call time, so a test that borrows whatever the shell
+// happens to have passes or fails for reasons that aren't the code's.
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+
+const host = "https://example.supabase.co";
 const stored = (file: string) => `${host}/storage/v1/object/public/business-logos/${file}`;
 
 test("a greeting is a thing an email has sometimes, not a field it fills", () => {
