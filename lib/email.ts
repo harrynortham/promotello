@@ -174,16 +174,21 @@ export function escapeHtml(value: string) {
 // file names are the network keys — nothing to keep in step by hand.
 //
 // A business deciding whether to put its name next to ours looks for
-// signs we are a real company, and these are one of them. Drawn at
-// half their size so they stay sharp on a phone, and every one carries
-// its name in alt text for the clients that block images by default.
+// signs we are a real company, and these are one of them — which is a
+// reason for them to be there, not a reason for them to be loud. They
+// are the glyphs alone, in the grey the footer text is already in, so
+// the row reads as small print rather than six buttons.
+//
+// Drawn at half their size so they stay sharp on a phone, and every
+// one carries its name in alt text for the clients that block images
+// by default.
 export function emailSocialRow() {
     const icons = socialProfiles
         .map(
             (profile) =>
-                `<td style="padding:0 5px"><a href="${profile.url}" style="text-decoration:none"><img src="${absoluteUrl(
+                `<td style="padding:0 8px"><a href="${profile.url}" style="text-decoration:none"><img src="${absoluteUrl(
                     `/email/social/${profile.network}.png`,
-                )}" width="30" height="30" alt="${escapeHtml(profile.label)}" style="display:block;width:30px;height:30px;border:0;outline:none"></a></td>`,
+                )}" width="28" height="28" alt="${escapeHtml(profile.label)}" style="display:block;width:28px;height:28px;border:0;outline:none"></a></td>`,
         )
         .join("");
 
