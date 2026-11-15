@@ -21,6 +21,7 @@ import { LoyaltyCardTile } from "./loyalty/loyalty-card-tile";
 import { VoucherGrid } from "./redemptions/voucher-list";
 import { groupVouchers } from "./redemptions/voucher-status";
 import { getWallet } from "./redemptions/wallet";
+import { TellUsYourName } from "@/components/tell-us-your-name";
 
 type ReviewPrompt = {
     business_id: string;
@@ -92,6 +93,10 @@ async function CustomerDashboardContent() {
         (typeof user.user_metadata?.full_name === "string" && user.user_metadata.full_name.split(" ")[0]) ||
         null;
 
+    // Nobody asked them at /signup, so ask here — once, skippably, and
+    // nowhere near the claim flow (components/tell-us-your-name.tsx).
+    const askTheirName = !firstName && !user.user_metadata?.name_asked_at;
+
     // What they can use, not what they have had: a count of spent
     // vouchers and finished cards is history, and this is the top of
     // the page somebody opens at a counter.
@@ -127,6 +132,8 @@ async function CustomerDashboardContent() {
                         <FiArrowRight aria-hidden="true" />
                     </Button>
                 </div>
+
+                {askTheirName && <TellUsYourName />}
 
                 <div className="mt-8 grid grid-cols-2 gap-4">
                     {stats.map((stat) => {

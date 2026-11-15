@@ -21,6 +21,9 @@ import { SetupShell } from "../setup-shell";
 
 const schema = z
     .object({
+        // Asked for only when the account hasn't got one: a customer
+        // who collected stamps first and is now opening a business.
+        yourName: z.string().max(100, "Keep it under 100 characters.").optional(),
         businessName: requiredText("The business name", { min: 2, max: 160 }),
         category: z.string().min(1, "Choose a category."),
         // Only asked for, and only required, when nothing on the list
@@ -49,7 +52,13 @@ const nothingDone = setupSteps({
     hasOffer: false,
 });
 
-export function NewBusinessStep({ firstName }: { firstName: string | null }) {
+export function NewBusinessStep({
+    firstName,
+    needsName = false,
+}: {
+    firstName: string | null;
+    needsName?: boolean;
+}) {
     const router = useRouter();
     const [errorMessage, setErrorMessage] = useState("");
     const [isRedirecting, setIsRedirecting] = useState(false);
@@ -61,7 +70,7 @@ export function NewBusinessStep({ firstName }: { firstName: string | null }) {
         formState: { errors, isSubmitting },
     } = useForm<Values>({
         resolver: zodResolver(schema),
-        defaultValues: { businessName: "", category: "", otherCategory: "" },
+        defaultValues: { yourName: "", businessName: "", category: "", otherCategory: "" },
     });
 
     // The one answer that asks another question. Kept here rather than
@@ -71,9 +80,21 @@ export function NewBusinessStep({ firstName }: { firstName: string | null }) {
     async function create(values: Values) {
         setErrorMessage("");
 
+        const client = createClient();
+
+        // Theirs before the business is theirs: every email from here
+        // on is addressed to a person, and this is the only screen that
+        // asks. A failure to save it must not stop them opening a
+        // business, so it is not checked.
+        if (needsName && values.yourName?.trim()) {
+            await client.auth
+                .updateUser({ data: { full_name: values.yourName.trim() } })
+                .catch(() => undefined);
+        }
+
         // The address, the logo and the rest are steps of their own: this
         // makes the business, and the flow does the page.
-        const { data, error } = await createClient().rpc("create_business_with_owner", {
+        const { data, error } = await client.rpc("create_business_with_owner", {
             business_name: values.businessName,
             // Their own words where the list had nothing: the database
             // finds no category for them and keeps what they said.
@@ -116,13 +137,40 @@ export function NewBusinessStep({ firstName }: { firstName: string | null }) {
             <form onSubmit={handleSubmit(create)} noValidate>
                 <div className="rounded-2xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
                     <div className="space-y-5">
+                        {/* First, because it is about them rather than
+                            the business, and because the page beside
+                            this one greets them by it. */}
+                        {needsName && (
+                            <div className="space-y-2">
+                                <Label htmlFor="yourName">Your name</Label>
+
+                                <Input
+                                    id="yourName"
+                                    maxLength={100}
+                                    autoComplete="name"
+                                    autoFocus
+                                    placeholder="Alex Hart"
+                                    readOnly={busy}
+                                    {...register("yourName")}
+                                    {...invalidProps("yourName-error", errors.yourName)}
+                                />
+                                <FieldError id="yourName-error" message={errors.yourName?.message} />
+
+                                <p className="text-sm text-[#17233B]/65">
+                                    So we know who we&apos;re writing to. Customers see your
+                                    business name, never yours.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <Label htmlFor="businessName">Business name</Label>
 
                             <Input
                                 id="businessName"
                                 maxLength={160}
-                                autoFocus
+                                // The cursor goes to whichever field is first.
+                                autoFocus={!needsName}
                                 placeholder="Harbour Grind"
                                 readOnly={busy}
                                 {...register("businessName", {

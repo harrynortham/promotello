@@ -45,7 +45,17 @@ async function NewBusinessContent() {
 
     const fullName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "";
 
-    return <NewBusinessStep firstName={fullName.trim().split(/\s+/)[0] || null} />;
+    // Somebody who signed up through /business/register gave their name
+    // there, and Google brings one with it. Somebody who started as a
+    // customer — claimed a voucher, collected some stamps — never has,
+    // and this is the first moment we need one: everything from here is
+    // addressed to a person who runs a business.
+    return (
+        <NewBusinessStep
+            firstName={fullName.trim().split(/\s+/)[0] || null}
+            needsName={fullName.trim().length === 0}
+        />
+    );
 }
 
 export default function NewBusinessPage() {
