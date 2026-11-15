@@ -123,19 +123,23 @@ without taking the decision off the business.
 
 ## Cheaper, still worth it
 
-- **No social proof, honestly handled.** `/business/testimonials`
-  redirects because there is nothing real to show, which is the right
-  call. The honest substitutes are a founder guarantee in the outreach
-  email and the first three names on the wall as soon as they exist.
-- **No concierge offer anywhere.** There is no "send me your logo and
-  I'll build it". At fifty businesses that is the highest-converting
-  asset there is, and it costs an afternoon a week.
+- ~~**No social proof, honestly handled.**~~ Done, except the part we
+  cannot do yet: `/business/testimonials` still redirects, because there
+  is nothing real to show and inventing it is out. The substitute is in
+  the outreach email — `guarantee()` in `preview-shared.ts`, which
+  carries the risk ourselves and quotes the price they were actually
+  offered. The first names on the wall go up when they exist.
+- ~~**No concierge offer anywhere.**~~ Done: on the preview page under
+  the plans, and in the welcome email. "Send us a photo of your shop and
+  your hours and we'll finish it for you." At fifty businesses it costs
+  an afternoon a week and converts better than any feature.
 - **Free is the weak half of the pitch**: a listing in a directory that
   is currently empty. Fixing 1 mostly solves this. If it doesn't, cap a
   free card at about twenty holders rather than blocking it.
-- **Founding scarcity is on the pricing page and in the emails, never on
-  the preview page they actually land on.** The live count belongs next
-  to Claim.
+- ~~**Founding scarcity is never on the preview page.**~~ Done: the live
+  count sits next to Claim, from `lib/founding-places.ts`, and appears
+  only once some have gone — "50 of 50 left" tells them nobody has
+  taken it.
 
 ## What not to touch
 

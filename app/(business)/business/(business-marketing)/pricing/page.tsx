@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 import {
@@ -25,9 +24,9 @@ import {
     FOUNDING_MEMBER_LIMIT,
     FREE_LIVE_OFFER_LIMIT,
     TRIAL_DAYS,
-    countFoundingMembers,
     plans,
 } from "@/lib/billing";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 
 export const metadata: Metadata = {
     title: "Business Pricing",
@@ -137,23 +136,8 @@ const questions = [
     },
 ];
 
-// Refreshed at most hourly so the page stays fast and static.
-async function getFoundingPlacesLeft() {
-    "use cache";
-    // Minutes, not hours: the last few founding places go quickly, and an
-    // hour-old count advertises places that have already gone. Checkout
-    // enforces the limit itself, so 51 can never be sold.
-    cacheLife("minutes");
-
-    try {
-        return Math.max(FOUNDING_MEMBER_LIMIT - (await countFoundingMembers()), 0);
-    } catch {
-        return null;
-    }
-}
-
 async function FoundingPlacesLeft() {
-    const placesLeft = await getFoundingPlacesLeft();
+    const placesLeft = await foundingPlacesLeft();
 
     if (placesLeft === null) {
         return <>Limited to the first {FOUNDING_MEMBER_LIMIT} businesses.</>;

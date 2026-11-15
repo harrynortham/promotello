@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DEFAULT_SENDER, outreachDm, outreachMessage, outreachSubject, signOff } from "@/app/admin/previews/preview-shared";
+import {
+    DEFAULT_SENDER,
+    guarantee,
+    outreachDm,
+    outreachMessage,
+    outreachSubject,
+    signOff,
+} from "@/app/admin/previews/preview-shared";
+import { plans } from "@/lib/billing";
 
 const preview = {
     businesses: {
@@ -107,4 +115,34 @@ test("without a name it is the team, and it says thanks rather than cheers", () 
     assert.deepEqual(signOff(DEFAULT_SENDER), ["Thanks,", DEFAULT_SENDER]);
     assert.deepEqual(signOff("Harry Northam"), ["Cheers,", "Harry"]);
     assert.deepEqual(signOff("  Harry  "), ["Cheers,", "Harry"]);
+});
+
+// The promise that stands in for reviews we do not have yet. There are
+// no testimonials and inventing them is out, so the honest substitute is
+// to carry the risk and say so (docs/LAUNCH-FUNNEL.md).
+test("the guarantee is about the price they were actually offered", () => {
+    assert.match(guarantee(37), new RegExp(plans.pro_founding_monthly.price));
+    assert.match(guarantee(1), new RegExp(plans.pro_founding_monthly.price));
+
+    // Founding places gone, or a count we could not read: the sentence
+    // must not quote a price nobody can have.
+    assert.match(guarantee(0), new RegExp(plans.pro_monthly.price));
+    assert.match(guarantee(null), new RegExp(plans.pro_monthly.price));
+});
+
+test("the email carries the guarantee and the offer to finish it for them", () => {
+    const message = outreachMessage(preview, "Harry Northam", 37);
+
+    assert.match(message, /I'll refund you/);
+    assert.match(message, /photo of the shop and your hours and I'll finish it for you/);
+});
+
+// A DM is read on a phone in a second, so it carries the short version
+// of the same two things, and no guarantee: a refund promise in a DM
+// reads as a sales line rather than a commitment.
+test("the DM offers to finish it, and leaves the guarantee to the email", () => {
+    const dm = outreachDm(preview, "Harry Northam", 37);
+
+    assert.match(dm, /send me a photo of the shop and your hours/);
+    assert.ok(!dm.includes("refund"));
 });

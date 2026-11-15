@@ -55,6 +55,27 @@ export function introduction(sender: string, town: string, street: string | null
     return street ? `${who}. It's new, and I'm starting with ${street}.` : `${who}, and it's new.`;
 }
 
+// The promise that stands in for reviews we do not have yet.
+//
+// A cold email from an unknown company asks a business to believe two
+// things: that this works, and that we will still be here. There are no
+// testimonials to settle it and inventing them is out, so the honest
+// substitute is to carry the risk ourselves and say so in one sentence
+// (docs/LAUNCH-FUNNEL.md).
+//
+// Bounded on purpose: it is about a paid plan, after the free trial, and
+// about customers rather than revenue — a number we can both see. Change
+// the wording here and it changes everywhere it is offered.
+export function guarantee(placesLeft: number | null) {
+    // The price they would actually be paying, so the sentence is never
+    // about a number they were not offered.
+    const price = placesLeft !== null && placesLeft > 0
+        ? plans.pro_founding_monthly.price
+        : plans.pro_monthly.price;
+
+    return `And if you pay for a month and nobody comes in through it, tell me and I'll refund you. I'd rather have the feedback than the ${price}.`;
+}
+
 export function signOff(sender: string) {
     if (sender === DEFAULT_SENDER) {
         return ["Thanks,", DEFAULT_SENDER];
@@ -214,7 +235,9 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         `It's free to use with one offer and a QR poster. ${founding}`,
         "",
-        `Worth a look? It takes about two minutes to make it yours. If it's not for you, reply "no thanks" and I won't email again.`,
+        guarantee(placesLeft),
+        "",
+        `Worth a look? It takes about two minutes to make it yours — or reply with a photo of the shop and your hours and I'll finish it for you. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
         ...signOff(sender),
     ].join("\n");
@@ -254,7 +277,7 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
         "",
         founding,
         "",
-        `Worth a look? It takes about two minutes to make it yours. If it's not for you, just say and I won't message again.`,
+        `Worth a look? It takes about two minutes to make it yours — or send me a photo of the shop and your hours and I'll finish it for you. If it's not for you, just say and I won't message again.`,
         // One line in a DM: "Cheers," on its own looks like a stray message.
         ...(sender === DEFAULT_SENDER ? [] : ["", `— ${sender.trim().split(/\s+/)[0]}`]),
     ].join("\n");

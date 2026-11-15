@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FOUNDING_MEMBER_LIMIT, plans } from "@/lib/billing";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 import { qrSvg } from "@/lib/qr";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
@@ -115,6 +116,10 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     const nextPath = previewLink(token, preview.business_name);
     const poster = await qrSvg(absoluteUrl(nextPath));
 
+    // The scarcity belongs next to the press, not two clicks away on the
+    // pricing page (docs/LAUNCH-FUNNEL.md).
+    const placesLeft = await foundingPlacesLeft();
+
     const claim = (
         <div className="flex flex-col items-start gap-3">
             <form action={claimPreview}>
@@ -127,6 +132,15 @@ async function PreviewContent({ params, searchParams }: PageProps) {
             <p className="text-sm text-[#17233B]/70">
                 Free, and nothing goes public until you say so.
             </p>
+
+            {placesLeft !== null && placesLeft > 0 && placesLeft < FOUNDING_MEMBER_LIMIT && (
+                // Only once some have gone: "50 of 50 left" tells them
+                // nobody has taken it.
+                <p className="text-sm font-medium text-[#FF593F]">
+                    {placesLeft} of {FOUNDING_MEMBER_LIMIT} founding places left at{" "}
+                    {plans.pro_founding_monthly.price} a month for life.
+                </p>
+            )}
 
             {!signedIn && (
                 <p className="text-sm text-[#17233B]/70">
@@ -245,6 +259,20 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         <p className="mt-4 text-sm text-[#17233B]/70">
                             <Link href="/business/pricing" className="underline">See pricing</Link> ·{" "}
                             <Link href="/business/how-it-works" className="underline">How it works</Link>
+                        </p>
+
+                        {/* The offer that converts somebody who likes it
+                            and has no time: at fifty businesses this
+                            costs an afternoon a week and is worth more
+                            than any feature (docs/LAUNCH-FUNNEL.md). */}
+                        <p className="mt-6 rounded-xl bg-white p-4 text-sm leading-6 text-[#17233B]/75">
+                            <span className="font-semibold text-[#17233B]">No time for it?</span>{" "}
+                            Claim the page and email us a photo of your shop and your opening
+                            hours, and we&apos;ll finish the rest for you — you look at it
+                            before anybody else does.{" "}
+                            <Link href="/business/contact" className="font-medium underline underline-offset-4">
+                                Ask us to set it up
+                            </Link>
                         </p>
                     </div>
                     {claim}
