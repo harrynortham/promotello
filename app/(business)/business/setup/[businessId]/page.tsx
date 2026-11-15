@@ -142,7 +142,7 @@ async function SetupContent({ params, searchParams }: PageProps) {
             steps={setupSteps(state)}
             startAt={isSetupStepId(search.step) ? search.step : null}
             justClaimed={search.welcome === "1"}
-            justSent={search.sent === "1"}
+            justSent={search.sent === "1" || search.sent === "live"}
             cities={cities}
             page={{
                 name: business.name,

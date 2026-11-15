@@ -340,6 +340,11 @@ export function lifecycleEmail(
                 ...(due.approved
                     ? []
                     : ["We check every new business before it appears to customers. You can set everything up in the meantime, and we'll email you as soon as you're live."]),
+                // The way out for somebody who likes it and has no time.
+                // At fifty businesses this costs an afternoon a week and
+                // converts better than any feature
+                // (docs/LAUNCH-FUNNEL.md).
+                "If you'd rather not do it yourself, reply to this email with a photo of your shop and your opening hours and we'll finish it for you. You look at it before anybody else does.",
             ],
             action: { label: "Open your dashboard", url: dashboard },
             footer: "You're getting this because you just added your business to Promotello.",

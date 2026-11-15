@@ -138,34 +138,23 @@ test("a preview becomes a live business", async ({ browser }) => {
         const send = page.getByRole("button", { name: `Send ${name} for review` });
         await expect(send).toBeVisible({ timeout: 15_000 });
 
-        // 5. Sending it.
+        // 5. Sending it, which is also the moment it goes live: this is
+        //    a page we built and they claimed, and it was read when we
+        //    built it (20270113090000). It used to say "Sent for review"
+        //    and wait for us, which was a dead day at the point of most
+        //    enthusiasm (docs/LAUNCH-FUNNEL.md).
         await send.click();
-        await expect(page.getByText("Sent for review")).toBeVisible({ timeout: 20_000 });
-        await expect(page.getByText("Pending approval")).toBeVisible();
+        await expect(page.getByText("You're live")).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByText("Sent for review")).toHaveCount(0);
         await page.close();
 
-        // 6. It reaches the queue, and we approve it.
-        await db.from("platform_admins").insert({ user_id: state.businessUserId });
-        const reviewer = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
-        await reviewer.goto("/admin/businesses");
-        await expect(reviewer.getByText(name)).toBeVisible({ timeout: 15_000 });
-        await reviewer.close();
+        const { data: afterSending } = await db
+            .from("businesses")
+            .select("approval_status")
+            .eq("id", business!.id)
+            .single();
 
-        const asAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-            { auth: { autoRefreshToken: false, persistSession: false } },
-        );
-        await asAdmin.auth.signInWithPassword({
-            email: state.businessEmail,
-            password: state.testPassword,
-        });
-
-        const { error: approveError } = await asAdmin.rpc("review_business", {
-            business_id: business!.id,
-            decision: "approved",
-        });
-        expect(approveError, "could not approve the business").toBeNull();
+        expect(afterSending!.approval_status, "live without waiting for us").toBe("approved");
 
         // 7. A customer can find it, and the owner sees their own page as
         //    their own page.
