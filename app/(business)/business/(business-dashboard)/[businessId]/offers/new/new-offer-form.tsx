@@ -34,6 +34,9 @@ type NewOfferFormProps = {
     businessName: string;
     businessLogoUrl: string | null;
     defaultCategoryId: string | null;
+    // The offer line from their preview email, when they came in by
+    // "Use this offer" on the dashboard.
+    suggestedTitle?: string | null;
     canSchedule: boolean;
 };
 
@@ -44,6 +47,7 @@ export default function NewOfferForm({
     businessName,
     businessLogoUrl,
     defaultCategoryId,
+    suggestedTitle = null,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -71,7 +75,10 @@ export default function NewOfferForm({
     } = useForm<OfferInput, unknown, OfferValues>({
         resolver: zodResolver(schema),
         defaultValues: {
-            title: "",
+            // The line from their preview email, where they came in by
+            // "Use this offer". Everything else is theirs to write: an
+            // offer's type is what it promises, and we don't guess that.
+            title: suggestedTitle ?? "",
             category: defaultCategoryId ?? "",
             // No type is chosen for them: the picker opens on "Choose a
             // type", so nothing is promised by accident.

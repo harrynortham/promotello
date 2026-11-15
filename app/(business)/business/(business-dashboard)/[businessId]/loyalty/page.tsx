@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormAndPreviewLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
+import { readStarter, starterToShow } from "@/lib/starter";
 import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
 import { ukDate } from "@/lib/uk-time";
 import { createClient } from "@/utils/supabase/server";
@@ -165,7 +166,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
     const canManage = ["owner", "admin"].includes(membership.role);
 
-    const [{ data: programs }, { data: business }, hasPro] = await Promise.all([
+    const [{ data: programs }, { data: business }, hasPro, starter] = await Promise.all([
         supabase
             .from("loyalty_programs")
             .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
@@ -178,9 +179,19 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
             .eq("id", businessId)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
+
+        // The card we drew in their preview email. Used only as the
+        // starting state of a first card (docs/LAUNCH-FUNNEL.md).
+        readStarter(supabase, businessId),
     ]);
 
     const allCards = (programs ?? []) as Program[];
+
+    const fromEmail = starterToShow(starter, {
+        // Only this half matters here; the offer has its own page.
+        hasOffer: true,
+        hasLoyalty: allCards.length > 0,
+    });
     // One card is on offer. The others are cards people are still
     // finishing: closed to new joiners, stamped until their holders are
     // done, because a card in someone's wallet is a promise.
@@ -302,6 +313,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             businessId={businessId}
                             businessName={business?.name ?? "Your business"}
                             businessLogoUrl={business?.logo_url ?? null}
+                            suggested={fromEmail.card}
                             program={null}
                             submitLabel="Start loyalty card"
                             locked={!hasPro}

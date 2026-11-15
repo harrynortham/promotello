@@ -10,6 +10,7 @@ import {
     type ChecklistGroup,
 } from "@/components/business-onboarding-checklist";
 import { BusinessRecentRedemptions } from "@/components/business-recent-redemptions";
+import { FromYourEmail } from "@/components/from-your-email";
 import { WhyNotApproved } from "@/components/why-not-approved";
 import { reopenBusiness } from "./settings/actions";
 import { requestBusinessReview } from "./review-actions";
@@ -26,6 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro } from "@/lib/billing";
+import { readStarter, starterToShow } from "@/lib/starter";
 import { businessPath } from "@/lib/slugs";
 import { storedImage } from "@/lib/images";
 import { createClient } from "@/utils/supabase/server";
@@ -145,6 +147,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { count: loyaltyCount },
         hasPro,
         { data: isPlatformAdmin },
+        starter,
     ] = await Promise.all([
         supabase
             .from("offers")
@@ -221,9 +224,20 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         // Only for us: the sales pack is a sheet for selling, and a
         // business that already pays has no use for a page of prices.
         supabase.rpc("is_platform_admin"),
+
+        // The offer and the reward we put in their preview email, so
+        // the first screen after claiming is the thing they said yes to
+        // rather than a blank form (docs/LAUNCH-FUNNEL.md).
+        readStarter(supabase, businessId),
     ]);
 
     const offers = (offerRows ?? []) as OfferSummary[];
+
+    // Only the halves they haven't done themselves.
+    const fromEmail = starterToShow(starter, {
+        hasOffer: offers.length > 0,
+        hasLoyalty: (loyaltyCount ?? 0) > 0,
+    });
 
     const recentRedemptions =
         (recentRedemptionRows ?? []) as RecentRedemption[];
@@ -579,6 +593,10 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     />
                 </div>
             )}
+
+            {/* Above the checklist: what they came for comes before the
+                list of what we want from them. */}
+            <FromYourEmail businessId={businessId} offer={fromEmail.offer} card={fromEmail.card} />
 
             <BusinessOnboardingChecklist groups={checklist} setupHref={`/business/setup/${businessId}`} />
 
