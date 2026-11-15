@@ -18,9 +18,11 @@ import {
     offersPaused,
     paymentFailed,
     posterPointingNowhere,
+    rewardGiven,
     rewardReady,
     voucherExpiring,
     voucherIssued,
+    voucherUsed,
     type NotificationContent,
 } from "@/lib/notifications";
 import { daysUntil } from "@/lib/daily-notices";
@@ -300,5 +302,55 @@ test("our own queue is one line a day, with the counts in it", () => {
     assert.equal(
         adminQueue({ day: "2026-11-13", businesses: 1, offers: 0, edits: 0, categories: 0 }).title,
         "One thing is waiting for you",
+    );
+});
+
+// ---------------------------------------------------------------------------
+// Receipts
+// ---------------------------------------------------------------------------
+
+test("a used voucher names the shop, the offer, and what to do about it", () => {
+    const receipt = voucherUsed({
+        id: "r1",
+        offerTitle: "Free pastry before 10am",
+        businessName: "Quayside Coffee",
+    });
+
+    assert.equal(receipt.title, "Voucher used at Quayside Coffee");
+    assert.match(receipt.body!, /Free pastry before 10am/);
+    assert.match(receipt.body!, /while you are still in the shop/);
+    assert.equal(receipt.href, "/dashboard/redemptions");
+    // Used once, for good.
+    assert.equal(receipt.dedupeKey, "voucher-used:r1");
+});
+
+test("a claimed reward says whether the card carries on", () => {
+    const card = {
+        id: "c1",
+        programId: "p1",
+        businessName: "Quayside Coffee",
+        reward: "a free coffee",
+        round: 1,
+    };
+
+    assert.match(rewardGiven({ ...card, finished: false }).body!, /starts again from the next stamp/);
+    assert.match(rewardGiven({ ...card, finished: true }).body!, /last of this card/);
+
+    // The reward reads as a sentence whichever way it was typed.
+    assert.match(rewardGiven({ ...card, finished: false }).body!, /^A free coffee —/);
+});
+
+test("a card that fills twice leaves two receipts, not one", () => {
+    const card = {
+        id: "c1",
+        programId: "p1",
+        businessName: "Quayside Coffee",
+        reward: "a free coffee",
+        finished: false,
+    };
+
+    assert.notEqual(
+        rewardGiven({ ...card, round: 1 }).dedupeKey,
+        rewardGiven({ ...card, round: 2 }).dedupeKey,
     );
 });

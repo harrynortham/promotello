@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { tellThemTheVoucherWasUsed } from "@/lib/receipts";
 import { createClient } from "@/utils/supabase/server";
 
 export async function markVoucherUsed(formData: FormData) {
@@ -14,6 +15,12 @@ export async function markVoucherUsed(formData: FormData) {
     const { error } = await supabase.rpc("mark_redemption_used", {
         requested_redemption_id: redemptionId,
     });
+
+    // The customer's own record of it, written on their side of the
+    // counter (lib/receipts.ts).
+    if (!error) {
+        await tellThemTheVoucherWasUsed(redemptionId);
+    }
 
     redirect(`/redeem/${code}?${error ? "error=failed" : "done=1"}`);
 }

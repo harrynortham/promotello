@@ -37,7 +37,9 @@ export type NotificationType =
     | "voucher_expiring"
     | "followed_business_closed"
     | "admin_queue"
-    | "plan_ending";
+    | "plan_ending"
+    | "voucher_used"
+    | "reward_given";
 
 export type NotificationContent = {
     type: NotificationType;
@@ -307,6 +309,57 @@ export function followedBusinessClosed(business: Business): NotificationContent 
         body: "Anything you were holding for them won't be honoured here any more. Worth checking before you make the trip.",
         href: "/dashboard",
         dedupeKey: `business-closed:${business.id}`,
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Receipts
+// ---------------------------------------------------------------------------
+//
+// Claiming an offer or joining a card is not worth a notification: the
+// person just did it and the thing is on the screen in front of them.
+// Being marked used is the opposite — somebody else's phone did it, it
+// is the moment the thing disappears, and it is the only place a
+// mistake shows up. Quiet, in the list, where a record belongs rather
+// than an interruption.
+
+export function voucherUsed(voucher: {
+    id: string;
+    offerTitle: string;
+    businessName: string;
+}): NotificationContent {
+    return {
+        type: "voucher_used",
+        title: `Voucher used at ${voucher.businessName}`,
+        body: `“${voucher.offerTitle}” was marked used just now. If that wasn't you, say so while you are still in the shop.`,
+        href: "/dashboard/redemptions",
+        // A voucher is used once, for good.
+        dedupeKey: `voucher-used:${voucher.id}`,
+    };
+}
+
+export function rewardGiven(card: {
+    id: string;
+    programId: string;
+    businessName: string;
+    reward: string;
+    // Rewards claimed on this card including this one, so a card that
+    // fills again gets its own receipt each time.
+    round: number;
+    finished: boolean;
+}): NotificationContent {
+    const reward = card.reward.trim();
+
+    return {
+        type: "reward_given",
+        title: `Reward claimed at ${card.businessName}`,
+        body: `${reward.charAt(0).toUpperCase() + reward.slice(1)} — handed over just now. ${
+            card.finished
+                ? "That was the last of this card."
+                : "Your card starts again from the next stamp."
+        }`,
+        href: `/loyalty/${card.programId}`,
+        dedupeKey: `reward-given:${card.id}:${card.round}`,
     };
 }
 
