@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { lifecycleEmail, type LifecycleDue } from "@/lib/business-lifecycle";
+import { lifecycleEmail, resultsStrength, type LifecycleDue } from "@/lib/business-lifecycle";
 
 function due(kind: LifecycleDue["kind"], overrides: Partial<LifecycleDue["details"]> = {}): LifecycleDue {
     return {
@@ -188,4 +188,88 @@ test("no setup email sends anybody to a till", () => {
 
         assert.doesNotMatch(email.text, /\btills?\b/i, `${kind} mentions a till`);
     }
+});
+
+// ---------------------------------------------------------------------------
+// Thin numbers are not a case
+// ---------------------------------------------------------------------------
+
+const counts = (over: Partial<LifecycleDue["details"]>) => ({ ...fresh("results").details, ...over });
+
+test("a visit is the only number that proves it worked", () => {
+    assert.equal(resultsStrength(counts({ visits: 1 })), "visits");
+    assert.equal(resultsStrength(counts({ loyalty_members: 4 })), "interest");
+    assert.equal(resultsStrength(counts({ followers: 2 })), "interest");
+    assert.equal(resultsStrength(counts({ claims: 1 })), "interest");
+
+    // Anonymous by design, and nobody renewed over a page view.
+    assert.equal(resultsStrength(counts({ views: 612, qr_scans: 147 })), "nothing");
+});
+
+// The email this started from: "Quayside Coffee has had 3 page views"
+// is a month of evidence that nothing happened, in our own words, just
+// before asking for a card.
+test("a business with nothing but page views is not read its page views", () => {
+    const email = lifecycleEmail(
+        { ...fresh("results"), details: counts({ views: 3 }) },
+        "sam@example.com",
+    );
+
+    assert.ok(email);
+    assert.match(email!.subject, /Getting .* first customers/);
+    assert.doesNotMatch(email!.text, /3 page views/);
+    assert.doesNotMatch(email!.text, /has had/);
+});
+
+test("interest without a visit is said as interest, not as a result", () => {
+    const email = lifecycleEmail(
+        { ...fresh("results"), details: counts({ loyalty_members: 9, followers: 4, views: 300 }) },
+        "sam@example.com",
+    );
+
+    assert.ok(email);
+    assert.match(email!.subject, /People are finding/);
+    assert.match(email!.text, /9 people are carrying your loyalty card/);
+    assert.match(email!.text, /Nobody has been in and used one yet/);
+    // The weak numbers stay out of it.
+    assert.doesNotMatch(email!.text, /page view/);
+});
+
+test("a visit brings the whole list back, page views and all", () => {
+    const email = lifecycleEmail(
+        { ...fresh("results"), details: counts({ visits: 61, loyalty_members: 41, views: 612 }) },
+        "sam@example.com",
+    );
+
+    assert.ok(email);
+    assert.match(email!.subject, /first two weeks/);
+    assert.match(email!.text, /61 customer visits/);
+    assert.match(email!.text, /612 page views/);
+});
+
+// The worst moment to recite a thin list: the last email before a card
+// is charged.
+test("the trial-ending email follows the same rule", () => {
+    const thin = lifecycleEmail(
+        {
+            ...fresh("trial_ending"),
+            details: counts({ views: 12, qr_scans: 3, trial_end: "2026-12-01T00:00:00Z" }),
+        },
+        "sam@example.com",
+    );
+
+    assert.ok(thin);
+    assert.doesNotMatch(thin!.text, /12 page views/);
+    assert.match(thin!.text, /hasn't had customers through Promotello yet/);
+
+    const real = lifecycleEmail(
+        {
+            ...fresh("trial_ending"),
+            details: counts({ visits: 18, claims: 9, trial_end: "2026-12-01T00:00:00Z" }),
+        },
+        "sam@example.com",
+    );
+
+    assert.ok(real);
+    assert.match(real!.text, /18 customer visits/);
 });

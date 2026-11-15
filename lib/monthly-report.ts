@@ -35,6 +35,29 @@ function changeText({ current, previous }: Change) {
     return `${percent > 0 ? "▲" : percent < 0 ? "▼" : ""} ${Math.abs(percent)}%`;
 }
 
+// How much of a month there is to report.
+//
+// A business pays for this one, so it reports whatever happened —
+// unlike the sales emails, where a page view is not evidence of
+// anything. But a table of five zeros under "Here's how October went"
+// is not a report, it is a monthly reminder that nothing is working,
+// and it arrives from the company being paid for it.
+//
+// So: a month with visits leads on the visits, a month with interest
+// but nobody through the door leads on the interest, and a month with
+// nothing at all gets a short note instead of a grid of noughts.
+export function monthStrength(report: Report) {
+    const at = (key: keyof Report["figures"]["metrics"]) => report.figures.metrics[key]?.current ?? 0;
+
+    if (at("visits") > 0) return "visits" as const;
+
+    if (at("claims") > 0 || at("new_followers") > 0 || at("loyalty_rewards") > 0 || report.figures.followers > 0) {
+        return "interest" as const;
+    }
+
+    return at("views") > 0 || at("qr_scans") > 0 ? "looking" as const : "nothing" as const;
+}
+
 export function monthlyReportEmail(
     report: Report,
     to: string,
@@ -61,16 +84,39 @@ export function monthlyReportEmail(
         ? repeatVisitSentence(repeatVisits)
         : null;
 
-    const headline = visits.current > 0
+    const strength = monthStrength(report);
+    const claims = report.figures.metrics.claims ?? empty;
+    const looks = (report.figures.metrics.views ?? empty).current + (report.figures.metrics.qr_scans ?? empty).current;
+
+    const headline = strength === "visits"
         ? `${visits.current} customer ${visits.current === 1 ? "visit" : "visits"} came through Promotello in ${monthName}.`
-        : `Here's how ${monthName} went on Promotello.`;
+        : strength === "interest"
+            ? claims.current > 0
+                ? `${claims.current} ${claims.current === 1 ? "voucher was" : "vouchers were"} claimed in ${monthName}, and nobody has come in with one yet.`
+                : `${report.figures.followers} ${report.figures.followers === 1 ? "person is" : "people are"} following ${report.business_name} on Promotello.`
+            : strength === "looking"
+                ? `${looks} ${looks === 1 ? "person looked" : "people looked"} at ${report.business_name} in ${monthName}, and none of them claimed anything yet.`
+                : `Nothing came through Promotello in ${monthName}.`;
+
+    // What to do about it, where the numbers do not speak for
+    // themselves. A report nobody can act on is a bill.
+    const nudge = strength === "visits"
+        ? null
+        : strength === "nothing"
+            ? "A live offer with an end date on it is what starts this: something worth making a trip for this week, mentioned when you serve somebody and on the poster by your counter."
+            : "The gap between looking and coming in is usually the offer itself. Something with an end date on it, mentioned when you serve people, is what turns the next one into a visit.";
 
     const html = emailShell({
         rows: `<tr><td style="padding:16px 0 8px">
 <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">${e(report.business_name)} · ${e(monthName)}</p>
 <h1 style="margin:12px 0 0;font-size:24px;line-height:1.3">${e(headline)}</h1>
-<p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#45506a">You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}. Changes are against the month before.</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">${tableRows}</table>
+<p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#45506a">${
+        strength === "nothing"
+            ? e(nudge ?? "")
+            : `You now have ${report.figures.followers} ${report.figures.followers === 1 ? "follower" : "followers"}. Changes are against the month before.`
+    }</p>
+${strength === "nothing" ? "" : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px">${tableRows}</table>`}
+${nudge && strength !== "nothing" ? `<p style="margin:20px 0 0;font-size:15px;line-height:1.6;color:#45506a">${e(nudge)}</p>` : ""}
 ${firstTimers ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#FFF4EE;border-radius:12px"><tr><td style="padding:18px 20px"><p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#FF593F">First-timers, and who came back</p><p style="margin:8px 0 0;font-size:15px;line-height:1.6">${e(firstTimers)}</p></td></tr></table>` : ""}
 <a href="${analyticsUrl}" style="display:inline-block;margin-top:24px;background:#FF593F;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">See full analytics</a>
 </td></tr>`,
@@ -81,12 +127,17 @@ ${firstTimers ? `<table role="presentation" width="100%" cellpadding="0" cellspa
         `${report.business_name} · ${monthName}`,
         headline,
         "",
-        ...rows.map(({ key, label }) => {
-            const metric = report.figures.metrics[key] ?? empty;
-            return `${label}: ${metric.current} (${changeText(metric)})`;
-        }),
-        "",
-        `Followers: ${report.figures.followers}`,
+        ...(strength === "nothing"
+            ? [nudge ?? ""]
+            : [
+                ...rows.map(({ key, label }) => {
+                    const metric = report.figures.metrics[key] ?? empty;
+                    return `${label}: ${metric.current} (${changeText(metric)})`;
+                }),
+                "",
+                `Followers: ${report.figures.followers}`,
+                ...(nudge ? ["", nudge] : []),
+            ]),
         ...(firstTimers ? ["", firstTimers] : []),
         `Full analytics: ${analyticsUrl}`,
         "",
