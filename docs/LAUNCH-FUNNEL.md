@@ -151,7 +151,7 @@ answer is 2 and 3 rather than the price.
 ## Progress
 
 - [x] 1 · Card-less trial
-- [ ] 2 · The sample offer and card follow them in
-- [ ] 3 · The first customer is told to the business
+- [x] 2 · The sample offer and card follow them in
+- [x] 3 · The first customer is told to the business
 - [ ] 4 · Proof on Free and Pro
 - [ ] 5 · A claimed preview is already approved
