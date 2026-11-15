@@ -32,7 +32,16 @@ export type LifecycleDue = {
         has_offer: boolean;
         has_loyalty: boolean;
         has_poster: boolean;
+        // The five the send button is locked behind, and the flag the
+        // database works out from them. Older payloads carry none of
+        // these: absent means done, so nobody is chased for a thing we
+        // cannot see.
+        has_logo?: boolean;
+        has_description?: boolean;
+        has_address?: boolean;
+        has_hours?: boolean;
         has_cover: boolean;
+        profile_ready?: boolean;
         // Older payloads don't carry it. Absent means sent, so nobody is
         // asked to send a page they already did.
         sent_for_review?: boolean;
@@ -51,14 +60,62 @@ export type LifecycleDue = {
     approved: boolean;
 };
 
-type Step = { key: "offer" | "loyalty" | "poster" | "cover" | "review"; label: string; why: string; path: string; action: string };
+type StepKey =
+    | "logo"
+    | "description"
+    | "address"
+    | "hours"
+    | "cover"
+    | "review"
+    | "offer"
+    | "loyalty"
+    | "poster";
 
-// Loyalty cards are part of Pro, so a free business is sent to start its
-// trial rather than to a page it can't use.
+type Step = { key: StepKey; label: string; why: string; path: string; action: string };
+
+// The same seven things the dashboard counts (lib/setup-steps.ts), in
+// the order it counts them, and then the two that come after going
+// live. They have to be the same list: an email that names a step the
+// dashboard has never heard of sends somebody looking for a page that
+// isn't there, and a dashboard step no email mentions is one nobody is
+// ever chased about.
+//
+// A loyalty card is part of Pro, so it is only a step for a business
+// that can actually start one. On Free it is not an unfinished page,
+// it is a thing to buy — which has an email of its own to make that
+// case ('loyalty_pitch') rather than being dressed up as setup.
 function setupSteps(businessId: string, hasPro: boolean): Step[] {
     const base = `/business/${businessId}`;
 
     return [
+        {
+            key: "logo",
+            label: "Add your logo",
+            why: "Customers recognise you by it — on your page, on your offers and on your stamp card.",
+            path: `${base}/logo`,
+            action: "Add your logo",
+        },
+        {
+            key: "description",
+            label: "Say what you're known for",
+            why: "Two or three sentences. It sits under your name wherever people find you.",
+            path: `${base}/description`,
+            action: "Write a description",
+        },
+        {
+            key: "address",
+            label: "Add your address",
+            why: "So customers can get directions, and so you turn up when somebody browses your part of town.",
+            path: `${base}/address`,
+            action: "Add your address",
+        },
+        {
+            key: "hours",
+            label: "Add your opening hours",
+            why: "Shown on your page, so nobody arrives at a closed door.",
+            path: `${base}/hours`,
+            action: "Add your hours",
+        },
         {
             key: "cover",
             label: "Add a cover photo",
@@ -76,29 +133,25 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
         {
             key: "offer",
             label: "Post your first offer",
-            why: "An offer gives new customers a reason to visit, and it shows on your page and in the Promotello directory.",
+            why: "An offer gives new customers a reason to visit, and it shows on your page and across the Promotello directory.",
             path: `${base}/offers/new`,
             action: "Create an offer",
         },
-        hasPro
-            ? {
-                key: "loyalty",
-                label: "Set up your loyalty card",
-                why: "A digital stamp card turns first-time visitors into regulars. Customers join by scanning your poster or from your page in the directory, so people who have never been in can join too, and you stamp them at the till.",
-                path: `${base}/loyalty`,
-                action: "Set up a loyalty card",
-            }
-            : {
-                key: "loyalty",
-                label: "Start a loyalty card with a free Pro trial",
-                why: `A digital stamp card turns first-time visitors into regulars, and because it sits on your page in the directory as well as your poster, people who have never been in can join it too. Loyalty cards are part of Pro, free for ${TRIAL_DAYS} days, with the terms on the Billing page before you start.`,
-                path: `${base}/billing`,
-                action: `Try Pro free for ${TRIAL_DAYS} days`,
-            },
+        ...(hasPro
+            ? [
+                {
+                    key: "loyalty" as const,
+                    label: "Set up your loyalty card",
+                    why: "A digital stamp card turns first-time visitors into regulars. Customers join from your page in the directory or by scanning your poster — so people who have never been in can join too — and your staff add a stamp by scanning the customer's phone with your own.",
+                    path: `${base}/loyalty`,
+                    action: "Set up a loyalty card",
+                },
+            ]
+            : []),
         {
             key: "poster",
             label: "Print your QR poster",
-            why: "A poster in your window or by the till is how customers find your offers and loyalty card. It takes a minute to print.",
+            why: "A poster in your window or by the counter is how passers-by find your offers. It takes a minute to print.",
             path: `${base}/qr`,
             action: "Get your poster",
         },
@@ -123,13 +176,27 @@ function alreadySeen(due: LifecycleDue) {
     return sentForReview(due) || due.approved;
 }
 
+// Absent means done: an older payload cannot be chased for something
+// it never carried.
+function has(flag: boolean | undefined) {
+    return flag !== false;
+}
+
+function profileReady(due: LifecycleDue) {
+    return due.details.profile_ready !== false;
+}
+
 function missingSteps(due: LifecycleDue) {
-    const done = {
+    const done: Record<StepKey, boolean> = {
+        logo: has(due.details.has_logo),
+        description: has(due.details.has_description),
+        address: has(due.details.has_address),
+        hours: has(due.details.has_hours),
         cover: due.details.has_cover,
+        review: alreadySeen(due),
         offer: due.details.has_offer,
         loyalty: due.details.has_loyalty,
         poster: due.details.has_poster,
-        review: alreadySeen(due),
     };
 
     return setupSteps(due.business_id, due.hasPro).filter((step) => !done[step.key]);
@@ -211,16 +278,22 @@ export function lifecycleEmail(
     const optOutToken = due.kind === "welcome" || due.kind === "trial_ending" ? undefined : unsubscribeToken;
 
     if (due.kind === "welcome") {
-        const steps = setupSteps(due.business_id, due.hasPro).filter(
-            (step) => step.key !== "review" || !alreadySeen(due),
-        );
+        // The first few, named, and the rest left to the checklist: a
+        // welcome that lists nine things is a wall rather than a
+        // beginning, and the dashboard counts them off anyway.
+        const steps = missingSteps(due);
+        const first = steps.slice(0, 3);
+        const rest = steps.length - first.length;
+
         const { html, text } = brandedEmail({
             eyebrow: "Welcome to Promotello",
             title: `${name} is on Promotello`,
             paragraphs: [
-                `Thanks for signing up. ${countInWords(steps.length)} get you ready to turn first-time visitors into regulars, and together they take about 15 minutes:`,
-                ...steps.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
-                "Your dashboard shows what's left to do, with a checklist you can work through at your own pace.",
+                `Thanks for signing up. Your page is started — here is what it needs before customers can find you${rest > 0 ? ", and your dashboard counts off the rest as you go" : ""}:`,
+                ...first.map((step, index) => `${index + 1}. ${step.label}. ${step.why}`),
+                rest > 0
+                    ? `Then ${countInWords(rest).toLowerCase()} more, none of them long: your dashboard keeps the list.`
+                    : "Your dashboard keeps the list, and you can work through it at your own pace.",
                 ...(due.approved
                     ? []
                     : ["We check every new business before it appears to customers. You can set everything up in the meantime, and we'll email you as soon as you're live."]),
@@ -265,9 +338,15 @@ export function lifecycleEmail(
         const remaining = missing.map((step) => step.label.toLowerCase());
         const counted = countInWords(remaining.length);
         const unsent = !sentForReview(due);
-        const title = unsent
+        // One click only when it really is one: the send button is
+        // locked until the page has a logo, a description, an address,
+        // hours and a cover photo.
+        const oneClick = unsent && profileReady(due);
+        const title = oneClick
             ? `${name} isn't live yet, and one click would do it`
-            : `${counted} left before customers can find ${name}`;
+            : unsent
+                ? `${name} isn't live yet`
+                : `${counted} left before customers can find ${name}`;
         const list = remaining.length === 2
             ? remaining.join(" and ")
             : `${remaining.slice(0, -1).join(", ")} and ${remaining[remaining.length - 1]}`;
@@ -276,12 +355,14 @@ export function lifecycleEmail(
             eyebrow: "Still to do",
             title,
             paragraphs: [
-                unsent
+                oneClick
                     ? `Nothing on your page is public until you send it to us, and you haven't yet. Have a look through it, change anything that isn't right, and send it — we usually look the same day.`
-                    : remaining.length === 1
+                    : unsent
+                        ? `Nothing on your page is public until you send it to us, and there is a little to finish first: ${list}. Then the button is there on your dashboard, and we usually look the same day.`
+                        : remaining.length === 1
                         ? `Your page is set up apart from one thing: ${remaining[0]}.`
                         : `Your page is set up, but it stays quiet until the rest is done: ${list}.`,
-                unsent && remaining.length > 1
+                oneClick && remaining.length > 1
                     ? `Still to do after that: ${remaining.filter((item) => !item.startsWith("send your page")).join(", ")}.`
                     : "Each one takes a few minutes, and you can stop after any of them. New offers are read by our team before they appear, usually the same day.",
             ],
@@ -303,7 +384,7 @@ export function lifecycleEmail(
             paragraphs: [
                 results.length > 0
                     ? `Since ${formatDate(d.since)}, ${name} has had ${results.join(", ")} through Promotello.`
-                    : `${name} hasn't had customers through Promotello yet. ${missing.length > 0 ? `${missing[0].label} to get started: ${missing[0].why}` : "Tell customers about your loyalty card at the till to get the first sign-ups."}`,
+                    : `${name} hasn't had customers through Promotello yet. ${missing.length > 0 ? `${missing[0].label} to get started: ${missing[0].why}` : "Mention your loyalty card when you serve somebody — that is where the first sign-ups come from."}`,
                 "Your plan carries on automatically when the trial ends, so you don't need to do anything. You can change or cancel your plan in Billing before then.",
             ],
             action: { label: "Review your plan", url: absoluteUrl(`/business/${due.business_id}/billing`) },
@@ -322,7 +403,7 @@ export function lifecycleEmail(
             title: `Turn ${name}'s first-time visitors into regulars`,
             paragraphs: [
                 "Paper stamp cards get lost, forgotten and put through the wash. A Promotello loyalty card lives on your customers' phones, so they always have it with them.",
-                "You choose the reward, like a free coffee after nine. Customers join by scanning your QR poster, and you or your staff stamp their card at the till. When they reach the reward, they show their card and you hand it over.",
+                "You choose the reward, like a free coffee after nine. Customers join from your page in the Promotello directory or by scanning your poster — so somebody who has never been in can join before their first visit — and your staff add a stamp by scanning the customer's phone with your own. When the card is full they show it to you and you hand the reward over.",
                 `Loyalty cards are part of Pro, ${plans.pro_monthly.price} a month. ${trialTerms.pitch}`,
             ],
             action: tryPro,
@@ -394,8 +475,8 @@ export function lifecycleEmail(
             paragraphs: [
                 "No customers have come through Promotello yet, which is normal in the first couple of weeks.",
                 d.has_poster
-                    ? "The quickest way to change that is to mention your offer at the till and keep your QR poster where people wait or pay, so they can scan it there and then."
-                    : "The quickest way to change that is your QR poster. Put it in your window or by the till, so customers can scan your offer while they're there.",
+                    ? "The quickest way to change that is to mention your offer when you serve somebody, and keep your QR poster where people wait or pay, so they can scan it there and then."
+                    : "The quickest way to change that is your QR poster. Put it in your window or by the counter, so customers can scan your offer while they're there.",
             ],
             action: d.has_poster
                 ? { label: "Open your dashboard", url: dashboard }
@@ -557,8 +638,8 @@ export function trialStartedEmail(
             `Your ${plan} trial runs until ${formatDate(trialEnd)}. You won't be charged before then, and you can cancel any time from Billing.`,
             ...unlocked,
             hasLoyalty
-                ? "Your loyalty card is ready. Put your QR poster by the till so customers can join, and stamp their card each visit."
-                : "Start with your loyalty card: choose a reward, like a free coffee after nine, then put your QR poster by the till so customers can join.",
+                ? "Your loyalty card is ready. Put your QR poster by the counter so customers can join, and add a stamp each visit by scanning their phone with yours."
+                : "Start with your loyalty card: choose a reward, like a free coffee after nine, then put your QR poster by the counter so customers can join.",
         ],
         action: hasLoyalty
             ? { label: "Get your poster", url: absoluteUrl(`${base}/qr`) }
