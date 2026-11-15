@@ -125,25 +125,41 @@ test("the first claim tells the business, and the second says nothing", async ({
     }
 });
 
-// A business that already has customers has had its first one, and being
-// told about it now would be absurd. The migration backfilled those.
-test("a business that already had customers is never told it has a first", async () => {
-    const { businessId } = state();
+// A business that already has customers has had its first one, and
+// being told about it now would be absurd — which is what the
+// migration's backfill is for. The backfill itself is a one-off over
+// rows that existed when it ran, so what is worth holding here is its
+// purpose: a business whose milestone is already claimed is never told
+// again, however the row got there.
+test("a business whose first customer is already recorded is never told", async ({ browser }) => {
+    test.setTimeout(300_000);
+    const { businessUserId, customerUserId } = state();
 
-    const { data: milestone } = await admin()
-        .from("business_milestones")
-        .select("kind, reached_at")
-        .eq("business_id", businessId)
-        .eq("kind", "first_customer")
-        .maybeSingle();
+    const { businessId, offer } = await seedBusinessWithOffer(businessUserId);
 
-    expect(milestone, "the seeded business has claims, so it was backfilled").not.toBeNull();
+    try {
+        // As the backfill would have left it.
+        const claimed = await admin().rpc("claim_business_milestone", {
+            requested_business_id: businessId,
+            requested_kind: "first_customer",
+        });
 
-    const { data: told } = await admin()
-        .from("notifications")
-        .select("id")
-        .eq("business_id", businessId)
-        .eq("type", "first_customer");
+        expect(claimed.data).toBe(true);
 
-    expect(told ?? [], "and nothing was sent about it").toHaveLength(0);
+        const page = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+        await page.goto(`/offers/${offer.slug}`, { timeout: 120_000 });
+
+        await page.getByRole("button", { name: "Get this deal" }).click({ timeout: 90_000 });
+        await expect(page.getByText("Your claimed voucher")).toBeVisible({ timeout: 90_000 });
+
+        // Long enough that a send would have landed by now: the claim
+        // itself was the slow part and it has already finished.
+        await page.waitForTimeout(5_000);
+
+        expect(await notices(businessId), "nothing, because this is not their first").toHaveLength(0);
+    } finally {
+        await admin().from("notifications").delete().eq("business_id", businessId);
+        await admin().from("offer_redemptions").delete().eq("user_id", customerUserId).eq("offer_id", offer.id);
+        await admin().from("businesses").delete().eq("id", businessId);
+    }
 });

@@ -23,18 +23,21 @@ export const planComparison: ComparisonRow[] = [
     { feature: "Share links, Instagram images and captions", free: true, pro: true, growth: true },
     { feature: "30-day analytics", free: true, pro: true, growth: true },
     { feature: "Welcome, birthday and win-back automations", free: false, pro: false, growth: true, plus: "Welcome, birthday and win-back emails that run themselves" },
+    // The report is the proof, and the business that most needs it is
+    // the one deciding whether to pay (docs/LAUNCH-FUNNEL.md). What
+    // Growth buys is the detail behind it, not the evidence itself.
+    { feature: "Monthly report by email", free: "Short", pro: "Short", growth: "Full", plus: "The whole month in your monthly email, every number with last month beside it" },
     // Every plan says when an offer runs; Growth is staff being held
     // to it at the till.
     { feature: "Quiet hours enforced when scanned", free: false, pro: false, growth: true, plus: "Quiet hours: outside an offer's times the voucher won't mark as used" },
-    { feature: "Monthly value report by email", free: false, pro: false, growth: true, plus: "A monthly value report in your inbox" },
     // The one a loyalty app can't print: it was never there for the
     // first visit.
     {
         feature: "First-time customers and who came back",
-        free: false,
-        pro: false,
-        growth: true,
-        plus: "First-time customers Promotello sent you, and how many came back",
+        free: "Totals",
+        pro: "Totals",
+        growth: "Month by month",
+        plus: "First-timers and returns broken down month by month",
     },
 ];
 

@@ -343,7 +343,7 @@ async function AnalyticsContent({ params }: AnalyticsPageProps) {
                 <RepeatVisitsPanel
                     report={repeatVisits}
                     businessId={businessId}
-                    locked={tier !== "growth"}
+                    detailed={tier === "growth"}
                 />
 
                 <Card className="mt-8 border-[#17233B]/10">

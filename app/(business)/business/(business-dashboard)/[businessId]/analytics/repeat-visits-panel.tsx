@@ -21,12 +21,15 @@ function Figure({ value, label, hint }: { value: number | string; label: string;
 export function RepeatVisitsPanel({
     report,
     businessId,
-    locked,
+    detailed,
 }: {
     report: RepeatVisits | null;
     businessId: string;
-    // Growth buys it. Everyone else is told what it says, not shown it.
-    locked: boolean;
+    // Everyone sees the numbers: they are the proof, and the business
+    // that most needs convincing is the one not paying yet
+    // (docs/LAUNCH-FUNNEL.md). Growth buys the month-by-month behind
+    // them, which is the part you read once you believe it.
+    detailed: boolean;
 }) {
     // Who the three numbers are about: the people we sent, or — where
     // we cannot claim any of them — everybody who came in.
@@ -42,7 +45,7 @@ export function RepeatVisitsPanel({
             </CardHeader>
 
             <CardContent>
-                {locked || !report || !these ? (
+                {!report || !these ? (
                     <>
                         <p className="max-w-2xl leading-7 text-[#17233B]/70">
                             How many people came to you for the first time, how many of
@@ -51,13 +54,10 @@ export function RepeatVisitsPanel({
                             tell you: it was never there for the first visit.
                         </p>
 
-                        <Link
-                            href={`/business/${businessId}/billing`}
-                            className="mt-4 inline-flex items-center gap-1.5 font-medium text-[#FF593F] hover:underline"
-                        >
-                            See it on Growth
-                            <FiArrowRight aria-hidden="true" className="size-4" />
-                        </Link>
+                        <p className="mt-3 max-w-2xl leading-7 text-[#17233B]/55">
+                            Nobody has had a first visit through Promotello yet, so there
+                            is nothing to count. It fills in on its own.
+                        </p>
                     </>
                 ) : (
                     <>
@@ -87,7 +87,7 @@ export function RepeatVisitsPanel({
                             />
                         </dl>
 
-                        {report.byMonth.length > 1 && (
+                        {detailed && report.byMonth.length > 1 && (
                             <table className="mt-6 w-full text-sm">
                                 <thead>
                                     <tr className="text-left text-[#17233B]/55">
@@ -115,6 +115,16 @@ export function RepeatVisitsPanel({
                                     ))}
                                 </tbody>
                             </table>
+                        )}
+
+                        {!detailed && report.byMonth.length > 1 && (
+                            <Link
+                                href={`/business/${businessId}/billing`}
+                                className="mt-6 inline-flex items-center gap-1.5 font-medium text-[#FF593F] hover:underline"
+                            >
+                                See it month by month on Growth
+                                <FiArrowRight aria-hidden="true" className="size-4" />
+                            </Link>
                         )}
 
                         <p className="mt-5 text-xs leading-5 text-[#17233B]/55">

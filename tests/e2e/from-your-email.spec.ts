@@ -85,7 +85,8 @@ test("the dashboard hands back the offer and the card from the email", async ({ 
         expect(offers ?? [], "nothing was published on their behalf").toHaveLength(0);
 
         // And the form opens with it in.
-        await panel.getByRole("link", { name: "Use this offer" }).click();
+        // A Button rendering a Link still reports as a button.
+        await panel.getByRole("button", { name: "Use this offer" }).click({ timeout: 30_000 });
         await expect(page.locator("#title")).toHaveValue(SAMPLE_OFFER, { timeout: 60_000 });
 
         // The type is theirs: guessing it would put a promise on their
