@@ -52,10 +52,14 @@ test("an offer cannot be declined without a reason, and the reason reaches the b
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto("/admin/offers", { timeout: 120_000 });
 
-        const row = page.locator("article, li, div").filter({ hasText: offer.title }).last();
-        await expect(page.getByText(offer.title).first()).toBeVisible({ timeout: 90_000 });
+        // Narrow the queue to this one offer, so "Reject" can only mean
+        // ours however many others are waiting.
+        await expect(page.getByRole("heading", { name: "Offers", level: 1 })).toBeVisible({ timeout: 90_000 });
+        await page.getByRole("textbox", { name: "Search offers" }).fill(offer.title);
+        await page.getByRole("button", { name: "Search", exact: true }).click();
 
-        await row.getByRole("button", { name: "Reject", exact: true }).first().click();
+        await expect(page.getByText(offer.title)).toBeVisible({ timeout: 60_000 });
+        await page.getByRole("button", { name: "Reject", exact: true }).click();
 
         // The confirm button is the thing being changed: there is now
         // nothing to confirm until a reason is chosen.
@@ -72,8 +76,12 @@ test("an offer cannot be declined without a reason, and the reason reaches the b
             .getByLabel(/Anything to add/)
             .fill("Staff would have to ask a manager whether it applies.");
 
-        await confirm.click();
-        await expect(page.getByRole("button", { name: "Reject offer" })).toBeHidden({ timeout: 90_000 });
+        await confirm.click({ timeout: 30_000 });
+
+        // The whole dialog, not its button: the button's own label
+        // changes to "Saving…" the moment it is pressed, so waiting for
+        // that to go races the request it started.
+        await expect(page.getByRole("dialog")).toBeHidden({ timeout: 120_000 });
 
         // 1. On the row.
         const { data: after } = await admin()
@@ -101,11 +109,15 @@ test("an offer cannot be declined without a reason, and the reason reaches the b
         // where a red chip used to be the whole message.
         await page.goto(`/business/${businessId}/offers`, { timeout: 120_000 });
 
-        const card = page.locator("div").filter({ hasText: offer.title }).last();
-        await expect(card.getByText("Why this offer wasn't approved")).toBeVisible({ timeout: 90_000 });
-        await expect(card.getByText(/ask a manager whether it applies/)).toBeVisible();
-        await expect(card.getByText("What to change")).toBeVisible();
-        await expect(card.getByRole("link", { name: /Why an offer isn't approved/ })).toBeVisible();
+        // The note is this offer's own words, so finding it on the page
+        // finds the panel it is rendered in and no other.
+        const note = page.getByText("Staff would have to ask a manager whether it applies.");
+        await expect(note).toBeVisible({ timeout: 90_000 });
+
+        const panel = note.locator("..");
+        await expect(panel.getByText("Why this offer wasn't approved")).toBeVisible();
+        await expect(panel.getByText("What to change")).toBeVisible();
+        await expect(panel.getByRole("link", { name: /Why an offer isn't approved/ })).toBeVisible();
     } finally {
         await admin().from("platform_admins").delete().eq("user_id", businessUserId);
         await admin().from("offers").delete().eq("id", offer.id);

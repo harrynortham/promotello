@@ -48,7 +48,10 @@ export function DeclineReason({
                     Why not? They are told this.
                 </legend>
 
-                <div className="mt-2 space-y-1.5">
+                {/* Eight reasons, a preview and a note box is taller
+                    than a laptop screen. The list scrolls so Cancel and
+                    the confirm button stay where they can be pressed. */}
+                <div className="mt-2 max-h-56 space-y-1.5 overflow-y-auto pr-1">
                     {reasons.map((reason) => (
                         <label
                             key={reason.code}

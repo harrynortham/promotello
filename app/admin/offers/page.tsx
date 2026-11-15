@@ -914,7 +914,7 @@ export default function AdminOffersPage() {
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent className="max-h-[85dvh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
                             {reviewAction?.decision === "approved"
@@ -991,7 +991,7 @@ export default function AdminOffersPage() {
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent className="max-h-[85dvh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Keep the old wording?</DialogTitle>
 

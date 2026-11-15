@@ -647,7 +647,7 @@ export default function AdminBusinessesPage() {
                     }
                 }}
             >
-                <DialogContent>
+                <DialogContent className="max-h-[85dvh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
                             {reviewAction?.decision === "approved"

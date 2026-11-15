@@ -318,16 +318,6 @@ correction H scans.
    as a business that never got a preview email, and once more with Google
    sign-in.
 
-2. **Admin approval and decline.** Done, and written down:
-   `docs/APPROVAL-AND-DECLINE.md` lists what the business gets at each of the
-   six decisions. A decline now carries a cause and a note, picked in the
-   reject dialog and read back off the row, so the email, the notification and
-   the dashboard say the same thing and both help articles exist. Still to walk
-   by hand once: approve and decline a real business and a real offer, and
-   check the emails read well on a phone. Suspension still sends nothing —
-   decide whether it gets a control and a message, or comes off the admin
-   surface.
-
 ### Stage 2 — True before you email a single business
 
 Each of these is an afternoon or a form, and each one is painful to discover
@@ -356,23 +346,13 @@ after outreach has started.
 
 ### Stage 3 — The gaps that lose a customer
 
-These are the places the product breaks in front of someone. Small builds,
-each tied to a moment in stage 1's walkthrough.
-
-- **Decline messages, and a history.** A set of polite, helpful, ready-to-send
-  messages for declining a business or an offer, with matching help-centre
-  wording, plus a log of approval reasons and resubmissions so there's a
-  history when a business asks.
-
 ### Stage 4 — The one build that earns month two
 
 ### Stage 5 — Not before launch
 
 Kept, not forgotten. Nothing here stops a business paying.
 
-- Add custom URL as a premium feature
-- What a customer sees when a voucher offer is claimed, and whether an
-  animation belongs there.
+- new pro + growth features
 - The "Promotello isn't in your area yet" bar with an email field, as a
   waitlist rather than a dead end. Note [docs/MULTI-CITY.md](docs/MULTI-CITY.md):
   the IP lookup names the wrong town often enough that it was removed on
