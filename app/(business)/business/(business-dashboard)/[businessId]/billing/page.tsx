@@ -44,6 +44,7 @@ type Subscription = {
     current_period_end: string | null;
     cancel_at_period_end: boolean;
     trial_end: string | null;
+    has_payment_method: boolean | null;
 };
 
 const errorMessages: Record<string, string> = {
@@ -117,7 +118,7 @@ async function BillingContent({ params, searchParams }: PageProps) {
         supabase
             .from("subscriptions")
             .select(
-                "status, price_id, current_period_end, cancel_at_period_end, trial_end",
+                "status, price_id, current_period_end, cancel_at_period_end, trial_end, has_payment_method",
             )
             .eq("business_id", businessId)
             .order("created_at", { ascending: false }),
@@ -232,13 +233,20 @@ async function CurrentPlan({
     const plan = planKey ? plans[planKey] : null;
     const periodEnd = formatDate(subscription.current_period_end);
     const trialEnd = formatDate(subscription.trial_end);
+    const needsCard = subscription.status === "trialing" && subscription.has_payment_method === false;
 
     let detail: string | null = null;
 
     if (subscription.cancel_at_period_end && periodEnd) {
         detail = `Cancels on ${periodEnd}. You keep everything until then.`;
     } else if (subscription.status === "trialing" && trialEnd) {
-        detail = `Your free trial ends on ${trialEnd}, when your first payment is taken.`;
+        // A trial can now be started without a card, and then nothing is
+        // charged on that date — the plan stops instead. Saying a payment
+        // will be taken tells that business the one thing it has to do is
+        // already done, and the trial-ending email says the opposite.
+        detail = needsCard
+            ? `Your free trial ends on ${trialEnd}. There's no card on this yet, so Pro stops that day unless you add one — nothing is charged either way.`
+            : `Your free trial ends on ${trialEnd}, when your first payment is taken.`;
     } else if (subscription.status === "active" && periodEnd) {
         detail = `Renews on ${periodEnd}.`;
     } else if (["past_due", "unpaid"].includes(subscription.status)) {
@@ -274,19 +282,40 @@ async function CurrentPlan({
                     <ChangePlan businessId={businessId} currentPlan={planKey} />
                 )}
 
+                {/* The trial-ending email's button says "Add a card and
+                    keep it" and lands here. Without this it landed on
+                    "Manage billing", described as updating a card that
+                    does not exist. */}
+                {needsCard && (
+                    <form action={openBillingPortal}>
+                        <input type="hidden" name="businessId" value={businessId} />
+                        <input type="hidden" name="flow" value="payment_method" />
+                        <SubmitButton
+                            size="lg"
+                            pendingLabel="Opening…"
+                            className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        >
+                            Add a card to keep Pro
+                        </SubmitButton>
+                    </form>
+                )}
+
                 <form action={openBillingPortal}>
                     <input type="hidden" name="businessId" value={businessId} />
                     <SubmitButton
                         size="lg"
                         pendingLabel="Opening…"
-                        className="bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        variant={needsCard ? "outline" : undefined}
+                        className={
+                            needsCard ? undefined : "bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
+                        }
                     >
                         Manage billing
                     </SubmitButton>
                 </form>
 
                 <p className="text-sm text-[#17233B]/70">
-                    Update your card, download invoices or cancel in the
+                    {needsCard ? "Add a card" : "Update your card"}, download invoices or cancel in the
                     secure Stripe billing portal. Questions about a payment?
                     Email{" "}
                     <a href={`mailto:${company.supportEmail}`} className="underline underline-offset-4">

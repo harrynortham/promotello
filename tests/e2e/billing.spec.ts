@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
 
@@ -112,4 +113,67 @@ test("business owner can start a founding member trial and open the billing port
     await page.goto(`/business/${businessId}/billing`);
     await page.getByRole("button", { name: "Manage billing" }).click();
     await page.waitForURL(/billing\.stripe\.com/, { timeout: 30_000 });
+});
+
+// A trial now starts without a card (payment_method_collection:
+// "if_required", with missing_payment_method: "cancel"). So on the day
+// it ends nothing is charged — the plan stops. The page said "when your
+// first payment is taken" to everybody, which told the one business
+// that had something to do that it was already done, and contradicted
+// the trial-ending email we send five days earlier.
+//
+// Nothing here goes near Stripe: the row is what the page reads.
+test("a trial with no card is told it stops, and given the way to keep it", async ({ page }) => {
+    test.setTimeout(120_000);
+    // The seeded business already has a subscription row so it has Pro's
+    // features, so this moves that row rather than adding a second one the
+    // page would have to choose between.
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const { data: before } = await admin
+        .from("subscriptions")
+        .select("stripe_subscription_id, status, trial_end, has_payment_method")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    const trialEnd = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+    const move = (fields: Record<string, unknown>) =>
+        admin.from("subscriptions").update(fields).eq("stripe_subscription_id", before!.stripe_subscription_id);
+
+    try {
+        await move({ status: "trialing", trial_end: trialEnd, has_payment_method: false });
+
+        await page.goto(`/business/${businessId}/billing`, { timeout: 120_000 });
+        await expect(page.getByText(/There's no card on this yet/), "says what will happen").toBeVisible({
+            timeout: 60_000,
+        });
+        await expect(page.getByText("when your first payment is taken")).toHaveCount(0);
+
+        // Where the trial-ending email's "Add a card and keep it" lands.
+        await expect(
+            page.getByRole("button", { name: "Add a card to keep Pro" }),
+            "and the way to do it",
+        ).toBeVisible();
+
+        // With a card there is nothing to do, and saying so would be noise.
+        await move({ has_payment_method: true });
+        await page.reload({ timeout: 120_000 });
+
+        await expect(page.getByText("when your first payment is taken")).toBeVisible({ timeout: 60_000 });
+        await expect(page.getByRole("button", { name: "Add a card to keep Pro" })).toHaveCount(0);
+    } finally {
+        await move({
+            status: before!.status,
+            trial_end: before!.trial_end,
+            has_payment_method: before!.has_payment_method,
+        });
+    }
 });
