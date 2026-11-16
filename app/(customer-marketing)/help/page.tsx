@@ -125,7 +125,7 @@ const guides: HelpGuide[] = [
             "Your card appears under My loyalty cards, ready for its first stamp.",
         ],
         note:
-            "The card lives in your Promotello account, so there is nothing to download and nothing to leave at home.",
+            "The card lives in your Promotello account, so there is nothing to download and nothing to leave at home. Some cards are not taking new members, and the business\u2019s page says so \u2014 the people already collecting on one carry on as normal.",
         link: {
             label: "My loyalty cards",
             href: "/dashboard/loyalty",

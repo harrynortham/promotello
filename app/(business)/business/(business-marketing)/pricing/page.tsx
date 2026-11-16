@@ -76,7 +76,7 @@ const principles = [
     {
         icon: FiMessageCircle,
         title: "Try it before you pay",
-        description: `Every Pro plan starts with a ${TRIAL_DAYS}-day free trial. Cancel before it ends and you won't be charged.`,
+        description: `Every Pro plan starts with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. Nothing is charged unless you add one.`,
     },
 ];
 
