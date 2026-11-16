@@ -2,7 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type WhatIsPaused = {
     pausedOffers: number;
-    // People holding a card. They keep collecting on Free; what stops is
+    // Whether there is a card at all. Separate from the count because a
+    // card nobody has joined yet is still the thing Free has stopped
+    // taking people for, and saying nothing about it leaves the business
+    // to find that out on its own.
+    hasCard: boolean;
+    // People holding one. They keep collecting on Free; what stops is
     // anybody new joining
     // (20270120090000_a_card_on_free_takes_no_new_members.sql).
     cardHolders: number;
@@ -30,13 +35,20 @@ export async function loadWhatIsPaused(
             .from("business_followers")
             .select("user_id", { count: "exact", head: true })
             .eq("business_id", businessId),
-        supabase.from("loyalty_programs").select("id").eq("business_id", businessId),
+        // Live cards only: one the business closed itself is not
+        // something Free is holding back.
+        supabase
+            .from("loyalty_programs")
+            .select("id")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .is("closed_at", null),
     ]);
 
     const programIds = (programs ?? []).map((program) => program.id as string);
 
-    // Everyone holding a card, on a closed programme as well as a live
-    // one: a card nobody can join any more is still in somebody's phone.
+    // Everyone holding one of those, which is who carries on collecting
+    // while nobody new can join.
     const { count: cardHolders } = programIds.length
         ? await supabase
               .from("loyalty_cards")
@@ -46,6 +58,7 @@ export async function loadWhatIsPaused(
 
     return {
         pausedOffers: pausedOffers ?? 0,
+        hasCard: programIds.length > 0,
         cardHolders: cardHolders ?? 0,
         followers: followers ?? 0,
     };
