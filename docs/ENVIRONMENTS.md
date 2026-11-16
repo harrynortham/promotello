@@ -284,8 +284,47 @@ sends it. If the list is not what you meant, press anything else and
 nothing happens.
 
 It needs `PROD_DB_URL` — the connection string from the live project's
-dashboard, under Settings → Database → Connection string → URI. Put it
-in `.env.production.local` and it will find it.
+dashboard, under Settings → Database → Connection string. Put it in
+`.env.production.local` and it will find it.
+
+**Take the Session pooler one, not Direct connection.** The direct
+host, `db.<ref>.supabase.co`, has no IPv4 address at all, and this
+machine has no IPv6 route — so that string cannot connect from here
+whatever the password is. It fails like this, which reads like a
+firewall problem and is not one:
+
+```
+failed to connect to `host=db.<ref>.supabase.co user=postgres`:
+dial error (connect ECONNREFUSED 2a05:d018:...)
+Make sure your local IP is allowed in Network Restrictions
+```
+
+The pooler hosts are IPv4. Three things about that string catch people
+out:
+
+- **Session pooler, port 5432** — not the Transaction pooler on 6543.
+  Migrations need session state that transaction pooling does not keep.
+- The username becomes `postgres.<ref>`, not plain `postgres`.
+- The password still has to be percent-encoded.
+
+### If it will not connect at all
+
+Pasting the migration into the dashboard's SQL editor still works, and
+is how every migration before 16 November 2026 was applied. One thing
+is different now: the live database has a migration history, and a
+paste does not write to it. So `db:ship` would later try to replay what
+you pasted and fail on things that already exist — the confusing
+failure the history was created to prevent.
+
+Paste the migration, then tell the history it ran:
+
+```sql
+insert into supabase_migrations.schema_migrations (version, name)
+values ('20270120090000', 'a_card_on_free_takes_no_new_members');
+```
+
+Only `version` is required; `statements` and `name` are both nullable,
+and nothing reads `statements` to decide what has been applied.
 
 **Then, in this order:**
 
