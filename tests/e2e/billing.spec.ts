@@ -344,3 +344,29 @@ test("the lapsed banner names the stamp card, joined or not", async ({ page }) =
         await move(before!.status);
     }
 });
+
+// The founding price is the reason to decide now, and the billing page
+// is where the deciding happens. Two different things live on that line
+// and only one of them is worth withholding: "50 of 50 left" says
+// nobody has taken it, but the cap — there are only ever fifty — is
+// true on the first day. Saying neither left the page with no scarcity
+// in it at all.
+//
+// Only the capped half is driven here. The count comes from
+// foundingPlacesLeft(), which is "use cache" with cacheLife("minutes"),
+// so a test that subscribed and waited for the number to move would be
+// waiting on the cache rather than on anything this page decides.
+test("the founding price says there are only ever fifty", async ({ page }) => {
+    test.setTimeout(120_000);
+    const { freeBusinessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    await page.goto(`/business/${freeBusinessId}/billing`, { timeout: 120_000 });
+
+    await expect(page.getByText("Founding price"), "the price is offered").toBeVisible({
+        timeout: 60_000,
+    });
+    await expect(
+        page.getByText(/Only the first \d+ businesses get it/),
+        "and says how few there are",
+    ).toBeVisible();
+});

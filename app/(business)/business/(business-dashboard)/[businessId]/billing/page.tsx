@@ -523,13 +523,18 @@ async function PlanOptions({
                                     {isFounding ? (
                                         <p className="mt-1 text-sm text-[#17233B]/70">
                                             Locked for life. Usually {plans.pro_monthly.price}.
-                                            {/* Saying "50 of 50 left" tells them nobody has
-                                                taken it, so the count only appears once some
-                                                have gone — the rule the email and the preview
-                                                page already follow. */}
+                                            {/* Two different things, and only one of them is
+                                                worth withholding. "50 of 50 left" says nobody
+                                                has taken it, so the count waits until some
+                                                have gone. The cap does not: there are only
+                                                ever fifty, which is true on the first day and
+                                                is the whole reason to decide now. The email
+                                                and the preview page say the cap at fifty of
+                                                fifty too; this said neither, and so had no
+                                                scarcity in it at all. */}
                                             {foundingLeft !== null && foundingLeft < FOUNDING_MEMBER_LIMIT
                                                 ? ` ${foundingLeft} of ${FOUNDING_MEMBER_LIMIT} founding places left.`
-                                                : ""}
+                                                : ` Only the first ${FOUNDING_MEMBER_LIMIT} businesses get it.`}
                                         </p>
                                     ) : (
                                         <p className="mt-1 text-sm text-[#17233B]/70">

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormAndPreviewLoading } from "@/components/dashboard-skeletons";
-import { businessHasPro } from "@/lib/billing";
+import { businessHasPro, hasEverSubscribed } from "@/lib/billing";
 import { readStarter, starterToShow } from "@/lib/starter";
 import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
 import { ukDate } from "@/lib/uk-time";
@@ -166,7 +166,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
     const canManage = ["owner", "admin"].includes(membership.role);
 
-    const [{ data: programs }, { data: business }, hasPro, starter] = await Promise.all([
+    const [{ data: programs }, { data: business }, hasPro, trialSpent, starter] = await Promise.all([
         supabase
             .from("loyalty_programs")
             .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
@@ -179,6 +179,9 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
             .eq("id", businessId)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
+        // One trial per business: "free for 30 days" is not on offer to
+        // somebody who has already had theirs.
+        hasEverSubscribed(supabase, businessId),
 
         // The card we drew in their preview email. Used only as the
         // starting state of a first card (docs/LAUNCH-FUNNEL.md).
@@ -317,6 +320,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             program={null}
                             submitLabel="Start loyalty card"
                             locked={!hasPro}
+                            trialSpent={trialSpent}
                         />
                     ) : (
                         <p className="mt-8 text-[#17233B]/65">Ask a business owner or admin to set up the loyalty card.</p>

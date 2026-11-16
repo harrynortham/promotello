@@ -242,3 +242,47 @@ test("scanning a card poster on Free lands on the card, closed rather than missi
         await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
     }
 });
+
+// One free trial per business (billing/actions.ts: trialEligible is
+// existing.length === 0). Every place that offers Pro inside the
+// dashboard has to know that, or it promises "free for 30 days and no
+// card to start" to somebody who will meet a card form one click later.
+test("the loyalty publish gate offers a trial only to a business that can have one", async ({ page }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const build = `/business/${state.freeBusinessId}/loyalty/new`;
+
+    // Never subscribed: the trial is real and worth saying.
+    await page.goto(build, { timeout: 120_000 });
+    await expect(page.getByRole("button", { name: "Start free trial to publish" })).toBeVisible({
+        timeout: 60_000,
+    });
+    await expect(page.getByText("free for 30 days and no card to start")).toBeVisible();
+
+    const subscription = `sub_e2e_spent_${Date.now()}`;
+
+    try {
+        // Had one, and let it go: Pro now starts with a card form.
+        await admin.from("subscriptions").insert({
+            business_id: state.freeBusinessId,
+            stripe_subscription_id: subscription,
+            stripe_customer_id: `cus_e2e_spent_${Date.now()}`,
+            status: "canceled",
+            tier: "pro",
+        });
+
+        await page.goto(build, { timeout: 120_000 });
+        await expect(page.getByRole("button", { name: "Go Pro to publish" })).toBeVisible({
+            timeout: 60_000,
+        });
+        await expect(page.getByText("free for 30 days and no card to start")).toHaveCount(0);
+    } finally {
+        await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
+    }
+});

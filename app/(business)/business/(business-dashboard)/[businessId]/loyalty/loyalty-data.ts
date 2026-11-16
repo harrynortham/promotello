@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { businessHasPro } from "@/lib/billing";
+import { businessHasPro, hasEverSubscribed } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 
 // Who is asking and what they are allowed to do, for the pages that
@@ -27,13 +27,17 @@ export async function loadLoyaltyEditor(businessId: string) {
         notFound();
     }
 
-    const [{ data: business }, hasPro] = await Promise.all([
+    const [{ data: business }, hasPro, trialSpent] = await Promise.all([
         supabase
             .from("businesses")
             .select("name, slug, logo_url, approval_status")
             .eq("id", businessId)
             .maybeSingle(),
         businessHasPro(supabase, businessId),
+        // One trial per business. Offering a second one to somebody who
+        // has had theirs sends them to a card form with a promise of
+        // "no card to start" still in their head.
+        hasEverSubscribed(supabase, businessId),
     ]);
 
     return {
@@ -45,5 +49,6 @@ export async function loadLoyaltyEditor(businessId: string) {
         // Nothing to share until customers can open the page it links to.
         isApproved: business?.approval_status === "approved",
         hasPro,
+        trialSpent,
     };
 }
