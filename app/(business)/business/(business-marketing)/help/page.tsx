@@ -367,7 +367,7 @@ const guides: HelpGuide[] = [
             "Pick the card colour and the stamp icon. The card beside the form changes as you choose, and it is the card customers carry.",
             "Save it. Customers can now join from your page or your QR poster.",
         ],
-        note: "Loyalty cards are part of Pro and Growth.",
+        note: "Loyalty cards are part of Pro and Growth. On Free a card you have already started keeps running — your staff keep stamping and nobody loses a stamp — but nobody new can join it.",
         link: { label: "Open business dashboard", href: "/business/dashboard" },
     },
     {
@@ -495,11 +495,12 @@ const guides: HelpGuide[] = [
         description: "Free, Pro and Growth.",
         steps: [
             "Open your business and choose Billing.",
-            "Pick Pro or Growth to start a 30-day free trial.",
+            "Pick Pro or Growth. The first 30 days are free, and starting a trial takes no card.",
+            "Add a card before the trial ends to carry on. Do nothing and it stops on that day, with nothing charged and nothing to remember to cancel.",
             "Already subscribed? Switch between Pro and Growth from the same page.",
-            "Use Manage billing to update your card, see invoices or cancel.",
+            "Use Manage billing to add or update your card, see invoices or cancel.",
         ],
-        note: "If you cancel, you keep your plan until the end of the paid period, then move to Free.",
+        note: "Each business gets one free trial. A trial that ends without a card moves to Free on the day it ends; a paid plan you cancel keeps going until the end of the period you have paid for.",
         link: { label: "See pricing", href: "/business/pricing" },
     },
 ];

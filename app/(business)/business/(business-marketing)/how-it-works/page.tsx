@@ -86,7 +86,7 @@ const faqs = [
     },
     {
         question: "Can I try it before paying?",
-        answer: "Yes. The Free plan has no time limit, and Pro and Growth both start with a 30-day free trial. Cancel any time before it ends and you won't be charged.",
+        answer: "Yes. The Free plan has no time limit, and Pro and Growth both start with a 30-day free trial, which takes no card to start. Add one before it ends to carry on, or do nothing and it stops by itself with nothing charged.",
     },
 ];
 

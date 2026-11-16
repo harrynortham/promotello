@@ -157,9 +157,11 @@ const sections: LegalSection[] = [
                 </p>
                 <p>
                     Paid plans start with a {TRIAL_DAYS}-day free trial, one per
-                    business. We take card details at the start but don&apos;t
-                    charge until the trial ends. Cancel before then and you
-                    won&apos;t pay anything.
+                    business. Starting one takes no card details. Add a card
+                    before the trial ends and the plan carries on, with the
+                    first payment taken on that date; add nothing and the plan
+                    stops on that date and you are charged nothing. There is
+                    nothing to cancel either way.
                 </p>
                 <p>
                     Subscriptions renew automatically until cancelled. You can
