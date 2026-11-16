@@ -333,6 +333,27 @@ async function seed({ reset }) {
         offerCount += await createSampleBusiness({ sample, index, cityName: "Bristol", categoryIds, ownerId });
     }
 
+    // A logo and a cover can only be uploaded once the business has an
+    // id, so both arrive as an update — and an update to a live business
+    // leaves a trace for an admin to read (20261230090000). Thirty-eight
+    // of those, from shops nobody edited, bury the queue that exists to
+    // show what real businesses changed. The trace is right; seeding
+    // being mistaken for editing is not.
+    const seeded = check(
+        await supabase.from("businesses").select("id").eq("is_sample", true),
+        "find sample businesses to tidy after",
+    );
+
+    if (seeded.length > 0) {
+        check(
+            await supabase
+                .from("business_edits")
+                .delete()
+                .in("business_id", seeded.map((row) => row.id)),
+            "clear the edit traces seeding left",
+        );
+    }
+
     console.log(`\nAdded ${sampleBusinesses.length} sample businesses and ${offerCount} offers.`);
 }
 
