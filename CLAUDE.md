@@ -13,10 +13,12 @@ What a business is told when it is approved or turned down:
 docs/APPROVAL-AND-DECLINE.md (read before changing a review decision, the
 words a decline sends, or the help articles it links to)
 
-Two databases and how a change reaches the live one: docs/ENVIRONMENTS.md
-(read before writing a migration or running the e2e tests). A migration
-runs on dev first; prod is pushed to by name with --db-url, never by
-being the linked project.
+Where the database lives while you work: docs/ENVIRONMENTS.md (read
+before writing a migration or running the e2e tests). A migration runs
+on the local stack first — `supabase db reset` rebuilds from the files,
+which is the only place they are tested as a sequence. Prod is pushed to
+by name with --db-url, never by being the linked project, and
+`db reset --linked` is never typed at all.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
