@@ -15,6 +15,7 @@ import { WhyNotApproved } from "@/components/why-not-approved";
 import { reopenBusiness } from "./settings/actions";
 import { requestBusinessReview } from "./review-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { TrialNeedsACard } from "@/components/trial-needs-a-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -148,6 +149,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         hasPro,
         { data: isPlatformAdmin },
         starter,
+        { data: trial },
     ] = await Promise.all([
         supabase
             .from("offers")
@@ -229,7 +231,24 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         // the first screen after claiming is the thing they said yes to
         // rather than a blank form (docs/LAUNCH-FUNNEL.md).
         readStarter(supabase, businessId),
+
+        // A trial can now start without a card, and then the day it ends
+        // is the day Pro stops. The billing page says so and an email
+        // says so five days out; neither is where a business spends its
+        // time (docs/LAUNCH-FUNNEL.md).
+        supabase
+            .from("subscriptions")
+            .select("status, trial_end, has_payment_method")
+            .eq("business_id", businessId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
     ]);
+
+    const trialNeedsACard =
+        trial?.status === "trialing" && trial.has_payment_method === false && trial.trial_end
+            ? trial.trial_end
+            : null;
 
     const offers = (offerRows ?? []) as OfferSummary[];
 
@@ -599,6 +618,10 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         note={business.review_note}
                     />
                 </div>
+            )}
+
+            {trialNeedsACard && (
+                <TrialNeedsACard businessId={businessId} trialEnd={trialNeedsACard} />
             )}
 
             {/* Above the checklist: what they came for comes before the

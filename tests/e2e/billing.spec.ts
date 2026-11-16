@@ -161,6 +161,63 @@ test("business owner can start a founding member trial and open the billing port
     await page.waitForURL(/billing\.stripe\.com/, { timeout: 30_000 });
 });
 
+// The billing page is not where a business spends its time. The one
+// thing a card-less trial has to do belongs where they already are.
+test("the dashboard says when a trial has no card, and stops when it has one", async ({ page }) => {
+    test.setTimeout(120_000);
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const { data: before } = await admin
+        .from("subscriptions")
+        .select("stripe_subscription_id, status, trial_end, has_payment_method")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    const move = (fields: Record<string, unknown>) =>
+        admin.from("subscriptions").update(fields).eq("stripe_subscription_id", before!.stripe_subscription_id);
+
+    try {
+        // Early in the trial the useful fact is that nothing is owed.
+        await move({
+            status: "trialing",
+            trial_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+            has_payment_method: false,
+        });
+
+        await page.goto(`/business/${businessId}`, { timeout: 120_000 });
+        await expect(page.getByText(/^Pro is free until /), "says it is free, and until when").toBeVisible({
+            timeout: 60_000,
+        });
+        await expect(page.getByRole("link", { name: "Add a card" })).toBeVisible();
+
+        // In the last week the useful fact is the date.
+        await move({ trial_end: new Date(Date.now() + 3 * 86_400_000).toISOString() });
+        await page.reload({ timeout: 120_000 });
+        await expect(page.getByText(/^Add a card to keep Pro past /), "and then it is the date").toBeVisible({
+            timeout: 60_000,
+        });
+
+        // Once there is a card there is nothing to say.
+        await move({ has_payment_method: true });
+        await page.reload({ timeout: 120_000 });
+        await expect(page.getByText(/Pro is free until |Add a card to keep Pro past /)).toHaveCount(0);
+    } finally {
+        await move({
+            status: before!.status,
+            trial_end: before!.trial_end,
+            has_payment_method: before!.has_payment_method,
+        });
+    }
+});
+
 // A trial now starts without a card (payment_method_collection:
 // "if_required", with missing_payment_method: "cancel"). So on the day
 // it ends nothing is charged — the plan stops. The page said "when your
