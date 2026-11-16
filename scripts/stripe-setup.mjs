@@ -37,6 +37,11 @@ export const WEBHOOK_EVENTS = [
     "customer.subscription.created",
     "customer.subscription.updated",
     "customer.subscription.deleted",
+    // A trial started without a card: the business adds one in the
+    // portal later, and Stripe says so with these two rather than with
+    // any subscription event.
+    "payment_method.attached",
+    "customer.updated",
     "invoice.paid",
     "invoice.payment_failed",
     "charge.refunded",

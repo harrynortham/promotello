@@ -172,10 +172,29 @@ export async function openBillingPortal(formData: FormData) {
     }
 
     const origin = await getOrigin();
+    const returnUrl = `${origin}${billingPath}`;
+
+    // A trial that took no card ends by stopping, and the one thing that
+    // business has to do is add one. The portal's front page offers that
+    // among invoices, addresses and cancelling; this drops them straight
+    // on the card form and brings them back when it is in.
+    const addingCard = String(formData.get("flow") ?? "") === "payment_method";
+
     const session = await createStripeClient().billingPortal.sessions.create({
         customer: customer.stripe_customer_id,
-        return_url: `${origin}${billingPath}`,
+        return_url: returnUrl,
         configuration: process.env.STRIPE_PORTAL_CONFIGURATION_ID || undefined,
+        ...(addingCard
+            ? {
+                  flow_data: {
+                      type: "payment_method_update" as const,
+                      after_completion: {
+                          type: "redirect" as const,
+                          redirect: { return_url: `${returnUrl}?card=added` },
+                      },
+                  },
+              }
+            : {}),
     });
 
     redirect(session.url);

@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { FOUNDING_MEMBER_LIMIT, countFoundingMembers } from "@/lib/billing";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
@@ -46,10 +46,15 @@ async function PreviewDetail({ params, searchParams }: PageProps) {
     const imagesFailed = Boolean(search?.images);
     const supabase = await createClient();
 
-    const [{ data }, { data: userData }, foundingTaken] = await Promise.all([
+    const [{ data }, { data: userData }, placesLeft] = await Promise.all([
         supabase.from("business_previews").select(previewColumns).eq("business_id", businessId).maybeSingle(),
         supabase.auth.getUser(),
-        countFoundingMembers().catch(() => null),
+        // The same count the preview page and the billing page read. This
+        // is the number that goes into the email, and the email links
+        // straight at the preview — so counting it separately here meant
+        // the two could name different numbers to the same business
+        // within seconds of each other.
+        foundingPlacesLeft(),
     ]);
 
     const preview = data as unknown as PreviewRow | null;
@@ -63,7 +68,6 @@ async function PreviewDetail({ params, searchParams }: PageProps) {
     const location = preview.businesses?.business_locations?.[0];
     const where = location?.cities?.name ?? location?.city ?? null;
     const link = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
-    const placesLeft = foundingTaken === null ? null : Math.max(FOUNDING_MEMBER_LIMIT - foundingTaken, 0);
 
     const justCreated = Boolean(created);
 

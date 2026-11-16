@@ -41,7 +41,7 @@ nothing tells the app, and the test fails waiting for a plan.
 
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhook \
-  --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,invoice.paid,invoice.payment_failed,charge.refunded,charge.dispute.created,radar.early_fraud_warning.created
+  --events checkout.session.completed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,payment_method.attached,customer.updated,invoice.paid,invoice.payment_failed,charge.refunded,charge.dispute.created,radar.early_fraud_warning.created
 ```
 
 The events are the ones `app/api/stripe/webhook/route.ts` switches on; the CLI
