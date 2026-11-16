@@ -40,7 +40,9 @@ export type QrCodeRow = {
 
 // `today` is the date in the UK, passed in so this stays a pure function:
 // an offer expiring today is still live, and "today" is not the server's.
-export function qrTarget(code: QrCodeRow, today: string): QrTarget {
+// hasPro defaults to true so every caller that has no plan to hand —
+// and every poster that is not a card — behaves exactly as before.
+export function qrTarget(code: QrCodeRow, today: string, hasPro = true): QrTarget {
     if (code.archived_at) {
         return {
             kind: "retired",
@@ -82,6 +84,19 @@ export function qrTarget(code: QrCodeRow, today: string): QrTarget {
 
         if (!program.is_active) {
             return { kind: "card", live: false, name: program.name, problem: "This card is turned off." };
+        }
+
+        // The card itself still works for everyone holding one, but a
+        // poster is for somebody who is not
+        // (20270120090000_a_card_on_free_takes_no_new_members.sql), so
+        // on Free this one in a window is doing nothing.
+        if (!hasPro) {
+            return {
+                kind: "card",
+                live: false,
+                name: program.name,
+                problem: "On Free nobody new can join, so this poster has nothing to offer a passer-by.",
+            };
         }
 
         return { kind: "card", live: true, name: program.name, problem: null };

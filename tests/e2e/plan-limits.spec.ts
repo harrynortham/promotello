@@ -68,3 +68,109 @@ test("making another offer is the first thing in the list", async ({ page }) => 
     // One way in, inside the card, not a button above the grid as well.
     await expect(page.getByRole("button", { name: "Create offer" })).toHaveCount(1);
 });
+
+// A stamp card is the half of Pro that does the selling, and until
+// 20270120090000 the Free plan gave it away: starting a card was
+// blocked, joining one was not. So a business whose trial lapsed kept a
+// fully working card and went on collecting new members for nothing.
+//
+// The line is drawn where it costs a customer nothing: somebody already
+// holding a card keeps it and keeps collecting, and only a new joiner is
+// turned away.
+test("a card on the Free plan keeps its holders and takes nobody new", async () => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    // Exactly how a lapsed trial leaves one standing: the card is started
+    // while the business is on Pro, and then the plan goes away. It can't
+    // be faked by flipping is_active, because enforce_loyalty_plan fires
+    // on the update too.
+    const subscription = `sub_e2e_lapse_${Date.now()}`;
+
+    await admin.from("subscriptions").insert({
+        business_id: state.freeBusinessId,
+        stripe_subscription_id: subscription,
+        stripe_customer_id: `cus_e2e_lapse_${Date.now()}`,
+        status: "active",
+        tier: "pro",
+    });
+
+    const { data: program, error: madeIt } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: state.freeBusinessId,
+            name: `E2E Lapsed card ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+    expect(madeIt, "a card can be started on Pro").toBeNull();
+
+    // And now the plan ends.
+    await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
+
+    const customer = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    try {
+        const { error: signInError } = await customer.auth.signInWithPassword({
+            email: state.customerEmail,
+            password: state.testPassword,
+        });
+        expect(signInError).toBeNull();
+
+        // Nobody new.
+        const { error: refused } = await customer.rpc("join_loyalty_program", {
+            requested_program_id: program!.id,
+        });
+        expect(refused?.code, "a new joiner is turned away").toBe("P0010");
+
+        // Somebody already holding one is untouched: their card comes
+        // back, and a stamp still goes on it.
+        const { data: held } = await admin
+            .from("loyalty_cards")
+            .insert({ program_id: program!.id, user_id: state.customerUserId })
+            .select("id, card_code, stamps")
+            .single();
+
+        const { error: handedBack } = await customer.rpc("join_loyalty_program", {
+            requested_program_id: program!.id,
+        });
+        expect(handedBack, "a holder gets their own card back").toBeNull();
+
+        const business = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } },
+        );
+        await business.auth.signInWithPassword({
+            email: state.businessEmail,
+            password: state.testPassword,
+        });
+
+        const { error: stamped } = await business.rpc("add_loyalty_stamp", {
+            requested_code: held!.card_code,
+        });
+        expect(stamped, "and staff can still stamp it").toBeNull();
+
+        const { data: after } = await admin
+            .from("loyalty_cards")
+            .select("stamps")
+            .eq("id", held!.id)
+            .single();
+        expect(after!.stamps).toBe(held!.stamps + 1);
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+        await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
+    }
+});

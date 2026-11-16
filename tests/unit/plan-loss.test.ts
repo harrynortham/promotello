@@ -55,16 +55,19 @@ test("followers are counted, singular and plural", () => {
     );
 });
 
-// The whole argument. A running card is deliberately left alone on Free
-// (20261025100000_loyalty_cards.sql), so the loss is the next one.
-test("the card is never said to stop — the loss is that it is the last one", () => {
+// The whole argument. A card already running is deliberately left alone
+// on Free — holders keep collecting and staff keep stamping
+// (20261025100000_loyalty_cards.sql) — so the loss is who can join it
+// from now on (20270120090000_a_card_on_free_takes_no_new_members.sql).
+test("the card is never said to stop — the loss is that nobody else can join", () => {
     const stops = whatStops(standing({ hasCard: true, cardHolders: 12 }));
     const card = stops.find((stop) => stop.heading.includes("stamp card"));
 
     assert.ok(card, "the card is spoken about");
-    assert.equal(card!.heading, "This is the last stamp card you can start");
-    assert.match(card!.body, /12 people are collecting on carries on/);
+    assert.equal(card!.heading, "No new members on your stamp card");
+    assert.match(card!.body, /12 people already collecting carries on/);
     assert.match(card!.body, /nobody loses a stamp/);
+    assert.match(card!.body, /nobody new can join/i);
 
     for (const stop of stops) {
         assert.doesNotMatch(stop.heading, /card (stops|ends|freezes)/i, stop.heading);
@@ -80,15 +83,19 @@ test("a business with no card is told nothing about one", () => {
     assert.ok(!survives.some((heading) => heading.includes("stamp card")));
 });
 
-test("what carries on is said beside what doesn't, and says the card keeps collecting", () => {
+test("what carries on is said beside what doesn't, and nobody loses a stamp", () => {
     const survives = whatSurvives(standing({ hasCard: true, cardHolders: 3 }));
 
     assert.deepEqual(headings(survives), [
         "Your page stays up",
-        "The stamp card keeps collecting",
+        "Nobody loses a stamp",
         "Nothing is deleted",
     ]);
     assert.match(survives[1].body, /keep stamping/);
+    // A card that fills is still swapped for a fresh one, and that
+    // handover inserts straight into loyalty_cards rather than going
+    // through the join the Free plan now gates.
+    assert.match(survives[1].body, /swapped for a fresh one/);
 });
 
 test("Growth loses the three things Pro never had", () => {

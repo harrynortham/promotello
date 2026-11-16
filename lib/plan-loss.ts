@@ -7,10 +7,12 @@ import type { PlanTier } from "@/lib/billing";
 // business finds out we exaggerated, nothing else we say counts.
 //
 //  - offers      apply_business_plan() pauses all but the newest live one
-//  - the card    enforce_loyalty_plan() only gates starting or reopening
-//                a programme. One already running keeps being stamped,
-//                deliberately, so customers never lose stamps they
-//                collected (20261025100000_loyalty_cards.sql)
+//  - the card    enforce_loyalty_plan() gates starting or reopening a
+//                programme, and since 20270120090000 join_loyalty_program
+//                turns away anybody who is not already holding one. A
+//                card already running keeps being stamped, deliberately,
+//                so customers never lose stamps they collected
+//                (20261025100000_loyalty_cards.sql)
 //  - posters     enforce_qr_plan_limit() fires on insert and update, so
 //                the ones already in windows keep scanning
 //  - followers   business_has_pro() gates the new-offer email
@@ -56,11 +58,11 @@ export function whatStops(standing: Standing): Consequence[] {
 
     if (standing.hasCard) {
         stops.push({
-            heading: "This is the last stamp card you can start",
+            heading: "No new members on your stamp card",
             body:
                 standing.cardHolders > 0
-                    ? `The card ${plural(standing.cardHolders, "person is", "people are")} collecting on carries on — nobody loses a stamp. But starting a new card, or reopening one you have closed, is part of Pro. Close this one on Free and that is the end of it.`
-                    : "The card you are running carries on. But starting another, or reopening one you have closed, is part of Pro — so on Free this is the only one you will ever have.",
+                    ? `The ${plural(standing.cardHolders, "person", "people")} already collecting carries on — nobody loses a stamp, and your staff keep stamping. But nobody new can join it, and starting another card, or reopening one you have closed, is part of Pro.`
+                    : "Anyone already holding a card keeps it and keeps collecting. Nobody new can join, and starting another card, or reopening one you have closed, is part of Pro.",
         });
     }
 
@@ -118,8 +120,8 @@ export function whatSurvives(standing: Standing): Consequence[] {
 
     if (standing.hasCard) {
         survives.push({
-            heading: "The stamp card keeps collecting",
-            body: "Your staff keep stamping, nobody loses what they have collected, and the posters pointing at it keep working.",
+            heading: "Nobody loses a stamp",
+            body: "Everyone already holding a card keeps it, your staff keep stamping, and a card that fills is still swapped for a fresh one. What they collected is theirs whatever you decide.",
         });
     }
 
