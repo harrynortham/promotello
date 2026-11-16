@@ -175,29 +175,43 @@ test("the report counts first visits, who sent them, and who came back", async (
     const { businessId } = state();
     const client = admin();
     const run = String(Date.now());
-    const made = await seedVisits(client, businessId, run);
     const business = await asBusiness();
 
-    try {
+    const ask = async () => {
         const { data, error } = await business.rpc("business_repeat_visits", {
             requested_business_id: businessId,
             months: 3,
         });
         expect(error, needsMigration).toBeNull();
 
-        const report = data as Report;
+        return data as Report;
+    };
 
-        expect(report.new_customers, "three people came in for the first time").toBe(3);
-        expect(report.sent_by_promotello, "the guest joined at the counter, so two of them").toBe(2);
-        expect(report.returned, "one of the three has been back").toBe(1);
-        expect(report.regulars, "and has been in three times").toBe(1);
+    // These are the numbers for the whole shared test business, and
+    // other specs put customers through it too — redeem-offer runs just
+    // before this one in a full run and adds a fourth first-timer. So
+    // the assertions are on what this test's own seeding changes, which
+    // is the behaviour being tested, rather than on totals that depend
+    // on what else ran first. Asserted absolutely, this passed alone and
+    // failed in the suite.
+    const before = await ask();
+    const made = await seedVisits(client, businessId, run);
+
+    try {
+        const report = await ask();
+        const added = (key: keyof Report) => (report[key] as number) - (before[key] as number);
+
+        expect(added("new_customers"), "three people came in for the first time").toBe(3);
+        expect(added("sent_by_promotello"), "the guest joined at the counter, so two of them").toBe(2);
+        expect(added("returned"), "one of the three has been back").toBe(1);
+        expect(added("regulars"), "and has been in three times").toBe(1);
 
         // The sentence counts coming back among the people we sent, so
         // those numbers are about those people and nobody else.
-        expect(report.sent_returned, needsMigration).toBe(1);
-        expect(report.sent_regulars).toBe(1);
-        expect(report.visits).toBe(5);
-        expect(report.customers).toBe(3);
+        expect(added("sent_returned"), needsMigration).toBe(1);
+        expect(added("sent_regulars")).toBe(1);
+        expect(added("visits")).toBe(5);
+        expect(added("customers")).toBe(3);
         expect(report.by_month.length).toBeGreaterThan(0);
     } finally {
         for (const id of made.programs) await client.from("loyalty_programs").delete().eq("id", id);
