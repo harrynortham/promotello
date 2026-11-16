@@ -317,33 +317,28 @@ most of stage 3 is guesswork until it is.
    never got a preview email, and once with Google sign-in. The November funnel
    work changed five things in this path and none of it has been walked
    (docs/LAUNCH-FUNNEL.md).
-2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
+2. **A second Supabase project for development**, so tests stop running against
+   the live database. One accidental e2e run during launch week is worscan e than the
+   day this costs. There are already stray `logos/e2e.png` rows in production from
+   runs that failed before their cleanup.
+3. **ICO registration.** A UK data controller processing names, emails,
+   birthdays and visit history. A fee and a form:
+   ico.org.uk/for-organisations/data-protection-fee, then the number into the
+   privacy policy and the other legal pages (company number is already in
+   `lib/legal.ts`).
+4. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
    the legal gate, the preview tooling and the copy are all finished.
-3. **Record why anyone says no** — a reason on `business_previews` beside the
+5. **Record why anyone says no** — a reason on `business_previews` beside the
    status, the way a decline now carries one. Track D2, and the only way the
    pitch improves.
 
 ### Stage 2 — True before you email a single business
-
-- **ICO registration.** A UK data controller processing names, emails,
-  birthdays and visit history. A fee and a form:
-  ico.org.uk/for-organisations/data-protection-fee, then the number into the
-  privacy policy and the other legal pages (company number is already in
-  `lib/legal.ts`).
 
 - **Resend's limits.** The free plan is 3,000 a month _and_ 100 a day, and the
   daily cap goes first: daily summaries alone are about 75 a day at 50 active
   businesses, one offer announced to 150 followers is 150 in a burst, and the
   1st of the month adds every monthly report. Supabase's sign-in emails come out
   of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
-
-- **A second Supabase project for development**, so tests stop running against
-  the live database. One accidental e2e run during launch week is worse than the
-  day this costs — nine test businesses reached the live directory this way, one
-  of them approved and publicly visible. The steps, and the flow for getting a
-  migration to prod afterwards, are in [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
-  Step 0 of it is the one that matters: prod has no migration history at all, so
-  `supabase db push` would try to replay all 110 from the beginning.
 
 - ~~Apply for the Apple Developer and Google Wallet issuer accounts.~~ Moved to
   stage 5: Wallet passes went from first on the build list to track C2, so the
