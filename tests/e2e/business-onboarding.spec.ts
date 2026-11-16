@@ -41,7 +41,7 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         // redirect into this now.
         await page.waitForURL("**/business/setup/new");
         await expect(page.getByRole("heading", { name: /Let's get you set up, Jo/ })).toBeVisible();
-        await expect(page.getByText("0 of 7 done").first()).toBeVisible();
+        await expect(page.getByText("0 of 6 done").first()).toBeVisible();
 
         await page.getByRole("button", { name: "Add my business" }).click();
         await expect(page.getByText("The business name needs at least 2 characters.")).toBeVisible();
@@ -69,15 +69,14 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
 
         // Nothing is done yet — the address is a step like the rest now —
         // and a business that signs itself up is in exactly the state a
-        // claimed page is, including having to send the page itself.
-        await expect(page.getByText("0 of 7 done").first()).toBeVisible();
+        // claimed page is.
+        await expect(page.getByText("0 of 6 done").first()).toBeVisible();
 
-        await page.getByRole("button", { name: "Send it" }).click();
-        await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
-        // Three, not five: the logo and the cover photo offer "I'll add
-        // it later" and the send button honours that, because the page
-        // has a monogram and a cover of its own without them.
-        await expect(page.getByText("3 things first").first()).toBeVisible();
+        // Six, not seven: sending is not a thing anybody does any more
+        // (20270123090000_the_queue_fills_itself.sql), so the step that
+        // asked for it is gone rather than renamed.
+        await expect(page.getByRole("button", { name: "Send it" })).toHaveCount(0);
+        await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toHaveCount(0);
         await expect(page.getByRole("button", { name: /Send .* for review/ })).toHaveCount(0);
 
         // They wrote this page themselves, so nothing on it is a guess of
@@ -99,7 +98,12 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
         await expect(page.getByText("Get ready to go live")).toBeVisible({ timeout: 15_000 });
         await expect(page.getByText("Add logo")).toBeVisible();
         await expect(page.getByText("Your page isn't live yet")).toBeVisible();
-        await expect(page.getByText("Send your page for review")).toBeVisible();
+
+        // The checklist used to end with "Send your page for review",
+        // which is no longer anybody's job. What replaces it is the
+        // sentence saying what does put the page in front of us.
+        await expect(page.getByText("Send your page for review")).toHaveCount(0);
+        await expect(page.getByText(/comes to us on its own/)).toBeVisible();
     } finally {
         await admin.from("businesses").delete().eq("created_by", userId);
         await admin.auth.admin.deleteUser(userId);
