@@ -107,3 +107,24 @@ test("today is read in the UK, not wherever the server is", () => {
     assert.equal(todayInUk(new Date("2026-06-30T23:30:00Z")), "2026-07-01");
     assert.match(todayInUk(), /^\d{4}-\d{2}-\d{2}$/);
 });
+
+// A card poster is for somebody who is not holding one yet, and on Free
+// that is exactly who is turned away
+// (20270120090000_a_card_on_free_takes_no_new_members.sql). The card
+// still works for everyone already collecting; the poster does not.
+test("a card poster on the Free plan has nothing to offer a passer-by", () => {
+    const open = { name: "Coffee card", is_active: true, closed_at: null };
+
+    const onPro = qrTarget({ loyalty_programs: open }, today, true);
+    assert.equal(onPro.live, true);
+    assert.equal(onPro.problem, null);
+
+    const onFree = qrTarget({ loyalty_programs: open }, today, false);
+    assert.equal(onFree.live, false);
+    assert.match(onFree.problem!, /nobody new can join/);
+
+    // An offer poster is not affected: apply_business_plan pauses the
+    // offer itself, and that is already said in its own words.
+    const offerOnFree = qrTarget({ offers: liveOffer }, today, false);
+    assert.equal(offerOnFree.live, true);
+});

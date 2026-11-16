@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { businessHasPro } from "@/lib/billing";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -265,7 +266,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         supabase.auth.getUser(),
     ]);
 
-    const loyaltyCards = loyaltyPrograms ?? [];
+    // A card on a Free business takes nobody new
+    // (20270120090000_a_card_on_free_takes_no_new_members.sql). Offering
+    // it here anyway would send somebody through a sign-in to be refused
+    // at the end of it. The people already holding one still reach it
+    // from their own wallet, which is where it belongs for them.
+    const loyaltyCards =
+        (loyaltyPrograms ?? []).length > 0 && (await businessHasPro(supabase, businessId).catch(() => true))
+            ? (loyaltyPrograms ?? [])
+            : [];
 
     const { data: eventRows } = !EVENTS_ENABLED
         ? { data: [] }

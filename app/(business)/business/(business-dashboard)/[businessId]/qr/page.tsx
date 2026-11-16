@@ -356,6 +356,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                         loyalty_programs: one(code.loyalty_programs),
                                     },
                                     today,
+                                    hasPro,
                                 );
                                 const scans = (recentScans ?? []).filter((scan) => scan.qr_code_id === code.id);
                                 const last7 = scans.filter((scan) => scan.scanned_at >= since7).length;

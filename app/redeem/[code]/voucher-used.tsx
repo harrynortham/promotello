@@ -28,6 +28,7 @@ export function VoucherUsed({
     terms,
     businessId,
     showLoyaltyNudge,
+    proCallToAction,
 }: {
     discount: string;
     offerTitle: string;
@@ -43,6 +44,9 @@ export function VoucherUsed({
     businessId: string;
     // Free businesses only: the honest next thing, not a billboard.
     showLoyaltyNudge: boolean;
+    // "Try Pro free" is only true for a business that has not had its
+    // trial yet.
+    proCallToAction: string;
 }) {
     // Mounted first, then animated, so the page never flashes a finished
     // state before it plays.
@@ -143,7 +147,7 @@ export function VoucherUsed({
                             href={`/business/${businessId}/billing`}
                             className="font-medium text-emerald-300 underline-offset-4 hover:underline"
                         >
-                            Try Pro free
+                            {proCallToAction}
                         </Link>
                     </p>
                 )}

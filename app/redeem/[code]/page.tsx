@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { FiAlertTriangle } from "react-icons/fi";
 
 import { SubmitButton } from "@/components/submit-button";
-import { businessHasPro } from "@/lib/billing";
+import { businessHasPro, hasEverSubscribed } from "@/lib/billing";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { formatSchedule, scheduleFrom } from "@/lib/schedule";
@@ -160,13 +160,18 @@ async function RedeemContent({ params, searchParams }: PageProps) {
         const midnight = new Date();
         midnight.setHours(0, 0, 0, 0);
 
-        const [{ count: usedToday }, hasPro] = await Promise.all([
+        const [{ count: usedToday }, hasPro, trialSpent] = await Promise.all([
             supabase
                 .from("offer_redemptions")
                 .select("id, offers!inner ( business_id )", { count: "exact", head: true })
                 .eq("offers.business_id", voucher.business_id)
                 .gte("used_at", midnight.toISOString()),
             businessHasPro(supabase, voucher.business_id).catch(() => true),
+            // Offering a free trial to a business that has had one is
+            // advertising something it cannot have. Erring towards the
+            // plainer line, since this is a till screen with staff and a
+            // customer in front of it.
+            hasEverSubscribed(supabase, voucher.business_id).catch(() => true),
         ]);
 
         return (
@@ -182,6 +187,7 @@ async function RedeemContent({ params, searchParams }: PageProps) {
                     terms={voucher.offer_terms}
                     businessId={voucher.business_id}
                     showLoyaltyNudge={!hasPro}
+                    proCallToAction={trialSpent ? "See what Pro adds" : "Try Pro free"}
                 />
             </Shell>
         );

@@ -134,11 +134,14 @@ export async function tellThemWhatStops({
 
 // So the next ending is told about too.
 export async function forgetTheEnding(businessId: string) {
+    // The win-backs are counted from the plan_ending row, so they go
+    // with it: a business that comes back and leaves again is asked
+    // again, and one that is already back is never chased.
     await createAdminClient()
         .from("business_lifecycle_sends")
         .delete()
         .eq("business_id", businessId)
-        .eq("kind", "plan_ending");
+        .in("kind", ["plan_ending", "win_back_1", "win_back_2"]);
 }
 
 export { cameBack, cancellationLanded };
