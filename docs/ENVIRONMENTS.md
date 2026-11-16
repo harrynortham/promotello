@@ -1,271 +1,266 @@
-# Where the database lives while you work
+# Two copies of the database, and which one you are touching
 
-Until now there has been one Supabase project. Every migration was
-pasted into the dashboard by hand, and `npm run test:e2e` ran against
-the same database the public site reads — which is how nine test
-businesses ended up in the live directory, one of them approved and
-visible, and why full test runs have been avoided rather than used.
+## The whole idea, in one picture
 
-This is the way out, and the flow afterwards.
+Right now there is **one** database. The live site reads it, and so does
+everything you do while building — including the tests, which create
+fake businesses and then delete them. Mostly that works. Occasionally a
+test crashes before it tidies up, and a fake business is left sitting in
+the real directory. That has happened: nine of them, one approved and
+publicly visible, which I cleared out yesterday.
 
-## The three places
+The fix is a second copy:
 
-| | What it is | When |
-| --- | --- | --- |
-| **Local** | The whole Supabase stack in Docker on your machine | `npm run dev`, every test run, every migration first |
-| **Cloud dev** | A second Supabase project. Optional, and later | Only when something needs to be prod-shaped: real Google sign-in, real deliverability, a link to show somebody |
-| **Prod** | `owdxoarqivpoplpqiylt`, the live site | A migration that has already run locally, pushed by name |
+```
+   YOUR LAPTOP                                 THE INTERNET
+   ───────────                                 ────────────
 
-Local is the default because it costs nothing, resets in seconds, and
-cannot reach a customer. Docker is already installed on this machine
-(28.0.4); it just needs to be running.
+   local database          ships to  ───────▶  live database
+   a throwaway copy                            what customers see
+   nobody can see it                           only two commands reach it
+   rebuilds in seconds
+```
 
-## What touches prod, and when
+You build against the copy. When a change is ready, you send it to the
+live one on purpose, with a command that asks you to confirm.
 
-Prod is written to **once** in this whole document, at step 4, and only
-after step 3 has proved the write is correct.
+That is the whole thing. Everything below is detail.
 
-| Step | Prod |
+## What you can actually break
+
+Worth saying plainly, because this is the bit that feels frightening.
+
+**On your laptop: nothing.** The local database is a throwaway. Delete
+every row, drop every table, pull the plug mid-write — `npm run db:reset`
+rebuilds it from scratch in seconds. There is nothing in it worth
+keeping and nobody else can see it. **You cannot do damage there.** Be
+as careless as you like; that is what it is for.
+
+**On the live one:** only two commands reach it, and neither can happen
+by accident.
+
+| | What it does |
 | --- | --- |
-| 1 · Start the local stack | untouched |
-| 2 · Point the app at it | untouched |
-| 3 · Prove the files match prod | read only |
-| 4 · Give prod its migration history | **written** — one metadata table |
+| `npm run db:ship` | Shows you what it would do, then asks you to type **ship** before doing it |
+| `supabase migration repair` | Writes one bookkeeping table. Cannot change a single table, column or function — see [the one-off job](#the-one-off-job-telling-the-live-database-what-it-has) |
 
-## Step 1 · Start the local stack
+Nothing else you run day to day can touch it. Not `npm run dev`, not the
+tests, not `db:reset`.
 
-```bash
-# Once. Creates supabase/config.toml, which is how the local stack is
-# configured: auth providers, ports, email.
-supabase init
+**The one command to know and avoid** is `supabase db reset --linked`.
+Plain `db reset` rebuilds your laptop's copy, which is safe and what the
+npm script does. Adding `--linked` rebuilds *the remote project it is
+connected to* — which would wipe it. You would have to type that flag
+deliberately, and there is no reason to. Use `npm run db:reset` and the
+question never comes up.
 
-# First run pulls containers and takes a while. After that, seconds.
-supabase start
-
-# Replays all 110 migrations into an empty database, then runs
-# supabase/seed.sql if there is one.
-supabase db reset
-```
-
-`db reset` is the part worth noticing. It rebuilds from the migration
-files every time, so **every reset re-proves that the 110 files produce
-a working database from nothing** — which nobody has ever checked,
-because prod was built one hand-pasted migration at a time.
-
-**If a reset fails**, the migration it stops on is genuinely broken in a
-way prod never noticed, usually because what was pasted into the
-dashboard differed from what was committed. Fix the file, never the
-database, and reset again.
-
-The storage buckets come with it: `business-logos`, `offer-images` and
-`profile-images` are all created in
-`20261022090000_sync_remote_schema.sql`.
-
-### Never pass `--linked` to `db reset`
-
-`supabase db reset --linked` resets **the linked project**: it drops
-everything and replays the migrations. Against prod that is the whole
-business. The default is `--local`, so the only way to do it is to type
-`--linked` deliberately. Don't.
-
-## Step 2 · Point the app at it
-
-`supabase status` prints the local URL and keys, and will print them in
-the shape `.env.local` wants:
+## The five commands you will use
 
 ```bash
-supabase status -o env \
-  --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
-  --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY \
-  --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY
+npm run db:start      # start the local database (needs Docker running)
+npm run db:reset      # rebuild it from scratch — do this freely
+npm run dev           # the app, pointed at your local copy
+npm run test:e2e      # the tests, now safe to run whenever
+npm run db:ship       # send migrations to the live database, with a confirmation
 ```
 
-Put those three in `.env.local`, and keep the prod values in
-`.env.production.local`, which is already gitignored, so the day you
-genuinely need them is a copy and not a hunt.
+That is the day-to-day. The rest of this document is setting it up once,
+and the detail behind the commands.
 
-Two deliberate changes while you are in there:
+---
 
-- **Remove `RESEND_API_KEY`.** `sendEmails` skips everything when it is
-  missing, so nothing from a development database can reach a real
-  person. Supabase's own sign-in emails go to the local inbox either
-  way, whose address `supabase status` prints. Put the key back for an
-  afternoon when you want to see a real email, then take it out again.
-- **Stripe stays in test mode**, which it already is (`sk_test_`). The
-  webhook listener in CLAUDE.md is unchanged.
+## Setting it up
 
-Then something to look at:
+### 1 · Start Docker
+
+Docker Desktop is already installed on this machine. Open it and wait
+for the whale icon to settle. The local database runs inside it.
+
+### 2 · Start the local database
+
+```bash
+supabase init         # once ever: creates supabase/config.toml
+npm run db:start      # first run pulls containers and is slow; later runs are seconds
+npm run db:reset      # builds the database from the migration files
+```
+
+`db:reset` replays all 110 migration files into an empty database. That
+is worth understanding, because it is the quiet benefit of working this
+way: **every reset re-proves that your migration files can build a
+working database from nothing.** Nobody has ever checked that — the live
+database was built by pasting migrations in one at a time over two
+months.
+
+If a reset fails, the migration it stops on is genuinely broken, and the
+live database just never noticed. Fix the **file**, not the database,
+and reset again.
+
+Your storage buckets come with it, since
+`20261022090000_sync_remote_schema.sql` creates all three.
+
+### 3 · Point the app at it
+
+```bash
+npm run db:env
+```
+
+That prints three lines. Put them in `.env.local`, replacing the ones
+that are there — and first move the current ones into
+`.env.production.local`, which is gitignored, so the live values are
+kept somewhere rather than lost.
+
+Two more changes while you are in `.env.local`:
+
+- **Delete the `RESEND_API_KEY` line.** Without it, `sendEmails` quietly
+  skips everything, so nothing you do while building can email a real
+  person. Sign-in emails still work: they go to a local inbox, whose
+  address `npm run db:status` prints. Put the key back for an afternoon
+  if you want to see a real email, then take it out.
+- **Stripe is already in test mode** (`sk_test_`), so nothing to do.
+
+Then give yourself something to look at:
 
 ```bash
 node scripts/sample-data.mjs
 ```
 
-**This is the step that stops the tests writing to the live site.**
-Until it is done, `npm run test:e2e` still runs against prod exactly as
-it does today.
+**This step is the one that matters.** Until `.env.local` points at the
+local copy, the tests still write to the live site, exactly as they do
+today.
 
-### Google sign-in
+### 4 · Sign-in, while you are getting used to it
 
-Email sign-in works locally with no setup and its code goes to the local
-inbox. Google needs an OAuth client pointed at the local callback and
-its id and secret in `config.toml` — the one thing genuinely easier on a
-cloud project. Until then, `NEXT_PUBLIC_AUTH_PROVIDERS` decides whether
-the button shows.
+Email sign-in works immediately and the code arrives in the local inbox.
+Google sign-in needs its own setup pointing at the local address, which
+is the one genuinely fiddly thing — leave it off locally for now via
+`NEXT_PUBLIC_AUTH_PROVIDERS`, and use email.
 
-## Step 3 · Prove the files are what prod has
+---
 
-The step that makes step 4 safe. It only reads.
+## The one-off job: telling the live database what it has
 
-`supabase_migrations.schema_migrations` does not exist on prod. The 110
-migrations were applied by hand, so as far as the CLI is concerned
-**none of them has ever run**. Step 4 fixes that by telling prod it
-already has them — which is only true if the files really do describe
-prod. Nobody has ever checked.
+This is separate from the setup above, and it is the only part that
+writes to the live database. It is worth doing, but it is not urgent and
+it is not required for anything above to work.
 
-If one file was never actually applied, step 4 would record it as
-applied anyway. Every future `db push` would skip it, and prod would be
-permanently missing that change while the history insisted otherwise. A
-quiet, lasting problem, and the only way any of this hurts.
+### Why it is needed
+
+Supabase keeps a list of which migrations a database has had. The live
+database **has no such list** — every one of your 110 migrations was
+pasted in by hand, so as far as the tooling is concerned none of them
+has ever run.
+
+That matters for one reason: `npm run db:ship` compares your files
+against that list. With the list empty, it would try to send all 110
+from the beginning. Most would fail on things that already exist, and
+the failure would be confusing.
+
+### Checking before changing anything
+
+The fix is to write the list. But writing it claims that all 110 files
+really have been applied — and nobody has checked. If one never was,
+the list would say it had, and it would be skipped forever afterwards.
+
+So check first. This reads the live database and writes nothing:
 
 ```bash
 supabase link --project-ref owdxoarqivpoplpqiylt
-
-# Replays the migration files into a shadow database and diffs the
-# result against prod. Reads prod, writes nothing to it.
 supabase db diff --linked
 ```
 
-**Empty output is the answer you want**: the files and prod are the same
-database, and step 4 records a fact rather than a hope.
+It replays your files into a temporary database and compares the result
+with the live one.
 
-**Output means they disagree.** Stop and read it — that is the
-difference between what has been committed and what prod actually has.
-Decide which is right before anything is written, because step 4 freezes
-whichever answer you pick.
+- **No output** — they match. Good. Carry on.
+- **Output** — they disagree, and that is worth knowing. Stop and read
+  it; it is the difference between what is committed and what is
+  actually live. Come back to this when you have decided which is right.
 
-## Step 4 · Give prod its migration history
+### Writing the list
 
-Only once step 3 came back clean.
+Only if the check was clean:
 
 ```bash
-# Still linked to prod from step 3.
-supabase migration list        # everything local, nothing remote
+supabase migration list        # everything on the left, nothing on the right
 
 for f in supabase/migrations/*.sql; do
   version=$(basename "$f" | cut -d_ -f1)
   supabase migration repair --status applied "$version"
 done
 
-supabase migration list        # both columns should now match
+supabase migration list        # both sides should match now
 ```
 
-`migration repair` writes one row per migration into
-`supabase_migrations.schema_migrations`. It runs none of the SQL and
-cannot alter a table, a column, a function or a policy — the documented
-behaviour is to mark a migration applied *without re-running it*. That
-is what makes it safe in bulk, given step 3.
+`migration repair` only writes that bookkeeping table. It runs none of
+your SQL and **cannot change a table, a column, a function or a policy**
+— the documented behaviour is to mark a migration as applied *without
+re-running it*. That is why doing all 110 at once is fine.
 
-**Check the second `migration list` before moving on.** If any row is
-local-only afterwards, stop and work out why.
+Afterwards the live database is safer than it is today: a stray push
+finds nothing pending instead of trying to replay everything.
 
-Afterwards prod is safer than it is now. A stray `supabase db push` at
-prod today would try to replay all 110 from the beginning; once the
-history is right, the same mistake finds nothing pending and does
-nothing.
+Don't use `supabase db pull` as a shortcut. It also writes to the live
+database, and the documentation warns the file it produces can contain
+statements you did not expect.
 
-**Do not reach for `supabase db pull` instead.** It writes to prod's
-history too, and the documentation warns that the file it generates can
-contain statements you did not expect — `DROP EXTENSION` among them.
+---
 
-### Afterwards, the link is still pointed at prod
-
-`supabase/.temp/` holds it, and every `--linked` command means prod
-until it changes. Nothing in the daily flow below needs a linked project
-at all, which is the point: the only commands that reach prod are the
-ones that name it.
-
-## Step 5 · The flow, day to day
+## Sending a change to the live site
 
 ```bash
-supabase start                 # if it is not already up
-
-# 1. Write the migration.
-supabase migration new what_it_does
-
-# 2. Rebuild from nothing, which proves the whole sequence again.
-#    It takes seconds.
-supabase db reset
-
-# 3. Prove it. Both of these now run against local.
-npm run test:unit
-npm run test:e2e
-
-# 4. Commit the migration with the code that needs it.
+npm run db:ship
 ```
 
-## Step 6 · Shipping to prod
+It prints what it would do, waits for you to type `ship`, and only then
+sends it. If the list is not what you meant, press anything else and
+nothing happens.
 
-Prod is named explicitly every time rather than being the linked
-project:
+It needs `PROD_DB_URL` — the connection string from the live project's
+dashboard, under Settings → Database → Connection string → URI. Put it
+in `.env.production.local` and it will find it.
 
-```bash
-# What would run. Read it.
-supabase db push --dry-run --db-url "$PROD_DB_URL"
+**Then, in this order:**
 
-supabase db push --db-url "$PROD_DB_URL"
-```
+1. Ship the migration.
+2. Check the thing exists — the new column, the new function.
+3. Merge the pull request, which deploys the code.
 
-`PROD_DB_URL` is the connection string from the prod dashboard
-(Settings → Database → Connection string → URI) with the password
-percent-encoded. Keep it out of the repo: an environment variable in
-your shell for the minute you need it, or read from
-`.env.production.local`.
+The code needs the database to be ready first. That is what every
+"⚠️ run the migration before merging" note in a pull request has meant.
 
-**The order matters.** The code and the migration ship together, but the
-migration lands first:
+## The short version of the rules
 
-1. `db push` to prod.
-2. Confirm it — the function or column exists.
-3. Merge the PR, which deploys the code.
+- **Build against your laptop's copy.** Break it as often as you like.
+- **`npm run db:reset` is always safe.** Use it whenever anything looks odd.
+- **Only `npm run db:ship` sends things live**, and it asks first.
+- **Never type `--linked` on a reset.**
+- **Never edit a migration that has already gone live.** Write a new one.
+- **If a push fails, fix the file, not the database.**
 
-Backwards and the live site calls something that is not there yet. That
-is what every "⚠️ run the migration before merging" note in a PR has
-been about.
+## For later
 
-## The rules
+### A cloud dev project
 
-- **A migration runs locally first.** `db reset` is the only place the
-  files are tested as a sequence rather than one at a time.
-- **Prod is pushed to by name**, with `--db-url`, never by being linked.
-- **Never `--linked` on `db reset`.**
-- **Dry run first**, every time.
-- **Never edit a migration that has run on prod.** Write another one.
-- **Never edit the database to fix a failed push.** Fix the file.
-- **A function is replaced from its deployed definition**, not from the
-  file, unless the two have been proven identical. The copy in
-  `supabase/migrations/` has differed from live more than once — eleven
-  characters in `claim_monthly_reports`, five behaviours in
-  `claim_business_lifecycle_emails`. Fetch it with `pg_get_functiondef`,
-  check the md5, then patch.
+A second Supabase project in the cloud, as well as the local one. Worth
+it when something is genuinely awkward locally — real Google sign-in,
+real email deliverability, a URL to show someone. Not needed now.
 
-## A cloud dev project, if you want one later
+If you do create one: same region as live, and **leave "automatic RLS"
+off**. It stops new tables being readable by default, and 27 of this
+project's 29 table-creating migrations rely on that default with RLS
+doing the real access control. Turning it on would give you a project
+where most tables exist but cannot be read.
 
-Worth adding when something is genuinely awkward locally: real Google
-sign-in, real deliverability, a URL to show somebody. Same shape —
-create `promotello-dev` in the dashboard, same region as prod,
-`supabase link --project-ref <dev-ref>`, `supabase db push`.
+### Replacing a database function
 
-**Leave "automatic RLS" off when creating it.** It stops a new table in
-`public` being granted to `anon` and `authenticated` by default, and 27
-of this project's 29 table-creating migrations rely on that implicit
-grant with RLS doing the access control. Prod is on the old behaviour,
-so turning it on would give you a dev project where most tables exist
-but cannot be read. If that posture is wanted later it is a deliberate
-change to both projects at once, not a checkbox at creation time.
+When changing an existing function, take its current definition from the
+live database with `pg_get_functiondef` and check the md5 before
+editing, rather than trusting the file. The file has differed from live
+more than once — eleven characters in `claim_monthly_reports`, and five
+behaviours in `claim_business_lifecycle_emails`.
 
-## When something is only true of prod
+### Things only the live site can test
 
-A few things cannot be tested anywhere else: a live Stripe webhook, real
-deliverability, the actual directory. Those are the cases to name out
-loud in a PR rather than wave through, and the list should get shorter,
-not longer.
+A real Stripe webhook, real email deliverability, the actual directory.
+Short list, and it should get shorter. When something genuinely needs
+the live site, say so in the pull request rather than waving it through.
