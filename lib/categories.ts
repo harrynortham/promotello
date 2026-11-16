@@ -88,3 +88,41 @@ export function isInCategory(
         ),
     );
 }
+
+// An example offer in the business's own trade, for the title field's
+// placeholder.
+//
+// It used to say "20% off your next coffee" to everybody, so a bike
+// shop, a barber and a hotel were all shown an example from a café. A
+// placeholder is the one piece of copy a business reads while deciding
+// what to write, and an example from somebody else's trade is worse
+// than none: it is the first thing that says we were not really
+// thinking about them.
+//
+// Keyed on the six top-level groups rather than the forty-odd
+// categories under them, because that is a list somebody can keep true.
+// Each one has to fit every trade under its group, not just the
+// first: "£5 off your first cut" is no use to the optician and the
+// dentist filed beside the barber, and "two for one on tickets" is no
+// use to the gym filed beside the cinema.
+const titleExamples: Record<string, string> = {
+    "food-drink": "20% off your next coffee",
+    "health-beauty": "10% off your first appointment",
+    services: "10% off your first booking",
+    shopping: "10% off your first purchase",
+    "things-to-do": "Bring a friend for free",
+    "travel-stays": "10% off a midweek stay",
+};
+
+// Never empty: a business whose category we cannot place still gets an
+// example, just a plainer one.
+export const DEFAULT_TITLE_EXAMPLE = "10% off your first visit";
+
+export function offerTitleExample(
+    categoryId: string | null | undefined,
+    groups: CategoryGroup[],
+) {
+    const group = topLevelFor(categoryId, groups);
+
+    return (group && titleExamples[group.slug]) || DEFAULT_TITLE_EXAMPLE;
+}

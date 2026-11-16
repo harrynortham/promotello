@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { FiLock } from "react-icons/fi";
 import type {
     Control,
@@ -16,10 +17,16 @@ import { z } from "zod";
 
 import { CategorySelect, nativeSelectClassName } from "@/components/category-select";
 import { FieldError, invalidProps } from "@/components/field-error";
+import {
+    getCategoryGroups,
+    offerTitleExample,
+    type CategoryGroup,
+} from "@/lib/categories";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/utils/supabase/client";
 import {
     HEADLINE_MAX,
     ITEM_MAX,
@@ -865,6 +872,31 @@ export function OfferFields({
     // Already claimed, when editing.
     minRedemptions?: number;
 }) {
+    // The categories, loaded the same way the picker loads them, so the
+    // example follows whatever the business chooses rather than the
+    // category it started on.
+    const [groups, setGroups] = useState<CategoryGroup[]>([]);
+
+    useEffect(() => {
+        let watching = true;
+
+        getCategoryGroups(createClient())
+            .then((loaded) => {
+                if (watching) setGroups(loaded);
+            })
+            .catch(() => undefined);
+
+        return () => {
+            watching = false;
+        };
+    }, []);
+
+    const chosenCategory = useWatch({ control, name: "category" });
+    const titleExample = offerTitleExample(
+        (chosenCategory as string) || defaultCategoryId,
+        groups,
+    );
+
     return (
         <>
             <div className="space-y-2">
@@ -874,7 +906,9 @@ export function OfferFields({
                 <Input
                     id="title"
                     maxLength={160}
-                    placeholder="20% off your next coffee"
+                    // An example from this business's own trade, which
+                    // follows the category as they change it.
+                    placeholder={titleExample}
                     {...register("title")}
                     {...invalidProps("title-error", errors.title)}
                 />
