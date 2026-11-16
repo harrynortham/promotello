@@ -106,6 +106,25 @@ async function handleEvent(
       await syncSubscription(stripe, supabase, event.data.object.id);
       break;
 
+    // A trial can now start without a card, so the business adds one
+    // later in the portal. That fires none of the subscription events —
+    // Stripe sends payment_method.attached and customer.updated and
+    // leaves the subscription alone — so without these two we never
+    // learn, has_payment_method stays false, and we go on telling a
+    // business that has paid attention that its plan is about to stop
+    // while Stripe quietly charges the card it added.
+    case "payment_method.attached": {
+      const owner = event.data.object.customer;
+      await syncCustomerSubscriptions(stripe, supabase, owner ? idOf(owner) : null);
+      break;
+    }
+
+    // Covers the default being changed or cleared, which is where the
+    // answer actually lives when the subscription has none of its own.
+    case "customer.updated":
+      await syncCustomerSubscriptions(stripe, supabase, event.data.object.id);
+      break;
+
     case "invoice.paid":
     case "invoice.payment_failed": {
       const subscription =
@@ -238,6 +257,26 @@ async function subscriptionsForPaymentIntent(
 
 // Always re-fetches the subscription from Stripe rather than trusting the
 // event payload, so events arriving out of order can't leave stale state.
+// Every subscription a customer has, resynced. Used where the event
+// names a customer rather than a subscription.
+async function syncCustomerSubscriptions(
+  stripe: Stripe,
+  supabase: AdminClient,
+  customerId: string | null,
+) {
+  if (!customerId) return;
+
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 100,
+  });
+
+  for (const subscription of subscriptions.data) {
+    await syncSubscription(stripe, supabase, subscription.id);
+  }
+}
+
 async function syncSubscription(
   stripe: Stripe,
   supabase: AdminClient,

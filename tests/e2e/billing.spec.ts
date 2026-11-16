@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import Stripe from "stripe";
 import fs from "fs";
 import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
 
@@ -111,6 +112,51 @@ test("business owner can start a founding member trial and open the billing port
     await expect(page.getByText(/Free plan ·/)).toHaveCount(0);
 
     await page.goto(`/business/${businessId}/billing`);
+
+    // The trial took no card, so the page should say what happens on the
+    // day rather than promise a payment.
+    await expect(page.getByText(/There's no card on this yet/)).toBeVisible({ timeout: 30_000 });
+
+    // Now the business adds one in the portal. Stripe tells us with
+    // payment_method.attached and customer.updated and leaves every
+    // subscription event alone, so without those two the record never
+    // learns and we go on warning somebody who has already acted.
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const { data: row } = await admin
+        .from("subscriptions")
+        .select("stripe_customer_id")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const method = await stripe.paymentMethods.create({
+        type: "card",
+        // Stripe's own test token: the raw numbers are never handled here.
+        card: { token: "tok_visa" },
+    });
+
+    await stripe.paymentMethods.attach(method.id, { customer: row!.stripe_customer_id });
+    await stripe.customers.update(row!.stripe_customer_id, {
+        invoice_settings: { default_payment_method: method.id },
+    });
+
+    await expect(async () => {
+        await page.reload();
+        await expect(
+            page.getByText("when your first payment is taken"),
+            "a card was added but the record never heard: is payment_method.attached in the listener's --events?",
+        ).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 60_000 });
+
+    await expect(page.getByRole("button", { name: "Add a card to keep Pro" })).toHaveCount(0);
+
     await page.getByRole("button", { name: "Manage billing" }).click();
     await page.waitForURL(/billing\.stripe\.com/, { timeout: 30_000 });
 });

@@ -29,7 +29,7 @@ For live, put `STRIPE_SECRET_KEY=sk_live_…` in `.env.production.local` (gitign
 node --env-file=.env.production.local scripts/stripe-setup.mjs --webhook-url https://www.promotello.com/api/stripe/webhook
 ```
 
-This also creates the webhook endpoint with all 9 events and prints `STRIPE_WEBHOOK_SECRET`. The secret is shown once, so copy it straight away.
+This also creates the webhook endpoint with all 11 events and prints `STRIPE_WEBHOOK_SECRET`. The secret is shown once, so copy it straight away.
 
 Then, in live mode:
 
