@@ -13,6 +13,13 @@ What a business is told when it is approved or turned down:
 docs/APPROVAL-AND-DECLINE.md (read before changing a review decision, the
 words a decline sends, or the help articles it links to)
 
+Two copies of the database, and which one you are touching:
+docs/ENVIRONMENTS.md (read before writing a migration or running the e2e
+tests). A migration runs on the local copy first — `npm run db:reset`
+rebuilds it from the files, which is the only place they are tested as a
+sequence. The live database is reached only by `npm run db:ship`, which
+confirms first. Never type `--remote` on a reset.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
