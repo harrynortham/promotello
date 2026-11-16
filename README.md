@@ -370,23 +370,14 @@ most of stage 3 is guesswork until it is.
    never got a preview email, and once with Google sign-in. The November funnel
    work changed five things in this path and none of it has been walked
    (docs/LAUNCH-FUNNEL.md).
-2. **Get the tests off the live database.** One accidental e2e run during launch
-   week is worse than the afternoon this costs — nine test businesses reached the
-   live directory that way, one of them approved and publicly visible, and full
-   runs have been avoided ever since rather than used. The answer is a local copy
-   of the database rather than a second cloud project: free, resets in seconds,
-   and `npm run db:reset` re-proves the 111 migrations as a sequence every time.
-   Steps in [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md), which also covers
-   getting a migration to prod afterwards. Prod is written to once in the whole
-   process, and only after a diff has proved the write correct.
-3. **ICO registration.** A UK data controller processing names, emails,
+2. **ICO registration.** A UK data controller processing names, emails,
    birthdays and visit history. A fee and a form:
    ico.org.uk/for-organisations/data-protection-fee, then the number into the
    privacy policy and the other legal pages (company number is already in
    `lib/legal.ts`).
-4. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
+3. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
    the legal gate, the preview tooling and the copy are all finished.
-5. **Record why anyone says no** — a reason on `business_previews` beside the
+4. **Record why anyone says no** — a reason on `business_previews` beside the
    status, the way a decline now carries one. Track D2, and the only way the
    pitch improves.
 
@@ -412,6 +403,16 @@ pricing and three of our own claims all assume customers browsing a directory.
   Instagram, press, the businesses' own channels, or paid. Everything else in
   this stage is worth less until this is answered, because there is no point
   building a weekly email with nobody to send it to.
+- **Take the example businesses down.** Nineteen of the twenty businesses on the
+  live site are the sample Bristol shops that fill the directory until real ones
+  are in it — `is_sample = true`, so they are already left out of the sitemap and
+  marked noindex, and `node scripts/sample-data.mjs remove` takes them away. They
+  are scaffolding for showing the site to a business, which is exactly the wrong
+  thing for a customer to browse: an offer that cannot be claimed anywhere. So
+  they come down before customers are invited, not before businesses are. Decide
+  the threshold — probably enough real businesses that the directory does not
+  look empty without them — and check what their removal leaves behind
+  (`node scripts/remove-unused-images.mjs` for the pictures).
 - **A reason to come back.** A weekly "new near you" by area, from the offers
   that went live that week. The per-business follower email already does the
   hard half.
