@@ -249,23 +249,26 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# The templates the live project uses, so a sign-in locally behaves the
-# way it does on the live site. Without these the local stack falls back
-# to Supabase's own magic-link email, which sends a link and no code —
-# and the form asks for a typed code (components/email-code-form.tsx
-# calls verifyOtp with a 6-digit token), so there is nothing to type and
+# The same templates the live project uses, so a sign-in locally behaves
+# the way it does on the live site. Without these the local stack falls
+# back to Supabase's own magic-link email, which sends a link and no
+# code — and the form asks for a typed code (email-code-form.tsx calls
+# verifyOtp with a 6-digit token), so there is nothing to type and
 # sign-in cannot be completed locally at all. The long token= in the
 # default link is a different token and will not work in that box.
 #
-# The subjects are set here to match each template's own heading. The
-# live project's subjects are dashboard settings rather than anything in
-# this repository, so if one is reworded there, reword it here too.
+# Both the files and the subjects come from
+# scripts/auth-email-templates.ts, which is also what gets pasted into
+# the dashboard for the live project. Change them there and re-run it,
+# never here, or the two drift apart — which is exactly what happened to
+# the files themselves: the email layout changed on 15 November and
+# these were a layout behind until the script was run again.
 [auth.email.template.magic_link]
-subject = "Your sign-in code"
+subject = "{{ .Token }} is your Promotello code"
 content_path = "./supabase/templates/magic-link.html"
 
 [auth.email.template.confirmation]
-subject = "Confirm your email"
+subject = "{{ .Token }} is your Promotello code"
 content_path = "./supabase/templates/confirm-signup.html"
 
 [auth.email.template.email_change]
@@ -273,7 +276,7 @@ subject = "Confirm your new email address"
 content_path = "./supabase/templates/change-email.html"
 
 [auth.email.template.reauthentication]
-subject = "Confirm it's you"
+subject = "{{ .Token }} is your Promotello confirmation code"
 content_path = "./supabase/templates/reauthentication.html"
 
 # Uncomment to customize email template
