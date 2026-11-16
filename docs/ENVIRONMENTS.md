@@ -47,12 +47,17 @@ by accident.
 Nothing else you run day to day can touch it. Not `npm run dev`, not the
 tests, not `db:reset`.
 
-**The one command to know and avoid** is `supabase db reset --linked`.
+**The one command to know and avoid** is `supabase db reset --remote`.
 Plain `db reset` rebuilds your laptop's copy, which is safe and what the
-npm script does. Adding `--linked` rebuilds *the remote project it is
-connected to* — which would wipe it. You would have to type that flag
-deliberately, and there is no reason to. Use `npm run db:reset` and the
-question never comes up.
+npm script does. Adding `--remote` rebuilds *the project in the cloud* —
+which would wipe it. You would have to type that flag deliberately, and
+there is no reason to. Use `npm run db:reset` and the question never
+comes up.
+
+(The CLI was upgraded to v3 on 16 November. It renamed how a remote is
+chosen: the old `--linked` and `--db-url` became one `--remote` flag,
+and every database command is local unless it is given. Older notes
+elsewhere may still say `--linked`.)
 
 ## The five commands you will use
 
@@ -165,7 +170,7 @@ So check first. This reads the live database and writes nothing:
 
 ```bash
 supabase link --project-ref owdxoarqivpoplpqiylt
-supabase db diff --linked
+supabase db diff --remote
 ```
 
 It replays your files into a temporary database and compares the result
@@ -233,7 +238,7 @@ The code needs the database to be ready first. That is what every
 - **Build against your laptop's copy.** Break it as often as you like.
 - **`npm run db:reset` is always safe.** Use it whenever anything looks odd.
 - **Only `npm run db:ship` sends things live**, and it asks first.
-- **Never type `--linked` on a reset.**
+- **Never type `--remote` on a reset.**
 - **Never edit a migration that has already gone live.** Write a new one.
 - **If a push fails, fix the file, not the database.**
 

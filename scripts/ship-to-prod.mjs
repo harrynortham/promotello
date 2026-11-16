@@ -8,6 +8,11 @@
 //
 // It reads the connection string from PROD_DB_URL, or from
 // .env.production.local if that is where you keep it.
+//
+// CLI v3 renamed how a remote is chosen: --db-url and --linked became
+// one --remote flag, and every db command is local unless it is given.
+// That is why this names the database by URL rather than relying on
+// whatever the project happens to be linked to.
 
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline/promises";
@@ -57,7 +62,7 @@ if (!url) {
 console.log("\nThis is the LIVE database — the one customers use.\n");
 console.log("First, what would run. Nothing is changed by this part:\n");
 
-const dryRun = await run(["db", "push", "--dry-run", "--db-url", url]);
+const dryRun = await run(["db", "push", "--dry-run", `--remote=${url}`]);
 
 if (dryRun !== 0) {
     console.error("\nThe dry run failed, so nothing was sent. Fix that first.");
@@ -77,7 +82,7 @@ if (answer.trim().toLowerCase() !== "ship") {
 }
 
 console.log("");
-const pushed = await run(["db", "push", "--db-url", url]);
+const pushed = await run(["db", "push", `--remote=${url}`]);
 
 if (pushed !== 0) {
     console.error("\nThe push failed. Read the error above before trying again.");
