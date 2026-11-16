@@ -45,6 +45,7 @@ export type NotificationType =
     | "first_customer"
     | "admin_queue"
     | "plan_ending"
+    | "trial_card_missing"
     | "voucher_used"
     | "reward_given";
 
@@ -305,6 +306,25 @@ export function planEnding(plan: {
         href: `/business/${plan.businessId}/billing`,
         businessId: plan.businessId,
         dedupeKey: `plan-ending:${plan.businessId}`,
+    };
+}
+
+// A trial that took no card ends by stopping, so the one thing that
+// business has to do is add one. The email says so five days out; this
+// is the same thing where they already are, because the person who
+// reads the dashboard is not always the person who reads the email.
+export function trialCardMissing(trial: {
+    businessId: string;
+    businessName: string;
+    ends: string;
+}): NotificationContent {
+    return {
+        type: "trial_card_missing",
+        title: `${trial.businessName} goes back to Free on ${trial.ends}`,
+        body: "There's no card on your trial, so nothing is charged and nothing will be — it stops on that date unless you add one.",
+        href: `/business/${trial.businessId}/billing`,
+        businessId: trial.businessId,
+        dedupeKey: `trial-card-missing:${trial.businessId}`,
     };
 }
 

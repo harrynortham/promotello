@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
-import { lifecycleEmail, sendTrialStartedEmail, trialStartedEmail, type LifecycleDue } from "../../lib/business-lifecycle";
+import { lifecycleEmail, sendLifecycleEmails, sendTrialStartedEmail, trialStartedEmail, type LifecycleDue } from "../../lib/business-lifecycle";
 import { businessReviewedEmail, newBusinessAlertEmail, offerReviewedEmail } from "../../lib/business-review-emails";
 import { STATE_PATH } from "../global-setup";
 
@@ -269,6 +269,71 @@ test.describe("business setup and trial emails", () => {
         expect(email.subject).toMatch(/^Your Promotello trial ends on \d+ \w+$/);
         expect(email.text).toContain("carries on automatically");
         expect(await claim(businessId)).toEqual([]);
+    });
+
+    // A trial that took no card ends by stopping, so this is the one
+    // lifecycle message that asks for something back. The email is good;
+    // it is also an email, and the person who runs the dashboard is not
+    // always the person reading it. So it is said in the app as well.
+    test("a trial ending with no card is said in the app too, once", async () => {
+        const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+        await admin().from("businesses").update({ created_at: daysAgo(26) }).eq("id", businessId);
+        await admin().from("subscriptions").insert({
+            business_id: businessId,
+            stripe_subscription_id: `sub_e2e_nocard_${Date.now()}`,
+            stripe_customer_id: `cus_e2e_nocard_${Date.now()}`,
+            status: "trialing",
+            trial_end: new Date(Date.now() + 4 * 86_400_000).toISOString(),
+            has_payment_method: false,
+        });
+
+        await sendLifecycleEmails(businessId);
+
+        const told = async () =>
+            (
+                await admin()
+                    .from("notifications")
+                    .select("title, body, href")
+                    .eq("user_id", businessUserId)
+                    .eq("dedupe_key", `trial-card-missing:${businessId}`)
+            ).data ?? [];
+
+        const first = await told();
+        expect(first, "the people who run it are told in the app").toHaveLength(1);
+        expect(first[0].title).toMatch(/goes back to Free on/);
+        expect(first[0].href).toBe(`/business/${businessId}/billing`);
+
+        // The claim is once-only and the dedupe key is a second lock, so
+        // a business is not nagged every night the job runs.
+        await sendLifecycleEmails(businessId);
+        expect(await told(), "and told once").toHaveLength(1);
+    });
+
+    // A trial with a card behind it carries on by itself. Telling that
+    // business its plan is about to stop would simply be wrong.
+    test("a trial with a card is not told anything is stopping", async () => {
+        const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+        await admin().from("businesses").update({ created_at: daysAgo(26) }).eq("id", businessId);
+        await admin().from("subscriptions").insert({
+            business_id: businessId,
+            stripe_subscription_id: `sub_e2e_card_${Date.now()}`,
+            stripe_customer_id: `cus_e2e_card_${Date.now()}`,
+            status: "trialing",
+            trial_end: new Date(Date.now() + 4 * 86_400_000).toISOString(),
+            has_payment_method: true,
+        });
+
+        await sendLifecycleEmails(businessId);
+
+        const { data } = await admin()
+            .from("notifications")
+            .select("id")
+            .eq("user_id", businessUserId)
+            .eq("dedupe_key", `trial-card-missing:${businessId}`);
+
+        expect(data ?? []).toHaveLength(0);
     });
 });
 

@@ -3,6 +3,8 @@ import { brandedEmail, emailCompanyFooter, escapeHtml, sendEmails, type Email } 
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
 import { releaseClaims } from "@/lib/email-claims";
+import { trialCardMissing } from "@/lib/notifications";
+import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -759,6 +761,27 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
             .filter((email): email is Email => email !== null),
     );
     const { sent, failedTo } = await sendEmails(emails);
+
+    // The same warning in the app. A trial without a card is the one
+    // lifecycle message that asks for something back, and the person who
+    // runs the dashboard is not always the person on the mailing list —
+    // or the email may simply be sitting unread. Its own dedupe key, so
+    // a retry of the batch cannot say it twice, and it never fails the
+    // send: a notification is a courtesy on top of the email.
+    for (const item of due) {
+        if (item.kind !== "trial_ending") continue;
+        if (item.details.trial_has_card !== false) continue;
+        if (!item.details.trial_end) continue;
+
+        await notifyBusinessManagers(
+            item.business_id,
+            trialCardMissing({
+                businessId: item.business_id,
+                businessName: item.business_name,
+                ends: formatDate(item.details.trial_end),
+            }),
+        ).catch((error) => console.error("Lifecycle emails: trial card notice failed", error));
+    }
 
     if (failedTo.length > 0) {
         const lost = new Set(failedTo);
