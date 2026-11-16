@@ -266,15 +266,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         supabase.auth.getUser(),
     ]);
 
+    const loyaltyCards = loyaltyPrograms ?? [];
+
     // A card on a Free business takes nobody new
-    // (20270120090000_a_card_on_free_takes_no_new_members.sql). Offering
-    // it here anyway would send somebody through a sign-in to be refused
-    // at the end of it. The people already holding one still reach it
-    // from their own wallet, which is where it belongs for them.
-    const loyaltyCards =
-        (loyaltyPrograms ?? []).length > 0 && (await businessHasPro(supabase, businessId).catch(() => true))
-            ? (loyaltyPrograms ?? [])
-            : [];
+    // (20270120090000_a_card_on_free_takes_no_new_members.sql). The card
+    // is still shown and said to be closed rather than hidden: a poster
+    // in a window points straight at it, and the QR page promises the
+    // business that "nobody hits a dead end: a scan lands on your
+    // business page instead". Hiding it made that a lie.
+    const cardClosedToNewMembers =
+        loyaltyCards.length > 0 && !(await businessHasPro(supabase, businessId).catch(() => true));
 
     const { data: eventRows } = !EVENTS_ENABLED
         ? { data: [] }
@@ -662,6 +663,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 isSignedIn={Boolean(viewer)}
                                 problem={loyaltyStatus}
                                 preview={isPreview}
+                                closedToNewMembers={cardClosedToNewMembers}
                             />
                         ))}
 

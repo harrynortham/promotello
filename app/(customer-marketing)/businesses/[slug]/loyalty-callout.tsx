@@ -30,6 +30,13 @@ type LoyaltyCalloutProps = {
     problem?: string;
     // The business's team previewing its page before approval: nothing to join yet.
     preview?: boolean;
+    // The business is on Free, so join_loyalty_program turns away anybody
+    // not already holding one
+    // (20270120090000_a_card_on_free_takes_no_new_members.sql). The card
+    // is still shown, because a poster in a window points at it and
+    // somebody who scanned one deserves to find out what happened rather
+    // than land on a page with no mention of it.
+    closedToNewMembers?: boolean;
 };
 
 // Loyalty card offer on a business profile: join, or see your progress.
@@ -42,6 +49,7 @@ export function LoyaltyCallout({
     isSignedIn,
     problem,
     preview,
+    closedToNewMembers,
 }: LoyaltyCalloutProps) {
     const problems: Record<string, string> = {
         unavailable: "This loyalty card isn't available right now.",
@@ -72,7 +80,9 @@ export function LoyaltyCallout({
                     <p className="mt-2 max-w-md text-sm text-white/70">
                         {card
                             ? `You have ${card.stamps} of ${program.stamps_required} stamps. Show your card at ${businessName} to collect more.`
-                            : `Join free and get a stamp every time you visit ${businessName}.`}
+                            : closedToNewMembers
+                                ? `${businessName} isn't handing out new cards at the moment. The people already collecting keep every stamp they have.`
+                                : `Join free and get a stamp every time you visit ${businessName}.`}
                     </p>
                     {program.terms && <p className="mt-2 max-w-md text-xs text-white/55">{program.terms}</p>}
 
@@ -101,6 +111,10 @@ export function LoyaltyCallout({
                     <p className="shrink-0 text-sm text-white/70">
                         Customers can join once you&apos;re live.
                     </p>
+                ) : closedToNewMembers && !card ? (
+                    // Somebody already holding one still gets "Show my
+                    // card" below; this is only for a new arrival.
+                    <p className="shrink-0 text-sm text-white/70">Not taking new members.</p>
                 ) : card ? (
                     <Button
                         render={<Link href={`/loyalty/${program.id}`} />}
