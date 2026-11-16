@@ -318,9 +318,12 @@ most of stage 3 is guesswork until it is.
    work changed five things in this path and none of it has been walked
    (docs/LAUNCH-FUNNEL.md).
 2. **A second Supabase project for development**, so tests stop running against
-   the live database. One accidental e2e run during launch week is worscan e than the
-   day this costs. There are already stray `logos/e2e.png` rows in production from
-   runs that failed before their cleanup.
+   the live database. One accidental e2e run during launch week is worse than the
+   day this costs — nine test businesses reached the live directory that way, one
+   of them approved and publicly visible. The steps, and the flow for getting a
+   migration to prod afterwards, are in [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
+   Prod is written to once in the whole process, and only after a diff has proved
+   the write is correct.
 3. **ICO registration.** A UK data controller processing names, emails,
    birthdays and visit history. A fee and a form:
    ico.org.uk/for-organisations/data-protection-fee, then the number into the
