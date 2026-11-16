@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { CategoryImageField } from "@/components/category-image-field";
 import {
     Alert,
     AlertDescription,
@@ -86,14 +87,11 @@ function CategoryFields({
                 />
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor={`${idPrefix}-image`}>Image URL</Label>
-                <Input
-                    id={`${idPrefix}-image`}
-                    name="imageUrl"
-                    type="url"
-                    placeholder="Optional"
-                    defaultValue={category?.image_url ?? ""}
+            <div className="space-y-2 sm:col-span-2">
+                <CategoryImageField
+                    idPrefix={idPrefix}
+                    categoryId={category?.id ?? null}
+                    savedImageUrl={category?.image_url ?? null}
                 />
             </div>
 
