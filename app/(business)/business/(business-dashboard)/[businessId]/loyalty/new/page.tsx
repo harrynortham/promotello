@@ -90,6 +90,7 @@ async function NewLoyaltyCard({ params }: PageProps) {
                 replacing={Boolean(current)}
                 submitLabel={current ? "Start the new card" : "Start this card"}
                 locked={!editor.hasPro}
+                trialSpent={editor.trialSpent}
             />
         </div>
     );

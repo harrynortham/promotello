@@ -266,6 +266,7 @@ export function LoyaltyCardBuilder({
     program,
     submitLabel,
     locked = false,
+    trialSpent = false,
     suggested = null,
 }: {
     businessId: string;
@@ -276,6 +277,10 @@ export function LoyaltyCardBuilder({
     replacing?: boolean;
     submitLabel: string;
     locked?: boolean;
+    // The business has had its one free trial, so Pro now starts with a
+    // card form. Promising "free for 30 days and no card to start"
+    // would be found out one click later.
+    trialSpent?: boolean;
     // The card we drew in their preview email. Only ever the starting
     // state of a first card, never anything already saved
     // (docs/LAUNCH-FUNNEL.md).
@@ -341,8 +346,10 @@ export function LoyaltyCardBuilder({
                                 <p className="mt-1 text-sm leading-6 text-[#17233B]/65">
                                     Publishing puts it on your business page,
                                     so customers can start collecting stamps
-                                    today. It is included in Pro, free for 30
-                                    days and no card to start.
+                                    today.{" "}
+                                    {trialSpent
+                                        ? "It is included in Pro, and everything you have set up here is waiting."
+                                        : "It is included in Pro, free for 30 days and no card to start."}
                                 </p>
 
                                 <Button
@@ -351,7 +358,7 @@ export function LoyaltyCardBuilder({
                                     size="lg"
                                     className="mt-4 bg-[#FF593F] text-white hover:bg-[#FF593F]/90"
                                 >
-                                    Start free trial to publish
+                                    {trialSpent ? "Go Pro to publish" : "Start free trial to publish"}
                                 </Button>
                             </div>
                         </div>
