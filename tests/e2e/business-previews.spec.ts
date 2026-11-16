@@ -134,3 +134,29 @@ test("an unknown preview link shows a friendly message", async ({ page }) => {
     await page.goto("/business/preview/00000000-0000-4000-8000-000000000000");
     await expect(page.getByRole("heading", { name: "This preview isn't available" })).toBeVisible();
 });
+
+// Pressing Claim used to land on a page headed "Win your next customer",
+// offering to help them add their business and prepare their first offer
+// — both of which we had already done, on the page they had just been
+// looking at. The thing that sold them evaporated at the moment of
+// highest intent (docs/LAUNCH-FUNNEL.md).
+test("claiming a preview asks for a login to claim, not to start from nothing", async ({ page }) => {
+    const claiming = `/business/register?next=${encodeURIComponent(
+        previewLink("11111111-2222-3333-4444-555555555555", "Little Loaf"),
+    )}`;
+
+    await page.goto(claiming);
+    await expect(page.getByRole("heading", { name: "Claim your page.", level: 1 })).toBeVisible({
+        timeout: 30_000,
+    });
+    await expect(page.getByText("Your page is already built")).toBeVisible();
+    await expect(page.getByText("prepare your first offer")).toHaveCount(0);
+
+    // A business arriving cold has nothing built, so it still gets told
+    // what is about to happen.
+    await page.goto("/business/register");
+    await expect(page.getByRole("heading", { name: "Win your next customer.", level: 1 })).toBeVisible({
+        timeout: 30_000,
+    });
+    await expect(page.getByText("prepare your first offer")).toBeVisible();
+});
