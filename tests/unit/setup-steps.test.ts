@@ -5,6 +5,7 @@ import {
     firstUnfinished,
     isSetupStepId,
     missingBeforeReview,
+    readyToSend,
     setupFinished,
     setupProgress,
     setupSteps,
@@ -56,11 +57,32 @@ test("nothing left means nothing to show", () => {
 });
 
 test("sending the page names what is still missing, rather than refusing", () => {
-    const missing = missingBeforeReview(setupSteps({ ...everything, hasHours: false, hasCover: false }));
+    const missing = missingBeforeReview(setupSteps({ ...everything, hasHours: false, hasAddress: false }));
 
-    assert.deepEqual(missing.map((step) => step.id), ["hours", "cover"]);
+    assert.deepEqual(missing.map((step) => step.id), ["address", "hours"]);
     // The offer comes after sending, so it is never in the way of it.
     assert.equal(missingBeforeReview(setupSteps({ ...everything, hasOffer: false })).length, 0);
+});
+
+// Both steps offer "I'll add it later", and the page has a real answer
+// without either — a monogram, and the cover's own empty state. A skip
+// the send button then refuses to honour is worse than no skip: a
+// business with no logo to hand could not go live at all.
+test("the logo and the cover photo can be left for later, and the send still works", () => {
+    const withoutEither = { ...everything, hasLogo: false, hasCover: false };
+
+    assert.deepEqual(missingBeforeReview(setupSteps(withoutEither)), []);
+    assert.equal(readyToSend(withoutEither), true);
+
+    // The three that make it a listing still do block.
+    assert.equal(readyToSend({ ...everything, hasDescription: false }), false);
+    assert.equal(readyToSend({ ...everything, hasAddress: false }), false);
+    assert.equal(readyToSend({ ...everything, hasHours: false }), false);
+
+    // And they are still steps: left for later, not taken off the list.
+    const list = setupSteps(withoutEither);
+    assert.equal(list.some((step) => step.id === "logo" && !step.done), true);
+    assert.equal(list.some((step) => step.id === "cover" && !step.done), true);
 });
 
 test("only the steps that exist can be asked for", () => {

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
 
 import type { PagePreview } from "@/components/business-page-preview";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { SetupShell } from "../setup-shell";
 import type { DayValues } from "@/lib/business-hours";
@@ -173,6 +174,25 @@ export function SetupFlow({
             stepTitle={finished ? undefined : step?.title}
             stepBlurb={finished ? undefined : step?.blurb}
         >
+            {/* Sending the page is the one irreversible thing in this
+                flow, and it used to say nothing at all: the step simply
+                advanced and the business was left to wonder whether it
+                had worked. Said here even when there is more to do,
+                because the thing they just did is finished either way. */}
+            {justSent && !finished && (
+                <Alert className="mb-6 border-emerald-200 bg-emerald-50 text-emerald-900">
+                    <AlertTitle>
+                        {isLive ? `${businessName} is live` : `${businessName} is with us`}
+                    </AlertTitle>
+                    <AlertDescription>
+                        {isLive
+                            ? "Customers browsing the directory can find you now."
+                            : "We read every page before it goes live — usually the same day — and we'll email you when it does."}{" "}
+                        There is still a little below, and none of it holds that up.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {finished ? (
                 <FinishedCard businessId={businessId} businessSlug={businessSlug} isLive={isLive} />
             ) : step?.id === "logo" ? (

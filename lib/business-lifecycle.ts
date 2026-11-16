@@ -6,6 +6,7 @@ import { releaseClaims } from "@/lib/email-claims";
 import { trialCardMissing } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
+import { readyToSend } from "@/lib/setup-steps";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { loadWhatIsPaused, type WhatIsPaused } from "@/lib/what-is-paused";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -211,8 +212,20 @@ function has(flag: boolean | undefined) {
     return flag !== false;
 }
 
+// The same answer the send button gives, worked out from the same
+// rule rather than from the payload's profile_ready — which still
+// counts the logo and the cover photo, and so would have this email
+// telling a business to finish things it can now send without.
 function profileReady(due: LifecycleDue) {
-    return due.details.profile_ready !== false;
+    return readyToSend({
+        hasLogo: has(due.details.has_logo),
+        hasDescription: has(due.details.has_description),
+        hasAddress: has(due.details.has_address),
+        hasHours: has(due.details.has_hours),
+        hasCover: due.details.has_cover,
+        sentForReview: alreadySeen(due),
+        hasOffer: due.details.has_offer,
+    });
 }
 
 function missingSteps(due: LifecycleDue) {

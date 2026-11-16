@@ -78,27 +78,13 @@ test("a business finishes its page in the flow, and sends it from there", async 
         await expect(page.getByRole("heading", { name: "The photo across the top", level: 2 })).toBeVisible();
         await page.getByRole("button", { name: "I'll add one later" }).click();
 
-        // Sending it is a step in the flow, not a trip to the dashboard —
-        // and it names what is missing rather than refusing silently.
+        // Sending it is a step in the flow, not a trip to the dashboard.
+        // Both pictures were left for later and the button honours that:
+        // the page has a monogram and a cover of its own, and a business
+        // with no logo to hand could otherwise never go live.
         await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
-        await expect(page.getByText("2 things first").first()).toBeVisible();
-        await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
-
-        // Finish the two pictures the quick way, then send it.
-        const { data: pictures } = await admin()
-            .from("businesses")
-            .select("logo_url, cover_image_url")
-            .not("cover_image_url", "is", null)
-            .limit(1)
-            .single();
-
-        await admin()
-            .from("businesses")
-            .update({ logo_url: pictures!.logo_url, cover_image_url: pictures!.cover_image_url })
-            .eq("id", businessId);
-
-        await page.goto(`/business/setup/${businessId}?step=review`);
-        await expect(page.getByText("5 of 7 done")).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByText("things first")).toHaveCount(0);
+        await expect(page.getByText("3 of 7 done")).toBeVisible({ timeout: 15_000 });
 
         await page.getByRole("button", { name: `Send ${name} for review` }).click();
 
@@ -106,7 +92,11 @@ test("a business finishes its page in the flow, and sends it from there", async 
         // to come in.
         await page.waitForURL(`**/business/setup/${businessId}?step=offer&sent=1`, { timeout: 20_000 });
         await expect(page.getByRole("heading", { name: "Give people a reason to come in", level: 2 })).toBeVisible();
-        await expect(page.getByText("6 of 7 done").first()).toBeVisible();
+        await expect(page.getByText("4 of 7 done").first()).toBeVisible();
+
+        // Sending is the one thing here that cannot be undone, and it
+        // used to happen in silence: the step simply advanced.
+        await expect(page.getByText(`${name} is with us`)).toBeVisible();
 
         const { data: sent } = await admin()
             .from("businesses")

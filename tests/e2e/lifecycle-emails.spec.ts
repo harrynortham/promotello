@@ -160,7 +160,13 @@ test.describe("business setup and trial emails", () => {
         expect((await claim(businessId)).map((due) => due.kind)).toEqual(["founding_places"]);
     });
 
-    test("businesses that have subscribed aren't pitched the trial", async () => {
+    // The trial is once per business, so a business that has had one is
+    // never pitched it again. The founding price is not the trial: it is
+    // still there to take, and since
+    // 20270119090000_asking_a_business_to_come_back.sql a business whose
+    // plan ended is reachable for it again — being shut out of every
+    // pitch for good was the thing that migration was written to stop.
+    test("a business that has subscribed is not pitched the trial, but is still offered the price", async () => {
         await admin().from("businesses").update({ created_at: daysAgo(8) }).eq("id", businessId);
         await admin().from("subscriptions").insert({
             business_id: businessId,
@@ -169,12 +175,20 @@ test.describe("business setup and trial emails", () => {
             status: "canceled",
         });
 
-        // Only the setup nudges: no loyalty pitch or founding places.
-        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["setup_nudge_1"]);
-        await admin().from("business_lifecycle_sends").update({ sent_at: daysAgo(3) }).eq("business_id", businessId);
-        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["setup_nudge_2"]);
-        await admin().from("business_lifecycle_sends").update({ sent_at: daysAgo(3) }).eq("business_id", businessId);
-        expect(await claim(businessId)).toEqual([]);
+        const kinds: string[] = [];
+
+        for (let run = 0; run < 4; run++) {
+            kinds.push(...(await claim(businessId)).map((due) => due.kind));
+            await admin()
+                .from("business_lifecycle_sends")
+                .update({ sent_at: daysAgo(3) })
+                .eq("business_id", businessId);
+        }
+
+        // loyalty_pitch is the one that sells the free trial, and it
+        // still asks for never_subscribed.
+        expect(kinds, "never pitched the trial again").not.toContain("loyalty_pitch");
+        expect(kinds, "but the founding price is still open").toContain("founding_places");
     });
 
     test("the conversion emails", async () => {
