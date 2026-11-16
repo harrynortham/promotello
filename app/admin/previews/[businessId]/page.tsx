@@ -172,6 +172,24 @@ async function PreviewDetail({ params, searchParams }: PageProps) {
                             <CopyButton text={outreachSubject(preview)} label="Copy subject" />
                             <CopyButton text={outreachMessage(preview, sender, placesLeft)} label="Copy message" />
                         </div>
+
+                        {/* docs/OUTREACH.md says to fix anything that reads wrong
+                            for that business before sending. That needed pasting
+                            it somewhere to find out what it said. */}
+                        <details className="group">
+                            <summary className="cursor-pointer list-none text-sm font-medium text-[#17233B]/70 underline underline-offset-4 group-open:text-[#17233B]">
+                                Read it first
+                            </summary>
+
+                            <div className="mt-3 space-y-3 rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] p-4">
+                                <p className="text-sm font-semibold text-[#17233B]">
+                                    {outreachSubject(preview)}
+                                </p>
+                                <p className="whitespace-pre-wrap text-sm leading-6 text-[#17233B]/80">
+                                    {outreachMessage(preview, sender, placesLeft)}
+                                </p>
+                            </div>
+                        </details>
                     </div>
 
                     <div className="space-y-3">
@@ -181,6 +199,16 @@ async function PreviewDetail({ params, searchParams }: PageProps) {
 
                         <div className="flex flex-wrap gap-2">
                             <CopyButton text={outreachDm(preview, sender, placesLeft)} label="Copy DM" />
+
+                            <details className="group w-full">
+                                <summary className="cursor-pointer list-none text-sm font-medium text-[#17233B]/70 underline underline-offset-4 group-open:text-[#17233B]">
+                                    Read it first
+                                </summary>
+
+                                <p className="mt-3 whitespace-pre-wrap rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] p-4 text-sm leading-6 text-[#17233B]/80">
+                                    {outreachDm(preview, sender, placesLeft)}
+                                </p>
+                            </details>
 
                             {preview.instagram_handle && (
                                 <Button

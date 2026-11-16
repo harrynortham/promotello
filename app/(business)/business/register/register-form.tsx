@@ -27,6 +27,15 @@ export function BusinessRegisterForm() {
     const requestedNext = safeNextPath(useSearchParams().get("next"));
     const next = requestedNext ?? "/business/setup/new";
 
+    // Somebody who got here by pressing "Claim" has just been shown their
+    // own page, with their offer on it. "We'll help you add your business
+    // and prepare your first offer" describes work we have already done
+    // for them, and reads as though the page they just looked at counted
+    // for nothing (docs/LAUNCH-FUNNEL.md). The page they came from is not
+    // named here: the business behind the token is not ours to read
+    // without counting another view of it.
+    const claiming = requestedNext?.startsWith("/business/preview/") ?? false;
+
     const signInHref = requestedNext
         ? `/login?next=${encodeURIComponent(requestedNext)}`
         : "/login?next=/business/dashboard";
@@ -59,13 +68,13 @@ export function BusinessRegisterForm() {
                                 </p>
 
                                 <h1 className="mt-4 text-3xl font-semibold tracking-tight text-nowrap sm:text-4xl">
-                                    Win your next customer.
+                                    {claiming ? "Claim your page." : "Win your next customer."}
                                 </h1>
 
                                 <p className="mt-4 leading-7 text-muted-foreground">
-                                    Create your personal login first. Then
-                                    we’ll help you add your business and
-                                    prepare your first offer.
+                                    {claiming
+                                        ? "Your page is already built, with the offer from your email on it. Make a login and it's yours — nothing goes public until you say so."
+                                        : "Create your personal login first. Then we’ll help you add your business and prepare your first offer."}
                                 </p>
 
                                 <SocialSignIn next={next} />

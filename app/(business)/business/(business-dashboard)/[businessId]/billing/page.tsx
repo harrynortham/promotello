@@ -13,12 +13,12 @@ import {
     FOUNDING_MEMBER_LIMIT,
     FREE_LIVE_OFFER_LIMIT,
     TRIAL_DAYS,
-    countFoundingMembers,
     planKeyForPriceId,
     plans,
     tierForPlan,
     type PlanKey,
 } from "@/lib/billing";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 import { planAdds } from "@/lib/plan-features";
 import { PlanComparison } from "@/components/plan-comparison";
 import { company } from "@/lib/legal";
@@ -416,11 +416,12 @@ async function PlanOptions({
     businessId: string;
     trialEligible: boolean;
 }) {
-    const foundingLeft = Math.max(
-        FOUNDING_MEMBER_LIMIT - (await countFoundingMembers()),
-        0,
-    );
-    const proMonthly: PlanKey = foundingLeft > 0 ? "pro_founding_monthly" : "pro_monthly";
+    // The same count the preview page and the outreach email use. Counting
+    // it again here meant a business could read "49 of 50 left" on its
+    // preview and "50 of 50 left" one press later.
+    const foundingLeft = await foundingPlacesLeft();
+    const proMonthly: PlanKey =
+        foundingLeft === null || foundingLeft > 0 ? "pro_founding_monthly" : "pro_monthly";
     const start = trialEligible ? "Start free trial" : "Choose";
 
     const cards: {
@@ -492,8 +493,14 @@ async function PlanOptions({
                                     </p>
                                     {isFounding ? (
                                         <p className="mt-1 text-sm text-[#17233B]/70">
-                                            Locked for life. Usually {plans.pro_monthly.price}.{" "}
-                                            {foundingLeft} of {FOUNDING_MEMBER_LIMIT} founding places left.
+                                            Locked for life. Usually {plans.pro_monthly.price}.
+                                            {/* Saying "50 of 50 left" tells them nobody has
+                                                taken it, so the count only appears once some
+                                                have gone — the rule the email and the preview
+                                                page already follow. */}
+                                            {foundingLeft !== null && foundingLeft < FOUNDING_MEMBER_LIMIT
+                                                ? ` ${foundingLeft} of ${FOUNDING_MEMBER_LIMIT} founding places left.`
+                                                : ""}
                                         </p>
                                     ) : (
                                         <p className="mt-1 text-sm text-[#17233B]/70">

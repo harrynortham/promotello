@@ -673,26 +673,57 @@ export function ReviewStep({
     );
 }
 
-export function OfferStep({ businessId }: { businessId: string }) {
+export function OfferStep({
+    businessId,
+    starterOffer,
+}: {
+    businessId: string;
+    starterOffer: string | null;
+}) {
+    // Somebody who came from a preview email was shown one specific offer,
+    // on the page, on the poster and on the card. Sending them to an empty
+    // form here asks them to invent the thing they already said yes to —
+    // the disconnect docs/LAUNCH-FUNNEL.md is about. The dashboard has
+    // handed it back since 20270112; this is the path the welcome screen
+    // pushes people down, so it hands it back too.
+    const fromEmail = starterOffer !== null;
+
     return (
         <StepCard
             errorTitle="Unable to start an offer"
             footer={
                 <Button
-                    render={<Link href={`/business/${businessId}/offers/new?from=setup`} />}
+                    render={
+                        <Link
+                            href={`/business/${businessId}/offers/new?from=${fromEmail ? "email" : "setup"}`}
+                        />
+                    }
                     nativeButton={false}
                     size="lg"
                 >
-                    Create my first offer
+                    {fromEmail ? "Use the offer from your email" : "Create my first offer"}
                     <FiArrowRight aria-hidden="true" />
                 </Button>
             }
         >
-            <p className="leading-7 text-[#17233B]/70">
-                An offer is what brings someone in the first time: a free side, 20% off, a
-                coffee with any pastry. It goes on your page, and on a QR poster for your
-                window that people scan to claim it.
-            </p>
+            {fromEmail ? (
+                <>
+                    <p className="leading-7 text-[#17233B]/70">
+                        The offer we showed you is still here, and nothing is live yet. It
+                        opens filled in, so you can change it or publish it as it is.
+                    </p>
+
+                    <p className="mt-4 rounded-xl bg-[#FFF8F0] px-4 py-3 font-medium text-[#17233B]">
+                        {starterOffer}
+                    </p>
+                </>
+            ) : (
+                <p className="leading-7 text-[#17233B]/70">
+                    An offer is what brings someone in the first time: a free side, 20% off, a
+                    coffee with any pastry. It goes on your page, and on a QR poster for your
+                    window that people scan to claim it.
+                </p>
+            )}
 
             <p className="mt-4 text-sm leading-6 text-[#17233B]/60">
                 We read every offer before customers see it, the same way we read your page.
