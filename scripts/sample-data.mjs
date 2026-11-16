@@ -250,12 +250,22 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
         );
     }
 
+    // The first offer photograph that arrives becomes the business's
+    // cover as well. A real business uploads its own, and these have
+    // none of their own to upload — but leaving the column null is not
+    // a harmless simplification: three e2e specs borrow a cover from
+    // whatever business already has one, and with every sample business
+    // null they read null and crash on it.
+    let coverUrl = null;
+
     for (const [offerIndex, offer] of sample.offers.entries()) {
         const slug = `${slugify(offer.title)}-${randomBytes(3).toString("hex")}`;
         const photo = await photoOrNothing(offer.photo);
         const imageUrl = photo
             ? await upload("offer-images", `${business.id}/sample-${slug}.jpg`, photo, "image/jpeg")
             : null;
+
+        coverUrl ??= imageUrl;
 
         check(
             await supabase.from("offers").insert({
@@ -282,6 +292,13 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
         );
 
         offers += 1;
+    }
+
+    if (coverUrl) {
+        check(
+            await supabase.from("businesses").update({ cover_image_url: coverUrl }).eq("id", business.id),
+            `cover for ${sample.name}`,
+        );
     }
 
     console.log(`✓ ${sample.name} (${sample.area.region}, ${cityName}, ${sample.offers.length} ${sample.offers.length === 1 ? "offer" : "offers"})`);
