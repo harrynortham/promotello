@@ -242,7 +242,12 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         ownNumbers(sender),
         "",
-        `Worth a look? It takes about two minutes to make it yours — or reply with a photo of the shop and your hours and I'll finish it for you. If it's not for you, reply "no thanks" and I won't email again.`,
+        // Claiming really is a minute. Putting the page live is not: it
+        // needs a logo, opening hours and a photo of the place before the
+        // send button turns on. "About two minutes" promised the whole
+        // thing and delivered the first step, and the offer to finish it
+        // reads better when it names what to send.
+        `Worth a look? Claiming it takes a minute, and it goes live once it has your logo, your opening hours and a photo of the place — or reply with those and I'll do the rest. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
         ...signOff(sender),
     ].join("\n");
@@ -282,7 +287,7 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
         "",
         founding,
         "",
-        `Worth a look? It takes about two minutes to make it yours — or send me a photo of the shop and your hours and I'll finish it for you. If it's not for you, just say and I won't message again.`,
+        `Worth a look? Claiming it takes a minute, and it goes live once it has your logo, your hours and a photo of the place — or send me those and I'll do the rest. If it's not for you, just say and I won't message again.`,
         // One line in a DM: "Cheers," on its own looks like a stray message.
         ...(sender === DEFAULT_SENDER ? [] : ["", `— ${sender.trim().split(/\s+/)[0]}`]),
     ].join("\n");

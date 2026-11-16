@@ -152,7 +152,17 @@ test("the email carries it, and the offer to finish the page for them", () => {
     // introduction() already says the company is new; saying it again
     // three paragraphs later sounds unsure.
     assert.equal(message.match(/It's new/g)?.length, 1);
-    assert.match(message, /photo of the shop and your hours and I'll finish it for you/);
+    // The offer to finish it, and what to send — which is exactly what
+    // the page needs before it can go live.
+    assert.match(message, /logo/);
+    assert.match(message, /opening hours/);
+    assert.match(message, /photo of the place/);
+    assert.match(message, /I'll do the rest/);
+
+    // Claiming is a minute; the page is not live until it has those three.
+    // "About two minutes" promised the whole thing and delivered the first
+    // step, which the first business to try it would have found out.
+    assert.ok(!/two minutes/.test(message));
 });
 
 // A DM is read on a phone in a second, so it carries the short version
@@ -164,6 +174,9 @@ test("the email carries it, and the offer to finish the page for them", () => {
 test("the DM offers to finish it, and leaves the numbers line to the email", () => {
     const dm = outreachDm(preview, "Harry Northam", 37);
 
-    assert.match(dm, /send me a photo of the shop and your hours/);
+    assert.match(dm, /logo/);
+    assert.match(dm, /photo of the place/);
+    assert.match(dm, /I'll do the rest/);
+    assert.ok(!/two minutes/.test(dm));
     assert.ok(!dm.includes("take my word"));
 });
