@@ -56,10 +56,11 @@ export function OwnerBar({
         <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[#17233B]/10 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-[#17233B]/70">
                 You&rsquo;re looking at your page the way a customer sees it.
-                {privacy === "unsent" &&
-                    " Only you and your team can see it, until you send it to us from your dashboard."}
-                {privacy === "waiting" &&
-                    " Only you and your team can see it, until our team approves it."}
+                {/* Both states are now the same sentence from the
+                    business's side: there is nothing for them to do
+                    either way, only something for us to do. */}
+                {(privacy === "unsent" || privacy === "waiting") &&
+                    " Only you and your team can see it, until we have read it — usually the same day."}
             </p>
 
             <Button

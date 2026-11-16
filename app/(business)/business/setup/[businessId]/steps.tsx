@@ -5,7 +5,7 @@ import { useState, type Dispatch, type ReactNode, type SetStateAction } from "re
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { FiArrowRight, FiCheck, FiClock, FiSend } from "react-icons/fi";
+import { FiArrowRight } from "react-icons/fi";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,6 @@ import { hoursRowsFor, hoursSchema, type DayValues, type HoursValues } from "@/l
 import { uploadBusinessImage, type BusinessImageKind } from "@/lib/business-images";
 import type { CityOption } from "@/lib/locations";
 import { locationShape, optionalText, postcodeInCity, requiredText } from "@/lib/validation";
-import type { SetupStep, SetupStepId } from "@/lib/setup-steps";
-import { requestBusinessReview } from "@/app/(business)/business/(business-dashboard)/[businessId]/review-actions";
 import { createClient } from "@/utils/supabase/client";
 import { savingProblem, tryToSave } from "@/lib/saving";
 
@@ -205,7 +203,7 @@ function ImageStep({
 
             <p className="mt-4 text-xs leading-6 text-[#17233B]/60">
                 It appears on {businessName}&apos;s page straight away — but nobody outside your
-                team can see the page until you send it to us.
+                team can see the page until we have read it.
             </p>
         </StepCard>
     );
@@ -559,117 +557,6 @@ export function HoursStep({
                 )}
             </StepCard>
         </form>
-    );
-}
-
-export function ReviewStep({
-    businessId,
-    businessName,
-    businessSlug,
-    missing,
-    sent,
-    isLive,
-    onGo,
-}: {
-    businessId: string;
-    businessName: string;
-    businessSlug: string | null;
-    missing: SetupStep[];
-    // Already asked for, so there is nothing to ask for.
-    sent: boolean;
-    isLive: boolean;
-    onGo: (step: SetupStepId) => void;
-}) {
-    if (sent) {
-        return (
-            <StepCard
-                errorTitle="Unable to send your page"
-                footer={
-                    <Button type="button" size="lg" onClick={() => onGo("offer")}>
-                        Next: your first offer
-                        <FiArrowRight aria-hidden="true" />
-                    </Button>
-                }
-            >
-                <span className="flex size-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                    <FiCheck aria-hidden="true" className="size-5" />
-                </span>
-
-                <p className="mt-4 font-medium">
-                    {isLive ? `${businessName} is live.` : "It's with us."}
-                </p>
-
-                <p className="mt-2 leading-7 text-[#17233B]/65">
-                    {isLive
-                        ? "Customers can find you in the directory."
-                        : "We read every page — usually the same day — and email you when it goes live. Nothing to do but wait."}
-                </p>
-            </StepCard>
-        );
-    }
-
-    return (
-        <StepCard
-            errorTitle="Unable to send your page"
-            footer={
-                missing.length > 0 ? (
-                    <p className="text-sm text-[#17233B]/60">
-                        Finish {missing.length === 1 ? "that" : "those"} and this button turns on.
-                    </p>
-                ) : (
-                    <form action={requestBusinessReview}>
-                        <input type="hidden" name="businessId" value={businessId} />
-                        <input type="hidden" name="from" value="setup" />
-
-                        <div className="flex flex-wrap items-center gap-4">
-                            <Button type="submit" size="lg">
-                                <FiSend aria-hidden="true" />
-                                Send {businessName} for review
-                            </Button>
-
-                            {businessSlug && (
-                                <Link
-                                    href={`/businesses/${businessSlug}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-sm font-medium underline underline-offset-4"
-                                >
-                                    Read it over first
-                                </Link>
-                            )}
-                        </div>
-                    </form>
-                )
-            }
-        >
-            <p className="leading-7 text-[#17233B]/70">
-                Nothing is public until you send it. We read every page — usually the same
-                day — and email you when it goes live.
-            </p>
-
-            {missing.length > 0 && (
-                <div className="mt-5 rounded-xl border border-dashed border-[#17233B]/20 bg-[#FFF8F0] p-4">
-                    <p className="flex items-center gap-2 text-sm font-medium">
-                        <FiClock aria-hidden="true" className="text-[#FF593F]" />
-                        {missing.length === 1 ? "One thing first" : `${missing.length} things first`}
-                    </p>
-
-                    <ul className="mt-3 space-y-1.5">
-                        {missing.map((step) => (
-                            <li key={step.id}>
-                                <button
-                                    type="button"
-                                    onClick={() => onGo(step.id)}
-                                    className="cursor-pointer text-sm font-medium text-[#FF593F] underline-offset-4 hover:underline"
-                                >
-                                    {step.title}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-        </StepCard>
     );
 }
 

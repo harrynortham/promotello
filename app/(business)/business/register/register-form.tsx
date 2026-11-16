@@ -73,7 +73,7 @@ export function BusinessRegisterForm() {
 
                                 <p className="mt-4 leading-7 text-muted-foreground">
                                     {claiming
-                                        ? "Your page is already built, with the offer from your email on it. Make a login and it's yours — nothing goes public until you say so."
+                                        ? "Your page is already built, with the offer from your email on it. Make a login and it's yours — and live, because we've already read it."
                                         : "Create your personal login first. Then we’ll help you add your business and prepare your first offer."}
                                 </p>
 

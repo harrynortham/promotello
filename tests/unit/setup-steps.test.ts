@@ -5,7 +5,7 @@ import {
     firstUnfinished,
     isSetupStepId,
     missingBeforeReview,
-    readyToSend,
+    readyForReview,
     setupFinished,
     setupProgress,
     setupSteps,
@@ -35,7 +35,15 @@ const everything: SetupState = {
 test("the page comes before the offer that points at it", () => {
     const order = setupSteps(nothing).map((step) => step.id);
 
-    assert.deepEqual(order, ["logo", "description", "address", "hours", "cover", "review", "offer"]);
+    // No "review" step: a page goes to us when it has the three things
+    // that make a listing, not when somebody presses something
+    // (20270123090000_the_queue_fills_itself.sql).
+    assert.deepEqual(order, ["logo", "description", "address", "hours", "cover", "offer"]);
+    assert.equal(
+        (order as string[]).includes("review"),
+        false,
+        "nothing is sent by hand any more",
+    );
 });
 
 test("a page we built arrives part-finished, and starts at what is left", () => {
@@ -45,7 +53,7 @@ test("a page we built arrives part-finished, and starts at what is left", () => 
 
     assert.equal(firstUnfinished(claimed), "hours");
     assert.equal(setupProgress(claimed).done, 3);
-    assert.equal(setupProgress(claimed).percent, 43);
+    assert.equal(setupProgress(claimed).percent, 50);
 });
 
 test("nothing left means nothing to show", () => {
@@ -56,7 +64,7 @@ test("nothing left means nothing to show", () => {
     assert.equal(setupProgress(done).percent, 100);
 });
 
-test("sending the page names what is still missing, rather than refusing", () => {
+test("what is still missing is named, rather than silently holding the page", () => {
     const missing = missingBeforeReview(setupSteps({ ...everything, hasHours: false, hasAddress: false }));
 
     assert.deepEqual(missing.map((step) => step.id), ["address", "hours"]);
@@ -72,12 +80,12 @@ test("the logo and the cover photo can be left for later, and the send still wor
     const withoutEither = { ...everything, hasLogo: false, hasCover: false };
 
     assert.deepEqual(missingBeforeReview(setupSteps(withoutEither)), []);
-    assert.equal(readyToSend(withoutEither), true);
+    assert.equal(readyForReview(withoutEither), true);
 
     // The three that make it a listing still do block.
-    assert.equal(readyToSend({ ...everything, hasDescription: false }), false);
-    assert.equal(readyToSend({ ...everything, hasAddress: false }), false);
-    assert.equal(readyToSend({ ...everything, hasHours: false }), false);
+    assert.equal(readyForReview({ ...everything, hasDescription: false }), false);
+    assert.equal(readyForReview({ ...everything, hasAddress: false }), false);
+    assert.equal(readyForReview({ ...everything, hasHours: false }), false);
 
     // And they are still steps: left for later, not taken off the list.
     const list = setupSteps(withoutEither);

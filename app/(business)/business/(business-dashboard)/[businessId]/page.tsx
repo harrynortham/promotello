@@ -13,7 +13,6 @@ import { BusinessRecentRedemptions } from "@/components/business-recent-redempti
 import { FromYourEmail } from "@/components/from-your-email";
 import { WhyNotApproved } from "@/components/why-not-approved";
 import { reopenBusiness } from "./settings/actions";
-import { requestBusinessReview } from "./review-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BackToFree } from "@/components/back-to-free";
 import { loadWhatIsPaused } from "@/lib/what-is-paused";
@@ -298,18 +297,10 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     const base = `/business/${businessId}`;
 
     // Live: customers can find them, so there is something to measure.
-    // Awaiting send: we built this page and nobody has asked us to look.
+    // Awaiting send: the page has not yet reached the bar that puts it in
+    // front of us, which is a thing that happens rather than a thing they
+    // do (20270123090000_the_queue_fills_itself.sql).
     const isLive = business.approval_status === "approved" && !business.closed_at;
-    // The page as a customer would see it. Sending asks us to look at
-    // this, so it is theirs to finish first — the description and the
-    // address came from us.
-    const profileReady = Boolean(
-        business.logo_url &&
-        business.description?.trim() &&
-        locations?.length &&
-        hours?.length &&
-        business.cover_image_url,
-    );
     const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
 
 
@@ -359,22 +350,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     href: `${base}/cover`,
                     action: "Add cover photo",
                 },
-                ...(awaitingSend
-                    ? [
-                        {
-                            id: "review",
-                            label: "Send your page for review",
-                            description:
-                                "Have a look at your page the way a customer sees it, change what isn't right, and send it to us.",
-                            completed: false,
-                            locked: !profileReady,
-                            lockedReason:
-                                "Ready once the steps above are done. Nothing is public until you send it.",
-                            href: `${base}#send-for-review`,
-                            action: "Send for review",
-                        },
-                    ]
-                    : []),
                 {
                     id: "offer",
                     label: "Create your first offer",
@@ -536,13 +511,17 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <Alert id="send-for-review" className="scroll-mt-24 border-[#FF593F]/30 bg-[#FF593F]/5">
                     <AlertTitle>Your page isn&apos;t live yet</AlertTitle>
                     <AlertDescription>
+                        {/* There is nothing to press any more: the page
+                            comes to us on its own once it is a listing
+                            (20270123090000_the_queue_fills_itself.sql).
+                            Saying what makes that happen is the whole of
+                            what the button used to say. */}
                         <p>
                             {isWelcome ? "It's yours now. " : ""}Open it to see what a customer
-                            would see, and work down the list below.
-                            {profileReady
-                                ? " When it's right, send it to us."
-                                : " Once it's finished, you can send it to us."}{" "}
-                            Nothing is public until you do.
+                            would see, and work down the list below. It comes to us on its own
+                            once it has a description, an address and your opening hours —
+                            there&apos;s nothing to send. Nothing is public until we&apos;ve
+                            read it.
                         </p>
 
                         {/* "This page" read as the dashboard, which is where they
@@ -558,14 +537,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                                 <FiExternalLink aria-hidden="true" />
                             </Button>
 
-                            {profileReady && (
-                                <form action={requestBusinessReview}>
-                                    <input type="hidden" name="businessId" value={businessId} />
-                                    <Button type="submit" size="sm">
-                                        Send {business.name} for review
-                                    </Button>
-                                </form>
-                            )}
                         </div>
                     </AlertDescription>
                 </Alert>
@@ -573,34 +544,13 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
             {business.approval_status === "pending" && business.review_requested_at && !isWelcome && (
                 <Alert className="border-amber-200 bg-amber-50 text-amber-900">
-                    <AlertTitle>Waiting for approval</AlertTitle>
+                    <AlertTitle>{business.name} is with us</AlertTitle>
                     <AlertDescription>
-                        Your profile and offers go live once our team has approved
-                        your business. Finish setting up so you&apos;re ready.
+                        We read every page before it goes on the directory — usually the
+                        same day — and we&apos;ll email you the moment yours does. Carry
+                        on in the meantime: everything here works, and your offers are
+                        read one by one as you write them.
                     </AlertDescription>
-                </Alert>
-            )}
-
-            {search?.sent && (
-                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
-                    {/* A page we built was read when we built it, so
-                        sending it is the moment it goes live rather than
-                        the moment it joins a queue (20270113090000). */}
-                    <AlertTitle>
-                        {search.sent === "live" ? "You're live" : "Sent for review"}
-                    </AlertTitle>
-                    <AlertDescription>
-                        {search.sent === "live"
-                            ? "Your page is on the directory now — we'd already read it, so there was nothing to wait for. Your offers are still read one by one before they appear."
-                            : "We usually look the same day, and we'll email you either way."}
-                    </AlertDescription>
-                </Alert>
-            )}
-
-            {search?.error === "review" && (
-                <Alert variant="destructive">
-                    <AlertTitle>We couldn&apos;t send it</AlertTitle>
-                    <AlertDescription>Please try again.</AlertDescription>
                 </Alert>
             )}
 

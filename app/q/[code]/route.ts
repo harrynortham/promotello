@@ -65,6 +65,16 @@ export async function GET(
         }
     }
 
+    // Only when nothing resolved, and set here rather than up with the
+    // fallback URL because the block above rewrites this same object on
+    // its way to a real page — a code set earlier would ride along onto
+    // the business's page. It lets /q/unavailable name the business whose
+    // page we have not finished reading; it is the code printed on the
+    // poster in their hand, not anything they did not already have.
+    if (destination.pathname === "/q/unavailable") {
+        destination.searchParams.set("code", code);
+    }
+
     // 307 so browsers don't cache the redirect and skip counting later scans.
     return NextResponse.redirect(destination, 307);
 }

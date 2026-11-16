@@ -129,8 +129,14 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     {signedIn ? `Claim ${preview.business_name}` : `Claim ${preview.business_name} for free`}
                 </SubmitButton>
             </form>
+            {/* This used to promise "nothing goes public until you say
+                so", which was the reason it was safe to press. The page
+                goes live on the claim now
+                (20270124090000_a_claimed_page_is_live_when_claimed.sql),
+                so the button says what it actually does. */}
             <p className="text-sm text-[#17233B]/70">
-                Free, and nothing goes public until you say so.
+                Free. We wrote this page and read it before we sent it, so it goes
+                live as soon as you claim it — and it&apos;s yours to change after.
             </p>
 
             {placesLeft !== null && placesLeft > 0 && placesLeft < FOUNDING_MEMBER_LIMIT && (

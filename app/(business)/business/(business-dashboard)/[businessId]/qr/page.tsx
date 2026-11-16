@@ -249,13 +249,13 @@ async function QrContent({ params, searchParams }: PageProps) {
                 )}
 
                 {canManage && !isLive && (
-                    <Alert className="mt-8 border-amber-200 bg-amber-50">
-                        <AlertTitle>Design it now, print it when your page is live</AlertTitle>
+                    <Alert className="mt-8 border-[#17233B]/15 bg-white">
+                        <AlertTitle>Make it now, put it up when your page is live</AlertTitle>
                         <AlertDescription>
-                            A scan opens your page, so the poster itself waits for us to
-                            finish checking it — usually the same day. Everything below
-                            works in the meantime: choose what it opens, pick the colours
-                            and the layout, and see exactly what prints.
+                            A scan opens your page, and we are still reading that — usually
+                            the same day. The poster is yours to make and print in the
+                            meantime; it starts working the moment the page does, and
+                            anyone who scans it before then is told you are on your way.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -294,7 +294,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
                                 {isLive
                                     ? "Make your first one above, print it and put it in your window."
-                                    : "Design yours above. The moment your page is live you can make it, print it and put it in your window."}
+                                    : "Make yours above. It starts working the moment your page is live."}
                             </p>
                         </div>
                     ) : (
