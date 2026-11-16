@@ -14,19 +14,26 @@ import { cn } from "@/lib/utils";
 
 export function BusinessPlanBadge({
     tier,
+    trialing = false,
     className = "",
 }: {
     tier: PlanTier;
+    // Still in the free trial, which is worth naming: the clock is
+    // running and the plan stops at the end of it unless a card is
+    // added.
+    trialing?: boolean;
     className?: string;
 }) {
     if (tier === "free") return null;
+
+    const name = tier === "growth" ? plans.growth_monthly.name : plans.pro_monthly.name;
 
     return (
         <Badge
             variant="outline"
             className={cn("border-[#FF593F]/40 bg-[#FF593F]/5 text-[#FF593F]", className)}
         >
-            {tier === "growth" ? plans.growth_monthly.name : plans.pro_monthly.name}
+            {trialing ? `${name} · Trial` : name}
         </Badge>
     );
 }

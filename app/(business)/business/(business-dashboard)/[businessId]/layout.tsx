@@ -11,7 +11,7 @@ import { BusinessSwitcher } from "@/components/business-switcher";
 import { BusinessPlanBadge } from "@/components/business-plan-badge";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
-import { businessTier } from "@/lib/billing";
+import { businessPlan } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { unclaimedPreview } from "@/lib/previews";
 
@@ -117,9 +117,11 @@ async function BusinessLayoutContent({
         redirect("/business/dashboard");
     }
 
-    // Which plan they are paying for, said where they already look to
-    // see whether the page is live. Nothing is shown on Free.
-    const tier = await businessTier(supabase, businessId).catch(() => "free" as const);
+    // Which plan they are on, said where they already look to see
+    // whether the page is live. Nothing is shown on Free.
+    const plan = await businessPlan(supabase, businessId).catch(
+        () => ({ tier: "free" as const, trialing: false }),
+    );
 
     const businesses: Business[] =
         memberships
@@ -165,7 +167,8 @@ async function BusinessLayoutContent({
                         businessLogoUrl={currentBusiness.logo_url}
                         approvalStatus={currentBusiness.approval_status}
                         reviewRequested={Boolean(currentBusiness.review_requested_at)}
-                        tier={tier}
+                        tier={plan.tier}
+                        trialing={plan.trialing}
                         canManage={canManage}
                         businesses={businesses}
                     />
@@ -196,7 +199,7 @@ async function BusinessLayoutContent({
                                 reviewRequested={Boolean(currentBusiness.review_requested_at)}
                             />
 
-                            <BusinessPlanBadge tier={tier} />
+                            <BusinessPlanBadge tier={plan.tier} trialing={plan.trialing} />
                         </div>
 
                         <Separator className="my-5" />

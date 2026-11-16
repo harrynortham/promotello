@@ -102,25 +102,30 @@ test("the sidebar says which plan this business is on, and says nothing on Free"
 
     const { data: before } = await admin
         .from("subscriptions")
-        .select("stripe_subscription_id, tier")
+        .select("stripe_subscription_id, tier, status")
         .eq("business_id", state.businessId)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
-    const asTier = (tier: string) =>
-        admin.from("subscriptions").update({ tier }).eq("stripe_subscription_id", before!.stripe_subscription_id);
+    const asPlan = (fields: Record<string, unknown>) =>
+        admin.from("subscriptions").update(fields).eq("stripe_subscription_id", before!.stripe_subscription_id);
 
     // Scoped to the sidebar: the checklist puts its own "Pro" pills
     // beside the steps that need it, and those are a different thing.
-    const badge = page.locator("aside").getByText(/^(Pro|Growth)$/);
+    const badge = page.locator("aside").getByText(/^(Pro|Growth)( · Trial)?$/);
 
     try {
-        await asTier("pro");
+        await asPlan({ tier: "pro", status: "active" });
         await page.goto(`/business/${state.businessId}`, { timeout: 120_000 });
         await expect(badge, "Pro is named").toHaveText("Pro", { timeout: 60_000 });
 
-        await asTier("growth");
+        // The clock is running, and that is worth saying at a glance.
+        await asPlan({ tier: "pro", status: "trialing" });
+        await page.reload({ timeout: 120_000 });
+        await expect(badge, "and a trial says so").toHaveText("Pro · Trial", { timeout: 60_000 });
+
+        await asPlan({ tier: "growth", status: "active" });
         await page.reload({ timeout: 120_000 });
         await expect(badge, "and so is Growth").toHaveText("Growth", { timeout: 60_000 });
 
@@ -130,6 +135,6 @@ test("the sidebar says which plan this business is on, and says nothing on Free"
         await expect(page.locator("aside").getByText("Overview")).toBeVisible({ timeout: 60_000 });
         await expect(badge, "and Free is left alone").toHaveCount(0);
     } finally {
-        await asTier(before!.tier);
+        await asPlan({ tier: before!.tier, status: before!.status });
     }
 });

@@ -38,6 +38,7 @@ type BusinessMobileNavProps = {
     approvalStatus: string;
     // Which plan they pay for; nothing is shown on Free.
     tier: PlanTier;
+    trialing: boolean;
     reviewRequested: boolean;
     canManage: boolean;
     businesses?: Business[];
@@ -51,6 +52,7 @@ export function BusinessMobileNav({
     approvalStatus,
     reviewRequested,
     tier,
+    trialing,
     canManage,
     businesses = [],
 }: BusinessMobileNavProps) {
@@ -108,7 +110,7 @@ export function BusinessMobileNav({
                                     reviewRequested={reviewRequested}
                                 />
 
-                                <BusinessPlanBadge tier={tier} />
+                                <BusinessPlanBadge tier={tier} trialing={trialing} />
                             </div>
                         </div>
                     </div>
