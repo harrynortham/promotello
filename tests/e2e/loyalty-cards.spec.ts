@@ -1020,3 +1020,93 @@ test("the card in the list opens its own page, and the name still opens the busi
         await admin.from("loyalty_programs").delete().eq("id", program!.id);
     }
 });
+
+// A card asks the database what it says now whenever it starts
+// listening, and again when a phone wakes up in somebody's hand. That
+// answer can arrive late — a slow connection at a counter is all it
+// takes — by which time a stamp has already landed by Realtime, and the
+// answer describes the card as it was before it. Holding the answer
+// back is the whole test: without it the count walked backwards in
+// front of somebody who had just watched it go up, and stayed wrong.
+test("a late answer about the card cannot undo a stamp that has landed", async ({ browser }) => {
+    test.setTimeout(120_000);
+    const { businessId, customerUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: open } = await admin
+        .from("loyalty_programs")
+        .select("id")
+        .eq("business_id", businessId)
+        .eq("is_active", true)
+        .is("closed_at", null);
+    for (const row of open ?? []) {
+        await admin.from("loyalty_programs").update({ closed_at: new Date().toISOString() }).eq("id", row.id);
+    }
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Late answer ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const { data: card } = await admin
+        .from("loyalty_cards")
+        .insert({ program_id: program!.id, user_id: customerUserId })
+        .select("card_code")
+        .single();
+
+    const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+    const staff = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+    try {
+        // Every answer the card gets is taken now and handed over eight
+        // seconds later, which is what a bad signal does to it.
+        let taken = 0;
+        let delivered = 0;
+
+        await customer.route(
+            (url) => url.pathname.includes("/rest/v1/loyalty_cards") && url.search.includes("stamps"),
+            async (route) => {
+                const response = await route.fetch();
+                const body = await response.text();
+                taken++;
+                await new Promise((resolve) => setTimeout(resolve, 8_000));
+                await route.fulfill({ response, body });
+                delivered++;
+            },
+        );
+
+        await customer.goto(`/loyalty/${program!.id}`);
+        await expect(customer.getByText("0 of 6 stamps")).toBeVisible({ timeout: 20_000 });
+
+        await staff.goto(`/stamp/${card!.card_code}`);
+        await staff.getByRole("button", { name: "Add a stamp" }).click();
+        await expect(staff.getByText("Stamp added")).toBeVisible({ timeout: 20_000 });
+
+        await expect(customer.getByText("1 of 6 stamps"), "the stamp landed").toBeVisible({
+            timeout: 30_000,
+        });
+
+        // Those answers were taken before the stamp and are still in
+        // the air. Wait for every one to be delivered — there is no
+        // point asserting before the card has had the chance to take a
+        // wrong one — and then the card should be exactly where it was.
+        expect(taken, "the card asked at least once").toBeGreaterThan(0);
+        await expect(async () => {
+            expect(delivered, "every held answer delivered").toBe(taken);
+        }).toPass({ timeout: 30_000, intervals: [250] });
+
+        await expect(customer.getByText("1 of 6 stamps"), "and ignored every one").toBeVisible();
+        await expect(customer.getByText("0 of 6 stamps"), "never going back").toHaveCount(0);
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+    }
+});
