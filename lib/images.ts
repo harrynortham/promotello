@@ -25,8 +25,17 @@ export function storedImage(url: string | null | undefined) {
     try {
         const image = new URL(url);
 
-        return image.protocol === "https:" &&
-            image.hostname === new URL(allowed).hostname &&
+        // Compared against the configured Supabase origin rather than a
+        // literal "https:", so the local stack works: it serves storage
+        // over http on 127.0.0.1:55321, and hardcoding the scheme meant
+        // every logo and offer photograph read as no image at all while
+        // developing. Deployed, NEXT_PUBLIC_SUPABASE_URL is https, so
+        // https is still the only thing that passes there.
+        //
+        // Origin covers scheme, host and port together, which is also
+        // tighter than the hostname check it replaces: that one would
+        // have accepted the same host on any port.
+        return image.origin === new URL(allowed).origin &&
             image.pathname.startsWith(PUBLIC_PATH)
             ? url
             : null;

@@ -25,6 +25,39 @@ test("anything next/image would refuse reads as no image", () => {
     assert.equal(storedImage(undefined), null);
 });
 
+// The local Supabase stack serves storage over http on a port, and
+// hardcoding https meant every picture read as no image while
+// developing. The check follows whatever NEXT_PUBLIC_SUPABASE_URL says,
+// so it is the deployment that decides what counts, not a literal.
+test("the local stack's http pictures are shown", () => {
+    const live = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    try {
+        process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:55321";
+
+        const local = "http://127.0.0.1:55321/storage/v1/object/public/offer-images/a/b.jpg";
+
+        assert.equal(storedImage(local), local);
+
+        // Same host, another port: a different service, and next/image
+        // has not been told about it. The hostname-only check this
+        // replaced would have let it through.
+        assert.equal(
+            storedImage("http://127.0.0.1:54321/storage/v1/object/public/offer-images/a/b.jpg"),
+            null,
+        );
+
+        // Still only the public bucket, and still not somebody else.
+        assert.equal(storedImage("http://127.0.0.1:55321/storage/v1/object/sign/private/b.jpg"), null);
+        assert.equal(storedImage("http://localhost:55321/storage/v1/object/public/a.jpg"), null);
+
+        // The live host is not this deployment's host any more.
+        assert.equal(storedImage(good), null);
+    } finally {
+        process.env.NEXT_PUBLIC_SUPABASE_URL = live;
+    }
+});
+
 // The live preview beside a form: the photo exists in the browser and
 // nowhere else yet.
 test("a picture the browser just made is shown as it is", () => {
