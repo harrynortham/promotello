@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
 import { BUSINESS_AUTH, STATE_PATH } from "../global-setup";
@@ -83,4 +84,52 @@ test.describe("on a phone", () => {
         await expect(inMenu).toHaveAttribute("href", `/businesses/${businessSlug}`);
         await expect(inMenu).toHaveAttribute("target", "_blank");
     });
+});
+
+// Somebody paying should be able to see what they are paying for
+// without opening Billing. Nothing is shown on Free: a badge saying so
+// would label most businesses with the one thing they have not done,
+// every time they open the dashboard.
+test("the sidebar says which plan this business is on, and says nothing on Free", async ({ page }) => {
+    test.setTimeout(120_000);
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const { data: before } = await admin
+        .from("subscriptions")
+        .select("stripe_subscription_id, tier")
+        .eq("business_id", state.businessId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    const asTier = (tier: string) =>
+        admin.from("subscriptions").update({ tier }).eq("stripe_subscription_id", before!.stripe_subscription_id);
+
+    // Scoped to the sidebar: the checklist puts its own "Pro" pills
+    // beside the steps that need it, and those are a different thing.
+    const badge = page.locator("aside").getByText(/^(Pro|Growth)$/);
+
+    try {
+        await asTier("pro");
+        await page.goto(`/business/${state.businessId}`, { timeout: 120_000 });
+        await expect(badge, "Pro is named").toHaveText("Pro", { timeout: 60_000 });
+
+        await asTier("growth");
+        await page.reload({ timeout: 120_000 });
+        await expect(badge, "and so is Growth").toHaveText("Growth", { timeout: 60_000 });
+
+        // The free business has no subscription at all, so there is
+        // nothing to say and nothing is said.
+        await page.goto(`/business/${state.freeBusinessId}`, { timeout: 120_000 });
+        await expect(page.locator("aside").getByText("Overview")).toBeVisible({ timeout: 60_000 });
+        await expect(badge, "and Free is left alone").toHaveCount(0);
+    } finally {
+        await asTier(before!.tier);
+    }
 });
