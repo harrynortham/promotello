@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { hoursToValues, type HoursRow } from "@/lib/business-hours";
+import { readStarter } from "@/lib/starter";
 import { getCityOptions } from "@/lib/locations";
 import { isSetupStepId, setupSteps, type SetupState } from "@/lib/setup-steps";
 import { createClient } from "@/utils/supabase/server";
@@ -118,6 +119,11 @@ async function SetupContent({ params, searchParams }: PageProps) {
         .limit(1)
         .maybeSingle();
 
+    // The offer we put in their preview email. The dashboard already hands
+    // it back; the checklist is the path the welcome screen pushes people
+    // down, and it was sending them to an empty form (docs/LAUNCH-FUNNEL.md).
+    const starter = await readStarter(supabase, businessId);
+
     const state: SetupState = {
         hasLogo: Boolean(business.logo_url),
         hasDescription: Boolean(business.description?.trim()),
@@ -158,6 +164,7 @@ async function SetupContent({ params, searchParams }: PageProps) {
             days={hoursToValues((hours ?? []) as HoursRow[])}
             isLive={business.approval_status === "approved"}
             ours={ours}
+            starterOffer={offerCount ? null : starter.offer}
         />
     );
 }

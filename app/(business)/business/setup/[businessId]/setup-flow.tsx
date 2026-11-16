@@ -47,6 +47,7 @@ export function SetupFlow({
     days,
     isLive,
     ours,
+    starterOffer,
 }: {
     businessId: string;
     businessName: string;
@@ -61,6 +62,9 @@ export function SetupFlow({
     location: BusinessLocation | null;
     days: DayValues[];
     isLive: boolean;
+    // The offer from their preview email, where there is one and they have
+    // not written their own yet.
+    starterOffer: string | null;
     // The page was written by us, not by them: the steps that arrive
     // prefilled say so.
     ours: boolean;
@@ -170,7 +174,7 @@ export function SetupFlow({
             stepBlurb={finished ? undefined : step?.blurb}
         >
             {finished ? (
-                <FinishedCard businessId={businessId} businessSlug={businessSlug} />
+                <FinishedCard businessId={businessId} businessSlug={businessSlug} isLive={isLive} />
             ) : step?.id === "logo" ? (
                 <LogoStep
                     businessId={businessId}
@@ -221,24 +225,40 @@ export function SetupFlow({
                     onGo={(id) => go(id)}
                 />
             ) : step?.id === "offer" ? (
-                <OfferStep businessId={businessId} />
+                <OfferStep businessId={businessId} starterOffer={starterOffer} />
             ) : null}
         </SetupShell>
     );
 }
 
-function FinishedCard({ businessId, businessSlug }: { businessId: string; businessSlug: string | null }) {
+// A page we built and they finished goes live the moment they send it
+// (straight-live). Telling that business we will email it when the page is
+// approved describes a wait that already happened, and the first thing it
+// does is make them wait for nothing.
+function FinishedCard({
+    businessId,
+    businessSlug,
+    isLive,
+}: {
+    businessId: string;
+    businessSlug: string | null;
+    isLive: boolean;
+}) {
     return (
         <div className="rounded-2xl border border-[#17233B]/10 bg-white p-6 shadow-sm sm:p-8">
             <span className="flex size-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
                 <FiCheck aria-hidden="true" className="size-6" />
             </span>
 
-            <h2 className="mt-5 text-xl font-semibold">Nothing left to do</h2>
+            <h2 className="mt-5 text-xl font-semibold">
+                {isLive ? "Your page is live" : "Nothing left to do"}
+            </h2>
 
             <p className="mt-3 leading-7 text-[#17233B]/65">
-                We&apos;ll email you the moment your page is approved. In the meantime your
-                dashboard is where your posters, your stamp card and your customers live.
+                {isLive
+                    ? "Customers browsing the directory can find you now. We read your offer before it joins the page — usually the same day — and we'll email you when it does."
+                    : "We'll email you the moment your page is approved."}{" "}
+                Your dashboard is where your posters, your stamp card and your customers live.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">

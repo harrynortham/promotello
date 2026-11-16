@@ -103,6 +103,47 @@ test("the dashboard hands back the offer and the card from the email", async ({ 
     }
 });
 
+// The dashboard has handed the offer back since this was built. The
+// welcome screen does not send anybody to the dashboard — it sends them
+// down the setup checklist, and that was linking to an empty form with a
+// placeholder about somebody else's coffee. The persuasion and the
+// product were still disconnected for everyone who followed the path the
+// product itself pushes (docs/LAUNCH-FUNNEL.md).
+test("the setup checklist hands it back too, not just the dashboard", async ({ browser }) => {
+    test.setTimeout(300_000);
+    const { businessUserId } = state();
+
+    const businessId = await seedClaimedPreview(businessUserId);
+
+    try {
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/setup/${businessId}?step=offer`, { timeout: 120_000 });
+
+        await expect(page.getByText(SAMPLE_OFFER)).toBeVisible({ timeout: 90_000 });
+
+        // The generic prompt is what a business with no preview gets, and
+        // saying both at once would be us not noticing what we sent them.
+        await expect(page.getByText("a free side, 20% off")).toHaveCount(0);
+
+        await page.getByRole("button", { name: "Use the offer from your email" }).click({ timeout: 30_000 });
+        await expect(page.locator("#title")).toHaveValue(SAMPLE_OFFER, { timeout: 60_000 });
+    } finally {
+        await removeBusiness(businessId);
+    }
+});
+
+// A business that was never a preview still gets the generic prompt,
+// which is the right one for somebody with nothing to hand back.
+test("a business with no preview still gets the plain offer step", async ({ browser }) => {
+    const { businessId } = state();
+
+    const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+    await page.goto(`/business/setup/${businessId}?step=offer`, { timeout: 120_000 });
+
+    await expect(page.getByText("a free side, 20% off")).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByRole("button", { name: "Create my first offer" })).toBeVisible();
+});
+
 test("a first loyalty card opens on the reward from the email", async ({ browser }) => {
     test.setTimeout(300_000);
     const { businessUserId } = state();
