@@ -197,7 +197,7 @@ test("the pack prints seven sheets off a business's own card, offer and report",
 
         // The features and the prices are read from the product, not
         // typed onto the sheet.
-        await expect(page.getByText("Monthly value report by email")).toBeVisible();
+        await expect(page.getByText("Monthly report by email")).toBeVisible();
         await expect(page.getByText("£39/mo")).toBeVisible();
 
         // The seeded business has no loyalty card, so that sheet says

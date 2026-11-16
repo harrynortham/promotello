@@ -115,14 +115,20 @@ async function seedVisits(client: SupabaseClient, businessId: string, run: strin
     const regular = await person("regular");
     const { data: claim } = await client
         .from("offer_redemptions")
-        .insert({ offer_id: offer!.id, user_id: regular, redeemed_at: ago(14), used_at: ago(13) })
+        // 45 days, not 14, so this visit is always in an earlier month
+        // than the others: more than 31 means a different month whatever
+        // today's date is. The panel only offers "See it month by month
+        // on Growth" when the report spans more than one month, so with
+        // everything inside 14 days this test passed in the first half
+        // of a month and failed in the second.
+        .insert({ offer_id: offer!.id, user_id: regular, redeemed_at: ago(45), used_at: ago(44) })
         .select("id")
         .single();
     expect(claim).not.toBeNull();
 
     const { data: regularCard } = await client
         .from("loyalty_cards")
-        .insert({ program_id: program!.id, user_id: regular, stamps: 2, created_at: ago(14) })
+        .insert({ program_id: program!.id, user_id: regular, stamps: 2, created_at: ago(45) })
         .select("id")
         .single();
     await client.from("loyalty_events").insert([
@@ -228,7 +234,7 @@ test("the panel says the sentence on Growth, and sells it on Pro", async ({ brow
         await expect(staff.getByText("First-timers, and who came back")).toBeVisible({
             timeout: 60_000,
         });
-        await expect(staff.getByRole("link", { name: /See it on Growth/ })).toBeVisible();
+        await expect(staff.getByRole("link", { name: /See it month by month on Growth/ })).toBeVisible();
 
         // On Growth it says the number.
         await client.from("subscriptions").update({ tier: "growth" }).eq("business_id", businessId);
