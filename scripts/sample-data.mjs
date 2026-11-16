@@ -306,8 +306,40 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
     return offers;
 }
 
+// `supabase db reset` ends by restarting the containers, and npm runs
+// this the moment it returns. PostgREST comes back before its schema
+// cache does, and answers the first query with "Could not query the
+// database for the schema cache. Retrying." — so a reset that rebuilt
+// the database perfectly well would still exit 1 with the seed undone,
+// and the fix was to run `npm run db:seed` again by hand.
+//
+// It is ready within a second or two. Waiting for it here keeps
+// `db:reset` the one command the docs promise it is.
+async function waitForTheSchemaCache() {
+    const give_up_after = 30_000;
+    const started = Date.now();
+
+    for (;;) {
+        const { error } = await supabase.from("businesses").select("is_sample").limit(1);
+
+        if (!error) return;
+
+        // Anything else is a real problem — a missing column, the wrong
+        // database — and saying so now is better than after 30 seconds.
+        if (!/schema cache/i.test(error.message)) {
+            throw new Error(`is_sample column (run the sample_businesses migration): ${error.message}`);
+        }
+
+        if (Date.now() - started > give_up_after) {
+            throw new Error(`the database never finished starting: ${error.message}`);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+}
+
 async function seed({ reset }) {
-    check(await supabase.from("businesses").select("is_sample").limit(1), "is_sample column (run the sample_businesses migration)");
+    await waitForTheSchemaCache();
 
     const existing = check(
         await supabase.from("businesses").select("id").eq("is_sample", true),
