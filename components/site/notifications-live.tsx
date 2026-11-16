@@ -52,12 +52,27 @@ export function NotificationsLive({ userId }: { userId: string }) {
                     },
                     catchUp,
                 )
-                .subscribe();
+                // Says on the page when the socket is actually listening.
+                // Until it is, a row written now produces no event at
+                // all, and there is nothing in the markup to tell the
+                // difference between "not subscribed yet" and "subscribed
+                // and nothing happened" — which is what made the e2e test
+                // for this fail about one run in three.
+                .subscribe((status) => {
+                    if (!watching) return;
+
+                    if (status === "SUBSCRIBED") {
+                        document.documentElement.dataset.notificationsLive = "on";
+                    } else {
+                        delete document.documentElement.dataset.notificationsLive;
+                    }
+                });
         }, 100);
 
         return () => {
             watching = false;
             clearTimeout(joining);
+            delete document.documentElement.dataset.notificationsLive;
             document.removeEventListener("visibilitychange", onVisible);
             if (channel) void supabase.removeChannel(channel);
         };
