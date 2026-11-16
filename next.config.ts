@@ -50,12 +50,40 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // The local Supabase stack is on 127.0.0.1, and the optimiser
+    // refuses a host that resolves to a private IP — reasonably, since
+    // fetching arbitrary private addresses on request is an SSRF
+    // vector. It is only ever true while developing, so nothing
+    // deployed will fetch from a loopback or private address.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
     remotePatterns: [
       {
         protocol: "https",
         hostname: "owdxoarqivpoplpqiylt.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      // The local Supabase stack (docs/ENVIRONMENTS.md), which serves
+      // storage over http on 55321. Without this every logo and offer
+      // photograph is simply absent while developing: the rows hold
+      // their URLs and the files serve fine, but next/image refuses a
+      // host it has not been told about. Development only, so nothing
+      // deployed can be asked to fetch from a loopback address.
+      ...(process.env.NODE_ENV === "production"
+        ? []
+        : ([
+            {
+              protocol: "http",
+              hostname: "127.0.0.1",
+              port: "55321",
+              pathname: "/storage/v1/object/public/**",
+            },
+            {
+              protocol: "http",
+              hostname: "localhost",
+              port: "55321",
+              pathname: "/storage/v1/object/public/**",
+            },
+          ] as const)),
     ],
   },
   partialPrefetching: true,
