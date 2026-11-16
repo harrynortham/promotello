@@ -288,8 +288,15 @@ test.describe.serial("Growth plan", () => {
 
     test("monthly reports are claimed once per business per month", async () => {
         const { businessId } = state();
-        // A month long past, so this can't stop a real report being sent.
-        const month = "2020-01-01";
+        // This month, because a business is not reported on for a month
+        // it did not exist in — `b.created_at < month_end` in
+        // claim_monthly_reports (20270112090000). A month long past was
+        // chosen here so the claim could not consume a real business's
+        // send, and that is still true of this month: the claim is
+        // keyed (business_id, month), so claiming ours says nothing
+        // about anybody else's.
+        const now = new Date();
+        const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
 
         const { data: first, error } = await admin().rpc("claim_monthly_reports", { report_month: month });
         expect(error).toBeNull();

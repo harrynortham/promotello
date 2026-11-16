@@ -250,12 +250,22 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
         );
     }
 
+    // The first offer photograph that arrives becomes the business's
+    // cover as well. A real business uploads its own, and these have
+    // none of their own to upload — but leaving the column null is not
+    // a harmless simplification: three e2e specs borrow a cover from
+    // whatever business already has one, and with every sample business
+    // null they read null and crash on it.
+    let coverUrl = null;
+
     for (const [offerIndex, offer] of sample.offers.entries()) {
         const slug = `${slugify(offer.title)}-${randomBytes(3).toString("hex")}`;
         const photo = await photoOrNothing(offer.photo);
         const imageUrl = photo
             ? await upload("offer-images", `${business.id}/sample-${slug}.jpg`, photo, "image/jpeg")
             : null;
+
+        coverUrl ??= imageUrl;
 
         check(
             await supabase.from("offers").insert({
@@ -282,6 +292,13 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
         );
 
         offers += 1;
+    }
+
+    if (coverUrl) {
+        check(
+            await supabase.from("businesses").update({ cover_image_url: coverUrl }).eq("id", business.id),
+            `cover for ${sample.name}`,
+        );
     }
 
     console.log(`✓ ${sample.name} (${sample.area.region}, ${cityName}, ${sample.offers.length} ${sample.offers.length === 1 ? "offer" : "offers"})`);
@@ -314,6 +331,27 @@ async function seed({ reset }) {
 
     for (const [index, sample] of sampleBusinesses.entries()) {
         offerCount += await createSampleBusiness({ sample, index, cityName: "Bristol", categoryIds, ownerId });
+    }
+
+    // A logo and a cover can only be uploaded once the business has an
+    // id, so both arrive as an update — and an update to a live business
+    // leaves a trace for an admin to read (20261230090000). Thirty-eight
+    // of those, from shops nobody edited, bury the queue that exists to
+    // show what real businesses changed. The trace is right; seeding
+    // being mistaken for editing is not.
+    const seeded = check(
+        await supabase.from("businesses").select("id").eq("is_sample", true),
+        "find sample businesses to tidy after",
+    );
+
+    if (seeded.length > 0) {
+        check(
+            await supabase
+                .from("business_edits")
+                .delete()
+                .in("business_id", seeded.map((row) => row.id)),
+            "clear the edit traces seeding left",
+        );
     }
 
     console.log(`\nAdded ${sampleBusinesses.length} sample businesses and ${offerCount} offers.`);

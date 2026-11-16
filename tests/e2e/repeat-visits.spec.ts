@@ -115,14 +115,20 @@ async function seedVisits(client: SupabaseClient, businessId: string, run: strin
     const regular = await person("regular");
     const { data: claim } = await client
         .from("offer_redemptions")
-        .insert({ offer_id: offer!.id, user_id: regular, redeemed_at: ago(14), used_at: ago(13) })
+        // 45 days, not 14, so this visit is always in an earlier month
+        // than the others: more than 31 means a different month whatever
+        // today's date is. The panel only offers "See it month by month
+        // on Growth" when the report spans more than one month, so with
+        // everything inside 14 days this test passed in the first half
+        // of a month and failed in the second.
+        .insert({ offer_id: offer!.id, user_id: regular, redeemed_at: ago(45), used_at: ago(44) })
         .select("id")
         .single();
     expect(claim).not.toBeNull();
 
     const { data: regularCard } = await client
         .from("loyalty_cards")
-        .insert({ program_id: program!.id, user_id: regular, stamps: 2, created_at: ago(14) })
+        .insert({ program_id: program!.id, user_id: regular, stamps: 2, created_at: ago(45) })
         .select("id")
         .single();
     await client.from("loyalty_events").insert([
@@ -169,29 +175,43 @@ test("the report counts first visits, who sent them, and who came back", async (
     const { businessId } = state();
     const client = admin();
     const run = String(Date.now());
-    const made = await seedVisits(client, businessId, run);
     const business = await asBusiness();
 
-    try {
+    const ask = async () => {
         const { data, error } = await business.rpc("business_repeat_visits", {
             requested_business_id: businessId,
             months: 3,
         });
         expect(error, needsMigration).toBeNull();
 
-        const report = data as Report;
+        return data as Report;
+    };
 
-        expect(report.new_customers, "three people came in for the first time").toBe(3);
-        expect(report.sent_by_promotello, "the guest joined at the counter, so two of them").toBe(2);
-        expect(report.returned, "one of the three has been back").toBe(1);
-        expect(report.regulars, "and has been in three times").toBe(1);
+    // These are the numbers for the whole shared test business, and
+    // other specs put customers through it too — redeem-offer runs just
+    // before this one in a full run and adds a fourth first-timer. So
+    // the assertions are on what this test's own seeding changes, which
+    // is the behaviour being tested, rather than on totals that depend
+    // on what else ran first. Asserted absolutely, this passed alone and
+    // failed in the suite.
+    const before = await ask();
+    const made = await seedVisits(client, businessId, run);
+
+    try {
+        const report = await ask();
+        const added = (key: keyof Report) => (report[key] as number) - (before[key] as number);
+
+        expect(added("new_customers"), "three people came in for the first time").toBe(3);
+        expect(added("sent_by_promotello"), "the guest joined at the counter, so two of them").toBe(2);
+        expect(added("returned"), "one of the three has been back").toBe(1);
+        expect(added("regulars"), "and has been in three times").toBe(1);
 
         // The sentence counts coming back among the people we sent, so
         // those numbers are about those people and nobody else.
-        expect(report.sent_returned, needsMigration).toBe(1);
-        expect(report.sent_regulars).toBe(1);
-        expect(report.visits).toBe(5);
-        expect(report.customers).toBe(3);
+        expect(added("sent_returned"), needsMigration).toBe(1);
+        expect(added("sent_regulars")).toBe(1);
+        expect(added("visits")).toBe(5);
+        expect(added("customers")).toBe(3);
         expect(report.by_month.length).toBeGreaterThan(0);
     } finally {
         for (const id of made.programs) await client.from("loyalty_programs").delete().eq("id", id);
@@ -228,7 +248,7 @@ test("the panel says the sentence on Growth, and sells it on Pro", async ({ brow
         await expect(staff.getByText("First-timers, and who came back")).toBeVisible({
             timeout: 60_000,
         });
-        await expect(staff.getByRole("link", { name: /See it on Growth/ })).toBeVisible();
+        await expect(staff.getByRole("link", { name: /See it month by month on Growth/ })).toBeVisible();
 
         // On Growth it says the number.
         await client.from("subscriptions").update({ tier: "growth" }).eq("business_id", businessId);

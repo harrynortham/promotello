@@ -31,18 +31,62 @@ test("business owner can start a founding member trial and open the billing port
     await page.getByRole("button", { name: "Start free trial" }).first().click();
     await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
 
-    // Stripe-hosted Checkout, test card.
-    await page.locator("#cardNumber").fill("4242 4242 4242 4242");
-    await page.locator("#cardExpiry").fill("12 / 34");
-    await page.locator("#cardCvc").fill("123");
-    await page.locator("#billingName").fill("E2E Test Owner");
+    // Stripe-hosted Checkout. A founding-member trial asks for no card
+    // at all — the session is created with payment_method_collection
+    // "if_required" (billing/actions.ts) so that starting a trial costs
+    // nobody their card details, and Checkout then renders none of these
+    // fields. Each one is filled only if it is actually on the page, so
+    // this passes whether or not a card is being collected rather than
+    // waiting out a timeout on a field that will never appear.
+    // Two different Checkouts, and the difference is not only the
+    // wording. One collecting a card puts its fields and a
+    // hosted-payment-submit-button in the top-level page. The card-less
+    // trial — payment_method_collection "if_required" in
+    // billing/actions.ts, so starting a trial costs nobody their card
+    // details — renders the form inside an iframe, with a plain "Start
+    // trial" button and no testid. getByRole does not cross frames, so
+    // the button has to be looked for in every frame.
+    const findSubmit = async () => {
+        const top = page.getByTestId("hosted-payment-submit-button");
 
-    const postalCode = page.locator("#billingPostalCode");
-    if (await postalCode.isVisible()) {
-        await postalCode.fill("BS7 8AA");
-    }
+        if (await top.count()) {
+            return top.first();
+        }
 
-    await page.getByTestId("hosted-payment-submit-button").click();
+        for (const frame of page.frames()) {
+            const button = frame.getByRole("button", { name: /^(Start trial|Subscribe|Pay)/ });
+
+            if (await button.count()) {
+                return button.first();
+            }
+        }
+
+        return null;
+    };
+
+    let submit: NonNullable<Awaited<ReturnType<typeof findSubmit>>> | null = null;
+
+    await expect(async () => {
+        submit = await findSubmit();
+        expect(submit, "no way to submit Stripe Checkout was found in any frame").not.toBeNull();
+        await expect(submit!).toBeVisible();
+    }).toPass({ timeout: 60_000 });
+
+    const fillIfPresent = async (selector: string, value: string) => {
+        const field = page.locator(selector);
+
+        if (await field.isVisible()) {
+            await field.fill(value);
+        }
+    };
+
+    await fillIfPresent("#cardNumber", "4242 4242 4242 4242");
+    await fillIfPresent("#cardExpiry", "12 / 34");
+    await fillIfPresent("#cardCvc", "123");
+    await fillIfPresent("#billingName", "E2E Test Owner");
+    await fillIfPresent("#billingPostalCode", "BS7 8AA");
+
+    await submit!.click();
 
     await page.waitForURL(`**/business/${businessId}/billing?checkout=success`, {
         timeout: 60_000,

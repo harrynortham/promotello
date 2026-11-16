@@ -50,7 +50,7 @@ test("the till sheet says what to do, in the business's own terms", async ({ bro
         // The way in is from where staff already are, whether or not a
         // card is on offer: it sits in the header, not inside a card.
         await staff.goto(`/business/${businessId}/loyalty`);
-        await staff.getByRole("link", { name: "Print the till guide" }).click();
+        await staff.getByRole("button", { name: "Print the till guide" }).click();
         await staff.waitForURL(new RegExp(`/staff-guide/${businessId}$`), { timeout: 60_000 });
 
         // Both halves of the counter.

@@ -100,6 +100,13 @@ test("an open list adds the row as it lands", async ({ browser }) => {
         await page.goto("/notifications", { timeout: 120_000 });
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 90_000 });
 
+        // Wait until the socket is listening. The component joins after
+        // a short delay and subscribing is itself asynchronous, so a row
+        // written the moment the heading appears can land before anything
+        // is watching for it — and a missed INSERT produces no event
+        // later. That race failed this test about one run in three.
+        await page.locator("html[data-notifications-live='on']").waitFor({ timeout: 60_000 });
+
         const title = `Live row ${Date.now()}`;
         await sendOne(customerUserId, title);
 
