@@ -213,9 +213,11 @@ function has(flag: boolean | undefined) {
 }
 
 // The same answer the send button gives, worked out from the same
-// rule rather than from the payload's profile_ready — which still
-// counts the logo and the cover photo, and so would have this email
-// telling a business to finish things it can now send without.
+// rule in setup-steps rather than from the payload's profile_ready.
+// The two agree — 20270121090000_a_nudge_knows_what_actually_blocks.sql
+// brought the query into line — and this stays the one that is unit
+// tested, so an older payload cannot make an email tell a business it
+// is blocked by something the button would let through.
 function profileReady(due: LifecycleDue) {
     return readyToSend({
         hasLogo: has(due.details.has_logo),
@@ -463,8 +465,9 @@ export function lifecycleEmail(
         const counted = countInWords(remaining.length);
         const unsent = !sentForReview(due);
         // One click only when it really is one: the send button is
-        // locked until the page has a logo, a description, an address,
-        // hours and a cover photo.
+        // locked until the page has a description, an address and
+        // hours. The logo and the cover photo are asked for below with
+        // everything else, because they do not hold the send up.
         const oneClick = unsent && profileReady(due);
         const title = oneClick
             ? `${name} isn't live yet, and one click would do it`
