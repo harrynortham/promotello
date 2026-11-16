@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { BusinessSidebarNav } from "@/components/business-sidebar-nav";
+import type { PlanTier } from "@/lib/billing";
+import { BusinessPlanBadge } from "@/components/business-plan-badge";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { BusinessInitial } from "@/components/business-initial";
@@ -34,6 +36,9 @@ type BusinessMobileNavProps = {
     businessSlug: string;
     businessLogoUrl?: string | null;
     approvalStatus: string;
+    // Which plan they pay for; nothing is shown on Free.
+    tier: PlanTier;
+    trialing: boolean;
     reviewRequested: boolean;
     canManage: boolean;
     businesses?: Business[];
@@ -46,6 +51,8 @@ export function BusinessMobileNav({
     businessLogoUrl,
     approvalStatus,
     reviewRequested,
+    tier,
+    trialing,
     canManage,
     businesses = [],
 }: BusinessMobileNavProps) {
@@ -97,11 +104,14 @@ export function BusinessMobileNav({
                                 <BusinessPageLink business={{ name: businessName, slug: businessSlug }} />
                             </div>
 
-                            <BusinessStatusBadge
-                                status={approvalStatus}
-                                reviewRequested={reviewRequested}
-                                className="mt-1"
-                            />
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                                <BusinessStatusBadge
+                                    status={approvalStatus}
+                                    reviewRequested={reviewRequested}
+                                />
+
+                                <BusinessPlanBadge tier={tier} trialing={trialing} />
+                            </div>
                         </div>
                     </div>
 

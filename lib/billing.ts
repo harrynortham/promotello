@@ -168,6 +168,40 @@ export async function businessHasPro(
 }
 
 // The business's plan: free, pro or growth. Uses the caller's client.
+// The plan a business is on, and whether it is still the trial.
+//
+// businessTier answers "what can this business do", which is the same
+// during a trial as after it. This answers "what does its badge say",
+// where the trial is worth naming: a business in its first week should
+// be able to tell at a glance that the clock is running.
+export async function businessPlan(
+    supabase: SupabaseClient,
+    businessId: string,
+): Promise<{ tier: PlanTier; trialing: boolean }> {
+    const { data, error } = await supabase
+        .from("subscriptions")
+        .select("tier, status")
+        .eq("business_id", businessId)
+        .in("status", PRO_SUBSCRIPTION_STATUSES);
+
+    if (error) {
+        throw error;
+    }
+
+    if (data.length === 0) {
+        return { tier: "free", trialing: false };
+    }
+
+    // The same choice businessTier makes, so the two never disagree:
+    // Growth wins where a business somehow has both.
+    const standing = data.find((row) => row.tier === "growth") ?? data[0];
+
+    return {
+        tier: standing.tier === "growth" ? "growth" : "pro",
+        trialing: standing.status === "trialing",
+    };
+}
+
 export async function businessTier(
     supabase: SupabaseClient,
     businessId: string,
