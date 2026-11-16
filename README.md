@@ -320,9 +320,9 @@ most of stage 3 is guesswork until it is.
 2. **Get the tests off the live database.** One accidental e2e run during launch
    week is worse than the afternoon this costs — nine test businesses reached the
    live directory that way, one of them approved and publicly visible, and full
-   runs have been avoided ever since rather than used. The answer is the local
-   Supabase stack rather than a second cloud project: free, resets in seconds,
-   and `supabase db reset` re-proves the 110 migrations as a sequence every time.
+   runs have been avoided ever since rather than used. The answer is a local copy
+   of the database rather than a second cloud project: free, resets in seconds,
+   and `npm run db:reset` re-proves the 110 migrations as a sequence every time.
    Steps in [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md), which also covers
    getting a migration to prod afterwards. Prod is written to once in the whole
    process, and only after a diff has proved the write correct.
