@@ -250,12 +250,12 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                 {canManage && !isLive && (
                     <Alert className="mt-8 border-amber-200 bg-amber-50">
-                        <AlertTitle>Your page is still being checked</AlertTitle>
+                        <AlertTitle>Design it now, print it when your page is live</AlertTitle>
                         <AlertDescription>
-                            A poster sends people to your page, so it can be
-                            made once that page is live — usually the same
-                            day. We will email you as soon as it is, and
-                            everything here is waiting for you.
+                            A scan opens your page, so the poster itself waits for us to
+                            finish checking it — usually the same day. Everything below
+                            works in the meantime: choose what it opens, pick the colours
+                            and the layout, and see exactly what prints.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -266,7 +266,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                 {/* The first code is made here, because there is nothing
                     else on the page to look at. After that the page is the
                     list, and the form has /qr/new to itself. */}
-                {canManage && isLive && !atFreeLimit && qrCodes.length === 0 && (
+                {canManage && !atFreeLimit && qrCodes.length === 0 && (
                     <Card id="create-qr" className="mt-8 overflow-visible scroll-mt-8 border-[#17233B]/10">
                         <CardHeader>
                             <CardTitle>Make a poster</CardTitle>
@@ -281,6 +281,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 loyalty={loyalty}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
+                                waitingForApproval={!isLive}
                             />
                         </CardContent>
                     </Card>
@@ -293,7 +294,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                             <p className="mx-auto mt-2 max-w-md text-[#17233B]/65">
                                 {isLive
                                     ? "Make your first one above, print it and put it in your window."
-                                    : "Once your page is approved you can make one here, print it and put it in your window."}
+                                    : "Design yours above. The moment your page is live you can make it, print it and put it in your window."}
                             </p>
                         </div>
                     ) : (

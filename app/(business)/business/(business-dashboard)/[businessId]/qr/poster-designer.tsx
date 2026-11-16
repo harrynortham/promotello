@@ -33,9 +33,14 @@ export function PosterDesigner({
     loyalty,
     previewSvg,
     previewLink,
+    waitingForApproval = false,
 }: {
     businessId: string;
     businessName: string;
+    // The page has not been approved yet, so a scan would land on
+    // nothing. Everything here still works — design it, see it, change
+    // your mind — and only the making of it waits.
+    waitingForApproval?: boolean;
     place?: string | null;
     logoUrl?: string | null;
     offers: {
@@ -320,13 +325,27 @@ export function PosterDesigner({
                     </>
                 )}
 
-                <SubmitButton
-                    size="lg"
-                    pendingLabel="Creating…"
-                    className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto"
-                >
-                    Make this poster
-                </SubmitButton>
+                {waitingForApproval ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-sm font-medium text-amber-900">
+                            Ready the moment your page is
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-amber-900/80">
+                            A scan opens your page, so this one waits for us to finish
+                            checking it — usually the same day. Keep designing: what you
+                            choose here is what prints, and we will email you as soon as you
+                            can make it.
+                        </p>
+                    </div>
+                ) : (
+                    <SubmitButton
+                        size="lg"
+                        pendingLabel="Creating…"
+                        className="w-full bg-[#FF593F] text-white hover:bg-[#FF593F]/90 sm:w-auto"
+                    >
+                        Make this poster
+                    </SubmitButton>
+                )}
             </form>
 
             {/* top-24 clears the site header, which is sticky and 80px
