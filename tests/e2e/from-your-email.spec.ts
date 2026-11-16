@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
 import { BUSINESS_AUTH, STATE_PATH } from "../global-setup";
+import { throwawayBusinesses } from "../throwaway";
 
 // The offer we put in their preview email, handed back on the first
 // screen after claiming.
@@ -18,6 +19,10 @@ const admin = () =>
     });
 
 const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+// Registered the moment a business exists, so a seed that throws on the
+// next insert cannot leave it behind (tests/throwaway.ts).
+const remember = throwawayBusinesses();
 
 const SAMPLE_OFFER = "E2E two for one on coffee";
 const SAMPLE_REWARD = "E2E free flat white";
@@ -40,6 +45,7 @@ async function seedClaimedPreview(businessUserId: string) {
         .single();
 
     expect(error).toBeNull();
+    remember(business!.id);
 
     await client.from("business_members").insert({
         business_id: business!.id,

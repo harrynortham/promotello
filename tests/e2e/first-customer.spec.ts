@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
 import { CUSTOMER_AUTH, STATE_PATH } from "../global-setup";
+import { throwawayBusinesses } from "../throwaway";
 
 // Somebody came, and the business hears about it.
 //
@@ -16,6 +17,10 @@ const admin = () =>
     });
 
 const state = () => JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+// Registered the moment a business exists, so a seed that throws on the
+// next insert cannot leave it behind (tests/throwaway.ts).
+const remember = throwawayBusinesses();
 
 // A business of this test's own, so "first" means something: the seeded
 // one has had customers since the suite was written.
@@ -36,6 +41,7 @@ async function seedBusinessWithOffer(businessUserId: string) {
         .single();
 
     expect(error).toBeNull();
+    remember(business!.id);
 
     await client
         .from("business_members")
