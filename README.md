@@ -339,8 +339,11 @@ most of stage 3 is guesswork until it is.
 
 - **A second Supabase project for development**, so tests stop running against
   the live database. One accidental e2e run during launch week is worse than the
-  day this costs. There are already stray `logos/e2e.png` rows in production from
-  runs that failed before their cleanup.
+  day this costs — nine test businesses reached the live directory this way, one
+  of them approved and publicly visible. The steps, and the flow for getting a
+  migration to prod afterwards, are in [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
+  Step 0 of it is the one that matters: prod has no migration history at all, so
+  `supabase db push` would try to replay all 110 from the beginning.
 
 - ~~Apply for the Apple Developer and Google Wallet issuer accounts.~~ Moved to
   stage 5: Wallet passes went from first on the build list to track C2, so the
