@@ -28,6 +28,19 @@ import { sampleBusinesses } from "./sample-data/businesses.mjs";
 import { bathBusinesses, bathCity } from "./sample-data/bath.mjs";
 import { downloadUnsplashPhoto } from "./sample-data/unsplash.mjs";
 
+// Unsplash can change a photo's licence at any time, and one that has
+// gone is not a reason to abandon a seed — it used to take the whole
+// run down, which matters now that npm run db:reset depends on this.
+// The business simply arrives without that picture.
+async function photoOrNothing(photoId, options) {
+    try {
+        return await downloadUnsplashPhoto(photoId, options);
+    } catch (error) {
+        console.warn(`  (no photo: ${error.message})`);
+        return null;
+    }
+}
+
 const SAMPLE_OWNER_EMAIL = "sample-owner@example.com";
 
 const supabase = createClient(
@@ -239,12 +252,10 @@ async function createSampleBusiness({ sample, index, cityName, categoryIds, owne
 
     for (const [offerIndex, offer] of sample.offers.entries()) {
         const slug = `${slugify(offer.title)}-${randomBytes(3).toString("hex")}`;
-        const imageUrl = await upload(
-            "offer-images",
-            `${business.id}/sample-${slug}.jpg`,
-            await downloadUnsplashPhoto(offer.photo),
-            "image/jpeg",
-        );
+        const photo = await photoOrNothing(offer.photo);
+        const imageUrl = photo
+            ? await upload("offer-images", `${business.id}/sample-${slug}.jpg`, photo, "image/jpeg")
+            : null;
 
         check(
             await supabase.from("offers").insert({
@@ -474,6 +485,22 @@ async function removeCity(slug) {
 }
 
 const [command] = process.argv.slice(2);
+
+// npm run db:reset calls this with --local-only, which refuses to seed
+// anything but a database on this machine. The script reads whatever
+// .env.local points at, and the day that points at the live project is
+// the day a reset would fill the real directory with sample shops.
+if (process.argv.includes("--local-only")) {
+    const host = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://nowhere").hostname;
+
+    if (host !== "127.0.0.1" && host !== "localhost") {
+        console.error(
+            `Refusing to seed ${host}: --local-only means a database on this machine.\n` +
+            "Check NEXT_PUBLIC_SUPABASE_URL in .env.local.",
+        );
+        process.exit(1);
+    }
+}
 
 try {
     if (command === "seed") {

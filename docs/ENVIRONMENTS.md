@@ -84,12 +84,26 @@ for the whale icon to settle. The local database runs inside it.
 ### 2 · Start the local database
 
 ```bash
-supabase init         # once ever: creates supabase/config.toml
 npm run db:start      # first run pulls containers and is slow; later runs are seconds
-npm run db:reset      # builds the database from the migration files
+npm run db:reset      # builds the database from the migration files, then seeds it
 ```
 
-`db:reset` replays all 110 migration files into an empty database. That
+(`supabase init` has already been run — `supabase/config.toml` is
+committed. There is no need to run it again, and `--force` would
+overwrite the ports below.)
+
+This project's local stack runs on **553xx**, not the usual 543xx,
+because another Supabase project on this machine already holds those
+ports. Both can run at once. The database is on 55322, Studio on
+<http://127.0.0.1:55323>, and the local inbox on
+<http://127.0.0.1:55324>.
+
+`db:reset` ends by putting the sample Bristol businesses back, so you
+never look at an empty directory. It takes about a minute, most of it
+downloading the offer photographs. A photograph Unsplash has since made
+paid is skipped with a warning rather than failing the run.
+
+`db:reset` replays all 111 migration files into an empty database. That
 is worth understanding, because it is the quiet benefit of working this
 way: **every reset re-proves that your migration files can build a
 working database from nothing.** Nobody has ever checked that — the live
@@ -109,8 +123,11 @@ Your storage buckets come with it, since
 npm run db:env
 ```
 
-That prints three lines. Put them in `.env.local`, replacing the ones
-that are there — and first move the current ones into
+That prints the whole local environment. **Three of those lines are the
+ones that matter** — `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SERVICE_ROLE_KEY`,
+named to match what the app already reads. Put those in `.env.local`,
+replacing the ones that are there — and first move the current ones into
 `.env.production.local`, which is gitignored, so the live values are
 kept somewhere rather than lost.
 
@@ -123,11 +140,22 @@ Two more changes while you are in `.env.local`:
   if you want to see a real email, then take it out.
 - **Stripe is already in test mode** (`sk_test_`), so nothing to do.
 
-Then give yourself something to look at:
+The keys it prints are the standard local demo keys. Every Supabase
+local stack has the same ones, so they are not secret and it does not
+matter that they appear on screen.
+
+`npm run db:reset` already leaves you with sample data. To put it back
+without rebuilding:
 
 ```bash
-node scripts/sample-data.mjs
+npm run db:seed
 ```
+
+Both read `.env.local`, and refuse to run against anything that is not
+on this machine — the seeder takes a `--local-only` flag that checks the
+host before it writes a thing. Nineteen fake Bristol shops arriving in
+the real directory is exactly the accident this whole document exists to
+prevent.
 
 **This step is the one that matters.** Until `.env.local` points at the
 local copy, the tests still write to the live site, exactly as they do
@@ -144,25 +172,35 @@ is the one genuinely fiddly thing — leave it off locally for now via
 
 ## The one-off job: telling the live database what it has
 
-This is separate from the setup above, and it is the only part that
-writes to the live database. It is worth doing, but it is not urgent and
-it is not required for anything above to work.
+**This was done on 16 November 2026.** The live database now has all 111
+migrations in its history, both sides of `supabase migration list
+--remote` match, and a push reports "Remote database is up to date". It
+is written up here because it is worth understanding what happened, and
+because the check it describes is the one to repeat before any future
+repair.
 
-### Why it is needed
+It also found something, which is the point of doing it in that order:
+prod's grants on two tables were tighter than these files described, and
+nothing recorded why. That is now
+`20270118090000_the_grants_prod_already_has.sql`. Had the history been
+written without checking first, the difference would still be sitting
+there unrecorded, and a rebuild would have quietly loosened both tables.
+
+### Why it was needed
 
 Supabase keeps a list of which migrations a database has had. The live
-database **has no such list** — every one of your 110 migrations was
-pasted in by hand, so as far as the tooling is concerned none of them
-has ever run.
+database **had no such list** — not an empty one, no such table at all.
+Every one of the 110 migrations that built it was pasted in by hand, so
+as far as the tooling was concerned none of them had ever run.
 
 That matters for one reason: `npm run db:ship` compares your files
-against that list. With the list empty, it would try to send all 110
-from the beginning. Most would fail on things that already exist, and
-the failure would be confusing.
+against that list. With no list, it would have tried to send all 111
+from the beginning. Most would have failed on things that already
+exist, and the failure would have been confusing.
 
 ### Checking before changing anything
 
-The fix is to write the list. But writing it claims that all 110 files
+The fix is to write the list. But writing it claims that all 111 files
 really have been applied — and nobody has checked. If one never was,
 the list would say it had, and it would be skipped forever afterwards.
 
@@ -186,20 +224,45 @@ with the live one.
 Only if the check was clean:
 
 ```bash
-supabase migration list        # everything on the left, nothing on the right
+supabase migration list --remote      # everything on the left, nothing on the right
 
-for f in supabase/migrations/*.sql; do
-  version=$(basename "$f" | cut -d_ -f1)
-  supabase migration repair --status applied "$version"
-done
+supabase migration repair --remote --status applied \
+  $(ls supabase/migrations/*.sql | xargs -n1 basename | cut -d_ -f1)
 
-supabase migration list        # both sides should match now
+supabase migration list --remote      # both sides should match now
 ```
+
+The middle command reads as: take every migration file, keep the number
+from the front of each filename — `20270117090000` out of
+`20270117090000_their_logo_and_their_name.sql` — and hand all of them to
+`repair` in one go. That number *is* the version; the words after it are
+only for people. (An earlier draft did this as a shell loop, one call
+per file. v3 takes them all at once, so it does not need one.)
 
 `migration repair` only writes that bookkeeping table. It runs none of
 your SQL and **cannot change a table, a column, a function or a policy**
-— the documented behaviour is to mark a migration as applied *without
-re-running it*. That is why doing all 110 at once is fine.
+— the documented behaviour is to mark a migration as applied _without
+re-running it_. That is why doing all 111 at once is fine. Proved rather
+than assumed, on the local copy: a row deleted, repaired back, and the
+table, function and policy counts identical either side. The live
+database's counts were taken before and after too, and did not move.
+
+Two guards showed up while doing it, both worth knowing about. v3 would
+not make the change while driven by an agent — it stopped with
+"Confirmation required … this run can't ask because it is running in
+agent mode. Nothing was changed", and wanted `--yes` from a person. And
+the new migration got today's real date from `migration new`, which
+sorts *before* every file here, because this project's names have run
+ahead into 2027. Rename a new one to follow the sequence.
+
+One of the 111 deserves a note, because marking it applied says
+something slightly different. `20270118090000_the_grants_prod_already_has.sql`
+was never run on the live database — it was written *from* it, after the
+check above found the live grants were tighter than these files
+described. Marking it applied is still true in substance: the live
+database is already in exactly the state that file describes, so running
+it there would change nothing. It exists so a database built from these
+files ends up the same way.
 
 Afterwards the live database is safer than it is today: a stray push
 finds nothing pending instead of trying to replay everything.

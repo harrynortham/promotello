@@ -322,7 +322,7 @@ most of stage 3 is guesswork until it is.
    live directory that way, one of them approved and publicly visible, and full
    runs have been avoided ever since rather than used. The answer is a local copy
    of the database rather than a second cloud project: free, resets in seconds,
-   and `npm run db:reset` re-proves the 110 migrations as a sequence every time.
+   and `npm run db:reset` re-proves the 111 migrations as a sequence every time.
    Steps in [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md), which also covers
    getting a migration to prod afterwards. Prod is written to once in the whole
    process, and only after a diff has proved the write correct.
@@ -336,6 +336,7 @@ most of stage 3 is guesswork until it is.
 5. **Record why anyone says no** — a reason on `business_previews` beside the
    status, the way a decline now carries one. Track D2, and the only way the
    pitch improves.
+6. Update .env.example
 
 ### Stage 2 — True before you email a single business
 
