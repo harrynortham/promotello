@@ -145,26 +145,26 @@ is the longer version, including what you can and cannot break.
 
 ### What you run
 
-| Command               | What it does                                               |
-| --------------------- | ---------------------------------------------------------- |
-| `npm run dev`         | Dev server (Turbopack)                                     |
-| `npm run build`       | Production build                                           |
-| `npm run lint`        | ESLint                                                     |
-| `npm run test:unit`   | Pure-logic tests (no browser, no database)                 |
-| `npm run test:e2e`    | Playwright tests, against the local database               |
-| `npm run test:e2e:ui` | The same, in Playwright's UI                               |
+| Command               | What it does                                 |
+| --------------------- | -------------------------------------------- |
+| `npm run dev`         | Dev server (Turbopack)                       |
+| `npm run build`       | Production build                             |
+| `npm run lint`        | ESLint                                       |
+| `npm run test:unit`   | Pure-logic tests (no browser, no database)   |
+| `npm run test:e2e`    | Playwright tests, against the local database |
+| `npm run test:e2e:ui` | The same, in Playwright's UI                 |
 
 ### The database
 
-| Command              | What it does                                                           |
-| -------------------- | ---------------------------------------------------------------------- |
-| `npm run db:start`   | Start the local database (needs Docker running)                        |
-| `npm run db:stop`    | Stop it                                                                |
-| `npm run db:reset`   | Rebuild from the migration files, then reseed. Do this freely          |
-| `npm run db:seed`    | Put the sample Bristol businesses back without rebuilding              |
-| `npm run db:status`  | The URLs and keys the local stack is serving                           |
-| `npm run db:env`     | The three `.env.local` lines for the local database                    |
-| `npm run db:ship`    | **The only command that writes to the live database.** Confirms first  |
+| Command             | What it does                                                          |
+| ------------------- | --------------------------------------------------------------------- |
+| `npm run db:start`  | Start the local database (needs Docker running)                       |
+| `npm run db:stop`   | Stop it                                                               |
+| `npm run db:reset`  | Rebuild from the migration files, then reseed. Do this freely         |
+| `npm run db:seed`   | Put the sample Bristol businesses back without rebuilding             |
+| `npm run db:status` | The URLs and keys the local stack is serving                          |
+| `npm run db:env`    | The three `.env.local` lines for the local database                   |
+| `npm run db:ship`   | **The only command that writes to the live database.** Confirms first |
 
 `db:reset` is always safe — the local copy is a throwaway and rebuilds in about
 a minute. It also re-proves that the migration files can build a working
@@ -194,7 +194,7 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `CONTACT_EMAIL`                                                                | Where contact form messages go (default support@promotello.com)                                                                                  |
 | `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                                                               |
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
-| `NEXT_PUBLIC_KEYSTATIC_STORAGE`, `NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`       | Editing the blog on the live site through GitHub. Left empty the editor runs against local files. See [docs/BLOG.md](docs/BLOG.md)              |
+| `NEXT_PUBLIC_KEYSTATIC_STORAGE`, `NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`       | Editing the blog on the live site through GitHub. Left empty the editor runs against local files. See [docs/BLOG.md](docs/BLOG.md)               |
 | `NEXT_PUBLIC_SENTRY_DSN`                                                       | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally)                             |
 
 Two more are read only by the tests, and both have working defaults:
@@ -356,8 +356,6 @@ Things get deleted when they're done rather than ticked.
 biggest risk is building too long before selling. Roughly 500 commits since
 October, zero outreach emails sent, five offers ever claimed. The product is not
 what's behind.
-
-Harry's own: upgrade to Claude Max.
 
 ### Stage 1 — Send the previews
 
