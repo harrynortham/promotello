@@ -337,6 +337,92 @@ test.describe("business setup and trial emails", () => {
     });
 });
 
+// Every other lifecycle email is measured from the day a business
+// signed up and the last stops at 35 days, so a business that trials
+// and lapses falls off the end of the schedule at the moment it is
+// deciding. These two are measured from the day its plan ended instead
+// (20270119090000_asking_a_business_to_come_back.sql).
+test.describe("asking a business to come back", () => {
+    let businessId: string;
+
+    test.beforeEach(async () => {
+        const { businessUserId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+        const { data } = await admin()
+            .from("businesses")
+            .insert({
+                name: `E2E Win back ${Date.now()}`,
+                category: "Testing",
+                approval_status: "approved",
+                created_by: businessUserId,
+                // Well past every schedule measured from sign-up, which
+                // is the whole point: nothing else would be due.
+                created_at: daysAgo(90),
+            })
+            .select("id")
+            .single();
+        businessId = data!.id;
+        await admin().from("business_members").insert({ business_id: businessId, user_id: businessUserId, role: "owner" });
+    });
+
+    test.afterEach(async () => {
+        await admin().from("businesses").delete().eq("id", businessId);
+    });
+
+    const planEndedDaysAgo = async (days: number) => {
+        await admin().from("business_lifecycle_sends").delete().eq("business_id", businessId);
+        await admin().from("business_lifecycle_sends").insert({ business_id: businessId, kind: "plan_ending" });
+        await admin()
+            .from("business_lifecycle_sends")
+            .update({ sent_at: daysAgo(days) })
+            .eq("business_id", businessId)
+            .eq("kind", "plan_ending");
+    };
+
+    test("a plan that ended a week ago is asked back, and again at a month", async () => {
+        await planEndedDaysAgo(8);
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["win_back_1"]);
+
+        // Nothing more until the second is due.
+        expect(await claim(businessId)).toEqual([]);
+
+        await admin()
+            .from("business_lifecycle_sends")
+            .update({ sent_at: daysAgo(31) })
+            .eq("business_id", businessId)
+            .eq("kind", "plan_ending");
+        await admin()
+            .from("business_lifecycle_sends")
+            .update({ sent_at: daysAgo(23) })
+            .eq("business_id", businessId)
+            .eq("kind", "win_back_1");
+
+        expect((await claim(businessId)).map((due) => due.kind)).toEqual(["win_back_2"]);
+    });
+
+    test("a plan that ended yesterday is left alone, and so is an ancient one", async () => {
+        await planEndedDaysAgo(2);
+        expect(await claim(businessId), "too soon").toEqual([]);
+
+        // The floor: without it, every business that ever lapsed would be
+        // written to on the day this ships.
+        await planEndedDaysAgo(200);
+        expect(await claim(businessId), "too long ago").toEqual([]);
+    });
+
+    test("a business that came back is not chased", async () => {
+        await planEndedDaysAgo(8);
+        await admin().from("subscriptions").insert({
+            business_id: businessId,
+            stripe_subscription_id: `sub_e2e_back_${Date.now()}`,
+            stripe_customer_id: `cus_e2e_back_${Date.now()}`,
+            status: "active",
+            tier: "pro",
+        });
+
+        expect(await claim(businessId)).toEqual([]);
+    });
+});
+
 test.describe("approval emails", () => {
     const business = { id: "b1", name: "Harbour Grind", slug: "harbour-grind" };
     const offer = { id: "o1", title: "Free pastry with any coffee", slug: "free-pastry", business: { id: "b1", name: "Harbour Grind" } };

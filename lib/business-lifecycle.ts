@@ -7,6 +7,7 @@ import { trialCardMissing } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
 import { readStarterRow, starterToShow } from "@/lib/starter";
+import { loadWhatIsPaused, type WhatIsPaused } from "@/lib/what-is-paused";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Emails that guide a new business through setup, on to a free Pro trial
@@ -22,7 +23,9 @@ export type LifecycleKind =
     | "loyalty_pitch"
     | "founding_places"
     | "results"
-    | "check_in";
+    | "check_in"
+    | "win_back_1"
+    | "win_back_2";
 
 // Who the personal check-in email comes from.
 const FOUNDER = { name: "Harry", title: "Founder, Promotello" };
@@ -323,7 +326,14 @@ function tipsFooter(token?: string) {
 export function lifecycleEmail(
     due: LifecycleDue,
     to: string,
-    { foundingPlacesLeft = null, unsubscribeToken }: { foundingPlacesLeft?: number | null; unsubscribeToken?: string } = {},
+    { foundingPlacesLeft = null, unsubscribeToken, paused = null }: {
+        foundingPlacesLeft?: number | null;
+        unsubscribeToken?: string;
+        // What a business on Free is not getting, in its own numbers.
+        // Only loaded for the win-backs, which are the only ones that
+        // ask for something back.
+        paused?: WhatIsPaused | null;
+    } = {},
 ): Email | null {
     const name = due.business_name;
     const dashboard = absoluteUrl(`/business/${due.business_id}`);
@@ -473,6 +483,68 @@ export function lifecycleEmail(
         });
 
         return { to, subject: title, html, text, headers: unsubscribeHeaders(optOutToken) };
+    }
+
+    if (due.kind === "win_back_1" || due.kind === "win_back_2") {
+        const holders = paused?.cardHolders ?? 0;
+        const offers = paused?.pausedOffers ?? 0;
+        const followers = paused?.followers ?? 0;
+        const second = due.kind === "win_back_2";
+
+        // Their own numbers or nothing. A win-back built on "you're
+        // missing out" with no figure behind it is the email everybody
+        // deletes, and the strongest fact we have is the one we can
+        // count: people are holding a card this business cannot add to.
+        // What is actually paused. The card holders are not in this
+        // list: their card still works and people can still join it, so
+        // counting them as a loss would be a lie the business could
+        // check in about ten seconds.
+        const standing: string[] = [];
+
+        if (offers > 0) {
+            standing.push(offers === 1 ? "one offer is off the directory" : `${offers} offers are off the directory`);
+        }
+
+        if (followers > 0) {
+            standing.push(
+                followers === 1
+                    ? "one follower hears nothing when you post a new one"
+                    : `${followers} followers hear nothing when you post a new one`,
+            );
+        }
+
+        const { html, text } = brandedEmail({
+            business: mark,
+            eyebrow: "Your plan",
+            title: holders > 0
+                ? `${holders === 1 ? "Somebody is" : `${holders} people are`} still collecting stamps at ${name}`
+                : second
+                    ? `${name} is still on Free`
+                    : `What ${name} is missing on Free`,
+            paragraphs: [
+                standing.length > 0
+                    ? `${hello}Since your plan ended, ${standing.join(", and ")}.`
+                    : `${hello}Your page is still up and still free, and it will stay that way for as long as you like. This is the part Free doesn't do.`,
+                holders > 0
+                    ? "They keep every stamp and your staff keep adding to them — that never stops. What Free stops is anybody new joining, so the card you built is now a closed group that can only get smaller."
+                    : "On Free you get your page and one live offer. Pro is every offer on the directory, a poster for each spot, a stamp card that brings people back, and your followers emailed whenever you post something new.",
+                second
+                    ? "If it isn't for you, that's genuinely fine — your page stays up either way and this is the last we'll say about it."
+                    : "Everything that was paused comes back exactly as it was, the moment you're back on Pro. Nothing has been deleted.",
+            ],
+            action: { label: "See the plans", url: absoluteUrl(`/business/${due.business_id}/billing`) },
+            ...tipsFooter(optOutToken),
+        });
+
+        return {
+            to,
+            subject: holders > 0
+                ? `${holders === 1 ? "Somebody is" : `${holders} people are`} still collecting stamps at ${name}`
+                : `${name} is on Free — here's what that's costing`,
+            html,
+            text,
+            headers: unsubscribeHeaders(optOutToken),
+        };
     }
 
     if (due.kind === "trial_ending" && due.details.trial_end) {
@@ -755,9 +827,25 @@ export async function sendLifecycleEmails(onlyBusiness?: string) {
     // the footer link both work without anyone signing in.
     const tokens = await unsubscribeTokensFor(due.flatMap((item) => item.emails));
 
+    // Only the win-backs ask a business to come back, and only they
+    // need its own numbers to do it with.
+    const paused = new Map<string, WhatIsPaused>();
+
+    for (const item of due) {
+        if (item.kind !== "win_back_1" && item.kind !== "win_back_2") continue;
+
+        paused.set(item.business_id, await loadWhatIsPaused(createAdminClient(), item.business_id));
+    }
+
     const emails = due.flatMap((item) =>
         item.emails
-            .map((to) => lifecycleEmail(item, to, { foundingPlacesLeft, unsubscribeToken: tokens.get(to) }))
+            .map((to) =>
+                lifecycleEmail(item, to, {
+                    foundingPlacesLeft,
+                    unsubscribeToken: tokens.get(to),
+                    paused: paused.get(item.business_id) ?? null,
+                }),
+            )
             .filter((email): email is Email => email !== null),
     );
     const { sent, failedTo } = await sendEmails(emails);

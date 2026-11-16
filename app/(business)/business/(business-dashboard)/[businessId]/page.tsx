@@ -15,6 +15,8 @@ import { WhyNotApproved } from "@/components/why-not-approved";
 import { reopenBusiness } from "./settings/actions";
 import { requestBusinessReview } from "./review-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BackToFree } from "@/components/back-to-free";
+import { loadWhatIsPaused } from "@/lib/what-is-paused";
 import { TrialNeedsACard } from "@/components/trial-needs-a-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -245,6 +247,18 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .maybeSingle(),
     ]);
 
+    // One free trial per business (billing/actions.ts: trialEligible is
+    // existing.length === 0). A business that has already had one is
+    // offered a card form, not a trial, so offering it "Try Pro free" is
+    // advertising something it cannot have.
+    const trialSpent = Boolean(trial);
+    const proCallToAction = trialSpent ? "Go Pro" : "Try Pro free";
+
+    // Only for a business that had a plan and lost it: a healthy one pays
+    // nothing for these, which is why they are not in the batch above.
+    const backToFree = trialSpent && !hasPro;
+    const whatIsPaused = backToFree ? await loadWhatIsPaused(supabase, businessId) : null;
+
     const trialNeedsACard =
         trial?.status === "trialing" && trial.has_payment_method === false && trial.trial_end
             ? trial.trial_end
@@ -390,7 +404,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     description: "Digital stamps that turn first visits into regulars.",
                     completed: Boolean(loyaltyCount),
                     href: hasPro ? `${base}/loyalty` : `${base}/billing`,
-                    action: hasPro ? "Set up card" : "Try Pro free",
+                    action: hasPro ? "Set up card" : proCallToAction,
                     pro: !hasPro,
                 },
                 {
@@ -399,7 +413,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     description: "Customers who just visited are asked to leave you a review.",
                     completed: Boolean(business.google_review_url),
                     href: hasPro ? `${base}/edit` : `${base}/billing`,
-                    action: hasPro ? "Add review link" : "Try Pro free",
+                    action: hasPro ? "Add review link" : proCallToAction,
                     pro: !hasPro,
                 },
                 {
@@ -623,6 +637,8 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             {trialNeedsACard && (
                 <TrialNeedsACard businessId={businessId} trialEnd={trialNeedsACard} />
             )}
+
+            {whatIsPaused && <BackToFree businessId={businessId} standing={whatIsPaused} />}
 
             {/* Above the checklist: what they came for comes before the
                 list of what we want from them. */}

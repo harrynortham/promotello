@@ -128,6 +128,27 @@ export async function countFoundingMembers() {
 
 // Reads with the caller's client: members can see their business's
 // subscriptions under RLS.
+// One free trial per business: startCheckout only offers one when the
+// business has never subscribed. So a business that has had a trial and
+// let it lapse is offered a card form, and telling it to "try Pro free"
+// is advertising something it cannot have.
+export async function hasEverSubscribed(
+    supabase: SupabaseClient,
+    businessId: string,
+) {
+    const { data, error } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("business_id", businessId)
+        .limit(1);
+
+    if (error) {
+        throw error;
+    }
+
+    return data.length > 0;
+}
+
 export async function businessHasPro(
     supabase: SupabaseClient,
     businessId: string,
