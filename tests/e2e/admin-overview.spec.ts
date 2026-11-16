@@ -199,8 +199,20 @@ test("an offer can't be approved before its business", async ({ browser }) => {
             "supabase/migrations/20261206110000_review_offer_needs_approved_business.sql isn't applied",
         ).toContain("Approve the business first");
 
-        // Rejecting is allowed whatever the business's status.
-        const rejected = await asAdmin.rpc("review_offer", { offer_id: offer!.id, decision: "rejected" });
+        // Rejecting is allowed whatever the business's status — but it
+        // has to say why now (20270107090000_a_decline_says_why), so the
+        // two-argument form refuses a rejection on purpose.
+        const silent = await asAdmin.rpc("review_offer", { offer_id: offer!.id, decision: "rejected" });
+        expect(silent.error?.message, "a decline has to carry a reason").toContain(
+            "Say why it was not approved",
+        );
+
+        const rejected = await asAdmin.rpc("review_offer", {
+            offer_id: offer!.id,
+            decision: "rejected",
+            reason: "unclear",
+            note: null,
+        });
         expect(rejected.error).toBeNull();
     } finally {
         if (businessId) await client.from("businesses").delete().eq("id", businessId);
