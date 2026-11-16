@@ -119,12 +119,24 @@ test("a card poster on the Free plan has nothing to offer a passer-by", () => {
     assert.equal(onPro.live, true);
     assert.equal(onPro.problem, null);
 
+    // The poster is not broken: a scan opens the card it was printed
+    // for. So it keeps live, and nothing offers to repoint it — a
+    // printed stamp-card poster sent to an offer instead would make
+    // less sense than leaving it alone.
     const onFree = qrTarget({ loyalty_programs: open }, today, false);
-    assert.equal(onFree.live, false);
-    assert.match(onFree.problem!, /nobody new can join/);
+    assert.equal(onFree.live, true);
+    assert.equal(onFree.problem, null);
+    assert.match(onFree.limited!, /isn't taking new members/);
+    assert.match(onFree.limited!, /back on Pro/);
 
     // An offer poster is not affected: apply_business_plan pauses the
     // offer itself, and that is already said in its own words.
     const offerOnFree = qrTarget({ offers: liveOffer }, today, false);
     assert.equal(offerOnFree.live, true);
+    assert.ok(!offerOnFree.limited);
+
+    // And the daily "poster pointing nowhere" notice only looks at live
+    // and problem (lib/daily-notices.ts), so a card poster on Free is
+    // never reported as broken to somebody who cannot fix it.
+    assert.ok(onFree.live || !onFree.problem);
 });

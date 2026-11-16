@@ -16,6 +16,10 @@ export type QrTarget = {
     name: string | null;
     // Why it isn't live, written for the business.
     problem: string | null;
+    // The poster works and opens what it promises, but the plan is
+    // holding back what happens next. Not a problem: there is nothing to
+    // fix on the poster, and pointing it somewhere else would be worse.
+    limited?: string | null;
 };
 
 export type QrOffer = {
@@ -86,16 +90,20 @@ export function qrTarget(code: QrCodeRow, today: string, hasPro = true): QrTarge
             return { kind: "card", live: false, name: program.name, problem: "This card is turned off." };
         }
 
-        // The card itself still works for everyone holding one, but a
-        // poster is for somebody who is not
-        // (20270120090000_a_card_on_free_takes_no_new_members.sql), so
-        // on Free this one in a window is doing nothing.
+        // A scan still opens the card, so the poster is not broken and
+        // there is nothing to repoint it at: a printed poster talks
+        // about a stamp card, and sending it to an offer instead would
+        // make less sense than leaving it. What the plan changes is who
+        // can join at the other end
+        // (20270120090000_a_card_on_free_takes_no_new_members.sql).
         if (!hasPro) {
             return {
                 kind: "card",
-                live: false,
+                live: true,
                 name: program.name,
-                problem: "On Free nobody new can join, so this poster has nothing to offer a passer-by.",
+                problem: null,
+                limited:
+                    "A scan opens your card and says it isn't taking new members. Everyone already collecting carries on, and new customers can join again as soon as you're back on Pro.",
             };
         }
 

@@ -391,6 +391,27 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                     <FiExternalLink aria-hidden="true" className="size-3" />
                                                 </a>
 
+                                                {/* Nothing is wrong with the poster and nothing is
+                                                    worth repointing it at: it opens the card it was
+                                                    printed for. Only who can join at the other end
+                                                    has changed, and the way back is the plan. */}
+                                                {target.limited && (
+                                                    <div className="mt-3 rounded-lg border border-[#17233B]/15 bg-[#FFF8F0] p-3">
+                                                        <p className="text-sm leading-6 text-[#17233B]/80">
+                                                            {target.limited}
+                                                        </p>
+
+                                                        {canManage && (
+                                                            <Link
+                                                                href={`/business/${businessId}/billing`}
+                                                                className="mt-2 inline-block text-sm font-medium underline underline-offset-4"
+                                                            >
+                                                                See the plans
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                )}
+
                                                 {/* The poster is already printed and already up. It
                                                     can't be fixed by changing the poster, so it is
                                                     fixed by changing what the code opens. */}
