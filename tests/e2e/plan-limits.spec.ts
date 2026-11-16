@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
-import { STATE_PATH, BUSINESS_AUTH } from "../global-setup";
+import { STATE_PATH, BUSINESS_AUTH, CUSTOMER_AUTH } from "../global-setup";
 
 test.use({ storageState: BUSINESS_AUTH });
 
@@ -170,6 +170,74 @@ test("a card on the Free plan keeps its holders and takes nobody new", async () 
             .single();
         expect(after!.stamps).toBe(held!.stamps + 1);
     } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+        await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
+    }
+});
+
+// A poster in a window points straight at the card, and the QR page
+// promises the business "nobody hits a dead end: a scan lands on your
+// business page instead". Hiding the card on Free made that a lie: a
+// customer scanned a stamp-card poster and landed on a page with no
+// mention of one. So it is shown and said to be closed instead.
+test("scanning a card poster on Free lands on the card, closed rather than missing", async ({ browser }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const stamp = Date.now();
+    const subscription = `sub_e2e_poster_${stamp}`;
+
+    // Started on Pro, like every card on a lapsed business.
+    await admin.from("subscriptions").insert({
+        business_id: state.freeBusinessId,
+        stripe_subscription_id: subscription,
+        stripe_customer_id: `cus_e2e_poster_${stamp}`,
+        status: "active",
+        tier: "pro",
+    });
+
+    const { data: program } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: state.freeBusinessId,
+            name: `E2E Poster card ${stamp}`,
+            stamps_required: 8,
+            reward: "a free flat white",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+
+    const code = `e2eqr${String(stamp).slice(-7)}`;
+    await admin.from("qr_codes").insert({
+        business_id: state.freeBusinessId,
+        label: "E2E window",
+        loyalty_program_id: program!.id,
+        code,
+    });
+
+    await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
+
+    const customer = await (await browser.newContext({ storageState: CUSTOMER_AUTH })).newPage();
+
+    try {
+        await customer.goto(`/q/${code}`, { timeout: 120_000 });
+
+        // The card itself, not a page that has forgotten about it.
+        const panel = customer.locator(`#loyalty-${program!.id}`);
+        await expect(panel, "the scan finds the card").toBeVisible({ timeout: 60_000 });
+        await expect(panel).toContainText("Collect 8 stamps");
+        await expect(panel.getByText("Not taking new members")).toBeVisible();
+
+        // And no door that leads nowhere.
+        await expect(panel.getByRole("button", { name: "Join the loyalty card" })).toHaveCount(0);
+    } finally {
+        await admin.from("qr_codes").delete().eq("code", code);
         await admin.from("loyalty_programs").delete().eq("id", program!.id);
         await admin.from("subscriptions").delete().eq("stripe_subscription_id", subscription);
     }
