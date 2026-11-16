@@ -47,8 +47,23 @@ export function LiveLoyaltyCard({
         const supabase = createClient();
         let watching = true;
 
+        // A card only ever moves forwards: a stamp adds one, and a reward
+        // spends a cardful and adds one to the tally. So an answer that
+        // sits behind what we already have is simply out of date.
+        const behindWhatWeHave = (next: { stamps: number; rewardsRedeemed: number }) =>
+            next.rewardsRedeemed < latest.current.rewardsRedeemed ||
+            (next.rewardsRedeemed === latest.current.rewardsRedeemed && next.stamps < latest.current.stamps);
+
         const apply = (next: { stamps: number; rewardsRedeemed: number; finished: boolean }) => {
             if (!watching) return;
+
+            // A catch-up is a question asked and answered later. Hold the
+            // answer up — a slow connection at a counter is enough — and it
+            // arrives after a stamp that came by Realtime, describing the
+            // card as it was before it. Taking it walks the count backwards
+            // in front of somebody who just watched it go up, and leaves it
+            // wrong until something else asks again.
+            if (behindWhatWeHave(next)) return;
 
             // A stamp is worth saying so about; a reward being redeemed
             // is staff taking something off the card, which says itself.
