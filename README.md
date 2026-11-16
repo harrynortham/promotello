@@ -129,20 +129,54 @@ app.
 
 ## Getting started
 
+The database runs on your machine, so Docker Desktop has to be running first.
+
 ```bash
 npm install
-cp .env.example .env.local   # or create it; see Environment variables
+npm run db:start             # the local database, in Docker
+npm run db:reset             # build it from the migrations, then seed it
+npm run db:env               # prints the local values for .env.local
 npm run dev                  # http://localhost:3000
 ```
 
-| Command               | What it does                                         |
-| --------------------- | ---------------------------------------------------- |
-| `npm run dev`         | Dev server (Turbopack)                               |
-| `npm run build`       | Production build                                     |
-| `npm run lint`        | ESLint                                               |
-| `npm run test:unit`   | Pure-logic tests (no browser, no database)           |
-| `npm run test:e2e`    | Playwright tests (needs `SUPABASE_SERVICE_ROLE_KEY`) |
-| `npm run test:e2e:ui` | The same, in Playwright's UI                         |
+`cp .env.example .env.local` first if you have no `.env.local` yet, then put the
+three values `db:env` prints into it. [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md)
+is the longer version, including what you can and cannot break.
+
+### What you run
+
+| Command               | What it does                                               |
+| --------------------- | ---------------------------------------------------------- |
+| `npm run dev`         | Dev server (Turbopack)                                     |
+| `npm run build`       | Production build                                           |
+| `npm run lint`        | ESLint                                                     |
+| `npm run test:unit`   | Pure-logic tests (no browser, no database)                 |
+| `npm run test:e2e`    | Playwright tests, against the local database               |
+| `npm run test:e2e:ui` | The same, in Playwright's UI                               |
+
+### The database
+
+| Command              | What it does                                                           |
+| -------------------- | ---------------------------------------------------------------------- |
+| `npm run db:start`   | Start the local database (needs Docker running)                        |
+| `npm run db:stop`    | Stop it                                                                |
+| `npm run db:reset`   | Rebuild from the migration files, then reseed. Do this freely          |
+| `npm run db:seed`    | Put the sample Bristol businesses back without rebuilding              |
+| `npm run db:status`  | The URLs and keys the local stack is serving                           |
+| `npm run db:env`     | The three `.env.local` lines for the local database                    |
+| `npm run db:ship`    | **The only command that writes to the live database.** Confirms first  |
+
+`db:reset` is always safe — the local copy is a throwaway and rebuilds in about
+a minute. It also re-proves that the migration files can build a working
+database from nothing, which is the only place they are tested as a sequence.
+
+The local stack runs on **553xx** rather than the usual 543xx, because another
+Supabase project on this machine holds those ports. Studio is at
+<http://127.0.0.1:55323> and every email the app sends lands at
+<http://127.0.0.1:55324> instead of a real inbox.
+
+**Never type `--remote` on a reset.** `npm run db:reset` rebuilds your laptop's
+copy; `supabase db reset --remote` would wipe the live project.
 
 `npm run build` and `npm run dev` share the `.next` folder, so restart the dev server after a build.
 
@@ -160,8 +194,21 @@ Set these in `.env.local`, and in Vercel for **both Production and Preview** (th
 | `CONTACT_EMAIL`                                                                | Where contact form messages go (default support@promotello.com)                                                                                  |
 | `CRON_SECRET`                                                                  | The daily job at `/api/cron/daily`                                                                                                               |
 | `NEXT_PUBLIC_AUTH_PROVIDERS`                                                   | Which "Continue with…" buttons to show: `google` for now (`google,apple` once Apple is set up). See [docs/SOCIAL_LOGIN.md](docs/SOCIAL_LOGIN.md) |
-| `NEXT_PUBLIC_KEYSTATIC_STORAGE` and `KEYSTATIC_*`                              | Editing the blog on the live site through GitHub. See [docs/BLOG.md](docs/BLOG.md)                                                               |
+| `NEXT_PUBLIC_KEYSTATIC_STORAGE`, `NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`       | Editing the blog on the live site through GitHub. Left empty the editor runs against local files. See [docs/BLOG.md](docs/BLOG.md)              |
 | `NEXT_PUBLIC_SENTRY_DSN`                                                       | Optional: overrides the Sentry project in `lib/sentry.ts` (error reports are on for Vercel deployments, off locally)                             |
+
+Two more are read only by the tests, and both have working defaults:
+`PLAYWRIGHT_BASE_URL` (where Playwright points, default
+`http://localhost:3000`) and `E2E_REAL_EMAIL` (set to `1` to include the one
+spec that sends a genuine email, which also needs `RESEND_API_KEY`).
+
+`PROD_DB_URL` belongs in **`.env.production.local`**, not `.env.local`. It is
+the live database's connection string, read only by `npm run db:ship`, and
+keeping it out of the file the app loads is the point. Dashboard → Settings →
+Database → Connection string → URI.
+
+`NODE_ENV`, `CI` and `NEXT_PUBLIC_VERCEL_ENV` are set by Next.js, CI and Vercel
+— never by hand.
 
 Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on), so the same code works in test and live mode.
 
@@ -288,7 +335,13 @@ Spec: [docs/NOTIFICATIONS-SPEC.md](docs/NOTIFICATIONS-SPEC.md).
 
 ## Tests
 
-`npm run test:e2e` starts the dev server if it isn't running. The setup creates test users and businesses through the Supabase admin API and removes them afterwards. Test email addresses end in `@test.internal`, which `sendEmails` never sends to. Skip the Stripe portal test with `--grep-invert "billing portal"` if you're not logged in to Stripe test mode.
+`npm run test:e2e` runs against **the database on your machine**, so a full run
+is safe and a test that crashes before tidying up cannot leave anything in the
+real directory. It used to write to the live database, which is how nine fake
+businesses once ended up there. Check `.env.local` points at `127.0.0.1` before
+a run; [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md) covers it.
+
+It starts the dev server if it isn't running. The setup creates test users and businesses through the Supabase admin API and removes them afterwards. Test email addresses end in `@test.internal`, which `sendEmails` never sends to. Skip the Stripe portal test with `--grep-invert "billing portal"` if you're not logged in to Stripe test mode.
 
 ## Still to do
 
@@ -336,7 +389,6 @@ most of stage 3 is guesswork until it is.
 5. **Record why anyone says no** — a reason on `business_previews` beside the
    status, the way a decline now carries one. Track D2, and the only way the
    pitch improves.
-6. Update .env.example
 
 ### Stage 2 — True before you email a single business
 
