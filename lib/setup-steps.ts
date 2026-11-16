@@ -32,11 +32,33 @@ export type SetupStep = {
     title: string;
     blurb: string;
     done: boolean;
+    // Whether the send button waits for it.
+    //
+    // The logo and the cover photo do not, because the page has a real
+    // answer without either: a monogram of the business's initials, and
+    // the cover's own empty state. Both steps offer "I'll add it later",
+    // and a skip that the send button then refuses to honour is worse
+    // than no skip at all — a business with no logo to hand, which is
+    // most small ones, could not go live at all.
+    //
+    // The other three do block, because a page with no description, no
+    // address and no hours is not a listing. Nothing here is a judgement
+    // about quality: every page is read before it goes live, and that is
+    // where a thin one gets its note.
+    blocksSend: boolean;
 };
 
-const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done: (state: SetupState) => boolean }[] = [
+const steps: {
+    id: SetupStepId;
+    nav: string;
+    title: string;
+    blurb: string;
+    blocksSend: boolean;
+    done: (state: SetupState) => boolean;
+}[] = [
     {
         id: "logo",
+        blocksSend: false,
         nav: "Logo",
         title: "Add your logo",
         blurb: "Customers recognise you by it — on your page, your offers and your stamp card.",
@@ -44,6 +66,7 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
     },
     {
         id: "description",
+        blocksSend: true,
         nav: "About you",
         title: "Say what you're known for",
         blurb: "Two or three sentences. This sits under your name wherever people find you.",
@@ -51,6 +74,7 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
     },
     {
         id: "address",
+        blocksSend: true,
         nav: "Address",
         title: "Where to find you",
         blurb: "So customers can get directions, and so you turn up when they browse your area.",
@@ -58,6 +82,7 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
     },
     {
         id: "hours",
+        blocksSend: true,
         nav: "Hours",
         title: "When you're open",
         blurb: "Shown on your page, so nobody arrives at a closed door.",
@@ -65,6 +90,7 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
     },
     {
         id: "cover",
+        blocksSend: false,
         nav: "Cover photo",
         title: "The photo across the top",
         blurb: "The first thing people see in the directory. Your shop front, counter or best dish.",
@@ -72,6 +98,7 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
     },
     {
         id: "review",
+        blocksSend: false,
         nav: "Send it",
         title: "Send your page to us",
         blurb: "We read every page before it goes live — usually the same day.",
@@ -79,6 +106,7 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
     },
     {
         id: "offer",
+        blocksSend: false,
         nav: "First offer",
         title: "Give people a reason to come in",
         blurb: "Your first offer goes on your page, and on a poster for your window.",
@@ -88,6 +116,13 @@ const steps: { id: SetupStepId; nav: string; title: string; blurb: string; done:
 
 export function setupSteps(state: SetupState): SetupStep[] {
     return steps.map(({ done, ...step }) => ({ ...step, done: done(state) }));
+}
+
+// Everything the page needs before it can be sent, whatever order it was
+// done in. The one definition: the flow locks its button on this, and
+// the setup emails say what is left using the same answer.
+export function readyToSend(state: SetupState) {
+    return steps.every((step) => !step.blocksSend || step.done(state));
 }
 
 export function setupProgress(list: SetupStep[]) {
@@ -109,7 +144,7 @@ export function setupFinished(list: SetupStep[]) {
 // The page is theirs to vouch for, so the steps before it are named where
 // one is missing rather than quietly blocking the button.
 export function missingBeforeReview(list: SetupStep[]) {
-    return list.slice(0, list.findIndex((step) => step.id === "review")).filter((step) => !step.done);
+    return list.filter((step) => step.blocksSend && !step.done);
 }
 
 export function stepAt(list: SetupStep[], id: SetupStepId | null | undefined) {

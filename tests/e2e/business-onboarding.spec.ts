@@ -74,7 +74,10 @@ test("a new owner goes from an empty dashboard to a set-up business", async ({ p
 
         await page.getByRole("button", { name: "Send it" }).click();
         await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
-        await expect(page.getByText("5 things first").first()).toBeVisible();
+        // Three, not five: the logo and the cover photo offer "I'll add
+        // it later" and the send button honours that, because the page
+        // has a monogram and a cover of its own without them.
+        await expect(page.getByText("3 things first").first()).toBeVisible();
         await expect(page.getByRole("button", { name: /Send .* for review/ })).toHaveCount(0);
 
         // They wrote this page themselves, so nothing on it is a guess of

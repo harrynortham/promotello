@@ -180,9 +180,22 @@ test("a business waiting for approval is told so, and can't make a code", async 
         });
 
         await page.goto(`/business/${waiting!.id}/qr`);
-        await expect(page.getByText("Your page is still being checked")).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText("Design it now, print it when your page is live")).toBeVisible({
+            timeout: 10_000,
+        });
+
+        // The form is all there — hiding it told a business to come back
+        // later and gave it nothing to do. A scan needs a live page, so
+        // the making of it waits; designing it does not, and the waiting
+        // is easier when you can see what you are waiting for.
+        await expect(page.getByLabel("Where will it go?")).toBeVisible();
+        await expect(page.getByLabel("What should it open?")).toBeVisible();
+        await expect(page.getByText("What gets printed")).toBeVisible();
+
+        // Only the making of it.
         await expect(page.getByRole("button", { name: "Make this poster" })).toHaveCount(0);
-        // Nor a button offering a form that isn't on the page.
+        await expect(page.getByText("Ready the moment your page is")).toBeVisible();
+        // Nor a second-poster link, which has no form behind it yet.
         await expect(page.getByRole("link", { name: "Make a poster" })).toHaveCount(0);
 
         // And the row is refused however it is written, with its own
@@ -1114,3 +1127,4 @@ test("a loyalty code is offered layouts that draw the card", async ({ browser })
         await client.from("loyalty_programs").delete().eq("id", program!.id);
     }
 });
+

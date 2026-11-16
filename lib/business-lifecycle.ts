@@ -6,6 +6,7 @@ import { releaseClaims } from "@/lib/email-claims";
 import { trialCardMissing } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
+import { readyToSend } from "@/lib/setup-steps";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { loadWhatIsPaused, type WhatIsPaused } from "@/lib/what-is-paused";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -211,8 +212,22 @@ function has(flag: boolean | undefined) {
     return flag !== false;
 }
 
+// The same answer the send button gives, worked out from the same
+// rule in setup-steps rather than from the payload's profile_ready.
+// The two agree — 20270121090000_a_nudge_knows_what_actually_blocks.sql
+// brought the query into line — and this stays the one that is unit
+// tested, so an older payload cannot make an email tell a business it
+// is blocked by something the button would let through.
 function profileReady(due: LifecycleDue) {
-    return due.details.profile_ready !== false;
+    return readyToSend({
+        hasLogo: has(due.details.has_logo),
+        hasDescription: has(due.details.has_description),
+        hasAddress: has(due.details.has_address),
+        hasHours: has(due.details.has_hours),
+        hasCover: due.details.has_cover,
+        sentForReview: alreadySeen(due),
+        hasOffer: due.details.has_offer,
+    });
 }
 
 function missingSteps(due: LifecycleDue) {
@@ -450,8 +465,9 @@ export function lifecycleEmail(
         const counted = countInWords(remaining.length);
         const unsent = !sentForReview(due);
         // One click only when it really is one: the send button is
-        // locked until the page has a logo, a description, an address,
-        // hours and a cover photo.
+        // locked until the page has a description, an address and
+        // hours. The logo and the cover photo are asked for below with
+        // everything else, because they do not hold the send up.
         const oneClick = unsent && profileReady(due);
         const title = oneClick
             ? `${name} isn't live yet, and one click would do it`

@@ -47,6 +47,16 @@ export async function startCheckout(formData: FormData) {
         redirect(`${billingPath}?error=already_subscribed`);
     }
 
+    // One trial per business, and it starts when the business can use
+    // it. Until the page is approved it has no public page, its offer
+    // is not visible, a QR poster cannot be made at all, and nobody can
+    // join its loyalty card — so a trial begun here would spend its
+    // days on a product the business cannot reach, and run out just as
+    // it was about to find out whether any of this works.
+    if (business.approval_status !== "approved") {
+        redirect(`${billingPath}?error=not_live_yet`);
+    }
+
     const priceIds = await getPlanPriceIds();
 
     if (
@@ -213,7 +223,7 @@ async function requireBillingManager(businessId: string) {
 
     const { data: membership } = await supabase
         .from("business_members")
-        .select("role, businesses ( name )")
+        .select("role, businesses ( name, approval_status )")
         .eq("business_id", businessId)
         .eq("user_id", user.id)
         .maybeSingle();
