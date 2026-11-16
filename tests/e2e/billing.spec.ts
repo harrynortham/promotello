@@ -27,7 +27,12 @@ test("business owner can start a founding member trial and open the billing port
 
     await page.goto(`/business/${businessId}/billing`);
     await expect(page.getByRole("heading", { name: "Choose a plan" })).toBeVisible();
-    await expect(page.getByText("founding places left")).toBeVisible();
+
+    // The founding price is offered. The count beside it is deliberately
+    // withheld until some places have gone — "50 of 50 left" tells a
+    // business nobody has taken it — so this asserts the price rather
+    // than the number, which on a freshly reset database is all fifty.
+    await expect(page.getByText("Locked for life.")).toBeVisible();
 
     // The founding member card is listed first.
     await page.getByRole("button", { name: "Start free trial" }).first().click();
@@ -278,5 +283,64 @@ test("a trial with no card is told it stops, and given the way to keep it", asyn
             trial_end: before!.trial_end,
             has_payment_method: before!.has_payment_method,
         });
+    }
+});
+
+// The banner listed offers and followers and said nothing about the
+// stamp card unless somebody was already holding one — so the business
+// most worth telling, the one whose card has not been joined yet, heard
+// nothing about the thing Free had just stopped taking people for.
+test("the lapsed banner names the stamp card, joined or not", async ({ page }) => {
+    test.setTimeout(120_000);
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const { data: before } = await admin
+        .from("subscriptions")
+        .select("stripe_subscription_id, status")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+    const move = (status: string) =>
+        admin.from("subscriptions").update({ status }).eq("stripe_subscription_id", before!.stripe_subscription_id);
+
+    // A card of its own, started while the business is still on Pro —
+    // enforce_loyalty_plan would refuse it afterwards, which is the
+    // point. Nobody joins it: the empty card is the case that was
+    // getting no mention at all.
+    const { data: program, error: started } = await admin
+        .from("loyalty_programs")
+        .insert({
+            business_id: businessId,
+            name: `E2E Banner card ${Date.now()}`,
+            stamps_required: 6,
+            reward: "a free coffee",
+            is_active: true,
+        })
+        .select("id")
+        .single();
+    expect(started, "a card can be started while on Pro").toBeNull();
+
+    try {
+        await move("canceled");
+
+        await page.goto(`/business/${businessId}`, { timeout: 120_000 });
+        await expect(page.getByText("Pro is off"), "the banner is up").toBeVisible({ timeout: 60_000 });
+
+        // Named in the opening line whatever the holder count.
+        await expect(page.getByText(/lets new customers join your stamp card/)).toBeVisible();
+
+        // And a line of its own about who can join.
+        await expect(page.getByText(/can join .*on Free|can join your stamp card on Free/)).toBeVisible();
+    } finally {
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+        await move(before!.status);
     }
 });

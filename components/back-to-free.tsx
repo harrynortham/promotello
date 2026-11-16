@@ -66,18 +66,32 @@ export function BackToFree({
                 ) : (
                     <p>
                         Your page is still up and free for as long as you like — Pro is
-                        what puts more than one offer on the directory and emails your
-                        followers when you post one.
+                        what puts more than one offer on the directory
+                        {standing.hasCard ? ", lets new customers join your stamp card," : ""} and
+                        emails your followers when you post one.
                     </p>
                 )}
 
-                {standing.cardHolders > 0 && (
+                {/* Said whenever there is a card, not only when somebody
+                    is on it: a card nobody has joined yet is still the
+                    thing Free has stopped taking people for, and that is
+                    exactly the business that needs telling. */}
+                {standing.hasCard && (
                     <p className="mt-2">
-                        {standing.cardHolders === 1
-                            ? "The person holding your stamp card keeps"
-                            : `The ${standing.cardHolders} people holding your stamp card keep`}{" "}
-                        every stamp, and your staff keep adding to them. Nobody new can join
-                        it on Free, so your card poster has nothing to offer a passer-by.
+                        {standing.cardHolders === 0
+                            ? "Nobody new can join your stamp card on Free, so your card poster has nothing to offer a passer-by. It is still there, and people can start collecting again the moment you're back on Pro."
+                            : null}
+
+                        {standing.cardHolders > 0 ? (
+                            <>
+                                {standing.cardHolders === 1
+                                    ? "The person holding your stamp card keeps"
+                                    : `The ${standing.cardHolders} people holding your stamp card keep`}{" "}
+                                every stamp, and your staff keep adding to them. Nobody new can
+                                join on Free, so your card poster has nothing to offer a
+                                passer-by.
+                            </>
+                        ) : null}
                     </p>
                 )}
 
