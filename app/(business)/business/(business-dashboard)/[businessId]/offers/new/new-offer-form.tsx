@@ -40,6 +40,11 @@ type NewOfferFormProps = {
     // How many people follow this business. Nought for anybody who has
     // just signed up, which is most people seeing this screen.
     followers: number;
+    // Set only on Free, and only once the plan's one poster is spent:
+    // which poster it is and what it currently opens. Telling somebody
+    // here to put this offer on a poster would be telling them to do
+    // something their plan refuses.
+    spentPoster: { codeId: string; pointsAt: string | null } | null;
     canSchedule: boolean;
 };
 
@@ -52,6 +57,7 @@ export default function NewOfferForm({
     defaultCategoryId,
     suggestedTitle = null,
     followers,
+    spentPoster,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -64,6 +70,28 @@ export default function NewOfferForm({
 
     const created = searchParams.get("created");
     const createdOffer = created === "live" || created === "pending" ? created : null;
+    const createdOfferId = searchParams.get("offer");
+
+    // The Free plan includes one poster. Once it is spent, "put it on a
+    // poster" is advice they cannot take — so the step becomes the thing
+    // they can do instead. Re-aiming a code changes what it opens and
+    // leaves the printed sheet in the window alone, which is why it is
+    // offered before the plan is.
+    const posterStep = spentPoster
+        ? `Your poster ${spentPoster.pointsAt ? `points at ${spentPoster.pointsAt}` : "is already pointing somewhere"}. You can point it at this offer instead — nothing to reprint — or Pro gives you one for every spot.`
+        : createdOffer === "live"
+            ? "Put it on a QR poster for your window or your till, so people passing can scan it."
+            : "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.";
+
+    // Where that step sends them. At the limit it is the list, where the
+    // poster they already have can be re-aimed; otherwise the designer,
+    // opened on the offer they just wrote. An offer still being read
+    // cannot be pointed at yet, so a pending one goes to the list to wait.
+    const posterHref = spentPoster
+        ? `/business/${businessId}/qr?for=${createdOfferId ?? ""}`
+        : createdOffer === "live" && createdOfferId
+            ? `/business/${businessId}/qr/new?for=${createdOfferId}`
+            : `/business/${businessId}/qr`;
     const [errorMessage, setErrorMessage] = useState("");
 
     const {
@@ -200,7 +228,14 @@ export default function NewOfferForm({
         reset();
         setImageFile(null);
         setImagePreviewUrl(null);
-        router.replace(`${pathname}?created=${live ? "live" : "pending"}`, { scroll: false });
+        // The id travels so the poster link can open the designer on this
+        // offer. Pressing "put it on a poster" and landing on a form set
+        // to the business page makes them choose again what they just
+        // spent five minutes writing.
+        router.replace(
+            `${pathname}?created=${live ? "live" : "pending"}&offer=${inserted.id}`,
+            { scroll: false },
+        );
     }
 
     if (createdOffer) {
@@ -244,14 +279,14 @@ export default function NewOfferForm({
                                                 : `The ${followers} people following you are getting an email about it.`,
                                         ]
                                         : []),
-                                    "Put it on a QR poster for your window or your till, so people passing can scan it.",
+                                    posterStep,
                                 ]
                                 : [
                                     "We check it, usually the same day.",
                                     followers > 0
                                         ? "You get an email the moment it's live, and the people following you hear about it then."
                                         : "You get an email the moment it's live.",
-                                    "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.",
+                                    posterStep,
                                 ]
                             ).map((step, index) => (
                                 <li key={step} className="flex gap-3">
@@ -288,14 +323,16 @@ export default function NewOfferForm({
 
                         <p className="mt-6 text-sm text-[#17233B]/65">
                             <Link
-                                href={`/business/${businessId}/qr`}
+                                href={posterHref}
                                 className="font-medium text-[#17233B] underline underline-offset-4 hover:text-[#FF593F]"
                             >
-                                See your QR posters
+                                {spentPoster ? "Point it at this offer" : "See your QR posters"}
                             </Link>{" "}
-                            {createdOffer === "live"
-                                ? "to put this offer in the window."
-                                : "— this offer joins them once it's approved."}
+                            {spentPoster
+                                ? "— the poster in your window stays as it is."
+                                : createdOffer === "live"
+                                    ? "to put this offer in the window."
+                                    : "— this offer joins them once it's approved."}
                         </p>
                     </CardContent>
                 </Card>

@@ -146,6 +146,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { count: memberCount },
         { data: recentRedemptionRows },
         { count: printedPosterCount },
+        { count: printedCardPosterCount },
         { count: loyaltyCount },
         hasPro,
         { data: isPlatformAdmin },
@@ -216,6 +217,18 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .eq("business_id", businessId)
             .is("archived_at", null)
             .not("poster_printed_at", "is", null),
+
+        supabase
+            // Of those, the ones that open a loyalty card. "Print a QR
+            // poster" was satisfied by any poster at all, including one
+            // pointing at the business page — so a card could sit there
+            // with no way in and this list would say everything was done.
+            .from("qr_codes")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId)
+            .is("archived_at", null)
+            .not("poster_printed_at", "is", null)
+            .not("loyalty_program_id", "is", null),
 
         supabase
             .from("loyalty_programs")
@@ -304,6 +317,12 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
 
 
+    // A card they are handing out, and no printed poster that opens it.
+    // Only ever true on Pro, since a card needs Pro to exist at all — so
+    // this never nudges a Free business towards a poster its plan would
+    // refuse.
+    const needsCardPoster = Boolean(loyaltyCount) && !printedCardPosterCount;
+
     const checklist: ChecklistGroup[] = [
         {
             title: "Get ready to go live",
@@ -365,14 +384,28 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             description: "Optional, but this is where regulars come from.",
             required: false,
             items: [
-                {
-                    id: "qr",
-                    label: "Print a QR poster",
-                    description: "Put it in your window or by the till so passers-by find your offers.",
-                    completed: Boolean(printedPosterCount),
-                    href: `${base}/qr`,
-                    action: "Make a poster",
-                },
+                // One poster row, naming whichever poster is worth most.
+                // A card with nothing pointing at it beats a second
+                // general poster every time: it is the thing they are
+                // paying for, and until a poster opens it the only way in
+                // is a directory page they are not yet found on.
+                needsCardPoster
+                    ? {
+                        id: "qr",
+                        label: "Put your loyalty card in the window",
+                        description: "A poster is how somebody who has never been in joins your card.",
+                        completed: false,
+                        href: `${base}/qr/new?for=loyalty`,
+                        action: "Make a poster",
+                    }
+                    : {
+                        id: "qr",
+                        label: "Print a QR poster",
+                        description: "Put it in your window or by the till so passers-by find your offers.",
+                        completed: Boolean(printedPosterCount),
+                        href: `${base}/qr`,
+                        action: "Make a poster",
+                    },
                 {
                     id: "loyalty",
                     label: "Start a loyalty card",

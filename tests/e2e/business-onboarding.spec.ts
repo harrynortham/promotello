@@ -238,22 +238,32 @@ test("the setup checklist goes once there is nothing left to do", async ({ brows
             image_url: picture!.cover_image_url,
         });
 
+        const { data: program, error: loyaltyError } = await admin
+            .from("loyalty_programs")
+            .insert({
+                business_id: businessId,
+                stamps_required: 9,
+                reward: "a free coffee",
+                is_active: true,
+            })
+            .select("id")
+            .single();
+        expect(loyaltyError, "the loyalty card was set up").toBeNull();
+
         // Printed, not made: the step ticks on poster_printed_at, which
         // the poster page sets when somebody prints it or saves the PDF.
         // A code sitting in the dashboard has never been in a window.
+        //
+        // Pointed at the card, not at the business page. A card with
+        // nothing pointing at it can only be joined by somebody who
+        // already found the business in the directory, so the list still
+        // has something to say — which is the whole point of that step.
         await admin.from("qr_codes").insert({
             business_id: businessId,
             label: "Front window",
+            loyalty_program_id: program!.id,
             poster_printed_at: new Date().toISOString(),
         });
-
-        const { error: loyaltyError } = await admin.from("loyalty_programs").insert({
-            business_id: businessId,
-            stamps_required: 9,
-            reward: "a free coffee",
-            is_active: true,
-        });
-        expect(loyaltyError, "the loyalty card was set up").toBeNull();
 
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto(`/business/${businessId}`);
@@ -268,6 +278,27 @@ test("the setup checklist goes once there is nothing left to do", async ({ brows
         await expect(page.getByText("Get your business ready")).toHaveCount(0);
         await expect(page.getByText("What's next")).toHaveCount(0);
         await expect(page.getByText("You're ready to go live")).toHaveCount(0);
+
+        // Re-aim that poster at the business page and the list has
+        // something to say again, by name. "Print a QR poster" was
+        // satisfied by any printed poster at all, so a card with no way
+        // into it read as finished.
+        await admin
+            .from("qr_codes")
+            .update({ loyalty_program_id: null })
+            .eq("business_id", businessId);
+
+        await page.reload();
+
+        await expect(
+            page.getByText("Put your loyalty card in the window"),
+        ).toBeVisible({ timeout: 20_000 });
+
+        // The step goes straight to the designer with the card chosen,
+        // rather than to the list for them to find it again.
+        await expect(
+            page.locator(`a[href="/business/${businessId}/qr/new?for=loyalty"]`),
+        ).toBeVisible();
     } finally {
         if (businessId) await admin.from("businesses").delete().eq("id", businessId);
     }

@@ -1110,3 +1110,72 @@ test("a late answer about the card cannot undo a stamp that has landed", async (
         await admin.from("loyalty_programs").delete().eq("id", program!.id);
     }
 });
+
+// A card is joined by scanning a poster or by finding the business in the
+// directory. For a business that arrived last week the second is close to
+// nobody, so a card with nothing pointing at it is a card nobody can join
+// — and until now the product said nothing about it. The dashboard's
+// "Print a QR poster" was ticked by any printed poster at all, including
+// one that opens the business page.
+test("a card with no poster pointing at it says so, and stops once one does", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const cardName = `E2E Poster prompt ${Date.now()}`;
+    let programId: string | null = null;
+
+    try {
+        const { data: program, error } = await admin
+            .from("loyalty_programs")
+            .insert({
+                business_id: businessId,
+                name: cardName,
+                stamps_required: 9,
+                reward: "a free coffee",
+                is_active: true,
+            })
+            .select("id")
+            .single();
+        expect(error, "the card was set up").toBeNull();
+        programId = program!.id;
+
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+        await page.goto(`/business/${businessId}/loyalty`);
+
+        const prompt = page.getByText("Nothing points at this card yet");
+        await expect(prompt).toBeVisible({ timeout: 20_000 });
+
+        // Straight to the designer with the card chosen. A poster made
+        // before this one existed sends them to a form set to the
+        // business page, which is the choice they just made.
+        await expect(
+            page.locator(`a[href="/business/${businessId}/qr/new?for=loyalty"]`),
+        ).toBeVisible();
+
+        // A poster aimed at the business page is not a way into the card,
+        // so it does not count.
+        const { data: code } = await admin
+            .from("qr_codes")
+            .insert({ business_id: businessId, label: `E2E prompt ${Date.now()}` })
+            .select("id")
+            .single();
+
+        await page.reload();
+        await expect(prompt).toBeVisible({ timeout: 20_000 });
+
+        // Pointed at the card, it is. Keyed on the poster existing rather
+        // than being printed: the dashboard checklist carries it from
+        // here to the printer.
+        await admin.from("qr_codes").update({ loyalty_program_id: programId }).eq("id", code!.id);
+
+        await page.reload();
+        await expect(page.getByRole("heading", { name: "Reward your regulars" })).toBeVisible({ timeout: 20_000 });
+        await expect(prompt).toHaveCount(0);
+
+        await admin.from("qr_codes").delete().eq("id", code!.id);
+    } finally {
+        if (programId) await admin.from("loyalty_programs").delete().eq("id", programId);
+    }
+});

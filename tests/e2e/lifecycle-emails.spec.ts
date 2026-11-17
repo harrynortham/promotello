@@ -129,12 +129,27 @@ test.describe("business setup and trial emails", () => {
         // nudge moves on to the poster rather than selling in a
         // checklist. The loyalty_pitch email makes that case on its own.
         const free = lifecycleEmail({ ...nudge, hasPro: false, approved: true }, "a@b.c")!;
-        expect(free.subject).toMatch(/^Print your QR poster/);
+        expect(free.subject).toMatch(/^Put up your QR poster/);
         expect(free.text).not.toContain("loyalty card");
 
         const pro = lifecycleEmail({ ...nudge, hasPro: true, approved: true }, "a@b.c")!;
         expect(pro.subject).toMatch(/^Set up your loyalty card/);
         expect(pro.text).toContain(`/business/${businessId}/loyalty`);
+
+        // Once the card exists, the poster step is about that card: a
+        // card nothing points at can only be joined from the directory
+        // page, which for a new business is close to nobody.
+        const withCard = lifecycleEmail(
+            {
+                ...nudge,
+                hasPro: true,
+                approved: true,
+                details: { ...nudge.details, has_loyalty: true },
+            },
+            "a@b.c",
+        )!;
+        expect(withCard.subject).toMatch(/^Put your loyalty card in the window/);
+        expect(withCard.text).toContain(`/business/${businessId}/qr/new?for=loyalty`);
     });
 
     test("the welcome email explains approval only while the business is waiting", async () => {

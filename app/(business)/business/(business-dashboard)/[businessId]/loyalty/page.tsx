@@ -166,7 +166,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
     const canManage = ["owner", "admin"].includes(membership.role);
 
-    const [{ data: programs }, { data: business }, hasPro, trialSpent, starter] = await Promise.all([
+    const [{ data: programs }, { data: business }, hasPro, trialSpent, starter, { data: cardPosters }] = await Promise.all([
         supabase
             .from("loyalty_programs")
             .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
@@ -186,6 +186,18 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
         // The card we drew in their preview email. Used only as the
         // starting state of a first card (docs/LAUNCH-FUNNEL.md).
         readStarter(supabase, businessId),
+
+        // Posters pointing at a card of theirs. A card with none is only
+        // reachable from the business page, which for a shop that joined
+        // last week is close to nobody — so the card that was supposed to
+        // bring people back cannot be joined by anyone who has not already
+        // found them.
+        supabase
+            .from("qr_codes")
+            .select("loyalty_program_id")
+            .eq("business_id", businessId)
+            .is("archived_at", null)
+            .not("loyalty_program_id", "is", null),
     ]);
 
     const allCards = (programs ?? []) as Program[];
@@ -199,6 +211,12 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     // finishing: closed to new joiners, stamped until their holders are
     // done, because a card in someone's wallet is a promise.
     const program = allCards.find((card) => card.is_active && !card.closed_at) ?? null;
+    // Whether a poster opens the card they are handing out. Posters left
+    // pointing at a card they have since closed do not count: the card on
+    // offer is the one that needs a way in.
+    const pointedAtCard = (cardPosters ?? []).some(
+        (poster) => poster.loyalty_program_id === program?.id,
+    );
     const cards = program ? [program] : [];
     const stillCollecting = allCards.filter((card) => card.id !== program?.id);
     const collectingPage = pageOf(stillCollecting, collecting, PER_PAGE.collecting);
@@ -298,7 +316,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             </p>
 
                             <Button
-                                render={<Link href={`/business/${businessId}/qr?for=loyalty#create-qr`} />}
+                                render={<Link href={`/business/${businessId}/qr/new?for=loyalty`} />}
                                 nativeButton={false}
                                 size="sm"
                                 className="mt-4 bg-[#17233B] text-white hover:bg-[#17233B]/90"
@@ -350,6 +368,40 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                 ) : (
                     <>
                     </>
+                )}
+
+                {/* A card on offer that nothing points at. Not a
+                    congratulation and not an error: a card is joined by
+                    scanning a poster or by finding the business page, and
+                    for a shop that joined last week the second of those is
+                    close to nobody. It says which of the two they have.
+
+                    Keyed on a poster existing rather than being printed,
+                    so it goes the moment they make one; the dashboard
+                    checklist carries it from there to the printer. */}
+                {program && !pointedAtCard && !saved && canManage && (
+                    <Alert className="mt-8 border-[#FF593F]/30 bg-[#FFF4E8]">
+                        <AlertTitle>Nothing points at this card yet</AlertTitle>
+
+                        <AlertDescription>
+                            <p className="text-[#17233B]/75">
+                                Customers join by scanning a poster or by finding your
+                                page in the directory. Right now it is only the page &mdash;
+                                so the people most likely to come back, the ones already
+                                standing in front of you, have no way in.
+                            </p>
+
+                            <Button
+                                render={<Link href={`/business/${businessId}/qr/new?for=loyalty`} />}
+                                nativeButton={false}
+                                size="sm"
+                                className="mt-4 bg-[#17233B] text-white hover:bg-[#17233B]/90"
+                            >
+                                Make a poster for this card
+                                <FiArrowRight aria-hidden="true" />
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {/* Everything the business has, not only what it is

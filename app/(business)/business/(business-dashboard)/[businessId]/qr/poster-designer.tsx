@@ -42,8 +42,9 @@ export function PosterDesigner({
     // The poster is still worth making and printing — it simply starts
     // working when the page does.
     waitingForApproval?: boolean;
-    // Which target to open on, when somebody arrived here meaning one.
-    startOn?: "loyalty" | null;
+    // Which target to open on, when somebody arrived here meaning one:
+    // "loyalty" for the card, or an offer's id.
+    startOn?: string | null;
     place?: string | null;
     logoUrl?: string | null;
     offers: {
@@ -76,8 +77,17 @@ export function PosterDesigner({
     const [eyebrow, setEyebrow] = useState("");
     const [headline, setHeadline] = useState("");
     // "Make a poster for this card" on the loyalty page means this card,
-    // so the form opens on it rather than making them choose it again.
-    const [target, setTarget] = useState(startOn === "loyalty" && loyalty ? "loyalty" : "business");
+    // and the link from a new offer means that offer, so the form opens on
+    // it rather than making them choose again what they just said. An id
+    // that is not theirs, or an offer that has since gone, falls back to
+    // the business page rather than opening on nothing.
+    const [target, setTarget] = useState(
+        startOn === "loyalty" && loyalty
+            ? "loyalty"
+            : offers.some((offer) => offer.id === startOn)
+                ? String(startOn)
+                : "business",
+    );
     // The line under the headline, which only an offer poster has. Null
     // means it hasn't been touched, so it follows the offer that is
     // chosen rather than keeping the first one's words.
