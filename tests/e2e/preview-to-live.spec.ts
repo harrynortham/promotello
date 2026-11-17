@@ -81,8 +81,12 @@ test("a preview becomes a live business", async ({ browser }) => {
         await expect(page.getByRole("heading", { name: new RegExp(`${name} on Promotello`) })).toBeVisible({
             timeout: 15_000,
         });
-        // The claim block appears twice: hero and foot of the page.
-        await expect(page.getByText("Free, and nothing goes public until you say so.").first()).toBeVisible();
+        // The claim block appears twice: hero and foot of the page. It
+        // used to promise that nothing goes public until they say so,
+        // which stopped being true when the claim became the acceptance
+        // (20270124090000) — so the words changed with the behaviour
+        // rather than quietly outliving it.
+        await expect(page.getByText(/goes\s+live as soon as you claim it/).first()).toBeVisible();
 
         // 2. Claiming hands them the flow that finishes the page, rather
         //    than a dashboard they would have to find their way around.
@@ -101,12 +105,14 @@ test("a preview becomes a live business", async ({ browser }) => {
         await expect(page.locator("main")).not.toContainText("offer are our guesses");
 
         // 3. The dashboard is still there for anyone who wants it: one
-        //    banner, no Send button, and the page theirs to finish first.
+        //    banner, nothing to press, and the page theirs to finish.
+        //    This preview had no hours, so it is not a listing yet and
+        //    has not gone live with the claim.
         await page.goto(dashboard);
         await expect(page.getByText("Draft")).toBeVisible();
         await expect(page.getByText("Your page isn't live yet")).toBeVisible();
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
-        await expect(page.getByText("Ready once the steps above are done.")).toBeVisible();
+        await expect(page.getByText(/comes to us on its own/)).toBeVisible();
 
         // And the dashboard says the same thing it says to a business that
         // signed itself up: no claim about who wrote the page.
@@ -134,27 +140,27 @@ test("a preview becomes a live business", async ({ browser }) => {
         });
         expect(hoursError, "could not set the hours").toBeNull();
 
+        // 5. Finishing it is the moment it goes live, which is what
+        //    sending it used to be. A page of ours that was short of the
+        //    three when they claimed it would otherwise sit in the queue
+        //    once they completed it — the business finishes the page we
+        //    half-built and waits for us anyway, which is the dead day
+        //    this whole change exists to remove, arriving by a side door
+        //    (20270123090000).
         await page.goto(dashboard);
-        const send = page.getByRole("button", { name: `Send ${name} for review` });
-        await expect(send).toBeVisible({ timeout: 15_000 });
-
-        // 5. Sending it, which is also the moment it goes live: this is
-        //    a page we built and they claimed, and it was read when we
-        //    built it (20270113090000). It used to say "Sent for review"
-        //    and wait for us, which was a dead day at the point of most
-        //    enthusiasm (docs/LAUNCH-FUNNEL.md).
-        await send.click();
-        await expect(page.getByText("You're live")).toBeVisible({ timeout: 20_000 });
-        await expect(page.getByText("Sent for review")).toHaveCount(0);
+        await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
         await page.close();
 
-        const { data: afterSending } = await db
+        const { data: afterFinishing } = await db
             .from("businesses")
             .select("approval_status")
             .eq("id", business!.id)
             .single();
 
-        expect(afterSending!.approval_status, "live without waiting for us").toBe("approved");
+        expect(
+            afterFinishing!.approval_status,
+            "live without waiting for us, and without pressing anything",
+        ).toBe("approved");
 
         // 7. A customer can find it, and the owner sees their own page as
         //    their own page.

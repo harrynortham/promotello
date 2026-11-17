@@ -31,6 +31,8 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  ours boolean;
 begin
   update public.businesses b
   set review_requested_at = timezone('utc', now())
@@ -41,6 +43,38 @@ begin
     and coalesce(btrim(b.description), '') <> ''
     and exists (select 1 from public.business_locations l where l.business_id = b.id)
     and exists (select 1 from public.business_hours h where h.business_id = b.id);
+
+  -- A page of ours that was not finished when they claimed it.
+  --
+  -- 20270124090000 accepts a claimed preview as it is claimed, and puts
+  -- a floor under that: one missing the three joins the queue instead of
+  -- publishing. Without this it would then sit there. The business
+  -- finishes the page we half-built, and waits for us anyway — which is
+  -- the dead day the whole change exists to remove, arriving by a side
+  -- door.
+  --
+  -- So completing it is the moment it goes live, which is what sending
+  -- it used to be. The same three, and the same reading as
+  -- 20270113090000: we wrote the page and read it before we sent it.
+  select exists (
+    select 1
+    from public.business_previews p
+    where p.business_id = requested_business_id
+      and p.claimed_at is not null
+  ) into ours;
+
+  if ours then
+    update public.businesses b
+    set approval_status = 'approved',
+        updated_at = timezone('utc', now())
+    where b.id = requested_business_id
+      and b.approval_status = 'pending'
+      and b.review_requested_at is not null
+      and b.closed_at is null
+      and coalesce(btrim(b.description), '') <> ''
+      and exists (select 1 from public.business_locations l where l.business_id = b.id)
+      and exists (select 1 from public.business_hours h where h.business_id = b.id);
+  end if;
 end;
 $$;
 

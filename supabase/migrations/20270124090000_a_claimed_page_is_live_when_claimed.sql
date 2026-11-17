@@ -47,7 +47,17 @@ begin
        old.approval_status = 'pending'
        and new.approval_status = 'approved'
        and new.review_requested_at is not null
-       and public.is_business_member(new.id, 'admin')
+       -- Or no user at all, which is our own server: the approval can
+       -- now come from the trigger in 20270123090000, which fires in
+       -- whatever session wrote the hours or the address. When that is
+       -- the service role — a seed, an admin tool, anything of ours —
+       -- auth.uid() is null, is_business_member is false, and this
+       -- refused the profile write itself rather than just the
+       -- approval. Nothing is loosened by allowing it: who may write
+       -- the row at all is businesses_update_admins' decision, and a
+       -- session with no user has already had to bypass RLS to get
+       -- here, which takes the service key.
+       and (auth.uid() is null or public.is_business_member(new.id, 'admin'))
        and exists (
          select 1
          from public.business_previews p
@@ -121,18 +131,22 @@ begin
   from public.businesses b
   where b.id = preview.business_id;
 
-  -- Asked for, either way: a complete page is accepted here, and an
-  -- incomplete one joins the queue with everybody else.
-  update public.businesses
-  set review_requested_at = coalesce(review_requested_at, timezone('utc', now())),
-      approval_status = case
-        when coalesce(ready, false) then 'approved'
-        else approval_status
-      end,
-      updated_at = timezone('utc', now())
-  where id = preview.business_id
-    and approval_status = 'pending'
-    and closed_at is null;
+  -- Only a page that is a listing has asked for anything. An
+  -- incomplete one stays a draft: review_requested_at is what the admin
+  -- queue is built on, so stamping it here would put a half-written
+  -- page in front of a reviewer, and tell its owner it was "Pending
+  -- approval" when nobody was looking at it and the work was theirs.
+  -- The triggers in 20270123090000 pick it up the moment it becomes
+  -- one, and approve it then.
+  if coalesce(ready, false) then
+    update public.businesses
+    set review_requested_at = coalesce(review_requested_at, timezone('utc', now())),
+        approval_status = 'approved',
+        updated_at = timezone('utc', now())
+    where id = preview.business_id
+      and approval_status = 'pending'
+      and closed_at is null;
+  end if;
 
   return preview.business_id;
 end;
