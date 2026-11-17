@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { safeNextPath } from "@/lib/redirects";
 import { EmailCodeForm } from "@/components/email-code-form";
 import { SocialSignIn } from "@/components/social-sign-in";
+import { BusinessPagePreview } from "@/components/business-page-preview";
 
 const benefits = [
     "Create offers on your terms",
@@ -21,7 +22,22 @@ const benefits = [
     "Manage customer codes with your team",
 ];
 
-export function BusinessRegisterForm() {
+// The page we built for them, looked up from the token in ?next= by the
+// server component in page.tsx. Nothing here comes from the query string:
+// a name in the URL would let anybody put any business on our sign-up
+// page, and would drift from the record the moment either changed.
+export type ClaimPreview = {
+    business_name: string;
+    category: string | null;
+    description: string | null;
+    logo_url: string | null;
+    cover_image_url: string | null;
+    area: string | null;
+    city: string | null;
+    sample_offer: string | null;
+};
+
+export function BusinessRegisterForm({ preview = null }: { preview?: ClaimPreview | null }) {
     // Claiming a preview sends people here with ?next= pointing back at it,
     // so they land on their own business rather than in onboarding.
     const requestedNext = safeNextPath(useSearchParams().get("next"));
@@ -141,86 +157,131 @@ export function BusinessRegisterForm() {
 
                 {/* Marketing visual: 40% on desktop */}
                 <aside className="relative hidden overflow-hidden bg-[#17233B] text-white lg:flex lg:items-center">
-                    {/*
-                        Future image placement:
-                        Add a full-height marketing photo here with
-                        absolute positioning, then retain a dark overlay
-                        behind the text for readability.
-                    */}
+                    {preview ? (
+                        /* The page we built, in the panel they are
+                           looking at while they type. Somebody who
+                           pressed Claim was two screens ago looking
+                           at exactly this; a sign-up form that then
+                           shows a stock illustration asks them to
+                           take on trust what they could just be
+                           shown. The same component as the preview
+                           page and the setup shell, so it really is
+                           the same page. */
+                        <div className="relative w-full px-10 py-16 xl:px-14">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF8F7D]">
+                                Claiming {preview.business_name}
+                            </p>
 
-                    <div
-                        aria-hidden="true"
-                        className="absolute -right-32 -top-24 size-[30rem] rounded-full bg-[#FF593F]/20 blur-3xl"
-                    />
+                            <p className="mt-4 text-lg leading-8 text-white/70">
+                                {preview.category && preview.city
+                                    ? `Your page is built and waiting, in the ${preview.city} directory under ${preview.category}.`
+                                    : "Your page is built and waiting."}
+                            </p>
 
-                    <div
-                        aria-hidden="true"
-                        className="absolute -bottom-24 -left-28 size-96 rounded-full border-[48px] border-white/5"
-                    />
-
-                    <div className="relative w-full px-10 py-16 xl:px-14">
-                        <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/80">
-                            <FiMapPin
-                                aria-hidden="true"
-                                className="text-[#FF8F7D]"
-                            />
-                            Built around local discovery
-                        </span>
-
-                        <p className="mt-7 text-lg leading-8 text-white/70">
-                            Give people a reason to discover your business,
-                            try something new, and walk through your door.
-                        </p>
-
-                        <div className="relative my-10 rounded-3xl border border-white/15 bg-white/5 p-6">
-                            <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F] text-[#17233B]">
-                                <FiGift
-                                    aria-hidden="true"
-                                    className="size-6"
+                            <div className="mt-8">
+                                <BusinessPagePreview
+                                    page={{
+                                        name: preview.business_name,
+                                        category: preview.category,
+                                        area: preview.area,
+                                        city: preview.city,
+                                        description: preview.description,
+                                        logoUrl: preview.logo_url,
+                                        coverImageUrl: preview.cover_image_url,
+                                        offer: preview.sample_offer,
+                                    }}
                                 />
+                            </div>
+
+                            <p className="mt-6 text-sm leading-7 text-white/65">
+                                It is yours the moment you make a login,
+                                and yours to change after.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                        {/*
+                            Future image placement:
+                            Add a full-height marketing photo here with
+                            absolute positioning, then retain a dark overlay
+                            behind the text for readability.
+                        */}
+
+                        <div
+                            aria-hidden="true"
+                            className="absolute -right-32 -top-24 size-[30rem] rounded-full bg-[#FF593F]/20 blur-3xl"
+                        />
+
+                        <div
+                            aria-hidden="true"
+                            className="absolute -bottom-24 -left-28 size-96 rounded-full border-[48px] border-white/5"
+                        />
+
+                        <div className="relative w-full px-10 py-16 xl:px-14">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/80">
+                                <FiMapPin
+                                    aria-hidden="true"
+                                    className="text-[#FF8F7D]"
+                                />
+                                Built around local discovery
                             </span>
 
-                            <p className="mt-5 text-2xl font-semibold leading-tight">
-                                One good offer.
-                                <br />
-                                A new introduction.
+                            <p className="mt-7 text-lg leading-8 text-white/70">
+                                Give people a reason to discover your business,
+                                try something new, and walk through your door.
                             </p>
 
-                            <p className="mt-3 text-sm leading-7 text-white/65">
-                                From discovering your offer to enjoying
-                                it in person.
-                            </p>
-
-                            <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-white/80">
-                                <span className="rounded-full bg-white/10 px-3 py-2">
-                                    Discover
-                                </span>
-                                <FiArrowRight aria-hidden="true" />
-                                <span className="rounded-full bg-white/10 px-3 py-2">
-                                    Claim
-                                </span>
-                                <FiArrowRight aria-hidden="true" />
-                                <span className="rounded-full bg-white/10 px-3 py-2">
-                                    Visit
-                                </span>
-                            </div>
-                        </div>
-
-                        <ul className="space-y-4">
-                            {benefits.map((benefit) => (
-                                <li
-                                    key={benefit}
-                                    className="flex items-start gap-3 text-sm leading-6 text-white/80"
-                                >
-                                    <FiCheck
+                            <div className="relative my-10 rounded-3xl border border-white/15 bg-white/5 p-6">
+                                <span className="flex size-12 items-center justify-center rounded-2xl bg-[#FF593F] text-[#17233B]">
+                                    <FiGift
                                         aria-hidden="true"
-                                        className="mt-1 size-4 shrink-0 text-[#FF8F7D]"
+                                        className="size-6"
                                     />
-                                    {benefit}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                                </span>
+
+                                <p className="mt-5 text-2xl font-semibold leading-tight">
+                                    One good offer.
+                                    <br />
+                                    A new introduction.
+                                </p>
+
+                                <p className="mt-3 text-sm leading-7 text-white/65">
+                                    From discovering your offer to enjoying
+                                    it in person.
+                                </p>
+
+                                <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-white/80">
+                                    <span className="rounded-full bg-white/10 px-3 py-2">
+                                        Discover
+                                    </span>
+                                    <FiArrowRight aria-hidden="true" />
+                                    <span className="rounded-full bg-white/10 px-3 py-2">
+                                        Claim
+                                    </span>
+                                    <FiArrowRight aria-hidden="true" />
+                                    <span className="rounded-full bg-white/10 px-3 py-2">
+                                        Visit
+                                    </span>
+                                </div>
+                            </div>
+
+                            <ul className="space-y-4">
+                                {benefits.map((benefit) => (
+                                    <li
+                                        key={benefit}
+                                        className="flex items-start gap-3 text-sm leading-6 text-white/80"
+                                    >
+                                        <FiCheck
+                                            aria-hidden="true"
+                                            className="mt-1 size-4 shrink-0 text-[#FF8F7D]"
+                                        />
+                                        {benefit}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        </>
+                    )}
                 </aside>
             </div>
         </main>

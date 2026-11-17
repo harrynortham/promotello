@@ -23,12 +23,16 @@ export type PreviewRow = {
         closed_at: string | null;
         logo_url: string | null;
         cover_image_url: string | null;
+        // The section of the directory they would be listed in. Named in
+        // the email because "a page in the Bristol directory" is a place
+        // in general and "listed under Bakeries" is their place.
+        categories: { name: string } | null;
         business_locations: { city: string | null; region: string | null; cities: { name: string } | null }[];
     } | null;
 };
 
 export const previewColumns =
-    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, business_locations ( city, region, cities ( name ) ) )";
+    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, cities ( name ) ) )";
 
 // Signed by a real name where there is one. A DM from a brand account
 // signed "The Promotello team" reads worse than one signed by nobody.
@@ -211,6 +215,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
     const town = location?.cities?.name ?? location?.city?.trim();
     const where = town ? ` ${town}` : "";
     const street = location?.region?.trim() || null;
+    const section = preview.businesses?.categories?.name?.trim() || null;
 
     const offer = `The first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}, and the first ${TRIAL_DAYS} days are free.`;
 
@@ -232,7 +237,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         introduction(sender, town || "Bristol", street),
         "",
-        `You get a page in the${where || " Bristol"} directory: your offers, your loyalty card and your opening hours. Someone can claim an offer or join your card from it before they have ever been in, and it gets better as more of ${street || town || "Bristol"} joins.`,
+        `You get a page in the${where || " Bristol"} directory${section ? `, listed under ${section}` : ""}: your offers, your loyalty card and your opening hours. Someone can claim an offer or join your card from it before they have ever been in, and it gets better as more of ${street || town || "Bristol"} joins.`,
         "",
         `None of that has to happen first. A QR poster in your window: people scan it, claim your offer on their phone, and show the code at the till. Then a stamp card brings them back, and your staff stamp it by scanning, so nobody can stamp their own.`,
         "",
@@ -242,12 +247,14 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
         "",
         ownNumbers(sender),
         "",
-        // Claiming really is a minute. Putting the page live is not: it
-        // needs a logo, opening hours and a photo of the place before the
-        // send button turns on. "About two minutes" promised the whole
-        // thing and delivered the first step, and the offer to finish it
-        // reads better when it names what to send.
-        `Worth a look? Claiming it takes a minute, and it goes live once it has your logo, your opening hours and a photo of the place — or reply with those and I'll do the rest. If it's not for you, reply "no thanks" and I won't email again.`,
+        // Claiming is the moment it goes live, for a page we wrote and
+        // checked (20270128090000). This described the old rule — a logo,
+        // opening hours and a photo before a send button turned on —
+        // which stopped being true, and undersold the very thing it was
+        // asking for. The logo and the photo are still worth having, so
+        // the offer to finish it stays; it is no longer the price of
+        // being seen.
+        `Worth a look? Claiming it takes a minute, and it goes live as soon as you do — send me a logo and a photo of the place and I'll finish it off. If it's not for you, reply "no thanks" and I won't email again.`,
         "",
         ...signOff(sender),
     ].join("\n");

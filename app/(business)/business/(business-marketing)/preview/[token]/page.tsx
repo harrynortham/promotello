@@ -146,6 +146,10 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     // year of previews it could not have been true, since the rule also
     // wanted opening hours and the preview form never collected any
     // (20270128090000). A promise worth making is worth checking.
+    // The section of the directory this page would be listed in. Already
+    // loaded for the page mock below, and never shown in words until now.
+    const section = preview.category?.trim() || null;
+
     const goesLiveOnClaim =
         Boolean(preview.description?.trim()) && Boolean(preview.area?.trim() || town);
 
@@ -202,7 +206,14 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-[#17233B]/70">
                     We&apos;ve set up your page, a digital loyalty card and a QR poster for your window, to show how
                     Promotello turns first-time visitors into regulars.
-                    {town && ` Your page sits in the ${town} directory, where people look for somewhere to go.`}
+                    {/* The section, not just the directory. "The Bristol
+                        directory" is a place in general; "under Bakeries"
+                        is their place, and it is a page that already
+                        exists with their competitors on it. */}
+                    {town &&
+                        (section
+                            ? ` Your page sits in the ${town} directory, under ${section}, where people look for somewhere to go.`
+                            : ` Your page sits in the ${town} directory, where people look for somewhere to go.`)}
                 </p>
 
                 {error && (
@@ -223,9 +234,11 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                             Your page
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
-                            {town
-                                ? `Customers browsing ${town} find you in the directory, follow you, and claim your offers.`
-                                : "Customers find you in the Promotello directory, follow you, and claim your offers."}
+                            {town && section
+                                ? `Customers browsing ${section.toLowerCase()} in ${town} find you, follow you, and claim your offers.`
+                                : town
+                                    ? `Customers browsing ${town} find you in the directory, follow you, and claim your offers.`
+                                    : "Customers find you in the Promotello directory, follow you, and claim your offers."}
                         </p>
                         <div className="mt-6">
                             <BusinessPagePreview

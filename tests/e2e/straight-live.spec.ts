@@ -324,3 +324,63 @@ test("a business still cannot approve itself by writing the column", async () =>
         await admin().from("businesses").delete().eq("id", businessId);
     }
 });
+
+// Somebody who presses Claim without an account is sent to sign up, and
+// the right-hand panel used to show the same stock illustration everybody
+// gets. They were looking at their own page two screens ago; asking them
+// for an email address in front of a generic graphic makes them take on
+// trust what we could simply show them.
+//
+// Nothing is passed in the URL to do it. ?next= already carries the
+// token, which is the only thing that proves which business this is — a
+// name in the query string would let anyone put any business on our
+// sign-up page.
+test("the sign-up page shows the page being claimed, without counting a view", async ({ page }) => {
+    const { businessUserId } = state();
+    const businessId = await seedPending(businessUserId, { ours: true, complete: true });
+    const token = tokens.get(businessId)!;
+
+    try {
+        const before = await admin()
+            .from("business_previews")
+            .select("view_count")
+            .eq("business_id", businessId)
+            .single();
+
+        await page.context().clearCookies();
+        await page.goto(`/business/register?next=${encodeURIComponent(`/business/preview/${token}`)}`);
+
+        // Their own page, in the panel.
+        await expect(page.getByText("Claiming", { exact: false })).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByText("E2E Straight Live", { exact: false }).first()).toBeVisible();
+
+        // And not the stock panel.
+        await expect(page.getByText("Built around local discovery")).toHaveCount(0);
+
+        // The outreach numbers are untouched: rendering a form is not the
+        // business opening their link. preview_card() reads, where
+        // open_business_preview() would have counted (20270130090000).
+        const after = await admin()
+            .from("business_previews")
+            .select("view_count, first_viewed_at")
+            .eq("business_id", businessId)
+            .single();
+
+        expect(after.data!.view_count).toBe(before.data!.view_count);
+        expect(after.data!.first_viewed_at).toBeNull();
+    } finally {
+        await admin().from("businesses").delete().eq("id", businessId);
+    }
+});
+
+// A link somebody mangled, or a preview that has gone: the form still
+// works and falls back to the panel everybody else sees.
+test("a sign-up link with no readable preview still renders", async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto(
+        "/business/register?next=%2Fbusiness%2Fpreview%2Fgone-00000000-0000-0000-0000-000000000000",
+    );
+
+    await expect(page.getByText("Built around local discovery")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Claiming", { exact: false })).toHaveCount(0);
+});
