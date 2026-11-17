@@ -129,11 +129,21 @@ by itself once it has the three things that make a listing — a
 description, an address and hours. The claim is the acceptance for a
 page we built (`20270124090000`), so the promise above was changed
 rather than quietly broken: the claim button now says the page goes
-live as soon as they claim it, because we wrote it and read it before
-we sent it.
+live as soon as they claim it, because we wrote it and checked it
+before we sent it.
+
+The claim path asks for two of those three, not all of them
+(`20270128090000`). It wanted hours as well, and `/admin/previews/new`
+has never collected any — so for every preview built the normal way the
+claim quietly took the "incomplete, stay a draft" branch, and the page
+the business had just been promised was live sat pending and unqueued.
+Hours decide whether a listing is thorough, not whether a page we wrote
+is fit to be seen, and the owner adds them in setup a minute later. The
+cold sign-up path still wants all three, because there the rule is
+deciding when a draft is worth a reviewer's time.
 
 Approval decides one thing now, and only that: whether it is public.
-Everything else is open while we read — offers, the loyalty card, QR
+Everything else is open while we check — offers, the loyalty card, QR
 posters (`20270125090000`) and the trial. A scan of a poster put up
 early says the business is on its way, by name. The guarantee that
 makes it safe is in the database rather than in a page, and

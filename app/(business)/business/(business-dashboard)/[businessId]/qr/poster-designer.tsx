@@ -38,7 +38,7 @@ export function PosterDesigner({
 }: {
     businessId: string;
     businessName: string;
-    // The page has not been read yet, so a scan does not open it yet.
+    // The page has not been checked yet, so a scan does not open it yet.
     // The poster is still worth making and printing — it simply starts
     // working when the page does.
     waitingForApproval?: boolean;
@@ -214,7 +214,7 @@ export function PosterDesigner({
                             <option value="loyalty">Loyalty card: {loyalty.name}</option>
                         )}
                         {offers.map((option) => {
-                            // An offer still being read can't be pointed at
+                            // An offer still being checked can't be pointed at
                             // yet, but leaving it out of the list looks like
                             // we lost it. It is here, and it says why.
                             const waiting = option.approval_status === "pending";

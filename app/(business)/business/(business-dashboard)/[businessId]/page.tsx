@@ -308,7 +308,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
 
     // The offer a poster would open: live, and approved, since a poster
-    // cannot point at one still being read. Whichever has been claimed
+    // cannot point at one still being checked. Whichever has been claimed
     // most, because the offers come back in that order and the one that
     // already works on people is the one worth putting in the window.
     const posterOffer =

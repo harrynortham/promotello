@@ -246,10 +246,20 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                 {!hasPro && (
                     <Alert className="mt-8 border-[#FF593F]/30 bg-[#FF593F]/5">
-                        <AlertTitle>Free plan · {qrCodes.length} of 1 poster used</AlertTitle>
+                        {/* Posters made on Pro are kept after a downgrade,
+                            because they are printed and in a window. So
+                            this counter could say "3 of 1 poster used",
+                            which reads like a sum that has gone wrong
+                            rather than a plan that has changed. */}
+                        <AlertTitle>
+                            {qrCodes.length > 1
+                                ? `Free plan · one poster included, and you have ${qrCodes.length} from Pro`
+                                : `Free plan · ${qrCodes.length} of 1 poster used`}
+                        </AlertTitle>
                         <AlertDescription>
-                            Get a poster in every spot, and compare which
-                            placements bring people in.{" "}
+                            {qrCodes.length > 1
+                                ? "They all keep working. You cannot make another until you are back on Pro, which gives you one for every spot."
+                                : "Get a poster in every spot, and compare which placements bring people in."}{" "}
                             <Link
                                 href={`/business/${businessId}/billing`}
                                 className="font-medium text-[#FF593F]"

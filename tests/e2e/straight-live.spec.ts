@@ -28,7 +28,10 @@ const remember = throwawayBusinesses();
 
 async function seedPending(
     businessUserId: string,
-    { ours, complete }: { ours: boolean; complete: boolean },
+    // hours defaults to complete. Set it false for the shape the admin
+    // preview form actually produces: a description and an address, and
+    // no opening hours, because /admin/previews/new never asks for any.
+    { ours, complete, hours = complete }: { ours: boolean; complete: boolean; hours?: boolean },
 ) {
     const client = admin();
     const stamp = Date.now();
@@ -83,15 +86,17 @@ async function seedPending(
 
         expect(location.error, "seeding an address").toBeNull();
 
-        const hours = await client.from("business_hours").insert({
-            business_id: business!.id,
-            day_of_week: 1,
-            is_closed: false,
-            opens_at: "09:00",
-            closes_at: "17:00",
-        });
+        if (hours) {
+            const seededHours = await client.from("business_hours").insert({
+                business_id: business!.id,
+                day_of_week: 1,
+                is_closed: false,
+                opens_at: "09:00",
+                closes_at: "17:00",
+            });
 
-        expect(hours.error, "seeding opening hours").toBeNull();
+            expect(seededHours.error, "seeding opening hours").toBeNull();
+        }
     }
 
     if (ours) {
@@ -210,6 +215,38 @@ test("a page of ours that isn't finished still waits", async () => {
         expect(error).toBeNull();
 
         expect((await statusOf(businessId)).approval_status).toBe("pending");
+    } finally {
+        await admin().from("businesses").delete().eq("id", businessId);
+    }
+});
+
+// The shape every real preview has. /admin/previews/new collects a name,
+// category, description, website, address, area, postcode, contact,
+// Instagram, a sample offer and two photos — and no opening hours at all.
+// So while the claim wanted all three, it refused every preview built the
+// normal way: claimed pages sat pending and unqueued while the preview page
+// promised they would go live on the claim (20270128090000).
+test("a page of ours goes live on claim with no opening hours", async () => {
+    const { businessUserId } = state();
+    const businessId = await seedPending(businessUserId, {
+        ours: true,
+        complete: true,
+        hours: false,
+    });
+
+    try {
+        const admins = admin();
+        const { count } = await admins
+            .from("business_hours")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId);
+
+        expect(count, "the seed really has no hours, or this proves nothing").toBe(0);
+
+        const { error } = await claim(businessId);
+        expect(error).toBeNull();
+
+        expect((await statusOf(businessId)).approval_status).toBe("approved");
     } finally {
         await admin().from("businesses").delete().eq("id", businessId);
     }

@@ -396,7 +396,7 @@ export function offerEditAlertEmail(
 }
 
 // A change to a live offer waits in its own queue, so the offer stays up
-// while we read it. Nothing else would tell us it is there.
+// while we check it. Nothing else would tell us it is there.
 export async function alertOfferEdit(offerId: string, submitter: string) {
     if (!isDeliverable(submitter)) return { sent: 0 };
 
