@@ -27,6 +27,8 @@ import { Separator } from "@/components/ui/separator";
 import { getCategoryGroups } from "@/lib/categories";
 import { availabilityLine, availabilityParts } from "@/lib/schedule";
 import { createClient } from "@/utils/supabase/client";
+import { FiArrowRight } from "react-icons/fi";
+
 import { announceNewOffer } from "./actions";
 
 type NewOfferFormProps = {
@@ -68,9 +70,12 @@ export default function NewOfferForm({
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    const created = searchParams.get("created");
-    const createdOffer = created === "live" || created === "pending" ? created : null;
-    const createdOfferId = searchParams.get("offer");
+    // Every offer waits for a person, on every plan: 20261107090000
+    // dropped the auto-approve trigger, because "Plans now buy more
+    // offers and more reach, not a way past review." So there is no
+    // "live" branch to write here — it was unreachable from this form
+    // for a year, and two of us edited it believing it was on screen.
+    const createdOffer = searchParams.get("created") === "pending";
 
     // The Free plan includes one poster. Once it is spent, "put it on a
     // poster" is advice they cannot take, so the step says what they have
@@ -85,18 +90,16 @@ export default function NewOfferForm({
     // has ended" and points at what is on.
     const posterStep = spentPoster
         ? `The Free plan includes one poster, and yours ${spentPoster.pointsAt ? `points at ${spentPoster.pointsAt}` : "is already up"}. Pro gives you one for every spot, so each offer can have its own.`
-        : createdOffer === "live"
-            ? "Put it on a QR poster for your window or your till, so people passing can scan it."
-            : "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.";
+        : "A poster that opens your page works today, and shows this offer the moment it is live.";
 
-    // Where that step sends them: the plans at the limit, otherwise the
-    // designer, opened on the offer they just wrote. An offer still being
-    // read cannot be pointed at yet, so a pending one goes to the list.
+    // The plans at the limit, where a second poster is the thing they
+    // cannot have. Otherwise the designer — aimed at the business page,
+    // not at this offer, because a code pointed at an offer still being
+    // checked resolves to "That offer has ended" until it is approved.
+    // The page poster has no such gap: it shows whatever is on.
     const posterHref = spentPoster
         ? `/business/${businessId}/billing`
-        : createdOffer === "live" && createdOfferId
-            ? `/business/${businessId}/qr/new?for=${createdOfferId}`
-            : `/business/${businessId}/qr`;
+        : `/business/${businessId}/qr/new`;
     const [errorMessage, setErrorMessage] = useState("");
 
     const {
@@ -227,20 +230,17 @@ export default function NewOfferForm({
             return;
         }
 
-        // Pro businesses' offers go live at once; this also emails followers.
-        const { live } = await announceNewOffer(inserted.id).catch(() => ({ live: false }));
+        // Tells the business it is waiting, and nothing else: every offer
+        // waits for a person (20261107090000). The comment here used to
+        // say "Pro businesses' offers go live at once", which stopped
+        // being true when that migration dropped the auto-approve
+        // trigger, and announceNewOffer has said so plainly ever since.
+        await announceNewOffer(inserted.id).catch(() => undefined);
 
         reset();
         setImageFile(null);
         setImagePreviewUrl(null);
-        // The id travels so the poster link can open the designer on this
-        // offer. Pressing "put it on a poster" and landing on a form set
-        // to the business page makes them choose again what they just
-        // spent five minutes writing.
-        router.replace(
-            `${pathname}?created=${live ? "live" : "pending"}&offer=${inserted.id}`,
-            { scroll: false },
-        );
+        router.replace(`${pathname}?created=pending`, { scroll: false });
     }
 
     if (createdOffer) {
@@ -253,92 +253,65 @@ export default function NewOfferForm({
                         </div>
 
                         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                            {createdOffer === "live" ? "Offer live" : "Offer submitted"}
+                            Offer submitted
                         </p>
 
                         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[#17233B]">
-                            {createdOffer === "live"
-                                ? "Your offer is live"
-                                : "Your offer is pending approval"}
+                            Your offer is with us
                         </h1>
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
-                            {createdOffer === "live"
-                                ? followers > 0
-                                    ? "Customers can see and claim it now, and your followers are getting an email about it."
-                                    : "Customers browsing the directory can see and claim it now."
-                                : "Our team checks every offer before customers see it, usually the same day."}
+                            We check every offer before customers see it, usually the
+                            same day
+                            {followers > 0
+                                ? ", and your followers hear about it the moment it's live."
+                                : ", and you get an email the moment it's live."}
                         </p>
 
-                        {/* What to do next. Creating an offer used to end
-                            here, with nothing to say that a poster is how
-                            people in the street find it. */}
-                        <ol className="mt-7 space-y-3 text-left text-sm leading-6 text-[#17233B]/75">
-                            {(createdOffer === "live"
-                                ? [
-                                    "It's on your page and in the Promotello directory now.",
-                                    ...(followers > 0
-                                        ? [
-                                            followers === 1
-                                                ? "The person following you is getting an email about it."
-                                                : `The ${followers} people following you are getting an email about it.`,
-                                        ]
-                                        : []),
-                                    posterStep,
-                                ]
-                                : [
-                                    "We check it, usually the same day.",
-                                    followers > 0
-                                        ? "You get an email the moment it's live, and the people following you hear about it then."
-                                        : "You get an email the moment it's live.",
-                                    posterStep,
-                                ]
-                            ).map((step, index) => (
-                                <li key={step} className="flex gap-3">
-                                    <span
-                                        aria-hidden="true"
-                                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#FFF4E8] text-xs font-semibold text-[#FF593F]"
-                                    >
-                                        {index + 1}
-                                    </span>
-                                    {step}
-                                </li>
-                            ))}
-                        </ol>
+                        {/* The waiting is two lines of reassurance, not a
+                            numbered list of things to do: the only step on
+                            that list they could act on was the poster, and
+                            it sat third behind two rows of "wait". */}
+                        <div className="mt-7 rounded-xl bg-[#FFF8F0] p-5 text-left">
+                            <p className="text-sm font-semibold text-[#17233B]">
+                                {spentPoster ? "About your poster" : "While you wait: put a poster up"}
+                            </p>
 
-                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                            <p className="mt-1.5 text-sm leading-6 text-[#17233B]/75">
+                                {posterStep}
+                            </p>
+
+                            <Button
+                                size="lg"
+                                render={<Link href={posterHref} />}
+                                nativeButton={false}
+                                className="mt-4 w-full sm:w-auto"
+                            >
+                                {spentPoster ? "See the plans" : "Make a poster"}
+                                <FiArrowRight aria-hidden="true" />
+                            </Button>
+                        </div>
+
+                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
                             <Button
                                 size="lg"
                                 render={<Link href={`/business/${businessId}/offers`} />}
                                 nativeButton={false}
                                 variant="outline"
                             >
-                                {createdOffer === "live" ? "View your offers" : "View pending"}
+                                View pending
                             </Button>
 
                             <Button
                                 size="lg"
                                 type="button"
-                                variant="default"
+                                variant="outline"
                                 onClick={() => router.replace(pathname, { scroll: false })}
                             >
                                 Create another
                             </Button>
                         </div>
 
-                        <p className="mt-6 text-sm text-[#17233B]/65">
-                            <Link
-                                href={posterHref}
-                                className="font-medium text-[#17233B] underline underline-offset-4 hover:text-[#FF593F]"
-                            >
-                                {spentPoster ? "See the plans" : "See your QR posters"}
-                            </Link>{" "}
-                            {spentPoster
-                                ? "— one poster per spot, so each offer gets its own."
-                                : createdOffer === "live"
-                                    ? "to put this offer in the window."
-                                    : "— this offer joins them once it's approved."}
-                        </p>
                     </CardContent>
                 </Card>
             </div>

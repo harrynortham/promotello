@@ -68,9 +68,19 @@ test("business owner can create a new offer", async ({ page }) => {
 
     // Every offer waits for review, whatever the business's plan.
     // By role: Next's route announcer reads the same words out.
-    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Your offer is with us" })).toBeVisible({
         timeout: 20_000,
     });
+
+    // And the one thing they can actually do while it is checked is the
+    // thing on offer. The poster used to be the third of three steps,
+    // two of which were "wait", and the only button was "Create another"
+    // — so the screen asked for another offer instead of a poster, at
+    // the one moment a new business is paying full attention.
+    await expect(page.getByText("While you wait: put a poster up")).toBeVisible();
+    await expect(
+        page.locator(`a[href="/business/${businessId}/qr/new"]`),
+    ).toBeVisible();
 
     const { data: made } = await client
         .from("offers")
@@ -142,7 +152,7 @@ test("a photo is cropped in a dialog, and only counts once it is confirmed", asy
     await expect(page.locator('img[src^="blob:"]').first()).toBeVisible();
 
     await page.locator('button[type="submit"]').click();
-    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Your offer is with us" })).toBeVisible({
         timeout: 20_000,
     });
 
@@ -194,7 +204,7 @@ test("an offer that fits no type is written out in full", async ({ page }) => {
     await expect(dialog).toBeHidden();
 
     await page.locator('button[type="submit"]').click();
-    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Your offer is with us" })).toBeVisible({
         timeout: 20_000,
     });
 
@@ -245,7 +255,7 @@ test("an offer for new customers only says so on its card", async ({ page }) => 
     await expect(dialog).toBeHidden();
 
     await page.locator('button[type="submit"]').click();
-    await expect(page.getByRole("heading", { name: "Your offer is pending approval" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Your offer is with us" })).toBeVisible({
         timeout: 20_000,
     });
 
