@@ -388,7 +388,7 @@ most of stage 3 is guesswork until it is.
   1st of the month adds every monthly report. Supabase's sign-in emails come out
   of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
 
--- Apply apply developer account for the oneclick oauth
+-- Apply apply apple developer account for the oneclick oauth
 
 - ~~Apply for the Apple Developer and Google Wallet issuer accounts.~~ Moved to
   stage 5: Wallet passes went from first on the build list to track C2, so the
@@ -425,6 +425,7 @@ pricing and three of our own claims all assume customers browsing a directory.
 - **One wallet for the street** — group the customer's vouchers and cards by
   area rather than by business. Claim 2 of the three in "How we sell it", still
   unbuilt, and cheap.
+- Find a way to request printed stickers for the QR codes, sent to business, work out costs
 
 ### Stage 4 — Make the number real
 

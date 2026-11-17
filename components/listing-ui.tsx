@@ -100,7 +100,13 @@ export function SearchForm({
         <form
             action={action}
             role="search"
-            className={`flex w-full items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white p-1.5 shadow-sm ${size === "lg" ? "sm:p-2" : ""}`}
+            // self-start so this keeps its own height. On the home page
+            // it shares a grid row with the location picker, which grows
+            // when that reports "Finding you…" — and a stretching row
+            // took the search box from 66px to 88px with it, while
+            // somebody was aiming at it. The picker still stretches, so
+            // the two stay level when there is no message.
+            className={`flex w-full self-start items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white p-1.5 shadow-sm ${size === "lg" ? "sm:p-2" : ""}`}
         >
             {Object.entries(hidden).map(([name, value]) =>
                 value ? <input key={name} type="hidden" name={name} value={value} /> : null,
