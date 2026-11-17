@@ -976,6 +976,55 @@ async function cardPoster() {
     };
 }
 
+// The same poster, after the business drops to Free. The card is shut to
+// newcomers, and asking for an email address before saying so is the
+// wrong way round: somebody at a till scanned, was asked to make an
+// account, made one, and the reward was being told no.
+test("scanning a closed card signed out explains it without asking for an account", async ({ page }) => {
+    test.setTimeout(120_000);
+    const { client, program, code, clearUp } = await cardPoster();
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+
+    // Whatever the test business is paying, it is not paying now.
+    const { data: subscriptions } = await client
+        .from("subscriptions")
+        .select("id, status")
+        .eq("business_id", businessId);
+
+    const paying = (subscriptions ?? []).filter((row) =>
+        ["trialing", "active", "past_due"].includes(row.status),
+    );
+
+    for (const row of paying) {
+        await client.from("subscriptions").update({ status: "canceled" }).eq("id", row.id);
+    }
+
+    try {
+        const { data: stillPro } = await client.rpc("business_has_pro", {
+            requested_business_id: businessId,
+        });
+
+        expect(stillPro, "the business must be on Free or this proves nothing").toBe(false);
+
+        await page.context().clearCookies();
+        await page.goto(`/q/${code.code}`);
+
+        // The business page, at the card — not the sign-up form.
+        await page.waitForURL(new RegExp(`/businesses/[^?]+\\?ref=qr`), { timeout: 20_000 });
+        expect(page.url()).not.toContain("/signup");
+        expect(page.url()).toContain(`#loyalty-${program.id}`);
+
+        await expect(page.getByText("Not taking new members.")).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByText("keep every stamp they have")).toBeVisible();
+    } finally {
+        for (const row of paying) {
+            await client.from("subscriptions").update({ status: row.status }).eq("id", row.id);
+        }
+
+        await clearUp();
+    }
+});
+
 test("scanning a card poster signed out: sign up, and the card is waiting", async ({ page }) => {
     test.setTimeout(120_000);
     const { client, program, code, clearUp } = await cardPoster();

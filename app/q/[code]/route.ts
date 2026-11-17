@@ -113,6 +113,34 @@ async function cardDestination(business: string, programId: string, requestUrl: 
         console.error("QR scan: could not tell who scanned", error);
     }
 
+    // Signed out, and the card may not be taking anybody. Asking for an
+    // email address first and explaining afterwards is the wrong way
+    // round: somebody at a till scanned a poster, was asked to make an
+    // account, made one, and the reward for it was being told no. The
+    // business page says the same thing without the account, and has
+    // what is on underneath it.
+    //
+    // business_has_pro answers this from an anonymous client
+    // (20270126090000), and a failure fails open: a scan that cannot
+    // reach the database is better sent to sign up than turned away
+    // from a card that is probably open.
+    const open = await (async () => {
+        try {
+            const { data, error } = await createPublicClient().rpc("business_has_pro", {
+                requested_business_id: business,
+            });
+
+            return error ? true : data !== false;
+        } catch (failure) {
+            console.error("QR scan: could not tell whether the card is open", failure);
+            return true;
+        }
+    })();
+
+    if (!open) {
+        return new URL(`/businesses/${business}?ref=qr#loyalty-${programId}`, requestUrl);
+    }
+
     const destination = new URL("/signup", requestUrl);
     destination.searchParams.set("next", joining);
     destination.searchParams.set("ref", "qr");
