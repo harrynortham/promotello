@@ -17,24 +17,13 @@ export function PointQrCode({
     codeId,
     offers,
     loyalty,
-    defaultTarget,
 }: {
     businessId: string;
     codeId: string;
     offers: OfferOption[];
     loyalty: { id: string; name: string } | null;
-    // What to have chosen already, when the business arrived here saying
-    // what it wanted this poster to open. An id that is not on the list
-    // falls through to the business page.
-    defaultTarget?: string | null;
 }) {
     const selectId = `point-${codeId}`;
-    const chosen =
-        defaultTarget === "loyalty" && loyalty
-            ? "loyalty"
-            : offers.some((offer) => offer.id === defaultTarget && offer.approval_status !== "pending")
-                ? String(defaultTarget)
-                : "business";
 
     return (
         <form action={pointQrCode} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
@@ -50,7 +39,7 @@ export function PointQrCode({
                 <select
                     id={selectId}
                     name="target"
-                    defaultValue={chosen}
+                    defaultValue="business"
                     className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
                 >
                     <option value="business">Your business profile page</option>

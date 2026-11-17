@@ -73,22 +73,27 @@ export default function NewOfferForm({
     const createdOfferId = searchParams.get("offer");
 
     // The Free plan includes one poster. Once it is spent, "put it on a
-    // poster" is advice they cannot take — so the step becomes the thing
-    // they can do instead. Re-aiming a code changes what it opens and
-    // leaves the printed sheet in the window alone, which is why it is
-    // offered before the plan is.
+    // poster" is advice they cannot take, so the step says what they have
+    // and what another would cost.
+    //
+    // Not "point it at this offer instead": a poster's printed words are
+    // written when it is made and can never be changed, so re-aiming a
+    // live one leaves a sheet in the window selling one offer and a code
+    // opening another. The customer holding the phone is the one who
+    // pays for that. A poster whose offer has simply ended is a different
+    // thing and already lands well — the business page says "That offer
+    // has ended" and points at what is on.
     const posterStep = spentPoster
-        ? `Your poster ${spentPoster.pointsAt ? `points at ${spentPoster.pointsAt}` : "is already pointing somewhere"}. You can point it at this offer instead — nothing to reprint — or Pro gives you one for every spot.`
+        ? `The Free plan includes one poster, and yours ${spentPoster.pointsAt ? `points at ${spentPoster.pointsAt}` : "is already up"}. Pro gives you one for every spot, so each offer can have its own.`
         : createdOffer === "live"
             ? "Put it on a QR poster for your window or your till, so people passing can scan it."
             : "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.";
 
-    // Where that step sends them. At the limit it is the list, where the
-    // poster they already have can be re-aimed; otherwise the designer,
-    // opened on the offer they just wrote. An offer still being read
-    // cannot be pointed at yet, so a pending one goes to the list to wait.
+    // Where that step sends them: the plans at the limit, otherwise the
+    // designer, opened on the offer they just wrote. An offer still being
+    // read cannot be pointed at yet, so a pending one goes to the list.
     const posterHref = spentPoster
-        ? `/business/${businessId}/qr?for=${createdOfferId ?? ""}`
+        ? `/business/${businessId}/billing`
         : createdOffer === "live" && createdOfferId
             ? `/business/${businessId}/qr/new?for=${createdOfferId}`
             : `/business/${businessId}/qr`;
@@ -326,10 +331,10 @@ export default function NewOfferForm({
                                 href={posterHref}
                                 className="font-medium text-[#17233B] underline underline-offset-4 hover:text-[#FF593F]"
                             >
-                                {spentPoster ? "Point it at this offer" : "See your QR posters"}
+                                {spentPoster ? "See the plans" : "See your QR posters"}
                             </Link>{" "}
                             {spentPoster
-                                ? "— the poster in your window stays as it is."
+                                ? "— one poster per spot, so each offer gets its own."
                                 : createdOffer === "live"
                                     ? "to put this offer in the window."
                                     : "— this offer joins them once it's approved."}

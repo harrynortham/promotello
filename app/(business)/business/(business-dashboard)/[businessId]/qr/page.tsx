@@ -451,41 +451,9 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                                 codeId={code.id}
                                                                 offers={offers ?? []}
                                                                 loyalty={loyalty}
-                                                                defaultTarget={openOn}
                                                             />
                                                         )}
                                                     </div>
-                                                )}
-
-                                                {/* The same control for a poster with nothing
-                                                    wrong with it. Re-aiming was only offered as a
-                                                    repair, so a business whose window poster sells
-                                                    last month's offer had no way to say so — and on
-                                                    Free, where the plan includes one poster, that
-                                                    was the only way to advertise a new offer at
-                                                    all. Shut by default: this is a thing you go
-                                                    looking for, not a choice to put in front of
-                                                    somebody reading their scan counts. */}
-                                                {canManage && target.live && (
-                                                    <details className="group mt-3" open={Boolean(openOn)}>
-                                                        <summary className="cursor-pointer text-sm text-[#17233B]/65 underline underline-offset-4 hover:text-[#FF593F]">
-                                                            Point this poster somewhere else
-                                                        </summary>
-
-                                                        <p className="mt-2 text-xs leading-5 text-[#17233B]/65">
-                                                            The poster in your window stays as it is &mdash;
-                                                            only what the code opens changes, so there is
-                                                            nothing to reprint.
-                                                        </p>
-
-                                                        <PointQrCode
-                                                            businessId={businessId}
-                                                            codeId={code.id}
-                                                            offers={offers ?? []}
-                                                            loyalty={loyalty}
-                                                            defaultTarget={openOn}
-                                                        />
-                                                    </details>
                                                 )}
 
                                                 <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
