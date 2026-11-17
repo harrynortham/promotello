@@ -21,7 +21,14 @@ import { PosterDesigner } from "./poster-designer";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
-    searchParams: Promise<{ error?: string; created?: string; pointed?: string; restored?: string }>;
+    searchParams: Promise<{
+        error?: string;
+        created?: string;
+        pointed?: string;
+        restored?: string;
+        // Sent by "Make a poster for this card" on the loyalty page.
+        for?: string;
+    }>;
 };
 
 type QrCode = {
@@ -66,7 +73,10 @@ function scanWindows() {
 async function QrContent({ params, searchParams }: PageProps) {
     await connection();
 
-    const [{ businessId }, { error, created, pointed, restored }] = await Promise.all([params, searchParams]);
+    const [{ businessId }, { error, created, pointed, restored, for: openOn }] = await Promise.all([
+        params,
+        searchParams,
+    ]);
     const supabase = await createClient();
 
     const {
@@ -282,6 +292,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
                                 waitingForApproval={!isLive}
+                                startOn={openOn === "loyalty" ? "loyalty" : null}
                             />
                         </CardContent>
                     </Card>

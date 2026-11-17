@@ -30,45 +30,37 @@ function due(kind: LifecycleDue["kind"], overrides: Partial<LifecycleDue["detail
     };
 }
 
-test("a page that was never sent is the thing the nudge asks for", () => {
-    const email = lifecycleEmail(due("setup_nudge_2"), "sam@example.com")!;
+// Sending was a step these emails asked for, and it stopped being
+// anybody's job: a page goes to us once it is a listing
+// (20270123090000_the_queue_fills_itself.sql). An email that asks for
+// it sends a business looking for a button that is not there.
+test("no email asks a business to send its page", () => {
+    for (const kind of ["welcome", "setup_nudge_1", "setup_nudge_2"] as const) {
+        const unsent = lifecycleEmail(due(kind), "sam@example.com");
+        const sent = lifecycleEmail(due(kind, { sent_for_review: true }), "sam@example.com");
 
-    assert.match(email.subject, /isn't live yet/);
-    assert.match(email.text, /Nothing on your page is public until you send it to us/);
-    // The old title named the wrong reason they can't be found.
-    assert.doesNotMatch(email.subject, /left before customers can find/);
+        for (const email of [unsent, sent]) {
+            if (!email) continue;
+            assert.doesNotMatch(email.text, /Send your page for review/, kind);
+            assert.doesNotMatch(email.text, /send it to us/i, kind);
+            assert.doesNotMatch(email.subject, /Send your page/, kind);
+        }
+    }
 });
 
-test("once it is sent, the nudge counts what is actually left", () => {
-    const email = lifecycleEmail(due("setup_nudge_2", { sent_for_review: true, has_cover: false }), "sam@example.com")!;
+test("the nudge counts what is actually left to do", () => {
+    const email = lifecycleEmail(
+        due("setup_nudge_2", { sent_for_review: true, has_cover: false }),
+        "sam@example.com",
+    )!;
 
     assert.match(email.subject, /left before customers can find Little Loaf/);
-    assert.doesNotMatch(email.text, /until you send it to us/);
 });
 
-test("sending is a setup step until it has been done", () => {
-    const unsent = lifecycleEmail(due("welcome"), "sam@example.com")!;
-    assert.match(unsent.text, /Send your page for review/);
-
-    const sent = lifecycleEmail(due("welcome", { sent_for_review: true }), "sam@example.com")!;
-    assert.doesNotMatch(sent.text, /Send your page for review/);
-});
-
-test("with everything else done, the next step is to send it", () => {
-    const email = lifecycleEmail(due("setup_nudge_1"), "sam@example.com")!;
-
-    assert.match(email.subject, /Send your page for review/);
-});
-
-test("sending comes before writing an offer", () => {
-    // Our clock starts when they send, so it runs while they write the
-    // offer rather than after it.
+test("the first offer is still named as a step", () => {
     const email = lifecycleEmail(due("welcome", { has_cover: false, has_offer: false }), "sam@example.com")!;
 
-    const review = email.text.indexOf("Send your page for review");
-    const offer = email.text.indexOf("Post your first offer");
-
-    assert.ok(review > 0 && offer > review, email.text);
+    assert.match(email.text, /Post your first offer/);
 });
 
 // ---------------------------------------------------------------------------
@@ -110,34 +102,17 @@ test("the welcome names the first things the dashboard asks for", () => {
     assert.doesNotMatch(email!.text, /15 minutes/);
 });
 
-// The send button is locked until there is a logo, a description, an
-// address, hours and a cover photo. An email promising one click to
-// somebody missing those sends them to a button that isn't there.
-test("one click is only promised when it really is one click", () => {
+// A page that is a listing has already come to us, so there is never a
+// state where it is finished and still waiting on the business. What
+// the nudge owes somebody is the list of what is missing.
+test("the nudge names what is missing rather than a button to press", () => {
     const notReady = lifecycleEmail(fresh("setup_nudge_2"), "sam@example.com");
 
     assert.ok(notReady);
     assert.doesNotMatch(notReady!.subject, /one click/);
+    assert.doesNotMatch(notReady!.text, /send it to us/i);
     assert.match(notReady!.text, /a little to finish first/);
-
-    const ready = lifecycleEmail(
-        {
-            ...fresh("setup_nudge_2"),
-            details: {
-                ...fresh("setup_nudge_2").details,
-                has_logo: true,
-                has_description: true,
-                has_address: true,
-                has_hours: true,
-                has_cover: true,
-                profile_ready: true,
-            },
-        },
-        "sam@example.com",
-    );
-
-    assert.ok(ready);
-    assert.match(ready!.subject, /one click would do it/);
+    assert.match(notReady!.text, /comes to us on its own/);
 });
 
 // A loyalty card is part of Pro, and enforce_loyalty_plan will not let a

@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { FiCheckCircle, FiGift, FiUsers } from "react-icons/fi";
+import { FiArrowRight, FiCheckCircle, FiGift, FiUsers } from "react-icons/fi";
 
+import { ExpiredPreview } from "./expired-preview";
 import { BusinessPagePreview } from "@/components/business-page-preview";
 import { LoyaltyCardScreen, PosterVisual } from "@/components/product-visuals";
 import { SubmitButton } from "@/components/submit-button";
@@ -50,16 +51,34 @@ type Preview = {
 };
 
 
+// Laid out like the business 404, because it is the same kind of
+// moment: something that was meant for you, and isn't there.
 function NotAvailable() {
     return (
-        <section className="mx-auto max-w-xl px-6 py-24 text-center sm:px-10">
-            <h1 className="text-3xl font-semibold tracking-tight">This preview isn&apos;t available</h1>
-            <p className="mt-4 text-[#17233B]/65">
-                The link may have expired. You can still add your business to Promotello in a few minutes.
-            </p>
-            <Button render={<RegisterLink />} nativeButton={false} size="lg" className="mt-8">
-                Add your business
-            </Button>
+        <section className="px-6 py-14 sm:py-20">
+            <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Preview unavailable
+                    </p>
+
+                    <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+                        This preview isn&apos;t available
+                    </h1>
+
+                    <p className="mt-5 max-w-lg text-lg leading-8 text-[#17233B]/65">
+                        The link may have expired. You can still add your business to
+                        Promotello in a few minutes.
+                    </p>
+
+                    <Button render={<RegisterLink />} nativeButton={false} size="lg" className="mt-8">
+                        Add your business
+                        <FiArrowRight aria-hidden="true" />
+                    </Button>
+                </div>
+
+                <ExpiredPreview />
+            </div>
         </section>
     );
 }
@@ -135,7 +154,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 (20270124090000_a_claimed_page_is_live_when_claimed.sql),
                 so the button says what it actually does. */}
             <p className="text-sm text-[#17233B]/70">
-                Free. We wrote this page and read it before we sent it, so it goes
+                Free. We wrote this page and checked it before we sent it, so it goes
                 live as soon as you claim it — and it&apos;s yours to change after.
             </p>
 

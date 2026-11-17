@@ -278,7 +278,12 @@ export function EmailCodeForm({
                 )}
             </div>
 
-            <div className="space-y-2">
+            {/* px-4 to match the padding inside the message above, so the
+                first box starts where "We've sent a 6-digit code" starts
+                rather than a centimetre to the left of it. The boxes are
+                flex-1, so they take the narrower width rather than
+                overflowing. */}
+            <div className="space-y-2 px-4">
                 <Label htmlFor={`${idPrefix}-code`}>Your code</Label>
 
                 <CodeInput

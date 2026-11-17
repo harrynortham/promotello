@@ -314,7 +314,7 @@ const sections: LegalSection[] = [
         content: (
             <>
                 <p>
-                    A person reads every new business before its page appears,
+                    A person checks every new business before its page appears,
                     and reads offers before they go live. If we decline
                     something we say why, and you can reply — we get it wrong
                     sometimes, and a licence or a bit of context often settles

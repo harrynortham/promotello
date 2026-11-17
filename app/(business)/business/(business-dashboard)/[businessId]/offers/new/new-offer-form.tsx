@@ -221,7 +221,7 @@ export default function NewOfferForm({
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
                                 ? "Customers can see and claim it now, and your followers are getting an email about it."
-                                : "Our team reads every offer before customers see it, usually the same day."}
+                                : "Our team checks every offer before customers see it, usually the same day."}
                         </p>
 
                         {/* What to do next. Creating an offer used to end
@@ -235,7 +235,7 @@ export default function NewOfferForm({
                                     "Put it on a QR poster for your window or your till, so people passing can scan it.",
                                 ]
                                 : [
-                                    "We read it, usually the same day.",
+                                    "We check it, usually the same day.",
                                     "You get an email the moment it's live, and your followers hear about it then.",
                                     "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.",
                                 ]
@@ -305,7 +305,7 @@ export default function NewOfferForm({
                         </h1>
 
                         <p className="mt-4 max-w-2xl leading-7 text-[#17233B]/65">
-                            Our team reads every offer before customers see it,
+                            Our team checks every offer before customers see it,
                             usually the same day. You will get an email when
                             yours is approved. A few kinds of offer we
                             can&apos;t publish:{" "}

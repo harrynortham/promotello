@@ -203,7 +203,7 @@ function ImageStep({
 
             <p className="mt-4 text-xs leading-6 text-[#17233B]/60">
                 It appears on {businessName}&apos;s page straight away — but nobody outside your
-                team can see the page until we have read it.
+                team can see the page until we have checked it.
             </p>
         </StepCard>
     );
@@ -613,7 +613,7 @@ export function OfferStep({
             )}
 
             <p className="mt-4 text-sm leading-6 text-[#17233B]/60">
-                We read every offer before customers see it, the same way we read your page.
+                We check every offer before customers see it, the same way we check your page.
             </p>
         </StepCard>
     );

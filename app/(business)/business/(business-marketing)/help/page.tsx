@@ -166,7 +166,7 @@ const guides: HelpGuide[] = [
             "Open your business and choose Offers.",
             "Find the offer marked Rejected: the reason and what to change are on it.",
             "Choose Edit offer, make the change and save.",
-            "Saving sends it back to us. We read it the same day.",
+            "Saving sends it back to us. We check it the same day.",
         ],
         lists: [
             {

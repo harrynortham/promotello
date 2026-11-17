@@ -133,8 +133,20 @@ export function money(value: number) {
     return `£${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(2)}`;
 }
 
+// Every template below puts the item straight after a word that wants a
+// bare noun: "Free ___", "20% off ___", "2 for 1 on ___". The field asks
+// "What's free" and suggests "pastry", but people answer the question
+// they were asked — "a filter coffee" — and the page then read "Free a
+// filter coffee". An article is the business's natural phrasing, not a
+// mistake, so the headline drops it rather than the form refusing it.
+//
+// Only a leading article, and only when something is left after it, so
+// an item that is just "a" survives as written.
 function cleanItem(item: string | null | undefined) {
-    return (item ?? "").replace(/\s+/g, " ").trim().slice(0, ITEM_MAX);
+    const tidy = (item ?? "").replace(/\s+/g, " ").trim();
+    const withoutArticle = tidy.replace(/^(?:an?|the)\s+(?=\S)/i, "");
+
+    return (withoutArticle || tidy).slice(0, ITEM_MAX);
 }
 
 export type HeadlineParts = {

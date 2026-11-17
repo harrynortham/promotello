@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { FiPrinter } from "react-icons/fi";
+import { FiArrowRight, FiPrinter } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { StampQr } from "@/components/stamp-qr";
@@ -284,7 +284,29 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                 {saved && !error && (
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
                         <AlertTitle>Loyalty card saved</AlertTitle>
-                        <AlertDescription>Customers can join it from your business page.</AlertDescription>
+                        {/* The business page is the quiet half of this: it
+                            reaches people already looking us up. A poster
+                            by the till reaches the ones standing in front
+                            of the staff, which is where a stamp card is
+                            actually handed out — so the moment the card
+                            exists is the moment to say so. */}
+                        <AlertDescription>
+                            <p>
+                                Customers can join it from your business page. The poster is
+                                how most will: one by the till, pointed at this card, and a
+                                scan puts it straight on their phone.
+                            </p>
+
+                            <Button
+                                render={<Link href={`/business/${businessId}/qr?for=loyalty#create-qr`} />}
+                                nativeButton={false}
+                                size="sm"
+                                className="mt-4 bg-[#17233B] text-white hover:bg-[#17233B]/90"
+                            >
+                                Make a poster for this card
+                                <FiArrowRight aria-hidden="true" />
+                            </Button>
+                        </AlertDescription>
                     </Alert>
                 )}
 

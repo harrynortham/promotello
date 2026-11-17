@@ -34,6 +34,7 @@ export function PosterDesigner({
     previewSvg,
     previewLink,
     waitingForApproval = false,
+    startOn,
 }: {
     businessId: string;
     businessName: string;
@@ -41,6 +42,8 @@ export function PosterDesigner({
     // The poster is still worth making and printing — it simply starts
     // working when the page does.
     waitingForApproval?: boolean;
+    // Which target to open on, when somebody arrived here meaning one.
+    startOn?: "loyalty" | null;
     place?: string | null;
     logoUrl?: string | null;
     offers: {
@@ -72,7 +75,9 @@ export function PosterDesigner({
     const [layout, setLayout] = useState<PosterLayout>("classic");
     const [eyebrow, setEyebrow] = useState("");
     const [headline, setHeadline] = useState("");
-    const [target, setTarget] = useState("business");
+    // "Make a poster for this card" on the loyalty page means this card,
+    // so the form opens on it rather than making them choose it again.
+    const [target, setTarget] = useState(startOn === "loyalty" && loyalty ? "loyalty" : "business");
     // The line under the headline, which only an offer poster has. Null
     // means it hasn't been touched, so it follows the offer that is
     // chosen rather than keeping the first one's words.

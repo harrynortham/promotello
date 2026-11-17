@@ -238,8 +238,25 @@ function Suggestions({
     ));
 }
 
+// Built the same way as the search box it sits beside
+// (SearchForm in components/listing-ui.tsx): vertical padding around a
+// control of a stated height, rather than a fixed height on the shell.
+//
+// The two have to agree, and a fixed height could not. The form came to
+// 66px — 48px of input, 8px of padding each side, 1px of border each
+// side — while h-16 made this 64px, so the box you saw was two pixels
+// shorter than the one next to it. Sharing the recipe means they stay
+// level if either part ever changes.
 function fieldClasses(tall: boolean) {
-    return `flex items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white px-4 shadow-sm ${tall ? "h-16" : "h-11"}`;
+    return `flex items-center gap-2 rounded-2xl border border-[#17233B]/10 bg-white px-4 py-1.5 shadow-sm ${tall ? "sm:py-2" : ""}`;
+}
+
+// The height the control inside a field takes, matching the input in
+// SearchForm so both shells come out the same. The padding above is
+// responsive for the same reason the form's is: at phone width both are
+// p-1.5 and come to 62px, and from sm up both are p-2 and come to 66.
+function fieldControlClasses(tall: boolean) {
+    return tall ? "h-12 text-base" : "h-10 text-sm";
 }
 
 function ClearButton({ onClear }: { onClear: () => void }) {
@@ -344,7 +361,7 @@ function AnchoredPicker({ places, basePath, current = null, placeholder, size = 
                     onFocus={() => setOpen(true)}
                     onBlur={() => setTimeout(() => setOpen(false), 120)}
                     onKeyDown={onKeyDown}
-                    className={`min-w-0 flex-1 bg-transparent text-[#17233B] outline-none placeholder:text-[#17233B]/70 ${tall ? "text-base" : "text-sm"}`}
+                    className={`min-w-0 flex-1 bg-transparent text-[#17233B] outline-none placeholder:text-[#17233B]/70 ${fieldControlClasses(tall)}`}
                 />
                 {current && <ClearButton onClear={() => choose({ label: "All locations", detail: "", href: basePath, remember: ALL_LOCATIONS }, close)} />}
             </div>
@@ -401,7 +418,7 @@ function ModalPicker({ places, basePath, current = null, placeholder, size = "md
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger
                         aria-label="Location"
-                        className={`min-w-0 flex-1 cursor-pointer truncate bg-transparent text-left outline-none focus-visible:underline ${tall ? "text-base" : "text-sm"} ${current ? "text-[#17233B]" : "text-[#17233B]/70"}`}
+                        className={`flex min-w-0 flex-1 cursor-pointer items-center truncate bg-transparent text-left outline-none focus-visible:underline ${fieldControlClasses(tall)} ${current ? "text-[#17233B]" : "text-[#17233B]/70"}`}
                     >
                         {current ? current.name : (placeholder ?? examplePlaceholder(places))}
                     </DialogTrigger>

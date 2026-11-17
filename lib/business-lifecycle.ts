@@ -6,7 +6,6 @@ import { releaseClaims } from "@/lib/email-claims";
 import { trialCardMissing } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
-import { readyForReview } from "@/lib/setup-steps";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { loadWhatIsPaused, type WhatIsPaused } from "@/lib/what-is-paused";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -88,16 +87,21 @@ type StepKey =
     | "address"
     | "hours"
     | "cover"
-    | "review"
     | "offer"
     | "loyalty"
     | "poster";
 
 type Step = { key: StepKey; label: string; why: string; path: string; action: string };
 
-// The same seven things the dashboard counts (lib/setup-steps.ts), in
+// The same six things the dashboard counts (lib/setup-steps.ts), in
 // the order it counts them, and then the two that come after going
-// live. They have to be the same list: an email that names a step the
+// live.
+//
+// Sending the page was a seventh, and it told a business to press a
+// button that no longer exists — the page comes to us on its own once
+// it is a listing (20270123090000_the_queue_fills_itself.sql).
+//
+// They have to be the same list: an email that names a step the
 // dashboard has never heard of sends somebody looking for a page that
 // isn't there, and a dashboard step no email mentions is one nobody is
 // ever chased about.
@@ -144,13 +148,6 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
             why: "The picture across the top of your page, and the one customers see on your card in the directory. It is the first thing they look at.",
             path: `${base}/cover`,
             action: "Add a cover photo",
-        },
-        {
-            key: "review",
-            label: "Send your page for review",
-            why: "Nothing on your page is public until you have looked it over and sent it to us. Change anything that isn't right first, then send it — we read every page, usually the same day.",
-            path: `${base}#send-for-review`,
-            action: "Send it for review",
         },
         {
             key: "offer",
@@ -200,34 +197,10 @@ function sentForReview(due: LifecycleDue) {
     return due.details.sent_for_review !== false;
 }
 
-// Nothing left to send: either they have sent it, or it is already live,
-// which means somebody here has read it.
-function alreadySeen(due: LifecycleDue) {
-    return sentForReview(due) || due.approved;
-}
-
 // Absent means done: an older payload cannot be chased for something
 // it never carried.
 function has(flag: boolean | undefined) {
     return flag !== false;
-}
-
-// The same answer the send button gives, worked out from the same
-// rule in setup-steps rather than from the payload's profile_ready.
-// The two agree — 20270121090000_a_nudge_knows_what_actually_blocks.sql
-// brought the query into line — and this stays the one that is unit
-// tested, so an older payload cannot make an email tell a business it
-// is blocked by something the button would let through.
-function profileReady(due: LifecycleDue) {
-    return readyForReview({
-        hasLogo: has(due.details.has_logo),
-        hasDescription: has(due.details.has_description),
-        hasAddress: has(due.details.has_address),
-        hasHours: has(due.details.has_hours),
-        hasCover: due.details.has_cover,
-        sentForReview: alreadySeen(due),
-        hasOffer: due.details.has_offer,
-    });
 }
 
 function missingSteps(due: LifecycleDue) {
@@ -237,7 +210,6 @@ function missingSteps(due: LifecycleDue) {
         address: has(due.details.has_address),
         hours: has(due.details.has_hours),
         cover: due.details.has_cover,
-        review: alreadySeen(due),
         offer: due.details.has_offer,
         loyalty: due.details.has_loyalty,
         poster: due.details.has_poster,
@@ -463,17 +435,13 @@ export function lifecycleEmail(
 
         const remaining = missing.map((step) => step.label.toLowerCase());
         const counted = countInWords(remaining.length);
+        // Not yet a listing, so it has not come to us. There is nothing
+        // to press — what is missing is the work, and naming it is the
+        // whole job of this email.
         const unsent = !sentForReview(due);
-        // One click only when it really is one: the send button is
-        // locked until the page has a description, an address and
-        // hours. The logo and the cover photo are asked for below with
-        // everything else, because they do not hold the send up.
-        const oneClick = unsent && profileReady(due);
-        const title = oneClick
-            ? `${name} isn't live yet, and one click would do it`
-            : unsent
-                ? `${name} isn't live yet`
-                : `${counted} left before customers can find ${name}`;
+        const title = unsent
+            ? `${name} isn't live yet`
+            : `${counted} left before customers can find ${name}`;
         const list = remaining.length === 2
             ? remaining.join(" and ")
             : `${remaining.slice(0, -1).join(", ")} and ${remaining[remaining.length - 1]}`;
@@ -483,16 +451,12 @@ export function lifecycleEmail(
             eyebrow: "Still to do",
             title,
             paragraphs: [
-                oneClick
-                    ? `${hello}Nothing on your page is public until you send it to us, and you haven't yet. Have a look through it, change anything that isn't right, and send it — we usually look the same day.`
-                    : unsent
-                        ? `Nothing on your page is public until you send it to us, and there is a little to finish first: ${list}. Then the button is there on your dashboard, and we usually look the same day.`
-                        : remaining.length === 1
+                unsent
+                    ? `${hello}Nothing on your page is public yet. It comes to us on its own once it has a description, an address and your opening hours — there is a little to finish first: ${list}.`
+                    : remaining.length === 1
                         ? `Your page is set up apart from one thing: ${remaining[0]}.`
                         : `Your page is set up, but it stays quiet until the rest is done: ${list}.`,
-                oneClick && remaining.length > 1
-                    ? `Still to do after that: ${remaining.filter((item) => !item.startsWith("send your page")).join(", ")}.`
-                    : "Each one takes a few minutes, and you can stop after any of them. New offers are read by our team before they appear, usually the same day.",
+                "Each one takes a few minutes, and you can stop after any of them. New offers are checked by our team before they appear, usually the same day.",
             ],
             action: { label: next.action, url: absoluteUrl(next.path) },
             ...tipsFooter(optOutToken),

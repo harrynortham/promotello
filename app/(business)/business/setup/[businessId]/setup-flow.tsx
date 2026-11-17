@@ -198,7 +198,7 @@ export function SetupFlow({
                     <AlertDescription>
                         {isLive
                             ? "Customers browsing the directory can find you now."
-                            : "That is everything we need to read it. We check every page — usually the same day — and we'll email you when it goes live."}{" "}
+                            : "That is everything we need. We check every page — usually the same day — and we'll email you when it goes live."}{" "}
                         There is still a little below, and none of it holds that up.
                     </AlertDescription>
                 </Alert>
@@ -277,7 +277,7 @@ function FinishedCard({
 
             <p className="mt-3 leading-7 text-[#17233B]/65">
                 {isLive
-                    ? "Customers browsing the directory can find you now. We read your offer before it joins the page — usually the same day — and we'll email you when it does."
+                    ? "Customers browsing the directory can find you now. We check your offer before it joins the page — usually the same day — and we'll email you when it does."
                     : "We'll email you the moment your page is approved."}{" "}
                 Your dashboard is where your posters, your stamp card and your customers live.
             </p>
