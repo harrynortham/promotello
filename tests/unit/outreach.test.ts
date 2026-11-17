@@ -13,6 +13,8 @@ import {
 const preview = {
     businesses: {
         name: "Little Loaf",
+        // The section of the directory they would be listed in.
+        categories: { name: "Bakeries" },
         business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
     },
     contact_name: "Sam",
@@ -152,17 +154,26 @@ test("the email carries it, and the offer to finish the page for them", () => {
     // introduction() already says the company is new; saying it again
     // three paragraphs later sounds unsure.
     assert.equal(message.match(/It's new/g)?.length, 1);
-    // The offer to finish it, and what to send — which is exactly what
-    // the page needs before it can go live.
+    // The offer to finish it, and what to send. Opening hours are no
+    // longer on that list: a page we wrote goes live on the claim
+    // (20270128090000), so asking for them as the price of being seen
+    // was both wrong and a reason to put the email down.
     assert.match(message, /logo/);
-    assert.match(message, /opening hours/);
     assert.match(message, /photo of the place/);
-    assert.match(message, /I'll do the rest/);
+    assert.match(message, /I'll finish it off/);
 
-    // Claiming is a minute; the page is not live until it has those three.
-    // "About two minutes" promised the whole thing and delivered the first
-    // step, which the first business to try it would have found out.
+    // Claiming is the moment it goes live, and the email says so rather
+    // than describing a rule that no longer exists.
+    assert.match(message, /goes live as soon as you do/);
+    assert.ok(!/once it has your logo, your opening hours/.test(message));
+
+    // "About two minutes" promised the whole thing and delivered the
+    // first step, which the first business to try it would have found out.
     assert.ok(!/two minutes/.test(message));
+
+    // And the section of the directory they would be in, which is their
+    // place rather than a place in general.
+    assert.match(message, /listed under Bakeries/);
 });
 
 // A DM is read on a phone in a second, so it carries the short version
@@ -179,4 +190,23 @@ test("the DM offers to finish it, and leaves the numbers line to the email", () 
     assert.match(dm, /I'll do the rest/);
     assert.ok(!/two minutes/.test(dm));
     assert.ok(!dm.includes("take my word"));
+});
+
+// A preview built without a category still has to read as a sentence.
+// The section is dropped rather than left as a gap or a "null".
+test("the directory line reads without a category", () => {
+    const uncategorised = {
+        businesses: {
+            name: "Little Loaf",
+            business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
+        },
+        contact_name: "Sam",
+        token: "11111111-2222-3333-4444-555555555555",
+    } as unknown as Parameters<typeof outreachMessage>[0];
+
+    const message = outreachMessage(uncategorised, "Harry Northam", 37);
+
+    assert.match(message, /You get a page in the Bristol directory: your offers/);
+    assert.ok(!/listed under/.test(message));
+    assert.ok(!/undefined|null/.test(message));
 });
