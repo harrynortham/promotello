@@ -28,7 +28,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { businessHasPro } from "@/lib/billing";
+import { businessHasPro, isLiveOffer } from "@/lib/billing";
 import { readStarter, starterToShow } from "@/lib/starter";
 import { businessPath } from "@/lib/slugs";
 import { storedImage } from "@/lib/images";
@@ -45,8 +45,11 @@ type OfferSummary = {
     id: string;
     title: string;
     approval_status: string;
-    closed_at: string | null;
-    review_requested_at: string | null;
+    // What isLiveOffer needs: an expired or plan-paused offer is not
+    // something to point a poster at. closed_at and review_requested_at
+    // stood here and were never selected or read.
+    expires_at: string;
+    plan_paused_at: string | null;
     max_redemptions: number | null;
     redemption_count: number;
 };
@@ -146,7 +149,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { count: memberCount },
         { data: recentRedemptionRows },
         { count: printedPosterCount },
-        { count: printedCardPosterCount },
         { count: loyaltyCount },
         hasPro,
         { data: isPlatformAdmin },
@@ -156,7 +158,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         supabase
             .from("offers")
             .select(
-                "id, title, approval_status, max_redemptions, redemption_count",
+                "id, title, approval_status, max_redemptions, redemption_count, expires_at, plan_paused_at",
             )
             .eq("business_id", businessId)
             .order("redemption_count", { ascending: false }),
@@ -217,18 +219,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .eq("business_id", businessId)
             .is("archived_at", null)
             .not("poster_printed_at", "is", null),
-
-        supabase
-            // Of those, the ones that open a loyalty card. "Print a QR
-            // poster" was satisfied by any poster at all, including one
-            // pointing at the business page — so a card could sit there
-            // with no way in and this list would say everything was done.
-            .from("qr_codes")
-            .select("id", { count: "exact", head: true })
-            .eq("business_id", businessId)
-            .is("archived_at", null)
-            .not("poster_printed_at", "is", null)
-            .not("loyalty_program_id", "is", null),
 
         supabase
             .from("loyalty_programs")
@@ -317,11 +307,28 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
     const awaitingSend = business.approval_status === "pending" && !business.review_requested_at;
 
 
-    // A card they are handing out, and no printed poster that opens it.
-    // Only ever true on Pro, since a card needs Pro to exist at all — so
-    // this never nudges a Free business towards a poster its plan would
-    // refuse.
-    const needsCardPoster = Boolean(loyaltyCount) && !printedCardPosterCount;
+    // The offer a poster would open: live, and approved, since a poster
+    // cannot point at one still being read. Whichever has been claimed
+    // most, because the offers come back in that order and the one that
+    // already works on people is the one worth putting in the window.
+    const posterOffer =
+        offers.find(
+            (offer) => offer.approval_status === "approved" && isLiveOffer(offer),
+        ) ?? null;
+
+    // One poster is the ask, and it is finished by any of them: a poster
+    // aimed at the business page still lands somebody on the page, where
+    // the offers and the card are both there to take. A poster aimed at
+    // one thing is better — it puts that thing straight on the phone —
+    // but it is not the only door, and asking a business that has
+    // already taped something up for a second and a third is a chore
+    // list rather than help.
+    //
+    // What it is aimed at decides the words while they have none, so the
+    // one poster they do make is the one worth most: the card if they
+    // hand one out, otherwise the offer they are running.
+    const hasPoster = Boolean(printedPosterCount);
+    const posterFor = loyaltyCount ? "loyalty" : posterOffer?.id ?? null;
 
     const checklist: ChecklistGroup[] = [
         {
@@ -389,23 +396,26 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 // general poster every time: it is the thing they are
                 // paying for, and until a poster opens it the only way in
                 // is a directory page they are not yet found on.
-                needsCardPoster
-                    ? {
-                        id: "qr",
-                        label: "Put your loyalty card in the window",
-                        description: "A poster is how somebody who has never been in joins your card.",
-                        completed: false,
-                        href: `${base}/qr/new?for=loyalty`,
-                        action: "Make a poster",
-                    }
-                    : {
-                        id: "qr",
-                        label: "Print a QR poster",
-                        description: "Put it in your window or by the till so passers-by find your offers.",
-                        completed: Boolean(printedPosterCount),
-                        href: `${base}/qr`,
-                        action: "Make a poster",
-                    },
+                // Named after what it will open, and sent to the
+                // designer with that already chosen. "Print a QR poster"
+                // pointing at an empty form left them a second decision
+                // to make before anything happened.
+                {
+                    id: "qr",
+                    label: loyaltyCount
+                        ? "Put your loyalty card in the window"
+                        : posterOffer
+                            ? "Put your offer in the window"
+                            : "Print a QR poster",
+                    description: loyaltyCount
+                        ? "A poster by the till puts your card straight on a customer's phone."
+                        : posterOffer
+                            ? `A poster is how somebody walking past finds “${posterOffer.title}”.`
+                            : "Put it in your window or by the till so passers-by find your offers.",
+                    completed: hasPoster,
+                    href: posterFor ? `${base}/qr/new?for=${posterFor}` : `${base}/qr`,
+                    action: "Make a poster",
+                },
                 {
                     id: "loyalty",
                     label: "Start a loyalty card",

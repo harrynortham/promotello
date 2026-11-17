@@ -175,7 +175,7 @@ function setupSteps(businessId: string, hasPro: boolean, hasLoyalty = false): St
             ? {
                 key: "poster" as const,
                 label: "Put your loyalty card in the window",
-                why: "A poster is how somebody who has never been in joins your card. Without one the only way in is your page in the directory, which is a slower road for a business that has just arrived.",
+                why: "A poster by the till puts your card straight on a customer's phone while they are standing in front of you. Without one they have to find your page first, which is a longer walk and most people don't take it.",
                 path: `${base}/qr/new?for=loyalty`,
                 action: "Get your poster",
             }

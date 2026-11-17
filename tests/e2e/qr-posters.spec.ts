@@ -61,10 +61,14 @@ test("business owner can create a QR code, print its poster and see scans", asyn
         }, { timeout: 15_000 })
         .not.toBeNull();
 
-    // And that is what ticks "Print a QR poster" on the dashboard: a
-    // finished item is struck through.
+    // And that is what ticks the poster step on the dashboard: a
+    // finished item is struck through. The step is named after whatever
+    // the poster would open — the card if they hand one out, else the
+    // offer they are running — so match any of the three.
     await page.goto(`/business/${businessId}`);
-    const item = page.getByText("Print a QR poster", { exact: true });
+    const item = page.getByText(
+        /^(Print a QR poster|Put your loyalty card in the window|Put your offer in the window)$/,
+    );
     await expect(item).toBeVisible({ timeout: 15_000 });
     await expect(item).toHaveClass(/line-through/);
 });

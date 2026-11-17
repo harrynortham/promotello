@@ -370,25 +370,26 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     </>
                 )}
 
-                {/* A card on offer that nothing points at. Not a
-                    congratulation and not an error: a card is joined by
-                    scanning a poster or by finding the business page, and
-                    for a shop that joined last week the second of those is
-                    close to nobody. It says which of the two they have.
+                {/* A card on offer that no poster opens. Not an error:
+                    somebody scanning any poster of theirs lands on the
+                    business page, where this card is there to join. A
+                    poster aimed at the card is a shorter walk — the card
+                    goes straight onto the phone — which is what this
+                    says, rather than pretending there is no way in.
 
                     Keyed on a poster existing rather than being printed,
                     so it goes the moment they make one; the dashboard
                     checklist carries it from there to the printer. */}
                 {program && !pointedAtCard && !saved && canManage && (
                     <Alert className="mt-8 border-[#FF593F]/30 bg-[#FFF4E8]">
-                        <AlertTitle>Nothing points at this card yet</AlertTitle>
+                        <AlertTitle>No poster opens this card yet</AlertTitle>
 
                         <AlertDescription>
                             <p className="text-[#17233B]/75">
-                                Customers join by scanning a poster or by finding your
-                                page in the directory. Right now it is only the page &mdash;
-                                so the people most likely to come back, the ones already
-                                standing in front of you, have no way in.
+                                A poster aimed at the card puts it straight on a
+                                customer&rsquo;s phone while they are standing at the
+                                counter. Without one they have to find your page first,
+                                which is a longer walk and most people don&rsquo;t take it.
                             </p>
 
                             <Button

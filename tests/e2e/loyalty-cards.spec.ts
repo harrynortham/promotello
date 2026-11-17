@@ -1111,12 +1111,10 @@ test("a late answer about the card cannot undo a stamp that has landed", async (
     }
 });
 
-// A card is joined by scanning a poster or by finding the business in the
-// directory. For a business that arrived last week the second is close to
-// nobody, so a card with nothing pointing at it is a card nobody can join
-// — and until now the product said nothing about it. The dashboard's
-// "Print a QR poster" was ticked by any printed poster at all, including
-// one that opens the business page.
+// A poster aimed at the card puts it straight on the phone of somebody
+// standing at the counter. Any other poster of theirs lands on the
+// business page, where the card is there to join — a longer walk, and
+// most people don't take it. The loyalty page said nothing either way.
 test("a card with no poster pointing at it says so, and stops once one does", async ({ browser }) => {
     const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -1144,7 +1142,7 @@ test("a card with no poster pointing at it says so, and stops once one does", as
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto(`/business/${businessId}/loyalty`);
 
-        const prompt = page.getByText("Nothing points at this card yet");
+        const prompt = page.getByText("No poster opens this card yet");
         await expect(prompt).toBeVisible({ timeout: 20_000 });
 
         // Straight to the designer with the card chosen. A poster made
