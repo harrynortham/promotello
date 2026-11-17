@@ -72,6 +72,31 @@ npm run db:ship       # send migrations to the live database, with a confirmatio
 That is the day-to-day. The rest of this document is setting it up once,
 and the detail behind the commands.
 
+### One thing to know about `test:e2e`
+
+The suite signs in once, in global setup, and saves the session to
+`tests/.auth/*.json`. Every spec loads that one file, and nothing ever
+writes a rotated token back to it — so the whole run has to finish
+inside the lifetime of that session.
+
+It did not, for a while. At `jwt_expiry = 3600` a full run outlived its
+own login: the first context to refresh rotated the token, every
+context after it presented the old one, and 142 `Invalid Refresh
+Token: Already Used` errors later fifty-one tests had failed for
+reasons that had nothing to do with the code. Each failure sat until
+its own timeout — 120s and 300s in places — which pushed the rest of
+the run further past the expiry, and one run took nine hours.
+
+`supabase/config.toml` sets `jwt_expiry = 28800` for that reason. It is
+local only: `db:ship` runs `supabase db push`, which sends migrations
+and not config, so the live project keeps the one hour it should have.
+It is also **not** how long a business stays signed in — the browser
+client refreshes in the background and the middleware writes the new
+cookies back, so a real session has never been an hour.
+
+If a run ever starts failing in clusters across unrelated specs, check
+for that error before believing any of it.
+
 ---
 
 ## Setting it up
