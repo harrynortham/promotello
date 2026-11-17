@@ -82,7 +82,34 @@ test("half a type is not half a headline", () => {
 
 test("an item arrives tidy, however it was typed", () => {
     assert.equal(offerHeadline({ kind: "freebie", item: "  pastry  " }), "Free pastry");
-    assert.equal(offerHeadline({ kind: "freebie", item: "a\n side" }), "Free a side");
+
+    // "What's free?" "A filter coffee." The article is how somebody
+    // answers that question, and "Free a filter coffee" is what the
+    // page used to read. Every template wants a bare noun after it.
+    assert.equal(
+        offerHeadline({ kind: "freebie", item: "a filter coffee" }),
+        "Free filter coffee",
+    );
+    assert.equal(offerHeadline({ kind: "freebie", item: "An espresso" }), "Free espresso");
+    assert.equal(
+        offerHeadline({ kind: "freebie", item: "the house blend" }),
+        "Free house blend",
+    );
+    assert.equal(
+        offerHeadline({ kind: "percent_off", value: 20, item: "a flat white" }),
+        "20% off flat white",
+    );
+    assert.equal(
+        offerHeadline({ kind: "two_for_one", item: "the daily special" }),
+        "2 for 1 on daily special",
+    );
+
+    // Not a word that merely starts with one, and not an item that is
+    // only an article.
+    assert.equal(offerHeadline({ kind: "freebie", item: "anchovies" }), "Free anchovies");
+    assert.equal(offerHeadline({ kind: "freebie", item: "theatre ticket" }), "Free theatre ticket");
+    assert.equal(offerHeadline({ kind: "freebie", item: "a" }), "Free a");
+    assert.equal(offerHeadline({ kind: "freebie", item: "side\n order" }), "Free side order");
     assert.equal(
         offerHeadline({ kind: "percent_off", value: 10, item: "x".repeat(40) }),
         `10% off ${"x".repeat(24)}`,
