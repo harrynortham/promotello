@@ -37,6 +37,14 @@ type NewOfferFormProps = {
     // The offer line from their preview email, when they came in by
     // "Use this offer" on the dashboard.
     suggestedTitle?: string | null;
+    // How many people follow this business. Nought for anybody who has
+    // just signed up, which is most people seeing this screen.
+    followers: number;
+    // Set only on Free, and only once the plan's one poster is spent:
+    // which poster it is and what it currently opens. Telling somebody
+    // here to put this offer on a poster would be telling them to do
+    // something their plan refuses.
+    spentPoster: { codeId: string; pointsAt: string | null } | null;
     canSchedule: boolean;
 };
 
@@ -48,6 +56,8 @@ export default function NewOfferForm({
     businessLogoUrl,
     defaultCategoryId,
     suggestedTitle = null,
+    followers,
+    spentPoster,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -60,6 +70,33 @@ export default function NewOfferForm({
 
     const created = searchParams.get("created");
     const createdOffer = created === "live" || created === "pending" ? created : null;
+    const createdOfferId = searchParams.get("offer");
+
+    // The Free plan includes one poster. Once it is spent, "put it on a
+    // poster" is advice they cannot take, so the step says what they have
+    // and what another would cost.
+    //
+    // Not "point it at this offer instead": a poster's printed words are
+    // written when it is made and can never be changed, so re-aiming a
+    // live one leaves a sheet in the window selling one offer and a code
+    // opening another. The customer holding the phone is the one who
+    // pays for that. A poster whose offer has simply ended is a different
+    // thing and already lands well — the business page says "That offer
+    // has ended" and points at what is on.
+    const posterStep = spentPoster
+        ? `The Free plan includes one poster, and yours ${spentPoster.pointsAt ? `points at ${spentPoster.pointsAt}` : "is already up"}. Pro gives you one for every spot, so each offer can have its own.`
+        : createdOffer === "live"
+            ? "Put it on a QR poster for your window or your till, so people passing can scan it."
+            : "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.";
+
+    // Where that step sends them: the plans at the limit, otherwise the
+    // designer, opened on the offer they just wrote. An offer still being
+    // read cannot be pointed at yet, so a pending one goes to the list.
+    const posterHref = spentPoster
+        ? `/business/${businessId}/billing`
+        : createdOffer === "live" && createdOfferId
+            ? `/business/${businessId}/qr/new?for=${createdOfferId}`
+            : `/business/${businessId}/qr`;
     const [errorMessage, setErrorMessage] = useState("");
 
     const {
@@ -196,7 +233,14 @@ export default function NewOfferForm({
         reset();
         setImageFile(null);
         setImagePreviewUrl(null);
-        router.replace(`${pathname}?created=${live ? "live" : "pending"}`, { scroll: false });
+        // The id travels so the poster link can open the designer on this
+        // offer. Pressing "put it on a poster" and landing on a form set
+        // to the business page makes them choose again what they just
+        // spent five minutes writing.
+        router.replace(
+            `${pathname}?created=${live ? "live" : "pending"}&offer=${inserted.id}`,
+            { scroll: false },
+        );
     }
 
     if (createdOffer) {
@@ -220,7 +264,9 @@ export default function NewOfferForm({
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
-                                ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                ? followers > 0
+                                    ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                    : "Customers browsing the directory can see and claim it now."
                                 : "Our team checks every offer before customers see it, usually the same day."}
                         </p>
 
@@ -231,13 +277,21 @@ export default function NewOfferForm({
                             {(createdOffer === "live"
                                 ? [
                                     "It's on your page and in the Promotello directory now.",
-                                    "Anyone following you is getting an email about it.",
-                                    "Put it on a QR poster for your window or your till, so people passing can scan it.",
+                                    ...(followers > 0
+                                        ? [
+                                            followers === 1
+                                                ? "The person following you is getting an email about it."
+                                                : `The ${followers} people following you are getting an email about it.`,
+                                        ]
+                                        : []),
+                                    posterStep,
                                 ]
                                 : [
                                     "We check it, usually the same day.",
-                                    "You get an email the moment it's live, and your followers hear about it then.",
-                                    "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.",
+                                    followers > 0
+                                        ? "You get an email the moment it's live, and the people following you hear about it then."
+                                        : "You get an email the moment it's live.",
+                                    posterStep,
                                 ]
                             ).map((step, index) => (
                                 <li key={step} className="flex gap-3">
@@ -274,14 +328,16 @@ export default function NewOfferForm({
 
                         <p className="mt-6 text-sm text-[#17233B]/65">
                             <Link
-                                href={`/business/${businessId}/qr`}
+                                href={posterHref}
                                 className="font-medium text-[#17233B] underline underline-offset-4 hover:text-[#FF593F]"
                             >
-                                See your QR posters
+                                {spentPoster ? "See the plans" : "See your QR posters"}
                             </Link>{" "}
-                            {createdOffer === "live"
-                                ? "to put this offer in the window."
-                                : "— this offer joins them once it's approved."}
+                            {spentPoster
+                                ? "— one poster per spot, so each offer gets its own."
+                                : createdOffer === "live"
+                                    ? "to put this offer in the window."
+                                    : "— this offer joins them once it's approved."}
                         </p>
                     </CardContent>
                 </Card>

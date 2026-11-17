@@ -222,38 +222,69 @@ test("the setup checklist goes once there is nothing left to do", async ({ brows
             })),
         );
 
-        await admin.from("offers").insert({
-            business_id: businessId,
-            created_by: state.businessUserId,
-            slug: `e2e-finished-${run}`,
-            title: "E2E Finished Offer",
-            category: "Testing",
-            discount: "10% off",
-            description: "An offer so the checklist has one.",
-            availability: "Available now",
-            expires_at: "2030-12-31",
-            terms: "For automated tests only.",
-            approval_status: "approved",
-            redemption_count: 0,
-            image_url: picture!.cover_image_url,
-        });
+        const { data: offer } = await admin
+            .from("offers")
+            .insert({
+                business_id: businessId,
+                created_by: state.businessUserId,
+                slug: `e2e-finished-${run}`,
+                title: "E2E Finished Offer",
+                category: "Testing",
+                discount: "10% off",
+                description: "An offer so the checklist has one.",
+                availability: "Available now",
+                expires_at: "2030-12-31",
+                terms: "For automated tests only.",
+                approval_status: "approved",
+                redemption_count: 0,
+                image_url: picture!.cover_image_url,
+            })
+            .select("id, title")
+            .single();
+
+        const { data: program, error: loyaltyError } = await admin
+            .from("loyalty_programs")
+            .insert({
+                business_id: businessId,
+                stamps_required: 9,
+                reward: "a free coffee",
+                is_active: true,
+            })
+            .select("id")
+            .single();
+        expect(loyaltyError, "the loyalty card was set up").toBeNull();
 
         // Printed, not made: the step ticks on poster_printed_at, which
         // the poster page sets when somebody prints it or saves the PDF.
         // A code sitting in the dashboard has never been in a window.
-        await admin.from("qr_codes").insert({
-            business_id: businessId,
-            label: "Front window",
-            poster_printed_at: new Date().toISOString(),
-        });
+        //
+        // Two of them, because "has a poster" is not one question. A
+        // poster aimed at the business page is not a way into the card,
+        // and a card poster is not an offer in a window. One printed
+        // poster used to tick this step whatever it opened.
+        const printed = new Date().toISOString();
 
-        const { error: loyaltyError } = await admin.from("loyalty_programs").insert({
-            business_id: businessId,
-            stamps_required: 9,
-            reward: "a free coffee",
-            is_active: true,
-        });
-        expect(loyaltyError, "the loyalty card was set up").toBeNull();
+        const { data: cardPoster } = await admin
+            .from("qr_codes")
+            .insert({
+                business_id: businessId,
+                label: "Till",
+                loyalty_program_id: program!.id,
+                poster_printed_at: printed,
+            })
+            .select("id")
+            .single();
+
+        const { data: offerPoster } = await admin
+            .from("qr_codes")
+            .insert({
+                business_id: businessId,
+                label: "Front window",
+                offer_id: offer!.id,
+                poster_printed_at: printed,
+            })
+            .select("id")
+            .single();
 
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto(`/business/${businessId}`);
@@ -268,6 +299,39 @@ test("the setup checklist goes once there is nothing left to do", async ({ brows
         await expect(page.getByText("Get your business ready")).toHaveCount(0);
         await expect(page.getByText("What's next")).toHaveCount(0);
         await expect(page.getByText("You're ready to go live")).toHaveCount(0);
+
+        // One poster is the ask, however it is aimed: a business-page
+        // poster still lands somebody where the offers and the card
+        // both are. Take every printed poster away and the step is back
+        // — named after the card, because that is the one worth making
+        // first, and opening the designer on it rather than on an empty
+        // form.
+        await admin.from("qr_codes").delete().in("id", [cardPoster!.id, offerPoster!.id]);
+
+        await page.reload();
+
+        await expect(
+            page.getByText("Put your loyalty card in the window"),
+        ).toBeVisible({ timeout: 20_000 });
+
+        await expect(
+            page.locator(`a[href="/business/${businessId}/qr/new?for=loyalty"]`),
+        ).toBeVisible();
+
+        // With no card to hand out it names the offer instead, so the
+        // one poster they make sells something rather than opening a
+        // form they have to fill in twice.
+        await admin.from("loyalty_programs").delete().eq("id", program!.id);
+
+        await page.reload();
+
+        await expect(page.getByText("Put your offer in the window")).toBeVisible({ timeout: 20_000 });
+        await expect(
+            page.getByText(`A poster is how somebody walking past finds “${offer!.title}”.`),
+        ).toBeVisible();
+        await expect(
+            page.locator(`a[href="/business/${businessId}/qr/new?for=${offer!.id}"]`),
+        ).toBeVisible();
     } finally {
         if (businessId) await admin.from("businesses").delete().eq("id", businessId);
     }

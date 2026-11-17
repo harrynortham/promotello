@@ -26,7 +26,9 @@ type PageProps = {
         created?: string;
         pointed?: string;
         restored?: string;
-        // Sent by "Make a poster for this card" on the loyalty page.
+        // "loyalty", or an offer's id: what the business said it wanted a
+        // poster for on the way here. Sent by the loyalty page, the
+        // dashboard checklist and the screen after a new offer.
         for?: string;
     }>;
 };
@@ -292,7 +294,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
                                 waitingForApproval={!isLive}
-                                startOn={openOn === "loyalty" ? "loyalty" : null}
+                                startOn={openOn ?? null}
                             />
                         </CardContent>
                     </Card>

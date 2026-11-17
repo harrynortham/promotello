@@ -110,7 +110,7 @@ type Step = { key: StepKey; label: string; why: string; path: string; action: st
 // that can actually start one. On Free it is not an unfinished page,
 // it is a thing to buy — which has an email of its own to make that
 // case ('loyalty_pitch') rather than being dressed up as setup.
-function setupSteps(businessId: string, hasPro: boolean): Step[] {
+function setupSteps(businessId: string, hasPro: boolean, hasLoyalty = false): Step[] {
     const base = `/business/${businessId}`;
 
     return [
@@ -167,13 +167,25 @@ function setupSteps(businessId: string, hasPro: boolean): Step[] {
                 },
             ]
             : []),
-        {
-            key: "poster",
-            label: "Print your QR poster",
-            why: "A poster in your window or by the counter is how passers-by find your offers. It takes a minute to print.",
-            path: `${base}/qr`,
-            action: "Get your poster",
-        },
+        // A card with nothing pointing at it is the one worth naming:
+        // it is what they are paying for, and until a poster opens it
+        // the only way in is a directory page they are not yet found on.
+        // Otherwise the general poster, which is the same step it was.
+        hasPro && hasLoyalty
+            ? {
+                key: "poster" as const,
+                label: "Put your loyalty card in the window",
+                why: "A poster by the till puts your card straight on a customer's phone while they are standing in front of you. Without one they have to find your page first, which is a longer walk and most people don't take it.",
+                path: `${base}/qr/new?for=loyalty`,
+                action: "Get your poster",
+            }
+            : {
+                key: "poster" as const,
+                label: "Put up your QR poster",
+                why: "A poster in your window or by the counter is how passers-by find your offers. Printing it is the step that counts — a code in your dashboard has never been in a window.",
+                path: `${base}/qr`,
+                action: "Get your poster",
+            },
     ];
 }
 
@@ -215,7 +227,9 @@ function missingSteps(due: LifecycleDue) {
         poster: due.details.has_poster,
     };
 
-    return setupSteps(due.business_id, due.hasPro).filter((step) => !done[step.key]);
+    return setupSteps(due.business_id, due.hasPro, due.details.has_loyalty).filter(
+        (step) => !done[step.key],
+    );
 }
 
 function formatDate(value: string) {
@@ -691,7 +705,7 @@ export function lifecycleEmail(
                 "No customers have come through Promotello yet, which is normal in the first couple of weeks.",
                 d.has_poster
                     ? "The quickest way to change that is to mention your offer when you serve somebody, and keep your QR poster where people wait or pay, so they can scan it there and then."
-                    : "The quickest way to change that is your QR poster. Put it in your window or by the counter, so customers can scan your offer while they're there.",
+                    : "The quickest way to change that is your QR poster, printed and up. Put it in your window or by the counter, so customers can scan your offer while they're there.",
             ],
             action: d.has_poster
                 ? { label: "Open your dashboard", url: dashboard }

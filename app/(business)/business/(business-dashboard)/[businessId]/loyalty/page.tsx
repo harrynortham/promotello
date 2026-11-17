@@ -166,7 +166,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
 
     const canManage = ["owner", "admin"].includes(membership.role);
 
-    const [{ data: programs }, { data: business }, hasPro, trialSpent, starter] = await Promise.all([
+    const [{ data: programs }, { data: business }, hasPro, trialSpent, starter, { data: cardPosters }] = await Promise.all([
         supabase
             .from("loyalty_programs")
             .select("id, name, closed_at, stamps_required, reward, terms, is_active, card_colour, card_header, card_accent, stamp_icon")
@@ -186,6 +186,18 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
         // The card we drew in their preview email. Used only as the
         // starting state of a first card (docs/LAUNCH-FUNNEL.md).
         readStarter(supabase, businessId),
+
+        // Posters pointing at a card of theirs. A card with none is only
+        // reachable from the business page, which for a shop that joined
+        // last week is close to nobody — so the card that was supposed to
+        // bring people back cannot be joined by anyone who has not already
+        // found them.
+        supabase
+            .from("qr_codes")
+            .select("loyalty_program_id")
+            .eq("business_id", businessId)
+            .is("archived_at", null)
+            .not("loyalty_program_id", "is", null),
     ]);
 
     const allCards = (programs ?? []) as Program[];
@@ -199,6 +211,12 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
     // finishing: closed to new joiners, stamped until their holders are
     // done, because a card in someone's wallet is a promise.
     const program = allCards.find((card) => card.is_active && !card.closed_at) ?? null;
+    // Whether a poster opens the card they are handing out. Posters left
+    // pointing at a card they have since closed do not count: the card on
+    // offer is the one that needs a way in.
+    const pointedAtCard = (cardPosters ?? []).some(
+        (poster) => poster.loyalty_program_id === program?.id,
+    );
     const cards = program ? [program] : [];
     const stillCollecting = allCards.filter((card) => card.id !== program?.id);
     const collectingPage = pageOf(stillCollecting, collecting, PER_PAGE.collecting);
@@ -298,7 +316,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             </p>
 
                             <Button
-                                render={<Link href={`/business/${businessId}/qr?for=loyalty#create-qr`} />}
+                                render={<Link href={`/business/${businessId}/qr/new?for=loyalty`} />}
                                 nativeButton={false}
                                 size="sm"
                                 className="mt-4 bg-[#17233B] text-white hover:bg-[#17233B]/90"
@@ -350,6 +368,41 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                 ) : (
                     <>
                     </>
+                )}
+
+                {/* A card on offer that no poster opens. Not an error:
+                    somebody scanning any poster of theirs lands on the
+                    business page, where this card is there to join. A
+                    poster aimed at the card is a shorter walk — the card
+                    goes straight onto the phone — which is what this
+                    says, rather than pretending there is no way in.
+
+                    Keyed on a poster existing rather than being printed,
+                    so it goes the moment they make one; the dashboard
+                    checklist carries it from there to the printer. */}
+                {program && !pointedAtCard && !saved && canManage && (
+                    <Alert className="mt-8 border-[#FF593F]/30 bg-[#FFF4E8]">
+                        <AlertTitle>No poster opens this card yet</AlertTitle>
+
+                        <AlertDescription>
+                            <p className="text-[#17233B]/75">
+                                A poster aimed at the card puts it straight on a
+                                customer&rsquo;s phone while they are standing at the
+                                counter. Without one they have to find your page first,
+                                which is a longer walk and most people don&rsquo;t take it.
+                            </p>
+
+                            <Button
+                                render={<Link href={`/business/${businessId}/qr/new?for=loyalty`} />}
+                                nativeButton={false}
+                                size="sm"
+                                className="mt-4 bg-[#17233B] text-white hover:bg-[#17233B]/90"
+                            >
+                                Make a poster for this card
+                                <FiArrowRight aria-hidden="true" />
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {/* Everything the business has, not only what it is

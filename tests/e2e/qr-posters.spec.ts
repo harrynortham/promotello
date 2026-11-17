@@ -61,10 +61,14 @@ test("business owner can create a QR code, print its poster and see scans", asyn
         }, { timeout: 15_000 })
         .not.toBeNull();
 
-    // And that is what ticks "Print a QR poster" on the dashboard: a
-    // finished item is struck through.
+    // And that is what ticks the poster step on the dashboard: a
+    // finished item is struck through. The step is named after whatever
+    // the poster would open — the card if they hand one out, else the
+    // offer they are running — so match any of the three.
     await page.goto(`/business/${businessId}`);
-    const item = page.getByText("Print a QR poster", { exact: true });
+    const item = page.getByText(
+        /^(Print a QR poster|Put your loyalty card in the window|Put your offer in the window)$/,
+    );
     await expect(item).toBeVisible({ timeout: 15_000 });
     await expect(item).toHaveClass(/line-through/);
 });
@@ -645,11 +649,18 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
     let codeId: string | undefined;
 
     try {
-        await page.goto(`/business/${state.businessId}/qr/new`);
+        // Arriving with the card already named — which is what every
+        // link to this form for a card does — opens on it, and on a
+        // layout that draws it. Choosing "loyalty" from the dropdown
+        // always did the second part; the link skipped it and opened on
+        // Classic, which draws no card at all.
+        await page.goto(`/business/${state.businessId}/qr/new?for=loyalty`);
         await expect(page.locator("#qr-target")).toBeVisible({ timeout: 20_000 });
 
+        await expect(page.locator("#qr-target")).toHaveValue("loyalty");
+        await expect(page.locator("input[name=posterLayout]")).toHaveValue("stamp_card");
+
         await page.locator("#qr-label").fill("By the till");
-        await page.selectOption("#qr-target", "loyalty");
 
         // The card's own words, offered as the poster's.
         await expect(page.locator("#poster-eyebrow")).toHaveAttribute("placeholder", "Collect 9 stamps");

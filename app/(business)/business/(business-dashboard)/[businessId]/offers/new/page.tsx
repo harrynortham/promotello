@@ -13,6 +13,8 @@ import {
     businessTier,
 } from "@/lib/billing";
 import { readStarter } from "@/lib/starter";
+import { qrTarget, todayInUk } from "@/lib/qr-target";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import NewOfferForm from "./new-offer-form";
 
@@ -90,6 +92,69 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
         .eq("id", businessId)
         .maybeSingle();
 
+    // The Free plan includes one poster. If it is already spent, the
+    // screen after this offer must not tell them to put it on a poster —
+    // they cannot. What they can do is point the poster they have at this
+    // offer instead, which costs nothing and needs no reprint, so the
+    // screen offers that and mentions Pro second.
+    const spentPoster = await (async () => {
+        if (await businessHasPro(supabase, businessId)) {
+            return null;
+        }
+
+        const { data: codes } = await supabase
+            .from("qr_codes")
+            .select(`
+                id,
+                archived_at,
+                former_target,
+                offers ( title, approval_status, expires_at, plan_paused_at ),
+                loyalty_programs ( name, is_active, closed_at )
+            `)
+            .eq("business_id", businessId)
+            .is("archived_at", null)
+            .limit(1);
+
+        const code = (codes ?? [])[0];
+
+        if (!code) {
+            return null;
+        }
+
+        // PostgREST gives an embedded row either way round depending on
+        // the join, the same as the QR page allows for.
+        const one = <T,>(value: T | T[] | null | undefined): T | null =>
+            Array.isArray(value) ? value[0] ?? null : value ?? null;
+
+        const target = qrTarget(
+            {
+                former_target: code.former_target,
+                offers: one(code.offers),
+                loyalty_programs: one(code.loyalty_programs),
+            },
+            todayInUk(),
+            false,
+        );
+
+        return { codeId: code.id as string, pointsAt: target.name };
+    })();
+
+    // Whether anybody actually follows them. The screen after submitting
+    // used to promise "your followers are getting an email about it" to
+    // a business that signed up an hour ago and has none — the one
+    // moment it should be describing what will really happen.
+    //
+    // Counted with the admin client, because the only select policy on
+    // business_followers is user_id = auth.uid(): a person can see who
+    // they follow, and a business cannot see who follows it. Asking
+    // through the owner's own client answers 1 when they follow
+    // themselves and 0 otherwise, whatever the real number is. Same
+    // reason lib/closing-notices.ts and the admin business page use it.
+    const { count: followers } = await createAdminClient()
+        .from("business_followers")
+        .select("user_id", { count: "exact", head: true })
+        .eq("business_id", businessId);
+
     // The line from their preview email, where they followed the button
     // that offers it. Only the title: the type decides what the offer
     // promises, and guessing that from a sentence would put a promise on
@@ -105,6 +170,8 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
             businessLogoUrl={business?.logo_url ?? null}
             defaultCategoryId={business?.category_id ?? null}
             suggestedTitle={suggestedTitle}
+            followers={followers ?? 0}
+            spentPoster={spentPoster}
             canSchedule={(await businessTier(supabase, businessId).catch(() => "free")) === "growth"}
         />
     );

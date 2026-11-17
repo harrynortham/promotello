@@ -24,6 +24,7 @@ import { PlanComparison } from "@/components/plan-comparison";
 import { company } from "@/lib/legal";
 import { createClient } from "@/utils/supabase/server";
 import { BillingHelp } from "./help";
+import { WaitingForStripe } from "./waiting-for-stripe";
 import { changePlan, openBillingPortal, startCheckout } from "./actions";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -171,16 +172,9 @@ async function BillingContent({ params, searchParams }: PageProps) {
                     </Alert>
                 )}
 
-                {checkout === "success" && !current && (
-                    <Alert className="mt-8">
-                        <AlertTitle>Finishing your sign-up</AlertTitle>
-                        <AlertDescription>
-                            Stripe has confirmed your details. Your plan will
-                            appear here in a few seconds. Refresh the page if it
-                            doesn&apos;t.
-                        </AlertDescription>
-                    </Alert>
-                )}
+                {/* Asks again until the webhook lands, rather than
+                    telling them to refresh it themselves. */}
+                {checkout === "success" && !current && <WaitingForStripe />}
 
                 {changed && (
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">

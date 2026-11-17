@@ -339,7 +339,9 @@ async function OffersSearch({ city, searchParams }: ListingProps) {
         <SearchForm
             action={city ? `/offers/${city.slug}` : "/offers"}
             defaultValue={params.search}
-            placeholder="Free coffee in Bedminster"
+            // What, not where: the location box beside this one already
+            // asks where. See the note on the businesses listing.
+            placeholder="Free coffee or 2 for 1"
             label="Search offers"
             hidden={{ category: params.category, area: params.area, type: params.type, sort: params.sort }}
             size="lg"
