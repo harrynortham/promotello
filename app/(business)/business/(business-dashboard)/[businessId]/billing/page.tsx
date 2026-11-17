@@ -501,7 +501,7 @@ async function PlanOptions({
                 when they start it and the days are theirs to use. */}
             {!isLive && trialEligible && (
                 <Alert className="mt-4 border-[#17233B]/15 bg-white">
-                    <AlertTitle>Your page is still being read</AlertTitle>
+                    <AlertTitle>Your page is still being checked</AlertTitle>
                     <AlertDescription>
                         That doesn&apos;t hold a trial up. Start one today and build your
                         loyalty card, your posters and your offers while you wait — they

@@ -75,7 +75,7 @@ async function WhoScanned({ searchParams }: { searchParams: Promise<{ code?: str
         <Words
             eyebrow="Almost there"
             heading={`${data.business_name} is coming to Promotello.`}
-            body="We're reading their page now — usually the same day — and this code starts working the moment it goes live. Worth scanning again tomorrow."
+            body="We're checking their page now — usually the same day — and this code starts working the moment it goes live. Worth scanning again tomorrow."
         />
     );
 }

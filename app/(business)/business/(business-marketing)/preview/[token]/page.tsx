@@ -139,6 +139,16 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     // pricing page (docs/LAUNCH-FUNNEL.md).
     const placesLeft = await foundingPlacesLeft();
 
+    // Whether the claim will actually publish it, which is the same two
+    // things claim_business_preview checks: something written about the
+    // business, and somewhere it is. Asked rather than assumed, because
+    // this sentence promised a thing the database then refused — for a
+    // year of previews it could not have been true, since the rule also
+    // wanted opening hours and the preview form never collected any
+    // (20270128090000). A promise worth making is worth checking.
+    const goesLiveOnClaim =
+        Boolean(preview.description?.trim()) && Boolean(preview.area?.trim() || town);
+
     const claim = (
         <div className="flex flex-col items-start gap-3">
             <form action={claimPreview}>
@@ -152,10 +162,12 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 so", which was the reason it was safe to press. The page
                 goes live on the claim now
                 (20270124090000_a_claimed_page_is_live_when_claimed.sql),
-                so the button says what it actually does. */}
+                so the button says what it actually does — and only while
+                it really does. */}
             <p className="text-sm text-[#17233B]/70">
-                Free. We wrote this page and checked it before we sent it, so it goes
-                live as soon as you claim it — and it&apos;s yours to change after.
+                {goesLiveOnClaim
+                    ? "Free. We wrote this page and checked it before we sent it, so it goes live as soon as you claim it — and it's yours to change after."
+                    : "Free, and it's yours to change. It goes on the directory once you've finished the page — we'll show you what's left."}
             </p>
 
             {placesLeft !== null && placesLeft > 0 && placesLeft < FOUNDING_MEMBER_LIMIT && (
