@@ -70,24 +70,31 @@ export function PosterDesigner({
     previewSvg: string;
     previewLink: string;
 }) {
-    const [colour, setColour] = useState<CardColour | typeof CUSTOM_COLOUR>(cardColourName(null));
-    // Their own two, once they have opened the picker.
-    const [custom, setCustom] = useState<{ header: string; accent: string } | null>(null);
-    const [layout, setLayout] = useState<PosterLayout>("classic");
-    const [eyebrow, setEyebrow] = useState("");
-    const [headline, setHeadline] = useState("");
     // "Make a poster for this card" on the loyalty page means this card,
-    // and the link from a new offer means that offer, so the form opens on
-    // it rather than making them choose again what they just said. An id
-    // that is not theirs, or an offer that has since gone, falls back to
-    // the business page rather than opening on nothing.
-    const [target, setTarget] = useState(
+    // and the link from a new offer means that offer, so the form opens
+    // on it rather than making them choose again what they just said. An
+    // id that is not theirs, or an offer that has since gone, falls back
+    // to the business page rather than opening on nothing.
+    const openingOn =
         startOn === "loyalty" && loyalty
             ? "loyalty"
             : offers.some((offer) => offer.id === startOn)
                 ? String(startOn)
-                : "business",
+                : "business";
+
+    const [colour, setColour] = useState<CardColour | typeof CUSTOM_COLOUR>(cardColourName(null));
+    // Their own two, once they have opened the picker.
+    const [custom, setCustom] = useState<{ header: string; accent: string } | null>(null);
+    const [layout, setLayout] = useState<PosterLayout>(
+        // The same rule the target dropdown applies below: a poster
+        // pointed at the card leads with the card. Arriving with the card
+        // already chosen skipped it, so the one link that exists to make
+        // a card poster opened on a layout that does not draw one.
+        openingOn === "loyalty" ? "stamp_card" : "classic",
     );
+    const [eyebrow, setEyebrow] = useState("");
+    const [headline, setHeadline] = useState("");
+    const [target, setTarget] = useState(openingOn);
     // The line under the headline, which only an offer poster has. Null
     // means it hasn't been touched, so it follows the offer that is
     // chosen rather than keeping the first one's words.
