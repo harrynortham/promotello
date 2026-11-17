@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardStackLoading } from "@/components/dashboard-skeletons";
 import { CURRENT_SUBSCRIPTION_STATUSES } from "@/lib/billing";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { CloseBusiness } from "./close-business";
 
@@ -79,7 +80,13 @@ async function SettingsContent({ params, searchParams }: PageProps) {
                 .select("id", { count: "exact", head: true })
                 .eq("business_id", businessId)
                 .is("archived_at", null),
-            supabase
+            // The admin client, because the only select policy on
+            // business_followers is user_id = auth.uid(). Asked through
+            // the owner's own client this counted the businesses *they*
+            // follow — so the close dialog told a business with forty
+            // followers that it had none, and left out the best reason
+            // not to go.
+            createAdminClient()
                 .from("business_followers")
                 .select("user_id", { count: "exact", head: true })
                 .eq("business_id", businessId),

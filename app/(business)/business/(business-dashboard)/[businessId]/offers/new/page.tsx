@@ -13,6 +13,7 @@ import {
     businessTier,
 } from "@/lib/billing";
 import { readStarter } from "@/lib/starter";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import NewOfferForm from "./new-offer-form";
 
@@ -90,6 +91,22 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
         .eq("id", businessId)
         .maybeSingle();
 
+    // Whether anybody actually follows them. The screen after submitting
+    // used to promise "your followers are getting an email about it" to
+    // a business that signed up an hour ago and has none — the one
+    // moment it should be describing what will really happen.
+    //
+    // Counted with the admin client, because the only select policy on
+    // business_followers is user_id = auth.uid(): a person can see who
+    // they follow, and a business cannot see who follows it. Asking
+    // through the owner's own client answers 1 when they follow
+    // themselves and 0 otherwise, whatever the real number is. Same
+    // reason lib/closing-notices.ts and the admin business page use it.
+    const { count: followers } = await createAdminClient()
+        .from("business_followers")
+        .select("user_id", { count: "exact", head: true })
+        .eq("business_id", businessId);
+
     // The line from their preview email, where they followed the button
     // that offers it. Only the title: the type decides what the offer
     // promises, and guessing that from a sentence would put a promise on
@@ -105,6 +122,7 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
             businessLogoUrl={business?.logo_url ?? null}
             defaultCategoryId={business?.category_id ?? null}
             suggestedTitle={suggestedTitle}
+            followers={followers ?? 0}
             canSchedule={(await businessTier(supabase, businessId).catch(() => "free")) === "growth"}
         />
     );

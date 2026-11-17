@@ -37,6 +37,9 @@ type NewOfferFormProps = {
     // The offer line from their preview email, when they came in by
     // "Use this offer" on the dashboard.
     suggestedTitle?: string | null;
+    // How many people follow this business. Nought for anybody who has
+    // just signed up, which is most people seeing this screen.
+    followers: number;
     canSchedule: boolean;
 };
 
@@ -48,6 +51,7 @@ export default function NewOfferForm({
     businessLogoUrl,
     defaultCategoryId,
     suggestedTitle = null,
+    followers,
     canSchedule,
 }: NewOfferFormProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -220,7 +224,9 @@ export default function NewOfferForm({
 
                         <p className="mt-4 leading-7 text-[#17233B]/65">
                             {createdOffer === "live"
-                                ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                ? followers > 0
+                                    ? "Customers can see and claim it now, and your followers are getting an email about it."
+                                    : "Customers browsing the directory can see and claim it now."
                                 : "Our team checks every offer before customers see it, usually the same day."}
                         </p>
 
@@ -231,12 +237,20 @@ export default function NewOfferForm({
                             {(createdOffer === "live"
                                 ? [
                                     "It's on your page and in the Promotello directory now.",
-                                    "Anyone following you is getting an email about it.",
+                                    ...(followers > 0
+                                        ? [
+                                            followers === 1
+                                                ? "The person following you is getting an email about it."
+                                                : `The ${followers} people following you are getting an email about it.`,
+                                        ]
+                                        : []),
                                     "Put it on a QR poster for your window or your till, so people passing can scan it.",
                                 ]
                                 : [
                                     "We check it, usually the same day.",
-                                    "You get an email the moment it's live, and your followers hear about it then.",
+                                    followers > 0
+                                        ? "You get an email the moment it's live, and the people following you hear about it then."
+                                        : "You get an email the moment it's live.",
                                     "Once it's approved you can put it on a QR poster, so people in your window or at the till can scan it.",
                                 ]
                             ).map((step, index) => (
