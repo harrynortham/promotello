@@ -25,7 +25,6 @@ import { company } from "@/lib/legal";
 import { createClient } from "@/utils/supabase/server";
 import { BillingHelp } from "./help";
 import { changePlan, openBillingPortal, startCheckout } from "./actions";
-import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/submit-button";
 
 type PageProps = {
@@ -56,8 +55,6 @@ const errorMessages: Record<string, string> = {
         "All founding member places have now been taken. Pro is still available.",
     no_customer: "There's no billing account for this business yet.",
     no_subscription: "There's no subscription to change. Choose a plan below.",
-    not_live_yet:
-        "Your page is still being checked, so a plan has nothing to work on yet. We'll email you when it's live, and your trial starts then.",
 };
 
 const statusLabels: Record<string, string> = {
@@ -423,30 +420,13 @@ function CheckoutButton({
     businessId,
     plan,
     primary,
-    disabled,
     children,
 }: {
     businessId: string;
     plan: PlanKey;
     primary?: boolean;
-    // The page is not live yet, so startCheckout would turn it away.
-    // Saying so on the button beats finding out after a redirect.
-    disabled?: boolean;
     children: React.ReactNode;
 }) {
-    if (disabled) {
-        return (
-            <Button
-                disabled
-                size="lg"
-                variant={primary ? "default" : "outline"}
-                className={primary ? "h-11 w-full text-base" : "w-full"}
-            >
-                {children}
-            </Button>
-        );
-    }
-
     return (
         <form action={startCheckout}>
             <input type="hidden" name="businessId" value={businessId} />
@@ -481,7 +461,6 @@ async function PlanOptions({
     const proMonthly: PlanKey =
         foundingLeft === null || foundingLeft > 0 ? "pro_founding_monthly" : "pro_monthly";
     const start = trialEligible ? "Start free trial" : "Choose";
-    const canStart = isLive;
 
     const cards: {
         tier: "pro" | "growth";
@@ -521,18 +500,18 @@ async function PlanOptions({
                     : "Pick a plan to reactivate your subscription."}
             </p>
 
-            {/* A trial begun now would spend its days on a page nobody
-                can see: no poster can be made, no offer is visible and
-                nobody can join a card. It waits for the page. */}
+            {/* A trial used to wait for approval, because there was
+                nothing to spend it on: no poster could be made, no offer
+                was visible, nobody could join a card. All of that is
+                open while a page is being read now, so the trial starts
+                when they start it and the days are theirs to use. */}
             {!isLive && trialEligible && (
-                <Alert className="mt-4 border-amber-300 bg-amber-50 text-amber-900">
-                    <AlertTitle>Your trial waits for your page</AlertTitle>
+                <Alert className="mt-4 border-[#17233B]/15 bg-white">
+                    <AlertTitle>Your page is still being read</AlertTitle>
                     <AlertDescription>
-                        We read every page before it goes live — usually the same day. Until
-                        then a plan has nothing to work on: your page isn&apos;t public, your
-                        offer isn&apos;t showing and a QR poster can&apos;t be made yet. We&apos;ll
-                        email you the moment it&apos;s live, and your {TRIAL_DAYS} days start
-                        from there.
+                        That doesn&apos;t hold a trial up. Start one today and build your
+                        loyalty card, your posters and your offers while you wait — they
+                        all go live with the page, usually the same day.
                     </AlertDescription>
                 </Alert>
             )}
@@ -595,19 +574,12 @@ async function PlanOptions({
                                 </div>
 
                                 <div className="mt-auto space-y-2 pt-2">
-                                    <CheckoutButton
-                                        businessId={businessId}
-                                        plan={card.monthly}
-                                        disabled={!canStart}
-                                        primary
-                                    >
-                                        {canStart ? `${start} · ${monthly.price}/month` : "Waiting for your page"}
+                                    <CheckoutButton businessId={businessId} plan={card.monthly} primary>
+                                        {start} · {monthly.price}/month
                                     </CheckoutButton>
-                                    {canStart && (
-                                        <CheckoutButton businessId={businessId} plan={card.yearly}>
-                                            {trialEligible ? "Or start yearly" : "Or choose yearly"} · {yearly.price}/year
-                                        </CheckoutButton>
-                                    )}
+                                    <CheckoutButton businessId={businessId} plan={card.yearly}>
+                                        {trialEligible ? "Or start yearly" : "Or choose yearly"} · {yearly.price}/year
+                                    </CheckoutButton>
                                 </div>
                             </CardContent>
                         </Card>

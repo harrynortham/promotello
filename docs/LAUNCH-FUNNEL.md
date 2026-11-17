@@ -121,6 +121,24 @@ locked behind. A cold sign-up has never been read by anyone and still
 queues. It takes a dead day out of the most fragile part of the funnel
 without taking the decision off the business.
 
+**Done, and then taken further — November 2026.** The above shipped and
+kept the button, which was still a step a business had to take and the
+one step on the list it could do nothing about. The button is gone now
+(`20270123090000_the_queue_fills_itself.sql`): a page joins the queue
+by itself once it has the three things that make a listing — a
+description, an address and hours. The claim is the acceptance for a
+page we built (`20270124090000`), so the promise above was changed
+rather than quietly broken: the claim button now says the page goes
+live as soon as they claim it, because we wrote it and read it before
+we sent it.
+
+Approval decides one thing now, and only that: whether it is public.
+Everything else is open while we read — offers, the loyalty card, QR
+posters (`20270125090000`) and the trial. A scan of a poster put up
+early says the business is on its way, by name. The guarantee that
+makes it safe is in the database rather than in a page, and
+`tests/e2e/approval-only-gates-the-public.spec.ts` holds it there.
+
 ## Cheaper, still worth it
 
 - ~~**No social proof, honestly handled.**~~ Done, except the part we
@@ -167,4 +185,5 @@ answer is 2 and 3 rather than the price.
 - [x] 2 · The sample offer and card follow them in
 - [x] 3 · The first customer is told to the business
 - [x] 4 · Proof on Free and Pro
-- [x] 5 · A claimed preview goes live when they send it
+- [x] 5 · A claimed preview goes live when they claim it, and nothing is
+  sent by hand at all

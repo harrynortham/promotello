@@ -16,14 +16,12 @@ const funnelStep: Record<SetupStepId, FunnelStepId> = {
     address: "address_added",
     hours: "hours_added",
     cover: "cover_added",
-    review: "sent_for_review",
     offer: "first_offer_published",
 };
 
-// Finishing these two is already written down — the business row carries
-// review_requested_at, and an approved offer is in the audit log — so only
-// what somebody tried and couldn't do is new.
-const completionIsRecordedElsewhere: SetupStepId[] = ["review", "offer"];
+// Finishing this is already written down — an approved offer is in the
+// audit log — so only what somebody tried and couldn't do is new.
+const completionIsRecordedElsewhere: SetupStepId[] = ["offer"];
 
 export async function recordSetupStep(
     businessId: string,

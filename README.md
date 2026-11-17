@@ -378,6 +378,7 @@ most of stage 3 is guesswork until it is.
 4. **Record why anyone says no** — a reason on `business_previews` beside the
    status, the way a decline now carries one. Track D2, and the only way the
    pitch improves.
+5. Ensure dev doesnt commit and merge GH without tests done first. we need to avoid bugs in prod
 
 ### Stage 2 — True before you email a single business
 

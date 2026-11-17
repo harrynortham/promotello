@@ -9,9 +9,11 @@ import { throwawayBusinesses } from "../throwaway";
 //
 // Approval sat exactly where enthusiasm peaks: a business whose page we
 // built and vetted ourselves still had to finish the checklist, press
-// send, and then wait (docs/LAUNCH-FUNNEL.md). Sending it is now the
-// moment it goes live — but only for a page of ours, and only when the
-// profile is the five things the send button is locked behind.
+// send, and then wait (docs/LAUNCH-FUNNEL.md). The send went
+// (20270123090000) and the claim is the acceptance now
+// (20270124090000): we wrote the page and read it before we sent it, so
+// claiming it is the moment it goes live — but only for a page of ours,
+// and only when it has the three things that make a listing.
 
 const admin = () =>
     createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -93,20 +95,27 @@ async function seedPending(
     }
 
     if (ours) {
-        const preview = await client.from("business_previews").insert({
-            business_id: business!.id,
-            sample_offer: "E2E sample offer",
-            sample_reward: "E2E sample reward",
-            sample_stamps: 8,
-            claimed_at: new Date().toISOString(),
-            claimed_by: businessUserId,
-        });
+        // Left unclaimed: claiming it is the thing under test now.
+        const preview = await client
+            .from("business_previews")
+            .insert({
+                business_id: business!.id,
+                sample_offer: "E2E sample offer",
+                sample_reward: "E2E sample reward",
+                sample_stamps: 8,
+            })
+            .select("token")
+            .single();
 
-        expect(preview.error, "seeding a claimed preview").toBeNull();
+        expect(preview.error, "seeding a preview").toBeNull();
+        tokens.set(business!.id, preview.data!.token as string);
     }
 
     return business!.id;
 }
+
+// The token of the preview seeded for a business, where there is one.
+const tokens = new Map<string, string>();
 
 const statusOf = async (businessId: string) => {
     const { data } = await admin()
@@ -118,8 +127,8 @@ const statusOf = async (businessId: string) => {
     return data!;
 };
 
-// The business asks the way the dashboard asks.
-const send = async (businessId: string) => {
+// The business claims it the way the preview page does.
+const claim = async (businessId: string) => {
     const { businessEmail, testPassword } = state();
     const client = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,15 +138,15 @@ const send = async (businessId: string) => {
 
     await client.auth.signInWithPassword({ email: businessEmail, password: testPassword });
 
-    return client.rpc("request_business_review", { requested_business_id: businessId });
+    return client.rpc("claim_business_preview", { requested_token: tokens.get(businessId) });
 };
 
-test("a finished page of ours goes live the moment they send it", async () => {
+test("a finished page of ours goes live the moment they claim it", async () => {
     const { businessUserId } = state();
     const businessId = await seedPending(businessUserId, { ours: true, complete: true });
 
     try {
-        const { error } = await send(businessId);
+        const { error } = await claim(businessId);
         expect(error).toBeNull();
 
         const after = await statusOf(businessId);
@@ -159,32 +168,45 @@ test("a finished page of ours goes live the moment they send it", async () => {
     }
 });
 
-// A cold sign-up has never been read by anyone.
-test("a page they built themselves still waits for us", async () => {
+// A cold sign-up has never been read by anyone. It joins the queue on
+// its own, which is the whole of the change — nobody pressed anything
+// here, the seed simply gave it the three things.
+test("a page they built themselves is queued by itself, and still waits for us", async () => {
     const { businessUserId } = state();
     const businessId = await seedPending(businessUserId, { ours: false, complete: true });
 
     try {
-        const { error } = await send(businessId);
-        expect(error).toBeNull();
-
         const after = await statusOf(businessId);
 
-        expect(after.approval_status, "queued, as before").toBe("pending");
-        expect(after.review_requested_at).not.toBeNull();
+        expect(after.review_requested_at, "asked for, with nothing pressed").not.toBeNull();
+        expect(after.approval_status, "and still read by a person").toBe("pending");
     } finally {
         await admin().from("businesses").delete().eq("id", businessId);
     }
 });
 
-// The lock on the send button is in a page; this is a function, and an
-// instant approval must never publish a half-finished page.
+// The other half of the same rule: until it is a listing, it is not in
+// front of anybody.
+test("a page with nothing on it is not in the queue", async () => {
+    const { businessUserId } = state();
+    const businessId = await seedPending(businessUserId, { ours: false, complete: false });
+
+    try {
+        expect((await statusOf(businessId)).review_requested_at).toBeNull();
+    } finally {
+        await admin().from("businesses").delete().eq("id", businessId);
+    }
+});
+
+// The floor under the claim: we build these ourselves and they are
+// complete, so this should never fire — but a claim must not be able to
+// put a page with no address on the directory, whatever we filled in.
 test("a page of ours that isn't finished still waits", async () => {
     const { businessUserId } = state();
     const businessId = await seedPending(businessUserId, { ours: true, complete: false });
 
     try {
-        const { error } = await send(businessId);
+        const { error } = await claim(businessId);
         expect(error).toBeNull();
 
         expect((await statusOf(businessId)).approval_status).toBe("pending");
@@ -193,33 +215,37 @@ test("a page of ours that isn't finished still waits", async () => {
     }
 });
 
-test("sending twice is still refused", async () => {
+// Somebody who presses the link twice, or opens it on a second device.
+test("claiming twice is harmless", async () => {
     const { businessUserId } = state();
     const businessId = await seedPending(businessUserId, { ours: true, complete: true });
 
     try {
-        await send(businessId);
-        const again = await send(businessId);
+        await claim(businessId);
+        const again = await claim(businessId);
 
-        expect(again.error?.message).toMatch(/already been sent/);
+        expect(again.error, "the same person claiming again is not an error").toBeNull();
+        expect((await statusOf(businessId)).approval_status).toBe("approved");
     } finally {
         await admin().from("businesses").delete().eq("id", businessId);
     }
 });
 
-test("the dashboard says it is live rather than that it is queued", async ({ browser }) => {
+// There is no send button left to offer, and the dashboard has to stop
+// asking for something that cannot be done.
+test("the dashboard says it is with us, and offers nothing to press", async ({ browser }) => {
     test.setTimeout(300_000);
     const { businessUserId } = state();
-    const businessId = await seedPending(businessUserId, { ours: true, complete: true });
+    const businessId = await seedPending(businessUserId, { ours: false, complete: true });
 
     try {
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
 
-        await page.goto(`/business/${businessId}?sent=live`, { timeout: 120_000 });
+        await page.goto(`/business/${businessId}`, { timeout: 120_000 });
 
-        await expect(page.getByText("You're live")).toBeVisible({ timeout: 90_000 });
-        await expect(page.getByText(/nothing to wait for/)).toBeVisible();
-        await expect(page.getByText("Sent for review")).toHaveCount(0);
+        await expect(page.getByText(/is with us/)).toBeVisible({ timeout: 90_000 });
+        await expect(page.getByRole("button", { name: /Send .* for review/ })).toHaveCount(0);
+        await expect(page.getByText("Send your page for review")).toHaveCount(0);
     } finally {
         await admin().from("businesses").delete().eq("id", businessId);
     }
@@ -244,7 +270,11 @@ test("a business still cannot approve itself by writing the column", async () =>
 
     try {
         await client.auth.signInWithPassword({ email: businessEmail, password: testPassword });
-        await client.rpc("request_business_review", { requested_business_id: businessId });
+
+        // Already in the queue, by the trigger rather than by asking —
+        // so this has every fact the exception wants except a page of
+        // ours, which is the one it cannot have.
+        expect((await statusOf(businessId)).review_requested_at).not.toBeNull();
 
         const forced = await client
             .from("businesses")

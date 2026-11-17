@@ -11,7 +11,7 @@ const admin = () =>
 
 // Finishing a page is a journey, not a list: one thing at a time, beside a
 // picture of the page it is becoming.
-test("a business finishes its page in the flow, and sends it from there", async ({ browser }) => {
+test("a business finishes its page in the flow, and it goes to us by itself", async ({ browser }) => {
     test.setTimeout(120_000);
 
     const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
@@ -48,7 +48,7 @@ test("a business finishes its page in the flow, and sends it from there", async 
         // being built beside it.
         await expect(page.getByRole("heading", { name: /Let's finish your page/ })).toBeVisible({ timeout: 15_000 });
         await expect(page.getByRole("heading", { name: "Add your logo", level: 2 })).toBeVisible();
-        await expect(page.getByText("0 of 7 done").first()).toBeVisible();
+        await expect(page.getByText("0 of 6 done").first()).toBeVisible();
         await expect(page.getByText("Your page so far").first()).toBeVisible();
         await expect(page.getByText(name).first()).toBeVisible();
 
@@ -62,7 +62,7 @@ test("a business finishes its page in the flow, and sends it from there", async 
         await page.getByRole("button", { name: "Save and continue" }).click();
 
         await expect(page.getByRole("heading", { name: "Where to find you", level: 2 })).toBeVisible();
-        await expect(page.getByText("1 of 7 done").first()).toBeVisible();
+        await expect(page.getByText("1 of 6 done").first()).toBeVisible();
         await page.locator("#setup-address-1").fill("12 Cotham Hill");
         await page.locator("#region").selectOption("Cotham");
         await page.locator("#postalCode").fill("BS6 6DF");
@@ -78,24 +78,18 @@ test("a business finishes its page in the flow, and sends it from there", async 
         await expect(page.getByRole("heading", { name: "The photo across the top", level: 2 })).toBeVisible();
         await page.getByRole("button", { name: "I'll add one later" }).click();
 
-        // Sending it is a step in the flow, not a trip to the dashboard.
-        // Both pictures were left for later and the button honours that:
-        // the page has a monogram and a cover of its own, and a business
-        // with no logo to hand could otherwise never go live.
-        await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toBeVisible();
-        await expect(page.getByText("things first")).toHaveCount(0);
-        await expect(page.getByText("3 of 7 done")).toBeVisible({ timeout: 15_000 });
+        // No send step: the description, the address and the hours are
+        // the three that make a listing, and filling the last of them is
+        // what puts the page in front of us
+        // (20270123090000_the_queue_fills_itself.sql). Both pictures were
+        // left for later and neither holds it up — a business with no
+        // logo to hand could otherwise never go live.
+        await expect(page.getByRole("heading", { name: "Send your page to us", level: 2 })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
+        await expect(page.getByText("3 of 6 done")).toBeVisible({ timeout: 15_000 });
 
-        await page.getByRole("button", { name: `Send ${name} for review` }).click();
-
-        // It lands on the next thing: the offer that gives people a reason
-        // to come in.
-        await page.waitForURL(`**/business/setup/${businessId}?step=offer&sent=1`, { timeout: 20_000 });
-        await expect(page.getByRole("heading", { name: "Give people a reason to come in", level: 2 })).toBeVisible();
-        await expect(page.getByText("4 of 7 done").first()).toBeVisible();
-
-        // Sending is the one thing here that cannot be undone, and it
-        // used to happen in silence: the step simply advanced.
+        // A hand-off nobody is told about would be worse than the button
+        // it replaced, so the flow says it as it happens.
         await expect(page.getByText(`${name} is with us`)).toBeVisible();
 
         const { data: sent } = await admin()
@@ -103,7 +97,7 @@ test("a business finishes its page in the flow, and sends it from there", async 
             .select("review_requested_at")
             .eq("id", businessId)
             .single();
-        expect(sent!.review_requested_at, "the page was sent for review").not.toBeNull();
+        expect(sent!.review_requested_at, "the page asked to be read, with nothing pressed").not.toBeNull();
 
         // The flow saves from the browser, so the only record of which
         // steps somebody finished — and which they merely opened — is the

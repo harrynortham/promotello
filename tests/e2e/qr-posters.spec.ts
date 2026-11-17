@@ -154,16 +154,18 @@ test("a business can download its code as an image, and nobody else can", async 
 // scan function only matches approved businesses, so the poster in the
 // window leads to a dead link. The dashboard says so instead of
 // offering the form, and the database refuses the row either way.
-test("a business waiting for approval is told so, and can't make a code", async ({ page }) => {
+test("a business waiting for approval makes its poster anyway, and a scan says so", async ({ page }) => {
     const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
         auth: { persistSession: false },
     });
 
+    const name = `E2E Waiting Business ${Date.now()}`;
+
     const { data: waiting } = await admin
         .from("businesses")
         .insert({
-            name: `E2E Waiting Business ${Date.now()}`,
+            name,
             category: "Testing",
             description: "Automated test business — safe to delete.",
             approval_status: "pending",
@@ -180,42 +182,55 @@ test("a business waiting for approval is told so, and can't make a code", async 
         });
 
         await page.goto(`/business/${waiting!.id}/qr`);
-        await expect(page.getByText("Design it now, print it when your page is live")).toBeVisible({
+        await expect(page.getByText("Make it now, put it up when your page is live")).toBeVisible({
             timeout: 10_000,
         });
 
-        // The form is all there — hiding it told a business to come back
-        // later and gave it nothing to do. A scan needs a live page, so
-        // the making of it waits; designing it does not, and the waiting
-        // is easier when you can see what you are waiting for.
+        // The whole form, and the button with it. Refusing the row was
+        // right while there was nothing else to do and wrong once the
+        // rest of the dashboard opened
+        // (20270125090000_a_poster_is_made_before_the_page_is_live.sql):
+        // making the code is most of the work of getting a poster into a
+        // window, and it was the one part they could not do.
         await expect(page.getByLabel("Where will it go?")).toBeVisible();
         await expect(page.getByLabel("What should it open?")).toBeVisible();
         await expect(page.getByText("What gets printed")).toBeVisible();
+        await expect(page.getByText(/Make it now and keep it ready/)).toBeVisible();
 
-        // Only the making of it.
-        await expect(page.getByRole("button", { name: "Make this poster" })).toHaveCount(0);
-        await expect(page.getByText("Ready the moment your page is")).toBeVisible();
-        // Nor a second-poster link, which has no form behind it yet.
-        await expect(page.getByRole("link", { name: "Make a poster" })).toHaveCount(0);
+        await page.getByLabel("Where will it go?").fill("Front window");
+        await page.getByRole("button", { name: "Make this poster" }).click();
 
-        // And the row is refused however it is written, with its own
-        // code so it isn't read as the Free plan's one-code limit.
-        const owner = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-            { auth: { autoRefreshToken: false, persistSession: false } },
-        );
-        await owner.auth.signInWithPassword({ email: state.businessEmail, password: state.testPassword });
+        await expect
+            .poll(
+                async () => {
+                    const { data } = await admin
+                        .from("qr_codes")
+                        .select("code")
+                        .eq("business_id", waiting!.id);
 
-        const { error } = await owner.from("qr_codes").insert({
-            business_id: waiting!.id,
-            label: "Front window",
-            created_by: state.businessUserId,
+                    return data?.length ?? 0;
+                },
+                {
+                    timeout: 30_000,
+                    message:
+                        "supabase/migrations/20270125090000_a_poster_is_made_before_the_page_is_live.sql isn't applied",
+                },
+            )
+            .toBe(1);
+
+        const { data: codes } = await admin
+            .from("qr_codes")
+            .select("code")
+            .eq("business_id", waiting!.id);
+
+        // Nothing is loosened downstream: it opens nothing until the
+        // page is read. What a customer standing in the shop gets is a
+        // sentence about this business rather than a dead end.
+        await page.goto(`/q/${codes![0].code}`);
+        await expect(page).toHaveURL(/\/q\/unavailable/);
+        await expect(page.getByText(`${name} is coming to Promotello.`)).toBeVisible({
+            timeout: 15_000,
         });
-        expect(
-            error?.code,
-            "supabase/migrations/20261206100000_qr_needs_approved_business.sql isn't applied",
-        ).toBe("P0003");
     } finally {
         await admin.from("businesses").delete().eq("id", waiting!.id);
     }

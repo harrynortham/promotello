@@ -6,7 +6,7 @@ import { releaseClaims } from "@/lib/email-claims";
 import { trialCardMissing } from "@/lib/notifications";
 import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
-import { readyToSend } from "@/lib/setup-steps";
+import { readyForReview } from "@/lib/setup-steps";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { loadWhatIsPaused, type WhatIsPaused } from "@/lib/what-is-paused";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -219,7 +219,7 @@ function has(flag: boolean | undefined) {
 // tested, so an older payload cannot make an email tell a business it
 // is blocked by something the button would let through.
 function profileReady(due: LifecycleDue) {
-    return readyToSend({
+    return readyForReview({
         hasLogo: has(due.details.has_logo),
         hasDescription: has(due.details.has_description),
         hasAddress: has(due.details.has_address),

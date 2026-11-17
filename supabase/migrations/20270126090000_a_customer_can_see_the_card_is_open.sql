@@ -1,0 +1,29 @@
+-- A customer can see the card is open
+--
+-- 20270120090000 stopped a card on Free taking new members, and the
+-- business page says so rather than hiding the card: a poster in a
+-- window points straight at it, so it has to explain itself.
+--
+-- It said so to everybody. The page decided by reading the
+-- subscriptions table through the visitor's own client, and the only
+-- select policy on that table is is_business_member — so a customer is
+-- not refused, they are handed nothing. No rows, no error, and
+-- businessHasPro answered false for every business on the directory.
+-- Every loyalty card read "Not taking new members", on Pro and on
+-- Growth, and nobody could join one at all. The .catch(() => true)
+-- meant to fail open never fired, because an empty result is not a
+-- failure.
+--
+-- business_has_pro already answers this question from exactly this
+-- position — it is SECURITY DEFINER, so it reads the row a customer
+-- cannot — and it was granted only to postgres and service_role. The
+-- grant is the fix; lib/billing.ts calls it rather than reading the
+-- table, so the SQL function is the one definition of what Pro means
+-- and the page cannot drift from the gate in join_loyalty_program.
+--
+-- What this exposes is one boolean: whether a business is on a paid
+-- plan. The page already shows the consequence of that boolean to
+-- anyone who looks at it, and a card that takes no new members is
+-- something a customer standing in the shop needs to be told.
+
+grant execute on function public.business_has_pro(uuid) to anon, authenticated;

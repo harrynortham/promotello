@@ -11,7 +11,6 @@ export type SetupStepId =
     | "address"
     | "hours"
     | "cover"
-    | "review"
     | "offer";
 
 export type SetupState = {
@@ -45,7 +44,7 @@ export type SetupStep = {
     // address and no hours is not a listing. Nothing here is a judgement
     // about quality: every page is read before it goes live, and that is
     // where a thin one gets its note.
-    blocksSend: boolean;
+    blocksReview: boolean;
 };
 
 const steps: {
@@ -53,12 +52,12 @@ const steps: {
     nav: string;
     title: string;
     blurb: string;
-    blocksSend: boolean;
+    blocksReview: boolean;
     done: (state: SetupState) => boolean;
 }[] = [
     {
         id: "logo",
-        blocksSend: false,
+        blocksReview: false,
         nav: "Logo",
         title: "Add your logo",
         blurb: "Customers recognise you by it — on your page, your offers and your stamp card.",
@@ -66,7 +65,7 @@ const steps: {
     },
     {
         id: "description",
-        blocksSend: true,
+        blocksReview: true,
         nav: "About you",
         title: "Say what you're known for",
         blurb: "Two or three sentences. This sits under your name wherever people find you.",
@@ -74,7 +73,7 @@ const steps: {
     },
     {
         id: "address",
-        blocksSend: true,
+        blocksReview: true,
         nav: "Address",
         title: "Where to find you",
         blurb: "So customers can get directions, and so you turn up when they browse your area.",
@@ -82,7 +81,7 @@ const steps: {
     },
     {
         id: "hours",
-        blocksSend: true,
+        blocksReview: true,
         nav: "Hours",
         title: "When you're open",
         blurb: "Shown on your page, so nobody arrives at a closed door.",
@@ -90,23 +89,15 @@ const steps: {
     },
     {
         id: "cover",
-        blocksSend: false,
+        blocksReview: false,
         nav: "Cover photo",
         title: "The photo across the top",
         blurb: "The first thing people see in the directory. Your shop front, counter or best dish.",
         done: (state) => state.hasCover,
     },
     {
-        id: "review",
-        blocksSend: false,
-        nav: "Send it",
-        title: "Send your page to us",
-        blurb: "We read every page before it goes live — usually the same day.",
-        done: (state) => state.sentForReview,
-    },
-    {
         id: "offer",
-        blocksSend: false,
+        blocksReview: false,
         nav: "First offer",
         title: "Give people a reason to come in",
         blurb: "Your first offer goes on your page, and on a poster for your window.",
@@ -121,8 +112,12 @@ export function setupSteps(state: SetupState): SetupStep[] {
 // Everything the page needs before it can be sent, whatever order it was
 // done in. The one definition: the flow locks its button on this, and
 // the setup emails say what is left using the same answer.
-export function readyToSend(state: SetupState) {
-    return steps.every((step) => !step.blocksSend || step.done(state));
+// Everything a page needs before it is a listing somebody could use,
+// which is the same bar queue_business_if_ready() holds it to in
+// 20270123090000_the_queue_fills_itself.sql. The business is not asked
+// to press anything — reaching this is what sends it.
+export function readyForReview(state: SetupState) {
+    return steps.every((step) => !step.blocksReview || step.done(state));
 }
 
 export function setupProgress(list: SetupStep[]) {
@@ -144,7 +139,7 @@ export function setupFinished(list: SetupStep[]) {
 // The page is theirs to vouch for, so the steps before it are named where
 // one is missing rather than quietly blocking the button.
 export function missingBeforeReview(list: SetupStep[]) {
-    return list.filter((step) => step.blocksSend && !step.done);
+    return list.filter((step) => step.blocksReview && !step.done);
 }
 
 export function stepAt(list: SetupStep[], id: SetupStepId | null | undefined) {

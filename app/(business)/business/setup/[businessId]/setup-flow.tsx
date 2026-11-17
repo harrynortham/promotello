@@ -14,7 +14,6 @@ import type { CityOption } from "@/lib/locations";
 import {
     firstUnfinished,
     isSetupStepId,
-    missingBeforeReview,
     setupFinished,
     type SetupStep,
     type SetupStepId,
@@ -26,7 +25,6 @@ import {
     HoursStep,
     LogoStep,
     OfferStep,
-    ReviewStep,
     type BusinessLocation,
 } from "./steps";
 import { trackStep } from "./track";
@@ -94,6 +92,24 @@ export function SetupFlow({
 
     const finished = setupFinished(live);
     const active = requested ?? firstUnfinished(live);
+
+    // The page goes to us when it has the three things that make a
+    // listing, and nobody presses anything to make that happen
+    // (20270123090000_the_queue_fills_itself.sql). A hand-off nobody is
+    // told about is worse than the button it replaced, so the step that
+    // completes the set says so — once, as it happens, rather than on
+    // every screen afterwards.
+    const ready = live.every((step) => !step.blocksReview || step.done);
+    const wasReady = useRef(ready);
+    const [justQueued, setJustQueued] = useState(false);
+
+    useEffect(() => {
+        if (ready && !wasReady.current) {
+            setJustQueued(true);
+        }
+
+        wasReady.current = ready;
+    }, [ready]);
 
     // The next thing still missing, starting after the one they are on —
     // so finishing step three offers step four, not the one they left for
@@ -174,12 +190,7 @@ export function SetupFlow({
             stepTitle={finished ? undefined : step?.title}
             stepBlurb={finished ? undefined : step?.blurb}
         >
-            {/* Sending the page is the one irreversible thing in this
-                flow, and it used to say nothing at all: the step simply
-                advanced and the business was left to wonder whether it
-                had worked. Said here even when there is more to do,
-                because the thing they just did is finished either way. */}
-            {justSent && !finished && (
+            {(justQueued || justSent) && !finished && (
                 <Alert className="mb-6 border-emerald-200 bg-emerald-50 text-emerald-900">
                     <AlertTitle>
                         {isLive ? `${businessName} is live` : `${businessName} is with us`}
@@ -187,7 +198,7 @@ export function SetupFlow({
                     <AlertDescription>
                         {isLive
                             ? "Customers browsing the directory can find you now."
-                            : "We read every page before it goes live — usually the same day — and we'll email you when it does."}{" "}
+                            : "That is everything we need to read it. We check every page — usually the same day — and we'll email you when it goes live."}{" "}
                         There is still a little below, and none of it holds that up.
                     </AlertDescription>
                 </Alert>
@@ -233,16 +244,6 @@ export function SetupFlow({
                     ours={ours}
                     onDone={() => completed("cover")}
                     onSkip={() => skip("cover")}
-                />
-            ) : step?.id === "review" ? (
-                <ReviewStep
-                    businessId={businessId}
-                    businessName={businessName}
-                    businessSlug={businessSlug}
-                    missing={missingBeforeReview(live)}
-                    sent={step.done || justSent}
-                    isLive={isLive}
-                    onGo={(id) => go(id)}
                 />
             ) : step?.id === "offer" ? (
                 <OfferStep businessId={businessId} starterOffer={starterOffer} />
