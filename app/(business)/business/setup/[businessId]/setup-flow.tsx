@@ -183,6 +183,7 @@ export function SetupFlow({
             onGo={go}
             page={draft}
             pageHref={businessSlug ? `/businesses/${businessSlug}` : null}
+            isLive={isLive}
             finishLater={{
                 href: `/business/${businessId}`,
                 label: finished ? "Go to your dashboard" : "Finish later",

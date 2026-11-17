@@ -36,13 +36,22 @@ export function FromYourEmail({
                 From your email
             </p>
 
+            {/* starterToShow drops whichever half is done, so by the time
+                somebody has made the offer only the card is left — and
+                the heading went on naming the offer and offering "either
+                one" of the one thing below it. */}
             <h2 id="from-your-email" className="mt-2 text-lg font-semibold">
-                The offer we showed you is still here
+                {offer && card
+                    ? "The offer and card we showed you are still here"
+                    : offer
+                        ? "The offer we showed you is still here"
+                        : "The card we showed you is still here"}
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
-                Nothing is live yet. Open either one and it comes up filled in, ready for
-                you to change or publish.
+                {offer && card
+                    ? "Open either one and it comes up filled in, ready for you to change or publish."
+                    : "It comes up filled in, ready for you to change or publish."}
             </p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">

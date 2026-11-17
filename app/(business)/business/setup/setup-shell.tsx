@@ -27,6 +27,7 @@ export function SetupShell({
     onGo,
     page,
     pageHref,
+    isLive = false,
     finishLater,
     stepTitle,
     stepBlurb,
@@ -41,6 +42,12 @@ export function SetupShell({
     onGo?: (step: SetupStepId) => void;
     page: PagePreview;
     pageHref?: string | null;
+    // Whether the page is public yet. Without it this panel said
+    // "Nothing is public until we've checked it" for the whole of setup,
+    // including on the screen where the banner beside it announces that
+    // the page has just gone live — the two a few hundred pixels apart,
+    // contradicting each other.
+    isLive?: boolean;
     finishLater?: { href: string; label: string };
     stepTitle?: string;
     stepBlurb?: string;
@@ -136,9 +143,11 @@ export function SetupShell({
                     <BusinessPagePreview page={page} className="mt-4" />
 
                     <p className="mt-4 text-xs leading-6 text-[#17233B]/60">
-                        {page.description && page.logoUrl && page.coverImageUrl
-                            ? "This is what customers see when they find you."
-                            : "It fills in as you go. Nothing is public until we've checked it."}
+                        {isLive
+                            ? "This is live. Everything you change here shows on it straight away."
+                            : page.description && page.logoUrl && page.coverImageUrl
+                                ? "This is what customers see when they find you."
+                                : "It fills in as you go. Nothing is public until we've checked it."}
                     </p>
 
                     {pageHref && (
