@@ -370,6 +370,37 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     </>
                 )}
 
+                {/* A card that outlived the plan that bought it. The
+                    builder's locked state only covers a business with no
+                    card at all, so this one fell through every branch and
+                    the page read as though nothing had changed —
+                    "On offer", a member count, and a stamp box that works.
+                    A business wondering why nobody new is joining looks
+                    here first. */}
+                {program && !hasPro && canManage && (
+                    <Alert className="mt-8 border-amber-200 bg-amber-50">
+                        <AlertTitle>Your card is closed to new customers</AlertTitle>
+
+                        <AlertDescription>
+                            <p className="text-[#17233B]/75">
+                                A loyalty card is part of Pro. Everyone already collecting
+                                keeps their stamps and you can carry on stamping them —
+                                but nobody new can join until you are back on Pro.
+                            </p>
+
+                            <Button
+                                render={<Link href={`/business/${businessId}/billing`} />}
+                                nativeButton={false}
+                                size="sm"
+                                className="mt-4 bg-[#17233B] text-white hover:bg-[#17233B]/90"
+                            >
+                                See the plans
+                                <FiArrowRight aria-hidden="true" />
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 {/* A card on offer that no poster opens. Not an error:
                     somebody scanning any poster of theirs lands on the
                     business page, where this card is there to join. A
@@ -380,7 +411,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                     Keyed on a poster existing rather than being printed,
                     so it goes the moment they make one; the dashboard
                     checklist carries it from there to the printer. */}
-                {program && !pointedAtCard && !saved && canManage && (
+                {program && hasPro && !pointedAtCard && !saved && canManage && (
                     <Alert className="mt-8 border-[#FF593F]/30 bg-[#FFF4E8]">
                         <AlertTitle>No poster opens this card yet</AlertTitle>
 
@@ -478,8 +509,11 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                                             <p className="mr-auto text-sm font-medium">
                                                 {card.name}
                                                 <span className="ml-2 text-xs font-normal text-[#17233B]/65">
-                                                    On offer · {holders.length}{" "}
-                                                    {holders.length === 1 ? "member" : "members"}
+                                                    {/* "On offer" was said whatever the plan, so
+                                                        the one screen named after the card was the
+                                                        one screen that did not know it was shut. */}
+                                                    {hasPro ? "On offer" : "Not taking new members"} ·{" "}
+                                                    {holders.length} collecting
                                                 </span>
                                             </p>
 

@@ -1177,3 +1177,78 @@ test("a card with no poster pointing at it says so, and stops once one does", as
         if (programId) await admin.from("loyalty_programs").delete().eq("id", programId);
     }
 });
+
+// A card that outlived the plan that bought it. Every other screen knew:
+// customers were told "Not taking new members", /qr explained it per
+// poster. The page named after the card said "On offer", counted its
+// members and offered a stamp box — so a business wondering why nobody
+// new was joining looked here first and was told everything was fine.
+test("the card page says when the plan has closed the card", async ({ browser }) => {
+    const { businessId } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    let programId: string | null = null;
+
+    const { data: subscriptions } = await admin
+        .from("subscriptions")
+        .select("id, status")
+        .eq("business_id", businessId);
+
+    const paying = (subscriptions ?? []).filter((row) =>
+        ["trialing", "active", "past_due"].includes(row.status),
+    );
+
+    try {
+        const { data: program, error } = await admin
+            .from("loyalty_programs")
+            .insert({
+                business_id: businessId,
+                name: `E2E Plan Closed ${Date.now()}`,
+                stamps_required: 8,
+                reward: "a free coffee",
+                is_active: true,
+            })
+            .select("id")
+            .single();
+
+        expect(error, "the card was set up").toBeNull();
+        programId = program!.id;
+
+        const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
+
+        // On Pro it says what it always said.
+        await page.goto(`/business/${businessId}/loyalty`);
+        await expect(page.getByText("On offer ·", { exact: false })).toBeVisible({ timeout: 20_000 });
+        await expect(page.getByText("Your card is closed to new customers")).toHaveCount(0);
+
+        for (const row of paying) {
+            await admin.from("subscriptions").update({ status: "canceled" }).eq("id", row.id);
+        }
+
+        const { data: stillPro } = await admin.rpc("business_has_pro", {
+            requested_business_id: businessId,
+        });
+
+        expect(stillPro, "the business must be on Free or this proves nothing").toBe(false);
+
+        await page.reload();
+
+        await expect(
+            page.getByText("Your card is closed to new customers"),
+        ).toBeVisible({ timeout: 20_000 });
+
+        await expect(page.getByText("Not taking new members ·", { exact: false })).toBeVisible();
+
+        // Stamping is not what Pro buys: the holders already collecting
+        // carry on, and the box they are stamped with stays.
+        await expect(page.getByText("Stamp a card")).toBeVisible();
+    } finally {
+        for (const row of paying) {
+            await admin.from("subscriptions").update({ status: row.status }).eq("id", row.id);
+        }
+
+        if (programId) await admin.from("loyalty_programs").delete().eq("id", programId);
+    }
+});
