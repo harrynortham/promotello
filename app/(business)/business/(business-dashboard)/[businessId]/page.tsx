@@ -521,7 +521,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                             would see, and work down the list below. It comes to us on its own
                             once it has a description, an address and your opening hours —
                             there&apos;s nothing to send. Nothing is public until we&apos;ve
-                            read it.
+                            checked it.
                         </p>
 
                         {/* "This page" read as the dashboard, which is where they
@@ -546,7 +546,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                 <Alert className="border-amber-200 bg-amber-50 text-amber-900">
                     <AlertTitle>{business.name} is with us</AlertTitle>
                     <AlertDescription>
-                        We read every page before it goes on the directory — usually the
+                        We check every page before it goes on the directory — usually the
                         same day — and we&apos;ll email you the moment yours does. Carry
                         on in the meantime: everything here works, and your offers are
                         read one by one as you write them.

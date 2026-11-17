@@ -60,7 +60,7 @@ export function OwnerBar({
                     business's side: there is nothing for them to do
                     either way, only something for us to do. */}
                 {(privacy === "unsent" || privacy === "waiting") &&
-                    " Only you and your team can see it, until we have read it — usually the same day."}
+                    " Only you and your team can see it, until we have checked it — usually the same day."}
             </p>
 
             <Button

@@ -135,7 +135,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 (20270124090000_a_claimed_page_is_live_when_claimed.sql),
                 so the button says what it actually does. */}
             <p className="text-sm text-[#17233B]/70">
-                Free. We wrote this page and read it before we sent it, so it goes
+                Free. We wrote this page and checked it before we sent it, so it goes
                 live as soon as you claim it — and it&apos;s yours to change after.
             </p>
 

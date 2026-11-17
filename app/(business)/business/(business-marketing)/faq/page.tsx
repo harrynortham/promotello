@@ -79,7 +79,7 @@ const sections = [
             {
                 question: "How soon does my offer go live?",
                 answer:
-                    "Our team reads every offer before it appears, whatever plan you are on, usually the same day. As soon as it is approved it goes live and your followers are emailed.",
+                    "Our team checks every offer before it appears, whatever plan you are on, usually the same day. As soon as it is approved it goes live and your followers are emailed.",
             },
             {
                 question: "Can an offer only work at certain times?",

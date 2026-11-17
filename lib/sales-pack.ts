@@ -88,7 +88,7 @@ export const offerSheet = {
         "A discount in the window is seen by people already walking past. The ones who have never been are the ones worth reaching.",
     steps: [
         "You write the offer: what it is, when it can be used, and how many you will give away.",
-        "It goes live on your page and across the directory once we have read it over — usually the same day.",
+        "It goes live on your page and across the directory once we have checked it — usually the same day.",
         "A customer claims it on their phone and brings a code in with them.",
         "Staff scan or type the code and mark it used. It can only be used once, and the screen says so if somebody tries twice.",
     ],

@@ -78,13 +78,16 @@ test.describe("business setup and trial emails", () => {
         expect(lifecycleEmail({ ...nudge, details: profile }, "a@b.c")!.subject)
             .toMatch(/^Add a cover photo/);
 
-        // With the page finished, sending it is next: nothing on it
-        // reaches a customer until the business has looked it over.
+        // With the page finished, the offer is next. Sending it used to
+        // sit here, and it is not a step any more: a page comes to us on
+        // its own once it is a listing
+        // (20270123090000_the_queue_fills_itself.sql).
         const ready = { ...profile, has_cover: true, profile_ready: true };
         expect(lifecycleEmail({ ...nudge, details: ready }, "a@b.c")!.subject)
-            .toMatch(/^Send your page for review/);
+            .toMatch(/^Post your first offer/);
+        expect(lifecycleEmail({ ...nudge, details: ready }, "a@b.c")!.text)
+            .not.toMatch(/Send your page for review/);
 
-        // Once it is sent, the offer.
         const sent = { ...ready, sent_for_review: true };
         expect(lifecycleEmail({ ...nudge, details: sent }, "a@b.c")!.subject)
             .toMatch(/^Post your first offer/);

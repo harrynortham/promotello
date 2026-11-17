@@ -254,7 +254,7 @@ async function OffersContent({ params }: PageProps) {
 
                         <p className="mt-3 max-w-2xl text-[#17233B]/65">
                             An offer gives somebody a reason to come in today. We
-                            read every one before it goes live, usually the same
+                            check every one before it goes live, usually the same
                             day, and each card below shows what it has done since.
                         </p>
                     </div>

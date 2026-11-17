@@ -81,7 +81,7 @@ export const BUSINESS_REASONS: ReviewReason[] = [
         code: "not-listed",
         label: "Not a trade we list",
         says: "This isn't a kind of business we're able to list on Promotello.",
-        fix: "Reply to this email if you think we've read it wrong — we'd rather be corrected than lose you.",
+        fix: "Reply to this email if you think we've got it wrong — we'd rather be corrected than lose you.",
     },
     {
         code: "other",
@@ -195,7 +195,7 @@ export const OFFER_SUSPENSIONS: ReviewReason[] = [
         code: "no-longer-available",
         label: "What's on offer has gone",
         says: "The thing this offer gives doesn't look to be available any more.",
-        fix: "Edit the offer to something you can give today, and it goes back up when we've read it.",
+        fix: "Edit the offer to something you can give today, and it goes back up when we've checked it.",
     },
     {
         code: "misleading",

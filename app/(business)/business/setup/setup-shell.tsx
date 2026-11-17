@@ -138,7 +138,7 @@ export function SetupShell({
                     <p className="mt-4 text-xs leading-6 text-[#17233B]/60">
                         {page.description && page.logoUrl && page.coverImageUrl
                             ? "This is what customers see when they find you."
-                            : "It fills in as you go. Nothing is public until we've read it."}
+                            : "It fills in as you go. Nothing is public until we've checked it."}
                     </p>
 
                     {pageHref && (
