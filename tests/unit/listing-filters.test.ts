@@ -5,6 +5,7 @@ import type { CategoryGroup } from "@/lib/categories";
 import {
     areaPhoto,
     areasFrom,
+    categoryPageImage,
     citiesWithArea,
     filterBusinesses,
     filterOffers,
@@ -359,4 +360,35 @@ test("pageOf counts in whatever screenful it is given", () => {
     // And a listing that fits says it is not paged.
     assert.equal(pageOf(items.slice(0, 10), undefined, BUSINESS_PAGE_SIZE).paged, false);
     assert.equal(pageOf(items.slice(0, 10), undefined, BUSINESS_PAGE_SIZE).more, null);
+});
+
+// The picture at the top of a category page. A subcategory has its own
+// when somebody has set one in /admin/categories, and the fallback is the
+// parent's rather than a guessed /images/categories/<slug>.jpg: six of
+// those files exist, one per top-level group, against forty-four
+// subcategories.
+test("a category page shows a subcategory's own picture, else its parent's", () => {
+    const group = { slug: "things-to-do", image_url: null };
+
+    // No subcategory at all: the group's own page.
+    assert.equal(categoryPageImage(group), "/images/categories/things-to-do.jpg");
+
+    // A subcategory with nothing set falls back to the parent, not to
+    // /images/categories/activities-experiences.jpg, which is not there.
+    assert.equal(
+        categoryPageImage(group, { image_url: null }),
+        "/images/categories/things-to-do.jpg",
+    );
+
+    // And its own once it has one.
+    assert.equal(
+        categoryPageImage(group, { image_url: "https://cdn.example/abseiling.jpg" }),
+        "https://cdn.example/abseiling.jpg",
+    );
+
+    // A group with its own uploaded picture still wins over the file.
+    assert.equal(
+        categoryPageImage({ slug: "things-to-do", image_url: "https://cdn.example/group.jpg" }),
+        "https://cdn.example/group.jpg",
+    );
 });

@@ -310,6 +310,21 @@ export function categoryImage(group: Pick<CategoryGroup, "slug" | "image_url">) 
     return group.image_url ?? `/images/categories/${group.slug}.jpg`;
 }
 
+// The picture at the top of a category page, which is a subcategory's own
+// when it has one.
+//
+// The fallback is the parent's picture rather than
+// /images/categories/<subcategory>.jpg, because those files do not exist:
+// there are six, one per top-level group, and forty-four subcategories.
+// Guessing a path for the other thirty-eight would put a broken image at
+// the top of the page in place of a correct one.
+export function categoryPageImage(
+    group: Pick<CategoryGroup, "slug" | "image_url">,
+    subcategory?: Pick<CategoryGroup, "image_url"> | null,
+) {
+    return subcategory?.image_url ?? categoryImage(group);
+}
+
 // One screenful of a listing. 24 divides by 2, 3 and 4, so the last row of
 // an offers grid is full at every breakpoint.
 export const PAGE_SIZE = 24;

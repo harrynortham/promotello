@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { CategoryGroup } from "@/lib/categories";
 import { truncate } from "@/lib/site";
 import {
-    categoryImage,
+    categoryPageImage,
     filterBusinesses,
     filterOffers,
     getCategories,
@@ -87,7 +87,7 @@ export async function categoryMetadata(slug: string, city: City | null, sub?: st
             title,
             description,
             url: path,
-            images: [{ url: categoryImage(group) }],
+            images: [{ url: categoryPageImage(group, subcategory) }],
         },
     };
 }
@@ -162,7 +162,7 @@ export async function CategoryContent({
             <section className="mx-auto max-w-7xl px-6 sm:px-10">
                 <div className="relative isolate overflow-hidden rounded-3xl bg-[#17233B]">
                     <Image
-                        src={categoryImage(group)}
+                        src={categoryPageImage(group, subcategory)}
                         alt=""
                         fill
                         priority
