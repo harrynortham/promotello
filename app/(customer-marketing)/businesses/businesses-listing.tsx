@@ -106,6 +106,17 @@ async function Directory({ city, searchParams }: ListingProps) {
     const areas = areasFrom(businesses);
     const hasFilters = Boolean(params.search || params.category || params.area);
 
+    // The chosen top-level category, or the parent of a chosen
+    // subcategory — so picking "Bakeries" keeps "Food & drink" lit above
+    // it rather than appearing to clear the filter. Same shape as the
+    // offers listing, which has had this row all along.
+    const selectedGroup =
+        groups.find((group) => group.slug === params.category) ??
+        groups.find((group) =>
+            group.subcategories.some((sub) => sub.slug === params.category),
+        ) ??
+        null;
+
     // Filters build on the current query, but never carry how far down the
     // list you had got: a different filter is a different list.
     const current = { ...params, show: undefined };
@@ -113,6 +124,7 @@ async function Directory({ city, searchParams }: ListingProps) {
 
     return (
         <>
+            <div className="space-y-4">
             <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                 {/* Areas live in a drawer behind Filter, not a second row of pills. */}
                 {/* An area belongs to a city, so areas are offered whenever
@@ -167,11 +179,37 @@ async function Directory({ city, searchParams }: ListingProps) {
                     <FilterChip
                         key={group.id}
                         href={hrefWith(base, current, { category: group.slug })}
-                        active={params.category === group.slug}
+                        active={selectedGroup?.slug === group.slug}
                     >
                         {group.name}
                     </FilterChip>
                 ))}
+            </div>
+
+            {/* Subcategories narrow the chosen category, so they stay as
+                pills. Without this row there was no way to ask the
+                directory for a barber or a bakery at all — only the six
+                groups, and then the search box. */}
+            {selectedGroup && selectedGroup.subcategories.length > 0 && (
+                <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                    <FilterChip
+                        href={hrefWith(base, current, { category: selectedGroup.slug })}
+                        active={params.category === selectedGroup.slug}
+                    >
+                        All {selectedGroup.name.toLowerCase()}
+                    </FilterChip>
+
+                    {selectedGroup.subcategories.map((sub) => (
+                        <FilterChip
+                            key={sub.id}
+                            href={hrefWith(base, current, { category: sub.slug })}
+                            active={params.category === sub.slug}
+                        >
+                            {sub.name}
+                        </FilterChip>
+                    ))}
+                </div>
+            )}
             </div>
 
 
