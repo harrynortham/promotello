@@ -80,12 +80,19 @@ export function SearchForm({
     action,
     defaultValue,
     placeholder,
+    label,
     hidden = {},
     size = "md",
 }: {
     action: string;
     defaultValue?: string;
+    // An example of what to type, not a description of the field. The
+    // two were the same string, which meant a placeholder worth reading
+    // — "dog yoga in Kingsdown" — would have been read out as the name
+    // of the box.
     placeholder: string;
+    // What the field is, for anyone who cannot see the placeholder.
+    label: string;
     hidden?: Record<string, string | undefined>;
     size?: "md" | "lg";
 }) {
@@ -106,7 +113,7 @@ export function SearchForm({
                 name="search"
                 defaultValue={defaultValue}
                 placeholder={placeholder}
-                aria-label={placeholder}
+                aria-label={label}
                 className={`min-w-0 flex-1 bg-transparent px-1 text-[#17233B] outline-none placeholder:text-[#17233B]/65 ${size === "lg" ? "h-12 text-base" : "h-10 text-sm"}`}
             />
 

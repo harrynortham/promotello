@@ -242,7 +242,13 @@ async function DirectorySearch({ city, searchParams }: ListingProps) {
         <SearchForm
             action={city ? `/businesses/${city.slug}` : "/businesses"}
             defaultValue={params.search}
-            placeholder="Search by name, type or area"
+            // An example beats a description, and the Search button
+            // beside it already says the word "search". Every word has
+            // to match across the name, what they do and the area
+            // (matchesSearch in lib/listing-filters.ts), so this is a
+            // query the box can really answer rather than a tease.
+            placeholder="Dog yoga in Kingsdown"
+            label="Search businesses"
             hidden={{ category: params.category, area: params.area }}
             size="lg"
         />

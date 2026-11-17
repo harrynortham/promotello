@@ -328,6 +328,7 @@ async function VisitorHome() {
                             <SearchForm
                                 action="/offers"
                                 placeholder="Try coffee, haircut or pizza"
+                                label="Search offers"
                                 size="lg"
                             />
                             <LocationSearch places={places} basePath="/explore" current={visitor.city} size="lg" />
