@@ -280,12 +280,18 @@ async function DirectorySearch({ city, searchParams }: ListingProps) {
         <SearchForm
             action={city ? `/businesses/${city.slug}` : "/businesses"}
             defaultValue={params.search}
-            // An example beats a description, and the Search button
-            // beside it already says the word "search". Every word has
-            // to match across the name, what they do and the area
-            // (matchesSearch in lib/listing-filters.ts), so this is a
-            // query the box can really answer rather than a tease.
-            placeholder="Dog yoga in Kingsdown"
+            // What, not where: the box beside this one already asks
+            // where, and answers it with a real city. Naming a place
+            // here asked the same question twice and taught a shape —
+            // "X in Y" — that only works when some business happens to
+            // have written an "in" somewhere, because matchesSearch
+            // wants every word (lib/listing-filters.ts).
+            //
+            // Three examples rather than one, so they read as examples
+            // instead of a format, and all three are words that really
+            // find something here. "Dog yoga in Kingsdown" found
+            // nothing: there is no dog yoga.
+            placeholder="Bakery, barbers or yoga"
             label="Search businesses"
             hidden={{ category: params.category, area: params.area }}
             size="lg"
