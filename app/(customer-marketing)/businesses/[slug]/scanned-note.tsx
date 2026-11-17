@@ -12,6 +12,20 @@ const reasons = {
         heading: "That offer has ended.",
         body: (name: string) => `The poster you scanned was for an offer that's finished. Here's what ${name} has on now.`,
     },
+    // Paused, not finished: it is over the business's plan limit and
+    // comes back if they move up again. "Ended" was said of offers with
+    // a year left on them, which is both untrue and a reason not to
+    // look again. Why it is paused is the business's own business.
+    paused: {
+        heading: "That offer isn't running just now.",
+        body: (name: string) => `The poster you scanned is for an offer that's paused. Here's what ${name} has on instead.`,
+    },
+    // Still with us, or pulled back for another look. Worth coming back
+    // for, which "has ended" would have talked them out of.
+    checking: {
+        heading: "That offer isn't live yet.",
+        body: (name: string) => `We're checking it — usually the same day. Here's what ${name} has on in the meantime.`,
+    },
     card: {
         heading: "That card has closed.",
         body: (name: string) => `${name} isn't adding new members to the card on that poster. Everything else they have on is below.`,

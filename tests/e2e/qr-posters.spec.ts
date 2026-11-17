@@ -706,6 +706,90 @@ test("a poster can be made for the loyalty card", async ({ page, request }) => {
 // A poster is printed once and stays in a window for months. Deleting the
 // offer behind it used to leave a code advertising a deal that no longer
 // exists, with nothing to say about it at either end.
+// A downgrade pauses every offer over the Free limit. The poster for
+// one is still in a window, and every scan of it used to say "That offer
+// has ended" — of an offer that is approved, unexpired, and back the
+// moment the business subscribes again. Being pulled back into review
+// said the same. Only one of the three has actually ended.
+test("a paused offer and one being checked do not claim to have ended", async ({ page, request }) => {
+    const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: { persistSession: false },
+    });
+
+    const stamp = Date.now();
+
+    const makeOffer = async (title: string, approval_status: string) => {
+        const { data, error } = await admin
+            .from("offers")
+            .insert({
+                business_id: state.businessId,
+                created_by: state.businessUserId,
+                slug: `e2e-scan-reason-${title}-${stamp}`,
+                title: `E2E ${title} ${stamp}`,
+                category: "Testing",
+                discount: "5% off",
+                description: "An offer for the scan-reason test.",
+                availability: "Available now",
+                // Well in the future: this is the point. "Ended" was said
+                // of offers with years left on them.
+                expires_at: "2030-12-31",
+                terms: "For automated tests only.",
+                approval_status,
+                redemption_count: 0,
+            })
+            .select("id")
+            .single();
+
+        expect(error, `seeding the ${title} offer`).toBeNull();
+        return data!.id as string;
+    };
+
+    const makeCode = async (offerId: string, label: string) => {
+        const { data, error } = await admin
+            .from("qr_codes")
+            .insert({ business_id: state.businessId, label: `${label} ${stamp}`, offer_id: offerId })
+            .select("code")
+            .single();
+
+        expect(error, `seeding the ${label} code`).toBeNull();
+        return data!.code as string;
+    };
+
+    const pausedOffer = await makeOffer("paused", "pending");
+    const checkingOffer = await makeOffer("checking", "pending");
+    const pausedCode = await makeCode(pausedOffer, "E2E Paused Poster");
+    const checkingCode = await makeCode(checkingOffer, "E2E Checking Poster");
+
+    try {
+        const paused = await admin
+            .from("offers")
+            .update({ plan_paused_at: new Date().toISOString() })
+            .eq("id", pausedOffer);
+
+        expect(paused.error, "pausing the offer").toBeNull();
+
+        const pausedScan = await request.get(`/q/${pausedCode}`, { maxRedirects: 0 });
+        expect(pausedScan.headers()["location"]).toContain("ended=paused");
+
+        const checkingScan = await request.get(`/q/${checkingCode}`, { maxRedirects: 0 });
+        expect(checkingScan.headers()["location"]).toContain("ended=checking");
+
+        // And the words a customer actually reads.
+        await page.goto(`/businesses/${state.businessId}?ended=paused`);
+        await expect(
+            page.getByRole("heading", { name: "That offer isn't running just now." }),
+        ).toBeVisible({ timeout: 10_000 });
+
+        await page.goto(`/businesses/${state.businessId}?ended=checking`);
+        await expect(
+            page.getByRole("heading", { name: "That offer isn't live yet." }),
+        ).toBeVisible({ timeout: 10_000 });
+    } finally {
+        await admin.from("offers").delete().in("id", [pausedOffer, checkingOffer]);
+    }
+});
+
 test("a poster for a deleted offer still lands somewhere, and both sides are told", async ({ page, request }) => {
     const state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
     const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
