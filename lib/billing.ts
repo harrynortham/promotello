@@ -149,22 +149,35 @@ export async function hasEverSubscribed(
     return data.length > 0;
 }
 
+// Whether a business is on a paid plan, asked of the database rather
+// than worked out here.
+//
+// This read the subscriptions table through the caller's own client,
+// which is right for a business looking at its own dashboard and wrong
+// for everybody else: the only select policy on that table is
+// is_business_member, so a customer browsing the directory was not
+// refused, they were handed nothing. No rows and no error, so this
+// returned false for every business, every loyalty card told every
+// customer it was closed, and nobody could join one
+// (20270126090000_a_customer_can_see_the_card_is_open.sql).
+//
+// business_has_pro is SECURITY DEFINER and answers from inside, which
+// is also what join_loyalty_program is gated on — so the page and the
+// gate now read the same sentence instead of two copies of it that
+// could disagree.
 export async function businessHasPro(
     supabase: SupabaseClient,
     businessId: string,
 ) {
-    const { data, error } = await supabase
-        .from("subscriptions")
-        .select("id")
-        .eq("business_id", businessId)
-        .in("status", PRO_SUBSCRIPTION_STATUSES)
-        .limit(1);
+    const { data, error } = await supabase.rpc("business_has_pro", {
+        requested_business_id: businessId,
+    });
 
     if (error) {
         throw error;
     }
 
-    return data.length > 0;
+    return data === true;
 }
 
 // The business's plan: free, pro or growth. Uses the caller's client.
