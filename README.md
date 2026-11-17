@@ -388,6 +388,8 @@ most of stage 3 is guesswork until it is.
   1st of the month adds every monthly report. Supabase's sign-in emails come out
   of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
 
+-- Apply apply developer account for the oneclick oauth
+
 - ~~Apply for the Apple Developer and Google Wallet issuer accounts.~~ Moved to
   stage 5: Wallet passes went from first on the build list to track C2, so the
   weeks of approval are no longer on the critical path. Apply when C2 is next.
