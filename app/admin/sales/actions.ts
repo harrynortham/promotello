@@ -12,7 +12,7 @@ import {
 } from "@/lib/preview-email";
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
-import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
+import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
 import { STAGE_LABELS } from "@/lib/sales-pipeline";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
@@ -94,17 +94,116 @@ async function resolveLocation(
     return { cityId: city?.id ?? null, areaId: area?.id ?? null };
 }
 
-export async function addLead(formData: FormData) {
+// Anything already written down that might be the same shop.
+//
+// The unique index catches a name typed the same way twice. It does not
+// catch "Joe's Bakery" against "Joes Bakery", or a second branch at a
+// different postcode, or a business already on Promotello — and the
+// first two are what a street looks like when it is worked through over
+// a week. So this asks the looser question and says what it found,
+// rather than refusing: two shops can share a name, and only the person
+// looking can tell.
+export type PossibleMatch = {
+    kind: "lead" | "business";
+    id: string;
+    name: string;
+    where: string | null;
+    note: string;
+};
+
+async function possibleMatches(
+    supabase: Awaited<ReturnType<typeof adminClient>>,
+    name: string,
+    postcode: string | null,
+    ignoreLeadId?: string,
+): Promise<PossibleMatch[]> {
+    const key = compare(name);
+
+    if (!key) return [];
+
+    const [{ data: leads }, { data: businesses }] = await Promise.all([
+        supabase
+            .from("leads")
+            .select("id, name, address_line_1, postcode, stage, cities ( name )")
+            .limit(500),
+        supabase
+            .from("businesses")
+            .select("id, name, approval_status, business_locations ( address_line_1, postal_code, city )")
+            .limit(500),
+    ]);
+
+    const matches: PossibleMatch[] = [];
+
+    for (const lead of leads ?? []) {
+        if (lead.id === ignoreLeadId) continue;
+        if (compare(lead.name) !== key) continue;
+
+        const cities = lead.cities as { name: string } | { name: string }[] | null;
+        const town = Array.isArray(cities) ? cities[0]?.name : cities?.name;
+
+        matches.push({
+            kind: "lead",
+            id: lead.id,
+            name: lead.name,
+            where: [lead.address_line_1, town, lead.postcode].filter(Boolean).join(", ") || null,
+            note:
+                lead.postcode && postcode && lead.postcode === postcode
+                    ? "Already a lead, at this postcode"
+                    : "Already a lead",
+        });
+    }
+
+    for (const business of businesses ?? []) {
+        if (compare(business.name) !== key) continue;
+
+        const locations = business.business_locations as
+            | { address_line_1: string | null; postal_code: string | null; city: string | null }[]
+            | null;
+        const location = locations?.[0];
+
+        matches.push({
+            kind: "business",
+            id: business.id,
+            name: business.name,
+            where:
+                [location?.address_line_1, location?.city, location?.postal_code]
+                    .filter(Boolean)
+                    .join(", ") || null,
+            // The one that matters: writing to somebody already on
+            // Promotello to ask them to join it.
+            note:
+                business.approval_status === "approved"
+                    ? "Already on Promotello"
+                    : `Already a business here (${business.approval_status})`,
+        });
+    }
+
+    return matches;
+}
+
+export async function addLead(
+    formData: FormData,
+): Promise<{ error?: string; matches?: PossibleMatch[]; leadId?: string }> {
     const supabase = await adminClient();
 
     const name = text(formData, "name");
 
     if (!name) {
-        redirect("/admin/sales/new?error=no_name");
+        return { error: "Give the business a name." };
     }
 
     const postcode = normalisePostcode(text(formData, "postalCode"));
     const line1 = text(formData, "addressLine1");
+
+    // Shown once, and only once: pressing Add again after reading them is
+    // the answer, not a loop.
+    if (text(formData, "confirmed") !== "1") {
+        const matches = await possibleMatches(supabase, name, postcode);
+
+        if (matches.length > 0) {
+            return { matches };
+        }
+    }
 
     const { cityId, areaId } = await resolveLocation(supabase, formData);
 
@@ -138,24 +237,20 @@ export async function addLead(formData: FormData) {
     // 23505 is the unique index in 20270207090000: this business is
     // already on the list. Usually the button pressed twice, so it says
     // which one it is rather than treating it as a failure.
+    // The index, which catches the exact repeat the warning above cannot
+    // when two requests are already running.
     if (error?.code === "23505") {
-        const { data: existing } = await supabase
-            .from("leads")
-            .select("id")
-            .ilike("name", name)
-            .maybeSingle();
-
-        redirect(existing ? `/admin/sales/${existing.id}?already=1` : "/admin/sales/new?error=duplicate");
+        return { error: "That business is already on the list." };
     }
 
     if (error || !lead) {
-        redirect(`/admin/sales/new?error=${encodeURIComponent(error?.message ?? "not_saved")}`);
+        return { error: error?.message ?? "The lead couldn't be saved." };
     }
 
     await record(supabase, lead.id, "added", name);
 
     revalidatePath("/admin/sales");
-    redirect(`/admin/sales/${lead.id}`);
+    return { leadId: lead.id };
 }
 
 // Reads their own site for the address they publish. Writes down where it
