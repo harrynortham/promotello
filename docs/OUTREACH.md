@@ -59,49 +59,58 @@ In rough order of how much work each one is per business.
 Do not scrape Google Maps or buy a list. Scraping breaks their terms, and a
 bought list has no consent behind it and will burn the sending domain.
 
+**The Places API is not scraping** and `/admin/sales/import` uses it to ask
+who is trading on a street. Their terms still decide what may be kept: a
+place id indefinitely, and names and addresses not at all. So the import
+shows what Google said, once, and what is kept is what somebody chose to
+keep as our own record. `docs/SALES-PIPELINE.md` has the table.
+
 ## The list itself
 
-Keep the long list in a spreadsheet, not in Promotello. Most of these
-businesses will never be contacted, and building a preview for each one is
-wasted work. A business graduates from the spreadsheet to a preview at the
-moment it is worth writing to.
+**The list lives in Promotello now, at `/admin/sales`.** It used to be a
+spreadsheet, deliberately: most of these businesses would never be contacted
+and a preview each was wasted work. That is still true, which is why a lead
+and a preview are different things — a lead is a row, a preview is a page we
+built, and a lead graduates to one when it is worth writing to.
 
-One row per business:
+What changed is the volume. A spreadsheet is the right tool for ten
+businesses and the wrong one for a hundred, and the legal gate below is too
+important to leave as a column somebody remembers to fill in.
 
-| Column | What goes in it |
-| ------ | --------------- |
-| `name` | Trading name, as written on the shop |
-| `street` | Gloucester Road, North Street, and so on |
-| `category` | Café, barber, bakery: matches a Promotello category |
-| `website` | Their own site, if any |
-| `email` | Only from their own site or profile |
-| `instagram` | Handle, where there is one |
-| `companies_house` | Company number, or `none` for a sole trader |
-| `can_email` | `yes` for a limited company, `no` otherwise |
-| `preview_built` | Date, once it exists in `/admin/previews` |
-| `notes` | Anything worth remembering before writing |
+`docs/SALES-PIPELINE.md` has the stages and what moves a lead between them.
+The columns the spreadsheet used to carry now live on the `leads` table, with
+two differences worth knowing:
 
-Sort by `can_email`, then by how good a fit they are. Cafés and barbers first:
-they already understand a stamp card, which makes the pitch a short one.
+- `can_email` is not something you type. It is set only by a confident
+  Companies House match, and the database refuses it otherwise.
+- Where a fact came from is kept beside the fact — `email_source` is the page
+  the address was found on, which is the answer to "how did you get this".
 
-## From a row to a sent email
+Still sorted the same way: what we may email first, and cafés and barbers
+before anybody else, because they already understand a stamp card.
 
-1. **Build the preview** at `/admin/previews` from what is on their website:
-   name, category, address, a sample offer that suits them, a loyalty reward
-   that suits them. Put their email in "Where you'll write".
-2. **Add a logo and a cover photo** on the preview's own page. A preview that
+## From a lead to a sent email
+
+1. **Find their address.** On the lead, "Find their address" reads their own
+   website for the one they publish, and records the page it was on.
+2. **Check Companies House**, which is what decides whether they can be
+   emailed at all. No confident match means post only, and the rest of this
+   list is a letter instead.
+3. **Build the preview** from the lead: name, category, address, a sample
+   offer that suits them, a loyalty reward that suits them.
+4. **Add a logo and a cover photo** on the preview's own page. A preview that
    looks like them is the entire argument, so this is worth the two minutes.
-3. **Open the preview** and read it as they would. If the sample offer is
+5. **Open the preview** and read it as they would. If the sample offer is
    wrong for that business, fix it before sending.
-4. **Copy the subject and the message** from the preview page and send it from
-   Gmail, so the signature and its disclosure go with it.
-5. **Mark it emailed** on the preview page. This is what stops the same
-   business being written to twice, so do it before closing the tab.
-6. **Fill in `preview_built`** in the spreadsheet.
+6. **Copy the subject and the message** from the preview page and send it from
+   Gmail, so the signature and its disclosure go with it. (The approve-and-send
+   queue is the next piece of work; until it lands this step is still by hand.)
+7. **Move the lead to Emailed.** This is what stops the same business being
+   written to twice, so do it before closing the tab.
 
 ## What is tracked, and where
 
-The spreadsheet holds the long list. The previews page holds everyone who has
+The pipeline holds the long list. The previews page holds everyone who has
 actually been contacted, and answers three questions on one row:
 
 - **Did I write to them?** Set by marking it emailed.
@@ -114,9 +123,13 @@ line is wrong. They need different fixes, and the page tells them apart.
 
 ## Following up
 
-One follow-up, five to seven days later, in the same thread, and then stop.
-Mark the preview `not_interested` if they reply no, and `replied` if they
-reply at all, so the list stays what is still outstanding.
+One follow-up, four or five days later, in the same thread. After a fortnight
+of nothing, a letter — which needs no consent, and is the only way to reach
+a sole trader at all. Then stop.
+
+The daily job flags who is due each of those on the board; it does not send
+them. Move a lead to `not_interested` if they reply no, and `claimed` when
+they take the page, so the list stays what is still outstanding.
 
 A preview expires after 90 days and the daily job deletes it. A business that
 has gone quiet for that long can be rebuilt later with a better offer.
