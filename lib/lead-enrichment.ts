@@ -189,3 +189,160 @@ export function matchCompany(
 
     return { confident: false, reason: "ambiguous" };
 }
+
+// --- The address they publish --------------------------------------
+//
+// Google's terms let a place_id be kept and restrict storing the rest,
+// so the address on a lead should come from somewhere we may keep it.
+// The business's own contact page is the obvious one: we are already
+// fetching it for the email, it is the address they chose to publish,
+// and unlike a registered office it is where the shop actually is —
+// which is what a letter needs.
+
+// A UK postcode, which is the anchor for everything below: find one and
+// the address is the line it sits on and the few before it.
+const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
+
+export function postcodeFrom(text: string) {
+    const match = POSTCODE.exec(text);
+
+    return match ? `${match[1].toUpperCase()} ${match[2].toUpperCase()}` : null;
+}
+
+// schema.org markup, where a site has it. Far and away the most reliable
+// source: the business has labelled the parts itself, so nothing has to
+// be guessed from punctuation.
+function fromJsonLd(html: string): string | null {
+    for (const block of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+        let parsed: unknown;
+
+        try {
+            parsed = JSON.parse(block[1].trim());
+        } catch {
+            continue;
+        }
+
+        const found = findPostalAddress(parsed);
+        if (found) return found;
+    }
+
+    return null;
+}
+
+type PostalAddress = {
+    streetAddress?: string;
+    addressLocality?: string;
+    addressRegion?: string;
+    postalCode?: string;
+};
+
+function findPostalAddress(node: unknown, depth = 0): string | null {
+    if (!node || typeof node !== "object" || depth > 6) return null;
+
+    if (Array.isArray(node)) {
+        for (const item of node) {
+            const found = findPostalAddress(item, depth + 1);
+            if (found) return found;
+        }
+
+        return null;
+    }
+
+    const record = node as Record<string, unknown>;
+
+    if (record["@type"] === "PostalAddress" || record.streetAddress) {
+        const address = record as PostalAddress;
+
+        const parts = [
+            address.streetAddress,
+            address.addressLocality,
+            address.addressRegion,
+            address.postalCode,
+        ]
+            .map((part) => (typeof part === "string" ? part.trim() : ""))
+            .filter(Boolean);
+
+        // A locality on its own is not an address worth posting to.
+        if (parts.length >= 2 && parts.join(" ").length > 8) {
+            return parts.join(", ");
+        }
+    }
+
+    for (const value of Object.values(record)) {
+        const found = findPostalAddress(value, depth + 1);
+        if (found) return found;
+    }
+
+    return null;
+}
+
+// Failing that, the text around a postcode. Footers are where addresses
+// live, and a postcode is the one part of a UK address that cannot be
+// mistaken for prose.
+function fromText(html: string): string | null {
+    const text = html
+        .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
+        .replace(/<br\s*\/?>|<\/(p|div|li|address)>/gi, ", ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/\s+/g, " ");
+
+    const match = POSTCODE.exec(text);
+
+    if (!match) return null;
+
+    const end = match.index + match[0].length;
+    const before = text.slice(Math.max(0, match.index - 200), match.index);
+
+    // Backwards from the postcode, a comma at a time, keeping the parts
+    // that look like an address and stopping at the first that looks
+    // like a sentence.
+    //
+    // Cutting at the previous full stop was not enough: "…at either time,
+    // you can find us at either shop or get in touch below., Joe's
+    // Bakery 240 Gloucester Road…" came back with the prose attached and
+    // the first word sliced in half, which is not something you put on
+    // an envelope.
+    const parts = before.split(",").map((part) => part.trim()).filter(Boolean);
+    const kept: string[] = [];
+
+    for (let i = parts.length - 1; i >= 0; i -= 1) {
+        const part = parts[i];
+
+        // A sentence, not a line of an address: too long, or it ends
+        // like prose. Either way, the address starts after it.
+        if (part.length > 45 || /[.!?]$/.test(part) || part.split(/\s+/).length > 8) {
+            break;
+        }
+
+        kept.unshift(part);
+
+        // An address is a handful of lines. More than that and something
+        // has gone wrong above.
+        if (kept.length >= 5) break;
+    }
+
+    // A street number, in the part before the postcode. Without one this
+    // is usually a sentence that happens to mention a postcode — "we
+    // deliver to most of Bristol, including BS7 8NZ" — and posting to
+    // that is worse than not having an address at all.
+    //
+    // It does mean "The Old Bakehouse, Church Lane" is missed. That is
+    // the trade worth making: a miss is typed in by hand in a few
+    // seconds, and a wrong address is a letter that never arrives.
+    if (!/\d/.test(kept.join(" "))) {
+        return null;
+    }
+
+    const tidy = [...kept, text.slice(match.index, end).trim()]
+        .join(", ")
+        .replace(/^[^A-Za-z0-9]+/, "")
+        .trim();
+
+    return tidy.length > 10 && tidy.length < 200 ? tidy : null;
+}
+
+export function addressFromHtml(html: string): string | null {
+    return fromJsonLd(html) ?? fromText(html);
+}

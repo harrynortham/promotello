@@ -12,7 +12,7 @@ import {
 } from "@/app/admin/previews/preview-shared";
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
-import { checkCompaniesHouse, findEmail } from "@/lib/lead-jobs";
+import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
@@ -68,7 +68,11 @@ export async function addLeads(formData: FormData) {
         return {
             place_id: place.place_id,
             name: place.name,
+            // Provisional: Google's, kept so the operator has something
+            // to look at, and replaced the moment enrichment finds the
+            // one the business publishes itself (20270202090000).
             address: place.address,
+            address_source: place.address ? "places" : null,
             website: place.website,
             phone: place.phone,
             city_id: cityId,
@@ -103,31 +107,57 @@ export async function enrichLead(formData: FormData) {
 
     const { data: lead } = await supabase
         .from("leads")
-        .select("id, website, stage")
+        .select("id, website, stage, address_source")
         .eq("id", leadId)
         .maybeSingle();
 
     if (!lead) redirect("/admin/sales");
 
-    const result = await findEmail(lead.website);
+    const found = await findContactDetails(lead.website);
 
-    if (!result.found) {
-        await record(supabase, leadId, "note", `No address found: ${result.reason.replace(/_/g, " ")}`);
+    if (!found.email && !found.address) {
+        await record(
+            supabase,
+            leadId,
+            "note",
+            `Nothing found on their site: ${(found.reason ?? "nothing published").replace(/_/g, " ")}`,
+        );
         revalidatePath(`/admin/sales/${leadId}`);
         return;
     }
 
-    await supabase
-        .from("leads")
-        .update({
-            email: result.email,
-            email_source: result.source,
-            email_found_at: new Date().toISOString(),
-            stage: lead.stage === "new" ? "enriched" : lead.stage,
-        })
-        .eq("id", leadId);
+    const now = new Date().toISOString();
 
-    await record(supabase, leadId, "email_found", `${result.email} — ${result.source}`);
+    const update: Record<string, unknown> = {
+        stage: lead.stage === "new" ? "enriched" : lead.stage,
+    };
+
+    if (found.email) {
+        update.email = found.email;
+        update.email_source = found.source;
+        update.email_found_at = now;
+    }
+
+    // Their own published address replaces the provisional one from the
+    // import, which is Google's and not ours to keep (20270202090000). A
+    // typed one is left alone: somebody looked at it on purpose.
+    if (found.address && lead.address_source !== "typed") {
+        update.address = found.address;
+        update.address_source = "website";
+        update.address_found_at = now;
+        if (found.postcode) update.postcode = found.postcode;
+    }
+
+    await supabase.from("leads").update(update).eq("id", leadId);
+
+    if (found.email) {
+        await record(supabase, leadId, "email_found", `${found.email} — ${found.source}`);
+    }
+
+    if (found.address && lead.address_source !== "typed") {
+        await record(supabase, leadId, "note", `Address from their own site: ${found.address}`);
+    }
+
     revalidatePath(`/admin/sales/${leadId}`);
 }
 

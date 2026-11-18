@@ -1,8 +1,10 @@
 import {
+    addressFromHtml,
     bestEmail,
     contactPaths,
     emailsFromHtml,
     matchCompany,
+    postcodeFrom,
     type CompanyCandidate,
     type CompanyMatch,
 } from "@/lib/lead-enrichment";
@@ -80,53 +82,82 @@ async function allowed(origin: string, path: string) {
     return true;
 }
 
-export type EmailSearch =
-    | { found: true; email: string; source: string }
-    | { found: false; reason: "no_website" | "unreachable" | "blocked" | "nothing_published" };
+export type ContactDetails = {
+    email: string | null;
+    address: string | null;
+    postcode: string | null;
+    // The page they were found on. "This was on your contact page" is the
+    // answer to "how did you get this", for both of them.
+    source: string | null;
+    reason: "no_website" | "unreachable" | "blocked" | "nothing_published" | null;
+};
 
-// The address a business publishes on its own site, and the page it was
-// on. Three requests at the very most: the home page, and up to two pages
-// it links to that look like a way of getting in touch.
-export async function findEmail(website: string | null | undefined): Promise<EmailSearch> {
-    if (!website?.trim()) {
-        return { found: false, reason: "no_website" };
-    }
+// What a business publishes about itself on its own site: an address to
+// write to, and an address to post to. Both come from the same pages, so
+// they are looked for in the same pass rather than fetching twice.
+//
+// Three requests at the very most: the home page, and up to two pages it
+// links to that look like a way of getting in touch.
+export async function findContactDetails(
+    website: string | null | undefined,
+): Promise<ContactDetails> {
+    const nothing = (reason: ContactDetails["reason"]): ContactDetails => ({
+        email: null,
+        address: null,
+        postcode: null,
+        source: null,
+        reason,
+    });
+
+    if (!website?.trim()) return nothing("no_website");
 
     let home: URL;
 
     try {
         home = new URL(website.startsWith("http") ? website : `https://${website}`);
     } catch {
-        return { found: false, reason: "no_website" };
+        return nothing("no_website");
     }
 
-    if (!(await allowed(home.origin, home.pathname))) {
-        return { found: false, reason: "blocked" };
-    }
+    if (!(await allowed(home.origin, home.pathname))) return nothing("blocked");
 
     const landing = await get(home.toString());
 
-    if (!landing) {
-        return { found: false, reason: "unreachable" };
+    if (!landing) return nothing("unreachable");
+
+    let email = bestEmail(emailsFromHtml(landing), home.host);
+    let address = addressFromHtml(landing);
+    let source = email || address ? home.toString() : null;
+
+    // Only worth opening a contact page for what the home page did not
+    // have. Somebody else's server, and two extra requests is the budget.
+    if (!email || !address) {
+        for (const path of contactPaths(landing, home.toString())) {
+            if (email && address) break;
+            if (!(await allowed(home.origin, new URL(path).pathname))) continue;
+
+            const page = await get(path);
+            if (!page) continue;
+
+            const pageEmail = email ?? bestEmail(emailsFromHtml(page), home.host);
+            const pageAddress = address ?? addressFromHtml(page);
+
+            if ((pageEmail && !email) || (pageAddress && !address)) {
+                source = path;
+            }
+
+            email = pageEmail;
+            address = pageAddress;
+        }
     }
 
-    const onLanding = bestEmail(emailsFromHtml(landing), home.host);
-
-    if (onLanding) {
-        return { found: true, email: onLanding, source: home.toString() };
-    }
-
-    for (const path of contactPaths(landing, home.toString())) {
-        if (!(await allowed(home.origin, new URL(path).pathname))) continue;
-
-        const page = await get(path);
-        if (!page) continue;
-
-        const onPage = bestEmail(emailsFromHtml(page), home.host);
-        if (onPage) return { found: true, email: onPage, source: path };
-    }
-
-    return { found: false, reason: "nothing_published" };
+    return {
+        email,
+        address,
+        postcode: address ? postcodeFrom(address) : null,
+        source,
+        reason: email || address ? null : "nothing_published",
+    };
 }
 
 // Companies House. The key is free from their developer portal and the

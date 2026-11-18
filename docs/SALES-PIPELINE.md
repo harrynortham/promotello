@@ -29,10 +29,31 @@ why posting one is in the sequence at all.
 | Fact | Comes from | Kept? |
 | --- | --- | --- |
 | `place_id` | Google Places | Yes — the one field their terms allow indefinitely |
-| name, address, phone, website | shown by Places at import, **kept only because somebody chose to** | Ours from then on |
+| name, phone, website | shown by Places at import, kept because somebody chose to | Ours from then on |
+| address | Places at import — **provisional**, then replaced by the one on their own site | `address_source` says which |
 | `email`, `email_source` | the business's own website | Yes |
 | `company_number`, `company_name` | Companies House (Open Government Licence) | Yes |
 | notes, category, stage | us | Yes |
+
+### The address, and why it has a source
+
+`leads.address_source` is `places`, `website` or `typed`.
+
+The import writes what Google returned so there is something to look at, and
+marks it **provisional**. Enrichment then reads the business's own contact
+page — the same pages it already opens for the email — and replaces it with
+the address they publish themselves, which is ours to keep and is where the
+shop actually is. A registered office is often an accountant's in another
+county, so it is no use for a letter.
+
+**A letter should go to an address whose source is not `places`.** The lead
+page says which one it has and what to do about it.
+
+An address with no street number is refused rather than guessed: "we deliver
+to most of Bristol, including BS7 8NZ" has a postcode and is not somewhere a
+letter can go. The cost is that "The Old Bakehouse, Church Lane" is missed and
+gets typed by hand, which is the right way round — a miss costs seconds, a
+wrong address costs a letter.
 
 Google's terms give names, addresses, ratings and photos **no caching
 exception** and call out bulk storing them. So Places answers one question —
