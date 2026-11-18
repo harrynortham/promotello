@@ -52,6 +52,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                         business_locations (
                             name,
                             address_line_1,
+                            address_line_2,
                             city,
                             region,
                             postal_code
