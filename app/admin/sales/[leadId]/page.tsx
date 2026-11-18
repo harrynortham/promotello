@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ATTRIBUTION } from "@/lib/postcodes";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
@@ -191,6 +192,20 @@ async function Lead({ params }: PageProps) {
                                         Save this address
                                     </Button>
                                 </form>
+
+                                {/* Looked up from the postcode, never the
+                                    other way round — reverse geocoding
+                                    returns the nearest centroid, which on a
+                                    long road is the wrong postcode. The
+                                    attribution is a condition of the data. */}
+                                {lead.latitude !== null && lead.longitude !== null && (
+                                    <p className="mt-3 text-[11px] leading-5 text-[#17233B]/55">
+                                        {[lead.ward, "located from the postcode"].filter(Boolean).join(" · ")} ·{" "}
+                                        {lead.latitude.toFixed(5)}, {lead.longitude.toFixed(5)}
+                                        <br />
+                                        {ATTRIBUTION}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">

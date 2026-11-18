@@ -13,6 +13,7 @@ import {
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
+import { lookupPostcode } from "@/lib/postcodes";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
@@ -69,11 +70,11 @@ export async function addLeads(formData: FormData) {
         return {
             place_id: place.place_id,
             name: place.name,
-            // Provisional: Google's, kept so the operator has something
-            // to look at, and replaced the moment enrichment finds the
-            // one the business publishes itself (20270202090000).
-            address: place.address,
-            address_source: place.address ? "places" : null,
+            // No address. Google's terms let a place_id be kept and
+            // restrict the rest, and "provisional" turned out to mean
+            // "kept for good" for any lead nobody got round to
+            // (20270204090000). It arrives from their own site or is
+            // typed, and the postcode locates it from there.
             website: place.website,
             phone: place.phone,
             city_id: cityId,
@@ -152,6 +153,17 @@ export async function enrichLead(formData: FormData) {
         const split = splitAddress(found.address);
         update.address_line_1 = split.line1;
         if (split.postcode) update.postcode = split.postcode;
+
+        // Where it is, from the postcode they published rather than from
+        // anything Google returned.
+        const located = await lookupPostcode(split.postcode);
+
+        if (located.found) {
+            update.latitude = located.place.latitude;
+            update.longitude = located.place.longitude;
+            update.ward = located.place.ward;
+            update.located_at = now;
+        }
     }
 
     await supabase.from("leads").update(update).eq("id", leadId);
@@ -480,6 +492,8 @@ export async function saveLeadAddress(formData: FormData) {
 
     const address = [line1, town, typedPostcode].filter(Boolean).join(", ");
 
+    const located = await lookupPostcode(typedPostcode);
+
     await supabase
         .from("leads")
         .update({
@@ -488,6 +502,14 @@ export async function saveLeadAddress(formData: FormData) {
             address_source: "typed",
             address_found_at: new Date().toISOString(),
             ...(typedPostcode ? { postcode: typedPostcode } : {}),
+            ...(located.found
+                ? {
+                      latitude: located.place.latitude,
+                      longitude: located.place.longitude,
+                      ward: located.place.ward,
+                      located_at: new Date().toISOString(),
+                  }
+                : {}),
         })
         .eq("id", leadId);
 
