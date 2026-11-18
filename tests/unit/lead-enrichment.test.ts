@@ -3,6 +3,7 @@ import { test } from "node:test";
 
 import {
     addressFromHtml,
+    compare,
     bestEmail,
     contactPaths,
     emailsFromHtml,
@@ -276,4 +277,19 @@ test("losing the apostrophe does not make different companies look alike", () =>
 
     assert.equal(matchCompany("Sams Kitchens", "BS1 1AA", candidates).confident, false);
     assert.equal(matchCompany("Sam Kitchen", "BS1 1AA", candidates).confident, false);
+});
+
+// The same normalisation now decides whether a lead is already written
+// down, so the two answers to "are these the same shop" cannot disagree.
+test("the comparison key folds the ways a name is written", () => {
+    const key = (value: string) => compare(value);
+
+    assert.equal(key("Joe's Bakery"), key("Joes Bakery"));
+    assert.equal(key("JOE'S BAKERY LIMITED"), key("Joes Bakery"));
+    assert.equal(key("The Little Loaf"), key("LITTLE LOAF LTD"));
+    assert.equal(key("  Joes   Bakery  "), key("Joes Bakery"));
+
+    // And does not fold two shops that are genuinely different.
+    assert.notEqual(key("Joes Bakery"), key("Joes Butchers"));
+    assert.notEqual(key("Sams Kitchen"), key("Sams Kitchens"));
 });

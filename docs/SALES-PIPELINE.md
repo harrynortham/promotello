@@ -62,6 +62,28 @@ a plpgsql body when a column it names is dropped, so the function would have
 kept its signature, passed every build, and failed the moment a business opened
 the link they were sent.
 
+### Adding one twice
+
+Three things, because none of them covers the others.
+
+The button disables while it saves. A **unique index** on the name and
+postcode is what actually stops two requests already in flight — a check in
+the action cannot, since both would ask and both be told no. Adding one that
+is exactly there opens the lead that exists instead of erroring.
+
+And before saving, anything that **might** be the same shop is shown:
+`Joe's Bakery` against `Joes Bakery`, a second branch at another postcode, or
+a business already on Promotello. It uses `compare()` from
+`lib/lead-enrichment.ts` — the same normalisation the Companies House matcher
+uses, so the two answers to "are these the same shop" cannot disagree.
+
+It warns rather than refuses. Two shops can share a name and only the person
+looking can tell, so it shows what it found, where each one is, and a link to
+open it; pressing **Add it anyway** is the answer, and nothing typed is lost
+while they look. The one worth catching is a business already on Promotello,
+because writing to them to ask them to join it is the only version a customer
+would ever see.
+
 ### Everything on a lead is editable
 
 A lead is written down by hand, so it is corrected by hand: the name, who to

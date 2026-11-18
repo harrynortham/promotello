@@ -9,8 +9,8 @@ const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOStr
 test("a follow-up is due four days after the first email, not before", () => {
     const { followUp } = dueToday(
         [
-            { id: "a", name: "Three days ago", stage: "emailed", can_email: true, last_touch: daysAgo(3) },
-            { id: "b", name: "Four days ago", stage: "emailed", can_email: true, last_touch: daysAgo(4) },
+            { id: "a", name: "Three days ago", stage: "emailed", can_email: true, last_touch: daysAgo(3), first_sent_at: daysAgo(3), follow_up_sent_at: null },
+            { id: "b", name: "Four days ago", stage: "emailed", can_email: true, last_touch: daysAgo(4), first_sent_at: daysAgo(4), follow_up_sent_at: null },
         ],
         now,
     );
@@ -21,8 +21,8 @@ test("a follow-up is due four days after the first email, not before", () => {
 test("a fortnight of silence becomes a letter", () => {
     const { letter } = dueToday(
         [
-            { id: "a", name: "Followed up, still quiet", stage: "followed_up", can_email: true, last_touch: daysAgo(14) },
-            { id: "b", name: "Followed up last week", stage: "followed_up", can_email: true, last_touch: daysAgo(7) },
+            { id: "a", name: "Followed up, still quiet", stage: "followed_up", can_email: true, last_touch: daysAgo(14), first_sent_at: daysAgo(14), follow_up_sent_at: daysAgo(14) },
+            { id: "b", name: "Followed up last week", stage: "followed_up", can_email: true, last_touch: daysAgo(7), first_sent_at: daysAgo(7), follow_up_sent_at: daysAgo(7) },
         ],
         now,
     );
@@ -35,7 +35,7 @@ test("a lead we may not email is still due a letter", () => {
     // needs no consent, so a sole trader is reachable this way and only
     // this way.
     const { followUp, letter } = dueToday(
-        [{ id: "a", name: "Sole trader", stage: "preview", can_email: false, last_touch: daysAgo(20) }],
+        [{ id: "a", name: "Sole trader", stage: "preview", can_email: false, last_touch: daysAgo(20), first_sent_at: null, follow_up_sent_at: null }],
         now,
     );
 
@@ -50,6 +50,8 @@ test("a lead that has finished is never due anything", () => {
         stage,
         can_email: true,
         last_touch: daysAgo(90),
+        first_sent_at: daysAgo(90),
+        follow_up_sent_at: daysAgo(90),
     }));
 
     const { followUp, letter } = dueToday(finished, now);
@@ -60,7 +62,7 @@ test("a lead that has finished is never due anything", () => {
 
 test("a lead nobody has touched is not chased", () => {
     const { followUp, letter } = dueToday(
-        [{ id: "a", name: "Imported, never written to", stage: "new", can_email: true, last_touch: null }],
+        [{ id: "a", name: "Imported, never written to", stage: "new", can_email: true, last_touch: null, first_sent_at: null, follow_up_sent_at: null }],
         now,
     );
 
@@ -97,4 +99,42 @@ test("the outreach sender has to be an address, not a domain", async () => {
         if (before === undefined) delete process.env[key];
         else process.env[key] = before;
     }
+});
+
+// The rule reads what was sent, not what the stage says. A stage can be
+// dragged by hand; outreach_messages records the send itself.
+test("a follow-up stops being due once it has gone", () => {
+    const sameLead = {
+        id: "a",
+        name: "Joe's Bakery",
+        stage: "emailed",
+        can_email: true,
+        last_touch: daysAgo(6),
+        first_sent_at: daysAgo(6),
+    };
+
+    const { followUp: waiting } = dueToday([{ ...sameLead, follow_up_sent_at: null }], now);
+    assert.deepEqual(waiting.map((lead) => lead.id), ["a"], "due while nothing has gone");
+
+    const { followUp: done } = dueToday([{ ...sameLead, follow_up_sent_at: daysAgo(1) }], now);
+    assert.equal(done.length, 0, "not due once it has");
+});
+
+test("a lead whose first email never went is not followed up", () => {
+    // The stage says emailed, which somebody could have set by hand.
+    // Nothing was sent, so there is nothing to follow.
+    const { followUp } = dueToday(
+        [{
+            id: "a",
+            name: "Moved by hand",
+            stage: "emailed",
+            can_email: true,
+            last_touch: daysAgo(9),
+            first_sent_at: null,
+            follow_up_sent_at: null,
+        }],
+        now,
+    );
+
+    assert.equal(followUp.length, 0);
 });

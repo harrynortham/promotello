@@ -132,7 +132,12 @@ export type CompanyMatch =
 
 // Normalised for comparison: a shop called "The Little Loaf" is the same
 // business as "LITTLE LOAF LTD" on the register.
-function compare(value: string) {
+//
+// Exported because the same question is asked when a lead is added —
+// is this one already written down? — and two answers to "are these the
+// same shop" would disagree the first time somebody typed an
+// apostrophe.
+export function compare(value: string) {
     return value
         .toLowerCase()
         .replace(/&/g, " and ")

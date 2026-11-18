@@ -15,7 +15,7 @@ export async function flagLeadsDueToday() {
 
     const { data, error } = await supabase
         .from("leads")
-        .select("id, name, stage, can_email, updated_at, lead_events ( kind, created_at )")
+        .select("id, name, stage, can_email, updated_at, lead_events ( kind, created_at ), outreach_messages ( kind, status, sent_at )")
         .in("stage", ["preview", "emailed", "followed_up"]);
 
     if (error) {
@@ -35,12 +35,18 @@ export async function flagLeadsDueToday() {
             .map((event) => event.created_at)
             .sort();
 
+        // What was sent, from the record of sending it.
+        const sent = ((lead.outreach_messages ?? []) as { kind: string; status: string; sent_at: string | null }[])
+            .filter((message) => message.status === "sent");
+
         return {
             id: lead.id,
             name: lead.name,
             stage: lead.stage,
             can_email: lead.can_email,
             last_touch: touches[touches.length - 1] ?? null,
+            first_sent_at: sent.find((message) => message.kind === "first")?.sent_at ?? null,
+            follow_up_sent_at: sent.find((message) => message.kind === "follow_up")?.sent_at ?? null,
         };
     });
 

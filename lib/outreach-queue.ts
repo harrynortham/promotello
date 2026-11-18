@@ -1,4 +1,4 @@
-import { companyDisclosure } from "@/lib/legal";
+import { SIGNATURE_HTML, signatureText } from "@/lib/email-signature";
 
 // Drafting and sending the queued outreach.
 //
@@ -21,8 +21,12 @@ export const OUTREACH_FROM = "OUTREACH_EMAIL_FROM";
 // email from a limited company has to give the registered name, number,
 // place of registration and office. So the queue adds it to the draft,
 // where it is also read before anybody approves it.
-export function withDisclosure(body: string) {
-    return `${body}\n\n—\n${companyDisclosure()}`;
+// The signature carries it now (lib/email-signature.ts), so this is what
+// goes on a draft: the letter, then the signature in full, so the thing
+// read in the outbox before approving is the thing that is sent. Adding
+// the disclosure here as well would print the registered office twice.
+export function withSignature(body: string) {
+    return `${body}\n\n—\n${signatureText()}`;
 }
 
 // Cold email does not go out on the address that carries vouchers,
@@ -68,8 +72,16 @@ export function followUpSubject(businessName: string) {
 // person writing to a shop, not as a template with a header image. The
 // branded wrapper is for the product's own email; this is not that.
 export function asHtml(body: string) {
-    return body
+    // The draft already ends with the signature as text, because that is
+    // what is read before approving. In HTML it is the real one, so the
+    // text version is taken off and the markup put in its place —
+    // otherwise the name and the registered office appear twice.
+    const letter = body.split(`\n\n—\n${signatureText()}`)[0];
+
+    const paragraphs = letter
         .split(/\n{2,}/)
         .map((paragraph) => `<p style="margin:0 0 16px">${paragraph.replace(/\n/g, "<br>").replace(/&/g, "&amp;").replace(/</g, "&lt;")}</p>`)
         .join("");
+
+    return `${paragraphs}${SIGNATURE_HTML}`;
 }

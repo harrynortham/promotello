@@ -206,6 +206,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 business_locations (
                     name,
                     address_line_1,
+                    address_line_2,
                     city,
                     region,
                     postal_code,

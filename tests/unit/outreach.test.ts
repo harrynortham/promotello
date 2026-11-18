@@ -1,48 +1,157 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, plans } from "@/lib/billing";
 import {
     DEFAULT_SENDER,
+    followUpSubject,
     ownNumbers,
     outreachDm,
+    outreachFollowUp,
     outreachMessage,
     outreachSubject,
+    personalOpening,
     signOff,
 } from "@/lib/preview-email";
 
 const preview = {
     businesses: {
         name: "Little Loaf",
-        // The section of the directory they would be listed in.
         categories: { name: "Bakeries" },
         business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
     },
     token: "11111111-2222-3333-4444-555555555555",
-} as unknown as Parameters<typeof outreachMessage>[0];
+} as unknown as Parameters<typeof outreachMessage>[0]["preview"];
 
-test("the subject offers a page, not the thing every stamp-card app emails about", () => {
-    const subject = outreachSubject(preview);
+const email = (over: Partial<Parameters<typeof outreachMessage>[0]> = {}) =>
+    outreachMessage({ preview, placesLeft: 38, contactName: "Sam", ...over });
 
-    assert.match(subject, /Little Loaf/);
-    assert.doesNotMatch(subject, /loyalty card/i);
+// --- The first email ------------------------------------------------
+
+test("the subject names the preview and the business", () => {
+    assert.equal(outreachSubject(preview), "A preview of Little Loaf on Promotello");
 });
 
-test("page, then offer, then card, then reminders", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
-
-    const page = message.indexOf("page in the Bristol directory");
-    const offer = message.indexOf("claim your offer");
-    const card = message.indexOf("stamp card");
-    const reminders = message.indexOf("follow you");
-
-    assert.ok(page > 0, "the page they get comes first");
-    assert.ok(offer > page, "then the offer that brings someone in");
-    assert.ok(reminders > card, "reminders come after the card");
-
-    assert.ok(card > offer, "the card is what brings them back, so it comes after");
-    // The poster is what carries the offer into the street.
-    assert.match(message, /QR poster in your window/);
+test("the follow-up is a reply, not a second cold email", () => {
+    // Same thread, so it arrives under the first one rather than as
+    // another unknown sender.
+    assert.equal(followUpSubject(preview), "Re: A preview of Little Loaf on Promotello");
 });
+
+test("the personal line opens the paragraph", () => {
+    const body = email({ personalLine: "Your window display is the best on the road." });
+
+    assert.match(body, /Your window display is the best on the road\. I've put together/);
+});
+
+test("a personal line with no full stop is given one", () => {
+    // It runs straight into the next sentence, and "…on the road I've
+    // put together" is worse than no personal line at all.
+    const body = email({ personalLine: "  Your window display is the best on the road  " });
+
+    assert.match(body, /the best on the road\. I've put together/);
+
+    // Punctuation it already has is left alone.
+    assert.match(
+        email({ personalLine: "Who bakes the sourdough?" }),
+        /sourdough\? I've put together/,
+    );
+});
+
+test("without one the paragraph starts clean", () => {
+    const body = email({ personalLine: null });
+
+    assert.match(body, /\n\nI've put together a preview/);
+    assert.doesNotMatch(body, / {2}/, "no double space where the line would have been");
+    assert.equal(personalOpening("   "), "", "whitespace is no line at all");
+});
+
+test("with no name it greets them anyway", () => {
+    assert.match(email({ contactName: null }), /^Hi there,/);
+});
+
+test("the street is theirs, and the town stands in when there is none", () => {
+    assert.match(email(), /helps Gloucester Road's independents/);
+
+    const noStreet = {
+        ...preview,
+        businesses: { ...preview.businesses, business_locations: [{ city: "Bristol", cities: { name: "Bristol" } }] },
+    } as typeof preview;
+
+    assert.match(outreachMessage({ preview: noStreet, placesLeft: 38, contactName: "Sam" }), /helps Bristol's independents/);
+});
+
+test("it says offers and loyalty card, in those words", () => {
+    const body = email();
+
+    assert.match(body, /loyalty card/);
+    assert.doesNotMatch(body, /stamp card/i, "never a stamp card");
+    assert.doesNotMatch(body, /phone offers/i, "never phone offers");
+});
+
+test("the founding places are named while there are some", () => {
+    const body = email({ placesLeft: 38 });
+
+    assert.match(body, new RegExp(`first ${FOUNDING_MEMBER_LIMIT} businesses`));
+    assert.match(body, new RegExp(`free for ${FOUNDING_TRIAL_DAYS} days`));
+    assert.match(body, new RegExp(`${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}`));
+});
+
+test("once they are gone it offers the ordinary trial instead", () => {
+    // Naming a thing nobody can have is a reason to stop reading.
+    for (const placesLeft of [0, null]) {
+        const body = email({ placesLeft });
+
+        assert.doesNotMatch(body, /founding/i);
+        assert.match(body, new RegExp(`free for ${TRIAL_DAYS} days`));
+    }
+});
+
+test("it promises the link is private, and offers a way out", () => {
+    const body = email();
+
+    assert.match(body, /private to this link/);
+    assert.match(body, /just reply and I'll delete it/);
+});
+
+test("it stops before the sign-off, because the signature is the sign-off", () => {
+    const body = email();
+
+    assert.doesNotMatch(body, /Harry/, "no name in the body");
+    assert.doesNotMatch(body, /17546946/, "and no registered office");
+});
+
+// --- The follow-up ---------------------------------------------------
+
+const followUp = (over: Partial<Parameters<typeof outreachFollowUp>[0]> = {}) =>
+    outreachFollowUp({ preview, placesLeft: 38, contactName: "Sam", ...over });
+
+test("the follow-up is short, and carries the link again", () => {
+    const body = followUp();
+
+    assert.match(body, /^Hi Sam,/);
+    assert.match(body, /Just checking you saw the preview I made for Little Loaf/);
+    assert.match(body, /business\/preview\//);
+    assert.match(body, /reply "no thanks"/);
+});
+
+test("the follow-up drops its founding sentence the same way", () => {
+    assert.match(followUp({ placesLeft: 12 }), new RegExp(`12 of the ${FOUNDING_MEMBER_LIMIT} founding places`));
+    assert.doesNotMatch(followUp({ placesLeft: 0 }), /founding/i);
+    assert.doesNotMatch(followUp({ placesLeft: null }), /founding/i);
+});
+
+// --- Both ------------------------------------------------------------
+
+test("neither carries an unfilled placeholder or a double space", () => {
+    for (const body of [email(), email({ personalLine: "A true sentence." }), followUp(), followUp({ placesLeft: 0 })]) {
+        assert.doesNotMatch(body, /\{\{|\{[a-z ]+\}/, "nothing left to fill in");
+        assert.doesNotMatch(body, /[^\n] {2}/, "no double spaces");
+        assert.doesNotMatch(body, /undefined|null|NaN/, "nothing leaked from a missing value");
+    }
+});
+
+// --- The Instagram DM, which is unchanged ----------------------------
 
 test("the DM runs in the same order", () => {
     const dm = outreachDm(preview, "Harry Northam", 38, "Sam");
@@ -52,56 +161,6 @@ test("the DM runs in the same order", () => {
     const card = dm.indexOf("stamp card");
 
     assert.ok(page > 0 && offer > page && card > offer, dm);
-});
-
-test("the directory is something that grows, and nothing waits on it", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
-
-    // A new directory can't promise an audience it hasn't got.
-    assert.match(message, /gets better as more of Gloucester Road joins/);
-    assert.match(message, /None of that has to happen first/);
-    assert.doesNotMatch(message, /people browse|people search/);
-    // The one thing a loyalty app can't say about its card.
-    assert.match(message, /before they have ever been in/);
-});
-
-test("it says who is writing, and that this is new", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
-
-    assert.match(message, /I'm Harry — I'm building Promotello here in Bristol/);
-    assert.match(message, /It's new, and I'm starting with Gloucester Road/);
-
-    // Said after the link: the first line is for them, not for us.
-    assert.ok(message.indexOf("I'm Harry") > message.indexOf("/business/preview/"));
-});
-
-test("with no name on the account it is still honest about being new", () => {
-    const message = outreachMessage(preview, DEFAULT_SENDER, 38, "Sam");
-
-    assert.match(message, /We're building Promotello here in Bristol/);
-    assert.doesNotMatch(message, /I'm —/);
-});
-
-test("a business with no area named is told it is new without a street", () => {
-    const withoutArea = {
-        ...preview,
-        businesses: {
-            ...preview.businesses,
-            business_locations: [{ city: "Bristol", region: null, cities: { name: "Bristol" } }],
-        },
-    } as unknown as Parameters<typeof outreachMessage>[0];
-
-    const message = outreachMessage(withoutArea, "Harry Northam", 38, "Sam");
-
-    assert.match(message, /here in Bristol, and it's new\./);
-    assert.doesNotMatch(message, /starting with/);
-});
-
-test("a person signs it, by their first name", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
-
-    assert.ok(message.endsWith("Cheers,\nHarry"), message.slice(-40));
-    assert.doesNotMatch(message, /Northam/);
 });
 
 test("a DM signs off on one line", () => {
@@ -117,9 +176,6 @@ test("without a name it is the team, and it says thanks rather than cheers", () 
     assert.deepEqual(signOff("  Harry  "), ["Cheers,", "Harry"]);
 });
 
-// What stands in for reviews we do not have yet: the number on their
-// own dashboard, not a promise they would have to trust
-// (docs/LAUNCH-FUNNEL.md).
 test("it sends them to their own numbers, and promises nothing to adjudicate", () => {
     const line = ownNumbers("Harry Northam");
 
@@ -131,8 +187,6 @@ test("it sends them to their own numbers, and promises nothing to adjudicate", (
     assert.ok(!/refund|money back|guarantee/i.test(line));
 });
 
-// introduction() already splits these two voices; this has to as well,
-// or a sentence signed "The Promotello team" says "I'll".
 test("it speaks as a person or as the team, like the introduction does", () => {
     const person = ownNumbers("Harry Northam");
     const team = ownNumbers(DEFAULT_SENDER);
@@ -145,42 +199,6 @@ test("it speaks as a person or as the team, like the introduction does", () => {
     assert.ok(!/take my word|\btell me\b/.test(team));
 });
 
-test("the email carries it, and the offer to finish the page for them", () => {
-    const message = outreachMessage(preview, "Harry Northam", 37, "Sam");
-
-    assert.match(message, /take my word for any of it/);
-
-    // introduction() already says the company is new; saying it again
-    // three paragraphs later sounds unsure.
-    assert.equal(message.match(/It's new/g)?.length, 1);
-    // The offer to finish it, and what to send. Opening hours are no
-    // longer on that list: a page we wrote goes live on the claim
-    // (20270128090000), so asking for them as the price of being seen
-    // was both wrong and a reason to put the email down.
-    assert.match(message, /logo/);
-    assert.match(message, /photo of the place/);
-    assert.match(message, /I'll finish it off/);
-
-    // Claiming is the moment it goes live, and the email says so rather
-    // than describing a rule that no longer exists.
-    assert.match(message, /goes live as soon as you do/);
-    assert.ok(!/once it has your logo, your opening hours/.test(message));
-
-    // "About two minutes" promised the whole thing and delivered the
-    // first step, which the first business to try it would have found out.
-    assert.ok(!/two minutes/.test(message));
-
-    // And the section of the directory they would be in, which is their
-    // place rather than a place in general.
-    assert.match(message, /listed under Bakeries/);
-});
-
-// A DM is read on a phone in a second, so it carries the short version
-// of the same two things, and no guarantee: a refund promise in a DM
-// reads as a sales line rather than a commitment.
-// A DM is read on a phone in a second, so it carries the short version
-// of the pitch and leaves this to the email, where there is room to say
-// which number and why it is theirs rather than ours.
 test("the DM offers to finish it, and leaves the numbers line to the email", () => {
     const dm = outreachDm(preview, "Harry Northam", 37, "Sam");
 
@@ -191,20 +209,19 @@ test("the DM offers to finish it, and leaves the numbers line to the email", () 
     assert.ok(!dm.includes("take my word"));
 });
 
-// A preview built without a category still has to read as a sentence.
-// The section is dropped rather than left as a gap or a "null".
-test("the directory line reads without a category", () => {
-    const uncategorised = {
-        businesses: {
-            name: "Little Loaf",
-            business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
-        },
-        token: "11111111-2222-3333-4444-555555555555",
-    } as unknown as Parameters<typeof outreachMessage>[0];
+// "50 of the 50 places left" is a sentence that says nobody has taken
+// one. The first email has always guarded against it; the follow-up
+// names a count, so it needs the same guard.
+test("the follow-up does not say nobody has joined", () => {
+    const untouched = outreachFollowUp({ preview, placesLeft: FOUNDING_MEMBER_LIMIT, contactName: "Sam" });
 
-    const message = outreachMessage(uncategorised, "Harry Northam", 37, "Sam");
+    assert.doesNotMatch(untouched, new RegExp(`${FOUNDING_MEMBER_LIMIT} of the ${FOUNDING_MEMBER_LIMIT}`));
+    assert.match(untouched, /A founding place comes with/);
+    assert.match(untouched, new RegExp(`${FOUNDING_TRIAL_DAYS} days of Pro free`));
 
-    assert.match(message, /You get a page in the Bristol directory: your offers/);
-    assert.ok(!/listed under/.test(message));
-    assert.ok(!/undefined|null/.test(message));
+    // Once some have gone, the count is worth saying.
+    assert.match(
+        outreachFollowUp({ preview, placesLeft: 31, contactName: "Sam" }),
+        new RegExp(`31 of the ${FOUNDING_MEMBER_LIMIT} founding places left`),
+    );
 });

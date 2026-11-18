@@ -3,14 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import {
-    CURRENT_SUBSCRIPTION_STATUSES,
-    FOUNDING_MEMBER_LIMIT,
-    TRIAL_DAYS,
-    countFoundingMembers,
-    getPlanPriceIds,
-    isPlanKey,
-} from "@/lib/billing";
+import { CURRENT_SUBSCRIPTION_STATUSES, FOUNDING_MEMBER_LIMIT, countFoundingMembers, getPlanPriceIds, isPlanKey, trialDays } from "@/lib/billing";
 import { createStripeClient } from "@/utils/stripe/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
@@ -89,7 +82,8 @@ export async function startCheckout(formData: FormData) {
         line_items: [{ price: priceIds[plan], quantity: 1 }],
         payment_method_collection: trialEligible ? "if_required" : "always",
         subscription_data: {
-            trial_period_days: trialEligible ? TRIAL_DAYS : undefined,
+            // A founding place gets three months, everything else one.
+            trial_period_days: trialEligible ? trialDays(plan) : undefined,
             trial_settings: trialEligible
                 ? { end_behavior: { missing_payment_method: "cancel" } }
                 : undefined,
