@@ -14,6 +14,20 @@ const ENDPOINT = "https://api-eu1.stannp.com/v1/letters/create";
 
 export const STANNP_KEY = "STANNP_API_KEY";
 
+// A template designed in the Stannp dashboard, which is where the
+// letter's look belongs: it can be changed without a deploy, and their
+// editor can place things our composed background cannot.
+//
+// Unset, the letter falls back to words plus the generated background,
+// so nothing breaks while a template is being drawn.
+export const STANNP_TEMPLATE = "STANNP_TEMPLATE_ID";
+
+export function letterTemplate() {
+    const id = process.env[STANNP_TEMPLATE]?.trim();
+
+    return id && /^\d+$/.test(id) ? id : null;
+}
+
 // What Stannp actually charges for one A4 letter, read off a test
 // response rather than their pricing page, which says £0.82.
 export const LETTER_COST = "0.88";
@@ -52,14 +66,24 @@ export type LetterResult =
 //                      they could not verify is posted anyway. We send
 //                      false: a letter to an address we got wrong is
 //                      money spent on nothing, and we would never know.
-function body(to: LetterTo, pages: string, test: boolean, background?: string) {
+function body(to: LetterTo, pages: string, test: boolean, background?: string, merge?: Record<string, string>) {
+    const template = letterTemplate();
+
     return new URLSearchParams({
         test: test ? "true" : "false",
-        ...(background ? { background } : {}),
+        // A template draws the page; words and a background are what a
+        // letter is made of without one. Sending both would be asking
+        // for two designs at once.
+        ...(template ? { template } : { pages, ...(background ? { background } : {}) }),
+        // Merge data rides on the recipient, which is how Stannp passes
+        // anything custom — proved by sending recipient[previewurl] and
+        // reading {previewurl} back off the sample PDF.
+        ...Object.fromEntries(
+            Object.entries(merge ?? {}).map(([field, value]) => [`recipient[${field}]`, value]),
+        ),
         size: "A4",
         duplex: "false",
         post_unverified: "false",
-        pages,
         "recipient[firstname]": to.firstName ?? "",
         "recipient[lastname]": to.lastName ?? "",
         "recipient[company]": to.company,
@@ -78,11 +102,15 @@ export async function sendLetter({
     to,
     pages,
     background,
+    merge,
     live = false,
     idempotencyKey,
 }: {
     to: LetterTo;
     pages: string;
+    // Anything the template puts on the page: the preview link, the
+    // personal line, whatever it is drawn to expect.
+    merge?: Record<string, string>;
     // The printed page: our letterhead and this business's QR code. A
     // URL Stannp fetches when the letter is made, because an <img> in
     // `pages` destroys the body.
@@ -118,7 +146,7 @@ export async function sendLetter({
                 // saw the answer to, cannot post twice.
                 ...(idempotencyKey ? { "X-Idempotency-Key": idempotencyKey } : {}),
             },
-            body: body(to, pages, !live, background),
+            body: body(to, pages, !live, background, merge),
             signal: AbortSignal.timeout(20_000),
         });
     } catch (error) {
