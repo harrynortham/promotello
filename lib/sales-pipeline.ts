@@ -114,11 +114,17 @@ export function eventLabel(kind: string) {
 // the words that were on the page.
 export function leadAddress(lead: {
     address_line_1?: string | null;
+    address_line_2?: string | null;
     postcode?: string | null;
     cities?: { name: string } | { name: string }[] | null;
 }) {
     const cities = lead.cities;
     const town = Array.isArray(cities) ? cities[0]?.name : cities?.name;
 
-    return [lead.address_line_1, town, lead.postcode].filter(Boolean).join(", ") || null;
+    // In the order an envelope wants them: street, locality, town,
+    // postcode (20270211090000).
+    return (
+        [lead.address_line_1, lead.address_line_2, town, lead.postcode].filter(Boolean).join(", ") ||
+        null
+    );
 }

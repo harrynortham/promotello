@@ -303,6 +303,23 @@ async function Lead({ params, searchParams }: PageProps) {
                                         />
                                     </div>
 
+                                    <div className="space-y-1">
+                                        <Label htmlFor="addressLine2" className="text-xs">
+                                            Locality
+                                        </Label>
+                                        <Input
+                                            id="addressLine2"
+                                            name="addressLine2"
+                                            defaultValue={lead.address_line_2 ?? ""}
+                                            maxLength={200}
+                                            placeholder="e.g. Horfield"
+                                        />
+                                        <p className="text-[11px] leading-5 text-[#17233B]/55">
+                                            The line between the street and the town on an envelope.
+                                            Not the area below, which is where they are listed.
+                                        </p>
+                                    </div>
+
                                     <LocationFields
                                         cities={cities}
                                         waitlist={false}

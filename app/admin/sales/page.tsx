@@ -22,6 +22,7 @@ type LeadRow = {
     // The parts, not a line: the line is built from them when it is
     // shown, so it cannot disagree with them.
     address_line_1: string | null;
+    address_line_2: string | null;
     postcode: string | null;
     email: string | null;
     can_email: boolean;
@@ -82,7 +83,7 @@ async function Board({ searchParams }: PageProps) {
 
     let query = supabase
         .from("leads")
-        .select("id, name, address_line_1, postcode, email, can_email, company_number, stage, website, created_at, areas ( name ), cities ( name )")
+        .select("id, name, address_line_1, address_line_2, postcode, email, can_email, company_number, stage, website, created_at, areas ( name ), cities ( name )")
         .order("created_at", { ascending: false })
         .limit(200);
 

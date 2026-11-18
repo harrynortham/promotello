@@ -109,7 +109,7 @@ against storing the answer.
 `leads.address_source` is `website` or `typed`.
 
 It is typed when the lead is added, or afterwards on the lead itself — the
-street, the town, the area and the postcode, through the same
+street, the locality, the town, the area and the postcode, through the same
 `LocationFields` the add form uses, so the two cannot drift apart. The town
 and area were fixed at the moment a lead was added, which made one filed in
 the wrong part of town unfixable.
@@ -117,6 +117,15 @@ Enrichment reads the business's own contact page — the same pages it already
 opens for the email — and fills it in when nobody has. A typed one is left
 alone. A registered office is often an accountant's in another county, so it
 is no use for a letter.
+
+**The locality is not the area.** `address_line_2` is the line between the
+street and the town on an envelope — Horfield — and `area_id` is where they
+are listed for somebody browsing. The two look alike until you notice the
+areas are both kinds of thing at once: Horfield and Redland are places the
+Post Office knows, while Gloucester Road, North Street and Stokes Croft are
+how people say where something is. A shop on Gloucester Road is postally in
+Horfield or Bishopston depending which end it is, and neither is what a
+customer means.
 
 **A letter should go to an address whose source is not `places`.** The lead
 page says which one it has, and has fields to write one in.

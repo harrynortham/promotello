@@ -42,7 +42,7 @@ async function BuildPreview({ params }: PageProps) {
     const { data: lead } = await supabase
         .from("leads")
         .select(
-            "id, name, description, email, contact_name, address_line_1, postcode, preview_business_id, categories ( name ), cities ( name ), areas ( name )",
+            "id, name, description, email, contact_name, address_line_1, address_line_2, postcode, preview_business_id, categories ( name ), cities ( name ), areas ( name )",
         )
         .eq("id", leadId)
         .maybeSingle();
@@ -77,7 +77,7 @@ async function BuildPreview({ params }: PageProps) {
         category?.name,
         lead.contact_name ? `for ${lead.contact_name}` : null,
         lead.email,
-        [lead.address_line_1, area?.name, city?.name, lead.postcode].filter(Boolean).join(", ") || null,
+        [lead.address_line_1, lead.address_line_2, city?.name, lead.postcode].filter(Boolean).join(", ") || null,
     ].filter(Boolean) as string[];
 
     return (
