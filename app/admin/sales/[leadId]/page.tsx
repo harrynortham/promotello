@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
+import { LocationFields } from "@/components/location-fields";
+import { getCityOptions } from "@/lib/locations";
 import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
 import { CategorySelect } from "@/components/category-select";
@@ -91,6 +93,10 @@ async function Lead({ params, searchParams }: PageProps) {
         .eq("lead_id", leadId);
 
     const typedEmail = lead.email_source === "typed";
+
+    // The same list the add form offers, so a lead can be moved to any
+    // town or area it could have been added to.
+    const cities = await getCityOptions({ includeNotLive: true });
 
 
 
@@ -252,12 +258,13 @@ async function Lead({ params, searchParams }: PageProps) {
                                     it, a shop's address is a fact about a
                                     street, and writing it down is not keeping
                                     anybody's API response. */}
-                                {/* The same four the preview form takes, by
-                                    the same names: the street line and the
-                                    postcode here, the town and the area from
-                                    the import. Typed outranks both the
-                                    provisional import and the crawler. */}
-                                <form action={saveLeadAddress} className="mt-3 space-y-3">
+                                {/* The same fields the add form uses, by the
+                                    same component, so a lead is corrected the
+                                    way it was written. The town and the area
+                                    used to be fixed at the moment it was
+                                    added, which made a lead filed in the
+                                    wrong part of town unfixable. */}
+                                <form action={saveLeadAddress} className="mt-3 space-y-4">
                                     <input type="hidden" name="leadId" value={lead.id} />
 
                                     <div className="space-y-1">
@@ -273,29 +280,14 @@ async function Lead({ params, searchParams }: PageProps) {
                                         />
                                     </div>
 
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="postalCode" className="text-xs">
-                                                Postcode
-                                            </Label>
-                                            <Input
-                                                id="postalCode"
-                                                name="postalCode"
-                                                defaultValue={lead.postcode ?? ""}
-                                                maxLength={10}
-                                                placeholder="e.g. BS7 8NU"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <p className="text-xs font-medium">Town and area</p>
-                                            <p className="text-sm text-[#17233B]/70">
-                                                {[lead.cities?.name, lead.areas?.name].filter(Boolean).join(" · ") ||
-                                                    "Not set"}
-                                            </p>
-                                            <p className="text-[11px] text-[#17233B]/55">Chosen when it was added.</p>
-                                        </div>
-                                    </div>
+                                    <LocationFields
+                                        cities={cities}
+                                        defaults={{
+                                            city: city?.name,
+                                            area: area?.name,
+                                            postalCode: lead.postcode,
+                                        }}
+                                    />
 
                                     <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
                                         Save this address

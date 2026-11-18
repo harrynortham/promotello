@@ -65,21 +65,15 @@ async function record(
 //
 // The crawler and the Companies House check still do the parts that are
 // genuinely slow by hand.
-export async function addLead(formData: FormData) {
-    const supabase = await adminClient();
-
-    const name = text(formData, "name");
-
-    if (!name) {
-        redirect("/admin/sales/new?error=no_name");
-    }
-
-    const postcode = normalisePostcode(text(formData, "postalCode"));
-    const line1 = text(formData, "addressLine1");
-
-    // LocationFields submits the city and the area by name, the same as
-    // every other form that uses it; a lead stores their ids. Resolved
-    // here rather than by adding a second shape of that component.
+// LocationFields submits the city and the area by name, the same as on
+// every other form that uses it; a lead stores their ids. Resolved here
+// rather than by growing a second shape of that component — and in one
+// place, because adding a lead and correcting one have to agree about
+// what a town is.
+async function resolveLocation(
+    supabase: Awaited<ReturnType<typeof adminClient>>,
+    formData: FormData,
+) {
     const cityName = text(formData, "city");
     const areaName = text(formData, "region");
 
@@ -96,8 +90,22 @@ export async function addLead(formData: FormData) {
               .maybeSingle()
         : { data: null };
 
-    const cityId = city?.id ?? null;
-    const areaId = area?.id ?? null;
+    return { cityId: city?.id ?? null, areaId: area?.id ?? null };
+}
+
+export async function addLead(formData: FormData) {
+    const supabase = await adminClient();
+
+    const name = text(formData, "name");
+
+    if (!name) {
+        redirect("/admin/sales/new?error=no_name");
+    }
+
+    const postcode = normalisePostcode(text(formData, "postalCode"));
+    const line1 = text(formData, "addressLine1");
+
+    const { cityId, areaId } = await resolveLocation(supabase, formData);
 
     const { data: lead, error } = await supabase
         .from("leads")
@@ -503,38 +511,41 @@ export async function saveLeadAddress(formData: FormData) {
     const line1 = text(formData, "addressLine1");
     const typedPostcode = postcodeFrom(text(formData, "postalCode"));
 
+    // The town and the area are on this form now, so they are saved
+    // whatever happens to the street line — clearing an address somebody
+    // got wrong should not also throw away the town they just corrected.
+    const { cityId, areaId } = await resolveLocation(supabase, formData);
+    const town = text(formData, "city") || null;
+
+    const where = {
+        ...(cityId ? { city_id: cityId } : {}),
+        ...(areaId ? { area_id: areaId } : {}),
+    };
+
     if (!line1) {
         await supabase
             .from("leads")
             .update({
+                ...where,
                 address: null,
                 address_line_1: null,
                 address_source: null,
                 address_found_at: null,
+                ...(typedPostcode ? { postcode: typedPostcode } : {}),
             })
             .eq("id", leadId);
 
         await record(supabase, leadId, "note", "Address cleared.");
         revalidatePath(`/admin/sales/${leadId}`);
-        return;
+        redirect(`/admin/sales/${leadId}?saved=address`);
     }
-
-    // The blob is what the preview and a letter read, so it is kept in
-    // step with the parts rather than left saying something else.
-    const { data: lead } = await supabase
-        .from("leads")
-        .select("cities ( name )")
-        .eq("id", leadId)
-        .maybeSingle();
-
-    const cities = lead?.cities as { name: string } | { name: string }[] | null | undefined;
-    const town = Array.isArray(cities) ? cities[0]?.name : cities?.name;
 
     const address = [line1, town, typedPostcode].filter(Boolean).join(", ");
 
     await supabase
         .from("leads")
         .update({
+            ...where,
             address,
             address_line_1: line1,
             address_source: "typed",
