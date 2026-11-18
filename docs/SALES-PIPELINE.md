@@ -47,7 +47,12 @@ shop actually is. A registered office is often an accountant's in another
 county, so it is no use for a letter.
 
 **A letter should go to an address whose source is not `places`.** The lead
-page says which one it has and what to do about it.
+page says which one it has, and has a box to write one in.
+
+A typed address outranks both and the crawler leaves it alone. Wherever
+somebody found it — the shop's own site, a search, the front of the building
+— a business's address is a fact about a street, and writing it down is not
+keeping anybody's API response.
 
 An address with no street number is refused rather than guessed: "we deliver
 to most of Bristol, including BS7 8NZ" has a postcode and is not somewhere a

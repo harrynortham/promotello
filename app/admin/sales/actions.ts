@@ -12,6 +12,7 @@ import {
 } from "@/app/admin/previews/preview-shared";
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
+import { postcodeFrom } from "@/lib/lead-enrichment";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
@@ -432,4 +433,40 @@ export async function sendOutreach(formData: FormData) {
 
     revalidatePath("/admin/sales/outbox");
     revalidatePath(`/admin/sales/${message.lead_id}`);
+}
+
+// An address somebody looked up and typed. Wherever they found it — the
+// shop's own site, a search, the front of the building — it is a fact
+// about a business on a street, and typing it is not caching anybody's
+// API response. It outranks both the provisional import and the crawler,
+// which is why enrichment leaves a typed address alone.
+export async function saveLeadAddress(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const address = text(formData, "address");
+    const postcode = postcodeFrom(address);
+
+    if (!address) {
+        await supabase
+            .from("leads")
+            .update({ address: null, address_source: null, address_found_at: null })
+            .eq("id", leadId);
+
+        await record(supabase, leadId, "note", "Address cleared.");
+        revalidatePath(`/admin/sales/${leadId}`);
+        return;
+    }
+
+    await supabase
+        .from("leads")
+        .update({
+            address,
+            address_source: "typed",
+            address_found_at: new Date().toISOString(),
+            ...(postcode ? { postcode } : {}),
+        })
+        .eq("id", leadId);
+
+    await record(supabase, leadId, "note", `Address entered by hand: ${address}`);
+    revalidatePath(`/admin/sales/${leadId}`);
 }

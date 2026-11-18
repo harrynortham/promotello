@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
-import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadNotes } from "../actions";
+import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
@@ -126,16 +126,33 @@ async function Lead({ params }: PageProps) {
                                 <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
                                     Postal address
                                 </p>
-                                <p className="mt-1 font-medium">{lead.address ?? "Not known"}</p>
                                 <p className="mt-1 text-xs leading-5 text-[#17233B]/60">
                                     {lead.address_source === "website"
                                         ? "Published on their own site — ours to keep, and where a letter goes."
                                         : lead.address_source === "typed"
-                                            ? "Entered by hand."
+                                            ? "Entered by hand, and left alone by the crawler."
                                             : lead.address
-                                                ? "From the import, so provisional. Read their site, or type it, before posting anything."
-                                                : "Read their site, or type one, before posting anything."}
+                                                ? "From the import, so provisional. Read their site, or write it below."
+                                                : "Read their site, or write one below, before posting anything."}
                                 </p>
+
+                                {/* Typed outranks both: wherever somebody found
+                                    it, a shop's address is a fact about a
+                                    street, and writing it down is not keeping
+                                    anybody's API response. */}
+                                <form action={saveLeadAddress} className="mt-3 space-y-2">
+                                    <input type="hidden" name="leadId" value={lead.id} />
+                                    <textarea
+                                        name="address"
+                                        defaultValue={lead.address ?? ""}
+                                        rows={3}
+                                        className="w-full rounded-lg border border-input bg-background p-3 text-sm"
+                                        placeholder="214 Gloucester Road, Bishopston, Bristol, BS7 8NU"
+                                    />
+                                    <Button type="submit" size="sm" variant="outline">
+                                        Save this address
+                                    </Button>
+                                </form>
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
