@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import {
     followUpSubject,
     outreachFollowUp,
+    outreachLetter,
     outreachMessage,
     outreachSubject,
     previewColumns,
@@ -17,7 +18,9 @@ import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
 import { STAGE_LABELS } from "@/lib/sales-pipeline";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
+import { letterAddress, letterDestination, sendLetter } from "@/lib/letters";
 import { asHtml, outreachSender, withSignature } from "@/lib/outreach-queue";
+import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
 
 function text(formData: FormData, key: string) {
@@ -981,4 +984,99 @@ export async function deleteLeadPreview(formData: FormData) {
 
     revalidatePath(`/admin/sales/${leadId}`);
     redirect(`/admin/sales/${leadId}?saved=preview_deleted`);
+}
+
+// The letter. The last thing in the sequence, and the only one that
+// costs money and cannot be taken back.
+//
+// Two ways in, deliberately different: a preview makes a sample PDF at
+// Stannp and charges nothing, and posting asks for the word "post" to
+// be typed. Nothing here is one click away from a letterbox.
+export async function previewLetter(formData: FormData): Promise<{ pdf?: string; error?: string }> {
+    return letterFor(formData, false);
+}
+
+export async function postLetter(formData: FormData) {
+    const leadId = text(formData, "leadId");
+
+    // Typed out in full, like closing a business. A letter is £0.88 and
+    // somebody's doormat, and a misplaced click should not reach either.
+    if (text(formData, "confirm").trim().toLowerCase() !== "post") {
+        redirect(`/admin/sales/${leadId}?error=say_post`);
+    }
+
+    const result = await letterFor(formData, true);
+
+    if (result.error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(result.error)}`);
+    }
+
+    redirect(`/admin/sales/${leadId}?saved=letter`);
+}
+
+async function letterFor(formData: FormData, live: boolean): Promise<{ pdf?: string; error?: string }> {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select(
+            "id, name, contact_name, personal_line, address_line_1, address_line_2, postcode, preview_business_id, cities ( name )",
+        )
+        .eq("id", leadId)
+        .maybeSingle();
+
+    if (!lead) return { error: "That lead has gone." };
+
+    const to = letterAddress(lead);
+
+    if (!to) return { error: "The lead needs a street address, a town and a postcode before anything can be posted." };
+
+    if (!lead.preview_business_id) return { error: "Build the preview first — the letter is a way to it." };
+
+    const { data: previewRow } = await supabase
+        .from("business_previews")
+        .select(previewColumns)
+        .eq("business_id", lead.preview_business_id)
+        .maybeSingle();
+
+    if (!previewRow) return { error: "The preview has gone." };
+
+    const row = previewRow as unknown as PreviewRow;
+
+    // Stannp fetches the background from the internet when it makes the
+    // letter, so a local address is one it cannot reach. Said here
+    // rather than letting their "Failed to save the background file"
+    // stand, which describes the symptom and not the cause.
+    const background = absoluteUrl(`/api/letters/${row.token}/background`);
+
+    if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/i.test(background)) {
+        return {
+            error: "The letterhead lives at a local address, which Stannp cannot fetch. Letters can only be made from a deployed site.",
+        };
+    }
+
+    const result = await sendLetter({
+        to,
+        pages: outreachLetter({
+            preview: row,
+            contactName: lead.contact_name,
+            personalLine: lead.personal_line,
+        }).replace(/\n/g, "<br>"),
+        background,
+        live,
+        // The same lead and the same day cannot post twice, whatever
+        // happens to the button or the connection.
+        idempotencyKey: live ? `lead-${leadId}-${new Date().toISOString().slice(0, 10)}` : undefined,
+    });
+
+    if (!result.ok) return { error: result.reason };
+
+    if (live) {
+        await supabase.from("leads").update({ stage: "letter" }).eq("id", leadId);
+        await record(supabase, leadId, "letter_sent", `Posted to ${letterDestination(to)} · £${result.cost}`);
+        revalidatePath(`/admin/sales/${leadId}`);
+    }
+
+    return { pdf: result.pdf };
 }

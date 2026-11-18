@@ -14,9 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS, eventLabel, leadAddress } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
+import { LetterCard } from "./letter-card";
 import { LocationFields } from "@/components/location-fields";
 import { getCityOptions } from "@/lib/locations";
 import { foundingPlacesLeft } from "@/lib/founding-places";
+import { LETTER_COST, letterAddress, letterDestination, lettersConfigured, STANNP_KEY } from "@/lib/letters";
 import {
     followUpSubject,
     outreachFollowUp,
@@ -118,6 +120,7 @@ async function Lead({ params, searchParams }: PageProps) {
         .eq("lead_id", leadId);
 
     const typedEmail = lead.email_source === "typed";
+    const letterTo = letterAddress(lead);
 
     // Companies House's own advanced search, with the lead's name already
     // in it, for the times our check finds nothing and somebody has to
@@ -789,6 +792,34 @@ async function Lead({ params, searchParams }: PageProps) {
                                         </form>
                                     </div>
                                 </>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Paper, after the email went quiet — and the only
+                        way to reach a sole trader at all, since a letter
+                        needs no consent. */}
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-base">Send a letter</CardTitle>
+                        </CardHeader>
+
+                        <CardContent>
+                            {!lettersConfigured() ? (
+                                <p className="text-sm leading-6 text-[#17233B]/65">
+                                    No Stannp key set, so nothing can be posted. Add{" "}
+                                    <code className="text-xs">{STANNP_KEY}</code> and this comes back.
+                                </p>
+                            ) : !lead.preview_business_id ? (
+                                <p className="text-sm leading-6 text-[#17233B]/65">
+                                    Build the preview first — the letter is a way to it.
+                                </p>
+                            ) : (
+                                <LetterCard
+                                    leadId={lead.id}
+                                    destination={letterTo ? letterDestination(letterTo) : null}
+                                    cost={LETTER_COST}
+                                />
                             )}
                         </CardContent>
                     </Card>

@@ -272,6 +272,43 @@ export function outreachMessage({
     ].join("\n");
 }
 
+// The letter, which is the third thing and the last.
+//
+// It goes to a business that has not answered two emails, and to every
+// sole trader, who may not be emailed at all — a letter needs no
+// consent, which is the whole reason paper is in the sequence.
+//
+// Shorter than either email, because the argument has either been made
+// twice already or cannot be made by email at all. The QR code is on
+// the page itself (lib/letter-background.ts), so the link is here only
+// for somebody who would rather type it.
+export function outreachLetter({
+    preview,
+    contactName,
+    personalLine,
+}: {
+    preview: PreviewRow;
+    contactName: string | null;
+    personalLine?: string | null;
+}) {
+    const name = preview.businesses?.name ?? "your business";
+    const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
+
+    return [
+        `Dear ${contactName || "Sir or Madam"},`,
+        "",
+        `${personalOpening(personalLine)}I have built ${name} a page on Promotello, a new site for independent businesses in Bristol, and it is waiting for you to claim.`,
+        "",
+        "Scan the code at the bottom of this page, or type:",
+        "",
+        url.replace(/^https?:\/\//, ""),
+        "",
+        "Your page lists your offers and a loyalty card, and it is free to claim and free to keep. Customers find you in the directory, claim an offer on their phone and show it at the till. Nothing to install, and no card reader.",
+        "",
+        "If it is not for you, nothing else will arrive.",
+    ].join("\n");
+}
+
 // The second email, a week later, as a reply in the same thread. Short
 // because the argument was made the first time: this says it is still
 // there and what it costs to find out.
