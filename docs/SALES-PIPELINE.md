@@ -47,7 +47,16 @@ shop actually is. A registered office is often an accountant's in another
 county, so it is no use for a letter.
 
 **A letter should go to an address whose source is not `places`.** The lead
-page says which one it has, and has a box to write one in.
+page says which one it has, and has fields to write one in.
+
+Those fields are the preview form's, by the same names: `addressLine1` and
+`postalCode` on the lead, with the town and area coming from `city_id` and
+`area_id`, which the import already set. **Build the preview** then opens
+`/admin/previews/new?lead=<id>` with every one of them filled in — name,
+category, website, email, Instagram, street, town, area, postcode — so
+building a preview is checking rather than retyping from the tab next door.
+Creating it links the preview back to the lead and moves it to **Preview**,
+rather than leaving somebody to remember.
 
 A typed address outranks both and the crawler leaves it alone. Wherever
 somebody found it — the shop's own site, a search, the front of the building

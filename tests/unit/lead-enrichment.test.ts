@@ -8,6 +8,7 @@ import {
     emailsFromHtml,
     matchCompany,
     postcodeFrom,
+    splitAddress,
 } from "@/lib/lead-enrichment";
 
 test("an address is taken from a mailto before anything else on the page", () => {
@@ -210,4 +211,31 @@ test("a postcode mentioned in a sentence is not an address", () => {
         addressFromHtml("<p>The Old Bakehouse, Church Lane, Bristol, BS7 8NZ</p>"),
         null,
     );
+});
+
+// The preview form takes a street line, a city, an area and a postcode.
+// A lead has one line of text, so it is split to fill that form in.
+test("an address is split into the parts the preview asks for", () => {
+    assert.deepEqual(
+        splitAddress("Joe's Bakery, 240 Gloucester Road, Bishopston, Bristol, BS7 8NZ"),
+        { line1: "Joe's Bakery, 240 Gloucester Road, Bishopston", town: "Bristol", postcode: "BS7 8NZ" },
+    );
+
+    // The common shape from a footer, where the town and postcode share a
+    // line: "…, Bristol BS7 8NZ".
+    assert.deepEqual(splitAddress("214 Gloucester Road, Bristol BS7 8NU"), {
+        line1: "214 Gloucester Road",
+        town: "Bristol",
+        postcode: "BS7 8NU",
+    });
+});
+
+test("splitting keeps the street when there is nothing else to take", () => {
+    assert.deepEqual(splitAddress("214 Gloucester Road"), {
+        line1: "214 Gloucester Road",
+        town: null,
+        postcode: null,
+    });
+
+    assert.deepEqual(splitAddress(null), { line1: null, town: null, postcode: null });
 });

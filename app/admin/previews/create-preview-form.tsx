@@ -44,7 +44,28 @@ function Section({
     );
 }
 
-export function CreatePreviewForm({ cities }: { cities: CityOption }) {
+// What a lead already knows, so building its preview is checking rather
+// than typing it all again from the page beside it.
+export type PreviewDefaults = {
+    leadId?: string;
+    businessName?: string | null;
+    category?: string | null;
+    website?: string | null;
+    contactEmail?: string | null;
+    instagramHandle?: string | null;
+    addressLine1?: string | null;
+    city?: string | null;
+    area?: string | null;
+    postalCode?: string | null;
+};
+
+export function CreatePreviewForm({
+    cities,
+    defaults,
+}: {
+    cities: CityOption;
+    defaults?: PreviewDefaults;
+}) {
     const router = useRouter();
     const [logo, setLogo] = useState<File | null>(null);
     const [cover, setCover] = useState<File | null>(null);
@@ -96,6 +117,10 @@ export function CreatePreviewForm({ cities }: { cities: CityOption }) {
 
     return (
         <form onSubmit={onSubmit} className="space-y-8">
+            {/* So the finished preview can be tied back to the lead it
+                came from, and the lead moved on without anybody
+                remembering to. */}
+            {defaults?.leadId && <input type="hidden" name="leadId" value={defaults.leadId} />}
             {problem && (
                 <Alert variant="destructive">
                     <AlertTitle>Not created</AlertTitle>
@@ -107,11 +132,11 @@ export function CreatePreviewForm({ cities }: { cities: CityOption }) {
                 <Section title="The business" hint="What goes on their page and their poster.">
                     <div className="space-y-2">
                         <Label htmlFor="businessName">Business name</Label>
-                        <Input id="businessName" name="businessName" required minLength={2} maxLength={120} placeholder="e.g. Little Loaf" />
+                        <Input id="businessName" name="businessName" required minLength={2} maxLength={120} defaultValue={defaults?.businessName ?? ""} placeholder="e.g. Little Loaf" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="category">Category</Label>
-                        <CategorySelect id="category" name="category" required />
+                        <CategorySelect id="category" name="category" required defaultValue={defaults?.category ?? undefined} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="description">Description (optional)</Label>
@@ -119,16 +144,23 @@ export function CreatePreviewForm({ cities }: { cities: CityOption }) {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="website">Website (optional)</Label>
-                        <Input id="website" name="website" type="url" placeholder="https://" />
+                        <Input id="website" name="website" type="url" defaultValue={defaults?.website ?? ""} placeholder="https://" />
                     </div>
                 </Section>
 
                 <Section title="Where they are" hint="Their real address, so the page and the poster are right.">
                     <div className="space-y-2">
                         <Label htmlFor="addressLine1">Street address</Label>
-                        <Input id="addressLine1" name="addressLine1" required minLength={2} maxLength={200} placeholder="e.g. 21 Gloucester Road" />
+                        <Input id="addressLine1" name="addressLine1" required minLength={2} maxLength={200} defaultValue={defaults?.addressLine1 ?? ""} placeholder="e.g. 21 Gloucester Road" />
                     </div>
-                    <LocationFields cities={cities} />
+                    <LocationFields
+                        cities={cities}
+                        defaults={{
+                            city: defaults?.city,
+                            area: defaults?.area,
+                            postalCode: defaults?.postalCode,
+                        }}
+                    />
                 </Section>
             </div>
 
@@ -142,11 +174,11 @@ export function CreatePreviewForm({ cities }: { cities: CityOption }) {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="contactEmail">Where you&apos;ll write (optional)</Label>
-                        <Input id="contactEmail" name="contactEmail" type="email" maxLength={160} placeholder="hello@theirshop.com" />
+                        <Input id="contactEmail" name="contactEmail" type="email" maxLength={160} defaultValue={defaults?.contactEmail ?? ""} placeholder="hello@theirshop.com" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="instagramHandle">Instagram (optional)</Label>
-                        <Input id="instagramHandle" name="instagramHandle" maxLength={120} placeholder="@theirshop or a profile link" />
+                        <Input id="instagramHandle" name="instagramHandle" maxLength={120} defaultValue={defaults?.instagramHandle ?? ""} placeholder="@theirshop or a profile link" />
                     </div>
                 </div>
             </Section>

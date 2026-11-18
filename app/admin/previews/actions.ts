@@ -62,6 +62,24 @@ export async function createPreview(formData: FormData): Promise<{ businessId?: 
         created_by: user.user?.id ?? null,
     });
 
+    // Tie it back to the lead it came from, and move that lead on. Done
+    // here rather than left to whoever built it: a preview that exists
+    // and a lead that still says "company checked" is the pipeline
+    // lying, and it only shows up weeks later as a business emailed
+    // twice.
+    const leadId = text(formData, "leadId");
+
+    if (leadId) {
+        await supabase
+            .from("leads")
+            .update({ preview_business_id: businessId, stage: "preview" })
+            .eq("id", leadId);
+
+        await supabase
+            .from("lead_events")
+            .insert({ lead_id: leadId, kind: "preview_built", detail: text(formData, "businessName") });
+    }
+
     if (previewError) {
         return {
             error: `The preview couldn't be saved (${previewError.message}). The business was created; find it under Businesses.`,

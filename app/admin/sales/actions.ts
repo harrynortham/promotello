@@ -12,7 +12,7 @@ import {
 } from "@/app/admin/previews/preview-shared";
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
-import { postcodeFrom } from "@/lib/lead-enrichment";
+import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
@@ -146,7 +146,12 @@ export async function enrichLead(formData: FormData) {
         update.address = found.address;
         update.address_source = "website";
         update.address_found_at = now;
-        if (found.postcode) update.postcode = found.postcode;
+
+        // In the shape the preview asks for, so building one is a glance
+        // rather than typing it all again from the page beside it.
+        const split = splitAddress(found.address);
+        update.address_line_1 = split.line1;
+        if (split.postcode) update.postcode = split.postcode;
     }
 
     await supabase.from("leads").update(update).eq("id", leadId);
@@ -443,13 +448,18 @@ export async function sendOutreach(formData: FormData) {
 export async function saveLeadAddress(formData: FormData) {
     const supabase = await adminClient();
     const leadId = text(formData, "leadId");
-    const address = text(formData, "address");
-    const postcode = postcodeFrom(address);
+    const line1 = text(formData, "addressLine1");
+    const typedPostcode = postcodeFrom(text(formData, "postalCode"));
 
-    if (!address) {
+    if (!line1) {
         await supabase
             .from("leads")
-            .update({ address: null, address_source: null, address_found_at: null })
+            .update({
+                address: null,
+                address_line_1: null,
+                address_source: null,
+                address_found_at: null,
+            })
             .eq("id", leadId);
 
         await record(supabase, leadId, "note", "Address cleared.");
@@ -457,13 +467,27 @@ export async function saveLeadAddress(formData: FormData) {
         return;
     }
 
+    // The blob is what the preview and a letter read, so it is kept in
+    // step with the parts rather than left saying something else.
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("cities ( name )")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    const cities = lead?.cities as { name: string } | { name: string }[] | null | undefined;
+    const town = Array.isArray(cities) ? cities[0]?.name : cities?.name;
+
+    const address = [line1, town, typedPostcode].filter(Boolean).join(", ");
+
     await supabase
         .from("leads")
         .update({
             address,
+            address_line_1: line1,
             address_source: "typed",
             address_found_at: new Date().toISOString(),
-            ...(postcode ? { postcode } : {}),
+            ...(typedPostcode ? { postcode: typedPostcode } : {}),
         })
         .eq("id", leadId);
 

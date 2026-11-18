@@ -8,6 +8,8 @@ import { FiExternalLink } from "react-icons/fi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
@@ -140,15 +142,51 @@ async function Lead({ params }: PageProps) {
                                     it, a shop's address is a fact about a
                                     street, and writing it down is not keeping
                                     anybody's API response. */}
-                                <form action={saveLeadAddress} className="mt-3 space-y-2">
+                                {/* The same four the preview form takes, by
+                                    the same names: the street line and the
+                                    postcode here, the town and the area from
+                                    the import. Typed outranks both the
+                                    provisional import and the crawler. */}
+                                <form action={saveLeadAddress} className="mt-3 space-y-3">
                                     <input type="hidden" name="leadId" value={lead.id} />
-                                    <textarea
-                                        name="address"
-                                        defaultValue={lead.address ?? ""}
-                                        rows={3}
-                                        className="w-full rounded-lg border border-input bg-background p-3 text-sm"
-                                        placeholder="214 Gloucester Road, Bishopston, Bristol, BS7 8NU"
-                                    />
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="addressLine1" className="text-xs">
+                                            Street address
+                                        </Label>
+                                        <Input
+                                            id="addressLine1"
+                                            name="addressLine1"
+                                            defaultValue={lead.address_line_1 ?? ""}
+                                            maxLength={200}
+                                            placeholder="e.g. 214 Gloucester Road"
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="postalCode" className="text-xs">
+                                                Postcode
+                                            </Label>
+                                            <Input
+                                                id="postalCode"
+                                                name="postalCode"
+                                                defaultValue={lead.postcode ?? ""}
+                                                maxLength={10}
+                                                placeholder="e.g. BS7 8NU"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-medium">Town and area</p>
+                                            <p className="text-sm text-[#17233B]/70">
+                                                {[lead.cities?.name, lead.areas?.name].filter(Boolean).join(" · ") ||
+                                                    "Not set"}
+                                            </p>
+                                            <p className="text-[11px] text-[#17233B]/55">From the import.</p>
+                                        </div>
+                                    </div>
+
                                     <Button type="submit" size="sm" variant="outline">
                                         Save this address
                                     </Button>
