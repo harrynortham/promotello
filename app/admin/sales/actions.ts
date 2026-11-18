@@ -9,7 +9,7 @@ import {
     previewColumns,
     senderName,
     type PreviewRow,
-} from "@/app/admin/previews/preview-shared";
+} from "@/lib/preview-email";
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
@@ -341,7 +341,7 @@ export async function queueOutreach(formData: FormData) {
 
     const { data: lead } = await supabase
         .from("leads")
-        .select("id, name, email, can_email, preview_business_id")
+        .select("id, name, email, contact_name, can_email, preview_business_id")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -387,7 +387,7 @@ export async function queueOutreach(formData: FormData) {
         kind === "first"
             ? {
                 subject: outreachSubject(row),
-                body: outreachMessage(row, sender, await foundingPlacesLeft()),
+                body: outreachMessage(row, sender, await foundingPlacesLeft(), lead.contact_name),
             }
             : {
                 subject: followUpSubject(lead.name),
@@ -619,6 +619,9 @@ export async function saveLeadDetails(formData: FormData) {
         .update({
             name,
             contact_name: text(formData, "contactName") || null,
+            // Not here: the description is written on the build-preview
+            // page, where it is actually used. Reading it from this form
+            // would write null over it every time anything else is saved.
             website: text(formData, "website") || null,
             phone: text(formData, "phone") || null,
             instagram_handle: text(formData, "instagramHandle") || null,
@@ -707,4 +710,145 @@ export async function saveLeadCompany(formData: FormData) {
 
     revalidatePath(`/admin/sales/${leadId}`);
     redirect(`/admin/sales/${leadId}?saved=company`);
+}
+
+// A preview, built from the lead that prompted it.
+//
+// This was a page of its own that asked again for the name, the
+// category, the address, who to write to and their email — all of which
+// are on the lead you pressed the button from. Typed twice is a chance
+// to type them differently, so now only the things a lead cannot answer
+// are asked: what the offer is, what the card gives, and what the place
+// looks like.
+//
+// Returns the business id rather than redirecting, because the images
+// have nowhere to go until the business exists and the dialog uploads
+// them straight afterwards.
+export async function createPreviewFromLead(
+    formData: FormData,
+): Promise<{ businessId?: string; error?: string }> {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select(
+            "id, name, description, email, contact_name, website, instagram_handle, address_line_1, postcode, category_id, preview_business_id, categories ( slug ), cities ( name ), areas ( name )",
+        )
+        .eq("id", leadId)
+        .maybeSingle();
+
+    if (!lead) return { error: "That lead has gone." };
+
+    if (lead.preview_business_id) {
+        return { error: "This lead already has a preview." };
+    }
+
+    const one = <T,>(value: T | T[] | null | undefined): T | undefined =>
+        Array.isArray(value) ? value[0] : (value ?? undefined);
+
+    const category = one(lead.categories as { slug: string } | { slug: string }[] | null);
+    const city = one(lead.cities as { name: string } | { name: string }[] | null);
+    const area = one(lead.areas as { name: string } | { name: string }[] | null);
+
+    // Named rather than counted: "something is missing" sends somebody
+    // hunting through a form they cannot see.
+    // Written here rather than on the lead: this is the page it appears
+    // on, and the moment somebody is deciding how to describe them. Kept
+    // on the lead so a rebuilt preview starts from what was written
+    // before.
+    const description = text(formData, "description") || lead.description;
+
+    const missing = [
+        !description && "a description",
+        !category && "a category",
+        !lead.address_line_1 && "a street address",
+        !lead.postcode && "a postcode",
+        !city && "a town",
+        !area && "an area",
+    ].filter(Boolean);
+
+    if (missing.length > 0) {
+        return { error: `The lead still needs ${missing.join(", ")}. Add it on the lead and try again.` };
+    }
+
+    const sampleOffer = text(formData, "sampleOffer");
+    const sampleReward = text(formData, "sampleReward");
+    const stamps = Number(formData.get("sampleStamps"));
+
+    if (sampleOffer.length < 3 || sampleReward.length < 3) {
+        return { error: "Add a sample offer and a loyalty reward." };
+    }
+
+    const { data: businessId, error } = await supabase.rpc("create_business_with_owner", {
+        business_name: lead.name,
+        business_category: category!.slug,
+        business_description: description,
+        business_website_url: lead.website,
+        business_contact_email: lead.email,
+        location_name: "Main location",
+        location_address_line_1: lead.address_line_1,
+        location_address_line_2: null,
+        location_city: city!.name,
+        location_region: area!.name,
+        location_postal_code: lead.postcode,
+        location_country_code: "GB",
+    });
+
+    if (error || !businessId) {
+        return { error: error?.message ?? "The business couldn't be created." };
+    }
+
+    const { data: user } = await supabase.auth.getUser();
+
+    const { error: previewError } = await supabase.from("business_previews").insert({
+        business_id: businessId,
+        sample_offer: sampleOffer.slice(0, 80),
+        sample_reward: sampleReward.slice(0, 60),
+        sample_stamps: Number.isInteger(stamps) && stamps >= 3 && stamps <= 20 ? stamps : 9,
+        created_by: user.user?.id ?? null,
+    });
+
+    if (previewError) {
+        return {
+            error: `The preview couldn't be saved (${previewError.message}). The business was created; find it under Businesses.`,
+        };
+    }
+
+    await supabase
+        .from("leads")
+        .update({ preview_business_id: businessId, stage: "preview", description })
+        .eq("id", leadId);
+
+    await record(supabase, leadId, "preview_built", lead.name);
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    return { businessId };
+}
+
+// Deletes an unclaimed preview and the business built for it, and lets
+// the lead go back to not having one. The RPC refuses a claimed preview,
+// so this cannot take a live business with it.
+export async function deleteLeadPreview(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const businessId = text(formData, "businessId");
+
+    const { error } = await supabase.rpc("delete_business_preview", {
+        requested_business_id: businessId,
+    });
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    await supabase
+        .from("leads")
+        .update({ preview_business_id: null, stage: "emailable" })
+        .eq("id", leadId);
+
+    await record(supabase, leadId, "note", "Preview deleted.");
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    redirect(`/admin/sales/${leadId}?saved=preview_deleted`);
 }

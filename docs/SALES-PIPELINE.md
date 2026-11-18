@@ -35,6 +35,33 @@ why posting one is in the sequence at all.
 | `company_number`, `company_name` | Companies House (Open Government Licence) | Yes |
 | notes, category, stage | us | Yes |
 
+### A preview is something a lead has
+
+There is no previews section. Building one is **Build the preview** on the
+lead, which opens `/admin/sales/[leadId]/preview` and asks only what a lead
+cannot answer: what they are, the sample offer, what the card gives, a logo
+and a photo. The name, category, address, area, postcode, who to write to and
+their email all come from the lead, and the page says so above the form.
+
+It was a dialog first. `ImagePicker` opens its own modal to crop, so inside a
+dialog the cropper sat in a sheet already constraining it, and two pickers
+with `shrink-0` upload buttons pushed past the edge. Cropping is the one thing
+here that wants room.
+
+Afterwards the lead shows the link to send, how many times it has been opened,
+and deleting it. Sending is unchanged: queue it, read it in the outbox, send.
+
+`business_previews` keeps only what a preview knows — the sample offer, the
+card, and who has looked at it. `contact_name`, `contact_email`,
+`instagram_handle`, `status`, `notes` and `contacted_at` were all a second
+copy of what the lead holds and are gone (`20270209090000`).
+
+**The greeting on the public page comes from the lead.** `open_business_preview`
+served "Hi Sam," from the preview's own `contact_name`; Postgres does not check
+a plpgsql body when a column it names is dropped, so the function would have
+kept its signature, passed every build, and failed the moment a business opened
+the link they were sent.
+
 ### Everything on a lead is editable
 
 A lead is written down by hand, so it is corrected by hand: the name, who to

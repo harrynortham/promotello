@@ -28,7 +28,6 @@ test("a preview opens by its readable link and by the bare token", async ({ brow
         .from("business_previews")
         .insert({
             business_id: business!.id,
-            contact_name: "Sam",
             sample_offer: "Free pastry with any coffee",
             sample_reward: "a free coffee",
             sample_stamps: 9,
@@ -36,6 +35,15 @@ test("a preview opens by its readable link and by the bare token", async ({ brow
         })
         .select("token")
         .single();
+
+    // "Hi Sam," comes from the lead now, not from the preview
+    // (20270209090000), so the thing that produces the greeting has to
+    // exist for the greeting to be tested at all.
+    await admin.from("leads").insert({
+        name: `Amsterdam Dandy ${Date.now()}`,
+        contact_name: "Sam",
+        preview_business_id: business!.id,
+    });
 
     try {
         const page = await (await browser.newContext()).newPage();
@@ -55,6 +63,9 @@ test("a preview opens by its readable link and by the bare token", async ({ brow
 
         await page.close();
     } finally {
+        // preview_business_id is set null when the business goes, so the
+        // lead would be left behind.
+        await admin.from("leads").delete().eq("preview_business_id", business!.id);
         await admin.from("businesses").delete().eq("id", business!.id);
     }
 });

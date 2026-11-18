@@ -298,7 +298,7 @@ async function BusinessDashboardContent() {
     }
 
     // A preview nobody has claimed belongs to whoever built it only in the
-    // sense that someone has to own the row. It is managed in /admin/previews,
+    // sense that someone has to own the row. It is managed on the lead it
     // and listing it here would bury the businesses they actually run.
     const businesses: Business[] =
         memberships

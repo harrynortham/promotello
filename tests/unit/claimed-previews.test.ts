@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { awaitingSend, claimedState, type PreviewRow } from "@/app/admin/previews/preview-shared";
+import { awaitingSend, claimedState, type PreviewRow } from "@/lib/preview-email";
 
 function preview(business: Partial<NonNullable<PreviewRow["businesses"]>> | null): PreviewRow {
     return {

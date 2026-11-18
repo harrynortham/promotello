@@ -20,20 +20,35 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
     await admin().from("platform_admins").insert({ user_id: businessUserId });
 
     try {
-        // 1. The admin builds it.
+        // 1. The admin writes the lead down, then builds its page.
+        //
+        // A preview is built from a lead now, so everything about
+        // reaching them — the name, who to write to, the address — is
+        // typed once, here, and the build page only asks what a lead
+        // cannot answer.
         const adminPage = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
-        await adminPage.goto("/admin/previews/new");
-        await adminPage.locator("#businessName").fill(name);
-        await adminPage.locator("#category option").nth(1).waitFor({ state: "attached" });
-        await adminPage.locator("#category").selectOption({ index: 1 });
-        await adminPage.locator("#contactName").fill("Sam");
+        await adminPage.goto("/admin/sales/new");
+        await adminPage.locator("#name").fill(name);
+        await adminPage.locator("#categoryId option").nth(1).waitFor({ state: "attached" });
+        await adminPage.locator("#categoryId").selectOption({ index: 1 });
         await adminPage.locator("#addressLine1").fill("1 Test Street");
         await adminPage.locator("#region").selectOption("Bishopston");
         await adminPage.locator("#postalCode").fill("BS7 8AA");
+        await adminPage.locator("#contactName").fill("Sam");
+        await adminPage.getByRole("button", { name: "Add to the pipeline" }).click();
+
+        await expect(adminPage.getByRole("heading", { name })).toBeVisible({ timeout: 15_000 });
+        // Rendered as a link but exposed with role="button" by the Button
+        // primitive, so match what is actually in the tree.
+        await adminPage.getByRole("button", { name: "Build the preview" }).click();
+
+        await adminPage.locator("#description").fill("A neighbourhood bakery on a test street.");
         await adminPage.locator("#sampleOffer").fill("Free cinnamon bun with any coffee");
         await adminPage.locator("#sampleReward").fill("a free loaf");
-        await adminPage.getByRole("button", { name: "Create preview" }).click();
-        await expect(adminPage.getByText(`Preview ready for ${name}`)).toBeVisible({ timeout: 15_000 });
+        await adminPage.getByRole("button", { name: "Build it" }).click();
+
+        // Back on the lead, which is where the link and the sending live.
+        await expect(adminPage.getByText("The link they get")).toBeVisible({ timeout: 20_000 });
 
         const { data: row } = await admin()
             .from("business_previews")
@@ -125,6 +140,10 @@ test("an admin builds a preview, and the owner claims it", async ({ browser }) =
         await expect(adminPage.getByRole("button", { name: /It wasn.t me/ })).toBeVisible();
     } finally {
         await admin().from("platform_admins").delete().eq("user_id", businessUserId);
+        // The lead the preview was built from, which the business no
+        // longer takes with it: preview_business_id is set null on
+        // delete, so the row would outlive the run.
+        await admin().from("leads").delete().eq("name", name);
         if (businessId) await admin().from("businesses").delete().eq("id", businessId);
         if (ownerId) await admin().auth.admin.deleteUser(ownerId);
     }
