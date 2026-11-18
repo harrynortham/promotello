@@ -14,7 +14,6 @@ import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
-import { lookupPostcode } from "@/lib/postcodes";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
@@ -100,9 +99,6 @@ export async function addLead(formData: FormData) {
     const cityId = city?.id ?? null;
     const areaId = area?.id ?? null;
 
-    // Where it is, from the postcode rather than from anything else.
-    const located = postcode ? await lookupPostcode(postcode) : { found: false as const, reason: "invalid" as const };
-
     const { data: lead, error } = await supabase
         .from("leads")
         .insert({
@@ -123,14 +119,6 @@ export async function addLead(formData: FormData) {
             postcode,
             address_source: line1 || postcode ? "typed" : null,
             address_found_at: line1 || postcode ? new Date().toISOString() : null,
-            ...(located.found
-                ? {
-                      latitude: located.place.latitude,
-                      longitude: located.place.longitude,
-                      ward: located.place.ward,
-                      located_at: new Date().toISOString(),
-                  }
-                : {}),
             stage: "new",
         })
         .select("id")
@@ -199,17 +187,6 @@ export async function enrichLead(formData: FormData) {
         const split = splitAddress(found.address);
         update.address_line_1 = split.line1;
         if (split.postcode) update.postcode = split.postcode;
-
-        // Where it is, from the postcode they published rather than from
-        // anything Google returned.
-        const located = await lookupPostcode(split.postcode);
-
-        if (located.found) {
-            update.latitude = located.place.latitude;
-            update.longitude = located.place.longitude;
-            update.ward = located.place.ward;
-            update.located_at = now;
-        }
     }
 
     await supabase.from("leads").update(update).eq("id", leadId);
@@ -538,8 +515,6 @@ export async function saveLeadAddress(formData: FormData) {
 
     const address = [line1, town, typedPostcode].filter(Boolean).join(", ");
 
-    const located = await lookupPostcode(typedPostcode);
-
     await supabase
         .from("leads")
         .update({
@@ -548,14 +523,6 @@ export async function saveLeadAddress(formData: FormData) {
             address_source: "typed",
             address_found_at: new Date().toISOString(),
             ...(typedPostcode ? { postcode: typedPostcode } : {}),
-            ...(located.found
-                ? {
-                      latitude: located.place.latitude,
-                      longitude: located.place.longitude,
-                      ward: located.place.ward,
-                      located_at: new Date().toISOString(),
-                  }
-                : {}),
         })
         .eq("id", leadId);
 

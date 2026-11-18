@@ -31,7 +31,6 @@ why posting one is in the sequence at all.
 | `place_id` | the importer that used to be here | Kept on old rows; nothing writes it now |
 | name, phone, website | typed, or read from their own site | Ours |
 | address | **never from Places** — their own site, or typed | `address_source` says which |
-| lat/long, ward | postcodes.io, looked up from the postcode | Ours, with attribution |
 | `email`, `email_source` | the business's own website | Yes |
 | `company_number`, `company_name` | Companies House (Open Government Licence) | Yes |
 | notes, category, stage | us | Yes |
@@ -52,19 +51,13 @@ What is still automatic is what is genuinely slow by hand: the crawler reads
 their site for an email and the address they publish, and the Companies House
 check decides whether they may be emailed at all.
 
-The postcode comes from the business's own site or is typed. Everything else
-is looked up **from** it via postcodes.io — never the other way round.
-Reverse geocoding a shop's coordinates returns the nearest postcode centroid:
-from Joe's Bakery's own point the three nearest are BS7 8PH, BS7 8QN and
-BS7 8TJ, and the real one, BS7 8NZ, is not among them. Fine for a map,
-useless on an envelope.
-
-postcodes.io is Ordnance Survey OpenData and ONS data: free, no key, storable
-with attribution, which `ATTRIBUTION` in `lib/postcodes.ts` carries wherever
-it is shown. **Northern Ireland is not covered** — BT postcodes come from Land
-and Property Services and commercial use needs a licence from them, so they
-are refused rather than quietly stored. That will matter the day Promotello
-opens in Belfast.
+The postcode comes from the business's own site or is typed, and that is as
+far as it goes. Coordinates and the ward were looked up from it for a while
+and nothing ever read them — there is no map here, and a letter needs a
+postcode rather than a point — so the lookup is gone along with the
+attribution condition and the Northern Ireland licence question it carried.
+A postcode can be looked up again by anyone, for free, which is the argument
+against storing the answer.
 
 ### The address, and why it has a source
 
@@ -103,7 +96,7 @@ Google's terms give names, addresses, ratings and photos **no caching
 exception** and call out bulk storing them. That is why there is no importer
 any more: the one fact it was good for was the one we could not keep, and
 every record here is built from sources we may — the business's own site,
-Companies House, postcodes.io, and what somebody typed.
+Companies House, and what somebody typed.
 
 ## The stages
 
