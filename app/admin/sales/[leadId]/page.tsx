@@ -14,13 +14,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
-import { checkCompany, deleteLead, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
+import { CategorySelect } from "@/components/category-select";
+import { checkCompany, deleteLead, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadCompany, saveLeadDetails, saveLeadNotes } from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
 type PageProps = {
     params: Promise<{ leadId: string }>;
-    searchParams: Promise<{ already?: string; undeletable?: string; confirm?: string }>;
+    searchParams: Promise<{
+        already?: string;
+        undeletable?: string;
+        confirm?: string;
+        saved?: string;
+        error?: string;
+    }>;
 };
 
 function When({ value }: { value: string }) {
@@ -46,7 +53,7 @@ async function Lead({ params, searchParams }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
-    const { already, undeletable, confirm } = await searchParams;
+    const { already, undeletable, confirm, saved, error } = await searchParams;
     const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
@@ -70,6 +77,8 @@ async function Lead({ params, searchParams }: PageProps) {
         .select("id", { count: "exact", head: true })
         .eq("lead_id", leadId);
 
+    const typedEmail = lead.email_source === "typed";
+
     const area = Array.isArray(lead.areas) ? lead.areas[0] : lead.areas;
     const city = Array.isArray(lead.cities) ? lead.cities[0] : lead.cities;
 
@@ -78,6 +87,24 @@ async function Lead({ params, searchParams }: PageProps) {
             <Button render={<Link href="/admin/sales" />} nativeButton={false} variant="ghost" size="sm">
                 ← The pipeline
             </Button>
+
+            {saved && (
+                <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    Saved.
+                </p>
+            )}
+
+            {error && (
+                <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-900">
+                    {error === "no_name"
+                        ? "A lead needs a name."
+                        : error === "duplicate"
+                            ? "Another lead already has that name and postcode."
+                            : error === "bad_company_number"
+                                ? "A company number is eight characters: eight digits, or two letters and six digits."
+                                : error}
+                </p>
+            )}
 
             {already && (
                 <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -127,25 +154,40 @@ async function Lead({ params, searchParams }: PageProps) {
                                 <div>
                                     <p className="text-xs uppercase tracking-wide text-[#17233B]/55">Email</p>
                                     <p className="mt-1 font-medium">{lead.email ?? "Not found yet"}</p>
-                                    {lead.email_source && (
-                                        <a
-                                            href={lead.email_source}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
-                                        >
-                                            from {lead.email_source.replace(/^https?:\/\//, "").slice(0, 48)}
-                                            <FiExternalLink aria-hidden="true" className="size-3" />
-                                        </a>
+                                    {/* "typed" is not a URL, and linking to it
+                                        went nowhere. Only a page they published
+                                        is worth opening. */}
+                                    {typedEmail ? (
+                                        <p className="mt-1 text-xs text-[#17233B]/60">
+                                            Entered by hand, and left alone by the crawler.
+                                        </p>
+                                    ) : (
+                                        lead.email_source && (
+                                            <a
+                                                href={lead.email_source}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
+                                            >
+                                                from {lead.email_source.replace(/^https?:\/\//, "").slice(0, 48)}
+                                                <FiExternalLink aria-hidden="true" className="size-3" />
+                                            </a>
+                                        )
                                     )}
                                 </div>
 
-                                <form action={enrichLead}>
-                                    <input type="hidden" name="leadId" value={lead.id} />
-                                    <Button type="submit" size="sm" variant="outline" disabled={!lead.website}>
-                                        {lead.email ? "Look again" : "Read their site"}
-                                    </Button>
-                                </form>
+                                {/* Nothing to look again for once somebody has
+                                    written one down: the crawler would not
+                                    replace it, so the button would do nothing
+                                    anybody wanted. */}
+                                {!typedEmail && (
+                                    <form action={enrichLead}>
+                                        <input type="hidden" name="leadId" value={lead.id} />
+                                        <Button type="submit" size="sm" variant="outline" disabled={!lead.website}>
+                                            {lead.email ? "Look again" : "Read their site"}
+                                        </Button>
+                                    </form>
+                                )}
                             </div>
 
                             {/* Where a letter would go, and whether it is
@@ -214,9 +256,9 @@ async function Lead({ params, searchParams }: PageProps) {
                                         </div>
                                     </div>
 
-                                    <Button type="submit" size="sm" variant="outline">
+                                    <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
                                         Save this address
-                                    </Button>
+                                    </SubmitButton>
                                 </form>
 
                             </div>
@@ -241,26 +283,192 @@ async function Lead({ params, searchParams }: PageProps) {
 
                                 <form action={checkCompany}>
                                     <input type="hidden" name="leadId" value={lead.id} />
-                                    <Button type="submit" size="sm" variant="outline">
+                                    <SubmitButton pendingLabel="Checking…" variant="outline" size="sm">
                                         {lead.companies_house_checked_at ? "Check again" : "Check"}
-                                    </Button>
+                                    </SubmitButton>
                                 </form>
                             </div>
 
-                            {lead.website && (
-                                <div className="border-t pt-4">
-                                    <p className="text-xs uppercase tracking-wide text-[#17233B]/55">Website</p>
-                                    <a
-                                        href={lead.website}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="mt-1 inline-flex items-center gap-1 font-medium hover:text-[#FF593F]"
-                                    >
-                                        {lead.website.replace(/^https?:\/\//, "")}
-                                        <FiExternalLink aria-hidden="true" className="size-3" />
-                                    </a>
+                            {/* The same fact by another route: somebody read
+                                the register instead of us calling it. Stored
+                                the same way, and the gate still decides what
+                                it unlocks — a number is what makes a lead
+                                emailable, and clearing it puts them back to
+                                post only. */}
+                            <form action={saveLeadCompany} className="space-y-3 border-t pt-4">
+                                <input type="hidden" name="leadId" value={lead.id} />
+
+                                <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                    Or write the company down
+                                </p>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="companyName" className="text-xs">
+                                            Registered name
+                                        </Label>
+                                        <Input
+                                            id="companyName"
+                                            name="companyName"
+                                            defaultValue={lead.company_name ?? ""}
+                                            maxLength={200}
+                                            placeholder="JOE'S BAKERY LIMITED"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="companyNumber" className="text-xs">
+                                            Company number
+                                        </Label>
+                                        <Input
+                                            id="companyNumber"
+                                            name="companyNumber"
+                                            defaultValue={lead.company_number ?? ""}
+                                            maxLength={10}
+                                            placeholder="08423930"
+                                        />
+                                    </div>
                                 </div>
-                            )}
+
+                                <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
+                                    Save the company
+                                </SubmitButton>
+
+                                <p className="text-[11px] leading-5 text-[#17233B]/55">
+                                    A number here makes them emailable. Clearing it puts them back to
+                                    post only.
+                                </p>
+                            </form>
+
+                        </CardContent>
+                    </Card>
+
+                    {/* Everything else, editable. A lead is written down by
+                        hand, so it is corrected by hand too — a name typed
+                        wrong, an email found later, the person who actually
+                        runs the place. */}
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-base">The details</CardTitle>
+                        </CardHeader>
+
+                        <CardContent>
+                            <form action={saveLeadDetails} className="space-y-5 text-sm">
+                                <input type="hidden" name="leadId" value={lead.id} />
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="name" className="text-xs">
+                                            Business name
+                                        </Label>
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            required
+                                            defaultValue={lead.name}
+                                            maxLength={120}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="contactName" className="text-xs">
+                                            Who to write to
+                                        </Label>
+                                        <Input
+                                            id="contactName"
+                                            name="contactName"
+                                            defaultValue={lead.contact_name ?? ""}
+                                            maxLength={80}
+                                            placeholder="Sam"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="categoryId" className="text-xs">
+                                        Category
+                                    </Label>
+                                    <CategorySelect
+                                        id="categoryId"
+                                        name="categoryId"
+                                        defaultValue={lead.category_id ?? undefined}
+                                    />
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="email" className="text-xs">
+                                            Email
+                                        </Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            defaultValue={lead.email ?? ""}
+                                            maxLength={160}
+                                            placeholder="hello@theirshop.com"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="phone" className="text-xs">
+                                            Phone
+                                        </Label>
+                                        <Input
+                                            id="phone"
+                                            name="phone"
+                                            defaultValue={lead.phone ?? ""}
+                                            maxLength={40}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="website" className="text-xs">
+                                            Website
+                                        </Label>
+                                        <Input
+                                            id="website"
+                                            name="website"
+                                            type="url"
+                                            defaultValue={lead.website ?? ""}
+                                            placeholder="https://"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="instagramHandle" className="text-xs">
+                                            Instagram
+                                        </Label>
+                                        <Input
+                                            id="instagramHandle"
+                                            name="instagramHandle"
+                                            defaultValue={lead.instagram_handle ?? ""}
+                                            maxLength={120}
+                                            placeholder="@theirshop"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
+                                        Save the details
+                                    </SubmitButton>
+
+                                    {lead.website && (
+                                        <a
+                                            href={lead.website}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
+                                        >
+                                            Open their site
+                                            <FiExternalLink aria-hidden="true" className="size-3" />
+                                        </a>
+                                    )}
+                                </div>
+                            </form>
                         </CardContent>
                     </Card>
 

@@ -116,6 +116,15 @@ async function AddLeadContent({ error }: { error?: string }) {
                                 All optional. Leave the email out and the crawler looks for one.
                             </p>
 
+                            <div className="space-y-2">
+                                <Label htmlFor="contactName">Who to write to</Label>
+                                <Input id="contactName" name="contactName" maxLength={80} placeholder="Sam" />
+                                <p className="text-xs text-[#17233B]/60">
+                                    Their first name is the first line of the email. Left blank it
+                                    says &ldquo;Hi there&rdquo;.
+                                </p>
+                            </div>
+
                             <div className="grid gap-5 sm:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email</Label>

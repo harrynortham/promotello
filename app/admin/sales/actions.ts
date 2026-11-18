@@ -103,6 +103,7 @@ export async function addLead(formData: FormData) {
         .from("leads")
         .insert({
             name,
+            contact_name: text(formData, "contactName") || null,
             website: text(formData, "website") || null,
             email: text(formData, "email") || null,
             // Said by hand, so it is nobody's guess but the person who
@@ -156,7 +157,7 @@ export async function enrichLead(formData: FormData) {
 
     const { data: lead } = await supabase
         .from("leads")
-        .select("id, website, stage, address_source")
+        .select("id, website, stage, address_source, email_source")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -181,7 +182,10 @@ export async function enrichLead(formData: FormData) {
         stage: lead.stage === "new" ? "enriched" : lead.stage,
     };
 
-    if (found.email) {
+    // A typed email is left alone, the same as a typed address: somebody
+    // looked it up and wrote it down, and a crawler guessing from a
+    // footer does not outrank that.
+    if (found.email && lead.email_source !== "typed") {
         update.email = found.email;
         update.email_source = found.source;
         update.email_found_at = now;
@@ -204,7 +208,7 @@ export async function enrichLead(formData: FormData) {
 
     await supabase.from("leads").update(update).eq("id", leadId);
 
-    if (found.email) {
+    if (found.email && lead.email_source !== "typed") {
         await record(supabase, leadId, "email_found", `${found.email} — ${found.source}`);
     }
 
@@ -587,4 +591,120 @@ export async function deleteLead(formData: FormData) {
 
     revalidatePath("/admin/sales");
     redirect(`/admin/sales?removed=${encodeURIComponent(lead.name)}`);
+}
+
+// Everything about a lead that is not its address or its company, in
+// one form. Typed beats found: an email written down here is marked
+// typed and the crawler leaves it alone.
+export async function saveLeadDetails(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const name = text(formData, "name");
+
+    if (!name) {
+        redirect(`/admin/sales/${leadId}?error=no_name`);
+    }
+
+    const { data: before } = await supabase
+        .from("leads")
+        .select("email, email_source")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    const email = text(formData, "email") || null;
+    const changed = email !== (before?.email ?? null);
+
+    const { error } = await supabase
+        .from("leads")
+        .update({
+            name,
+            contact_name: text(formData, "contactName") || null,
+            website: text(formData, "website") || null,
+            phone: text(formData, "phone") || null,
+            instagram_handle: text(formData, "instagramHandle") || null,
+            category_id: text(formData, "categoryId") || null,
+            email,
+            // Only when it actually changed, so saving the rest of the
+            // form does not quietly relabel an email the crawler found.
+            ...(changed
+                ? {
+                      email_source: email ? "typed" : null,
+                      email_found_at: email ? new Date().toISOString() : null,
+                  }
+                : {}),
+        })
+        .eq("id", leadId);
+
+    if (error?.code === "23505") {
+        redirect(`/admin/sales/${leadId}?error=duplicate`);
+    }
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    if (changed && email) {
+        await record(supabase, leadId, "email_found", `${email} — entered by hand`);
+    }
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    redirect(`/admin/sales/${leadId}?saved=details`);
+}
+
+// A company looked up by hand and written down. Stored exactly as the
+// API check stores it, because it is the same fact arriving by a
+// different route — somebody read the register instead of us calling
+// it. The gate in 20270131090000 still decides what it unlocks: a
+// number is what makes a lead emailable, and without one it stays post
+// only whatever is typed here.
+export async function saveLeadCompany(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+
+    // Companies House numbers are eight characters: digits, or two
+    // letters and six digits. Spaces out, upper case, so the same
+    // company typed two ways is the same company.
+    const number = text(formData, "companyNumber").replace(/\s/g, "").toUpperCase();
+    const companyName = text(formData, "companyName");
+
+    if (!number) {
+        const { error: cleared } = await supabase
+            .from("leads")
+            .update({ company_number: null, company_name: null, can_email: false })
+            .eq("id", leadId);
+
+        if (cleared) redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(cleared.message)}`);
+
+        await record(supabase, leadId, "companies_house_checked", "Company cleared by hand — post only");
+        revalidatePath(`/admin/sales/${leadId}`);
+        redirect(`/admin/sales/${leadId}?saved=company`);
+    }
+
+    if (!/^(\d{8}|[A-Z]{2}\d{6})$/.test(number)) {
+        redirect(`/admin/sales/${leadId}?error=bad_company_number`);
+    }
+
+    const { error } = await supabase
+        .from("leads")
+        .update({
+            company_number: number,
+            company_name: companyName || null,
+            can_email: true,
+            companies_house_checked_at: new Date().toISOString(),
+        })
+        .eq("id", leadId);
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    await record(
+        supabase,
+        leadId,
+        "companies_house_checked",
+        `${companyName || "Company"} · ${number} — entered by hand`,
+    );
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    redirect(`/admin/sales/${leadId}?saved=company`);
 }

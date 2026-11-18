@@ -23,7 +23,7 @@ async function defaultsFromLead(leadId: string): Promise<PreviewDefaults | undef
     const { data: lead } = await supabase
         .from("leads")
         .select(
-            "id, name, website, email, instagram_handle, address_line_1, postcode, cities ( name ), areas ( name ), categories ( id, parent_id )",
+            "id, name, website, email, contact_name, instagram_handle, address_line_1, postcode, cities ( name ), areas ( name ), categories ( id, parent_id )",
         )
         .eq("id", leadId)
         .maybeSingle();
@@ -51,6 +51,7 @@ async function defaultsFromLead(leadId: string): Promise<PreviewDefaults | undef
         category: category?.parent_id ? category.id : undefined,
         website: lead.website,
         contactEmail: lead.email,
+        contactName: lead.contact_name,
         instagramHandle: lead.instagram_handle,
         addressLine1: lead.address_line_1,
         city: one(lead.cities as { name: string } | { name: string }[] | null)?.name,
