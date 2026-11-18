@@ -30,10 +30,33 @@ why posting one is in the sequence at all.
 | --- | --- | --- |
 | `place_id` | Google Places | Yes — the one field their terms allow indefinitely |
 | name, phone, website | shown by Places at import, kept because somebody chose to | Ours from then on |
-| address | Places at import — **provisional**, then replaced by the one on their own site | `address_source` says which |
+| address | **never from Places** — their own site, or typed | `address_source` says which |
+| lat/long, ward | postcodes.io, looked up from the postcode | Ours, with attribution |
 | `email`, `email_source` | the business's own website | Yes |
 | `company_number`, `company_name` | Companies House (Open Government Licence) | Yes |
 | notes, category, stage | us | Yes |
+
+### Google discovers, the postcode locates
+
+The import takes a `place_id` and nothing else from Google that it keeps.
+"Provisional" was tried first and did not hold: it was a label with no
+mechanism behind it, so a lead nobody got round to kept Google's address for
+good. `address_source` can no longer be `places`, and the database refuses
+one.
+
+The postcode comes from the business's own site or is typed. Everything else
+is looked up **from** it via postcodes.io — never the other way round.
+Reverse geocoding a shop's coordinates returns the nearest postcode centroid:
+from Joe's Bakery's own point the three nearest are BS7 8PH, BS7 8QN and
+BS7 8TJ, and the real one, BS7 8NZ, is not among them. Fine for a map,
+useless on an envelope.
+
+postcodes.io is Ordnance Survey OpenData and ONS data: free, no key, storable
+with attribution, which `ATTRIBUTION` in `lib/postcodes.ts` carries wherever
+it is shown. **Northern Ireland is not covered** — BT postcodes come from Land
+and Property Services and commercial use needs a licence from them, so they
+are refused rather than quietly stored. That will matter the day Promotello
+opens in Belfast.
 
 ### The address, and why it has a source
 
