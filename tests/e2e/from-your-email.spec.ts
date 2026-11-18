@@ -80,7 +80,11 @@ test("the dashboard hands back the offer and the card from the email", async ({ 
         const page = await (await browser.newContext({ storageState: BUSINESS_AUTH })).newPage();
         await page.goto(`/business/${businessId}`, { timeout: 120_000 });
 
-        const panel = page.getByRole("region", { name: /The offer we showed you is still here/ });
+        // Both an offer and a card were seeded, and the heading names
+        // what is actually there — it says "the offer" only when the card
+        // has gone. Matching the offer-only wording looked for a panel
+        // this test never produces.
+        const panel = page.getByRole("region", { name: /The offer and card we showed you are still here/ });
         await expect(panel).toBeVisible({ timeout: 90_000 });
 
         await expect(panel.getByText(SAMPLE_OFFER)).toBeVisible();

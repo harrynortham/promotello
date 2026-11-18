@@ -25,11 +25,18 @@ export function LocationFields({
     defaults,
     fields,
     errors,
+    waitlist = true,
 }: {
     cities: CityOption[];
     defaults?: { city?: string | null; area?: string | null; postalCode?: string | null };
     fields?: Record<LocationField, UseFormRegisterReturn>;
     errors?: Partial<Record<LocationField, { message?: string }>>;
+    // The line about where Promotello is, and the waitlist for everywhere
+    // else. It is for a business filling this in about themselves. Admin
+    // writing a lead down is not going to join a waitlist, and offering
+    // it there is a sentence that reads as if we have lost track of who
+    // is at the keyboard.
+    waitlist?: boolean;
 }) {
     const [cityName, setCityName] = useState(
         cities.find((city) => city.name === defaults?.city)?.name ?? cities[0]?.name ?? "",
@@ -135,12 +142,14 @@ export function LocationFields({
                 <FieldError id="postalCode-error" message={errors?.postalCode?.message} />
             </div>
 
-            <p className="text-xs text-[#17233B]/70">
-                Promotello is in {cities.map((option) => option.name).join(", ")} for now.{" "}
-                <Link href="/business/waitlist" className="font-medium text-[#FF593F] underline underline-offset-2">
-                    Somewhere else? Join the waitlist
-                </Link>
-            </p>
+            {waitlist && (
+                <p className="text-xs text-[#17233B]/70">
+                    Promotello is in {cities.map((option) => option.name).join(", ")} for now.{" "}
+                    <Link href="/business/waitlist" className="font-medium text-[#FF593F] underline underline-offset-2">
+                        Somewhere else? Join the waitlist
+                    </Link>
+                </p>
+            )}
         </div>
     );
 }

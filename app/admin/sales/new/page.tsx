@@ -102,7 +102,7 @@ async function AddLeadContent({ error }: { error?: string }) {
                                 />
                             </div>
 
-                            <LocationFields cities={cities} />
+                            <LocationFields cities={cities} waitlist={false} />
 
                             <p className="text-xs text-[#17233B]/60">
                                 The postcode fixes where they are — it is looked up for the

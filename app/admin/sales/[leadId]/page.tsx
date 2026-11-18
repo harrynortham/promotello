@@ -305,6 +305,7 @@ async function Lead({ params, searchParams }: PageProps) {
 
                                     <LocationFields
                                         cities={cities}
+                                        waitlist={false}
                                         defaults={{
                                             city: city?.name,
                                             area: area?.name,
