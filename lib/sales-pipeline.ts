@@ -5,7 +5,11 @@
 export const STAGES = [
     { key: "new", label: "New", blurb: "Found on a street. Nothing known yet." },
     { key: "enriched", label: "Has an address", blurb: "An email found on their own site." },
-    { key: "emailable", label: "Emailable", blurb: "A limited company, so we may write to them." },
+    // Not "Emailable": that word is already the badge for can_email, and
+    // the two sat side by side saying the same thing twice. This stage is
+    // what was done — the register has been checked — and the badge is
+    // what it means.
+    { key: "emailable", label: "Company checked", blurb: "On the register, so we may write to them." },
     { key: "preview", label: "Preview built", blurb: "A page exists, ready to send." },
     { key: "emailed", label: "Emailed", blurb: "The first email has gone." },
     { key: "followed_up", label: "Followed up", blurb: "The second one has gone too." },
