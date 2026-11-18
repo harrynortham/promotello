@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
-import { checkCompany, enrichLead, moveLead, saveLeadNotes } from "../actions";
+import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadNotes } from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
@@ -190,6 +190,52 @@ async function Lead({ params }: PageProps) {
                                     >
                                         Build the preview
                                     </Button>
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Queueing, not sending. The draft is read in the
+                        outbox and goes when somebody says so. */}
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-base">Write to them</CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="text-sm">
+                            {!lead.can_email ? (
+                                <p className="text-[#17233B]/65">
+                                    Post only. A letter needs no consent, which is how this
+                                    one is reached — check Companies House if that looks wrong.
+                                </p>
+                            ) : !lead.email || !lead.preview_business_id ? (
+                                <p className="text-[#17233B]/65">
+                                    {!lead.email
+                                        ? "No address to write to yet."
+                                        : "Build the preview first — the email is a link to it."}
+                                </p>
+                            ) : (
+                                <>
+                                    <p className="text-[#17233B]/65">
+                                        Drafted from the preview and put in the outbox. You read
+                                        it there, and it goes when you press send.
+                                    </p>
+
+                                    <div className="mt-4 flex flex-wrap gap-3">
+                                        <form action={queueOutreach}>
+                                            <input type="hidden" name="leadId" value={lead.id} />
+                                            <input type="hidden" name="kind" value="first" />
+                                            <Button type="submit" size="sm">Queue the first email</Button>
+                                        </form>
+
+                                        <form action={queueOutreach}>
+                                            <input type="hidden" name="leadId" value={lead.id} />
+                                            <input type="hidden" name="kind" value="follow_up" />
+                                            <Button type="submit" size="sm" variant="outline">
+                                                Queue a follow-up
+                                            </Button>
+                                        </form>
+                                    </div>
                                 </>
                             )}
                         </CardContent>

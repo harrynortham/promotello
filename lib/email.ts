@@ -111,9 +111,19 @@ export type SendResult = {
     failedTo: string[];
 };
 
-export async function sendEmails(emails: Email[]): Promise<SendResult> {
+// `from` overrides EMAIL_FROM for one send. Outreach uses it so cold
+// email goes out on its own subdomain: a spam complaint run against a
+// hundred cold emails must not be able to stop a customer receiving the
+// voucher they just claimed (docs/SALES-PIPELINE.md). It is passed in
+// rather than read here so that a caller which has not been set up sends
+// nothing, instead of quietly falling back to the address the product's
+// own mail depends on.
+export async function sendEmails(
+    emails: Email[],
+    options?: { from?: string },
+): Promise<SendResult> {
     const apiKey = process.env.RESEND_API_KEY;
-    const from = setting(process.env.EMAIL_FROM);
+    const from = options ? setting(options.from) : setting(process.env.EMAIL_FROM);
     const deliverable = emails.filter((email) => isDeliverable(email.to));
 
     // Skipped: test addresses, or sending isn't set up. Not a failure.

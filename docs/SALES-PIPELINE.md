@@ -77,13 +77,26 @@ added and enriched by hand.
   requests per five minutes. Without it no lead can become emailable, which
   fails in the safe direction.
 
+## The outbox
+
+`/admin/sales/outbox` holds the day's drafts. A lead with an address, a
+preview and a company number can be queued — the first email or the follow-up
+— and the message is **drafted from the preview and stored**, so what somebody
+approved is what goes out. A preview edited in between does not silently
+change an email that was already read and agreed to.
+
+Sending needs `OUTREACH_EMAIL_FROM`, an address on its own subdomain verified
+in Resend. **Outreach must not share the sending domain** with vouchers and
+receipts: one spam complaint run against cold email should not be able to stop
+a customer getting what they claimed. Without it the queue drafts and holds,
+the Send button is disabled, and the action refuses on the server as well.
+
+The gate is checked a third time here. `outreach_messages` has its own trigger
+refusing a row for a lead whose `can_email` is false, because inserting
+straight into that table would otherwise be a way round the other two.
+
 ## Still to build
 
-Sending. The approve-and-send queue, the outreach subdomain and the letters
-provider are the second piece of work. Until then the board shows those stages
-and an admin moves a lead into them by hand, so the pipeline is honest from
-the first day.
-
-**Outreach must not share the sending domain** with vouchers and receipts. One
-spam complaint run against cold email should not be able to stop a customer
-getting their voucher.
+The letter. The daily job flags who is due one after a fortnight, and an admin
+moves the lead to **Letter posted** by hand; nothing addresses or posts it
+yet. A provider needs choosing and funding first.
