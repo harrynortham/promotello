@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
+import { STAGES, STAGE_LABELS, eventLabel } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { LocationFields } from "@/components/location-fields";
@@ -32,7 +32,23 @@ import {
     saveLeadNotes,
 } from "../actions";
 
-export const metadata: Metadata = { title: "Lead", robots: { index: false } };
+// The business, not "Lead". Several of these are open at once while a
+// street is worked through, and every tab saying the same word is no way
+// to find the one you want.
+export async function generateMetadata({ params }: { params: Promise<{ leadId: string }> }): Promise<Metadata> {
+    await connection();
+
+    const { leadId } = await params;
+    const supabase = await createClient();
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("name")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    return { title: lead?.name ?? "Lead", robots: { index: false } };
+}
 
 type PageProps = {
     params: Promise<{ leadId: string }>;
@@ -93,6 +109,13 @@ async function Lead({ params, searchParams }: PageProps) {
         .eq("lead_id", leadId);
 
     const typedEmail = lead.email_source === "typed";
+
+    // Companies House's own advanced search, with the lead's name already
+    // in it, for the times our check finds nothing and somebody has to
+    // go and look.
+    const companiesHouseSearch =
+        "https://find-and-update.company-information.service.gov.uk/advanced-search/get-results" +
+        `?companyNameIncludes=${encodeURIComponent(lead.name)}`;
 
     // The same list the add form offers, so a lead can be moved to any
     // town or area it could have been added to.
@@ -331,9 +354,27 @@ async function Lead({ params, searchParams }: PageProps) {
                             <form action={saveLeadCompany} className="space-y-3 border-t pt-4">
                                 <input type="hidden" name="leadId" value={lead.id} />
 
-                                <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
-                                    Or write the company down
-                                </p>
+                                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                    <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                        Or write the company down
+                                    </p>
+
+                                    {/* The register itself, with the name
+                                        already in the box. The search matches
+                                        the name literally, so a shop called
+                                        Joe's is only found by typing the
+                                        apostrophe — which is the same thing
+                                        that used to beat our own matcher. */}
+                                    <a
+                                        href={companiesHouseSearch}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-xs font-medium text-[#FF593F] hover:underline"
+                                    >
+                                        Look it up on Companies House
+                                        <FiExternalLink aria-hidden="true" className="size-3" />
+                                    </a>
+                                </div>
 
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <div className="space-y-1">
@@ -708,9 +749,22 @@ async function Lead({ params, searchParams }: PageProps) {
                             ) : (
                                 (events ?? []).map((event) => (
                                     <div key={event.id} className="border-b pb-3 last:border-0 last:pb-0">
-                                        <p className="font-medium">{event.kind.replace(/_/g, " ")}</p>
+                                        {/* A note has no heading: its detail is
+                                            the whole of it, and "note" above
+                                            the words was a label for the
+                                            column rather than for what
+                                            happened. */}
+                                        {eventLabel(event.kind) && (
+                                            <p className="font-medium">{eventLabel(event.kind)}</p>
+                                        )}
                                         {event.detail && (
-                                            <p className="mt-0.5 text-xs leading-5 text-[#17233B]/65">
+                                            <p
+                                                className={
+                                                    eventLabel(event.kind)
+                                                        ? "mt-0.5 text-xs leading-5 text-[#17233B]/65"
+                                                        : "font-medium"
+                                                }
+                                            >
                                                 {event.detail}
                                             </p>
                                         )}

@@ -11,9 +11,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/server";
 import { BuildPreviewForm } from "../build-preview-form";
 
-export const metadata: Metadata = { title: "Build the preview", robots: { index: false } };
-
 type PageProps = { params: Promise<{ leadId: string }> };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    await connection();
+
+    const { leadId } = await params;
+    const supabase = await createClient();
+
+    const { data: lead } = await supabase.from("leads").select("name").eq("id", leadId).maybeSingle();
+
+    return {
+        title: lead?.name ? `Build ${lead.name} a page` : "Build the preview",
+        robots: { index: false },
+    };
+}
 
 // Under the lead, because that is what it is built from. It was briefly a
 // dialog on the lead itself; cropping two images inside a sheet that was

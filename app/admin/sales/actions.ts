@@ -14,6 +14,7 @@ import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
+import { STAGE_LABELS } from "@/lib/sales-pipeline";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
@@ -290,11 +291,20 @@ export async function moveLead(formData: FormData) {
 
     const { data: lead } = await supabase
         .from("leads")
-        .select("id, can_email")
+        .select("id, can_email, stage")
         .eq("id", leadId)
         .maybeSingle();
 
     if (!lead) redirect("/admin/sales");
+
+    // Pressing Move on the stage it is already in wrote an event anyway.
+    // Joe's Bakery has "Moved to emailable" twice, nine seconds apart,
+    // which is a history of the button being pressed rather than of
+    // anything happening to the business.
+    if (lead.stage === stage) {
+        revalidatePath(`/admin/sales/${leadId}`);
+        return;
+    }
 
     // The gate again, at the one place somebody could walk a lead into a
     // sending stage by hand.
@@ -320,7 +330,15 @@ export async function moveLead(formData: FormData) {
         dead: "closed",
     };
 
-    await record(supabase, leadId, kinds[stage] ?? "note", kinds[stage] ? undefined : `Moved to ${stage}`);
+    // By the name on the board, not the key underneath it. "Moved to
+    // emailable" named something the pipeline calls "Company checked",
+    // so the history and the thing it describes disagreed.
+    await record(
+        supabase,
+        leadId,
+        kinds[stage] ?? "note",
+        kinds[stage] ? undefined : `Moved to ${STAGE_LABELS[stage] ?? stage}`,
+    );
 
     revalidatePath("/admin/sales");
     revalidatePath(`/admin/sales/${leadId}`);
