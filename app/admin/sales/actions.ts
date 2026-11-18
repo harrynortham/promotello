@@ -13,7 +13,7 @@ import {
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { checkCompaniesHouse, findEmail } from "@/lib/lead-jobs";
-import { asHtml, followUpMessage, followUpSubject, outreachSender } from "@/lib/outreach-queue";
+import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
@@ -311,7 +311,10 @@ export async function queueOutreach(formData: FormData) {
         kind,
         to_email: lead.email,
         subject: draft.subject,
-        body: draft.body,
+        // The disclosure goes on here, not inside the composer: the
+        // previews page still copies that message into Gmail, where the
+        // signature adds it, and twice reads badly.
+        body: withDisclosure(draft.body),
     });
 
     if (error) {

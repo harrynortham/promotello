@@ -1,3 +1,5 @@
+import { companyDisclosure } from "@/lib/legal";
+
 // Drafting and sending the queued outreach.
 //
 // The drafting reuses what the previews page already composes, so the
@@ -9,6 +11,19 @@
 // until somebody reads it and presses send.
 
 export const OUTREACH_FROM = "OUTREACH_EMAIL_FROM";
+
+// What the Gmail signature used to add, and now has to be added here.
+//
+// outreachMessage() carries no company footer on purpose — "the Companies
+// Act disclosure is in the email signature, and sending it twice reads
+// badly" — which was true while every outreach email was pasted into
+// Gmail by hand. Sent from the app there is no signature, and a business
+// email from a limited company has to give the registered name, number,
+// place of registration and office. So the queue adds it to the draft,
+// where it is also read before anybody approves it.
+export function withDisclosure(body: string) {
+    return `${body}\n\n—\n${companyDisclosure()}`;
+}
 
 // Cold email does not go out on the address that carries vouchers,
 // receipts and stamp notifications. Without its own sender configured,
