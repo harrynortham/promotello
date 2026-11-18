@@ -1,0 +1,70 @@
+// The stages a lead moves through, in order, and what each one means.
+// Kept apart from the pages so the board, the lead record and the daily
+// job all agree on one list (tests/unit/sales-pipeline.test.ts).
+
+export const STAGES = [
+    { key: "new", label: "New", blurb: "Found on a street. Nothing known yet." },
+    { key: "enriched", label: "Has an address", blurb: "An email found on their own site." },
+    { key: "emailable", label: "Emailable", blurb: "A limited company, so we may write to them." },
+    { key: "preview", label: "Preview built", blurb: "A page exists, ready to send." },
+    { key: "emailed", label: "Emailed", blurb: "The first email has gone." },
+    { key: "followed_up", label: "Followed up", blurb: "The second one has gone too." },
+    { key: "letter", label: "Letter posted", blurb: "Paper, after the email went quiet." },
+    { key: "claimed", label: "Claimed", blurb: "They took the page. Done." },
+    { key: "not_interested", label: "Not interested", blurb: "They said no. Never write again." },
+    { key: "dead", label: "Closed", blurb: "Gone quiet, or not for us." },
+] as const;
+
+export type Stage = (typeof STAGES)[number]["key"];
+
+export const STAGE_LABELS: Record<string, string> = Object.fromEntries(
+    STAGES.map((stage) => [stage.key, stage.label]),
+);
+
+// Still in play: everything that is not finished one way or another.
+export const OPEN_STAGES = STAGES.map((stage) => stage.key).filter(
+    (key) => !["claimed", "not_interested", "dead"].includes(key),
+);
+
+export type DueLead = {
+    id: string;
+    name: string;
+    stage: string;
+    can_email: boolean;
+    last_touch: string | null;
+};
+
+// What the day's work is. Follow up four to five days after the first
+// email; after a fortnight of nothing, it stops being an email problem
+// and becomes a letter.
+//
+// Pure, and given "now", so the dates can be tested rather than waited
+// for. Nothing in here sends anything: it decides who is due.
+export function dueToday(leads: DueLead[], now: Date) {
+    const days = (since: string | null) =>
+        since ? Math.floor((now.getTime() - new Date(since).getTime()) / 86_400_000) : null;
+
+    const followUp: DueLead[] = [];
+    const letter: DueLead[] = [];
+
+    for (const lead of leads) {
+        const age = days(lead.last_touch);
+
+        if (age === null) continue;
+
+        if (lead.stage === "emailed" && age >= 4) {
+            followUp.push(lead);
+            continue;
+        }
+
+        // A fortnight after the last thing we did, whether that was the
+        // first email or the follow-up. A lead we may not email at all
+        // arrives here too: a letter needs no consent, which is the
+        // whole reason it is in the sequence.
+        if (["emailed", "followed_up", "preview"].includes(lead.stage) && age >= 14) {
+            letter.push(lead);
+        }
+    }
+
+    return { followUp, letter };
+}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+    FiTrendingUp,
     FiAlertTriangle,
     FiBarChart2,
     FiBriefcase,
@@ -23,6 +24,7 @@ const links = [
     { label: "Businesses", href: "/admin/businesses", icon: FiBriefcase, count: "businesses" },
     { label: "Offers", href: "/admin/offers", icon: FiGift, count: "offers" },
     { label: "Categories", href: "/admin/categories", icon: FiTag },
+    { label: "Sales", href: "/admin/sales", icon: FiTrendingUp },
     { label: "Previews", href: "/admin/previews", icon: FiSend },
     { label: "Cities and areas", href: "/admin/cities", icon: FiMapPin },
     { label: "Billing alerts", href: "/admin/billing", icon: FiAlertTriangle, count: "billing" },

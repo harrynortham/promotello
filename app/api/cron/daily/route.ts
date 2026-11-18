@@ -10,6 +10,7 @@ import {
 import { submitRecentPosts } from "@/lib/indexnow";
 import { sendMonthlyReports } from "@/lib/monthly-report";
 import { retryOfferAnnouncements } from "@/lib/new-offer-email";
+import { flagLeadsDueToday } from "@/lib/sales-due";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { deleteOldNotifications } from "@/lib/notify";
 
@@ -56,6 +57,13 @@ export async function GET(request: Request) {
         return null;
     });
 
+    // Who is due the next touch in the sales pipeline. Flags only: the
+    // sending is approved by a person (docs/SALES-PIPELINE.md).
+    const salesDue = await flagLeadsDueToday().catch((error) => {
+        console.error("Daily job: the sales pipeline check failed", error);
+        return null;
+    });
+
     const { data: expiredPreviews } = await createAdminClient().rpc("delete_expired_business_previews");
     const oldNotifications = await deleteOldNotifications();
     const indexNow = await submitRecentPosts().catch(() => ({ submitted: 0 }));
@@ -65,6 +73,7 @@ export async function GET(request: Request) {
     const reports = ukDay === 1 ? await sendMonthlyReports() : null;
 
     return Response.json({
+        salesDue,
         automations,
         lifecycle,
         signupReminders,
