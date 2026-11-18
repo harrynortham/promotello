@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
+import { STAGES, STAGE_LABELS, leadAddress } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = { title: "Sales", robots: { index: false } };
@@ -19,7 +19,11 @@ type PageProps = { searchParams: Promise<{ stage?: string; post?: string }> };
 type LeadRow = {
     id: string;
     name: string;
-    address: string | null;
+    // The parts, not a line: the line is built from them when it is
+    // shown, so it cannot disagree with them.
+    address_line_1: string | null;
+    address_line_2: string | null;
+    postcode: string | null;
     email: string | null;
     can_email: boolean;
     company_number: string | null;
@@ -27,6 +31,7 @@ type LeadRow = {
     website: string | null;
     created_at: string;
     areas: { name: string } | null;
+    cities: { name: string } | null;
 };
 
 function Pipeline({ counts }: { counts: Record<string, number> }) {
@@ -78,7 +83,7 @@ async function Board({ searchParams }: PageProps) {
 
     let query = supabase
         .from("leads")
-        .select("id, name, address, email, can_email, company_number, stage, website, created_at, areas ( name )")
+        .select("id, name, address_line_1, address_line_2, postcode, email, can_email, company_number, stage, website, created_at, areas ( name ), cities ( name )")
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -193,7 +198,7 @@ async function Board({ searchParams }: PageProps) {
                                                     {lead.email}
                                                 </span>
                                             )}
-                                            {lead.address && <span>{lead.address}</span>}
+                                            {leadAddress(lead) && <span>{leadAddress(lead)}</span>}
                                         </p>
                                     </div>
 

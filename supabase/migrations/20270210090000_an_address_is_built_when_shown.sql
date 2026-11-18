@@ -1,0 +1,21 @@
+-- The address line is built, not stored
+--
+-- leads.address held a line made of address_line_1, the town and the
+-- postcode — the same three sitting beside it. Three places wrote it:
+-- the crawler, saving the address form, and adding a lead, which did
+-- not. So a lead typed in on /admin/sales/new had a street and a
+-- postcode and no line, and the pipeline showed nothing under its name
+-- until somebody pressed Save this address for no other reason than to
+-- make it appear.
+--
+-- Every row's value was exactly its parts joined, which is the tell: it
+-- was never a fact of its own, only a cache of three others with a
+-- writer that forgot. It is built where it is shown now, so a writer
+-- that forgets is impossible rather than fixed.
+--
+-- What the crawler actually found on the page is not lost with it. That
+-- already goes into the history as a note, in the words that were there,
+-- which is where it was any use — a line nobody can edit is no good as a
+-- record of what somebody else wrote.
+
+alter table public.leads drop column if exists address;

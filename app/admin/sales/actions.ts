@@ -126,6 +126,7 @@ export async function addLead(formData: FormData) {
             city_id: cityId,
             area_id: areaId,
             address_line_1: line1 || null,
+            address_line_2: text(formData, "addressLine2") || null,
             postcode,
             address_source: line1 || postcode ? "typed" : null,
             address_found_at: line1 || postcode ? new Date().toISOString() : null,
@@ -204,7 +205,6 @@ export async function enrichLead(formData: FormData) {
     // import, which is Google's and not ours to keep (20270202090000). A
     // typed one is left alone: somebody looked at it on purpose.
     if (found.address && lead.address_source !== "typed") {
-        update.address = found.address;
         update.address_source = "website";
         update.address_found_at = now;
 
@@ -545,8 +545,8 @@ export async function saveLeadAddress(formData: FormData) {
             .from("leads")
             .update({
                 ...where,
-                address: null,
                 address_line_1: null,
+                address_line_2: null,
                 address_source: null,
                 address_found_at: null,
                 ...(typedPostcode ? { postcode: typedPostcode } : {}),
@@ -558,21 +558,20 @@ export async function saveLeadAddress(formData: FormData) {
         redirect(`/admin/sales/${leadId}?saved=address`);
     }
 
-    const address = [line1, town, typedPostcode].filter(Boolean).join(", ");
 
     await supabase
         .from("leads")
         .update({
             ...where,
-            address,
             address_line_1: line1,
+            address_line_2: text(formData, "addressLine2") || null,
             address_source: "typed",
             address_found_at: new Date().toISOString(),
             ...(typedPostcode ? { postcode: typedPostcode } : {}),
         })
         .eq("id", leadId);
 
-    await record(supabase, leadId, "note", `Address entered by hand: ${address}`);
+    await record(supabase, leadId, "note", `Address entered by hand: ${[line1, town, typedPostcode].filter(Boolean).join(", ")}`);
     revalidatePath(`/admin/sales/${leadId}`);
 }
 
@@ -762,7 +761,7 @@ export async function createPreviewFromLead(
     const { data: lead } = await supabase
         .from("leads")
         .select(
-            "id, name, description, email, contact_name, website, instagram_handle, address_line_1, postcode, category_id, preview_business_id, categories ( slug ), cities ( name ), areas ( name )",
+            "id, name, description, email, contact_name, website, instagram_handle, address_line_1, address_line_2, postcode, category_id, preview_business_id, categories ( slug ), cities ( name ), areas ( name )",
         )
         .eq("id", leadId)
         .maybeSingle();
@@ -817,7 +816,7 @@ export async function createPreviewFromLead(
         business_contact_email: lead.email,
         location_name: "Main location",
         location_address_line_1: lead.address_line_1,
-        location_address_line_2: null,
+        location_address_line_2: lead.address_line_2,
         location_city: city!.name,
         location_region: area!.name,
         location_postal_code: lead.postcode,

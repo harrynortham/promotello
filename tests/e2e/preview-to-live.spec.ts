@@ -105,20 +105,35 @@ test("a preview becomes a live business", async ({ browser }) => {
 
         // 3. The dashboard is still there for anyone who wants it: one
         //    banner, nothing to press, and the page theirs to finish.
-        //    This preview had no hours, so it is not a listing yet and
-        //    has not gone live with the claim.
+        //
+        //    It is live already. This expected "Draft" and a page that
+        //    had not gone live, because a claim once needed description,
+        //    address and hours and this preview had no hours. 20270128090000
+        //    took hours out of that rule eleven hours after this test was
+        //    written — for a page we wrote and checked there is no
+        //    reviewer, the claim publishes, and hours are not what decides
+        //    whether it is fit to be public. straight-live.spec.ts has
+        //    asserted exactly that ever since, so the two were describing
+        //    the same claim differently.
         await page.goto(dashboard);
-        await expect(page.getByText("Draft")).toBeVisible();
-        await expect(page.getByText("Your page isn't live yet")).toBeVisible();
+        // Exact: this business is called "E2E Preview To Live", so a loose
+        // match finds its own name eight times over.
+        await expect(page.getByText("Live", { exact: true })).toBeVisible();
         await expect(page.getByRole("button", { name: `Send ${name} for review` })).toHaveCount(0);
-        await expect(page.getByText(/comes to us on its own/)).toBeVisible();
 
-        // And the dashboard says the same thing it says to a business that
-        // signed itself up: no claim about who wrote the page.
-        await expect(page.locator("#send-for-review")).not.toContainText("We wrote");
+        // And the review panel is not there at all, which is the stronger
+        // version of what this checked before: it used to assert the panel
+        // did not say "We wrote", and a page that is already live has no
+        // panel to say anything.
+        await expect(page.locator("#send-for-review")).toHaveCount(0);
+        await expect(page.locator("main")).not.toContainText("We wrote");
 
-        // Nothing telling them they have nothing.
-        await expect(page.getByText("No redemptions yet")).toHaveCount(0);
+        // The redemptions panel is gated on isLive, so it appears here
+        // now. This used to assert it did not — "nothing telling them
+        // they have nothing" — which was right while the page was still a
+        // draft. For a live page an empty list is the true answer to a
+        // question they can now ask.
+        await expect(page.getByText("No redemptions yet")).toBeVisible();
 
         // 4. They finish the profile.
         const { error: imagesError } = await db

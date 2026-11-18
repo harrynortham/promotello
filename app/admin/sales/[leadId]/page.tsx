@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGES, STAGE_LABELS, eventLabel } from "@/lib/sales-pipeline";
+import { STAGES, STAGE_LABELS, eventLabel, leadAddress } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { LocationFields } from "@/components/location-fields";
@@ -196,7 +196,7 @@ async function Lead({ params, searchParams }: PageProps) {
                 <div>
                     <h1 className="text-3xl font-semibold tracking-tight">{lead.name}</h1>
                     <p className="mt-2 text-sm text-[#17233B]/65">
-                        {[lead.address, area?.name, city?.name].filter(Boolean).join(" · ") || "No address yet"}
+                        {[leadAddress(lead), area?.name].filter(Boolean).join(" · ") || "No address yet"}
                     </p>
                 </div>
 
@@ -303,8 +303,26 @@ async function Lead({ params, searchParams }: PageProps) {
                                         />
                                     </div>
 
+                                    <div className="space-y-1">
+                                        <Label htmlFor="addressLine2" className="text-xs">
+                                            Locality
+                                        </Label>
+                                        <Input
+                                            id="addressLine2"
+                                            name="addressLine2"
+                                            defaultValue={lead.address_line_2 ?? ""}
+                                            maxLength={200}
+                                            placeholder="e.g. Horfield"
+                                        />
+                                        <p className="text-[11px] leading-5 text-[#17233B]/55">
+                                            The line between the street and the town on an envelope.
+                                            Not the area below, which is where they are listed.
+                                        </p>
+                                    </div>
+
                                     <LocationFields
                                         cities={cities}
+                                        waitlist={false}
                                         defaults={{
                                             city: city?.name,
                                             area: area?.name,

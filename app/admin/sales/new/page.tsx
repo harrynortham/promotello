@@ -102,7 +102,21 @@ async function AddLeadContent({ error }: { error?: string }) {
                                 />
                             </div>
 
-                            <LocationFields cities={cities} />
+                            <div className="space-y-2">
+                                <Label htmlFor="addressLine2">Locality</Label>
+                                <Input
+                                    id="addressLine2"
+                                    name="addressLine2"
+                                    maxLength={200}
+                                    placeholder="e.g. Horfield"
+                                />
+                                <p className="text-xs text-[#17233B]/60">
+                                    The line between the street and the town on an envelope. Not the
+                                    area below, which is where they are listed on Promotello.
+                                </p>
+                            </div>
+
+                            <LocationFields cities={cities} waitlist={false} />
 
                             <p className="text-xs text-[#17233B]/60">
                                 The postcode fixes where they are — it is looked up for the
