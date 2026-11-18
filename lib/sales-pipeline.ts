@@ -99,3 +99,26 @@ export const EVENT_LABELS: Record<string, string> = {
 export function eventLabel(kind: string) {
     return EVENT_LABELS[kind] ?? kind.replace(/_/g, " ");
 }
+
+// One line for where a lead is, built when it is shown.
+//
+// This was a column, written by whoever last touched an address — the
+// crawler wrote it, saving the address form wrote it, and adding a lead
+// did not. So a lead typed in on /admin/sales/new had a street and a
+// postcode and no line at all, and the pipeline showed nothing under its
+// name until somebody pressed Save this address for no other reason.
+//
+// Derived, it cannot disagree with the parts it is made of, and the
+// writer that forgets is impossible rather than fixed. What the crawler
+// actually found is still kept: it goes into the history as a note, in
+// the words that were on the page.
+export function leadAddress(lead: {
+    address_line_1?: string | null;
+    postcode?: string | null;
+    cities?: { name: string } | { name: string }[] | null;
+}) {
+    const cities = lead.cities;
+    const town = Array.isArray(cities) ? cities[0]?.name : cities?.name;
+
+    return [lead.address_line_1, town, lead.postcode].filter(Boolean).join(", ") || null;
+}
