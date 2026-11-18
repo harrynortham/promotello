@@ -13,11 +13,22 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
-import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
+import { SubmitButton } from "@/components/submit-button";
+import { CategorySelect } from "@/components/category-select";
+import { checkCompany, deleteLead, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadCompany, saveLeadDetails, saveLeadNotes } from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
-type PageProps = { params: Promise<{ leadId: string }> };
+type PageProps = {
+    params: Promise<{ leadId: string }>;
+    searchParams: Promise<{
+        already?: string;
+        undeletable?: string;
+        confirm?: string;
+        saved?: string;
+        error?: string;
+    }>;
+};
 
 function When({ value }: { value: string }) {
     return (
@@ -33,7 +44,7 @@ function When({ value }: { value: string }) {
     );
 }
 
-async function Lead({ params }: PageProps) {
+async function Lead({ params, searchParams }: PageProps) {
     await connection();
 
     const supabase = await createClient();
@@ -42,6 +53,8 @@ async function Lead({ params }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
+    const { already, undeletable, confirm, saved, error } = await searchParams;
+    const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
         .from("leads")
@@ -57,6 +70,15 @@ async function Lead({ params }: PageProps) {
         .eq("lead_id", leadId)
         .order("created_at", { ascending: false });
 
+    // Whether it can be deleted at all, so the page does not offer
+    // something the action will refuse.
+    const { count: writtenTo } = await supabase
+        .from("outreach_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_id", leadId);
+
+    const typedEmail = lead.email_source === "typed";
+
     const area = Array.isArray(lead.areas) ? lead.areas[0] : lead.areas;
     const city = Array.isArray(lead.cities) ? lead.cities[0] : lead.cities;
 
@@ -65,6 +87,40 @@ async function Lead({ params }: PageProps) {
             <Button render={<Link href="/admin/sales" />} nativeButton={false} variant="ghost" size="sm">
                 ← The pipeline
             </Button>
+
+            {saved && (
+                <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    Saved.
+                </p>
+            )}
+
+            {error && (
+                <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-900">
+                    {error === "no_name"
+                        ? "A lead needs a name."
+                        : error === "duplicate"
+                            ? "Another lead already has that name and postcode."
+                            : error === "bad_company_number"
+                                ? "A company number is eight characters: eight digits, or two letters and six digits."
+                                : error}
+                </p>
+            )}
+
+            {already && (
+                <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    This business was already on the list — here it is. Nothing was added twice.
+                </p>
+            )}
+
+            {undeletable && (
+                <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    {undeletable === "emailed"
+                        ? "This lead can't be deleted: we have written to them, and that record is why we wouldn't write again. Move it to Not interested or Closed instead."
+                        : undeletable === "preview"
+                            ? "This lead has a preview built from it. Delete or close the business first, or move the lead to Closed."
+                            : undeletable}
+                </p>
+            )}
 
             <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -98,25 +154,40 @@ async function Lead({ params }: PageProps) {
                                 <div>
                                     <p className="text-xs uppercase tracking-wide text-[#17233B]/55">Email</p>
                                     <p className="mt-1 font-medium">{lead.email ?? "Not found yet"}</p>
-                                    {lead.email_source && (
-                                        <a
-                                            href={lead.email_source}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
-                                        >
-                                            from {lead.email_source.replace(/^https?:\/\//, "").slice(0, 48)}
-                                            <FiExternalLink aria-hidden="true" className="size-3" />
-                                        </a>
+                                    {/* "typed" is not a URL, and linking to it
+                                        went nowhere. Only a page they published
+                                        is worth opening. */}
+                                    {typedEmail ? (
+                                        <p className="mt-1 text-xs text-[#17233B]/60">
+                                            Entered by hand, and left alone by the crawler.
+                                        </p>
+                                    ) : (
+                                        lead.email_source && (
+                                            <a
+                                                href={lead.email_source}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-1 inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
+                                            >
+                                                from {lead.email_source.replace(/^https?:\/\//, "").slice(0, 48)}
+                                                <FiExternalLink aria-hidden="true" className="size-3" />
+                                            </a>
+                                        )
                                     )}
                                 </div>
 
-                                <form action={enrichLead}>
-                                    <input type="hidden" name="leadId" value={lead.id} />
-                                    <Button type="submit" size="sm" variant="outline" disabled={!lead.website}>
-                                        {lead.email ? "Look again" : "Read their site"}
-                                    </Button>
-                                </form>
+                                {/* Nothing to look again for once somebody has
+                                    written one down: the crawler would not
+                                    replace it, so the button would do nothing
+                                    anybody wanted. */}
+                                {!typedEmail && (
+                                    <form action={enrichLead}>
+                                        <input type="hidden" name="leadId" value={lead.id} />
+                                        <Button type="submit" size="sm" variant="outline" disabled={!lead.website}>
+                                            {lead.email ? "Look again" : "Read their site"}
+                                        </Button>
+                                    </form>
+                                )}
                             </div>
 
                             {/* Where a letter would go, and whether it is
@@ -185,9 +256,9 @@ async function Lead({ params }: PageProps) {
                                         </div>
                                     </div>
 
-                                    <Button type="submit" size="sm" variant="outline">
+                                    <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
                                         Save this address
-                                    </Button>
+                                    </SubmitButton>
                                 </form>
 
                             </div>
@@ -212,26 +283,192 @@ async function Lead({ params }: PageProps) {
 
                                 <form action={checkCompany}>
                                     <input type="hidden" name="leadId" value={lead.id} />
-                                    <Button type="submit" size="sm" variant="outline">
+                                    <SubmitButton pendingLabel="Checking…" variant="outline" size="sm">
                                         {lead.companies_house_checked_at ? "Check again" : "Check"}
-                                    </Button>
+                                    </SubmitButton>
                                 </form>
                             </div>
 
-                            {lead.website && (
-                                <div className="border-t pt-4">
-                                    <p className="text-xs uppercase tracking-wide text-[#17233B]/55">Website</p>
-                                    <a
-                                        href={lead.website}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="mt-1 inline-flex items-center gap-1 font-medium hover:text-[#FF593F]"
-                                    >
-                                        {lead.website.replace(/^https?:\/\//, "")}
-                                        <FiExternalLink aria-hidden="true" className="size-3" />
-                                    </a>
+                            {/* The same fact by another route: somebody read
+                                the register instead of us calling it. Stored
+                                the same way, and the gate still decides what
+                                it unlocks — a number is what makes a lead
+                                emailable, and clearing it puts them back to
+                                post only. */}
+                            <form action={saveLeadCompany} className="space-y-3 border-t pt-4">
+                                <input type="hidden" name="leadId" value={lead.id} />
+
+                                <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                    Or write the company down
+                                </p>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="companyName" className="text-xs">
+                                            Registered name
+                                        </Label>
+                                        <Input
+                                            id="companyName"
+                                            name="companyName"
+                                            defaultValue={lead.company_name ?? ""}
+                                            maxLength={200}
+                                            placeholder="JOE'S BAKERY LIMITED"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="companyNumber" className="text-xs">
+                                            Company number
+                                        </Label>
+                                        <Input
+                                            id="companyNumber"
+                                            name="companyNumber"
+                                            defaultValue={lead.company_number ?? ""}
+                                            maxLength={10}
+                                            placeholder="08423930"
+                                        />
+                                    </div>
                                 </div>
-                            )}
+
+                                <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
+                                    Save the company
+                                </SubmitButton>
+
+                                <p className="text-[11px] leading-5 text-[#17233B]/55">
+                                    A number here makes them emailable. Clearing it puts them back to
+                                    post only.
+                                </p>
+                            </form>
+
+                        </CardContent>
+                    </Card>
+
+                    {/* Everything else, editable. A lead is written down by
+                        hand, so it is corrected by hand too — a name typed
+                        wrong, an email found later, the person who actually
+                        runs the place. */}
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-base">The details</CardTitle>
+                        </CardHeader>
+
+                        <CardContent>
+                            <form action={saveLeadDetails} className="space-y-5 text-sm">
+                                <input type="hidden" name="leadId" value={lead.id} />
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="name" className="text-xs">
+                                            Business name
+                                        </Label>
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            required
+                                            defaultValue={lead.name}
+                                            maxLength={120}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="contactName" className="text-xs">
+                                            Who to write to
+                                        </Label>
+                                        <Input
+                                            id="contactName"
+                                            name="contactName"
+                                            defaultValue={lead.contact_name ?? ""}
+                                            maxLength={80}
+                                            placeholder="Sam"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="categoryId" className="text-xs">
+                                        Category
+                                    </Label>
+                                    <CategorySelect
+                                        id="categoryId"
+                                        name="categoryId"
+                                        defaultValue={lead.category_id ?? undefined}
+                                    />
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="email" className="text-xs">
+                                            Email
+                                        </Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            defaultValue={lead.email ?? ""}
+                                            maxLength={160}
+                                            placeholder="hello@theirshop.com"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="phone" className="text-xs">
+                                            Phone
+                                        </Label>
+                                        <Input
+                                            id="phone"
+                                            name="phone"
+                                            defaultValue={lead.phone ?? ""}
+                                            maxLength={40}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="website" className="text-xs">
+                                            Website
+                                        </Label>
+                                        <Input
+                                            id="website"
+                                            name="website"
+                                            type="url"
+                                            defaultValue={lead.website ?? ""}
+                                            placeholder="https://"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="instagramHandle" className="text-xs">
+                                            Instagram
+                                        </Label>
+                                        <Input
+                                            id="instagramHandle"
+                                            name="instagramHandle"
+                                            defaultValue={lead.instagram_handle ?? ""}
+                                            maxLength={120}
+                                            placeholder="@theirshop"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
+                                        Save the details
+                                    </SubmitButton>
+
+                                    {lead.website && (
+                                        <a
+                                            href={lead.website}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
+                                        >
+                                            Open their site
+                                            <FiExternalLink aria-hidden="true" className="size-3" />
+                                        </a>
+                                    )}
+                                </div>
+                            </form>
                         </CardContent>
                     </Card>
 
@@ -397,6 +634,75 @@ async function Lead({ params }: PageProps) {
                                         </p>
                                     </div>
                                 ))
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* For one added twice, or added by mistake. Hidden
+                        behind a disclosure because lead_events and
+                        outreach_messages both cascade: this is not an
+                        undo. A lead we have written to cannot be deleted
+                        at all — that record is the reason we would not
+                        write again — and the action refuses it too. */}
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-base">Remove it</CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="text-sm">
+                            {(writtenTo ?? 0) > 0 ? (
+                                <p className="leading-6 text-[#17233B]/65">
+                                    We have written to this lead, so it stays. That record is why we
+                                    would not write again. Move it to <strong>Not interested</strong> or{" "}
+                                    <strong>Closed</strong> to take it off the list.
+                                </p>
+                            ) : lead.preview_business_id ? (
+                                <p className="leading-6 text-[#17233B]/65">
+                                    A preview was built from this lead, and that business has a page of
+                                    its own. Close the business first, or move this to{" "}
+                                    <strong>Closed</strong>.
+                                </p>
+                            ) : (
+                                confirming ? (
+                                    <div>
+                                        <p className="leading-6 text-[#17233B]/65">
+                                            <strong>{lead.name}</strong> and everything written down
+                                            about it goes, and it cannot be undone.
+                                        </p>
+
+                                        <div className="mt-4 flex items-center gap-3">
+                                            <form action={deleteLead}>
+                                                <input type="hidden" name="leadId" value={lead.id} />
+                                                <SubmitButton
+                                                    pendingLabel="Deleting…"
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Yes, delete it
+                                                </SubmitButton>
+                                            </form>
+
+                                            <Button
+                                                render={<Link href={`/admin/sales/${lead.id}`} />}
+                                                nativeButton={false}
+                                                variant="ghost"
+                                                size="sm"
+                                            >
+                                                Keep it
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        render={<Link href={`/admin/sales/${lead.id}?confirm=delete`} />}
+                                        nativeButton={false}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="px-0 text-[#FF593F]"
+                                    >
+                                        Delete this lead
+                                    </Button>
+                                )
                             )}
                         </CardContent>
                     </Card>

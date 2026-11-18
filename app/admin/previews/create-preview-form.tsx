@@ -52,6 +52,7 @@ export type PreviewDefaults = {
     category?: string | null;
     website?: string | null;
     contactEmail?: string | null;
+    contactName?: string | null;
     instagramHandle?: string | null;
     addressLine1?: string | null;
     city?: string | null;
@@ -170,7 +171,7 @@ export function CreatePreviewForm({
                 <div className="grid gap-5 sm:grid-cols-3">
                     <div className="space-y-2">
                         <Label htmlFor="contactName">Owner&apos;s first name (optional)</Label>
-                        <Input id="contactName" name="contactName" maxLength={80} placeholder="Sam" />
+                        <Input id="contactName" name="contactName" maxLength={80} defaultValue={defaults?.contactName ?? ""} placeholder="Sam" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="contactEmail">Where you&apos;ll write (optional)</Label>

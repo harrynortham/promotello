@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SubmitButton } from "@/components/submit-button";
 import { getCityOptions } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/server";
 import { addLead } from "../actions";
@@ -55,7 +56,11 @@ async function AddLeadContent({ error }: { error?: string }) {
 
             {error && (
                 <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                    {error === "no_name" ? "Give the business a name." : error}
+                    {error === "no_name"
+                        ? "Give the business a name."
+                        : error === "duplicate"
+                            ? "That business is already on the list."
+                            : error}
                 </p>
             )}
 
@@ -111,6 +116,15 @@ async function AddLeadContent({ error }: { error?: string }) {
                                 All optional. Leave the email out and the crawler looks for one.
                             </p>
 
+                            <div className="space-y-2">
+                                <Label htmlFor="contactName">Who to write to</Label>
+                                <Input id="contactName" name="contactName" maxLength={80} placeholder="Sam" />
+                                <p className="text-xs text-[#17233B]/60">
+                                    Their first name is the first line of the email. Left blank it
+                                    says &ldquo;Hi there&rdquo;.
+                                </p>
+                            </div>
+
                             <div className="grid gap-5 sm:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
@@ -135,7 +149,12 @@ async function AddLeadContent({ error }: { error?: string }) {
                         </div>
 
                         <div className="flex items-center gap-3 border-t border-[#17233B]/10 pt-6">
-                            <Button type="submit">Add to the pipeline</Button>
+                            {/* Disabled while it saves. Without it there was
+                                no sign anything was happening, so it was
+                                pressed twice and the business went in twice
+                                (20270207090000, which stops the race this
+                                cannot). */}
+                            <SubmitButton pendingLabel="Adding…">Add to the pipeline</SubmitButton>
                             <Button render={<Link href="/admin/sales" />} nativeButton={false} variant="ghost">
                                 Cancel
                             </Button>

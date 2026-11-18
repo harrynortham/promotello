@@ -35,6 +35,24 @@ why posting one is in the sequence at all.
 | `company_number`, `company_name` | Companies House (Open Government Licence) | Yes |
 | notes, category, stage | us | Yes |
 
+### Everything on a lead is editable
+
+A lead is written down by hand, so it is corrected by hand: the name, who to
+write to, the category, email, phone, website and Instagram in one form; the
+address in another; the company in a third.
+
+**Who to write to** is `contact_name`. It fills the preview form and it is the
+first line of the outreach email — "Hi Sam," rather than "Hi there,".
+
+An email typed here is marked `typed`, and the crawler leaves it alone, the
+same as a typed address. There is no **Look again** once one is written down,
+because looking again could not change it.
+
+**The company can be written down too.** Paste the registered name and number
+and it is stored exactly as the API check stores it — it is the same fact
+arriving by a different route. The gate is unchanged: a number is what makes a
+lead emailable, and clearing it puts them back to post only.
+
 ### Leads are written down
 
 There is no importer. One asked Google what was trading on a street, and the
