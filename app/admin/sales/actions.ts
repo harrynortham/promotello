@@ -3,7 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+    outreachMessage,
+    outreachSubject,
+    previewColumns,
+    senderName,
+    type PreviewRow,
+} from "@/app/admin/previews/preview-shared";
+import { sendEmails } from "@/lib/email";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 import { checkCompaniesHouse, findEmail } from "@/lib/lead-jobs";
+import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
+import { previewLink } from "@/lib/previews";
+import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
 
 function text(formData: FormData, key: string) {
@@ -225,4 +237,169 @@ export async function saveLeadNotes(formData: FormData) {
     await supabase.from("leads").update({ notes: text(formData, "notes") }).eq("id", leadId);
 
     revalidatePath(`/admin/sales/${leadId}`);
+}
+
+// --- The outreach queue -------------------------------------------
+//
+// Drafting reuses what the previews page composes, so a lead gets the
+// email that has been argued over for months rather than a second
+// version of it. Nothing is sent here: a draft waits until somebody has
+// read it and pressed send.
+
+export async function queueOutreach(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const kind = text(formData, "kind") === "follow_up" ? "follow_up" : "first";
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("id, name, email, can_email, preview_business_id")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    if (!lead) redirect("/admin/sales");
+
+    // Said here as well as in the database, so the reason reaches the
+    // person rather than only the log.
+    if (!lead.can_email) {
+        await record(supabase, leadId, "note", "Not queued: post only until Companies House says otherwise.");
+        revalidatePath(`/admin/sales/${leadId}`);
+        return;
+    }
+
+    if (!lead.email || !lead.preview_business_id) {
+        await record(
+            supabase,
+            leadId,
+            "note",
+            !lead.email ? "Not queued: no address to write to." : "Not queued: no preview to send them.",
+        );
+        revalidatePath(`/admin/sales/${leadId}`);
+        return;
+    }
+
+    const { data: preview } = await supabase
+        .from("business_previews")
+        .select(previewColumns)
+        .eq("business_id", lead.preview_business_id)
+        .maybeSingle();
+
+    if (!preview) {
+        await record(supabase, leadId, "note", "Not queued: the preview has gone.");
+        revalidatePath(`/admin/sales/${leadId}`);
+        return;
+    }
+
+    const { data: profile } = await supabase.auth.getUser();
+    const sender = senderName(profile.user?.user_metadata?.full_name);
+    const row = preview as unknown as PreviewRow;
+    const link = absoluteUrl(previewLink(row.token, row.businesses?.name));
+
+    const draft =
+        kind === "first"
+            ? {
+                subject: outreachSubject(row),
+                body: outreachMessage(row, sender, await foundingPlacesLeft()),
+            }
+            : {
+                subject: followUpSubject(lead.name),
+                body: followUpMessage(lead.name, link, sender),
+            };
+
+    const { error } = await supabase.from("outreach_messages").insert({
+        lead_id: leadId,
+        kind,
+        to_email: lead.email,
+        subject: draft.subject,
+        // The disclosure goes on here, not inside the composer: the
+        // previews page still copies that message into Gmail, where the
+        // signature adds it, and twice reads badly.
+        body: withDisclosure(draft.body),
+    });
+
+    if (error) {
+        // The unique index, almost always: it is already waiting.
+        await record(supabase, leadId, "note", `Not queued: ${error.message}`);
+    }
+
+    revalidatePath("/admin/sales/outbox");
+    revalidatePath(`/admin/sales/${leadId}`);
+}
+
+export async function cancelOutreach(formData: FormData) {
+    const supabase = await adminClient();
+
+    await supabase
+        .from("outreach_messages")
+        .update({ status: "cancelled" })
+        .eq("id", text(formData, "messageId"))
+        .eq("status", "queued");
+
+    revalidatePath("/admin/sales/outbox");
+}
+
+// The one that actually writes to somebody. Everything up to here is
+// reversible; this is not.
+export async function sendOutreach(formData: FormData) {
+    const supabase = await adminClient();
+    const messageId = text(formData, "messageId");
+
+    const from = outreachSender();
+
+    if (!from) {
+        redirect("/admin/sales/outbox?error=no_sender");
+    }
+
+    const { data: message } = await supabase
+        .from("outreach_messages")
+        .select("id, lead_id, kind, to_email, subject, body, status")
+        .eq("id", messageId)
+        .maybeSingle();
+
+    if (!message || message.status !== "queued") {
+        redirect("/admin/sales/outbox");
+    }
+
+    const { data: profile } = await supabase.auth.getUser();
+
+    const result = await sendEmails(
+        [{
+            to: message.to_email,
+            subject: message.subject,
+            text: message.body,
+            html: asHtml(message.body),
+        }],
+        { from },
+    );
+
+    if (result.sent === 0) {
+        await supabase
+            .from("outreach_messages")
+            .update({ status: "failed", failed_reason: "Resend did not accept it" })
+            .eq("id", messageId);
+
+        await record(supabase, message.lead_id, "note", "The email was not accepted. Nothing was sent.");
+        revalidatePath("/admin/sales/outbox");
+        return;
+    }
+
+    await supabase
+        .from("outreach_messages")
+        .update({ status: "sent", sent_at: new Date().toISOString(), approved_by: profile.user?.id ?? null })
+        .eq("id", messageId);
+
+    await supabase
+        .from("leads")
+        .update({ stage: message.kind === "first" ? "emailed" : "followed_up" })
+        .eq("id", message.lead_id);
+
+    await record(
+        supabase,
+        message.lead_id,
+        message.kind === "first" ? "emailed" : "followed_up",
+        `Sent to ${message.to_email}`,
+    );
+
+    revalidatePath("/admin/sales/outbox");
+    revalidatePath(`/admin/sales/${message.lead_id}`);
 }

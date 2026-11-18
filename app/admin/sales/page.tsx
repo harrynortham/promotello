@@ -65,6 +65,13 @@ async function Board({ searchParams }: PageProps) {
 
     const postOnly = (all ?? []).filter((lead) => !lead.can_email).length;
 
+    const { count: waitingCount } = await supabase
+        .from("outreach_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "queued");
+
+    const waiting = waitingCount ?? 0;
+
     let query = supabase
         .from("leads")
         .select("id, name, address, email, can_email, company_number, stage, website, created_at, areas ( name )")
@@ -91,10 +98,16 @@ async function Board({ searchParams }: PageProps) {
                     </p>
                 </div>
 
-                <Button render={<Link href="/admin/sales/import" />} nativeButton={false} className="shrink-0">
-                    Import an area
-                    <FiArrowRight aria-hidden="true" />
-                </Button>
+                <div className="flex shrink-0 gap-3">
+                    <Button render={<Link href="/admin/sales/outbox" />} nativeButton={false} variant="outline">
+                        Outbox{waiting > 0 ? ` · ${waiting}` : ""}
+                    </Button>
+
+                    <Button render={<Link href="/admin/sales/import" />} nativeButton={false}>
+                        Import an area
+                        <FiArrowRight aria-hidden="true" />
+                    </Button>
+                </div>
             </div>
 
             {params.added && (

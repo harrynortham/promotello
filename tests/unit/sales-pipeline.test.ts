@@ -74,3 +74,27 @@ test("the open stages are the ones still in play", () => {
     assert.ok(!OPEN_STAGES.includes("dead"));
     assert.equal(STAGES.length, 10);
 });
+
+// A From address that is only a domain used to count as configured, so
+// the Send button lit up and the send failed at Resend — which reads as
+// the queue being broken rather than a setting being half written.
+test("the outreach sender has to be an address, not a domain", async () => {
+    const { outreachSender } = await import("@/lib/outreach-queue");
+    const key = "OUTREACH_EMAIL_FROM";
+    const before = process.env[key];
+
+    try {
+        for (const bad of ["", "   ", "team.promotello.com", "harry@", "@promotello.com", "Harry"]) {
+            process.env[key] = bad;
+            assert.equal(outreachSender(), null, `"${bad}" is not a From address`);
+        }
+
+        for (const good of ["harry@team.promotello.com", "Harry at Promotello <harry@team.promotello.com>"]) {
+            process.env[key] = good;
+            assert.equal(outreachSender(), good);
+        }
+    } finally {
+        if (before === undefined) delete process.env[key];
+        else process.env[key] = before;
+    }
+});
