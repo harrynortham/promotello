@@ -346,3 +346,39 @@ function fromText(html: string): string | null {
 export function addressFromHtml(html: string): string | null {
     return fromJsonLd(html) ?? fromText(html);
 }
+
+// The blob, in the shape the preview form takes.
+//
+// The preview wants a street line, a city, an area and a postcode. A
+// lead has one line of text, so this splits it on commas from the right:
+// the postcode if there is one, then the town, and whatever is left is
+// the street.
+//
+// It is deliberately dumb, and it does not try to name the city or the
+// area — the import already knows those as ids, and they are the two
+// parts an address written by hand most often gets wrong. Somebody
+// checks the result; address_source says whether anybody has.
+export function splitAddress(address: string | null | undefined) {
+    const parts = (address ?? "")
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    const postcode = postcodeFrom(address ?? "");
+
+    // The postcode's own part drops out, wherever it sits — usually last,
+    // and sometimes with the town: "Bristol BS7 8NZ".
+    const withoutPostcode = parts
+        .map((part) => (POSTCODE.test(part) ? part.replace(POSTCODE, "").trim() : part))
+        .filter(Boolean);
+
+    // The last part left is the town, which the preview takes from the
+    // city list rather than from here.
+    const line1 = withoutPostcode.slice(0, -1).join(", ") || withoutPostcode.join(", ");
+
+    return {
+        line1: line1 || null,
+        town: withoutPostcode.length > 1 ? withoutPostcode[withoutPostcode.length - 1] : null,
+        postcode,
+    };
+}

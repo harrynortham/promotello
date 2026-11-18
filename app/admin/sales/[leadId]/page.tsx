@@ -8,10 +8,12 @@ import { FiExternalLink } from "react-icons/fi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
-import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadNotes } from "../actions";
+import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
@@ -126,16 +128,69 @@ async function Lead({ params }: PageProps) {
                                 <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
                                     Postal address
                                 </p>
-                                <p className="mt-1 font-medium">{lead.address ?? "Not known"}</p>
                                 <p className="mt-1 text-xs leading-5 text-[#17233B]/60">
                                     {lead.address_source === "website"
                                         ? "Published on their own site — ours to keep, and where a letter goes."
                                         : lead.address_source === "typed"
-                                            ? "Entered by hand."
+                                            ? "Entered by hand, and left alone by the crawler."
                                             : lead.address
-                                                ? "From the import, so provisional. Read their site, or type it, before posting anything."
-                                                : "Read their site, or type one, before posting anything."}
+                                                ? "From the import, so provisional. Read their site, or write it below."
+                                                : "Read their site, or write one below, before posting anything."}
                                 </p>
+
+                                {/* Typed outranks both: wherever somebody found
+                                    it, a shop's address is a fact about a
+                                    street, and writing it down is not keeping
+                                    anybody's API response. */}
+                                {/* The same four the preview form takes, by
+                                    the same names: the street line and the
+                                    postcode here, the town and the area from
+                                    the import. Typed outranks both the
+                                    provisional import and the crawler. */}
+                                <form action={saveLeadAddress} className="mt-3 space-y-3">
+                                    <input type="hidden" name="leadId" value={lead.id} />
+
+                                    <div className="space-y-1">
+                                        <Label htmlFor="addressLine1" className="text-xs">
+                                            Street address
+                                        </Label>
+                                        <Input
+                                            id="addressLine1"
+                                            name="addressLine1"
+                                            defaultValue={lead.address_line_1 ?? ""}
+                                            maxLength={200}
+                                            placeholder="e.g. 214 Gloucester Road"
+                                        />
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="postalCode" className="text-xs">
+                                                Postcode
+                                            </Label>
+                                            <Input
+                                                id="postalCode"
+                                                name="postalCode"
+                                                defaultValue={lead.postcode ?? ""}
+                                                maxLength={10}
+                                                placeholder="e.g. BS7 8NU"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-medium">Town and area</p>
+                                            <p className="text-sm text-[#17233B]/70">
+                                                {[lead.cities?.name, lead.areas?.name].filter(Boolean).join(" · ") ||
+                                                    "Not set"}
+                                            </p>
+                                            <p className="text-[11px] text-[#17233B]/55">From the import.</p>
+                                        </div>
+                                    </div>
+
+                                    <Button type="submit" size="sm" variant="outline">
+                                        Save this address
+                                    </Button>
+                                </form>
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
