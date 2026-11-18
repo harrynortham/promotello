@@ -44,11 +44,12 @@ export async function GET(
     const businesses = preview.businesses as { name: string } | { name: string }[] | null;
     const name = (Array.isArray(businesses) ? businesses[0]?.name : businesses?.name) ?? null;
 
-    const { png } = await letterBackground(absoluteUrl(previewLink(preview.token, name)));
+    const { jpeg } = await letterBackground(absoluteUrl(previewLink(preview.token, name)));
 
-    return new NextResponse(new Uint8Array(png), {
+    return new NextResponse(new Uint8Array(jpeg), {
         headers: {
-            "Content-Type": "image/png",
+            // JPEG because Stannp refuses a PNG background.
+            "Content-Type": "image/jpeg",
             // Stannp fetches this once when the letter is made. Caching
             // it at the edge means a second letter to the same business
             // does not rebuild it.

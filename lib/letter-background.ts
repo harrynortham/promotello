@@ -14,8 +14,18 @@ import sharp from "sharp";
 // words either side of the tag were gone. `background` takes a URL,
 // renders beneath the text, and leaves the words alone.
 //
-// A4 at 300dpi, which is what a printer wants. Nearly all of it is
-// white, so it compresses to very little.
+// A4 at 300dpi, which is what a printer wants.
+//
+// JPEG, not PNG. Stannp's `background` refuses a PNG — "Failed to save
+// the background file" — whatever the format it takes, and their docs
+// only list JPG/PNG/PDF for postcard fronts, not for a letter's
+// background. Tested three ways against the live API: our route as PNG
+// failed, a PNG with a proper .png extension failed, and a JPEG from
+// the same domain worked. So the extension was never the problem and
+// the format always was.
+//
+// Quality 92: there is a QR code on this page and JPEG artefacts around
+// hard black edges are exactly what a phone camera struggles with.
 const WIDTH = 2480;
 const HEIGHT = 3508;
 
@@ -61,9 +71,9 @@ export async function letterBackground(url: string) {
                 top: HEIGHT - QR_BOTTOM + 20,
             },
         ])
-        .png({ compressionLevel: 9 })
+        .jpeg({ quality: 92, chromaSubsampling: "4:4:4" })
         .toBuffer()
-        .then((png) => ({ png, logoHeight }));
+        .then((jpeg) => ({ jpeg, logoHeight }));
 }
 
 async function caption() {

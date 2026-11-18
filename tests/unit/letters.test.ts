@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { letterAddress, letterDestination } from "@/lib/letters";
+import { letterAddress, letterDestination, letterTemplate } from "@/lib/letters";
 
 const lead = {
     name: "Little Loaf",
@@ -46,4 +46,31 @@ test("what is confirmed is the whole address", () => {
         letterDestination(letterAddress(lead)!),
         "Sam Baker, Little Loaf, 214 Gloucester Road, Horfield, Bristol, BS7 8NU",
     );
+});
+
+// A template drawn in the Stannp dashboard takes over the page, so the
+// words and the generated letterhead are not sent with it — asking for
+// two designs at once is how a letter ends up with the letterhead
+// printed twice.
+test("a template id is only used when it is a number", () => {
+    const original = process.env.STANNP_TEMPLATE_ID;
+
+    try {
+        process.env.STANNP_TEMPLATE_ID = "4821";
+        assert.equal(letterTemplate(), "4821");
+
+        // Anything that is not an id is no id. A half-pasted value
+        // would otherwise be sent to Stannp as a template that does not
+        // exist, and the letter would fail at the printer.
+        for (const bad of ["", "   ", "template-4821", "4821 ", "abc"]) {
+            process.env.STANNP_TEMPLATE_ID = bad;
+            assert.equal(letterTemplate(), bad.trim() === "4821" ? "4821" : null, `"${bad}"`);
+        }
+
+        delete process.env.STANNP_TEMPLATE_ID;
+        assert.equal(letterTemplate(), null, "unset means draw it ourselves");
+    } finally {
+        if (original === undefined) delete process.env.STANNP_TEMPLATE_ID;
+        else process.env.STANNP_TEMPLATE_ID = original;
+    }
 });

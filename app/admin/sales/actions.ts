@@ -18,8 +18,9 @@ import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
 import { STAGE_LABELS } from "@/lib/sales-pipeline";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
-import { letterAddress, letterDestination, sendLetter } from "@/lib/letters";
+import { letterAddress, letterDestination, letterTemplate, sendLetter } from "@/lib/letters";
 import { asHtml, outreachSender, withSignature } from "@/lib/outreach-queue";
+import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
 
@@ -1050,11 +1051,15 @@ async function letterFor(formData: FormData, live: boolean): Promise<{ pdf?: str
     // stand, which describes the symptom and not the cause.
     const background = absoluteUrl(`/api/letters/${row.token}/background`);
 
-    if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/i.test(background)) {
+    // Only when we are drawing the page ourselves. A dashboard template
+    // carries its own design, so a local address is no obstacle to it.
+    if (!letterTemplate() && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/i.test(background)) {
         return {
-            error: "The letterhead lives at a local address, which Stannp cannot fetch. Letters can only be made from a deployed site.",
+            error: "The letterhead lives at a local address, which Stannp cannot fetch. Either set a Stannp template, or make letters from a deployed site.",
         };
     }
+
+    const previewUrl = absoluteUrl(previewLink(row.token, lead.name));
 
     const result = await sendLetter({
         to,
@@ -1064,6 +1069,15 @@ async function letterFor(formData: FormData, live: boolean): Promise<{ pdf?: str
             personalLine: lead.personal_line,
         }).replace(/\n/g, "<br>"),
         background,
+        // What a dashboard template can put on the page. The same facts
+        // the letter's own words use, so the two cannot disagree about
+        // which link a business is being sent to.
+        merge: {
+            business: lead.name,
+            previewurl: previewUrl.replace(/^https?:\/\//, ""),
+            previewlink: previewUrl,
+            personalline: lead.personal_line ?? "",
+        },
         live,
         // The same lead and the same day cannot post twice, whatever
         // happens to the button or the connection.
