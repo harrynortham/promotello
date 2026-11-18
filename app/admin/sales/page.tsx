@@ -14,7 +14,7 @@ import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = { title: "Sales", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ stage?: string; post?: string; added?: string }> };
+type PageProps = { searchParams: Promise<{ stage?: string; post?: string }> };
 
 type LeadRow = {
     id: string;
@@ -103,18 +103,13 @@ async function Board({ searchParams }: PageProps) {
                         Outbox{waiting > 0 ? ` · ${waiting}` : ""}
                     </Button>
 
-                    <Button render={<Link href="/admin/sales/import" />} nativeButton={false}>
-                        Import an area
+                    <Button render={<Link href="/admin/sales/new" />} nativeButton={false}>
+                        Add a lead
                         <FiArrowRight aria-hidden="true" />
                     </Button>
                 </div>
             </div>
 
-            {params.added && (
-                <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    {params.added} added to the pipeline.
-                </p>
-            )}
 
             <div className="mt-8">
                 <Pipeline counts={counts} />
@@ -150,15 +145,16 @@ async function Board({ searchParams }: PageProps) {
                     <CardContent className="p-10 text-center">
                         <h2 className="text-lg font-semibold">Nothing here yet</h2>
                         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#17233B]/65">
-                            Import a street and the businesses on it become leads. Nothing
-                            is written to anybody until you say so.
+                            Add a business and it becomes a lead. Give it a website and the
+                            crawler finds their email and the address they publish. Nothing is
+                            written to anybody until you say so.
                         </p>
                         <Button
-                            render={<Link href="/admin/sales/import" />}
+                            render={<Link href="/admin/sales/new" />}
                             nativeButton={false}
                             className="mt-6"
                         >
-                            Import an area
+                            Add a lead
                         </Button>
                     </CardContent>
                 </Card>
