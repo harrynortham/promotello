@@ -72,3 +72,30 @@ export function dueToday(leads: DueLead[], now: Date) {
 
     return { followUp, letter };
 }
+
+// What a line in the history is called. The kind is a column value —
+// "companies_house_checked", "note" — and printing it with the
+// underscores taken out gave headings nobody writes: "note" above the
+// only words that carried any meaning, and "email found" above an email
+// somebody had typed in themselves.
+//
+// Named after what happened, in the words the board uses for the stages
+// these sit beside.
+export const EVENT_LABELS: Record<string, string> = {
+    added: "Added",
+    imported: "Imported",
+    email_found: "Email",
+    companies_house_checked: "Companies House",
+    preview_built: "Preview built",
+    emailed: "Emailed",
+    followed_up: "Followed up",
+    letter_sent: "Letter posted",
+    replied: "Replied",
+    claimed: "Claimed",
+    closed: "Closed",
+    note: "",
+};
+
+export function eventLabel(kind: string) {
+    return EVENT_LABELS[kind] ?? kind.replace(/_/g, " ");
+}

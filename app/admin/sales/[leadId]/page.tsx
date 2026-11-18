@@ -11,9 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
+import { STAGES, STAGE_LABELS, eventLabel } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
+import { LocationFields } from "@/components/location-fields";
+import { getCityOptions } from "@/lib/locations";
 import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
 import { CategorySelect } from "@/components/category-select";
@@ -30,7 +32,23 @@ import {
     saveLeadNotes,
 } from "../actions";
 
-export const metadata: Metadata = { title: "Lead", robots: { index: false } };
+// The business, not "Lead". Several of these are open at once while a
+// street is worked through, and every tab saying the same word is no way
+// to find the one you want.
+export async function generateMetadata({ params }: { params: Promise<{ leadId: string }> }): Promise<Metadata> {
+    await connection();
+
+    const { leadId } = await params;
+    const supabase = await createClient();
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("name")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    return { title: lead?.name ?? "Lead", robots: { index: false } };
+}
 
 type PageProps = {
     params: Promise<{ leadId: string }>;
@@ -91,6 +109,17 @@ async function Lead({ params, searchParams }: PageProps) {
         .eq("lead_id", leadId);
 
     const typedEmail = lead.email_source === "typed";
+
+    // Companies House's own advanced search, with the lead's name already
+    // in it, for the times our check finds nothing and somebody has to
+    // go and look.
+    const companiesHouseSearch =
+        "https://find-and-update.company-information.service.gov.uk/advanced-search/get-results" +
+        `?companyNameIncludes=${encodeURIComponent(lead.name)}`;
+
+    // The same list the add form offers, so a lead can be moved to any
+    // town or area it could have been added to.
+    const cities = await getCityOptions({ includeNotLive: true });
 
 
 
@@ -252,12 +281,13 @@ async function Lead({ params, searchParams }: PageProps) {
                                     it, a shop's address is a fact about a
                                     street, and writing it down is not keeping
                                     anybody's API response. */}
-                                {/* The same four the preview form takes, by
-                                    the same names: the street line and the
-                                    postcode here, the town and the area from
-                                    the import. Typed outranks both the
-                                    provisional import and the crawler. */}
-                                <form action={saveLeadAddress} className="mt-3 space-y-3">
+                                {/* The same fields the add form uses, by the
+                                    same component, so a lead is corrected the
+                                    way it was written. The town and the area
+                                    used to be fixed at the moment it was
+                                    added, which made a lead filed in the
+                                    wrong part of town unfixable. */}
+                                <form action={saveLeadAddress} className="mt-3 space-y-4">
                                     <input type="hidden" name="leadId" value={lead.id} />
 
                                     <div className="space-y-1">
@@ -273,29 +303,14 @@ async function Lead({ params, searchParams }: PageProps) {
                                         />
                                     </div>
 
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="postalCode" className="text-xs">
-                                                Postcode
-                                            </Label>
-                                            <Input
-                                                id="postalCode"
-                                                name="postalCode"
-                                                defaultValue={lead.postcode ?? ""}
-                                                maxLength={10}
-                                                placeholder="e.g. BS7 8NU"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <p className="text-xs font-medium">Town and area</p>
-                                            <p className="text-sm text-[#17233B]/70">
-                                                {[lead.cities?.name, lead.areas?.name].filter(Boolean).join(" · ") ||
-                                                    "Not set"}
-                                            </p>
-                                            <p className="text-[11px] text-[#17233B]/55">Chosen when it was added.</p>
-                                        </div>
-                                    </div>
+                                    <LocationFields
+                                        cities={cities}
+                                        defaults={{
+                                            city: city?.name,
+                                            area: area?.name,
+                                            postalCode: lead.postcode,
+                                        }}
+                                    />
 
                                     <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
                                         Save this address
@@ -339,9 +354,27 @@ async function Lead({ params, searchParams }: PageProps) {
                             <form action={saveLeadCompany} className="space-y-3 border-t pt-4">
                                 <input type="hidden" name="leadId" value={lead.id} />
 
-                                <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
-                                    Or write the company down
-                                </p>
+                                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                    <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                        Or write the company down
+                                    </p>
+
+                                    {/* The register itself, with the name
+                                        already in the box. The search matches
+                                        the name literally, so a shop called
+                                        Joe's is only found by typing the
+                                        apostrophe — which is the same thing
+                                        that used to beat our own matcher. */}
+                                    <a
+                                        href={companiesHouseSearch}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-xs font-medium text-[#FF593F] hover:underline"
+                                    >
+                                        Look it up on Companies House
+                                        <FiExternalLink aria-hidden="true" className="size-3" />
+                                    </a>
+                                </div>
 
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <div className="space-y-1">
@@ -716,9 +749,22 @@ async function Lead({ params, searchParams }: PageProps) {
                             ) : (
                                 (events ?? []).map((event) => (
                                     <div key={event.id} className="border-b pb-3 last:border-0 last:pb-0">
-                                        <p className="font-medium">{event.kind.replace(/_/g, " ")}</p>
+                                        {/* A note has no heading: its detail is
+                                            the whole of it, and "note" above
+                                            the words was a label for the
+                                            column rather than for what
+                                            happened. */}
+                                        {eventLabel(event.kind) && (
+                                            <p className="font-medium">{eventLabel(event.kind)}</p>
+                                        )}
                                         {event.detail && (
-                                            <p className="mt-0.5 text-xs leading-5 text-[#17233B]/65">
+                                            <p
+                                                className={
+                                                    eventLabel(event.kind)
+                                                        ? "mt-0.5 text-xs leading-5 text-[#17233B]/65"
+                                                        : "font-medium"
+                                                }
+                                            >
                                                 {event.detail}
                                             </p>
                                         )}

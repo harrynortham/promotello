@@ -83,7 +83,7 @@ async function TimelineContent({ params }: PageProps) {
     return (
         <div className="text-[#17233B]">
             <Link
-                href="/admin/funnel"
+                href="/admin/analytics"
                 className="inline-flex items-center gap-2 text-sm font-medium text-[#17233B]/70 hover:text-[#17233B]"
             >
                 <FiArrowLeft aria-hidden="true" />

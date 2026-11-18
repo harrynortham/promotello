@@ -108,7 +108,11 @@ against storing the answer.
 
 `leads.address_source` is `website` or `typed`.
 
-It is typed when the lead is added, or afterwards on the lead itself.
+It is typed when the lead is added, or afterwards on the lead itself — the
+street, the town, the area and the postcode, through the same
+`LocationFields` the add form uses, so the two cannot drift apart. The town
+and area were fixed at the moment a lead was added, which made one filed in
+the wrong part of town unfixable.
 Enrichment reads the business's own contact page — the same pages it already
 opens for the email — and fills it in when nobody has. A typed one is left
 alone. A registered office is often an accountant's in another county, so it

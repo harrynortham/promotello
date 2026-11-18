@@ -11,7 +11,7 @@ import { formatGap, funnelRows, stuckByStep, type FunnelStep, type StuckBusiness
 import { getCityOptions } from "@/lib/locations";
 import { createClient } from "@/utils/supabase/server";
 
-export const metadata = { title: "Onboarding funnel" };
+export const metadata = { title: "Analytics" };
 
 type Funnel = {
     businesses: number;
@@ -85,7 +85,14 @@ async function FunnelContent({ searchParams }: PageProps) {
     return (
         <div className="text-[#17233B]">
             <header>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Onboarding funnel</h1>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Analytics</h1>
+
+                {/* The funnel is what Analytics holds for now, so it is
+                    named as a section rather than left as the whole page
+                    wearing a wider title than it earns. */}
+                <p className="mt-2 text-sm font-medium uppercase tracking-wide text-[#17233B]/55">
+                    Onboarding funnel
+                </p>
                 <p className="mt-2 max-w-2xl text-[#17233B]/65">
                     Where businesses stop, between the link we send them and paying us. Sample
                     businesses are left out. A step counted for more businesses than the one before
@@ -98,7 +105,7 @@ async function FunnelContent({ searchParams }: PageProps) {
                 {filters.map((filter) => (
                     <Button
                         key={filter.value}
-                        render={<Link href={`/admin/funnel?city=${filter.value}`} />}
+                        render={<Link href={`/admin/analytics?city=${filter.value}`} />}
                         nativeButton={false}
                         variant={chosen === filter.value ? "default" : "outline"}
                         size="sm"
@@ -201,7 +208,7 @@ async function FunnelContent({ searchParams }: PageProps) {
                                                 <Badge variant="outline">{business.label}</Badge>
                                                 <Button
                                                     render={
-                                                        <Link href={`/admin/funnel/${business.business_id}`} />
+                                                        <Link href={`/admin/analytics/${business.business_id}`} />
                                                     }
                                                     nativeButton={false}
                                                     variant="ghost"
