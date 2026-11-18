@@ -112,9 +112,30 @@ async function Lead({ params }: PageProps) {
                                 <form action={enrichLead}>
                                     <input type="hidden" name="leadId" value={lead.id} />
                                     <Button type="submit" size="sm" variant="outline" disabled={!lead.website}>
-                                        {lead.email ? "Look again" : "Find their address"}
+                                        {lead.email ? "Look again" : "Read their site"}
                                     </Button>
                                 </form>
+                            </div>
+
+                            {/* Where a letter would go, and whether it is
+                                ours to keep. The import's address is
+                                Google's and provisional; the one on their
+                                own contact page is theirs and published
+                                (20270202090000). */}
+                            <div className="border-t pt-4">
+                                <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                    Postal address
+                                </p>
+                                <p className="mt-1 font-medium">{lead.address ?? "Not known"}</p>
+                                <p className="mt-1 text-xs leading-5 text-[#17233B]/60">
+                                    {lead.address_source === "website"
+                                        ? "Published on their own site — ours to keep, and where a letter goes."
+                                        : lead.address_source === "typed"
+                                            ? "Entered by hand."
+                                            : lead.address
+                                                ? "From the import, so provisional. Read their site, or type it, before posting anything."
+                                                : "Read their site, or type one, before posting anything."}
+                                </p>
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">

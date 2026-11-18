@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+    addressFromHtml,
     bestEmail,
     contactPaths,
     emailsFromHtml,
     matchCompany,
+    postcodeFrom,
 } from "@/lib/lead-enrichment";
 
 test("an address is taken from a mailto before anything else on the page", () => {
@@ -117,4 +119,95 @@ test("a business whose name merely contains the company's is not a match", () =>
     ]);
 
     assert.equal(match.confident, false);
+});
+
+// The address a business publishes on its own contact page. Google's
+// terms let a place_id be kept and restrict storing the rest, so the
+// address we keep should come from somewhere we may keep it — and
+// unlike a registered office, this is where the shop actually is, which
+// is what a letter needs.
+test("schema.org markup is used before anything is guessed", () => {
+    const html = `
+        <script type="application/ld+json">
+        {"@context":"https://schema.org","@type":"Bakery","name":"Little Loaf",
+         "address":{"@type":"PostalAddress","streetAddress":"214 Gloucester Road",
+         "addressLocality":"Bristol","postalCode":"BS7 8NU"}}
+        </script>
+        <footer>Some other postcode BS1 1AA that is not ours</footer>`;
+
+    assert.equal(
+        addressFromHtml(html),
+        "214 Gloucester Road, Bristol, BS7 8NU",
+    );
+});
+
+test("a footer address is found when there is no markup", () => {
+    const html = `
+        <footer>
+          <p>Little Loaf<br>214 Gloucester Road<br>Bristol<br>BS7 8NU</p>
+        </footer>`;
+
+    const found = addressFromHtml(html);
+
+    assert.ok(found, "an address should be found");
+    assert.match(found!, /214 Gloucester Road/);
+    assert.match(found!, /BS7 8NU/);
+});
+
+test("a page with no postcode yields nothing rather than a guess", () => {
+    // An address we invented is worse than none: a letter goes to it.
+    assert.equal(addressFromHtml("<p>Find us on Gloucester Road, opposite the Arches.</p>"), null);
+    assert.equal(addressFromHtml(""), null);
+});
+
+test("a postcode is read whatever the spacing and case", () => {
+    assert.equal(postcodeFrom("bs7 8nu"), "BS7 8NU");
+    assert.equal(postcodeFrom("BS78NU"), "BS7 8NU");
+    assert.equal(postcodeFrom("Call us on 0117 123 4567"), null);
+});
+
+test("a locality on its own is not an address worth posting to", () => {
+    const html = `
+        <script type="application/ld+json">
+        {"@type":"PostalAddress","addressLocality":"Bristol"}
+        </script>`;
+
+    assert.equal(addressFromHtml(html), null);
+});
+
+// From Joe's Bakery, the first real site this was run against. The
+// postcode was found correctly and the prose before it came too:
+// "ime, you can find us at either shop or get in touch below., Joe's
+// Bakery 240 – 242 Gloucester Road…" — the sentence attached and its
+// first word sliced in half. Not something to put on an envelope.
+test("prose before the address is left behind", () => {
+    const html = `
+        <p>We are open from 7am at either time, you can find us at either shop
+        or get in touch below.</p>
+        <p>Joe's Bakery, 240 Gloucester Road, Bishopston, Bristol, BS7 8NZ</p>`;
+
+    const found = addressFromHtml(html);
+
+    assert.ok(found, "an address should still be found");
+    assert.ok(!/get in touch/.test(found!), "the sentence must not come with it");
+    assert.ok(!/^ime/.test(found!), "and must not start mid-word");
+    assert.match(found!, /240 Gloucester Road/);
+    assert.match(found!, /BS7 8NZ$/);
+});
+
+test("a postcode mentioned in a sentence is not an address", () => {
+    // "We deliver to most of Bristol, including BS7 8NZ" has a postcode
+    // and no street number, which is how a delivery-area paragraph is
+    // told apart from somewhere a letter can go.
+    assert.equal(
+        addressFromHtml("<p>We deliver to most of Bristol, including BS7 8NZ and nearby.</p>"),
+        null,
+    );
+
+    // The cost of that rule, stated rather than discovered later: an
+    // address with no number is missed, and gets typed in by hand.
+    assert.equal(
+        addressFromHtml("<p>The Old Bakehouse, Church Lane, Bristol, BS7 8NZ</p>"),
+        null,
+    );
 });
