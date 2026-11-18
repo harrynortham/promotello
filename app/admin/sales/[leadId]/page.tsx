@@ -13,11 +13,15 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
-import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
+import { SubmitButton } from "@/components/submit-button";
+import { checkCompany, deleteLead, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
-type PageProps = { params: Promise<{ leadId: string }> };
+type PageProps = {
+    params: Promise<{ leadId: string }>;
+    searchParams: Promise<{ already?: string; undeletable?: string; confirm?: string }>;
+};
 
 function When({ value }: { value: string }) {
     return (
@@ -33,7 +37,7 @@ function When({ value }: { value: string }) {
     );
 }
 
-async function Lead({ params }: PageProps) {
+async function Lead({ params, searchParams }: PageProps) {
     await connection();
 
     const supabase = await createClient();
@@ -42,6 +46,8 @@ async function Lead({ params }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
+    const { already, undeletable, confirm } = await searchParams;
+    const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
         .from("leads")
@@ -57,6 +63,13 @@ async function Lead({ params }: PageProps) {
         .eq("lead_id", leadId)
         .order("created_at", { ascending: false });
 
+    // Whether it can be deleted at all, so the page does not offer
+    // something the action will refuse.
+    const { count: writtenTo } = await supabase
+        .from("outreach_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_id", leadId);
+
     const area = Array.isArray(lead.areas) ? lead.areas[0] : lead.areas;
     const city = Array.isArray(lead.cities) ? lead.cities[0] : lead.cities;
 
@@ -65,6 +78,22 @@ async function Lead({ params }: PageProps) {
             <Button render={<Link href="/admin/sales" />} nativeButton={false} variant="ghost" size="sm">
                 ← The pipeline
             </Button>
+
+            {already && (
+                <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    This business was already on the list — here it is. Nothing was added twice.
+                </p>
+            )}
+
+            {undeletable && (
+                <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    {undeletable === "emailed"
+                        ? "This lead can't be deleted: we have written to them, and that record is why we wouldn't write again. Move it to Not interested or Closed instead."
+                        : undeletable === "preview"
+                            ? "This lead has a preview built from it. Delete or close the business first, or move the lead to Closed."
+                            : undeletable}
+                </p>
+            )}
 
             <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -397,6 +426,75 @@ async function Lead({ params }: PageProps) {
                                         </p>
                                     </div>
                                 ))
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* For one added twice, or added by mistake. Hidden
+                        behind a disclosure because lead_events and
+                        outreach_messages both cascade: this is not an
+                        undo. A lead we have written to cannot be deleted
+                        at all — that record is the reason we would not
+                        write again — and the action refuses it too. */}
+                    <Card className="border-[#17233B]/10">
+                        <CardHeader>
+                            <CardTitle className="text-base">Remove it</CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="text-sm">
+                            {(writtenTo ?? 0) > 0 ? (
+                                <p className="leading-6 text-[#17233B]/65">
+                                    We have written to this lead, so it stays. That record is why we
+                                    would not write again. Move it to <strong>Not interested</strong> or{" "}
+                                    <strong>Closed</strong> to take it off the list.
+                                </p>
+                            ) : lead.preview_business_id ? (
+                                <p className="leading-6 text-[#17233B]/65">
+                                    A preview was built from this lead, and that business has a page of
+                                    its own. Close the business first, or move this to{" "}
+                                    <strong>Closed</strong>.
+                                </p>
+                            ) : (
+                                confirming ? (
+                                    <div>
+                                        <p className="leading-6 text-[#17233B]/65">
+                                            <strong>{lead.name}</strong> and everything written down
+                                            about it goes, and it cannot be undone.
+                                        </p>
+
+                                        <div className="mt-4 flex items-center gap-3">
+                                            <form action={deleteLead}>
+                                                <input type="hidden" name="leadId" value={lead.id} />
+                                                <SubmitButton
+                                                    pendingLabel="Deleting…"
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Yes, delete it
+                                                </SubmitButton>
+                                            </form>
+
+                                            <Button
+                                                render={<Link href={`/admin/sales/${lead.id}`} />}
+                                                nativeButton={false}
+                                                variant="ghost"
+                                                size="sm"
+                                            >
+                                                Keep it
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        render={<Link href={`/admin/sales/${lead.id}?confirm=delete`} />}
+                                        nativeButton={false}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="px-0 text-[#FF593F]"
+                                    >
+                                        Delete this lead
+                                    </Button>
+                                )
                             )}
                         </CardContent>
                     </Card>

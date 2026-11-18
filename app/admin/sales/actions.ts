@@ -124,6 +124,19 @@ export async function addLead(formData: FormData) {
         .select("id")
         .single();
 
+    // 23505 is the unique index in 20270207090000: this business is
+    // already on the list. Usually the button pressed twice, so it says
+    // which one it is rather than treating it as a failure.
+    if (error?.code === "23505") {
+        const { data: existing } = await supabase
+            .from("leads")
+            .select("id")
+            .ilike("name", name)
+            .maybeSingle();
+
+        redirect(existing ? `/admin/sales/${existing.id}?already=1` : "/admin/sales/new?error=duplicate");
+    }
+
     if (error || !lead) {
         redirect(`/admin/sales/new?error=${encodeURIComponent(error?.message ?? "not_saved")}`);
     }
@@ -528,4 +541,50 @@ export async function saveLeadAddress(formData: FormData) {
 
     await record(supabase, leadId, "note", `Address entered by hand: ${address}`);
     revalidatePath(`/admin/sales/${leadId}`);
+}
+
+// Removing a lead, for the ones added twice or added by mistake.
+//
+// lead_events and outreach_messages both cascade, so deleting a lead we
+// have written to destroys the record that we wrote to them — including
+// anybody who replied "no thanks". That record is the reason we would
+// not email them again, so a lead that has been emailed cannot be
+// deleted. Closed and Not interested are the stages for those; they keep
+// the history and take it off the list.
+export async function deleteLead(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("id, name, preview_business_id")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    if (!lead) redirect("/admin/sales");
+
+    const { count: written } = await supabase
+        .from("outreach_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_id", leadId);
+
+    if (written && written > 0) {
+        redirect(`/admin/sales/${leadId}?undeletable=emailed`);
+    }
+
+    // A preview is a business and a page of its own, built by hand. It
+    // outlives the lead that prompted it, so this refuses rather than
+    // quietly leaving one orphaned.
+    if (lead.preview_business_id) {
+        redirect(`/admin/sales/${leadId}?undeletable=preview`);
+    }
+
+    const { error } = await supabase.from("leads").delete().eq("id", leadId);
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?undeletable=${encodeURIComponent(error.message)}`);
+    }
+
+    revalidatePath("/admin/sales");
+    redirect(`/admin/sales?removed=${encodeURIComponent(lead.name)}`);
 }
