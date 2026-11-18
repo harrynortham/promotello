@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ATTRIBUTION } from "@/lib/postcodes";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { checkCompany, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadNotes } from "../actions";
@@ -134,9 +133,7 @@ async function Lead({ params }: PageProps) {
                                         ? "Published on their own site — ours to keep, and where a letter goes."
                                         : lead.address_source === "typed"
                                             ? "Entered by hand, and left alone by the crawler."
-                                            : lead.address
-                                                ? "From the import, so provisional. Read their site, or write it below."
-                                                : "Read their site, or write one below, before posting anything."}
+                                            : "Read their site, or write one below, before posting anything."}
                                 </p>
 
                                 {/* Typed outranks both: wherever somebody found
@@ -184,7 +181,7 @@ async function Lead({ params }: PageProps) {
                                                 {[lead.cities?.name, lead.areas?.name].filter(Boolean).join(" · ") ||
                                                     "Not set"}
                                             </p>
-                                            <p className="text-[11px] text-[#17233B]/55">From the import.</p>
+                                            <p className="text-[11px] text-[#17233B]/55">Chosen when it was added.</p>
                                         </div>
                                     </div>
 
@@ -193,19 +190,6 @@ async function Lead({ params }: PageProps) {
                                     </Button>
                                 </form>
 
-                                {/* Looked up from the postcode, never the
-                                    other way round — reverse geocoding
-                                    returns the nearest centroid, which on a
-                                    long road is the wrong postcode. The
-                                    attribution is a condition of the data. */}
-                                {lead.latitude !== null && lead.longitude !== null && (
-                                    <p className="mt-3 text-[11px] leading-5 text-[#17233B]/55">
-                                        {[lead.ward, "located from the postcode"].filter(Boolean).join(" · ")} ·{" "}
-                                        {lead.latitude.toFixed(5)}, {lead.longitude.toFixed(5)}
-                                        <br />
-                                        {ATTRIBUTION}
-                                    </p>
-                                )}
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
