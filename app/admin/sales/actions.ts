@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+    followUpSubject,
+    outreachFollowUp,
     outreachMessage,
     outreachSubject,
     previewColumns,
-    senderName,
     type PreviewRow,
 } from "@/lib/preview-email";
 import { sendEmails } from "@/lib/email";
@@ -16,9 +17,7 @@ import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
 import { STAGE_LABELS } from "@/lib/sales-pipeline";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
-import { asHtml, followUpMessage, followUpSubject, outreachSender, withSignature } from "@/lib/outreach-queue";
-import { previewLink } from "@/lib/previews";
-import { absoluteUrl } from "@/lib/site";
+import { asHtml, outreachSender, withSignature } from "@/lib/outreach-queue";
 import { createClient } from "@/utils/supabase/server";
 
 function text(formData: FormData, key: string) {
@@ -462,7 +461,7 @@ export async function queueOutreach(formData: FormData) {
 
     const { data: lead } = await supabase
         .from("leads")
-        .select("id, name, email, contact_name, can_email, preview_business_id")
+        .select("id, name, email, contact_name, personal_line, can_email, preview_business_id")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -499,20 +498,26 @@ export async function queueOutreach(formData: FormData) {
         return;
     }
 
-    const { data: profile } = await supabase.auth.getUser();
-    const sender = senderName(profile.user?.user_metadata?.full_name);
     const row = preview as unknown as PreviewRow;
-    const link = absoluteUrl(previewLink(row.token, row.businesses?.name));
+    const placesLeft = await foundingPlacesLeft();
 
+    // Both emails now live in lib/preview-email.ts, and the follow-up
+    // goes as a reply in the same thread, so its subject is the first
+    // one with Re: in front rather than a new one of its own.
     const draft =
         kind === "first"
             ? {
                 subject: outreachSubject(row),
-                body: outreachMessage(row, sender, await foundingPlacesLeft(), lead.contact_name),
+                body: outreachMessage({
+                    preview: row,
+                    placesLeft,
+                    contactName: lead.contact_name,
+                    personalLine: lead.personal_line,
+                }),
             }
             : {
-                subject: followUpSubject(lead.name),
-                body: followUpMessage(lead.name, link, sender),
+                subject: followUpSubject(row),
+                body: outreachFollowUp({ preview: row, placesLeft, contactName: lead.contact_name }),
             };
 
     const { error } = await supabase.from("outreach_messages").insert({
@@ -743,6 +748,7 @@ export async function saveLeadDetails(formData: FormData) {
         .update({
             name,
             contact_name: text(formData, "contactName") || null,
+            personal_line: text(formData, "personalLine") || null,
             // Not here: the description is written on the build-preview
             // page, where it is actually used. Reading it from this form
             // would write null over it every time anything else is saved.

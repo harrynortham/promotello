@@ -16,6 +16,15 @@ import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { LocationFields } from "@/components/location-fields";
 import { getCityOptions } from "@/lib/locations";
+import { foundingPlacesLeft } from "@/lib/founding-places";
+import {
+    followUpSubject,
+    outreachFollowUp,
+    outreachMessage,
+    outreachSubject,
+    previewColumns,
+    type PreviewRow,
+} from "@/lib/preview-email";
 import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
 import { CategorySelect } from "@/components/category-select";
@@ -137,6 +146,42 @@ async function Lead({ params, searchParams }: PageProps) {
         : { data: null };
 
     const publicPreview = preview ? absoluteUrl(previewLink(preview.token, lead.name)) : null;
+
+    // The two emails as they stand today, so they can be read before
+    // anything is queued. Built from the same functions that draft them,
+    // or this would be a second version that drifts.
+    const { data: previewRow } = lead.preview_business_id
+        ? await supabase
+              .from("business_previews")
+              .select(previewColumns)
+              .eq("business_id", lead.preview_business_id)
+              .maybeSingle()
+        : { data: null };
+
+    const drafts = previewRow
+        ? await (async () => {
+              const row = previewRow as unknown as PreviewRow;
+              const placesLeft = await foundingPlacesLeft();
+
+              return [
+                  {
+                      kind: "first" as const,
+                      subject: outreachSubject(row),
+                      body: outreachMessage({
+                          preview: row,
+                          placesLeft,
+                          contactName: lead.contact_name,
+                          personalLine: lead.personal_line,
+                      }),
+                  },
+                  {
+                      kind: "follow-up" as const,
+                      subject: followUpSubject(row),
+                      body: outreachFollowUp({ preview: row, placesLeft, contactName: lead.contact_name }),
+                  },
+              ];
+          })()
+        : null;
 
     // What a preview is built from, said before it is built. Named rather
     // than counted: "something is missing" sends somebody hunting.
@@ -476,6 +521,27 @@ async function Lead({ params, searchParams }: PageProps) {
                                     </div>
                                 </div>
 
+                                {/* Opens the first email, so the business
+                                    knows somebody looked at them rather than
+                                    at a list. Blank is a fine answer: an
+                                    invented one is obvious. */}
+                                <div className="space-y-1">
+                                    <Label htmlFor="personalLine" className="text-xs">
+                                        Personal line (optional)
+                                    </Label>
+                                    <Input
+                                        id="personalLine"
+                                        name="personalLine"
+                                        defaultValue={lead.personal_line ?? ""}
+                                        maxLength={200}
+                                        placeholder="e.g. Your sourdough gets a mention in half your reviews"
+                                    />
+                                    <p className="text-[11px] leading-5 text-[#17233B]/55">
+                                        One specific, true sentence about this business, e.g. something
+                                        from their reviews or photos. Leave blank to skip.
+                                    </p>
+                                </div>
+
                                 <div className="space-y-1">
                                     <Label htmlFor="categoryId" className="text-xs">
                                         Category
@@ -676,6 +742,36 @@ async function Lead({ params, searchParams }: PageProps) {
                                         Drafted from the preview and put in the outbox. You read
                                         it there, and it goes when you press send.
                                     </p>
+
+                                    {/* Both of them, as they would go, before
+                                        anything is queued — the personal line
+                                        in place and the founding paragraph as
+                                        it stands today. The signature is added
+                                        on send, so it is named rather than
+                                        printed: it is the same every time and
+                                        would bury the words that are not. */}
+                                    {drafts && (
+                                        <div className="mt-4 space-y-3">
+                                            {drafts.map((draft) => (
+                                                <details
+                                                    key={draft.kind}
+                                                    className="rounded-lg border border-[#17233B]/10 bg-[#FFF8F0] p-3"
+                                                >
+                                                    <summary className="cursor-pointer text-xs font-medium">
+                                                        Read the {draft.kind} email
+                                                    </summary>
+
+                                                    <p className="mt-3 text-xs font-semibold">{draft.subject}</p>
+                                                    <p className="mt-2 whitespace-pre-wrap text-xs leading-6 text-[#17233B]/80">
+                                                        {draft.body}
+                                                    </p>
+                                                    <p className="mt-3 text-[11px] text-[#17233B]/55">
+                                                        Your signature is added when it sends.
+                                                    </p>
+                                                </details>
+                                            ))}
+                                        </div>
+                                    )}
 
                                     <div className="mt-4 flex flex-wrap gap-3">
                                         <form action={queueOutreach}>

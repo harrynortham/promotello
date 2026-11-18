@@ -4,7 +4,21 @@ import { createStripeClient } from "@/utils/stripe/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export const TRIAL_DAYS = 30;
+
+// A founding place is worth more than the £5 a month it saves, and a
+// month is not long enough to find out whether a loyalty card brings
+// anybody back — the second visit is the whole thing being sold, and it
+// has not happened yet by day thirty. Three months is a season.
+//
+// Only the founding price gets it. trialDays() below is the one place
+// that decides, so the emails, the dashboard copy and the Stripe session
+// cannot say three different numbers.
+export const FOUNDING_TRIAL_DAYS = 90;
 export const FOUNDING_MEMBER_LIMIT = 50;
+
+export function trialDays(plan: PlanKey) {
+    return plan === "pro_founding_monthly" ? FOUNDING_TRIAL_DAYS : TRIAL_DAYS;
+}
 
 // Must match the limit in public.enforce_offer_plan_limit().
 export const FREE_LIVE_OFFER_LIMIT = 1;

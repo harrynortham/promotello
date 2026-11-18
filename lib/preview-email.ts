@@ -1,4 +1,4 @@
-import { FOUNDING_MEMBER_LIMIT, TRIAL_DAYS, plans } from "@/lib/billing";
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, plans } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink } from "@/lib/previews";
 
@@ -188,7 +188,38 @@ export function instagramDmUrl(handle: string) {
 // sitting there, which is a notification. Waiting is a thing that wants
 // them, which is why they open it.
 export function outreachSubject(preview: PreviewRow) {
-    return `Your Promotello page is waiting, ${preview.businesses?.name ?? "your business"}`;
+    return `A preview of ${preview.businesses?.name ?? "your business"} on Promotello`;
+}
+
+// The follow-up goes as a reply in the same thread, so it carries the
+// first subject with Re: in front. A new subject reads as a second cold
+// email; this reads as the same conversation.
+export function followUpSubject(preview: PreviewRow) {
+    return `Re: ${outreachSubject(preview)}`;
+}
+
+// One true sentence about this business, so the email could not have
+// been sent to anybody else. Trimmed, and given a full stop when it has
+// no closing punctuation, because it runs straight into the next
+// sentence — "Your photos of the window display are lovely I've put
+// together" is worse than no personal line at all.
+export function personalOpening(personalLine: string | null | undefined) {
+    const line = personalLine?.trim();
+
+    if (!line) return "";
+
+    return /[.!?]$/.test(line) ? `${line} ` : `${line}. `;
+}
+
+// What a founding place is worth, said once. When they are gone it is
+// the ordinary trial instead, because naming a thing nobody can have is
+// a reason to stop reading.
+function foundingOffer(placesLeft: number | null) {
+    const gone = placesLeft === null || placesLeft <= 0;
+
+    return gone
+        ? `You can also try Pro free for ${TRIAL_DAYS} days (loyalty cards and unlimited offers).`
+        : `The first ${FOUNDING_MEMBER_LIMIT} businesses also get our Pro plan free for ${FOUNDING_TRIAL_DAYS} days, then ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price} for life if they stay on it.`;
 }
 
 // The message to send with the link, by email or a DM. It opens with what has
@@ -202,60 +233,77 @@ export function outreachSubject(preview: PreviewRow) {
 //
 // It signs off by name, but carries no company footer: the Companies Act
 // disclosure is in the email signature, and sending it twice reads badly.
-export function outreachMessage(
-    preview: PreviewRow,
-    sender: string,
-    placesLeft: number | null,
-    contactName: string | null,
-) {
+export function outreachMessage({
+    preview,
+    placesLeft,
+    contactName,
+    personalLine,
+}: {
+    preview: PreviewRow;
+    placesLeft: number | null;
+    contactName: string | null;
+    personalLine?: string | null;
+}) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
-    const town = location?.cities?.name ?? location?.city?.trim();
-    const where = town ? ` ${town}` : "";
-    const street = location?.region?.trim() || null;
-    const section = preview.businesses?.categories?.name?.trim() || null;
+    const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";
 
-    const offer = `The first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}, and the first ${TRIAL_DAYS} days are free.`;
+    // The street they are on, which is what a business recognises. With
+    // none, the town stands in — "Bristol's independents" is still true,
+    // where an empty gap is not a sentence.
+    const street = location?.region?.trim() || town;
 
-    // Saying "50 of 50 left" tells them nobody has taken it, so the count
-    // only appears once some have gone.
-    const founding =
-        placesLeft === null || placesLeft <= 0
-            ? `Pro is ${plans.pro_monthly.price} a month and the first ${TRIAL_DAYS} days are free.`
-            : placesLeft < FOUNDING_MEMBER_LIMIT
-              ? `${offer} ${placesLeft} of the ${FOUNDING_MEMBER_LIMIT} places are left.`
-              : offer;
+    // No sign-off: the signature carries the name, the site and the
+    // registered office (lib/email-signature.ts), and writing one here
+    // would print both.
+    return [
+        `Hi ${contactName || "there"},`,
+        "",
+        `${personalOpening(personalLine)}I've put together a preview of how ${name} could look on Promotello, a new site that helps ${street}'s independents bring customers back with offers and loyalty cards:`,
+        "",
+        url,
+        "",
+        `It works from a QR poster in your window: customers scan it, claim your offer and show it at the till. Your page is also listed in the ${town} directory, so local people can find you there, claim your offers and join your loyalty card. The offer and loyalty card on the preview are only examples; if you claim the page, you choose what goes on it. It's free to claim and free to keep.`,
+        "",
+        foundingOffer(placesLeft),
+        "",
+        `The preview is private to this link. If you're not interested, just reply and I'll delete it.`,
+    ].join("\n");
+}
+
+// The second email, a week later, as a reply in the same thread. Short
+// because the argument was made the first time: this says it is still
+// there and what it costs to find out.
+export function outreachFollowUp({
+    preview,
+    placesLeft,
+    contactName,
+}: {
+    preview: PreviewRow;
+    placesLeft: number | null;
+    contactName: string | null;
+}) {
+    const name = preview.businesses?.name ?? "your business";
+    const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
+    const gone = placesLeft === null || placesLeft <= 0;
 
     return [
         `Hi ${contactName || "there"},`,
         "",
-        `I've built ${name} a page on Promotello, so you can look at it rather than read about it:`,
+        `Just checking you saw the preview I made for ${name}: ${url}`,
         "",
-        url,
+        // The count only once some have gone. "50 of the 50 places left"
+        // is a sentence that says nobody has taken one, which is the
+        // opposite of what naming a limit is for — the guard the first
+        // email has always had, kept here.
+        gone
+            ? "It's free and takes about two minutes to claim."
+            : placesLeft < FOUNDING_MEMBER_LIMIT
+                ? `It's free and takes about two minutes to claim. There are ${placesLeft} of the ${FOUNDING_MEMBER_LIMIT} founding places left, each with ${FOUNDING_TRIAL_DAYS} days of Pro free and the ${plans.pro_founding_monthly.price} price for life.`
+                : `It's free and takes about two minutes to claim. A founding place comes with ${FOUNDING_TRIAL_DAYS} days of Pro free and the ${plans.pro_founding_monthly.price} price for life.`,
         "",
-        introduction(sender, town || "Bristol", street),
-        "",
-        `You get a page in the${where || " Bristol"} directory${section ? `, listed under ${section}` : ""}: your offers, your loyalty card and your opening hours. Someone can claim an offer or join your card from it before they have ever been in, and it gets better as more of ${street || town || "Bristol"} joins.`,
-        "",
-        `None of that has to happen first. A QR poster in your window: people scan it, claim your offer on their phone, and show the code at the till. Then a stamp card brings them back, and your staff stamp it by scanning, so nobody can stamp their own.`,
-        "",
-        "No app for customers to download and no card reader. Customers can follow you too, so a new offer lands in their inbox without you writing anything.",
-        "",
-        `It's free to use with one offer and a QR poster. ${founding}`,
-        "",
-        ownNumbers(sender),
-        "",
-        // Claiming is the moment it goes live, for a page we wrote and
-        // checked (20270128090000). This described the old rule — a logo,
-        // opening hours and a photo before a send button turned on —
-        // which stopped being true, and undersold the very thing it was
-        // asking for. The logo and the photo are still worth having, so
-        // the offer to finish it stays; it is no longer the price of
-        // being seen.
-        `Worth a look? Claiming it takes a minute, and it goes live as soon as you do — send me a logo and a photo of the place and I'll finish it off. If it's not for you, reply "no thanks" and I won't email again.`,
-        "",
-        ...signOff(sender),
+        `If it's not for you, reply "no thanks" and I'll remove it.`,
     ].join("\n");
 }
 

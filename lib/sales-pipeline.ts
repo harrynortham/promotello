@@ -36,6 +36,12 @@ export type DueLead = {
     stage: string;
     can_email: boolean;
     last_touch: string | null;
+
+    // What was actually sent, from outreach_messages, rather than what
+    // the stage says. A stage can be dragged by hand; these two cannot,
+    // and "has the follow-up gone" is the whole question.
+    first_sent_at: string | null;
+    follow_up_sent_at: string | null;
 };
 
 // What the day's work is. Follow up four to five days after the first
@@ -56,7 +62,13 @@ export function dueToday(leads: DueLead[], now: Date) {
 
         if (age === null) continue;
 
-        if (lead.stage === "emailed" && age >= 4) {
+        // Four days after the first email actually went, and only while
+        // no follow-up has. Claimed and Not interested never reach here:
+        // the caller does not ask about them, and a lead that answered
+        // is not owed a chase.
+        const since = days(lead.first_sent_at);
+
+        if (since !== null && since >= 4 && !lead.follow_up_sent_at) {
             followUp.push(lead);
             continue;
         }

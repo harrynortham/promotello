@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { TRIAL_DAYS } from "@/lib/billing";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS } from "@/lib/billing";
 import { trialTerms } from "@/lib/business-lifecycle";
 
 const wordings = Object.values(trialTerms);
@@ -21,7 +21,11 @@ test("no two emails say the trial terms the same way", () => {
 // commits nothing.
 test("each one still says all three things", () => {
     for (const [name, line] of Object.entries(trialTerms)) {
-        assert.match(line, new RegExp(`${TRIAL_DAYS} days`), `${name}: how long it is free`);
+        // A founding place carries the longer trial, so the sentence
+        // beside it says ninety rather than thirty.
+        const days = name === "founding" ? FOUNDING_TRIAL_DAYS : TRIAL_DAYS;
+
+        assert.match(line, new RegExp(`${days} days`), `${name}: how long it is free`);
         assert.match(line, /no card|without a card/i, `${name}: that starting takes no card`);
         assert.match(line, /stop|keep it|carry on/i, `${name}: what happens at the end`);
     }

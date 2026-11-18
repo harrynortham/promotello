@@ -1,4 +1,11 @@
-import { FOUNDING_MEMBER_LIMIT, PRO_SUBSCRIPTION_STATUSES, TRIAL_DAYS, countFoundingMembers, plans } from "@/lib/billing";
+import {
+    FOUNDING_MEMBER_LIMIT,
+    FOUNDING_TRIAL_DAYS,
+    PRO_SUBSCRIPTION_STATUSES,
+    TRIAL_DAYS,
+    countFoundingMembers,
+    plans,
+} from "@/lib/billing";
 import { brandedEmail, emailCompanyFooter, escapeHtml, sendEmails, type Email } from "@/lib/email";
 import { companyDisclosure } from "@/lib/legal";
 import { absoluteUrl } from "@/lib/site";
@@ -292,7 +299,9 @@ function resultsList(d: LifecycleDue["details"]) {
 // docs/LAUNCH-FUNNEL.md is why it isn't.
 export const trialTerms = {
     pitch: `Pro is free for ${TRIAL_DAYS} days and starting takes no card. Add one before the end to keep it, or let it stop on its own — either way nothing is charged in the meantime.`,
-    founding: `A place is held the moment you start the trial — ${TRIAL_DAYS} days free, no card to start it, and nothing charged unless you decide at the end to keep it.`,
+    // A founding place now carries the longer trial, so the sentence
+    // beside it has to say so rather than the usual thirty days.
+    founding: `A place is held the moment you start the trial — ${FOUNDING_TRIAL_DAYS} days free, no card to start it, and nothing charged unless you decide at the end to keep it.`,
     adds: `The first ${TRIAL_DAYS} days are free and there's no card to start. Add one before the trial is up to carry on, or do nothing and it stops by itself.`,
     results: `Trying it is free for ${TRIAL_DAYS} days with no card to begin, and it stops by itself unless you add one — so there's nothing to remember to cancel.`,
 };
