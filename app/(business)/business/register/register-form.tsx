@@ -83,21 +83,45 @@ export function BusinessRegisterForm({ preview = null }: { preview?: ClaimPrevie
                                     Promotello for business
                                 </p>
 
-                                <h1 className="mt-4 text-3xl font-semibold tracking-tight text-nowrap sm:text-4xl">
-                                    {claiming ? "Claim your page." : "Win your next customer."}
+                                {/* Their name, not "your page". This is the
+                                    first screen after they decide to claim,
+                                    and a business that has just been told
+                                    the page is theirs should see which one.
+
+                                    text-nowrap only where the words are
+                                    ours and known to be short: a business
+                                    name can be long, and a heading that
+                                    cannot wrap runs off the side of a
+                                    phone. */}
+                                <h1
+                                    className={`mt-4 text-3xl font-semibold tracking-tight sm:text-4xl ${
+                                        preview ? "text-balance" : "text-nowrap"
+                                    }`}
+                                >
+                                    {preview
+                                        ? `${preview.business_name}, claim your page.`
+                                        : claiming
+                                            ? "Claim your page."
+                                            : "Win your next customer."}
                                 </h1>
 
                                 <p className="mt-4 leading-7 text-muted-foreground">
-                                    {claiming
-                                        // No second promise about going
-                                        // live: this screen cannot see
-                                        // whether the page is complete,
-                                        // and the preview they came from
-                                        // has already told them, in the
-                                        // words that are true of theirs
-                                        // (20270128090000).
-                                        ? "Your page is already built, with the offer from your email on it. Make a login and it's yours."
-                                        : "Create your personal login first. Then we’ll help you add your business and prepare your first offer."}
+                                    {/* The offer in their own words, where we
+                                        have it. "The offer from your email"
+                                        asks them to remember; quoting it
+                                        shows them we did.
+
+                                        No second promise about going live:
+                                        this screen cannot see whether the
+                                        page is complete, and the preview
+                                        they came from has already told them,
+                                        in the words that are true of theirs
+                                        (20270128090000). */}
+                                    {preview?.sample_offer
+                                        ? `Your page is built, with “${preview.sample_offer}” on it. Make a login and it's yours.`
+                                        : claiming
+                                            ? "Your page is already built, with the offer from your email on it. Make a login and it's yours."
+                                            : "Create your personal login first. Then we’ll help you add your business and prepare your first offer."}
                                 </p>
 
                                 <SocialSignIn next={next} />
