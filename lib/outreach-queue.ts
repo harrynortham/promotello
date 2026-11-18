@@ -29,7 +29,18 @@ export function withDisclosure(body: string) {
 // receipts and stamp notifications. Without its own sender configured,
 // the queue drafts and holds, and the dashboard says why.
 export function outreachSender() {
-    return process.env[OUTREACH_FROM]?.trim() || null;
+    const value = process.env[OUTREACH_FROM]?.trim();
+
+    // A domain is not a From address. Set to "team.promotello.com" this
+    // used to count as configured, enable the Send button, and fail at
+    // Resend — which reads as the queue being broken rather than as a
+    // setting being half written. Either "name@domain" or
+    // "Name <name@domain>".
+    if (!value || !/^[^<>@]*<?[^<>@\s]+@[^<>@\s]+\.[a-z]{2,}>?$/i.test(value)) {
+        return null;
+    }
+
+    return value;
 }
 
 // The follow-up is the same thread four or five days later, so it is
