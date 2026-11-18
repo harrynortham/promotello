@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS, eventLabel, leadAddress } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
+import { CopyButton } from "@/components/copy-button";
 import { LetterCard } from "./letter-card";
 import { LocationFields } from "@/components/location-fields";
 import { getCityOptions } from "@/lib/locations";
@@ -21,10 +22,14 @@ import { foundingPlacesLeft } from "@/lib/founding-places";
 import { LETTER_COST, letterAddress, letterDestination, lettersConfigured, STANNP_KEY } from "@/lib/letters";
 import {
     followUpSubject,
+    instagramDmUrl,
+    instagramHandle,
+    outreachDm,
     outreachFollowUp,
     outreachMessage,
     outreachSubject,
     previewColumns,
+    senderName,
     type PreviewRow,
 } from "@/lib/preview-email";
 import { previewLink } from "@/lib/previews";
@@ -122,6 +127,11 @@ async function Lead({ params, searchParams }: PageProps) {
     const typedEmail = lead.email_source === "typed";
     const letterTo = letterAddress(lead);
 
+    // The DM, where there is a handle and a page to point at. Written
+    // by the same composer the email uses, so the two cannot drift —
+    // and shorter, because a DM is read on a phone in a second.
+    const dmHandle = instagramHandle(lead.instagram_handle);
+
     // Companies House's own advanced search, with the lead's name already
     // in it, for the times our check finds nothing and somebody has to
     // go and look.
@@ -160,6 +170,16 @@ async function Lead({ params, searchParams }: PageProps) {
               .eq("business_id", lead.preview_business_id)
               .maybeSingle()
         : { data: null };
+
+    const dm =
+        dmHandle && previewRow
+            ? outreachDm(
+                  previewRow as unknown as PreviewRow,
+                  senderName((await supabase.auth.getUser()).data.user?.user_metadata?.full_name),
+                  await foundingPlacesLeft(),
+                  lead.contact_name,
+              )
+            : null;
 
     const drafts = previewRow
         ? await (async () => {
@@ -795,6 +815,43 @@ async function Lead({ params, searchParams }: PageProps) {
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Instagram, which needs no consent either and is
+                        where a shop that never answers email often lives.
+                        Copied and pasted by hand: there is no API for a
+                        cold DM, and there should not be. */}
+                    {dmHandle && dm && (
+                        <Card className="border-[#17233B]/10">
+                            <CardHeader>
+                                <CardTitle className="text-base">Send a DM</CardTitle>
+                            </CardHeader>
+
+                            <CardContent className="space-y-3 text-sm">
+                                <p className="leading-6 text-[#17233B]/65">
+                                    To <strong>@{dmHandle}</strong>. Copy it, open the DM and paste
+                                    — nothing is sent from here.
+                                </p>
+
+                                <p className="whitespace-pre-wrap rounded-lg border border-[#17233B]/10 bg-[#FFF8F0] p-3 text-xs leading-6">
+                                    {dm}
+                                </p>
+
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <CopyButton text={dm} label="Copy the message" />
+
+                                    <a
+                                        href={instagramDmUrl(dmHandle)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-xs font-medium text-[#FF593F] hover:underline"
+                                    >
+                                        Open the DM
+                                        <FiExternalLink aria-hidden="true" className="size-3" />
+                                    </a>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Paper, after the email went quiet — and the only
                         way to reach a sole trader at all, since a letter

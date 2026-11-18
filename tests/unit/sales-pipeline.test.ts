@@ -74,7 +74,15 @@ test("the open stages are the ones still in play", () => {
     assert.ok(OPEN_STAGES.includes("emailed"));
     assert.ok(!OPEN_STAGES.includes("claimed"));
     assert.ok(!OPEN_STAGES.includes("dead"));
-    assert.equal(STAGES.length, 10);
+
+    // Was a count, which only recorded that somebody once counted. The
+    // thing worth holding is the order: following them is what makes
+    // the name half-familiar, so it has to happen before the email and
+    // after there is a page to point at.
+    const order = STAGES.map((stage) => stage.key);
+
+    assert.ok(order.indexOf("social") > order.indexOf("preview"), "after the page exists");
+    assert.ok(order.indexOf("social") < order.indexOf("emailed"), "before we write");
 });
 
 // A From address that is only a domain used to count as configured, so

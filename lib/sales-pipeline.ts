@@ -11,6 +11,9 @@ export const STAGES = [
     // what it means.
     { key: "emailable", label: "Company checked", blurb: "On the register, so we may write to them." },
     { key: "preview", label: "Preview built", blurb: "A page exists, ready to send." },
+    // Before the email, not after: the point is that the name is
+    // already half-familiar when the email lands.
+    { key: "social", label: "Following them", blurb: "Followed, and seen about, before we write." },
     { key: "emailed", label: "Emailed", blurb: "The first email has gone." },
     { key: "followed_up", label: "Followed up", blurb: "The second one has gone too." },
     { key: "letter", label: "Letter posted", blurb: "Paper, after the email went quiet." },
@@ -95,6 +98,7 @@ export function dueToday(leads: DueLead[], now: Date) {
 // these sit beside.
 export const EVENT_LABELS: Record<string, string> = {
     added: "Added",
+    followed_social: "Followed them",
     imported: "Imported",
     email_found: "Email",
     companies_house_checked: "Companies House",
