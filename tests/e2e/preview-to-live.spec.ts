@@ -37,7 +37,6 @@ test("a preview becomes a live business", async ({ browser }) => {
 
     const { error: previewError } = await db.from("business_previews").insert({
         business_id: business!.id,
-        contact_name: "Sam",
         sample_offer: "Free side with any main",
         sample_reward: "a free main",
         sample_stamps: 9,

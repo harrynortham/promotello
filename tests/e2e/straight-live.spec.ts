@@ -28,9 +28,9 @@ const remember = throwawayBusinesses();
 
 async function seedPending(
     businessUserId: string,
-    // hours defaults to complete. Set it false for the shape the admin
-    // preview form actually produces: a description and an address, and
-    // no opening hours, because /admin/previews/new never asks for any.
+    // hours defaults to complete. Set it false for the shape a page we
+    // build actually has: a description and an address, and no opening
+    // hours, because building a preview never asks for any.
     { ours, complete, hours = complete }: { ours: boolean; complete: boolean; hours?: boolean },
 ) {
     const client = admin();
@@ -220,9 +220,10 @@ test("a page of ours that isn't finished still waits", async () => {
     }
 });
 
-// The shape every real preview has. /admin/previews/new collects a name,
-// category, description, website, address, area, postcode, contact,
-// Instagram, a sample offer and two photos — and no opening hours at all.
+// The shape every real preview has. A preview is built from a lead —
+// name, category, address, area, postcode, who to write to — plus a
+// description, a sample offer, a card and two photos, and no opening
+// hours at all.
 // So while the claim wanted all three, it refused every preview built the
 // normal way: claimed pages sat pending and unqueued while the preview page
 // promised they would go live on the claim (20270128090000).

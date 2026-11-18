@@ -239,3 +239,41 @@ test("splitting keeps the street when there is nothing else to take", () => {
 
     assert.deepEqual(splitAddress(null), { line1: null, town: null, postcode: null });
 });
+
+// Found by running the Companies House check on a real lead: "Joes
+// Bakery" matched nothing, though the API returns JOE'S BAKERY LIMITED
+// for it. The apostrophe became a space, so "joe s bakery" was compared
+// with "joes bakery" and every shop named after a person was quietly
+// unemailable — failing safe, into a letter, but losing the lead.
+test("an apostrophe does not stop a company matching", () => {
+    const candidates = [
+        { company_number: "08423930", title: "JOE'S BAKERY LIMITED", company_status: "active" },
+    ];
+
+    const match = matchCompany("Joes Bakery", "BS7 8NZ", candidates);
+
+    assert.equal(match.confident, true);
+    assert.equal(match.confident && match.company.company_number, "08423930");
+});
+
+test("a curly apostrophe matches too", () => {
+    // A name pasted from a website carries U+2019 far more often than a
+    // typed one does.
+    const candidates = [
+        { company_number: "08423930", title: "JOE’S BAKERY LIMITED", company_status: "active" },
+    ];
+
+    assert.equal(matchCompany("Joe's Bakery", "BS7 8NZ", candidates).confident, true);
+    assert.equal(matchCompany("Joe’s Bakery", "BS7 8NZ", candidates).confident, true);
+});
+
+test("losing the apostrophe does not make different companies look alike", () => {
+    // The fix must not widen what counts as obvious: the thing a match
+    // unlocks is permission to email somebody.
+    const candidates = [
+        { company_number: "11111111", title: "SAMS KITCHEN LIMITED", company_status: "active" },
+    ];
+
+    assert.equal(matchCompany("Sams Kitchens", "BS1 1AA", candidates).confident, false);
+    assert.equal(matchCompany("Sam Kitchen", "BS1 1AA", candidates).confident, false);
+});

@@ -8,7 +8,7 @@ import {
     outreachMessage,
     outreachSubject,
     signOff,
-} from "@/app/admin/previews/preview-shared";
+} from "@/lib/preview-email";
 
 const preview = {
     businesses: {
@@ -17,7 +17,6 @@ const preview = {
         categories: { name: "Bakeries" },
         business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
     },
-    contact_name: "Sam",
     token: "11111111-2222-3333-4444-555555555555",
 } as unknown as Parameters<typeof outreachMessage>[0];
 
@@ -29,7 +28,7 @@ test("the subject offers a page, not the thing every stamp-card app emails about
 });
 
 test("page, then offer, then card, then reminders", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38);
+    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
 
     const page = message.indexOf("page in the Bristol directory");
     const offer = message.indexOf("claim your offer");
@@ -46,7 +45,7 @@ test("page, then offer, then card, then reminders", () => {
 });
 
 test("the DM runs in the same order", () => {
-    const dm = outreachDm(preview, "Harry Northam", 38);
+    const dm = outreachDm(preview, "Harry Northam", 38, "Sam");
 
     const page = dm.indexOf("page in the Bristol directory");
     const offer = dm.indexOf("claim an offer");
@@ -56,7 +55,7 @@ test("the DM runs in the same order", () => {
 });
 
 test("the directory is something that grows, and nothing waits on it", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38);
+    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
 
     // A new directory can't promise an audience it hasn't got.
     assert.match(message, /gets better as more of Gloucester Road joins/);
@@ -67,7 +66,7 @@ test("the directory is something that grows, and nothing waits on it", () => {
 });
 
 test("it says who is writing, and that this is new", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38);
+    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
 
     assert.match(message, /I'm Harry — I'm building Promotello here in Bristol/);
     assert.match(message, /It's new, and I'm starting with Gloucester Road/);
@@ -77,7 +76,7 @@ test("it says who is writing, and that this is new", () => {
 });
 
 test("with no name on the account it is still honest about being new", () => {
-    const message = outreachMessage(preview, DEFAULT_SENDER, 38);
+    const message = outreachMessage(preview, DEFAULT_SENDER, 38, "Sam");
 
     assert.match(message, /We're building Promotello here in Bristol/);
     assert.doesNotMatch(message, /I'm —/);
@@ -92,24 +91,24 @@ test("a business with no area named is told it is new without a street", () => {
         },
     } as unknown as Parameters<typeof outreachMessage>[0];
 
-    const message = outreachMessage(withoutArea, "Harry Northam", 38);
+    const message = outreachMessage(withoutArea, "Harry Northam", 38, "Sam");
 
     assert.match(message, /here in Bristol, and it's new\./);
     assert.doesNotMatch(message, /starting with/);
 });
 
 test("a person signs it, by their first name", () => {
-    const message = outreachMessage(preview, "Harry Northam", 38);
+    const message = outreachMessage(preview, "Harry Northam", 38, "Sam");
 
     assert.ok(message.endsWith("Cheers,\nHarry"), message.slice(-40));
     assert.doesNotMatch(message, /Northam/);
 });
 
 test("a DM signs off on one line", () => {
-    assert.ok(outreachDm(preview, "Harry Northam", 38).endsWith("— Harry"));
+    assert.ok(outreachDm(preview, "Harry Northam", 38, "Sam").endsWith("— Harry"));
     // Nothing to sign when there is no person to name. The body has an em
     // dash of its own, so this is about how it ends.
-    assert.ok(outreachDm(preview, DEFAULT_SENDER, 38).trimEnd().endsWith("I won't message again."));
+    assert.ok(outreachDm(preview, DEFAULT_SENDER, 38, "Sam").trimEnd().endsWith("I won't message again."));
 });
 
 test("without a name it is the team, and it says thanks rather than cheers", () => {
@@ -147,7 +146,7 @@ test("it speaks as a person or as the team, like the introduction does", () => {
 });
 
 test("the email carries it, and the offer to finish the page for them", () => {
-    const message = outreachMessage(preview, "Harry Northam", 37);
+    const message = outreachMessage(preview, "Harry Northam", 37, "Sam");
 
     assert.match(message, /take my word for any of it/);
 
@@ -183,7 +182,7 @@ test("the email carries it, and the offer to finish the page for them", () => {
 // of the pitch and leaves this to the email, where there is room to say
 // which number and why it is theirs rather than ours.
 test("the DM offers to finish it, and leaves the numbers line to the email", () => {
-    const dm = outreachDm(preview, "Harry Northam", 37);
+    const dm = outreachDm(preview, "Harry Northam", 37, "Sam");
 
     assert.match(dm, /logo/);
     assert.match(dm, /photo of the place/);
@@ -200,11 +199,10 @@ test("the directory line reads without a category", () => {
             name: "Little Loaf",
             business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
         },
-        contact_name: "Sam",
         token: "11111111-2222-3333-4444-555555555555",
     } as unknown as Parameters<typeof outreachMessage>[0];
 
-    const message = outreachMessage(uncategorised, "Harry Northam", 37);
+    const message = outreachMessage(uncategorised, "Harry Northam", 37, "Sam");
 
     assert.match(message, /You get a page in the Bristol directory: your offers/);
     assert.ok(!/listed under/.test(message));

@@ -14,8 +14,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { STAGES, STAGE_LABELS } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
+import { previewLink } from "@/lib/previews";
+import { absoluteUrl } from "@/lib/site";
 import { CategorySelect } from "@/components/category-select";
-import { checkCompany, deleteLead, enrichLead, moveLead, queueOutreach, saveLeadAddress, saveLeadCompany, saveLeadDetails, saveLeadNotes } from "../actions";
+import {
+    checkCompany,
+    deleteLead,
+    deleteLeadPreview,
+    enrichLead,
+    moveLead,
+    queueOutreach,
+    saveLeadAddress,
+    saveLeadCompany,
+    saveLeadDetails,
+    saveLeadNotes,
+} from "../actions";
 
 export const metadata: Metadata = { title: "Lead", robots: { index: false } };
 
@@ -58,7 +71,7 @@ async function Lead({ params, searchParams }: PageProps) {
 
     const { data: lead } = await supabase
         .from("leads")
-        .select("*, areas ( name ), cities ( name )")
+        .select("*, areas ( name ), cities ( name ), categories ( name )")
         .eq("id", leadId)
         .maybeSingle();
 
@@ -79,8 +92,36 @@ async function Lead({ params, searchParams }: PageProps) {
 
     const typedEmail = lead.email_source === "typed";
 
+
+
     const area = Array.isArray(lead.areas) ? lead.areas[0] : lead.areas;
     const city = Array.isArray(lead.cities) ? lead.cities[0] : lead.cities;
+
+    // The preview, if there is one: the link to send, and whether anybody
+    // has opened it.
+    const { data: preview } = lead.preview_business_id
+        ? await supabase
+              .from("business_previews")
+              .select("token, view_count, last_viewed_at, claimed_at")
+              .eq("business_id", lead.preview_business_id)
+              .maybeSingle()
+        : { data: null };
+
+    const publicPreview = preview ? absoluteUrl(previewLink(preview.token, lead.name)) : null;
+
+    // What a preview is built from, said before it is built. Named rather
+    // than counted: "something is missing" sends somebody hunting.
+    const leadCategory = Array.isArray(lead.categories) ? lead.categories[0] : lead.categories;
+
+    // Not the description: that is asked for on the build page now, so
+    // demanding it here withheld the button for the one thing the button
+    // leads to a form for.
+    const missingForPreview = [
+        !leadCategory && "a category",
+        !lead.address_line_1 && "a street address",
+        !lead.postcode && "a postcode",
+    ].filter(Boolean) as string[];
+
 
     return (
         <div className="text-[#17233B]">
@@ -477,16 +518,68 @@ async function Lead({ params, searchParams }: PageProps) {
                             <CardTitle className="text-base">The preview</CardTitle>
                         </CardHeader>
 
-                        <CardContent className="text-sm">
-                            {lead.preview_business_id ? (
-                                <Button
-                                    render={<Link href={`/admin/previews/${lead.preview_business_id}`} />}
-                                    nativeButton={false}
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    Open the preview
-                                </Button>
+                        <CardContent className="space-y-4 text-sm">
+                            {preview ? (
+                                <>
+                                    <div>
+                                        <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                            The link they get
+                                        </p>
+                                        <a
+                                            href={publicPreview ?? "#"}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-1 inline-flex items-center gap-1 break-all font-medium hover:text-[#FF593F]"
+                                        >
+                                            {publicPreview?.replace(/^https?:\/\//, "")}
+                                            <FiExternalLink aria-hidden="true" className="size-3 shrink-0" />
+                                        </a>
+                                    </div>
+
+                                    <div className="border-t pt-4">
+                                        <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                            Has it been read
+                                        </p>
+                                        <p className="mt-1 font-medium">
+                                            {preview.claimed_at
+                                                ? "Claimed"
+                                                : preview.view_count > 0
+                                                    ? `Opened ${preview.view_count} ${preview.view_count === 1 ? "time" : "times"}`
+                                                    : "Not opened yet"}
+                                        </p>
+                                        {preview.last_viewed_at && !preview.claimed_at && (
+                                            <p className="mt-0.5 text-xs text-[#17233B]/55">
+                                                Last <When value={preview.last_viewed_at} />
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* The RPC refuses a claimed preview, so this
+                                        cannot take a live business with it. */}
+                                    {!preview.claimed_at && (
+                                        <form action={deleteLeadPreview} className="border-t pt-4">
+                                            <input type="hidden" name="leadId" value={lead.id} />
+                                            <input
+                                                type="hidden"
+                                                name="businessId"
+                                                value={lead.preview_business_id ?? ""}
+                                            />
+                                            <SubmitButton pendingLabel="Deleting…" variant="outline" size="sm">
+                                                Delete the preview
+                                            </SubmitButton>
+                                        </form>
+                                    )}
+                                </>
+                            ) : missingForPreview.length > 0 ? (
+                                <>
+                                    <p className="text-[#17233B]/65">
+                                        A page built for them is the whole argument, and it is built
+                                        from what is written down here.
+                                    </p>
+                                    <p className="text-[#17233B]/65">
+                                        Still needed: <strong>{missingForPreview.join(", ")}</strong>.
+                                    </p>
+                                </>
                             ) : (
                                 <>
                                     <p className="text-[#17233B]/65">
@@ -495,7 +588,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                     </p>
 
                                     <Button
-                                        render={<Link href={`/admin/previews/new?lead=${lead.id}`} />}
+                                        render={<Link href={`/admin/sales/${lead.id}/preview`} />}
                                         nativeButton={false}
                                         size="sm"
                                         className="mt-4"

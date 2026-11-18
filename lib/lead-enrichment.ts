@@ -136,6 +136,14 @@ function compare(value: string) {
     return value
         .toLowerCase()
         .replace(/&/g, " and ")
+        // Apostrophes vanish rather than becoming a space. The register
+        // writes JOE'S BAKERY LIMITED and the lead says Joes Bakery; as
+        // a space those were "joe s bakery" and "joes bakery", which
+        // never matched, so every shop named after a person — Joe's,
+        // Sam's, Nando's — was quietly unemailable and got a letter
+        // instead. The curly ones too: a name pasted from a website
+        // carries U+2019 far more often than a typed one.
+        .replace(/['\u2018\u2019\u0060\u00b4]/g, "")
         .replace(/\b(the|ltd|limited|llp|plc|co|company|uk)\b/g, " ")
         .replace(/[^a-z0-9]+/g, " ")
         .trim();

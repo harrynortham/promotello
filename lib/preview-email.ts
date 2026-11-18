@@ -3,15 +3,13 @@ import { absoluteUrl } from "@/lib/site";
 import { previewLink } from "@/lib/previews";
 
 // What a preview looks like wherever it is listed or opened.
+// Who to write to, the email and the Instagram handle all used to be
+// here as well. They are on the lead now, which is the one record of a
+// business we might write to, and keeping a second copy only meant the
+// two could disagree. The name is passed in (20270209090000).
 export type PreviewRow = {
     business_id: string;
     token: string;
-    contact_name: string | null;
-    contact_email: string | null;
-    contacted_at: string | null;
-    instagram_handle: string | null;
-    status: string;
-    notes: string | null;
     created_at: string;
     view_count: number;
     last_viewed_at: string | null;
@@ -32,7 +30,7 @@ export type PreviewRow = {
 };
 
 export const previewColumns =
-    "business_id, token, contact_name, contact_email, contacted_at, instagram_handle, status, notes, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, cities ( name ) ) )";
+    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, cities ( name ) ) )";
 
 // Signed by a real name where there is one. A DM from a brand account
 // signed "The Promotello team" reads worse than one signed by nobody.
@@ -155,10 +153,6 @@ export function formatDate(value: string) {
     );
 }
 
-export function previewPath(businessId: string) {
-    return `/admin/previews/${businessId}`;
-}
-
 // Accepts whatever is to hand: a bare handle, an @handle, or a profile URL
 // copied out of the address bar. Returns the bare lowercase handle the column
 // stores, or null if it could not be read as one.
@@ -208,7 +202,12 @@ export function outreachSubject(preview: PreviewRow) {
 //
 // It signs off by name, but carries no company footer: the Companies Act
 // disclosure is in the email signature, and sending it twice reads badly.
-export function outreachMessage(preview: PreviewRow, sender: string, placesLeft: number | null) {
+export function outreachMessage(
+    preview: PreviewRow,
+    sender: string,
+    placesLeft: number | null,
+    contactName: string | null,
+) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
@@ -229,7 +228,7 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
               : offer;
 
     return [
-        `Hi ${preview.contact_name || "there"},`,
+        `Hi ${contactName || "there"},`,
         "",
         `I've built ${name} a page on Promotello, so you can look at it rather than read about it:`,
         "",
@@ -268,7 +267,12 @@ export function outreachMessage(preview: PreviewRow, sender: string, placesLeft:
 // A DM is electronic mail under PECR exactly as an email is, so the sole
 // trader rule applies here too: it is not a way round a business that cannot
 // be emailed.
-export function outreachDm(preview: PreviewRow, sender: string, placesLeft: number | null) {
+export function outreachDm(
+    preview: PreviewRow,
+    sender: string,
+    placesLeft: number | null,
+    contactName: string | null,
+) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
@@ -284,7 +288,7 @@ export function outreachDm(preview: PreviewRow, sender: string, placesLeft: numb
             : `It's free with one offer and a poster, and the first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}.${placesLeft < FOUNDING_MEMBER_LIMIT ? ` ${placesLeft} places left.` : ""}`;
 
     return [
-        `Hi${preview.contact_name ? ` ${preview.contact_name}` : ""}! I've built ${name} a page on Promotello — easier to look at than to explain:`,
+        `Hi${contactName ? ` ${contactName}` : ""}! I've built ${name} a page on Promotello — easier to look at than to explain:`,
         "",
         url,
         "",
