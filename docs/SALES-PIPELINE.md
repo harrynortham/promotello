@@ -180,8 +180,14 @@ Companies House, and what somebody typed.
 
 ## The stages
 
-`new → enriched → emailable → preview → emailed → followed_up → letter`, and
-then `claimed`, `not_interested` or `dead`.
+`new → enriched → emailable → preview → social → emailed → followed_up →
+letter`, and then `claimed`, `not_interested` or `dead`.
+
+**`social` comes before the first email on purpose.** A cold email from a name
+nobody has seen is the hardest thing to get opened, so following them and
+saying something true under a photo of their bread puts the name about first.
+When the email arrives it is from somebody half-noticed rather than nobody.
+The DM on the lead is part of the same idea, and needs no consent either.
 
 **Post only is not a stage.** It is `can_email = false` and it cuts across all
 of them, so the board filters on it instead.

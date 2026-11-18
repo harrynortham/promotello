@@ -16,8 +16,6 @@ test("a letter is addressed from the same parts the page is", () => {
     const to = letterAddress(lead);
 
     assert.deepEqual(to, {
-        firstName: "Sam",
-        lastName: "Baker",
         company: "Little Loaf",
         addressLine1: "214 Gloucester Road",
         addressLine2: "Horfield",
@@ -26,9 +24,15 @@ test("a letter is addressed from the same parts the page is", () => {
     });
 });
 
-test("one name is a first name, not an invented surname", () => {
-    assert.equal(letterAddress({ ...lead, contact_name: "Sam" })?.lastName, null);
-    assert.equal(letterAddress({ ...lead, contact_name: null })?.firstName, null);
+test("the envelope goes to the business, whoever we write to inside", () => {
+    // "Sam" above "Little Loaf" reads like a letter to somebody's
+    // house. The name belongs in the greeting, not on the envelope.
+    for (const contact of ["Sam", "Sam Baker", null]) {
+        const to = letterAddress({ ...lead, contact_name: contact });
+
+        assert.equal(to?.company, "Little Loaf");
+        assert.ok(!JSON.stringify(to).includes("Sam"), `no name on the envelope for "${contact}"`);
+    }
 });
 
 test("an address missing a part is not postable at all", () => {
@@ -44,7 +48,7 @@ test("what is confirmed is the whole address", () => {
     // printed, or confirming it means nothing.
     assert.equal(
         letterDestination(letterAddress(lead)!),
-        "Sam Baker, Little Loaf, 214 Gloucester Road, Horfield, Bristol, BS7 8NU",
+        "Little Loaf, 214 Gloucester Road, Horfield, Bristol, BS7 8NU",
     );
 });
 

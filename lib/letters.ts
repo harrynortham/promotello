@@ -36,9 +36,17 @@ export function lettersConfigured() {
     return Boolean(process.env[STANNP_KEY]?.trim());
 }
 
+// Addressed to the business, not to a person.
+//
+// The envelope used to carry whoever we had written down as the contact,
+// and most of the time that is a first name off a contact page — "Sam"
+// above "Little Loaf" reads like a letter to somebody's house rather
+// than to a shop, and gets opened by whoever it is not meant for just
+// as easily.
+//
+// The greeting inside still uses their name. "Dear Sam" in the letter
+// is warm; "Sam" on the envelope is odd.
 export type LetterTo = {
-    firstName: string | null;
-    lastName: string | null;
     company: string;
     addressLine1: string;
     addressLine2: string | null;
@@ -84,8 +92,6 @@ function body(to: LetterTo, pages: string, test: boolean, background?: string, m
         size: "A4",
         duplex: "false",
         post_unverified: "false",
-        "recipient[firstname]": to.firstName ?? "",
-        "recipient[lastname]": to.lastName ?? "",
         "recipient[company]": to.company,
         "recipient[address1]": to.addressLine1,
         "recipient[address2]": to.addressLine2 ?? "",
@@ -199,14 +205,7 @@ export function letterAddress(lead: {
 
     if (!lead.address_line_1 || !city || !lead.postcode) return null;
 
-    // "Sam" on its own, where that is all we have. Stannp prints the
-    // name line from first and last, and a lastname of "" is better than
-    // inventing one.
-    const parts = (lead.contact_name ?? "").trim().split(/\s+/).filter(Boolean);
-
     return {
-        firstName: parts[0] ?? null,
-        lastName: parts.slice(1).join(" ") || null,
         company: lead.name,
         addressLine1: lead.address_line_1,
         addressLine2: lead.address_line_2,
@@ -219,7 +218,6 @@ export function letterAddress(lead: {
 // posted.
 export function letterDestination(to: LetterTo) {
     return [
-        [to.firstName, to.lastName].filter(Boolean).join(" ") || null,
         to.company,
         to.addressLine1,
         to.addressLine2,

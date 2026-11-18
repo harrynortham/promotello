@@ -420,6 +420,7 @@ export async function moveLead(formData: FormData) {
     await supabase.from("leads").update({ stage }).eq("id", leadId);
 
     const kinds: Record<string, string> = {
+        social: "followed_social",
         emailed: "emailed",
         followed_up: "followed_up",
         letter: "letter_sent",
