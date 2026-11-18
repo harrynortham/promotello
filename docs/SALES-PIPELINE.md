@@ -28,21 +28,29 @@ why posting one is in the sequence at all.
 
 | Fact | Comes from | Kept? |
 | --- | --- | --- |
-| `place_id` | Google Places | Yes — the one field their terms allow indefinitely |
-| name, phone, website | shown by Places at import, kept because somebody chose to | Ours from then on |
+| `place_id` | the importer that used to be here | Kept on old rows; nothing writes it now |
+| name, phone, website | typed, or read from their own site | Ours |
 | address | **never from Places** — their own site, or typed | `address_source` says which |
 | lat/long, ward | postcodes.io, looked up from the postcode | Ours, with attribution |
 | `email`, `email_source` | the business's own website | Yes |
 | `company_number`, `company_name` | Companies House (Open Government Licence) | Yes |
 | notes, category, stage | us | Yes |
 
-### Google discovers, the postcode locates
+### Leads are written down
 
-The import takes a `place_id` and nothing else from Google that it keeps.
-"Provisional" was tried first and did not hold: it was a label with no
-mechanism behind it, so a lead nobody got round to kept Google's address for
-good. `address_source` can no longer be `places`, and the database refuses
-one.
+There is no importer. One asked Google what was trading on a street, and the
+half of it worth having — the address — was the half the terms would not let
+us keep. What it actually saved was a name and a website, and the address was
+typed afterwards anyway, so **Add a lead** types the name too and there is
+nothing left to explain.
+
+`place_id` stays on the table, unwritten: existing rows have one, and it is
+the only piece of Places data the terms allowed us to keep. `address_source`
+can no longer be `places`, and the database refuses one.
+
+What is still automatic is what is genuinely slow by hand: the crawler reads
+their site for an email and the address they publish, and the Companies House
+check decides whether they may be emailed at all.
 
 The postcode comes from the business's own site or is typed. Everything else
 is looked up **from** it via postcodes.io — never the other way round.
@@ -60,21 +68,20 @@ opens in Belfast.
 
 ### The address, and why it has a source
 
-`leads.address_source` is `places`, `website` or `typed`.
+`leads.address_source` is `website` or `typed`.
 
-The import writes what Google returned so there is something to look at, and
-marks it **provisional**. Enrichment then reads the business's own contact
-page — the same pages it already opens for the email — and replaces it with
-the address they publish themselves, which is ours to keep and is where the
-shop actually is. A registered office is often an accountant's in another
-county, so it is no use for a letter.
+It is typed when the lead is added, or afterwards on the lead itself.
+Enrichment reads the business's own contact page — the same pages it already
+opens for the email — and fills it in when nobody has. A typed one is left
+alone. A registered office is often an accountant's in another county, so it
+is no use for a letter.
 
 **A letter should go to an address whose source is not `places`.** The lead
 page says which one it has, and has fields to write one in.
 
 Those fields are the preview form's, by the same names: `addressLine1` and
 `postalCode` on the lead, with the town and area coming from `city_id` and
-`area_id`, which the import already set. **Build the preview** then opens
+`area_id`, chosen when it was added. **Build the preview** then opens
 `/admin/previews/new?lead=<id>` with every one of them filled in — name,
 category, website, email, Instagram, street, town, area, postcode — so
 building a preview is checking rather than retyping from the tab next door.
@@ -93,10 +100,10 @@ gets typed by hand, which is the right way round — a miss costs seconds, a
 wrong address costs a letter.
 
 Google's terms give names, addresses, ratings and photos **no caching
-exception** and call out bulk storing them. So Places answers one question —
-who is trading on this street — and the record is built from sources we may
-keep. Check the live terms before changing `lib/places-import.ts`; they are
-revised, and the EEA version differs.
+exception** and call out bulk storing them. That is why there is no importer
+any more: the one fact it was good for was the one we could not keep, and
+every record here is built from sources we may — the business's own site,
+Companies House, postcodes.io, and what somebody typed.
 
 ## The stages
 
@@ -130,7 +137,6 @@ are tested rather than waited for.
 Both are optional, and the pipeline works without either — a lead can be
 added and enriched by hand.
 
-- `GOOGLE_PLACES_API_KEY` — the area import. Without it that page says so.
 - `COMPANIES_HOUSE_API_KEY` — free from their developer portal, roughly 600
   requests per five minutes. Without it no lead can become emailable, which
   fails in the safe direction.

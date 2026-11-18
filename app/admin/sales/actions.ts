@@ -13,6 +13,7 @@ import {
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
+import { normalisePostcode } from "@/lib/locations";
 import { lookupPostcode } from "@/lib/postcodes";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
@@ -41,63 +42,108 @@ async function record(
     kind: string,
     detail?: string,
 ) {
-    await supabase.from("lead_events").insert({ lead_id: leadId, kind, detail: detail ?? null });
+    const { error } = await supabase
+        .from("lead_events")
+        .insert({ lead_id: leadId, kind, detail: detail ?? null });
+
+    // An audit trail that fails quietly is worse than none: adding a
+    // lead wrote the lead and no event, because 'added' was not yet an
+    // allowed kind and nothing said so. The row is already written by
+    // the time we get here, so this does not throw — it says so where
+    // somebody will see it.
+    if (error) {
+        console.error(`lead_events insert failed (${kind}):`, error.message);
+    }
 }
 
-export async function addLeads(formData: FormData) {
+// A lead, written down by hand.
+//
+// There was an importer here that asked Google what was trading on a
+// street. The useful half of it — the address — was the half the terms
+// would not let us keep (20270204090000), so what it actually saved was
+// a name and a website, and every address was typed afterwards anyway.
+// Typing the name too is barely more work and leaves nothing to explain.
+//
+// The crawler and the Companies House check still do the parts that are
+// genuinely slow by hand.
+export async function addLead(formData: FormData) {
     const supabase = await adminClient();
 
-    const chosen = formData.getAll("place").map((value) => String(value));
-    const cityId = text(formData, "cityId") || null;
-    const areaId = text(formData, "areaId") || null;
+    const name = text(formData, "name");
 
-    if (chosen.length === 0) {
-        redirect("/admin/sales/import?error=nothing_chosen");
+    if (!name) {
+        redirect("/admin/sales/new?error=no_name");
     }
 
-    // What Google returned travels through the form rather than being
-    // fetched again: the operator has already read it and chosen, and
-    // this is the moment it stops being Google's and starts being ours.
-    const rows = chosen.map((value) => {
-        const place = JSON.parse(value) as {
-            place_id: string;
-            name: string;
-            address: string | null;
-            website: string | null;
-            phone: string | null;
-        };
+    const postcode = normalisePostcode(text(formData, "postalCode"));
+    const line1 = text(formData, "addressLine1");
 
-        return {
-            place_id: place.place_id,
-            name: place.name,
-            // No address. Google's terms let a place_id be kept and
-            // restrict the rest, and "provisional" turned out to mean
-            // "kept for good" for any lead nobody got round to
-            // (20270204090000). It arrives from their own site or is
-            // typed, and the postcode locates it from there.
-            website: place.website,
-            phone: place.phone,
+    // LocationFields submits the city and the area by name, the same as
+    // every other form that uses it; a lead stores their ids. Resolved
+    // here rather than by adding a second shape of that component.
+    const cityName = text(formData, "city");
+    const areaName = text(formData, "region");
+
+    const { data: city } = cityName
+        ? await supabase.from("cities").select("id").eq("name", cityName).maybeSingle()
+        : { data: null };
+
+    const { data: area } = areaName && city
+        ? await supabase
+              .from("areas")
+              .select("id")
+              .eq("name", areaName)
+              .eq("city_id", city.id)
+              .maybeSingle()
+        : { data: null };
+
+    const cityId = city?.id ?? null;
+    const areaId = area?.id ?? null;
+
+    // Where it is, from the postcode rather than from anything else.
+    const located = postcode ? await lookupPostcode(postcode) : { found: false as const, reason: "invalid" as const };
+
+    const { data: lead, error } = await supabase
+        .from("leads")
+        .insert({
+            name,
+            website: text(formData, "website") || null,
+            email: text(formData, "email") || null,
+            // Said by hand, so it is nobody's guess but the person who
+            // wrote it: the crawler leaves a typed email alone the same
+            // way it leaves a typed address alone.
+            email_source: text(formData, "email") ? "typed" : null,
+            email_found_at: text(formData, "email") ? new Date().toISOString() : null,
+            phone: text(formData, "phone") || null,
+            instagram_handle: text(formData, "instagramHandle") || null,
+            category_id: text(formData, "categoryId") || null,
             city_id: cityId,
             area_id: areaId,
+            address_line_1: line1 || null,
+            postcode,
+            address_source: line1 || postcode ? "typed" : null,
+            address_found_at: line1 || postcode ? new Date().toISOString() : null,
+            ...(located.found
+                ? {
+                      latitude: located.place.latitude,
+                      longitude: located.place.longitude,
+                      ward: located.place.ward,
+                      located_at: new Date().toISOString(),
+                  }
+                : {}),
             stage: "new",
-        };
-    });
+        })
+        .select("id")
+        .single();
 
-    const { data, error } = await supabase
-        .from("leads")
-        .upsert(rows, { onConflict: "place_id", ignoreDuplicates: true })
-        .select("id");
-
-    if (error) {
-        redirect(`/admin/sales/import?error=${encodeURIComponent(error.message)}`);
+    if (error || !lead) {
+        redirect(`/admin/sales/new?error=${encodeURIComponent(error?.message ?? "not_saved")}`);
     }
 
-    for (const lead of data ?? []) {
-        await record(supabase, lead.id, "imported");
-    }
+    await record(supabase, lead.id, "added", name);
 
     revalidatePath("/admin/sales");
-    redirect(`/admin/sales?added=${(data ?? []).length}`);
+    redirect(`/admin/sales/${lead.id}`);
 }
 
 // Reads their own site for the address they publish. Writes down where it
