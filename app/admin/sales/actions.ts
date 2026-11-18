@@ -16,7 +16,7 @@ import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
 import { STAGE_LABELS } from "@/lib/sales-pipeline";
 import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
-import { asHtml, followUpMessage, followUpSubject, outreachSender, withDisclosure } from "@/lib/outreach-queue";
+import { asHtml, followUpMessage, followUpSubject, outreachSender, withSignature } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
@@ -520,10 +520,11 @@ export async function queueOutreach(formData: FormData) {
         kind,
         to_email: lead.email,
         subject: draft.subject,
-        // The disclosure goes on here, not inside the composer: the
-        // previews page still copies that message into Gmail, where the
-        // signature adds it, and twice reads badly.
-        body: withDisclosure(draft.body),
+        // The signature goes on here rather than inside the composer, so
+        // what is stored is what is read in the outbox and what is sent:
+        // the letter, then Harry's sign-off and the registered office it
+        // carries.
+        body: withSignature(draft.body),
     });
 
     if (error) {
