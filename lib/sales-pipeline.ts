@@ -150,6 +150,7 @@ export function dueToday(leads: DueLead[], now: Date) {
 export const EVENT_LABELS: Record<string, string> = {
     added: "Added",
     followed_social: "Followed them",
+    dm_sent: "DM sent",
     imported: "Imported",
     email_found: "Email",
     companies_house_checked: "Companies House",

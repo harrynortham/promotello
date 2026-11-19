@@ -2,15 +2,16 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-    dueDate,
-    dueToday,
-    followUpDue,
-    letterDue,
-    whenSaid,
     FOLLOW_UP_AFTER_DAYS,
     LETTER_AFTER_DAYS,
     OPEN_STAGES,
     STAGES,
+    dueDate,
+    dueToday,
+    eventLabel,
+    followUpDue,
+    letterDue,
+    whenSaid,
 } from "@/lib/sales-pipeline";
 
 const now = new Date("2026-11-18T09:00:00Z");
@@ -219,4 +220,28 @@ test("being followed counts as a touch, so the clock starts", () => {
     );
 
     assert.deepEqual(letter.map((lead) => lead.id), ["a"]);
+});
+
+test("a DM starts the fortnight, the same as any other touch", () => {
+    // It used to be copied out of the page and pasted into Instagram
+    // with nothing knowing it had happened, so the lead sat at "social"
+    // looking untouched and a letter came due to a business that had
+    // already heard from us.
+    const { letter, followUp } = dueToday(
+        [
+            { id: "fresh", name: "DM'd on Tuesday", stage: "social", can_email: true, last_touch: daysAgo(3), first_sent_at: null, follow_up_sent_at: null },
+            { id: "stale", name: "DM'd and forgotten", stage: "social", can_email: true, last_touch: daysAgo(20), first_sent_at: null, follow_up_sent_at: null },
+        ],
+        now,
+    );
+
+    assert.deepEqual(letter.map((lead) => lead.id), ["stale"]);
+
+    // A DM is not an email, so it never owes an email follow-up: that
+    // is keyed on what outreach_messages says was sent.
+    assert.deepEqual(followUp, []);
+});
+
+test("a DM is a labelled event, not a raw column name", () => {
+    assert.equal(eventLabel("dm_sent"), "DM sent");
 });

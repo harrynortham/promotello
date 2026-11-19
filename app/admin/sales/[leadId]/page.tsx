@@ -51,6 +51,7 @@ import {
     enrichLead,
     moveLead,
     queueOutreach,
+    recordDm,
     saveLeadAddress,
     saveLeadCompany,
     saveLeadDetails,
@@ -144,6 +145,11 @@ async function Lead({ params, searchParams }: PageProps) {
 
     const firstSentAt = (sentMessages ?? []).find((m) => m.kind === "first")?.sent_at ?? null;
     const followUpSentAt = (sentMessages ?? []).find((m) => m.kind === "follow_up")?.sent_at ?? null;
+
+    // The last DM, if one has gone. From the events the page already
+    // reads, so it costs nothing.
+    const dmSentAt =
+        (events ?? []).find((event) => event.kind === "dm_sent")?.created_at ?? null;
 
     const typedEmail = lead.email_source === "typed";
     const letterTo = letterAddress(lead);
@@ -915,7 +921,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                     </div>
                                 ))}
 
-                                <div className="border-t border-[#17233B]/10 pt-3">
+                                <div className="flex flex-wrap items-center gap-4 border-t border-[#17233B]/10 pt-3">
                                     <a
                                         href={instagramDmUrl(dmHandle)}
                                         target="_blank"
@@ -925,6 +931,28 @@ async function Lead({ params, searchParams }: PageProps) {
                                         Open the DM
                                         <FiExternalLink aria-hidden="true" className="size-3" />
                                     </a>
+
+                                    {/* Pressed by the person who just sent
+                                        it, because nothing else can know.
+                                        Without it the lead sat here looking
+                                        untouched and the board would call
+                                        for a letter a fortnight later. */}
+                                    {dmSentAt ? (
+                                        <span className="text-xs text-[#17233B]/60">
+                                            Sent {whenSaid(dmSentAt)}.
+                                        </span>
+                                    ) : (
+                                        <form action={recordDm}>
+                                            <input type="hidden" name="leadId" value={lead.id} />
+                                            <SubmitButton
+                                                pendingLabel="Noting…"
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                I&rsquo;ve sent it
+                                            </SubmitButton>
+                                        </form>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
