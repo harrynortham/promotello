@@ -7,6 +7,9 @@ export type Category = {
     name: string;
     description: string | null;
     image_url: string | null;
+    // SVG path on a 24-box, drawn behind the business name on a
+    // generated cover. Null means the shop front.
+    icon_path: string | null;
     sort_order: number;
     is_active: boolean;
 };
@@ -16,7 +19,7 @@ export type CategoryGroup = Category & {
 };
 
 export const CATEGORY_COLUMNS =
-    "id, parent_id, slug, name, description, image_url, sort_order, is_active";
+    "id, parent_id, slug, name, description, image_url, icon_path, sort_order, is_active";
 
 function bySortOrder(a: Category, b: Category) {
     return a.sort_order - b.sort_order || a.name.localeCompare(b.name);

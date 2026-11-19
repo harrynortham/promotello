@@ -42,7 +42,7 @@ async function BuildPreview({ params }: PageProps) {
     const { data: lead } = await supabase
         .from("leads")
         .select(
-            "id, name, description, email, contact_name, address_line_1, address_line_2, postcode, preview_business_id, categories ( name ), cities ( name ), areas ( name )",
+            "id, name, description, email, contact_name, address_line_1, address_line_2, postcode, preview_business_id, category_id, categories ( name ), cities ( name ), areas ( name )",
         )
         .eq("id", leadId)
         .maybeSingle();
@@ -120,7 +120,13 @@ async function BuildPreview({ params }: PageProps) {
                             </Button>
                         </div>
                     ) : (
-                        <BuildPreviewForm leadId={lead.id} taking={taking} description={lead.description} />
+                        <BuildPreviewForm
+                            leadId={lead.id}
+                            businessName={lead.name}
+                            categoryId={lead.category_id}
+                            taking={taking}
+                            description={lead.description}
+                        />
                     )}
                 </CardContent>
             </Card>

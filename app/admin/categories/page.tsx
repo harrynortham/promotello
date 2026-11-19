@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { CategoryIconField } from "@/components/category-icon-field";
 import { CategoryImageField } from "@/components/category-image-field";
 import {
     Alert,
@@ -92,6 +93,13 @@ function CategoryFields({
                     idPrefix={idPrefix}
                     categoryId={category?.id ?? null}
                     savedImageUrl={category?.image_url ?? null}
+                />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+                <CategoryIconField
+                    idPrefix={idPrefix}
+                    savedIconPath={category?.icon_path ?? null}
                 />
             </div>
 
