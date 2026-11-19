@@ -1125,3 +1125,39 @@ async function letterFor(formData: FormData, live: boolean): Promise<{ pdf?: str
 
     return { pdf: result.pdf };
 }
+
+// Writing down that a DM went.
+//
+// There is no API for a cold DM and there should not be: one that
+// arrived by API would read like one. So the message is copied out of
+// the page and pasted into Instagram by hand, and this is the only
+// thing that can know it happened — pressed by the person who just sent
+// it.
+//
+// It starts the clock. Until this existed the lead sat at "Following
+// them" looking untouched, and a fortnight later the board would say a
+// letter was due to a business that had already heard from us.
+export async function recordDm(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("id, stage")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    if (!lead) redirect("/admin/sales");
+
+    await record(supabase, leadId, "dm_sent", "Sent on Instagram");
+
+    // Moved on only from the stages before it. A lead that has since
+    // been emailed or written to is further along, and a DM noted late
+    // should not drag it backwards.
+    if (["new", "enriched", "emailable", "preview"].includes(lead.stage)) {
+        await supabase.from("leads").update({ stage: "social" }).eq("id", leadId);
+    }
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    revalidatePath("/admin/sales");
+}

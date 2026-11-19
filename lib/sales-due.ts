@@ -18,7 +18,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 // is a thing we did to them on a day, and without it a lead whose only
 // touch was being followed had no age at all — so the rule skipped it
 // and a sole trader could sit in Following them for good.
-const TOUCHES = ["emailed", "followed_up", "letter_sent", "preview_built", "followed_social"];
+export const TOUCHES = ["emailed", "followed_up", "letter_sent", "preview_built", "followed_social", "dm_sent"];
 
 // The columns dueToday() needs, wherever it is asked from.
 export const dueColumns =
