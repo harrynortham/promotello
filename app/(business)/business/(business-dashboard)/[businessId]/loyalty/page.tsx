@@ -17,6 +17,8 @@ import { businessHasPro, hasEverSubscribed } from "@/lib/billing";
 import { readStarter, starterToShow } from "@/lib/starter";
 import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
 import { ukDate } from "@/lib/uk-time";
+import { freeFor } from "@/lib/billing";
+import { trialOnOffer } from "@/lib/founding-places";
 import { createClient } from "@/utils/supabase/server";
 import { lookUpLoyaltyCard } from "./actions";
 import { LoyaltyHowItWorks } from "./how-it-works";
@@ -360,7 +362,8 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             program={null}
                             submitLabel="Start loyalty card"
                             locked={!hasPro}
-                            trialSpent={trialSpent}
+                            trialLength={freeFor(await trialOnOffer())}
+                trialSpent={trialSpent}
                         />
                     ) : (
                         <p className="mt-8 text-[#17233B]/65">Ask a business owner or admin to set up the loyalty card.</p>

@@ -18,6 +18,12 @@ export type SocialNetwork = {
     // Hosts that count as "already a link to this network". The first
     // is the canonical one.
     hosts: string[];
+    // The shape of the answer, not an example of one.
+    //
+    // These used to read "@theanchorbristol", which is a real-looking
+    // handle for a business that is not theirs — it reads as a value
+    // already in the box, and it tells them nothing about what they
+    // are supposed to type. A placeholder's job is the format.
     placeholder: string;
 };
 
@@ -33,7 +39,7 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         column: "instagram_url",
         prefix: "https://instagram.com/",
         hosts: ["instagram.com", "www.instagram.com"],
-        placeholder: "@theanchorbristol",
+        placeholder: "@yourhandle",
     },
     {
         key: "facebook",
@@ -41,7 +47,7 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         column: "facebook_url",
         prefix: "https://facebook.com/",
         hosts: ["facebook.com", "www.facebook.com", "m.facebook.com", "fb.com", "fb.me"],
-        placeholder: "theanchorbristol",
+        placeholder: "yourpagename",
     },
     {
         key: "tiktok",
@@ -50,7 +56,7 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         // TikTok handles carry the @ in the path, unlike the others.
         prefix: "https://tiktok.com/@",
         hosts: ["tiktok.com", "www.tiktok.com", "vm.tiktok.com"],
-        placeholder: "@theanchorbristol",
+        placeholder: "@yourhandle",
     },
     {
         key: "x",
@@ -58,7 +64,7 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         column: "x_url",
         prefix: "https://x.com/",
         hosts: ["x.com", "www.x.com", "twitter.com", "www.twitter.com"],
-        placeholder: "@theanchorbristol",
+        placeholder: "@yourhandle",
     },
     {
         key: "youtube",
@@ -66,7 +72,7 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         column: "youtube_url",
         prefix: "https://youtube.com/@",
         hosts: ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"],
-        placeholder: "@theanchorbristol",
+        placeholder: "@yourchannel",
     },
     {
         key: "linkedin",
@@ -74,7 +80,7 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         column: "linkedin_url",
         prefix: "https://linkedin.com/company/",
         hosts: ["linkedin.com", "www.linkedin.com", "uk.linkedin.com"],
-        placeholder: "company/the-anchor",
+        placeholder: "company/your-business",
     },
 ];
 

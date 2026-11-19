@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     CURRENT_SUBSCRIPTION_STATUSES,
     FOUNDING_MEMBER_LIMIT,
+    FOUNDING_TRIAL_DAYS,
     FREE_LIVE_OFFER_LIMIT,
     TRIAL_DAYS,
     freeFor,
@@ -556,6 +557,21 @@ async function PlanOptions({
                                             {foundingLeft !== null && foundingLeft < FOUNDING_MEMBER_LIMIT
                                                 ? ` ${foundingLeft} of ${FOUNDING_MEMBER_LIMIT} founding places left.`
                                                 : ` Only the first ${FOUNDING_MEMBER_LIMIT} businesses get it.`}
+                                        </p>
+                                    ) : null}
+
+                                    {/* The longer trial is half of what a
+                                        founding place is worth and the card
+                                        never mentioned it — the price was
+                                        locked for life in bold and the three
+                                        months were nowhere. Said on its own
+                                        line rather than appended to the
+                                        scarcity, because it is the better
+                                        half of the offer. */}
+                                    {isFounding ? (
+                                        <p className="mt-2 text-sm font-medium text-[#FF593F]">
+                                            {freeFor(FOUNDING_TRIAL_DAYS)} free to start, not{" "}
+                                            {freeFor(TRIAL_DAYS)}.
                                         </p>
                                     ) : (
                                         <p className="mt-1 text-sm text-[#17233B]/70">
