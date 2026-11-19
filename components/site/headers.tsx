@@ -1,8 +1,6 @@
 "use client";
 
 import { EVENTS_ENABLED } from "@/lib/features";
-import { usePathname } from "next/navigation";
-
 
 import { SiteHeader, type HeaderLink } from "./site-header";
 
@@ -66,13 +64,6 @@ const yourBusiness = {
 
 // Business marketing pages under /business.
 export function BusinessMarketingHeader() {
-    const pathname = usePathname();
-
-    // The preview page renders its own header (components/site/
-    // preview-header.tsx), because whether there is anything to claim
-    // depends on the preview, which a layout cannot know.
-    if (pathname.startsWith("/business/preview/")) return null;
-
     return (
         <SiteHeader
             homeHref="/business"
