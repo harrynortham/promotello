@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+import { isGeneratedCover, uploadedCover } from "@/lib/business-images";
 import { encodingFor, localImage, storedImage } from "@/lib/images";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
@@ -97,4 +98,49 @@ test("nothing can ask for a format an email client won't draw", () => {
     for (const transparent of [true, false]) {
         assert.notEqual(encodingFor("auto", transparent), "image/webp");
     }
+});
+
+// A cover we drew is a stand-in, and the setup steps have to be able to
+// tell. The answer rides on the stored path, so these are the shapes it
+// actually comes back in.
+const BUCKET = "https://owdxoarqivpoplpqiylt.supabase.co/storage/v1/object/public/business-logos";
+const BUSINESS = "53e2d26f-711e-48f1-8a97-5258c9236e0d";
+
+test("a cover we drew is known by the name it was stored under", () => {
+    assert.equal(isGeneratedCover(`${BUCKET}/${BUSINESS}/cover-generated-1795100008912.png`), true);
+});
+
+test("a photo the business uploaded is not", () => {
+    assert.equal(isGeneratedCover(`${BUCKET}/${BUSINESS}/cover-1795100008912.jpg`), false);
+    assert.equal(isGeneratedCover(`${BUCKET}/${BUSINESS}/cover-1795100008912.png`), false);
+    assert.equal(isGeneratedCover(`${BUCKET}/${BUSINESS}/cover-1795100008912.webp`), false);
+});
+
+test("a logo is never a generated cover, whatever it is called", () => {
+    assert.equal(isGeneratedCover(`${BUCKET}/${BUSINESS}/logo-1795100008912.png`), false);
+});
+
+test("nothing at all is not a generated cover", () => {
+    assert.equal(isGeneratedCover(null), false);
+    assert.equal(isGeneratedCover(undefined), false);
+    assert.equal(isGeneratedCover(""), false);
+});
+
+// The prefix is matched after a slash, so a business whose own upload
+// happens to sit under a path containing the words is still theirs.
+test("the name is matched as a path segment, not anywhere in the url", () => {
+    assert.equal(isGeneratedCover(`${BUCKET}/${BUSINESS}/cover-1795.jpg?v=cover-generated-1`), false);
+    assert.equal(isGeneratedCover("https://example.com/cover-generated/photo.jpg"), false);
+});
+
+test("uploadedCover gives back only what the business actually sent", () => {
+    const theirs = `${BUCKET}/${BUSINESS}/cover-1795100008912.jpg`;
+    const ours = `${BUCKET}/${BUSINESS}/cover-generated-1795100008912.png`;
+
+    assert.equal(uploadedCover(theirs), theirs);
+    // Both "nothing" and "only a placeholder" answer the same, because
+    // that is the question the setup steps are asking.
+    assert.equal(uploadedCover(ours), null);
+    assert.equal(uploadedCover(null), null);
+    assert.equal(uploadedCover(""), null);
 });

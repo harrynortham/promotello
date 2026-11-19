@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { GeneratedCoverField } from "@/components/generated-cover-field";
 import { ImagePicker } from "@/components/image-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,16 +29,27 @@ import { createPreviewFromLead } from "../actions";
 // from the business itself.
 export function BuildPreviewForm({
     leadId,
+    businessName,
+    categoryId,
     taking,
     description,
 }: {
     leadId: string;
+    // Both only so a cover can be drawn from them before the business
+    // exists: the name goes on it, the trade picks its colour and its
+    // mark.
+    businessName: string;
+    categoryId: string | null;
     taking: string[];
     description: string | null;
 }) {
     const router = useRouter();
     const [logo, setLogo] = useState<File | null>(null);
     const [cover, setCover] = useState<File | null>(null);
+    // A cover drawn from their colours, for a business with no photo.
+    // It is uploaded exactly as a photo is — same bucket, same column —
+    // so nothing downstream has to know which it got.
+    const [generated, setGenerated] = useState<File | null>(null);
     const [problem, setProblem] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
@@ -61,13 +73,20 @@ export function BuildPreviewForm({
         // url; writing that url onto the business is a second step. Left
         // out, the upload succeeds, nothing complains, and the page has
         // no picture on it — which is the one thing a preview is for.
-        for (const [kind, file, column] of [
-            ["logo", logo, "logo_url"],
-            ["cover", cover, "cover_image_url"],
+        for (const [kind, file, column, drawn] of [
+            ["logo", logo, "logo_url", false],
+            // A photo of the place beats one we drew, so an upload wins
+            // where there is both. Which it was has to travel with it:
+            // stored under its own name, a drawn cover shows on the page
+            // like any other and still leaves "Add a cover photo"
+            // unticked, because nobody has added one.
+            ["cover", cover ?? generated, "cover_image_url", !cover && Boolean(generated)],
         ] as const) {
             if (!file) continue;
 
-            const upload = await uploadBusinessImage(supabase, result.businessId, kind, file);
+            const upload = await uploadBusinessImage(supabase, result.businessId, kind, file, {
+                generated: drawn,
+            });
 
             if ("error" in upload) {
                 imagesFailed = true;
@@ -185,17 +204,40 @@ export function BuildPreviewForm({
                     disabled={isSaving}
                     onChange={(file) => setLogo(file)}
                 />
-                <ImagePicker
-                    id="preview-cover"
-                    label="Photo of the place"
-                    hint="A landscape photo. You can zoom and reposition it."
-                    aspect={16 / 9}
-                    maxSize={1600}
-                    convertToJpeg
-                    modal
-                    disabled={isSaving}
-                    onChange={(file) => setCover(file)}
-                />
+                <div className="space-y-4">
+                    <ImagePicker
+                        id="preview-cover"
+                        label="Photo of the place"
+                        hint="A landscape photo. You can zoom and reposition it."
+                        aspect={16 / 9}
+                        maxSize={1600}
+                        convertToJpeg
+                        modal
+                        disabled={isSaving}
+                        onChange={(file) => {
+                            setCover(file);
+                            // A photo of the real place beats anything
+                            // drawn, so choosing one drops the drawing
+                            // rather than leaving two covers racing for
+                            // the same column.
+                            if (file) setGenerated(null);
+                        }}
+                    />
+
+                    <div className="border-t border-[#17233B]/10 pt-4">
+                        <p className="text-sm font-medium text-[#17233B]">Or build one</p>
+
+                        <div className="mt-3">
+                            <GeneratedCoverField
+                                name={businessName}
+                                categoryId={categoryId ?? ""}
+                                logo={logo}
+                                disabled={isSaving || Boolean(cover)}
+                                onChange={setGenerated}
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="flex items-center gap-3 border-t border-[#17233B]/10 pt-6">

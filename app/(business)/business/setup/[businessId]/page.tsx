@@ -8,6 +8,7 @@ import { hoursToValues, type HoursRow } from "@/lib/business-hours";
 import { readStarter } from "@/lib/starter";
 import { getCityOptions } from "@/lib/locations";
 import { isSetupStepId, setupSteps, type SetupState } from "@/lib/setup-steps";
+import { uploadedCover } from "@/lib/business-images";
 import { createClient } from "@/utils/supabase/server";
 import { SetupFlow } from "./setup-flow";
 
@@ -129,7 +130,9 @@ async function SetupContent({ params, searchParams }: PageProps) {
         hasDescription: Boolean(business.description?.trim()),
         hasAddress: Boolean(location),
         hasHours: Boolean(hours?.length),
-        hasCover: Boolean(business.cover_image_url),
+        // A cover we drew for the preview is a placeholder, and the step
+        // stays unticked until the business sends a photo of the place.
+        hasCover: Boolean(uploadedCover(business.cover_image_url)),
         sentForReview: Boolean(business.review_requested_at) || business.approval_status === "approved",
         hasOffer: Boolean(offerCount),
     };

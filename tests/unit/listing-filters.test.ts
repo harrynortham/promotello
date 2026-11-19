@@ -92,6 +92,7 @@ const groups: CategoryGroup[] = [
         name: "Food & drink",
         description: null,
         image_url: null,
+        icon_path: null,
         sort_order: 1,
         is_active: true,
         subcategories: [
@@ -102,6 +103,7 @@ const groups: CategoryGroup[] = [
                 name: "Cafés & coffee",
                 description: null,
                 image_url: null,
+        icon_path: null,
                 sort_order: 1,
                 is_active: true,
             },

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FieldError } from "@/components/field-error";
 import { ImageCropper, cropImage } from "@/components/image-cropper";
-import { IMAGE_ACCEPT, imageFileError, uploadBusinessImage, type BusinessImageKind } from "@/lib/business-images";
+import { IMAGE_ACCEPT, imageFileError, uploadBusinessImage, type BusinessImageKind, uploadedCover } from "@/lib/business-images";
 import { createClient } from "@/utils/supabase/client";
 
 const KINDS = {
@@ -152,7 +152,12 @@ export function BusinessImageForm({
         done();
     }
 
-    const title = `${imageUrl ? "Change" : "Add"} your ${config.name}`;
+    // A cover we drew is not one they added, so this still says "Add".
+    // It is their page and the picture on it is a stand-in; calling it
+    // theirs and offering to change it would be the page telling them a
+    // job is done that is not.
+    const theirs = kind === "cover" ? uploadedCover(imageUrl) : imageUrl;
+    const title = `${theirs ? "Change" : "Add"} your ${config.name}`;
 
     return (
         <div className="text-[#17233B]">

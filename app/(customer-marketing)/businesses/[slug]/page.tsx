@@ -250,6 +250,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         minimum_role: "admin",
     });
     const dashboard = `/business/${businessId}`;
+
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
 
@@ -518,6 +519,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 <div className="absolute right-44 top-12 size-32 rounded-full bg-[#FF593F]/20" />
                             </div>
                         )}
+
                     </div>
 
                     <div className="px-6 pb-7 sm:px-8">

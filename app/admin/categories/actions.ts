@@ -21,6 +21,7 @@ function readFields(formData: FormData) {
     const slug = slugify(String(formData.get("slug") ?? "").trim() || name);
     const description = String(formData.get("description") ?? "").trim();
     const imageUrl = String(formData.get("imageUrl") ?? "").trim();
+    const iconPath = String(formData.get("iconPath") ?? "").trim();
     const sortOrder = Number.parseInt(String(formData.get("sortOrder") ?? "0"), 10);
 
     return {
@@ -28,6 +29,7 @@ function readFields(formData: FormData) {
         slug,
         description: description || null,
         image_url: imageUrl || null,
+        icon_path: iconPath || null,
         sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
     };
 }

@@ -39,6 +39,7 @@ import {
 } from "@/lib/validation";
 import { getCategoryGroups } from "@/lib/categories";
 import type { ListingBusiness } from "@/lib/listings";
+import { uploadedCover } from "@/lib/business-images";
 import { createClient } from "@/utils/supabase/client";
 
 type EditBusinessFormProps = {
@@ -515,7 +516,9 @@ function BusinessForm({
                                             size="sm"
                                         >
                                             <FiUpload aria-hidden="true" />
-                                            {business.cover_image_url ? "Change cover photo" : "Add cover photo"}
+                                            {uploadedCover(business.cover_image_url)
+                                                ? "Change cover photo"
+                                                : "Add cover photo"}
                                         </Button>
                                         <p className="text-xs text-[#17233B]/65">
                                             The big photo at the top of your page. Without one, your newest offer photo is used.

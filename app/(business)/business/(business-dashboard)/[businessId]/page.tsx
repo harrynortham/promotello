@@ -32,6 +32,7 @@ import { businessHasPro, isLiveOffer } from "@/lib/billing";
 import { readStarter, starterToShow } from "@/lib/starter";
 import { businessPath } from "@/lib/slugs";
 import { storedImage } from "@/lib/images";
+import { uploadedCover } from "@/lib/business-images";
 import { createClient } from "@/utils/supabase/server";
 
 type PageProps = {
@@ -367,7 +368,10 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     id: "cover",
                     label: "Add a cover photo",
                     description: "The picture across the top of your page, and the one customers see in the directory.",
-                    completed: Boolean(business.cover_image_url),
+                    // One we drew for the preview does not count: it is
+                    // a stand-in, and the whole point of the step is to
+                    // get a photo of the actual place.
+                    completed: Boolean(uploadedCover(business.cover_image_url)),
                     href: `${base}/cover`,
                     action: "Add cover photo",
                 },
