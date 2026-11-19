@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { businessHasPro } from "@/lib/billing";
+import { BusinessGallery } from "@/components/business-gallery";
+import { photoUrl } from "@/lib/business-photos";
+import { SocialLinks } from "@/components/social-links";
+import { socialsOf } from "@/lib/social-links";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -200,6 +204,12 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 category,
                 description,
                 website_url,
+                instagram_url,
+                facebook_url,
+                tiktok_url,
+                x_url,
+                youtube_url,
+                linkedin_url,
                 contact_email,
                 approval_status,
                 is_sample,
@@ -250,6 +260,24 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         minimum_role: "admin",
     });
     const dashboard = `/business/${businessId}`;
+
+    // The photos the plan is showing. business_photos_public_select
+    // already hides the paused ones, so this is the same list a
+    // visitor would get.
+    const { data: photoRows } = await supabase
+        .from("business_photos")
+        .select("id, storage_path, caption, sort_order")
+        .eq("business_id", businessId)
+        .is("plan_paused_at", null)
+        .order("sort_order")
+        .order("created_at");
+
+    // The url is built here rather than in the browser, so the bucket
+    // is named in one place.
+    const photos = (photoRows ?? []).map((photo) => ({
+        ...photo,
+        url: photoUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", photo.storage_path),
+    }));
 
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
@@ -415,7 +443,18 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         image: business.logo_url ?? undefined,
         logo: business.logo_url ?? undefined,
         email: business.contact_email ?? undefined,
-        sameAs: business.website_url ? [business.website_url] : undefined,
+        // sameAs is the schema.org field for "the same thing, over
+        // there", which is what these are. Google uses it to tie a
+        // listing to the profiles it already knows about.
+        sameAs: [
+            ...(business.website_url ? [business.website_url] : []),
+            ...socialsOf(business).map((entry) => entry.url),
+        ].length
+            ? [
+                  ...(business.website_url ? [business.website_url] : []),
+                  ...socialsOf(business).map((entry) => entry.url),
+              ]
+            : undefined,
         address: location
             ? {
                 "@type": "PostalAddress",
@@ -773,6 +812,31 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </Card>
                             )}
                         </section>
+
+                        {/* The room, the counter, what they make.
+                            Below the offers, because the offers are
+                            why somebody opened the page and these are
+                            what make them go. Nothing at all when
+                            there are none — a heading over an empty
+                            space reads as something broken. */}
+                        {photos.length > 0 && (
+                            <section aria-labelledby="photos-heading" className="mt-10">
+                                <div className="mb-5 flex items-start justify-between gap-4">
+                                    <h2
+                                        id="photos-heading"
+                                        className="text-2xl font-semibold tracking-tight"
+                                    >
+                                        Inside {business.name}
+                                    </h2>
+
+                                    {canEdit && (
+                                        <OwnerEdit href={`${dashboard}/photos`} label="Edit your photos" />
+                                    )}
+                                </div>
+
+                                <BusinessGallery photos={photos} businessName={business.name} />
+                            </section>
+                        )}
                     </div>
 
                     {/* Visiting information */}
@@ -921,6 +985,23 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </section>
                             )}
                         </Card>
+
+                        {/* Where else to find them. Its own card
+                            rather than a row inside "Get in touch":
+                            that card is for reaching the business, and
+                            this is for seeing what they are like before
+                            you do. */}
+                        {socialsOf(business).length > 0 && (
+                            <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
+                                <CardHeader>
+                                    <CardTitle className="text-base">Follow {business.name}</CardTitle>
+                                </CardHeader>
+
+                                <CardContent>
+                                    <SocialLinks business={business} businessName={business.name} />
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {(business.website_url ||
                             business.contact_email) && (

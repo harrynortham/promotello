@@ -14,6 +14,7 @@ import {
     FiShoppingBag,
     FiTag,
     FiUsers,
+    FiImage,
     FiZap,
 } from "react-icons/fi";
 import type { IconType } from "react-icons";
@@ -49,6 +50,11 @@ const baseLinks: SidebarLink[] = [
         label: "Loyalty card",
         path: "/loyalty",
         icon: FiAward,
+    },
+    {
+        label: "Photos",
+        path: "/photos",
+        icon: FiImage,
     },
     {
         label: "Automations",
