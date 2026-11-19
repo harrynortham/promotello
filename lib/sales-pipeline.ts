@@ -93,8 +93,37 @@ export function dueDate(from: string, days: number) {
 }
 
 // How long ago, in the words somebody would use out loud.
+// What day it was, in Bristol.
+//
+// Not the server's day: this machine is on Europe/Gibraltar and Vercel
+// runs on UTC, so the same instant would be two different dates
+// depending on where the page rendered. Every business on here is in
+// the UK, and London is the day they mean.
+const UK = "Europe/London";
+
+function ukDate(at: Date) {
+    // en-CA for YYYY-MM-DD, which subtracts cleanly.
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: UK,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).format(at);
+}
+
+function calendarDaysBetween(then: Date, now: Date) {
+    return Math.round((Date.parse(ukDate(now)) - Date.parse(ukDate(then))) / 86_400_000);
+}
+
+// Calendar days, not elapsed ones.
+//
+// daysSince() counts whole 24-hour periods, which is right for deciding
+// when something falls due and wrong for saying when it happened: an
+// email sent at half past nine last night is thirteen hours old at
+// breakfast, so it read "sent today" the morning after it went. What
+// somebody means by "yesterday" is the date, not the hours.
 export function whenSaid(when: string, now: Date = new Date()) {
-    const days = daysSince(when, now) ?? 0;
+    const days = calendarDaysBetween(new Date(when), now);
 
     if (days <= 0) return "today";
     if (days === 1) return "yesterday";
