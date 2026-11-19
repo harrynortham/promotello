@@ -48,15 +48,42 @@ export function CategorySelect({
 }: CategorySelectProps) {
     const [groups, setGroups] = useState<CategoryGroup[] | null>(null);
     const [failed, setFailed] = useState(false);
+    // Bumped to ask again. A failed load used to be the end of it: the
+    // select stayed disabled for as long as the page was open, with no
+    // way back but a manual refresh. That is an annoyance in admin and a
+    // dead end on business signup, where the category is required and
+    // the person has no idea what went wrong or that reloading would
+    // fix it.
+    const [attempt, setAttempt] = useState(0);
 
     useEffect(() => {
+        let live = true;
+
+        setFailed(false);
+
         getCategoryGroups(createClient())
-            .then(setGroups)
-            .catch(() => setFailed(true));
-    }, []);
+            .then((loaded) => {
+                if (live) setGroups(loaded);
+            })
+            .catch((error: unknown) => {
+                if (!live) return;
+
+                // Said out loud. This went wrong in production for
+                // everyone holding a stale bundle after a column was
+                // dropped, and the only evidence was a greyed-out box:
+                // nothing in the console, nothing anywhere.
+                console.error("[CategorySelect] categories failed to load", error);
+                setFailed(true);
+            });
+
+        return () => {
+            live = false;
+        };
+    }, [attempt]);
 
     return (
-        <select
+        <div className="space-y-1.5">
+            <select
             // Remount once options load so defaultValue is applied.
             key={groups ? "loaded" : "loading"}
             id={id}
@@ -91,6 +118,22 @@ export function CategorySelect({
             {allowOther && groups && (
                 <option value={OTHER_CATEGORY}>Something else</option>
             )}
-        </select>
+            </select>
+
+            {/* Only when it has actually failed. While it is loading
+                there is nothing to try again. */}
+            {failed && (
+                <p className="text-xs leading-5 text-[#17233B]/70">
+                    Categories didn&apos;t load.{" "}
+                    <button
+                        type="button"
+                        onClick={() => setAttempt((count) => count + 1)}
+                        className="font-medium text-[#FF593F] underline underline-offset-2"
+                    >
+                        Try again
+                    </button>
+                </p>
+            )}
+        </div>
     );
 }
