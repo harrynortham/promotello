@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { coverImage, dominantColourFromBytes } from "@/lib/cover-image";
+import { iconName } from "@/lib/cover-icons";
 import { createClient } from "@/utils/supabase/server";
 
 // Draws a cover and hands it back as a PNG. Nothing is stored: the page
@@ -21,13 +22,19 @@ export async function POST(request: Request) {
 
     const form = await request.formData();
     const categoryId = String(form.get("categoryId") ?? "").trim();
+    // Whichever of lucide's the admin picked. Checked against the
+    // library rather than trusted, since it ends up naming a component
+    // to render.
+    const icon = iconName(form.get("icon"));
     const variation = Number.parseInt(String(form.get("variation") ?? "0"), 10);
 
     // The trade decides the colour when the logo cannot, and carries
     // the mark either way. Read here rather than sent up, so the page
     // cannot ask for a category's colours on another category's behalf.
+    // The trade still picks the colour, and is read here rather than
+    // sent up so a page cannot ask for another category's palette.
     const { data: category } = categoryId
-        ? await supabase.from("categories").select("slug, icon_path").eq("id", categoryId).maybeSingle()
+        ? await supabase.from("categories").select("slug").eq("id", categoryId).maybeSingle()
         : { data: null };
 
     const logo = form.get("logo");
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
 
     return coverImage({
         categorySlug: category?.slug ?? null,
-        categoryIconPath: category?.icon_path ?? null,
+        icon,
         logoColour,
         variation: Number.isFinite(variation) ? variation : 0,
     });

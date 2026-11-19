@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { DEFAULT_ICON } from "@/lib/cover-icon-default";
+import { CoverIconPicker } from "@/components/cover-icon-picker";
 
 // A cover built from the business's own colours rather than a photo.
 //
@@ -30,6 +32,8 @@ export function GeneratedCoverField({
     onChange: (file: File | null) => void;
 }) {
     const [variation, setVariation] = useState(0);
+    // Which of lucide's marks goes on it.
+    const [icon, setIcon] = useState(DEFAULT_ICON);
     const [url, setUrl] = useState<string | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [problem, setProblem] = useState("");
@@ -43,13 +47,14 @@ export function GeneratedCoverField({
         };
     }, []);
 
-    async function draw(next: number) {
+    async function draw(next: number, mark: string = icon) {
         setIsDrawing(true);
         setProblem("");
 
         try {
             const body = new FormData();
             body.set("categoryId", categoryId);
+            body.set("icon", mark);
             body.set("variation", String(next));
             // The logo has not been uploaded anywhere yet, so its bytes
             // go up with the request. Without it the cover still works;
@@ -82,6 +87,7 @@ export function GeneratedCoverField({
         shown.current = null;
         setUrl(null);
         setVariation(0);
+        setIcon(DEFAULT_ICON);
         onChange(null);
     }
 
@@ -95,6 +101,22 @@ export function GeneratedCoverField({
                     src={url}
                     alt={`A generated cover for ${name || "the business"}`}
                     className="aspect-video w-full rounded-xl border border-[#17233B]/10 object-cover"
+                />
+            )}
+
+            {/* Only once there is something to compare it against.
+                Before that it is a control over an empty box. */}
+            {url && (
+                <CoverIconPicker
+                    value={icon}
+                    disabled={disabled || isDrawing}
+                    onChange={(next) => {
+                        setIcon(next);
+                        // Redrawn at the variation they are already
+                        // looking at, so swapping the mark changes the
+                        // mark and nothing else.
+                        void draw(variation, next);
+                    }}
                 />
             )}
 
