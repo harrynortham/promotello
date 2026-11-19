@@ -7,6 +7,7 @@ import {
     COVER_FALLBACK,
     coverLayout,
     coverPalette,
+    isHex,
     isUsableLogoColour,
 } from "@/lib/cover-colours";
 
@@ -166,4 +167,59 @@ test("a channel pushed past its end stays a colour", () => {
             assert.match(palette.to, /^#[0-9a-f]{6}$/i);
         }
     }
+});
+
+test("a colour picked by hand beats the logo and the trade", () => {
+    const palette = coverPalette({
+        chosenColour: "#8A2BE2",
+        logoColour: "#6F4E37",
+        categorySlug: "cafes-coffee",
+    });
+
+    assert.equal(palette.source, "chosen");
+});
+
+// isUsableLogoColour throws away greys and near-whites because an
+// averaged logo lands on them by accident. Somebody clicking one has
+// not done it by accident.
+test("a grey or white chosen by hand is kept, not thrown away", () => {
+    for (const colour of ["#FFFFFF", "#808080", "#000000", "#D6D6D6"]) {
+        const palette = coverPalette({ chosenColour: colour, categorySlug: "bakeries" });
+
+        assert.equal(palette.source, "chosen", `${colour} should have been kept`);
+    }
+});
+
+test("a chosen colour still has to carry the mark", () => {
+    // The background moves until the ink on it can be seen, whoever
+    // chose it — otherwise picking white gives a blank rectangle.
+    for (const colour of ["#FFFFFF", "#FFFF00", "#000000", "#8A2BE2"]) {
+        for (let variation = 0; variation < 6; variation += 1) {
+            const palette = coverPalette({ chosenColour: colour, variation });
+
+            assert.ok(
+                contrastRatio(palette.ink, palette.from) >= 4.5,
+                `${colour} variation ${variation}`,
+            );
+            assert.ok(contrastRatio(palette.ink, palette.to) >= 4.5);
+        }
+    }
+});
+
+test("nonsense in the colour box is ignored rather than drawn", () => {
+    for (const bad of ["", "red", "#ABC", "#GGGGGG", "javascript:x", null, undefined]) {
+        const palette = coverPalette({ chosenColour: bad as string, categorySlug: "bakeries" });
+
+        assert.equal(palette.source, "category", `${String(bad)} should not have been used`);
+    }
+});
+
+test("a hex is a hex whichever case it is typed in", () => {
+    assert.equal(isHex("#8a2be2"), true);
+    assert.equal(isHex("#8A2BE2"), true);
+    assert.equal(isHex("8A2BE2"), false);
+    assert.equal(isHex("#8A2BE"), false);
+    assert.equal(isHex(null), false);
+    // Typed lowercase, kept uppercase, like every other colour here.
+    assert.equal(coverPalette({ chosenColour: "#8a2be2", variation: 0 }).from, "#8A2BE2");
 });

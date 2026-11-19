@@ -77,7 +77,7 @@ export type CoverPalette = {
     ink: string;
     // Where the colour came from, so the admin can be told rather than
     // left guessing why a cover is navy.
-    source: "logo" | "category" | "fallback";
+    source: "chosen" | "logo" | "category" | "fallback";
 };
 
 // A logo's dominant colour is only worth using if it is a colour.
@@ -151,20 +151,39 @@ const BRAND_NAVY = "#17233B";
 // actually different rather than the same picture again. It is a number
 // rather than a random, so the same variation always looks the same —
 // what the admin previewed is what gets saved.
+// A hex somebody typed or clicked, if it is one.
+export function isHex(value: unknown): value is string {
+    return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+}
+
 export function coverPalette({
+    chosenColour,
     logoColour,
     categorySlug,
     variation = 0,
 }: {
+    // Picked by hand, which beats everything else. Not put through
+    // isUsableLogoColour: that throws away greys and near-whites
+    // because an averaged logo lands on them by accident, and somebody
+    // choosing one has not done it by accident. The background still
+    // moves until the mark on it can be seen.
+    chosenColour?: string | null;
     logoColour?: string | null;
     categorySlug?: string | null;
     variation?: number;
 }): CoverPalette {
+    const chosen = isHex(chosenColour) ? chosenColour.toUpperCase() : null;
     const fromLogo = isUsableLogoColour(logoColour) ? logoColour! : null;
     const fromCategory = categorySlug ? CATEGORY_COLOURS[categorySlug] : undefined;
 
-    const base = fromLogo ?? fromCategory ?? COVER_FALLBACK;
-    const source: CoverPalette["source"] = fromLogo ? "logo" : fromCategory ? "category" : "fallback";
+    const base = chosen ?? fromLogo ?? fromCategory ?? COVER_FALLBACK;
+    const source: CoverPalette["source"] = chosen
+        ? "chosen"
+        : fromLogo
+          ? "logo"
+          : fromCategory
+            ? "category"
+            : "fallback";
 
     // Three shades, so pressing Regenerate three times is three
     // different covers and the fourth is the first again.
