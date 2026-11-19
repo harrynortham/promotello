@@ -23,6 +23,7 @@ import {
 } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
+import { NativeSelect } from "@/components/ui/native-select";
 import { CopyButton } from "@/components/copy-button";
 import { LetterCard } from "./letter-card";
 import { LocationFields } from "@/components/location-fields";
@@ -1028,18 +1029,17 @@ async function Lead({ params, searchParams }: PageProps) {
                                     and this still said the one before it.
                                     Pressing Move then quietly dragged the
                                     lead backwards. */}
-                                <select
+                                <NativeSelect
                                     key={lead.stage}
                                     name="stage"
                                     defaultValue={lead.stage}
-                                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
                                 >
                                     {STAGES.map((stage) => (
                                         <option key={stage.key} value={stage.key}>
                                             {stage.label}
                                         </option>
                                     ))}
-                                </select>
+                                </NativeSelect>
 
                                 <Button type="submit" size="sm" className="w-full">
                                     Move

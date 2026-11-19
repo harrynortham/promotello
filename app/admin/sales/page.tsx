@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dueColumns, toDueLeads, WAITING_STAGES } from "@/lib/sales-due";
 import { STAGES, STAGE_LABELS, dueToday, leadAddress, whenSaid, type DueLead } from "@/lib/sales-pipeline";
@@ -319,7 +320,7 @@ async function Board({ searchParams }: PageProps) {
                 filter should land on the first page of the new list,
                 not page four of it. */}
             <form method="get" action="/admin/sales" className="mt-6 space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
                     <Input
                         type="search"
                         name="q"
@@ -328,25 +329,19 @@ async function Board({ searchParams }: PageProps) {
                         aria-label="Search by name"
                     />
 
-                    <select
-                        name="area"
-                        defaultValue={params.area ?? ""}
-                        aria-label="Area"
-                        className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
-                    >
+                    <NativeSelect name="area" defaultValue={params.area ?? ""} aria-label="Area">
                         <option value="">Everywhere</option>
                         {areas.map((area) => (
                             <option key={area.id} value={area.id}>
                                 {area.cities?.name ? `${area.name} · ${area.cities.name}` : area.name}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
 
-                    <select
+                    <NativeSelect
                         name="category"
                         defaultValue={params.category ?? ""}
                         aria-label="Category"
-                        className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
                     >
                         <option value="">Every trade</option>
                         {categories.map((category) => (
@@ -354,17 +349,23 @@ async function Board({ searchParams }: PageProps) {
                                 {category.name}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
 
+                    {/* The same height as the fields beside them, so the
+                        row is one line rather than three things that
+                        nearly line up. */}
                     <div className="flex items-center gap-2">
-                        <Button type="submit" size="sm">Filter</Button>
+                        <Button type="submit" size="lg" className="h-12 px-6">
+                            Filter
+                        </Button>
 
                         {filtered && (
                             <Button
                                 render={<Link href="/admin/sales" />}
                                 nativeButton={false}
                                 variant="ghost"
-                                size="sm"
+                                size="lg"
+                                className="h-12"
                             >
                                 Clear
                             </Button>

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     DeclineReason,
@@ -489,24 +490,28 @@ export default function AdminOffersPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="status">Status</Label>
 
-                                    <select
+                                    <NativeSelect
                                         id="status"
                                         value={status}
                                         onChange={(event) => {
                                             setStatus(event.target.value as Status | "all");
                                             setPage(1);
                                         }}
-                                        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm sm:w-44"
+                                        className="sm:w-44"
                                     >
                                         <option value="all">Any status</option>
                                         {(Object.keys(statusLabels) as Status[]).map((key) => (
                                             <option key={key} value={key}>{statusLabels[key]}</option>
                                         ))}
-                                    </select>
+                                    </NativeSelect>
                                 </div>
                             )}
 
-                            <Button type="submit">Search</Button>
+                            {/* The same height as the field it sits
+                                beside, which it was not. */}
+                            <Button type="submit" size="lg" className="h-12 px-6">
+                                Search
+                            </Button>
                         </form>
                     </CardContent>
                 </Card>
