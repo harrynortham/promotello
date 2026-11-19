@@ -68,3 +68,25 @@ test("nothing else is claimed on the way in", () => {
     assert.equal(previewBeingClaimed("/business/preview/jamaican-kitchen"), null);
     assert.equal(previewBeingClaimed("/business/preview/"), null);
 });
+
+// business_previews.business_id is the primary key, so PostgREST embeds the
+// relationship to-one: a single object, not an array. Calling .some() on it
+// threw "(a.business_previews ?? []).some is not a function" and took the
+// whole business dashboard down — but only for somebody who had a business
+// with a preview on it, which is why it sat there unnoticed. Everybody else
+// got null, and ?? [] turned that into an array.
+test("a preview embedded as one object is read, not thrown at", () => {
+    assert.equal(unclaimedPreview({ business_previews: { claimed_at: null } }), true);
+    assert.equal(unclaimedPreview({ business_previews: { claimed_at: "2026-11-01" } }), false);
+});
+
+test("an array still works, in case the embed ever comes back as one", () => {
+    assert.equal(unclaimedPreview({ business_previews: [{ claimed_at: null }] }), true);
+    assert.equal(unclaimedPreview({ business_previews: [{ claimed_at: "2026-11-01" }] }), false);
+    assert.equal(unclaimedPreview({ business_previews: [] }), false);
+});
+
+test("no preview at all is not an unclaimed one", () => {
+    assert.equal(unclaimedPreview({ business_previews: null }), false);
+    assert.equal(unclaimedPreview({}), false);
+});

@@ -5,10 +5,35 @@
 //
 // The embedded rows are empty for anyone who isn't a platform admin, since
 // only they can read business_previews — so this is a no-op for everyone else.
+//
+// One preview or many, depending on who is asking.
+//
+// business_previews.business_id is the primary key, so the relationship is
+// one-to-one and PostgREST embeds it as a single object, not an array. This
+// used to call .some() on it and took the whole business dashboard down with
+// "(a.business_previews ?? []).some is not a function" — but only for
+// somebody who had a business with a preview on it. Everybody else got null,
+// which ?? [] turned into an array and quietly hid the bug.
+//
+// So it is normalised rather than trusted: an object, an array, null or
+// missing all arrive here, and the shape PostgREST chooses is not something
+// a page should have an opinion about.
+type EmbeddedPreview = { claimed_at: string | null };
+
 export function unclaimedPreview(business: {
-    business_previews?: { claimed_at: string | null }[] | null;
+    business_previews?: EmbeddedPreview | EmbeddedPreview[] | null;
 }) {
-    return (business.business_previews ?? []).some((preview) => preview.claimed_at === null);
+    return previewsOf(business).some((preview) => preview.claimed_at === null);
+}
+
+export function previewsOf(business: {
+    business_previews?: EmbeddedPreview | EmbeddedPreview[] | null;
+}): EmbeddedPreview[] {
+    const embedded = business.business_previews;
+
+    if (!embedded) return [];
+
+    return Array.isArray(embedded) ? embedded : [embedded];
 }
 
 // A preview link is pasted into an email or a DM, where it is read before
