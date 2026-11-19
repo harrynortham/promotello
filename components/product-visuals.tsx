@@ -188,21 +188,31 @@ export function PosterVisual({
     eyebrow = "Scan for offers",
     colour = "navy",
     logoUrl = null,
+    // 240 is the size of the little illustrations on the marketing
+    // pages. A preview showing a business their own poster wants more.
+    width = 240,
 }: {
     qrSvg: string;
     className?: string;
+    width?: number;
     businessName?: string;
     headline?: string;
     eyebrow?: string;
     colour?: string | null;
     logoUrl?: string | null;
 }) {
-    const width = 240;
-
     return (
         <figure
             aria-label="A printable QR poster for a shop window"
-            className={`w-60 shrink-0 rotate-[-2deg] overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/20 ${className}`}
+            // The width is a number rather than a class because the
+            // poster inside has to be told it too — A4 proportions and
+            // the type scale both follow from it, so a class alone would
+            // stretch the frame and leave the poster the old size.
+            style={{ width: `${width}px` }}
+            className={cn(
+                "shrink-0 rotate-[-2deg] overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/20",
+                className,
+            )}
         >
             <QrPoster
                 width={`${width}px`}

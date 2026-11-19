@@ -1,4 +1,4 @@
-import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, plans } from "@/lib/billing";
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink } from "@/lib/previews";
 
@@ -211,18 +211,6 @@ export function personalOpening(personalLine: string | null | undefined) {
     return /[.!?]$/.test(line) ? `${line} ` : `${line}. `;
 }
 
-// "3 months" rather than "90 days", because that is how long a person
-// hears it as — but derived, so changing FOUNDING_TRIAL_DAYS changes the
-// sentence rather than leaving it quietly wrong.
-export function freeFor(days: number) {
-    if (days % 30 === 0) {
-        const months = days / 30;
-
-        return months === 1 ? "1 month" : `${months} months`;
-    }
-
-    return `${days} days`;
-}
 
 // What a founding place is worth, said once. When they are gone it is
 // the ordinary trial instead, because naming a thing nobody can have is

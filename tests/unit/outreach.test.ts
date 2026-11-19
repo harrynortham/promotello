@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, plans } from "@/lib/billing";
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import {
     DEFAULT_SENDER,
     followUpSubject,
-    freeFor,
     outreachDm,
     outreachFollowUp,
     outreachMessage,

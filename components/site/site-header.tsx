@@ -46,6 +46,18 @@ export type SiteHeaderProps = {
     // What that line says once you're signed in, when the pitch no longer
     // fits: your own pages, which are otherwise only behind the avatar.
     signedInMenuFooter?: MenuFooter;
+    // Rendered in place of the sign-in buttons, for a header whose
+    // action is a form rather than a link.
+    action?: React.ReactNode;
+    // A header with nothing in it but the logo and one button.
+    //
+    // For a page whose whole job is one decision — the preview a lead is
+    // sent. Every link in a header is a way out of that page, and on a
+    // landing page sent to one business there is nothing else we want
+    // them to do. No nav, no menu, no sign-in, and no avatar: a signed-in
+    // visitor has a dashboard behind that menu, which is the most
+    // tempting way off the page of all.
+    bare?: boolean;
 };
 
 const breakpoints = {
@@ -80,12 +92,14 @@ function HeaderContent({
     accountArea = "customer",
     menuFooter,
     signedInMenuFooter,
+    bare = false,
+    action,
 }: SiteHeaderProps) {
     const pathname = usePathname();
     const { user, isLoading } = useCurrentUser();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const bp = breakpoints[collapseBelow];
-    const hasMobileMenu = links.length > 0 || (!user && !isLoading);
+    const hasMobileMenu = !bare && (links.length > 0 || (!user && !isLoading));
 
     const runsABusiness = useRunsABusiness();
 
@@ -116,7 +130,7 @@ function HeaderContent({
                     />
                 </Link>
 
-                {links.length > 0 && (
+                {!bare && links.length > 0 && (
                     <nav
                         aria-label="Primary navigation"
                         className={`absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 ${bp.show}`}
@@ -158,7 +172,24 @@ function HeaderContent({
                 )}
 
                 <div className="flex items-center gap-2">
-                    {isLoading ? (
+                    {bare ? (
+                        // The same button whether or not they are signed
+                        // in: claiming is the only thing this page asks.
+                        <div className="flex items-center gap-2">
+                            {action}
+                            {signedOutActions.map((item) => (
+                                <Button
+                                    key={item.href}
+                                    render={<Link href={item.href} />}
+                                    nativeButton={false}
+                                    variant={item.primary ? "default" : "ghost"}
+                                    size={item.primary ? "lg" : "default"}
+                                >
+                                    {item.label}
+                                </Button>
+                            ))}
+                        </div>
+                    ) : isLoading ? (
                         <div className="h-10 w-10 animate-pulse rounded-full bg-muted sm:w-28" />
                     ) : user ? (
                         <UserMenu user={user} signOutRedirect={signOutRedirect} area={accountArea} />

@@ -16,6 +16,20 @@ export const TRIAL_DAYS = 30;
 export const FOUNDING_TRIAL_DAYS = 90;
 export const FOUNDING_MEMBER_LIMIT = 50;
 
+// "3 months" rather than "90 days", because that is how long a person
+// hears it as — but derived, so changing FOUNDING_TRIAL_DAYS changes the
+// sentence rather than leaving it quietly wrong.
+export function freeFor(days: number) {
+    if (days % 30 === 0) {
+        const months = days / 30;
+
+        return months === 1 ? "1 month" : `${months} months`;
+    }
+
+    return `${days} days`;
+}
+
+
 export function trialDays(plan: PlanKey) {
     return plan === "pro_founding_monthly" ? FOUNDING_TRIAL_DAYS : TRIAL_DAYS;
 }

@@ -140,33 +140,63 @@ export function LoyaltyCard({
                 one still being collected should be the one that
                 catches the eye in a list of them. */}
             <div
-                className={cn("flex items-center gap-3 px-6 py-4", finished && "grayscale")}
+                className={cn(
+                    "flex items-center gap-3 py-4",
+                    // A narrow card cannot spare 24px a side: it is what
+                    // was squeezing the stamps down to 14px.
+                    narrow ? "px-4" : "px-6",
+                    finished && "grayscale",
+                )}
                 style={{ backgroundColor: theme.header, color: theme.ink }}
             >
                 {storedImage(logoUrl) ? (
-                    <Image src={storedImage(logoUrl)!} alt="" width={40} height={40} className="size-10 rounded-xl object-cover" />
+                    <Image
+                        src={storedImage(logoUrl)!}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className={cn("rounded-xl object-cover", narrow ? "size-8" : "size-10")}
+                    />
                 ) : (
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-current/10 font-semibold">
+                    <span
+                        className={cn(
+                            "flex shrink-0 items-center justify-center rounded-xl bg-current/10 font-semibold",
+                            narrow ? "size-8 text-sm" : "size-10",
+                        )}
+                    >
                         {businessName.charAt(0).toUpperCase()}
                     </span>
                 )}
 
                 <div className="min-w-0">
                     {businessHref ? (
-                        <a href={businessHref} className="relative z-20 block w-fit max-w-full truncate font-semibold hover:underline">
+                        <a
+                            href={businessHref}
+                            className={cn(
+                                "relative z-20 block w-fit max-w-full truncate font-semibold hover:underline",
+                                narrow && "text-sm",
+                            )}
+                        >
                             {businessName}
                         </a>
                     ) : (
-                        <p className="truncate font-semibold">{businessName}</p>
+                        <p className={cn("truncate font-semibold", narrow && "text-sm")}>
+                            {businessName}
+                        </p>
                     )}
 
-                    <p className="text-sm" style={{ color: theme.ink, opacity: 0.7 }}>
+                    {/* Smaller on a narrow card, where the full size
+                        wrapped the reward onto three lines. */}
+                    <p
+                        className={narrow ? "text-xs" : "text-sm"}
+                        style={{ color: theme.ink, opacity: 0.7 }}
+                    >
                         {stampsRequired} stamps for {rewardWording}
                     </p>
                 </div>
             </div>
 
-            <div className="p-6">
+            <div className={narrow ? "p-4" : "p-6"}>
                 {finished && (
                     <p className="mb-4 flex items-center gap-2 rounded-xl bg-[#17233B]/5 px-3 py-2 text-sm font-semibold text-[#17233B]/70">
                         <FiCheck aria-hidden="true" />
@@ -189,6 +219,11 @@ export function LoyaltyCard({
 
                 <div className={finished ? "grayscale" : undefined}>
                     <LoyaltyStamps
+                        // Smaller on a narrow card: at full size five
+                        // across filled the whole width and the stamps
+                        // became the card rather than part of it.
+                        size={narrow ? "sm" : undefined}
+                        balanced={narrow}
                         stamps={stamps}
                         required={stampsRequired}
                         colour={colour}
@@ -199,8 +234,13 @@ export function LoyaltyCard({
                     />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <p className="text-sm text-[#17233B]/70">
+                <div
+                    className={cn(
+                        "flex flex-wrap items-center gap-x-3 gap-y-2",
+                        narrow ? "mt-2" : "mt-3",
+                    )}
+                >
+                    <p className={cn("text-[#17233B]/70", narrow ? "text-xs" : "text-sm")}>
                         {stamps} of {stampsRequired} stamps
                         {rewardsRedeemed > 0 && ` · ${rewardsRedeemed} redeemed`}
                         {!active && " · paused by the business"}
@@ -221,7 +261,8 @@ export function LoyaltyCard({
                     as what it is, something they finished. */}
                 {!finished && (
                 <div className={cn(
-                    "mt-6 flex flex-col items-center gap-4 rounded-xl bg-[#FFF8F0] p-5 text-center",
+                    "flex flex-col items-center rounded-xl bg-[#FFF8F0] text-center",
+                    narrow ? "mt-4 gap-2 p-3" : "mt-6 gap-4 p-5",
                     // Side by side once there is room for it. On a card
                     // in a phone frame there is not, and the panel used
                     // to squash "Show this to staff" into a
@@ -231,18 +272,35 @@ export function LoyaltyCard({
                     <div
                         className={cn(
                             "shrink-0 rounded-xl bg-white p-2 [&_svg]:h-full [&_svg]:w-full",
-                            qrSize ?? (narrow ? "size-40" : "size-52 sm:size-32"),
+                            qrSize ?? (narrow ? "size-24" : "size-52 sm:size-32"),
                         )}
                     >
                         {qr}
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-sm font-medium">{scanTitle}</p>
+                        <p className={cn("font-medium", narrow ? "text-xs" : "text-sm")}>
+                            {scanTitle}
+                        </p>
                         {code && (
-                            <p className="mt-2 font-mono text-lg font-semibold tracking-[0.2em]">{code}</p>
+                            <p
+                                className={cn(
+                                    "font-mono font-semibold tracking-[0.2em]",
+                                    narrow ? "mt-1 text-sm" : "mt-2 text-lg",
+                                )}
+                            >
+                                {code}
+                            </p>
                         )}
-                        <p className={`text-xs text-[#17233B]/70 ${code ? "mt-1" : "mt-2"}`}>{scanHint}</p>
+                        <p
+                            className={cn(
+                                "text-[#17233B]/70",
+                                narrow ? "text-[11px]" : "text-xs",
+                                code ? "mt-1" : "mt-2",
+                            )}
+                        >
+                            {scanHint}
+                        </p>
                     </div>
                 </div>
                 )}

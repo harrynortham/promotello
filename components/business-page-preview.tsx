@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { FiMapPin } from "react-icons/fi";
+import { FiGift, FiMapPin } from "react-icons/fi";
 
 import { BrowserFrame } from "@/components/product-visuals";
+import { Badge } from "@/components/ui/badge";
 import { storedImage } from "@/lib/images";
 
 export type PagePreview = {
@@ -34,7 +35,21 @@ function Initials({ name }: { name: string }) {
 //
 // Blank where something is missing rather than hiding it, so an empty
 // strip where a cover photo goes reads as a thing to do.
-export function BusinessPagePreview({ page, className = "" }: { page: PagePreview; className?: string }) {
+export function BusinessPagePreview({
+    page,
+    className = "",
+    // Show the Follow button that a real page has under its
+    // description, rather than an offer block that no page has there.
+    follow = false,
+    // How many offers the page is showing. On a preview that is the one
+    // sample offer; the real page counts its live ones.
+    offers,
+}: {
+    page: PagePreview;
+    className?: string;
+    follow?: boolean;
+    offers?: number;
+}) {
     const where = [page.area, page.city]
         .filter((part, index, parts) => part && parts.indexOf(part) === index)
         .join(", ");
@@ -51,7 +66,13 @@ export function BusinessPagePreview({ page, className = "" }: { page: PagePrevie
                     <div className="h-20 rounded-xl bg-[#17233B]" />
                 )}
 
-                <div className="-mt-7 flex items-end gap-3 px-3">
+                {/* Logo left, trade on the right under the cover —
+                    the row a real page has. The category used to sit in
+                    the location line, which is not where anybody who
+                    has seen the live page would look for it.
+                    items-end, and no margin on the badge, so it sits on
+                    the logo's bottom edge rather than near it. */}
+                <div className="-mt-7 flex items-end justify-between gap-3 px-3">
                     {logo ? (
                         <Image
                             src={logo}
@@ -63,13 +84,19 @@ export function BusinessPagePreview({ page, className = "" }: { page: PagePrevie
                     ) : (
                         <Initials name={page.name} />
                     )}
+
+                    {page.category && (
+                        <Badge variant="secondary" className="max-w-[60%] whitespace-normal text-right">
+                            {page.category}
+                        </Badge>
+                    )}
                 </div>
 
                 <p className="mt-3 text-lg font-semibold">{page.name}</p>
 
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-[#17233B]/70">
                     <FiMapPin aria-hidden="true" />
-                    {[page.category, where].filter(Boolean).join(" · ") || "Your area"}
+                    {where || "Your area"}
                 </p>
 
                 {page.description ? (
@@ -81,16 +108,39 @@ export function BusinessPagePreview({ page, className = "" }: { page: PagePrevie
                     </div>
                 )}
 
-                {page.offer && (
-                    <div className="mt-4 rounded-xl border border-[#17233B]/10 bg-white p-3">
-                        <span className="inline-flex rounded-full bg-[#FF593F] px-2.5 py-0.5 text-xs font-semibold text-white">
-                            Offer
-                        </span>
-                        <p className="mt-1.5 text-sm font-semibold">{page.offer}</p>
-                        <div className="mt-2 rounded-lg bg-[#FF593F] py-1.5 text-center text-xs font-semibold text-white">
-                            Claim offer
+                {/* What is actually under the description on a real
+                    page. The offer block that used to sit here was
+                    invented — on the live page offers are a section of
+                    their own further down, and this is where Follow is. */}
+                {follow ? (
+                    <>
+                        {/* "Current offers" is what the real page calls
+                            the section this points at. */}
+                        {offers !== undefined && offers > 0 && (
+                            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[#17233B]/10 bg-white p-2.5">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-medium">
+                                    <FiGift aria-hidden="true" className="size-3.5 text-[#FF593F]" />
+                                    {offers} current offer{offers === 1 ? "" : "s"}
+                                </span>
+
+                                <span className="rounded-lg bg-[#FF593F] px-2.5 py-1 text-[11px] font-semibold text-white">
+                                    View offers
+                                </span>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    page.offer && (
+                        <div className="mt-4 rounded-xl border border-[#17233B]/10 bg-white p-3">
+                            <span className="inline-flex rounded-full bg-[#FF593F] px-2.5 py-0.5 text-xs font-semibold text-white">
+                                Offer
+                            </span>
+                            <p className="mt-1.5 text-sm font-semibold">{page.offer}</p>
+                            <div className="mt-2 rounded-lg bg-[#FF593F] py-1.5 text-center text-xs font-semibold text-white">
+                                Claim offer
+                            </div>
                         </div>
-                    </div>
+                    )
                 )}
             </div>
         </BrowserFrame>
