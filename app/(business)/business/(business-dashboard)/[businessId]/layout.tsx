@@ -27,7 +27,9 @@ type Business = {
     // For the link out to the page customers see.
     slug: string;
     name: string;
-    business_previews: { claimed_at: string | null }[];
+    // One object, not an array: business_id is the primary key of
+    // business_previews, so PostgREST embeds it to-one.
+    business_previews: { claimed_at: string | null } | { claimed_at: string | null }[] | null;
     logo_url: string | null;
     approval_status: string;
     review_requested_at: string | null;
@@ -130,7 +132,11 @@ async function BusinessLayoutContent({
                     ? item.businesses[0]
                     : item.businesses;
 
-                return business;
+                // PostgREST's inferred shape says business_previews is an
+                // array; business_id is its primary key, so it is really one
+                // object or nothing. Business says so, and this is where the
+                // two meet.
+                return business as unknown as Business | null;
             })
             .filter(
                 (business): business is Business =>

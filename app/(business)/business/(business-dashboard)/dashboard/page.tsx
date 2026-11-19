@@ -30,7 +30,9 @@ type Business = {
     logo_url: string | null;
     approval_status: string;
     closed_at: string | null;
-    business_previews: { claimed_at: string | null }[];
+    // One object, not an array: business_id is the primary key of
+    // business_previews, so PostgREST embeds it to-one.
+    business_previews: { claimed_at: string | null } | { claimed_at: string | null }[] | null;
 };
 
 type BusinessSummary = Business & {
@@ -302,8 +304,14 @@ async function BusinessDashboardContent() {
     // and listing it here would bury the businesses they actually run.
     const businesses: Business[] =
         memberships
-            ?.map((membership) =>
-                Array.isArray(membership.businesses) ? membership.businesses[0] : membership.businesses,
+            ?.map(
+                (membership) =>
+                    // PostgREST's inferred shape says business_previews is an
+                    // array; business_id is its primary key, so it is really
+                    // one object or nothing.
+                    (Array.isArray(membership.businesses)
+                        ? membership.businesses[0]
+                        : membership.businesses) as unknown as Business | null,
             )
             .filter((business): business is Business => Boolean(business?.id && business?.name))
             .filter((business) => !unclaimedPreview(business)) ?? [];
