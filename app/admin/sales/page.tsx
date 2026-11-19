@@ -33,7 +33,11 @@ type AreaOption = { id: string; name: string; cities: { name: string } | null };
 
 // Enough that a morning's work is one page, few enough that the page
 // is readable on a phone.
-const PER_PAGE = 25;
+//
+// Twenty-five never fired: the board had twenty-two leads on it and
+// the pager stayed hidden while the page ran to nearly five screens.
+// A number only reached in theory is not a page size.
+const PER_PAGE = 15;
 
 // A uuid no lead has, for the case where a filter matches nothing:
 // PostgREST's .in() with an empty list matches every row, which is the
