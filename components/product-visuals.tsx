@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 
 import { storedImage } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { cardColour } from "@/lib/loyalty-design";
 import { DailyBars } from "@/components/daily-bars";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
@@ -30,11 +31,18 @@ const business = "Harbour Grind";
 // Frames
 // ---------------------------------------------------------------------------
 
+// w-64 is right for the little illustrations on the marketing pages. A
+// real card put inside one needs more — merged rather than appended, so
+// a width passed in actually replaces it instead of depending on which
+// rule the browser happens to apply last.
 export function PhoneFrame({ children, label, className = "" }: { children: ReactNode; label: string; className?: string }) {
     return (
         <figure
             aria-label={label}
-            className={`w-64 shrink-0 rounded-[2.5rem] border-[10px] border-[#17233B] bg-[#FFF8F0] shadow-2xl shadow-[#17233B]/20 ${className}`}
+            className={cn(
+                "w-64 shrink-0 rounded-[2.5rem] border-[10px] border-[#17233B] bg-[#FFF8F0] shadow-2xl shadow-[#17233B]/20",
+                className,
+            )}
         >
             <div className="mx-auto mt-2 h-1.5 w-16 rounded-full bg-[#17233B]/15" aria-hidden="true" />
             <div className="px-4 pb-6 pt-4 text-[#17233B]">{children}</div>
@@ -180,21 +188,31 @@ export function PosterVisual({
     eyebrow = "Scan for offers",
     colour = "navy",
     logoUrl = null,
+    // 240 is the size of the little illustrations on the marketing
+    // pages. A preview showing a business their own poster wants more.
+    width = 240,
 }: {
     qrSvg: string;
     className?: string;
+    width?: number;
     businessName?: string;
     headline?: string;
     eyebrow?: string;
     colour?: string | null;
     logoUrl?: string | null;
 }) {
-    const width = 240;
-
     return (
         <figure
             aria-label="A printable QR poster for a shop window"
-            className={`w-60 shrink-0 rotate-[-2deg] overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/20 ${className}`}
+            // The width is a number rather than a class because the
+            // poster inside has to be told it too — A4 proportions and
+            // the type scale both follow from it, so a class alone would
+            // stretch the frame and leave the poster the old size.
+            style={{ width: `${width}px` }}
+            className={cn(
+                "shrink-0 rotate-[-2deg] overflow-hidden rounded-2xl shadow-2xl shadow-[#17233B]/20",
+                className,
+            )}
         >
             <QrPoster
                 width={`${width}px`}

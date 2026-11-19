@@ -17,14 +17,13 @@ import {
     DEFAULT_CARD_COLOUR,
     DEFAULT_STAMP_ICON,
     cardColour,
+    SAMPLE_CARD_CODE,
     stampIcon,
     type CardColour,
     type StampIcon,
 } from "@/lib/loyalty-design";
 import { saveLoyaltyDesign } from "./actions";
 
-// A sample code, so the preview carries a QR like the live card.
-const SAMPLE_CODE = "4F8A2C91D0";
 
 export function CardDesign({
     businessId,
@@ -163,8 +162,8 @@ export function CardDesign({
                                     reward={reward}
                                     stamps={Math.min(3, stampsRequired - 1)}
                                     terms={terms}
-                                    code={SAMPLE_CODE}
-                                    qr={<StampQr code={SAMPLE_CODE} />}
+                                    code={SAMPLE_CARD_CODE}
+                                    qr={<StampQr code={SAMPLE_CARD_CODE} />}
                                     colour={colour}
                                     stampIcon={icon}
                                     className="border-[#17233B]/10"

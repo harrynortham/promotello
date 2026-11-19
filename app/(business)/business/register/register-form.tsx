@@ -203,7 +203,14 @@ export function BusinessRegisterForm({ preview = null }: { preview?: ClaimPrevie
                             </p>
 
                             <div className="mt-8">
+                                {/* The same page they were just looking
+                                    at. They arrived here by pressing
+                                    Claim on the preview, so a different
+                                    drawing of the same page on the next
+                                    screen reads as a different page. */}
                                 <BusinessPagePreview
+                                    follow
+                                    offers={1}
                                     page={{
                                         name: preview.business_name,
                                         category: preview.category,
@@ -212,7 +219,6 @@ export function BusinessRegisterForm({ preview = null }: { preview?: ClaimPrevie
                                         description: preview.description,
                                         logoUrl: preview.logo_url,
                                         coverImageUrl: preview.cover_image_url,
-                                        offer: preview.sample_offer,
                                     }}
                                 />
                             </div>

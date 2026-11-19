@@ -6,6 +6,7 @@ import { ExampleBadge } from "@/components/example-badge";
 import { localImage, storedImage } from "@/lib/images";
 
 type OfferCardProps = {
+    // Empty for a sample offer, which has no page to open.
     slug: string;
     discount: string;
     title: string;
@@ -164,12 +165,20 @@ export function OfferCard({
                 )}
 
                 <h3 className="mt-4 text-lg font-semibold leading-snug text-[#17233B]">
-                    <Link
-                        href={`/offers/${slug}`}
-                        className="after:absolute after:inset-0 focus-visible:outline-none"
-                    >
-                        {title}
-                    </Link>
+                    {/* An offer that does not exist yet has nowhere to
+                        go: the sample on a preview page is a picture of
+                        a card, and a link to /offers/ would be a 404
+                        dressed up as the main thing to click. */}
+                    {slug ? (
+                        <Link
+                            href={`/offers/${slug}`}
+                            className="after:absolute after:inset-0 focus-visible:outline-none"
+                        >
+                            {title}
+                        </Link>
+                    ) : (
+                        title
+                    )}
                 </h3>
 
                 <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-[#17233B]/65">

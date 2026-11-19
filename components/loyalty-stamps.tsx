@@ -29,10 +29,11 @@ export function LoyaltyStamps({
     accent: customAccent,
     icon: chosenIcon,
     landedAt,
+    balanced = false,
 }: {
     stamps: number;
     required: number;
-    size?: "sm" | "md" | "lg";
+    size?: "xs" | "sm" | "md" | "lg";
     // The business's chosen look; both fall back to the original card.
     colour?: string | null;
     icon?: string | null;
@@ -42,6 +43,11 @@ export function LoyaltyStamps({
     // The stamp just added, which lands with a bounce instead of
     // appearing between one render and the next.
     landedAt?: number;
+    // Even rows instead of eight-then-the-rest. Only the narrow card on
+    // a preview page asks for it: everywhere else the row of eight is
+    // the established look and changing it would move a card thousands
+    // of people have already seen.
+    balanced?: boolean;
 }) {
     const filled = Math.min(stamps, required);
     const accent = cardTheme({ colour, header, accent: customAccent }).stamp;
@@ -49,15 +55,21 @@ export function LoyaltyStamps({
     // a yellow that white disappears into.
     const stampInk = readableInk(accent);
     const StampIconComponent = icons[stampIcon(chosenIcon)];
-    const widest = { sm: 28, md: 40, lg: 48 }[size];
-    const icon = { sm: "size-3.5", md: "size-5", lg: "size-6" }[size];
+    // xs is for a card inside a phone frame on a preview page,
+    // where sm still made the stamps the loudest thing on it.
+    const widest = { xs: 20, sm: 28, md: 40, lg: 48 }[size];
+    const icon = { xs: "size-2.5", sm: "size-3.5", md: "size-5", lg: "size-6" }[size];
 
     // Eight to a row. Wrapping wherever the width ran out put seven on
     // one line and two on the next, which reads as a mistake; a grid of
     // eight columns keeps the rows even and lets the stamps shrink a
     // little on a narrow card rather than spill onto a line of their
     // own. A card of eight — what most of them are — is one row.
-    const columns = Math.min(required, 8);
+    // Still eight at most. Balanced, it spreads them evenly over however
+    // many rows that takes — nine becomes five and four rather than
+    // eight and a lone one, which reads as a mistake on a small card.
+    const rows = Math.ceil(required / 8);
+    const columns = balanced ? Math.ceil(required / rows) : Math.min(required, 8);
 
     return (
         <div
@@ -65,8 +77,16 @@ export function LoyaltyStamps({
             // above it start. On a card the columns fill the width and
             // it makes no odds; anywhere wider than the row, centring
             // floated the stamps away from everything else.
-            className="grid justify-start gap-2"
-            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, ${widest}px))` }}
+            className={balanced ? "grid gap-2" : "grid justify-start gap-2"}
+            style={{
+                // Balanced, the columns stretch to fill the row rather
+                // than sitting at a fixed width with the rest of the
+                // card empty beside them. Everywhere else they keep
+                // their size and pack from the left.
+                gridTemplateColumns: balanced
+                    ? `repeat(${columns}, minmax(0, 1fr))`
+                    : `repeat(${columns}, minmax(0, ${widest}px))`,
+            }}
             role="img"
             aria-label={`${filled} of ${required} stamps collected`}
         >

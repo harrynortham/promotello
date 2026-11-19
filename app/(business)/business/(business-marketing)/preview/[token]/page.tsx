@@ -2,22 +2,27 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { FiArrowRight, FiCheckCircle, FiGift, FiUsers } from "react-icons/fi";
+import { FiArrowRight, FiCheckCircle, FiGift, FiTag } from "react-icons/fi";
 
 import { ExpiredPreview } from "./expired-preview";
 import { BusinessPagePreview } from "@/components/business-page-preview";
-import { LoyaltyCardScreen, PosterVisual } from "@/components/product-visuals";
+import { LoyaltyCard } from "@/components/loyalty-card";
+import { OfferCard } from "@/components/offer-card";
+import { PhoneFrame, PosterVisual } from "@/components/product-visuals";
+import { StampQr } from "@/components/stamp-qr";
+import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FOUNDING_MEMBER_LIMIT, plans } from "@/lib/billing";
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { qrSvg } from "@/lib/qr";
 import { absoluteUrl } from "@/lib/site";
 import { previewLink, tokenFromPreviewSegment } from "@/lib/previews";
 import { createClient } from "@/utils/supabase/server";
 import { claimPreview } from "./actions";
+import { PreviewHeader } from "@/components/site/preview-header";
 import { PreviewClaimed } from "./claimed";
 import { RegisterLink } from "@/components/register-link";
 
@@ -55,6 +60,8 @@ type Preview = {
 // moment: something that was meant for you, and isn't there.
 function NotAvailable() {
     return (
+        <>
+            <PreviewHeader />
         <section className="px-6 py-14 sm:py-20">
             <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
                 <div>
@@ -80,6 +87,7 @@ function NotAvailable() {
                 <ExpiredPreview />
             </div>
         </section>
+        </>
     );
 }
 
@@ -120,12 +128,15 @@ async function PreviewContent({ params, searchParams }: PageProps) {
             : { data: null };
 
         return (
-            <PreviewClaimed
-                name={preview.business_name}
-                businessId={preview.business_id}
-                yours={Boolean(membership)}
-                signedIn={signedIn}
-            />
+            <>
+                <PreviewHeader />
+                <PreviewClaimed
+                    name={preview.business_name}
+                    businessId={preview.business_id}
+                    yours={Boolean(membership)}
+                    signedIn={signedIn}
+                />
+            </>
         );
     }
 
@@ -139,22 +150,18 @@ async function PreviewContent({ params, searchParams }: PageProps) {
     // pricing page (docs/LAUNCH-FUNNEL.md).
     const placesLeft = await foundingPlacesLeft();
 
-    // Whether the claim will actually publish it, which is the same two
-    // things claim_business_preview checks: something written about the
-    // business, and somewhere it is. Asked rather than assumed, because
-    // this sentence promised a thing the database then refused — for a
-    // year of previews it could not have been true, since the rule also
-    // wanted opening hours and the preview form never collected any
-    // (20270128090000). A promise worth making is worth checking.
+    // Whether there is still a founding place to be had. Null means we
+    // could not count them, and promising one we cannot honour is worse
+    // than not mentioning it.
+    const founding = placesLeft !== null && placesLeft > 0;
+
     // The section of the directory this page would be listed in. Already
     // loaded for the page mock below, and never shown in words until now.
     const section = preview.category?.trim() || null;
 
-    const goesLiveOnClaim =
-        Boolean(preview.description?.trim()) && Boolean(preview.area?.trim() || town);
-
     const claim = (
-        <div className="flex flex-col items-start gap-3">
+        // The header's button points here, so it needs somewhere to land.
+        <div id="claim" className="flex scroll-mt-24 flex-col items-start gap-3">
             <form action={claimPreview}>
                 <input type="hidden" name="token" value={token} />
                 <input type="hidden" name="name" value={preview.business_name} />
@@ -162,18 +169,6 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     {signedIn ? `Claim ${preview.business_name}` : `Claim ${preview.business_name} for free`}
                 </SubmitButton>
             </form>
-            {/* This used to promise "nothing goes public until you say
-                so", which was the reason it was safe to press. The page
-                goes live on the claim now
-                (20270124090000_a_claimed_page_is_live_when_claimed.sql),
-                so the button says what it actually does — and only while
-                it really does. */}
-            <p className="text-sm text-[#17233B]/70">
-                {goesLiveOnClaim
-                    ? "Free. We wrote this page and checked it before we sent it, so it goes live as soon as you claim it — and it's yours to change after."
-                    : "Free, and it's yours to change. It goes on the directory once you've finished the page — we'll show you what's left."}
-            </p>
-
             {placesLeft !== null && placesLeft > 0 && placesLeft < FOUNDING_MEMBER_LIMIT && (
                 // Only once some have gone: "50 of 50 left" tells them
                 // nobody has taken it.
@@ -183,20 +178,22 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 </p>
             )}
 
-            {!signedIn && (
-                <p className="text-sm text-[#17233B]/70">
-                    You&apos;ll create an account first. Already have one?{" "}
-                    <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-medium text-[#FF593F] underline">
-                        Sign in
-                    </Link>
-                </p>
-            )}
         </div>
     );
 
     return (
         <>
+            {/* The only state with something to claim, so the only one
+                whose header carries the button. */}
+            <PreviewHeader token={token} />
+
             <section className="mx-auto max-w-7xl px-6 pb-12 pt-14 sm:px-10 sm:pt-20">
+                {/* Their page beside the sentence that names it, rather
+                    than a column further down. It is the thing being
+                    offered, and the first screenful is where somebody
+                    decides whether to read the rest. */}
+                <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+                    <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
                     A preview made for {preview.business_name}
                 </p>
@@ -224,34 +221,60 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                 )}
 
                 <div className="mt-8">{claim}</div>
+                    </div>
+
+                    <div className="flex justify-center lg:justify-end">
+                        {/* No offer on it: the offer has its own card
+                            below, drawn by the component the directory
+                            uses, and two different pictures of the same
+                            offer is one too many. */}
+                        <BusinessPagePreview
+                            follow
+                            offers={1}
+                            page={{
+                                name: preview.business_name,
+                                category: preview.category,
+                                area: preview.area,
+                                city: preview.city,
+                                description: preview.description,
+                                logoUrl: preview.logo_url,
+                                coverImageUrl: preview.cover_image_url,
+                            }}
+                        />
+                    </div>
+                </div>
             </section>
 
             <section className="border-y border-[#17233B]/10 bg-white">
                 <div className="mx-auto grid max-w-7xl items-start gap-12 px-6 py-14 sm:px-10 lg:grid-cols-3">
                     <div>
                         <h2 className="flex items-center gap-2 font-semibold">
-                            <FiUsers aria-hidden="true" className="text-[#FF593F]" />
-                            Your page
+                            <FiTag aria-hidden="true" className="text-[#FF593F]" />
+                            Your offer
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
                             {town && section
-                                ? `Customers browsing ${section.toLowerCase()} in ${town} find you, follow you, and claim your offers.`
-                                : town
-                                    ? `Customers browsing ${town} find you in the directory, follow you, and claim your offers.`
-                                    : "Customers find you in the Promotello directory, follow you, and claim your offers."}
+                                ? `This is how it looks to someone browsing ${section.toLowerCase()} in ${town}. They claim it on their phone and show the code at the till.`
+                                : "This is how it looks to someone browsing the directory. They claim it on their phone and show the code at the till."}
                         </p>
+                        {/* The card the directory draws, not a drawing
+                            of one — the same component /offers lists.
+                            No slug: this offer does not exist until
+                            they claim the page. */}
                         <div className="mt-6">
-                            <BusinessPagePreview
-                                page={{
-                                    name: preview.business_name,
-                                    category: preview.category,
-                                    area: preview.area,
-                                    city: preview.city,
-                                    description: preview.description,
-                                    logoUrl: preview.logo_url,
-                                    coverImageUrl: preview.cover_image_url,
-                                    offer: preview.sample_offer,
-                                }}
+                            <OfferCard
+                                slug=""
+                                discount="Offer"
+                                title={preview.sample_offer}
+                                description="An example of what you could run. You write the real one when you claim the page."
+                                availability="You choose the days and times"
+                                business={preview.business_name}
+                                businessLogoUrl={preview.logo_url}
+                                imageUrl={preview.cover_image_url}
+                                area={preview.area}
+                                city={preview.city}
+                                category={preview.category}
+                                example
                             />
                         </div>
                     </div>
@@ -259,7 +282,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     <div>
                         <h2 className="flex items-center gap-2 font-semibold">
                             <FiCheckCircle aria-hidden="true" className="text-[#FF593F]" />
-                            Your offer, on a poster
+                            Your poster
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
                             Print it in a minute and put it in the window. People scan it, claim your
@@ -268,6 +291,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         </p>
                         <div className="mt-10 flex justify-center">
                             <PosterVisual
+                                width={300}
                                 qrSvg={poster}
                                 businessName={preview.business_name}
                                 logoUrl={preview.logo_url}
@@ -284,27 +308,65 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
                             Customers keep it on their phone. Staff stamp it by scanning, so no paper cards to lose.
                         </p>
+                        {/* The real card, the same component the business
+                            sees on their own loyalty page — not an
+                            illustration of one. What they are shown here is
+                            what they get, and a drawing that drifts from the
+                            product is worse than no drawing. */}
                         <div className="mt-6 flex justify-center">
-                            <LoyaltyCardScreen
+                            {/* Wider than the illustrations elsewhere,
+                                because this is the card itself rather
+                                than a drawing of one — at w-64 the
+                                stamps shrink to 12px and stop reading
+                                as stamps. */}
+                            <PhoneFrame
+                                label="A customer's loyalty card on their phone"
+                                className="w-full max-w-[17rem]"
+                            >
+                            <LoyaltyCard
                                 businessName={preview.business_name}
                                 logoUrl={preview.logo_url}
-                                required={preview.sample_stamps}
-                                stamps={Math.max(1, preview.sample_stamps - 3)}
+                                stampsRequired={preview.sample_stamps}
                                 reward={preview.sample_reward}
+                                stamps={Math.max(1, preview.sample_stamps - 3)}
+                                code={SAMPLE_CARD_CODE}
+                                qr={<StampQr code={SAMPLE_CARD_CODE} />}
+                                narrow
+                                className="border-[#17233B]/10"
                             />
+                            </PhoneFrame>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section className="mx-auto max-w-7xl px-6 py-14 sm:px-10">
-                <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                {/* The claim block is a button and a line of small
+                    print, and "auto" was letting that print set the
+                    column — 827px of it beside 341px of the words that
+                    matter. Both columns are given a share instead, and
+                    min-w-0 so neither can push the other out. */}
+                <div className="grid gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-center">
                     <div>
-                        <h2 className="text-2xl font-semibold tracking-tight">Free to claim. Pro is free for 30 days.</h2>
+                        {/* The founding trial is three months, not the
+                            ordinary thirty days — this said 30 to
+                            somebody being offered 90, which is the one
+                            number on the page they might check. */}
+                        <h2 className="text-2xl font-semibold tracking-tight">
+                            Free to claim. Pro is free for{" "}
+                            {freeFor(founding ? FOUNDING_TRIAL_DAYS : TRIAL_DAYS)}.
+                        </h2>
                         <ul className="mt-4 space-y-2 text-[#17233B]/70">
                             <li>Free plan: your page, one live offer and a QR poster for your window, for as long as you like.</li>
                             <li>Pro: loyalty card, a poster for every spot with scan counts, followers and unlimited offers.</li>
-                            <li>The first {FOUNDING_MEMBER_LIMIT} businesses on Pro pay {plans.pro_founding_monthly.price} a month, locked for life.</li>
+                            {founding && (
+                                <li>
+                                    The first {FOUNDING_MEMBER_LIMIT} businesses get{" "}
+                                    {freeFor(FOUNDING_TRIAL_DAYS)} of Pro free, then{" "}
+                                    {plans.pro_founding_monthly.price} a month instead of{" "}
+                                    {plans.pro_monthly.price}, locked for life.
+                                </li>
+                            )}
                         </ul>
                         <p className="mt-4 text-sm text-[#17233B]/70">
                             <Link href="/business/pricing" className="underline">See pricing</Link> ·{" "}
