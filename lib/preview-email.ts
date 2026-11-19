@@ -1,5 +1,6 @@
 import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import { absoluteUrl } from "@/lib/site";
+import { SIGNED_BY } from "@/lib/email-signature";
 import { previewLink } from "@/lib/previews";
 
 // What a preview looks like wherever it is listed or opened.
@@ -256,9 +257,15 @@ export function outreachMessage({
     // reads as noticing rather than as a mail merge.
     const opening = personalLine?.trim();
 
-    // No sign-off: the signature carries the name, the site and the
-    // registered office (lib/email-signature.ts), and writing one here
-    // would print "Harry Northam, Founder" twice.
+    // "Cheers, Harry", then the signature under it. The two are not the
+    // same thing: the sign-off ends the letter, and the signature is the
+    // block of small print a business email has to carry. A letter that
+    // stops dead at the last sentence and goes straight into a
+    // registered office reads like a notice rather than a note.
+    //
+    // Cheers rather than Thanks, which is what signOff() has always
+    // said for a named sender — they have not done anything to be
+    // thanked for yet.
     return [
         `Hi ${contactName || "there"},`,
         "",
@@ -276,6 +283,8 @@ export function outreachMessage({
         foundingOffer(placesLeft),
         "",
         "The preview is private and the offers on it are only examples. Claim it and it's yours to edit. Not for you? Reply and I'll delete it.",
+        "",
+        ...signOff(SIGNED_BY),
     ].join("\n");
 }
 
@@ -352,6 +361,8 @@ export function outreachFollowUp({
                 : `A founding place comes with Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}, then ${plans.pro_founding_monthly.price} a month for life.`,
         "",
         `Not for you? Reply "no thanks" and I'll delete it.`,
+        "",
+        ...signOff(SIGNED_BY),
     ].join("\n");
 }
 
@@ -420,8 +431,13 @@ export function outreachDm({
             ? `It's free, and you can try Pro free for ${freeFor(TRIAL_DAYS)}.`
             : `It's free, and the first ${FOUNDING_MEMBER_LIMIT} businesses get Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}.`;
 
-    // No sign-off: it opens with who is writing, and signing it again at
-    // the bottom of a DM reads like a letter.
+    // It opens with who is writing and ends the same way the emails do.
+    // A DM is still a note from a person, and one that stops dead on
+    // "Not for you? Just say" reads like the end of a form.
+    //
+    // Only this one. The opener is a single line asking a question, and
+    // a sign-off under a question is a letter pretending to be a
+    // message.
     return [
         who,
         ...(line ? ["", line] : []),
@@ -437,5 +453,7 @@ export function outreachDm({
         founding,
         "",
         "Not for you? Just say and I'll delete it.",
+        "",
+        ...signOff(SIGNED_BY),
     ].join("\n");
 }

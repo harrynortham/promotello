@@ -9,6 +9,11 @@ import { companyDisclosure } from "@/lib/legal";
 // something a server bundle can be relied on to carry, and this is
 // static. The file stays the thing a person edits, and a unit test
 // fails if the two drift apart.
+// Whose name is on it. The signature prints it in full and the sign-off
+// above uses the first name, so they come from here rather than being
+// typed twice and drifting.
+export const SIGNED_BY = "Harry Northam";
+
 export const SIGNATURE_HTML = `<div
   style="
     font-family: Arial, Helvetica, sans-serif;
@@ -106,7 +111,7 @@ export const SIGNATURE_HTML = `<div
 // not survive the trip, so it says the words instead.
 export function signatureText() {
     return [
-        "Harry Northam",
+        SIGNED_BY,
         "Founder",
         "",
         "Promotello — Local offers, real customers",
