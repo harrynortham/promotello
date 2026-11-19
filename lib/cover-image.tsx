@@ -2,9 +2,10 @@
    renders through, draws plain <img> and knows nothing about
    next/image. These are inline SVG data URIs besides: there is nothing
    to fetch and nothing to optimise. */
+import { createElement } from "react";
 import { ImageResponse } from "next/og";
 
-import { categoryIcon, iconDataUri } from "@/lib/cover-icons";
+import { iconShapes, type IconShapes } from "@/lib/cover-icons";
 import { coverLayout, coverPalette, type CoverPalette } from "@/lib/cover-colours";
 
 // The same pixels an uploaded cover is cropped to in the browser:
@@ -52,17 +53,15 @@ export async function dominantColourOf(imageUrl: string): Promise<string | null>
 }
 
 type CoverContent = {
-    // The trade, for the colour, and its mark, for the pattern. The
-    // mark is the category's own icon_path; the slug still picks the
-    // colour, which is a code decision rather than an editable one.
+    // The trade picks the colour; the mark is chosen by hand from
+    // lucide, by name.
     categorySlug?: string | null;
-    categoryIconPath?: string | null;
+    icon?: string | null;
     logoColour?: string | null;
     variation?: number;
 };
 
-function Cover({ palette, layout, content }: { palette: CoverPalette; layout: ReturnType<typeof coverLayout>; content: CoverContent }) {
-    const icon = categoryIcon(content.categoryIconPath);
+function Cover({ palette, layout, shapes }: { palette: CoverPalette; layout: ReturnType<typeof coverLayout>; shapes: IconShapes }) {
 
     return (
         <div
@@ -114,7 +113,7 @@ function Cover({ palette, layout, content }: { palette: CoverPalette; layout: Re
                             }}
                         >
                             {[0, 1, 2, 3, 4, 5, 6, 7].map((column) => (
-                                <img key={column} alt="" src={iconDataUri(icon, palette.ink, 0.2)} width={86} height={86} />
+                                <Mark key={column} shapes={shapes} size={86} colour={palette.ink} opacity={0.2} />
                             ))}
                         </div>
                     ))}
@@ -124,16 +123,52 @@ function Cover({ palette, layout, content }: { palette: CoverPalette; layout: Re
                 // Cropped on purpose: a whole icon centred in a
                 // rectangle looks like a missing-image placeholder,
                 // which is the one thing a cover must not look like.
-                <img
-                    alt=""
-                    src={iconDataUri(icon, palette.ink, 0.17)}
-                    width={760}
-                    height={760}
+                <Mark
+                    shapes={shapes}
+                    size={760}
+                    colour={palette.ink}
+                    opacity={0.17}
                     style={{ position: "absolute", right: -130, bottom: -150 }}
                 />
             )}
 
         </div>
+    );
+}
+
+// The icon's shapes, drawn the way lucide draws them. An <svg> rather
+// than the lucide component, which satori cannot call — see
+// lib/cover-icons.ts.
+function Mark({
+    shapes,
+    size,
+    colour,
+    opacity,
+    style,
+}: {
+    shapes: IconShapes;
+    size: number;
+    colour: string;
+    opacity: number;
+    style?: Record<string, string | number>;
+}) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={colour}
+            strokeOpacity={opacity}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={style}
+        >
+            {shapes.map(([tag, attributes], index) =>
+                createElement(tag, { key: index, ...attributes }),
+            )}
+        </svg>
     );
 }
 
@@ -145,7 +180,7 @@ export function coverImage(content: CoverContent) {
             <Cover
                 palette={coverPalette({ logoColour: content.logoColour, categorySlug: content.categorySlug, variation })}
                 layout={coverLayout(variation)}
-                content={content}
+                shapes={iconShapes(content.icon)}
             />
         ),
         { width: COVER_WIDTH, height: COVER_HEIGHT },
