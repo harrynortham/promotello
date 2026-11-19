@@ -54,6 +54,28 @@ async function Outbox({ searchParams }: PageProps) {
                 to read it. Nothing goes until you press send.
             </p>
 
+            {/* What the recipient will see in their inbox.
+                OUTREACH_EMAIL_FROM is a Vercel setting, so the only way
+                to check it was to send something and look at where it
+                landed — and a bare address means the client invents a
+                name from the part before the @, which is how "Harry
+                Northam" arrived as "harry". */}
+            {sender && (
+                <p className="mt-6 text-sm text-[#17233B]/65">
+                    Sending as <strong className="text-[#17233B]">{sender}</strong>.
+                    {!/</.test(sender) && (
+                        <>
+                            {" "}
+                            <span className="text-[#FF593F]">
+                                No name on it, so inboxes will make one up from the
+                                address. Set {OUTREACH_FROM} to{" "}
+                                <code>Your Name &lt;{sender}&gt;</code>.
+                            </span>
+                        </>
+                    )}
+                </p>
+            )}
+
             {!sender && (
                 <Alert className="mt-6 border-amber-200 bg-amber-50">
                     <AlertTitle>Outreach has no sender yet</AlertTitle>
