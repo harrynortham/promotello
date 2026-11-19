@@ -13,6 +13,7 @@ import {
     AlertTitle,
 } from "@/components/ui/alert";
 import { BusinessCard } from "@/components/business-card";
+import { SOCIAL_NETWORKS, socialHandle, socialUrl } from "@/lib/social-links";
 import { CategorySelect, OTHER_CATEGORY } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -57,6 +58,12 @@ type Business = {
     contact_email: string | null;
     logo_url: string | null;
     cover_image_url: string | null;
+    instagram_url: string | null;
+    facebook_url: string | null;
+    tiktok_url: string | null;
+    x_url: string | null;
+    youtube_url: string | null;
+    linkedin_url: string | null;
     google_review_url: string | null;
 };
 
@@ -87,6 +94,22 @@ const businessShape = {
         .string()
         .trim()
         .refine((value) => !value || reviewLink.test(value), "Paste the review link from your Google Business Profile."),
+    // A handle or a pasted link, either way round. socialUrl says which
+    // it is and whether it belongs to this network — a Facebook link in
+    // the Instagram box is a mistake worth catching rather than turning
+    // into a handle called "facebook.com".
+    ...Object.fromEntries(
+        SOCIAL_NETWORKS.map((network) => [
+            network.key,
+            z
+                .string()
+                .trim()
+                .refine(
+                    (value) => !("invalid" in socialUrl(network.key, value)),
+                    `Enter your ${network.label} handle, like ${network.placeholder}, or paste the link.`,
+                ),
+        ]),
+    ),
 };
 
 const locationFieldsShape = {
@@ -159,7 +182,7 @@ export default function EditBusinessForm({
                     supabase
                         .from("businesses")
                         .select(
-                            "name, slug, category, category_id, description, website_url, contact_email, logo_url, cover_image_url, google_review_url",
+                            "name, slug, category, category_id, description, website_url, contact_email, logo_url, cover_image_url, google_review_url, instagram_url, facebook_url, tiktok_url, x_url, youtube_url, linkedin_url",
                         )
                         .eq("id", businessId)
                         .single(),
@@ -269,6 +292,14 @@ function BusinessForm({
             website: business.website_url ?? "",
             contactEmail: business.contact_email ?? "",
             googleReviewUrl: business.google_review_url ?? "",
+            // Shown as the handle, which is what they typed and what
+            // they recognise.
+            ...Object.fromEntries(
+                SOCIAL_NETWORKS.map((network) => [
+                    network.key,
+                    socialHandle(network.key, business[network.column]),
+                ]),
+            ),
             locationName: location?.name ?? "",
             addressLine1: location?.address_line_1 ?? "",
             addressLine2: location?.address_line_2 ?? "",
@@ -319,7 +350,15 @@ function BusinessForm({
     };
 
     const errorsByTab = {
-        profile: ["businessName", "category", "description", "website", "contactEmail", "googleReviewUrl"],
+        profile: [
+            "businessName",
+            "category",
+            "description",
+            "website",
+            "contactEmail",
+            "googleReviewUrl",
+            ...SOCIAL_NETWORKS.map((network) => network.key),
+        ],
         location: ["locationName", "addressLine1", "addressLine2", "city", "region", "postalCode"],
     } as const;
 
@@ -347,6 +386,17 @@ function BusinessForm({
                 website_url: values.website || null,
                 contact_email: values.contactEmail || null,
                 google_review_url: values.googleReviewUrl || null,
+                // Stored as the full url, whichever way it was typed.
+                ...Object.fromEntries(
+                    SOCIAL_NETWORKS.map((network) => {
+                        const entered = socialUrl(
+                            network.key,
+                            values[network.key as keyof Output] as string,
+                        );
+
+                        return [network.column, "url" in entered ? entered.url : null];
+                    }),
+                ),
             })
             .eq("id", businessId);
 
@@ -638,6 +688,49 @@ function BusinessForm({
                                         reviews&rdquo; and copy the link. On Pro, customers who
                                         recently visited are asked to leave you a review.
                                     </p>
+                                </div>
+
+                                {/* Most of these places put more into
+                                    their Instagram than into any
+                                    website, and somebody who has just
+                                    found them wants to see the room
+                                    before they go. */}
+                                <div className="space-y-3 border-t border-[#17233B]/10 pt-6">
+                                    <div>
+                                        <h3 className="font-medium text-[#17233B]">Social media</h3>
+                                        <p className="mt-1 text-xs leading-5 text-[#17233B]/70">
+                                            Shown on your page so customers can see what
+                                            you&apos;re up to. Your handle is enough — or paste
+                                            the link.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {SOCIAL_NETWORKS.map((network) => (
+                                            <div key={network.key} className="space-y-2">
+                                                <Label htmlFor={network.key}>{network.label}</Label>
+
+                                                <Input
+                                                    id={network.key}
+                                                    placeholder={network.placeholder}
+                                                    maxLength={200}
+                                                    {...register(network.key as keyof Output)}
+                                                    {...invalidProps(
+                                                        `${network.key}-error`,
+                                                        errors[network.key as keyof typeof errors],
+                                                    )}
+                                                />
+
+                                                <FieldError
+                                                    id={`${network.key}-error`}
+                                                    message={
+                                                        errors[network.key as keyof typeof errors]
+                                                            ?.message as string | undefined
+                                                    }
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                     </TabsContent>
 

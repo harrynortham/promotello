@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { businessHasPro } from "@/lib/billing";
+import { SocialLinks } from "@/components/social-links";
+import { socialsOf } from "@/lib/social-links";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -200,6 +202,12 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 category,
                 description,
                 website_url,
+                instagram_url,
+                facebook_url,
+                tiktok_url,
+                x_url,
+                youtube_url,
+                linkedin_url,
                 contact_email,
                 approval_status,
                 is_sample,
@@ -415,7 +423,18 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         image: business.logo_url ?? undefined,
         logo: business.logo_url ?? undefined,
         email: business.contact_email ?? undefined,
-        sameAs: business.website_url ? [business.website_url] : undefined,
+        // sameAs is the schema.org field for "the same thing, over
+        // there", which is what these are. Google uses it to tie a
+        // listing to the profiles it already knows about.
+        sameAs: [
+            ...(business.website_url ? [business.website_url] : []),
+            ...socialsOf(business).map((entry) => entry.url),
+        ].length
+            ? [
+                  ...(business.website_url ? [business.website_url] : []),
+                  ...socialsOf(business).map((entry) => entry.url),
+              ]
+            : undefined,
         address: location
             ? {
                 "@type": "PostalAddress",
@@ -921,6 +940,23 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </section>
                             )}
                         </Card>
+
+                        {/* Where else to find them. Its own card
+                            rather than a row inside "Get in touch":
+                            that card is for reaching the business, and
+                            this is for seeing what they are like before
+                            you do. */}
+                        {socialsOf(business).length > 0 && (
+                            <Card className="gap-4 rounded-2xl border-[#17233B]/10 shadow-none">
+                                <CardHeader>
+                                    <CardTitle className="text-base">Follow {business.name}</CardTitle>
+                                </CardHeader>
+
+                                <CardContent>
+                                    <SocialLinks business={business} businessName={business.name} />
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {(business.website_url ||
                             business.contact_email) && (
