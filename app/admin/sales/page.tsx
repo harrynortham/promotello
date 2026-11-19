@@ -167,10 +167,10 @@ function withParams(current: Params, changes: Record<string, string | null>) {
 }
 
 function Pipeline({ counts, params }: { counts: Record<string, number>; params: Params }) {
-    // Eleven stages, so six to a row above mobile: six and five, which is
-    // as near equal as an odd number gets and leaves no orphan. It was
-    // five and five until following them on social was added before the
-    // first email. A strip that scrolls is still right on a phone.
+    // Twelve stages, so six to a row above mobile: two full rows, no
+    // orphan. It was five and five, then six and five when following
+    // them was added, and now six and six with the DM between that and
+    // the first email. A strip that scrolls is still right on a phone.
     return (
         <div className="-mx-6 flex gap-2 overflow-x-auto scrollbar-none px-6 pb-1 sm:mx-0 sm:grid sm:grid-cols-6 sm:overflow-visible sm:px-0">
             {STAGES.map((stage) => (

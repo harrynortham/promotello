@@ -406,7 +406,10 @@ export async function moveLead(formData: FormData) {
 
     // The gate again, at the one place somebody could walk a lead into a
     // sending stage by hand.
-    if (["emailed", "followed_up"].includes(stage) && !lead.can_email) {
+    // 'dm' is in here with the emails on purpose. A DM is electronic
+    // mail under PECR exactly as an email is, so it is not a way round
+    // a sole trader who may not be written to — the letter is.
+    if (["dm", "emailed", "followed_up"].includes(stage) && !lead.can_email) {
         await record(
             supabase,
             leadId,
@@ -421,6 +424,7 @@ export async function moveLead(formData: FormData) {
 
     const kinds: Record<string, string> = {
         social: "followed_social",
+        dm: "dm_sent",
         emailed: "emailed",
         followed_up: "followed_up",
         letter: "letter_sent",
@@ -1154,8 +1158,8 @@ export async function recordDm(formData: FormData) {
     // Moved on only from the stages before it. A lead that has since
     // been emailed or written to is further along, and a DM noted late
     // should not drag it backwards.
-    if (["new", "enriched", "emailable", "preview"].includes(lead.stage)) {
-        await supabase.from("leads").update({ stage: "social" }).eq("id", leadId);
+    if (["new", "enriched", "emailable", "preview", "social"].includes(lead.stage)) {
+        await supabase.from("leads").update({ stage: "dm" }).eq("id", leadId);
     }
 
     revalidatePath(`/admin/sales/${leadId}`);

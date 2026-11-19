@@ -61,7 +61,7 @@ type DueRow = {
 // The stages a lead can be waiting in. Claimed, Not interested and
 // Closed are finished with; the earlier ones have not been written to
 // yet, so nothing is owed.
-export const WAITING_STAGES = ["preview", "social", "emailed", "followed_up"];
+export const WAITING_STAGES = ["preview", "social", "dm", "emailed", "followed_up"];
 
 export async function flagLeadsDueToday() {
     const supabase = createAdminClient();

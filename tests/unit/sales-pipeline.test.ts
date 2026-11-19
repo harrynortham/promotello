@@ -265,3 +265,23 @@ test("the database and the app agree on what counts as a touch", () => {
 
     assert.deepEqual([...(inTrigger ?? [])].sort(), [...TOUCHES].sort());
 });
+
+test("the DM sits between following them and the first email", () => {
+    // The order is the argument: follow them so the name is half
+    // familiar, then reach out. A DM is a reaching out, and it usually
+    // happens instead of the email rather than before it — a shop that
+    // never answers email is on Instagram every day.
+    const order = STAGES.map((stage) => stage.key);
+
+    assert.ok(order.indexOf("dm") > order.indexOf("social"), "after following them");
+    assert.ok(order.indexOf("dm") < order.indexOf("emailed"), "before the first email");
+});
+
+test("a lead left on a DM is owed a letter, like one left on an email", () => {
+    const { letter } = dueToday(
+        [{ id: "a", name: "DM'd and forgotten", stage: "dm", can_email: true, last_touch: daysAgo(20), first_sent_at: null, follow_up_sent_at: null }],
+        now,
+    );
+
+    assert.deepEqual(letter.map((lead) => lead.id), ["a"]);
+});
