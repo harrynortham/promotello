@@ -13,17 +13,20 @@ export const TRIAL_DAYS = 30;
 // Only the founding price gets it. trialDays() below is the one place
 // that decides, so the emails, the dashboard copy and the Stripe session
 // cannot say three different numbers.
-export const FOUNDING_TRIAL_DAYS = 90;
+export const FOUNDING_TRIAL_DAYS = 60;
 export const FOUNDING_MEMBER_LIMIT = 50;
 
 // "3 months" rather than "90 days", because that is how long a person
 // hears it as — but derived, so changing FOUNDING_TRIAL_DAYS changes the
 // sentence rather than leaving it quietly wrong.
 export function freeFor(days: number) {
-    if (days % 30 === 0) {
-        const months = days / 30;
-
-        return months === 1 ? "1 month" : `${months} months`;
+    // Months only from two upwards. Thirty days is "30 days" — it is
+    // what every page has always said and what people hear as a trial
+    // length; "1 month free trial" sounds like a different, smaller
+    // thing. Sixty is "2 months", which is the opposite: longer than
+    // "60 days" sounds.
+    if (days >= 60 && days % 30 === 0) {
+        return `${days / 30} months`;
     }
 
     return `${days} days`;
