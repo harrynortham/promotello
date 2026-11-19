@@ -324,6 +324,10 @@ export async function enrichLead(formData: FormData) {
     }
 
     revalidatePath(`/admin/sales/${leadId}`);
+
+    // Reading somebody's site takes a few seconds and often finds
+    // nothing, which looked exactly like a button that did nothing.
+    redirect(`/admin/sales/${leadId}?crawled=${found.email ? "email" : found.address ? "address" : "nothing"}`);
 }
 
 // The legal gate. Only a confident match turns can_email on, and the
@@ -417,7 +421,7 @@ export async function moveLead(formData: FormData) {
             "Refused: this lead is post only until Companies House says otherwise.",
         );
         revalidatePath(`/admin/sales/${leadId}`);
-        return;
+        redirect(`/admin/sales/${leadId}?error=post_only_stage`);
     }
 
     await supabase.from("leads").update({ stage }).eq("id", leadId);
@@ -445,6 +449,7 @@ export async function moveLead(formData: FormData) {
 
     revalidatePath("/admin/sales");
     revalidatePath(`/admin/sales/${leadId}`);
+    redirect(`/admin/sales/${leadId}?moved=${encodeURIComponent(STAGE_LABELS[stage] ?? stage)}`);
 }
 
 export async function saveLeadNotes(formData: FormData) {
@@ -454,6 +459,7 @@ export async function saveLeadNotes(formData: FormData) {
     await supabase.from("leads").update({ notes: text(formData, "notes") }).eq("id", leadId);
 
     revalidatePath(`/admin/sales/${leadId}`);
+    redirect(`/admin/sales/${leadId}?saved=notes`);
 }
 
 // --- The outreach queue -------------------------------------------
