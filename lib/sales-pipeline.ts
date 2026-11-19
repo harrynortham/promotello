@@ -53,6 +53,52 @@ export type DueLead = {
 //
 // Pure, and given "now", so the dates can be tested rather than waited
 // for. Nothing in here sends anything: it decides who is due.
+// The sequence, in days. Named once because the rule that decides what
+// is due and the words on the lead page that explain it have to agree —
+// a page saying "worth leaving until Friday" beside a rule that fires on
+// Thursday is worse than either alone.
+export const FOLLOW_UP_AFTER_DAYS = 4;
+export const LETTER_AFTER_DAYS = 14;
+
+export function daysSince(when: string | null, now: Date = new Date()) {
+    if (!when) return null;
+
+    return Math.floor((now.getTime() - new Date(when).getTime()) / 86_400_000);
+}
+
+export function followUpDue(firstSentAt: string | null, now: Date = new Date()) {
+    const days = daysSince(firstSentAt, now);
+
+    return days !== null && days >= FOLLOW_UP_AFTER_DAYS;
+}
+
+export function letterDue(lastTouch: string | null, now: Date = new Date()) {
+    const days = daysSince(lastTouch, now);
+
+    return days !== null && days >= LETTER_AFTER_DAYS;
+}
+
+// The day it comes due, written the way a date is read rather than
+// counted: "23 November" beats "in 3 days", which goes stale the moment
+// the page is left open.
+export function dueDate(from: string, days: number) {
+    const date = new Date(new Date(from).getTime() + days * 86_400_000);
+
+    return date.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+}
+
+// How long ago, in the words somebody would use out loud.
+export function whenSaid(when: string, now: Date = new Date()) {
+    const days = daysSince(when, now) ?? 0;
+
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 14) return `${days} days ago`;
+    if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+
+    return `${Math.floor(days / 30)} months ago`;
+}
+
 export function dueToday(leads: DueLead[], now: Date) {
     const days = (since: string | null) =>
         since ? Math.floor((now.getTime() - new Date(since).getTime()) / 86_400_000) : null;
@@ -71,7 +117,7 @@ export function dueToday(leads: DueLead[], now: Date) {
         // is not owed a chase.
         const since = days(lead.first_sent_at);
 
-        if (since !== null && since >= 4 && !lead.follow_up_sent_at) {
+        if (since !== null && since >= FOLLOW_UP_AFTER_DAYS && !lead.follow_up_sent_at) {
             followUp.push(lead);
             continue;
         }
@@ -80,7 +126,12 @@ export function dueToday(leads: DueLead[], now: Date) {
         // first email or the follow-up. A lead we may not email at all
         // arrives here too: a letter needs no consent, which is the
         // whole reason it is in the sequence.
-        if (["emailed", "followed_up", "preview"].includes(lead.stage) && age >= 14) {
+        // "Following them" counts the same as "Preview built": a page
+        // exists and nothing has been written to them. A lead left in
+        // either for a fortnight was invisible to this rule, which is
+        // how a sole trader — reachable by post and nothing else — could
+        // sit there for good.
+        if (["emailed", "followed_up", "preview", "social"].includes(lead.stage) && age >= LETTER_AFTER_DAYS) {
             letter.push(lead);
         }
     }

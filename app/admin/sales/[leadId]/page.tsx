@@ -11,7 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGES, STAGE_LABELS, eventLabel, leadAddress } from "@/lib/sales-pipeline";
+import {
+    STAGES,
+    STAGE_LABELS,
+    dueDate,
+    eventLabel,
+    followUpDue,
+    leadAddress,
+    letterDue,
+    whenSaid,
+} from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
@@ -123,6 +132,18 @@ async function Lead({ params, searchParams }: PageProps) {
         .from("outreach_messages")
         .select("id", { count: "exact", head: true })
         .eq("lead_id", leadId);
+
+    // What has actually gone, and when. The three ways of writing to a
+    // business are a sequence, not a menu, and this is what says where
+    // in it this lead is.
+    const { data: sentMessages } = await supabase
+        .from("outreach_messages")
+        .select("kind, sent_at")
+        .eq("lead_id", leadId)
+        .eq("status", "sent");
+
+    const firstSentAt = (sentMessages ?? []).find((m) => m.kind === "first")?.sent_at ?? null;
+    const followUpSentAt = (sentMessages ?? []).find((m) => m.kind === "follow_up")?.sent_at ?? null;
 
     const typedEmail = lead.email_source === "typed";
     const letterTo = letterAddress(lead);
@@ -796,20 +817,58 @@ async function Lead({ params, searchParams }: PageProps) {
                                         </div>
                                     )}
 
-                                    <div className="mt-4 flex flex-wrap gap-3">
-                                        <form action={queueOutreach}>
-                                            <input type="hidden" name="leadId" value={lead.id} />
-                                            <input type="hidden" name="kind" value="first" />
-                                            <Button type="submit" size="sm">Queue the first email</Button>
-                                        </form>
+                                    {/* One at a time, in order. Both of
+                                        these used to sit here at equal
+                                        weight on a lead nobody had ever
+                                        written to, so a follow-up — "just
+                                        checking you saw the preview I
+                                        made" — could be the first thing a
+                                        business ever heard from us. */}
+                                    <div className="mt-4 space-y-3">
+                                        {!firstSentAt ? (
+                                            <form action={queueOutreach}>
+                                                <input type="hidden" name="leadId" value={lead.id} />
+                                                <input type="hidden" name="kind" value="first" />
+                                                <Button type="submit" size="sm">
+                                                    Queue the first email
+                                                </Button>
+                                            </form>
+                                        ) : (
+                                            <p className="text-xs text-[#17233B]/60">
+                                                First email sent {whenSaid(firstSentAt)}.
+                                            </p>
+                                        )}
 
-                                        <form action={queueOutreach}>
-                                            <input type="hidden" name="leadId" value={lead.id} />
-                                            <input type="hidden" name="kind" value="follow_up" />
-                                            <Button type="submit" size="sm" variant="outline">
-                                                Queue a follow-up
-                                            </Button>
-                                        </form>
+                                        {firstSentAt && !followUpSentAt && (
+                                            <div className="space-y-2">
+                                                <form action={queueOutreach}>
+                                                    <input type="hidden" name="leadId" value={lead.id} />
+                                                    <input type="hidden" name="kind" value="follow_up" />
+                                                    <Button
+                                                        type="submit"
+                                                        size="sm"
+                                                        variant={followUpDue(firstSentAt) ? "default" : "outline"}
+                                                    >
+                                                        Queue a follow-up
+                                                    </Button>
+                                                </form>
+
+                                                <p className="text-xs text-[#17233B]/60">
+                                                    {followUpDue(firstSentAt)
+                                                        ? "Due now — four days with no reply."
+                                                        : `Worth leaving until ${dueDate(firstSentAt, 4)}, four days after the first.`}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {followUpSentAt && (
+                                            <p className="text-xs text-[#17233B]/60">
+                                                Followed up {whenSaid(followUpSentAt)}.{" "}
+                                                {letterDue(followUpSentAt)
+                                                    ? "A letter is the next thing."
+                                                    : `A letter is worth it from ${dueDate(followUpSentAt, 14)}.`}
+                                            </p>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -914,7 +973,17 @@ async function Lead({ params, searchParams }: PageProps) {
                             <form action={moveLead} className="space-y-3">
                                 <input type="hidden" name="leadId" value={lead.id} />
 
+                                {/* Keyed on the stage it is showing.
+                                    Without the key this is an uncontrolled
+                                    select, and React keeps whatever is in
+                                    the DOM across a re-render — so after
+                                    the crawler or Companies House moved
+                                    the lead on, the badges said one stage
+                                    and this still said the one before it.
+                                    Pressing Move then quietly dragged the
+                                    lead backwards. */}
                                 <select
+                                    key={lead.stage}
                                     name="stage"
                                     defaultValue={lead.stage}
                                     className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"

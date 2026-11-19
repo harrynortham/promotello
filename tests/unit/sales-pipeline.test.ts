@@ -1,7 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { dueToday, OPEN_STAGES, STAGES } from "@/lib/sales-pipeline";
+import {
+    dueDate,
+    dueToday,
+    followUpDue,
+    letterDue,
+    whenSaid,
+    FOLLOW_UP_AFTER_DAYS,
+    LETTER_AFTER_DAYS,
+    OPEN_STAGES,
+    STAGES,
+} from "@/lib/sales-pipeline";
 
 const now = new Date("2026-11-18T09:00:00Z");
 const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOString();
@@ -145,4 +155,68 @@ test("a lead whose first email never went is not followed up", () => {
     );
 
     assert.equal(followUp.length, 0);
+});
+
+test("a lead left in Following them is still due a letter", () => {
+    // The stage was added to the board without being added to the rule,
+    // so a sole trader parked there — reachable by post and nothing
+    // else — was invisible to it and would have sat there for good.
+    const { letter } = dueToday(
+        [{ id: "a", name: "Followed, never written to", stage: "social", can_email: false, last_touch: daysAgo(20), first_sent_at: null, follow_up_sent_at: null }],
+        now,
+    );
+
+    assert.deepEqual(letter.map((lead) => lead.id), ["a"]);
+});
+
+test("the words on the lead page agree with the rule that fires", () => {
+    // These are the two halves of the same promise: the page says when
+    // something comes due and the rule decides when it has. Drifting
+    // apart is the failure nobody would notice.
+    const first = daysAgo(FOLLOW_UP_AFTER_DAYS);
+
+    assert.equal(followUpDue(first, now), true);
+    assert.equal(followUpDue(daysAgo(FOLLOW_UP_AFTER_DAYS - 1), now), false);
+
+    const { followUp } = dueToday(
+        [{ id: "a", name: "Due today", stage: "emailed", can_email: true, last_touch: first, first_sent_at: first, follow_up_sent_at: null }],
+        now,
+    );
+
+    assert.deepEqual(followUp.map((lead) => lead.id), ["a"]);
+
+    assert.equal(letterDue(daysAgo(LETTER_AFTER_DAYS), now), true);
+    assert.equal(letterDue(daysAgo(LETTER_AFTER_DAYS - 1), now), false);
+});
+
+test("nothing is due when nothing has been sent", () => {
+    assert.equal(followUpDue(null, now), false);
+    assert.equal(letterDue(null, now), false);
+});
+
+test("how long ago is said the way somebody would say it", () => {
+    assert.equal(whenSaid(daysAgo(0), now), "today");
+    assert.equal(whenSaid(daysAgo(1), now), "yesterday");
+    assert.equal(whenSaid(daysAgo(6), now), "6 days ago");
+    assert.equal(whenSaid(daysAgo(21), now), "3 weeks ago");
+    assert.equal(whenSaid(daysAgo(90), now), "3 months ago");
+});
+
+test("the day a thing comes due is a date, not a countdown", () => {
+    // A countdown written into the page goes stale the moment the tab is
+    // left open; a date does not.
+    assert.equal(dueDate("2026-11-18T09:00:00Z", FOLLOW_UP_AFTER_DAYS), "22 November");
+    assert.equal(dueDate("2026-11-18T09:00:00Z", LETTER_AFTER_DAYS), "2 December");
+});
+
+test("being followed counts as a touch, so the clock starts", () => {
+    // The stage and the rule both knew about "social"; the list of what
+    // counts as a touch did not, so the lead had no age and was skipped
+    // by the very rule that was meant to catch it.
+    const { letter } = dueToday(
+        [{ id: "a", name: "Followed and forgotten", stage: "social", can_email: false, last_touch: daysAgo(20), first_sent_at: null, follow_up_sent_at: null }],
+        now,
+    );
+
+    assert.deepEqual(letter.map((lead) => lead.id), ["a"]);
 });

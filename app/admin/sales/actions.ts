@@ -491,6 +491,36 @@ export async function queueOutreach(formData: FormData) {
         return;
     }
 
+    // A follow-up only means anything if there was something to follow.
+    //
+    // Both buttons sat side by side and neither knew about the other, so
+    // a follow-up could be queued — and sent — to a business that had
+    // never heard from us. It reads "just checking you saw the preview
+    // I made", which is a worse first impression than silence.
+    //
+    // Asked of outreach_messages rather than the stage, because a stage
+    // can be dragged by hand and what was actually sent cannot.
+    if (kind === "follow_up") {
+        const { data: first } = await supabase
+            .from("outreach_messages")
+            .select("id")
+            .eq("lead_id", leadId)
+            .eq("kind", "first")
+            .eq("status", "sent")
+            .maybeSingle();
+
+        if (!first) {
+            await record(
+                supabase,
+                leadId,
+                "note",
+                "Not queued: the first email has not gone yet, so there is nothing to follow up.",
+            );
+            revalidatePath(`/admin/sales/${leadId}`);
+            return;
+        }
+    }
+
     const { data: preview } = await supabase
         .from("business_previews")
         .select(previewColumns)
