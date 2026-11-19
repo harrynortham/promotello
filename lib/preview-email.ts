@@ -188,7 +188,7 @@ export function instagramDmUrl(handle: string) {
 // sitting there, which is a notification. Waiting is a thing that wants
 // them, which is why they open it.
 export function outreachSubject(preview: PreviewRow) {
-    return `A preview of ${preview.businesses?.name ?? "your business"} on Promotello`;
+    return `${preview.businesses?.name ?? "Your business"}, I built you a preview`;
 }
 
 // The follow-up goes as a reply in the same thread, so it carries the
@@ -211,6 +211,19 @@ export function personalOpening(personalLine: string | null | undefined) {
     return /[.!?]$/.test(line) ? `${line} ` : `${line}. `;
 }
 
+// "3 months" rather than "90 days", because that is how long a person
+// hears it as — but derived, so changing FOUNDING_TRIAL_DAYS changes the
+// sentence rather than leaving it quietly wrong.
+export function freeFor(days: number) {
+    if (days % 30 === 0) {
+        const months = days / 30;
+
+        return months === 1 ? "1 month" : `${months} months`;
+    }
+
+    return `${days} days`;
+}
+
 // What a founding place is worth, said once. When they are gone it is
 // the ordinary trial instead, because naming a thing nobody can have is
 // a reason to stop reading.
@@ -218,8 +231,8 @@ function foundingOffer(placesLeft: number | null) {
     const gone = placesLeft === null || placesLeft <= 0;
 
     return gone
-        ? `You can also try Pro free for ${TRIAL_DAYS} days (loyalty cards and unlimited offers).`
-        : `The first ${FOUNDING_MEMBER_LIMIT} businesses also get our Pro plan free for ${FOUNDING_TRIAL_DAYS} days, then ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price} for life if they stay on it.`;
+        ? `You can also try Pro free for ${freeFor(TRIAL_DAYS)}.`
+        : `The first ${FOUNDING_MEMBER_LIMIT} businesses also get Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}, then ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, for life.`;
 }
 
 // The message to send with the link, by email or a DM. It opens with what has
@@ -249,26 +262,32 @@ export function outreachMessage({
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";
 
-    // The street they are on, which is what a business recognises. With
-    // none, the town stands in — "Bristol's independents" is still true,
-    // where an empty gap is not a sentence.
-    const street = location?.region?.trim() || town;
+    // The personal line stands on its own now rather than running into
+    // the next sentence. It is the one thing in here that could not have
+    // been sent to anybody else, and a paragraph of its own is how that
+    // reads as noticing rather than as a mail merge.
+    const opening = personalLine?.trim();
 
     // No sign-off: the signature carries the name, the site and the
     // registered office (lib/email-signature.ts), and writing one here
-    // would print both.
+    // would print "Harry Northam, Founder" twice.
     return [
         `Hi ${contactName || "there"},`,
         "",
-        `${personalOpening(personalLine)}I've put together a preview of how ${name} could look on Promotello, a new site that helps ${street}'s independents bring customers back with offers and loyalty cards:`,
+        ...(opening ? [/[.!?]$/.test(opening) ? opening : `${opening}.`, ""] : []),
+        `I've built a preview of ${name} on Promotello. Take a look:`,
         "",
         url,
         "",
-        `It works from a QR poster in your window: customers scan it, claim your offer and show it at the till. Your page is also listed in the ${town} directory, so local people can find you there, claim your offers and join your loyalty card. The offer and loyalty card on the preview are only examples; if you claim the page, you choose what goes on it. It's free to claim and free to keep.`,
+        "Promotello turns passers-by into regulars. A QR poster goes in your window. Customers scan it, claim your offer and show it at the till. A loyalty card brings them back.",
+        "",
+        `You're also listed in the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`,
+        "",
+        "It's free. There's no app for customers to download and nothing for you to install.",
         "",
         foundingOffer(placesLeft),
         "",
-        `The preview is private to this link. If you're not interested, just reply and I'll delete it.`,
+        "The preview is private and the offers on it are only examples. Claim it and it's yours to edit. Not for you? Reply and I'll delete it.",
     ].join("\n");
 }
 
@@ -328,19 +347,23 @@ export function outreachFollowUp({
     return [
         `Hi ${contactName || "there"},`,
         "",
-        `Just checking you saw the preview I made for ${name}: ${url}`,
+        `Your preview of ${name} is still waiting:`,
+        "",
+        url,
+        "",
+        "It takes two minutes to claim and it's free to keep. One poster in the window is all you need to start.",
         "",
         // The count only once some have gone. "50 of the 50 places left"
         // is a sentence that says nobody has taken one, which is the
         // opposite of what naming a limit is for — the guard the first
         // email has always had, kept here.
         gone
-            ? "It's free and takes about two minutes to claim."
+            ? `You can still try Pro free for ${freeFor(TRIAL_DAYS)}.`
             : placesLeft < FOUNDING_MEMBER_LIMIT
-                ? `It's free and takes about two minutes to claim. There are ${placesLeft} of the ${FOUNDING_MEMBER_LIMIT} founding places left, each with ${FOUNDING_TRIAL_DAYS} days of Pro free and the ${plans.pro_founding_monthly.price} price for life.`
-                : `It's free and takes about two minutes to claim. A founding place comes with ${FOUNDING_TRIAL_DAYS} days of Pro free and the ${plans.pro_founding_monthly.price} price for life.`,
+                ? `${placesLeft} of the ${FOUNDING_MEMBER_LIMIT} founding places are left. Each comes with Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}, then ${plans.pro_founding_monthly.price} a month for life.`
+                : `A founding place comes with Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}, then ${plans.pro_founding_monthly.price} a month for life.`,
         "",
-        `If it's not for you, reply "no thanks" and I'll remove it.`,
+        `Not for you? Reply "no thanks" and I'll delete it.`,
     ].join("\n");
 }
 
@@ -352,39 +375,79 @@ export function outreachFollowUp({
 // A DM is electronic mail under PECR exactly as an email is, so the sole
 // trader rule applies here too: it is not a way round a business that cannot
 // be emailed.
-export function outreachDm(
-    preview: PreviewRow,
-    sender: string,
-    placesLeft: number | null,
-    contactName: string | null,
-) {
+export type DmVariant = "full" | "opener";
+
+export function outreachDm({
+    preview,
+    sender,
+    placesLeft,
+    contactName,
+    personalLine,
+    variant = "full",
+}: {
+    preview: PreviewRow;
+    sender: string;
+    placesLeft: number | null;
+    contactName: string | null;
+    personalLine?: string | null;
+    variant?: DmVariant;
+}) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
-    const town = location?.cities?.name ?? location?.city?.trim();
-    const where = town ? ` ${town}` : "";
-    const street = location?.region?.trim() || null;
+    const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";
 
-    // Kept separate from the email's version on purpose: one sentence here,
-    // and the count again only once places have actually gone.
+    // A DM goes to the shop's own account, so with no contact name the
+    // business name is the right thing to say — not "there", which in a
+    // DM reads like it was fired at a list.
+    const greeting = contactName?.trim() || name;
+
+    const first = sender === DEFAULT_SENDER ? null : sender.trim().split(/\s+/)[0];
+    const who = first
+        ? `Hi ${greeting}, I'm ${first}, founder of Promotello.`
+        : `Hi ${greeting}, I'm from Promotello.`;
+
+    // Given a full stop when it has none, because in the opener it sits
+    // between two sentences on one line.
+    const trimmed = personalLine?.trim();
+    const line = trimmed ? (/[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`) : "";
+
+    // Asking before sending anything. A cold DM with a link in it is the
+    // shape of every scam people are told to ignore, so this one carries
+    // no link at all: it asks, and the link goes in the reply, where it
+    // arrives in a conversation they chose to have.
+    if (variant === "opener") {
+        return [
+            who,
+            line,
+            `I've built a free preview page for ${name} in our ${town} directory, with an example offer and loyalty card.`,
+            "Want me to send the link?",
+        ]
+            .filter(Boolean)
+            .join(" ");
+    }
+
     const founding =
         placesLeft === null || placesLeft <= 0
-            ? `It's free with one offer and a poster, and Pro is ${plans.pro_monthly.price} a month with the first ${TRIAL_DAYS} days free.`
-            : `It's free with one offer and a poster, and the first ${FOUNDING_MEMBER_LIMIT}${where} businesses get Pro at ${plans.pro_founding_monthly.price} a month for life instead of ${plans.pro_monthly.price}.${placesLeft < FOUNDING_MEMBER_LIMIT ? ` ${placesLeft} places left.` : ""}`;
+            ? `It's free, and you can try Pro free for ${freeFor(TRIAL_DAYS)}.`
+            : `It's free, and the first ${FOUNDING_MEMBER_LIMIT} businesses get Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}.`;
 
+    // No sign-off: it opens with who is writing, and signing it again at
+    // the bottom of a DM reads like a letter.
     return [
-        `Hi${contactName ? ` ${contactName}` : ""}! I've built ${name} a page on Promotello — easier to look at than to explain:`,
+        who,
+        ...(line ? ["", line] : []),
+        "",
+        `I've built a preview of ${name} on Promotello. Take a look:`,
         "",
         url,
         "",
-        introduction(sender, town || "Bristol", street),
+        "A QR poster goes in your window. Customers scan it, claim your offer and show it at the till. A loyalty card brings them back.",
         "",
-        `You get a page in the${where || " Bristol"} directory with your offers and your card on it, a QR poster for your window people scan to claim an offer, and a stamp card that brings them back. No app for them to download and no card reader.`,
+        `You're also listed in the ${town} directory, where local people can find you.`,
         "",
         founding,
         "",
-        `Worth a look? Claiming it takes a minute, and it goes live once it has your logo, your hours and a photo of the place — or send me those and I'll do the rest. If it's not for you, just say and I won't message again.`,
-        // One line in a DM: "Cheers," on its own looks like a stray message.
-        ...(sender === DEFAULT_SENDER ? [] : ["", `— ${sender.trim().split(/\s+/)[0]}`]),
+        "Not for you? Just say and I'll delete it.",
     ].join("\n");
 }

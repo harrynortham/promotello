@@ -192,15 +192,25 @@ async function Lead({ params, searchParams }: PageProps) {
               .maybeSingle()
         : { data: null };
 
-    const dm =
-        dmHandle && previewRow
-            ? outreachDm(
-                  previewRow as unknown as PreviewRow,
-                  senderName((await supabase.auth.getUser()).data.user?.user_metadata?.full_name),
-                  await foundingPlacesLeft(),
-                  lead.contact_name,
-              )
-            : null;
+    // Two of them. The opener carries no link, because a cold DM with a
+    // link in it is the shape of every scam people are told to ignore —
+    // it asks first, and the link goes in the reply.
+    const dms = previewRow
+        ? await (async () => {
+              const shared = {
+                  preview: previewRow as unknown as PreviewRow,
+                  sender: senderName((await supabase.auth.getUser()).data.user?.user_metadata?.full_name),
+                  placesLeft: await foundingPlacesLeft(),
+                  contactName: lead.contact_name,
+                  personalLine: lead.personal_line,
+              };
+
+              return [
+                  { key: "opener" as const, label: "Ask first", body: outreachDm({ ...shared, variant: "opener" }) },
+                  { key: "full" as const, label: "With the link", body: outreachDm({ ...shared, variant: "full" }) },
+              ];
+          })()
+        : null;
 
     const drafts = previewRow
         ? await (async () => {
@@ -879,25 +889,33 @@ async function Lead({ params, searchParams }: PageProps) {
                         where a shop that never answers email often lives.
                         Copied and pasted by hand: there is no API for a
                         cold DM, and there should not be. */}
-                    {dmHandle && dm && (
+                    {dmHandle && dms && (
                         <Card className="border-[#17233B]/10">
                             <CardHeader>
                                 <CardTitle className="text-base">Send a DM</CardTitle>
                             </CardHeader>
 
-                            <CardContent className="space-y-3 text-sm">
+                            <CardContent className="space-y-4 text-sm">
                                 <p className="leading-6 text-[#17233B]/65">
-                                    To <strong>@{dmHandle}</strong>. Copy it, open the DM and paste
-                                    — nothing is sent from here.
+                                    To <strong>@{dmHandle}</strong>. Copy one, open the DM and
+                                    paste — nothing is sent from here.
                                 </p>
 
-                                <p className="whitespace-pre-wrap rounded-lg border border-[#17233B]/10 bg-[#FFF8F0] p-3 text-xs leading-6">
-                                    {dm}
-                                </p>
+                                {dms.map((option) => (
+                                    <div key={option.key} className="space-y-2">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                                            {option.label}
+                                        </p>
 
-                                <div className="flex flex-wrap items-center gap-3">
-                                    <CopyButton text={dm} label="Copy the message" />
+                                        <p className="whitespace-pre-wrap rounded-lg border border-[#17233B]/10 bg-[#FFF8F0] p-3 text-xs leading-6">
+                                            {option.body}
+                                        </p>
 
+                                        <CopyButton text={option.body} label="Copy this one" />
+                                    </div>
+                                ))}
+
+                                <div className="border-t border-[#17233B]/10 pt-3">
                                     <a
                                         href={instagramDmUrl(dmHandle)}
                                         target="_blank"
