@@ -151,6 +151,7 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { data: recentRedemptionRows },
         { count: printedPosterCount },
         { count: loyaltyCount },
+        { count: photoCount },
         hasPro,
         starter,
         { data: trial },
@@ -222,6 +223,14 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
 
         supabase
             .from("loyalty_programs")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", businessId),
+
+        // Any at all ticks the step. Paused ones count: they uploaded
+        // them, and being on Free is not a reason to be asked again for
+        // something already done.
+        supabase
+            .from("business_photos")
             .select("id", { count: "exact", head: true })
             .eq("business_id", businessId),
 
@@ -374,6 +383,19 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     completed: Boolean(uploadedCover(business.cover_image_url)),
                     href: `${base}/cover`,
                     action: "Add cover photo",
+                },
+                {
+                    id: "photos",
+                    label: "Add photos of your place",
+                    // The reason, not the mechanism. Somebody deciding
+                    // between two coffee shops on a phone is deciding
+                    // on what the room looks like, and a page with one
+                    // picture loses to a page with six.
+                    description:
+                        "The room, the counter, what you make. People choose where to go on what it looks like, and a page with photos gets picked over one without.",
+                    completed: Boolean(photoCount && photoCount > 0),
+                    href: `${base}/photos`,
+                    action: "Add photos",
                 },
                 {
                     id: "offer",
