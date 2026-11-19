@@ -3,13 +3,14 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FiArrowRight, FiBriefcase, FiMail, FiMapPin } from "react-icons/fi";
+import { FiArrowRight, FiBriefcase, FiClock, FiMail, FiMapPin, FiSend } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGES, STAGE_LABELS, leadAddress } from "@/lib/sales-pipeline";
+import { dueColumns, toDueLeads, WAITING_STAGES } from "@/lib/sales-due";
+import { STAGES, STAGE_LABELS, dueToday, leadAddress, whenSaid, type DueLead } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = { title: "Sales", robots: { index: false } };
@@ -30,9 +31,99 @@ type LeadRow = {
     stage: string;
     website: string | null;
     created_at: string;
+    lead_events: { kind: string; created_at: string }[] | null;
     areas: { name: string } | null;
     cities: { name: string } | null;
 };
+
+// The last thing done to them, said plainly: "emailed 6 days ago".
+const TOUCH_WORDS: Record<string, string> = {
+    preview_built: "page built",
+    followed_social: "followed",
+    emailed: "emailed",
+    followed_up: "chased",
+    letter_sent: "letter posted",
+};
+
+function lastTouch(lead: LeadRow) {
+    const touches = (lead.lead_events ?? [])
+        .filter((event) => event.kind in TOUCH_WORDS)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at));
+
+    const last = touches[touches.length - 1];
+
+    return last ? `${TOUCH_WORDS[last.kind]} ${whenSaid(last.created_at)}` : null;
+}
+
+// What to do today, above everything else on the page.
+//
+// The rule that decides this was always right and always invisible: it
+// ran in the daily job and wrote a note on the lead, so finding out
+// whose turn it was meant opening every lead in the pipeline one at a
+// time. Here it is the first thing on the board.
+function DueList({ due }: { due: { followUp: DueLead[]; letter: DueLead[] } }) {
+    const total = due.followUp.length + due.letter.length;
+
+    if (total === 0) return null;
+
+    return (
+        <Card className="mt-8 border-[#FF593F]/30 bg-[#FF593F]/[0.04]">
+            <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                    <FiSend aria-hidden="true" className="text-[#FF593F]" />
+                    Needs doing today
+                </CardTitle>
+            </CardHeader>
+
+            <CardContent className="grid gap-6 sm:grid-cols-2">
+                <DueGroup
+                    title="Due a follow-up"
+                    note="Four days since the first email and no reply."
+                    leads={due.followUp}
+                />
+                <DueGroup
+                    title="Due a letter"
+                    note="A fortnight with nothing back."
+                    leads={due.letter}
+                />
+            </CardContent>
+        </Card>
+    );
+}
+
+function DueGroup({ title, note, leads }: { title: string; note: string; leads: DueLead[] }) {
+    return (
+        <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#17233B]/55">
+                {title} · {leads.length}
+            </p>
+
+            {leads.length === 0 ? (
+                <p className="mt-2 text-sm text-[#17233B]/60">Nobody.</p>
+            ) : (
+                <>
+                    <p className="mt-1 text-xs text-[#17233B]/55">{note}</p>
+
+                    <ul className="mt-2 space-y-1">
+                        {leads.map((lead) => (
+                            <li key={lead.id}>
+                                <Link
+                                    href={`/admin/sales/${lead.id}`}
+                                    className="text-sm font-medium text-[#FF593F] hover:underline"
+                                >
+                                    {lead.name}
+                                </Link>
+                                {!lead.can_email && (
+                                    <span className="ml-2 text-xs text-[#17233B]/55">post only</span>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+        </div>
+    );
+}
 
 function Pipeline({ counts }: { counts: Record<string, number> }) {
     // Eleven stages, so six to a row above mobile: six and five, which is
@@ -81,9 +172,20 @@ async function Board({ searchParams }: PageProps) {
 
     const waiting = waitingCount ?? 0;
 
+    // Worked out here, live, rather than read off whatever the daily
+    // job wrote at eight. The board is where the question "what do I do
+    // today" is actually asked, and an answer that is up to sixteen
+    // hours old is not an answer.
+    const { data: waitingRows } = await supabase
+        .from("leads")
+        .select(dueColumns)
+        .in("stage", WAITING_STAGES);
+
+    const due = dueToday(toDueLeads(waitingRows ?? []), new Date());
+
     let query = supabase
         .from("leads")
-        .select("id, name, address_line_1, address_line_2, postcode, email, can_email, company_number, stage, website, created_at, areas ( name ), cities ( name )")
+        .select("id, name, address_line_1, address_line_2, postcode, email, can_email, company_number, stage, website, created_at, lead_events ( kind, created_at ), areas ( name ), cities ( name )")
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -121,6 +223,8 @@ async function Board({ searchParams }: PageProps) {
 
 
             <div className="mt-8">
+                <DueList due={due} />
+
                 <Pipeline counts={counts} />
             </div>
 
@@ -199,6 +303,18 @@ async function Board({ searchParams }: PageProps) {
                                                 </span>
                                             )}
                                             {leadAddress(lead) && <span>{leadAddress(lead)}</span>}
+                                            {/* Without this a lead badged
+                                                "Emailed" might have been
+                                                emailed yesterday or last
+                                                month, which is the one
+                                                fact the next decision
+                                                turns on. */}
+                                            {lastTouch(lead) && (
+                                                <span className="inline-flex items-center gap-1">
+                                                    <FiClock aria-hidden="true" />
+                                                    {lastTouch(lead)}
+                                                </span>
+                                            )}
                                         </p>
                                     </div>
 
