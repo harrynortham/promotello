@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { DEFAULT_ICON } from "@/lib/cover-icon-default";
+import { CoverColourPicker } from "@/components/cover-colour-picker";
 import { CoverIconPicker } from "@/components/cover-icon-picker";
 
 // A cover built from the business's own colours rather than a photo.
@@ -34,6 +35,11 @@ export function GeneratedCoverField({
     const [variation, setVariation] = useState(0);
     // Which of lucide's marks goes on it.
     const [icon, setIcon] = useState(DEFAULT_ICON);
+    // A colour picked by hand, or null while the logo's own is in use.
+    const [colour, setColour] = useState<string | null>(null);
+    // What the drawing actually used, told to us by the route.
+    const [autoColour, setAutoColour] = useState<string | null>(null);
+    const [autoSource, setAutoSource] = useState<string | null>(null);
     const [url, setUrl] = useState<string | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [problem, setProblem] = useState("");
@@ -47,7 +53,7 @@ export function GeneratedCoverField({
         };
     }, []);
 
-    async function draw(next: number, mark: string = icon) {
+    async function draw(next: number, mark: string = icon, pick: string | null = colour) {
         setIsDrawing(true);
         setProblem("");
 
@@ -55,6 +61,7 @@ export function GeneratedCoverField({
             const body = new FormData();
             body.set("categoryId", categoryId);
             body.set("icon", mark);
+            if (pick) body.set("colour", pick);
             body.set("variation", String(next));
             // The logo has not been uploaded anywhere yet, so its bytes
             // go up with the request. Without it the cover still works;
@@ -64,6 +71,14 @@ export function GeneratedCoverField({
             const response = await fetch("/api/admin/cover", { method: "POST", body });
 
             if (!response.ok) throw new Error("The cover couldn't be drawn.");
+
+            // Only worth keeping while nothing is picked: once there
+            // is a choice, the "from the logo" reading is what it would
+            // go back to, not what it is showing.
+            if (!pick) {
+                setAutoColour(response.headers.get("X-Cover-Colour"));
+                setAutoSource(response.headers.get("X-Cover-Source"));
+            }
 
             const blob = await response.blob();
 
@@ -88,6 +103,7 @@ export function GeneratedCoverField({
         setUrl(null);
         setVariation(0);
         setIcon(DEFAULT_ICON);
+        setColour(null);
         onChange(null);
     }
 
@@ -106,6 +122,20 @@ export function GeneratedCoverField({
 
             {/* Only once there is something to compare it against.
                 Before that it is a control over an empty box. */}
+            {url && (
+                <CoverColourPicker
+                    logo={logo}
+                    auto={autoColour}
+                    autoSource={autoSource}
+                    value={colour}
+                    disabled={disabled || isDrawing}
+                    onChange={(next) => {
+                        setColour(next);
+                        void draw(variation, icon, next);
+                    }}
+                />
+            )}
+
             {url && (
                 <CoverIconPicker
                     value={icon}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { coverImage, dominantColourFromBytes } from "@/lib/cover-image";
+import { isHex } from "@/lib/cover-colours";
 import { iconName } from "@/lib/cover-icons";
 import { createClient } from "@/utils/supabase/server";
 
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
         ? await supabase.from("categories").select("slug").eq("id", categoryId).maybeSingle()
         : { data: null };
 
+    // A colour the admin picked, off the logo or out of the wheel.
+    // Checked as a hex here, since it goes straight into a gradient.
+    const picked = String(form.get("colour") ?? "").trim();
+    const chosenColour = isHex(picked) ? picked : null;
+
     const logo = form.get("logo");
     const logoColour =
         logo instanceof File && logo.size > 0
@@ -44,6 +50,7 @@ export async function POST(request: Request) {
             : null;
 
     return coverImage({
+        chosenColour,
         categorySlug: category?.slug ?? null,
         icon,
         logoColour,

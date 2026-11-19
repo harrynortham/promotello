@@ -57,6 +57,7 @@ type CoverContent = {
     // lucide, by name.
     categorySlug?: string | null;
     icon?: string | null;
+    chosenColour?: string | null;
     logoColour?: string | null;
     variation?: number;
 };
@@ -174,15 +175,31 @@ function Mark({
 
 export function coverImage(content: CoverContent) {
     const variation = content.variation ?? 0;
+    const palette = coverPalette({
+        chosenColour: content.chosenColour,
+        logoColour: content.logoColour,
+        categorySlug: content.categorySlug,
+        variation,
+    });
 
     return new ImageResponse(
         (
             <Cover
-                palette={coverPalette({ logoColour: content.logoColour, categorySlug: content.categorySlug, variation })}
+                palette={palette}
                 layout={coverLayout(variation)}
                 shapes={iconShapes(content.icon)}
             />
         ),
-        { width: COVER_WIDTH, height: COVER_HEIGHT },
+        {
+            width: COVER_WIDTH,
+            height: COVER_HEIGHT,
+            // So the picker can show what it landed on, and say where
+            // that came from, without working it out a second time and
+            // risking a different answer.
+            headers: {
+                "X-Cover-Colour": palette.from,
+                "X-Cover-Source": palette.source,
+            },
+        },
     );
 }
