@@ -12,6 +12,9 @@ type SubmitButtonProps = {
     className?: string;
     name?: string;
     value?: string;
+    // Separate from pending: a button that cannot be pressed at all,
+    // like Send with no sender configured.
+    disabled?: boolean;
 };
 
 export function SubmitButton({
@@ -22,6 +25,7 @@ export function SubmitButton({
     className,
     name,
     value,
+    disabled = false,
 }: SubmitButtonProps) {
     const { pending } = useFormStatus();
 
@@ -32,7 +36,7 @@ export function SubmitButton({
             value={value}
             variant={variant}
             size={size}
-            disabled={pending}
+            disabled={pending || disabled}
             className={className}
         >
             {pending ? pendingLabel : children}

@@ -481,7 +481,7 @@ export async function queueOutreach(formData: FormData) {
     if (!lead.can_email) {
         await record(supabase, leadId, "note", "Not queued: post only until Companies House says otherwise.");
         revalidatePath(`/admin/sales/${leadId}`);
-        return;
+        redirect(`/admin/sales/${leadId}?error=post_only`);
     }
 
     if (!lead.email || !lead.preview_business_id) {
@@ -492,7 +492,7 @@ export async function queueOutreach(formData: FormData) {
             !lead.email ? "Not queued: no address to write to." : "Not queued: no preview to send them.",
         );
         revalidatePath(`/admin/sales/${leadId}`);
-        return;
+        redirect(`/admin/sales/${leadId}?error=${!lead.email ? "no_email" : "no_preview"}`);
     }
 
     // A follow-up only means anything if there was something to follow.
@@ -521,7 +521,7 @@ export async function queueOutreach(formData: FormData) {
                 "Not queued: the first email has not gone yet, so there is nothing to follow up.",
             );
             revalidatePath(`/admin/sales/${leadId}`);
-            return;
+            redirect(`/admin/sales/${leadId}?error=no_first_email`);
         }
     }
 
@@ -534,7 +534,7 @@ export async function queueOutreach(formData: FormData) {
     if (!preview) {
         await record(supabase, leadId, "note", "Not queued: the preview has gone.");
         revalidatePath(`/admin/sales/${leadId}`);
-        return;
+        redirect(`/admin/sales/${leadId}?error=no_preview`);
     }
 
     const row = preview as unknown as PreviewRow;
@@ -578,6 +578,11 @@ export async function queueOutreach(formData: FormData) {
 
     revalidatePath("/admin/sales/outbox");
     revalidatePath(`/admin/sales/${leadId}`);
+
+    // Said on the page, not only written into the history. Queueing puts
+    // the draft somewhere else, so without this the button was pressed
+    // and nothing on screen changed.
+    redirect(`/admin/sales/${leadId}?${error ? "error=already_queued" : `queued=${kind}`}`);
 }
 
 export async function cancelOutreach(formData: FormData) {
@@ -590,6 +595,7 @@ export async function cancelOutreach(formData: FormData) {
         .eq("status", "queued");
 
     revalidatePath("/admin/sales/outbox");
+    redirect("/admin/sales/outbox?discarded=1");
 }
 
 // The one that actually writes to somebody. Everything up to here is
@@ -611,7 +617,8 @@ export async function sendOutreach(formData: FormData) {
         .maybeSingle();
 
     if (!message || message.status !== "queued") {
-        redirect("/admin/sales/outbox");
+        // Usually the same draft sent from another tab.
+        redirect("/admin/sales/outbox?error=gone");
     }
 
     const { data: profile } = await supabase.auth.getUser();
@@ -634,7 +641,12 @@ export async function sendOutreach(formData: FormData) {
 
         await record(supabase, message.lead_id, "note", "The email was not accepted. Nothing was sent.");
         revalidatePath("/admin/sales/outbox");
-        return;
+
+        // The loudest case of saying nothing. A refused send marks the
+        // row failed, so it leaves the outbox exactly as a sent one
+        // does — press the button, the draft disappears, and you would
+        // reasonably believe it had gone.
+        redirect("/admin/sales/outbox?error=not_accepted");
     }
 
     await supabase
@@ -656,6 +668,10 @@ export async function sendOutreach(formData: FormData) {
 
     revalidatePath("/admin/sales/outbox");
     revalidatePath(`/admin/sales/${message.lead_id}`);
+
+    // The row vanishes from the outbox either way, which looks the same
+    // as a press that did nothing. This says which it was.
+    redirect(`/admin/sales/outbox?sent=${encodeURIComponent(message.to_email)}`);
 }
 
 // An address somebody looked up and typed. Wherever they found it — the

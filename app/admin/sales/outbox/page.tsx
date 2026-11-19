@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SubmitButton } from "@/components/submit-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OUTREACH_FROM, outreachSender } from "@/lib/outreach-queue";
 import { createClient } from "@/utils/supabase/server";
@@ -14,7 +15,7 @@ import { cancelOutreach, sendOutreach } from "../actions";
 
 export const metadata: Metadata = { title: "Outbox", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ error?: string }> };
+type PageProps = { searchParams: Promise<{ error?: string; sent?: string; discarded?: string }> };
 
 async function Outbox({ searchParams }: PageProps) {
     await connection();
@@ -67,6 +68,23 @@ async function Outbox({ searchParams }: PageProps) {
                 </Alert>
             )}
 
+            {params.error === "not_accepted" && (
+                <Alert variant="destructive" className="mt-6">
+                    <AlertTitle>Nothing was sent</AlertTitle>
+                    <AlertDescription>
+                        Resend did not accept it, so it is marked failed rather than sent.
+                        The lead has not heard from us — queue it again when the sender is
+                        working.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {params.error === "gone" && (
+                <p className="mt-6 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
+                    That one was no longer waiting — sent or discarded somewhere else.
+                </p>
+            )}
+
             {params.error === "no_sender" && (
                 <Alert variant="destructive" className="mt-6">
                     <AlertTitle>Nothing was sent</AlertTitle>
@@ -75,6 +93,20 @@ async function Outbox({ searchParams }: PageProps) {
                         waiting.
                     </AlertDescription>
                 </Alert>
+            )}
+
+            {/* The row leaves the list either way, which looks the
+                same as a press that did nothing. */}
+            {params.sent && (
+                <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    Sent to {params.sent}.
+                </p>
+            )}
+
+            {params.discarded && (
+                <p className="mt-6 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
+                    Discarded. Nothing was sent, and the lead can be queued again.
+                </p>
             )}
 
             {(queued ?? []).length === 0 ? (
@@ -120,16 +152,20 @@ async function Outbox({ searchParams }: PageProps) {
                                     <div className="mt-4 flex flex-wrap items-center gap-3">
                                         <form action={sendOutreach}>
                                             <input type="hidden" name="messageId" value={message.id} />
-                                            <Button type="submit" size="sm" disabled={!sender}>
+                                            <SubmitButton
+                                                pendingLabel="Sending…"
+                                                size="sm"
+                                                disabled={!sender}
+                                            >
                                                 Send it
-                                            </Button>
+                                            </SubmitButton>
                                         </form>
 
                                         <form action={cancelOutreach}>
                                             <input type="hidden" name="messageId" value={message.id} />
-                                            <Button type="submit" size="sm" variant="outline">
-                                                Cancel
-                                            </Button>
+                                            <SubmitButton pendingLabel="Discarding…" size="sm" variant="outline">
+                                                Discard
+                                            </SubmitButton>
                                         </form>
 
                                         {lead && (
