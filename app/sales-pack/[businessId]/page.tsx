@@ -192,10 +192,10 @@ async function Pack({ params }: PageProps) {
         redirect(`/login?next=${encodeURIComponent(`/sales-pack/${businessId}`)}`);
     }
 
-    // Us, or somebody who works there. A paying owner is never shown
-    // the link to this (the dashboard shows it to admins only), but a
-    // business that finds the address is reading about itself, which is
-    // no secret.
+    // Us, or somebody who works there. Nothing links a business here —
+    // the pack is a thing we print to sell with, and it is reached from
+    // Sales, through the demo business. But one that finds the address
+    // is reading about itself, which is no secret.
     const [{ data: isAdmin }, { data: membership }] = await Promise.all([
         supabase.rpc("is_platform_admin"),
         supabase
