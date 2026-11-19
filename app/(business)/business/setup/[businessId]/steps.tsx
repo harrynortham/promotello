@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { LocationFields } from "@/components/location-fields";
 import { Textarea } from "@/components/ui/textarea";
 import { hoursRowsFor, hoursSchema, type DayValues, type HoursValues } from "@/lib/business-hours";
-import { uploadBusinessImage, type BusinessImageKind } from "@/lib/business-images";
+import { uploadBusinessImage, type BusinessImageKind, isGeneratedCover } from "@/lib/business-images";
 import type { CityOption } from "@/lib/locations";
 import { locationShape, optionalText, postcodeInCity, requiredText } from "@/lib/validation";
 import { createClient } from "@/utils/supabase/client";
@@ -273,6 +273,15 @@ export function CoverStep({
             }}
             onSkip={onSkip}
             skipLabel="I'll add one later"
+            // A cover we drew sits in the box looking like a job already
+            // done, while the step it belongs to stays unticked. Saying
+            // which it is costs a sentence and stops the two
+            // contradicting each other.
+            ourNote={
+                isGeneratedCover(draft.coverImageUrl)
+                    ? "This one is a stand-in we made from your colours. A photo of the place — the front, the counter, a dish — does more."
+                    : undefined
+            }
         />
     );
 }

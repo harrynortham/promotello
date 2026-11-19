@@ -73,13 +73,20 @@ export function BuildPreviewForm({
         // url; writing that url onto the business is a second step. Left
         // out, the upload succeeds, nothing complains, and the page has
         // no picture on it — which is the one thing a preview is for.
-        for (const [kind, file, column] of [
-            ["logo", logo, "logo_url"],
-            ["cover", cover ?? generated, "cover_image_url"],
+        for (const [kind, file, column, drawn] of [
+            ["logo", logo, "logo_url", false],
+            // A photo of the place beats one we drew, so an upload wins
+            // where there is both. Which it was has to travel with it:
+            // stored under its own name, a drawn cover shows on the page
+            // like any other and still leaves "Add a cover photo"
+            // unticked, because nobody has added one.
+            ["cover", cover ?? generated, "cover_image_url", !cover && Boolean(generated)],
         ] as const) {
             if (!file) continue;
 
-            const upload = await uploadBusinessImage(supabase, result.businessId, kind, file);
+            const upload = await uploadBusinessImage(supabase, result.businessId, kind, file, {
+                generated: drawn,
+            });
 
             if ("error" in upload) {
                 imagesFailed = true;
