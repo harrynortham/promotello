@@ -8,6 +8,7 @@ import { FiArrowRight, FiBriefcase, FiClock, FiMail, FiMapPin, FiSend } from "re
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dueColumns, toDueLeads, WAITING_STAGES } from "@/lib/sales-due";
 import { STAGES, STAGE_LABELS, dueToday, leadAddress, whenSaid, type DueLead } from "@/lib/sales-pipeline";
@@ -15,7 +16,28 @@ import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = { title: "Sales", robots: { index: false } };
 
-type PageProps = { searchParams: Promise<{ stage?: string; post?: string }> };
+type PageProps = {
+    searchParams: Promise<{
+        stage?: string;
+        post?: string;
+        area?: string;
+        category?: string;
+        q?: string;
+        due?: string;
+        page?: string;
+    }>;
+};
+
+type AreaOption = { id: string; name: string; cities: { name: string } | null };
+
+// Enough that a morning's work is one page, few enough that the page
+// is readable on a phone.
+const PER_PAGE = 25;
+
+// A uuid no lead has, for the case where a filter matches nothing:
+// PostgREST's .in() with an empty list matches every row, which is the
+// opposite of what an empty filter means.
+const NO_SUCH_LEAD = "00000000-0000-0000-0000-000000000000";
 
 type LeadRow = {
     id: string;
@@ -31,6 +53,7 @@ type LeadRow = {
     stage: string;
     website: string | null;
     created_at: string;
+    last_touch_at: string;
     lead_events: { kind: string; created_at: string }[] | null;
     areas: { name: string } | null;
     cities: { name: string } | null;
@@ -125,7 +148,24 @@ function DueGroup({ title, note, leads }: { title: string; note: string; leads: 
     );
 }
 
-function Pipeline({ counts }: { counts: Record<string, number> }) {
+// A link that keeps the filters already on, changing only what it is
+// given. Without it every chip and every stage tile silently threw the
+// rest away, which is the thing that makes a filter bar annoying.
+type Params = Awaited<PageProps["searchParams"]>;
+
+function withParams(current: Params, changes: Record<string, string | null>) {
+    const next = new URLSearchParams();
+
+    for (const [key, value] of Object.entries({ ...current, ...changes })) {
+        if (value) next.set(key, String(value));
+    }
+
+    const query = next.toString();
+
+    return query ? `/admin/sales?${query}` : "/admin/sales";
+}
+
+function Pipeline({ counts, params }: { counts: Record<string, number>; params: Params }) {
     // Eleven stages, so six to a row above mobile: six and five, which is
     // as near equal as an odd number gets and leaves no orphan. It was
     // five and five until following them on social was added before the
@@ -135,7 +175,7 @@ function Pipeline({ counts }: { counts: Record<string, number> }) {
             {STAGES.map((stage) => (
                 <Link
                     key={stage.key}
-                    href={`/admin/sales?stage=${stage.key}`}
+                    href={withParams(params, { stage: stage.key, page: null })}
                     className="shrink-0 rounded-xl border border-[#17233B]/10 bg-white px-4 py-3 hover:border-[#FF593F]/40 sm:shrink"
                 >
                     <p className="text-xs text-[#17233B]/60">{stage.label}</p>
@@ -183,17 +223,62 @@ async function Board({ searchParams }: PageProps) {
 
     const due = dueToday(toDueLeads(waitingRows ?? []), new Date());
 
+    // The places and the trades actually on the board, so the two
+    // selects never offer a filter that would return nothing.
+    const [{ data: areaRows }, { data: categoryRows }] = await Promise.all([
+        supabase.from("areas").select("id, name, cities ( name )").order("name"),
+        supabase.from("categories").select("id, name").not("parent_id", "is", null).order("name"),
+    ]);
+
+    const areas = (areaRows ?? []) as unknown as AreaOption[];
+    const categories = (categoryRows ?? []) as { id: string; name: string }[];
+
+    // Whether anything is narrowing the list, which is what decides if
+    // a Clear button is worth showing.
+    const filtered = Boolean(
+        params.q || params.area || params.category || params.stage || params.post || params.due,
+    );
+
+    const page = Math.max(1, Number(params.page) || 1);
+    const from = (page - 1) * PER_PAGE;
+
     let query = supabase
         .from("leads")
-        .select("id, name, address_line_1, address_line_2, postcode, email, can_email, company_number, stage, website, created_at, lead_events ( kind, created_at ), areas ( name ), cities ( name )")
-        .order("created_at", { ascending: false })
-        .limit(200);
+        .select(
+            "id, name, address_line_1, address_line_2, postcode, email, can_email, company_number, stage, website, created_at, last_touch_at, lead_events ( kind, created_at ), areas ( name ), cities ( name )",
+            { count: "exact" },
+        )
+        // Longest since anything happened, first. A sales board is for
+        // finding neglected work, not for admiring recent work — and
+        // the column exists so this can be an ORDER BY rather than
+        // reading the whole table and sorting it here.
+        .order("last_touch_at", { ascending: true })
+        .range(from, from + PER_PAGE - 1);
 
     if (params.stage) query = query.eq("stage", params.stage);
     if (params.post === "1") query = query.eq("can_email", false);
+    if (params.area) query = query.eq("area_id", params.area);
+    if (params.category) query = query.eq("category_id", params.category);
 
-    const { data } = await query;
+    // Matched on the name alone. An address or an email would widen it
+    // in ways that are hard to predict from what was typed.
+    const search = params.q?.trim();
+
+    if (search) query = query.ilike("name", `%${search.replace(/[%_]/g, "\\$&")}%`);
+
+    // The two lists above, as a filter, so they can be worked through
+    // with the area and stage filters still on.
+    if (params.due === "followup" || params.due === "letter") {
+        const ids = (params.due === "followup" ? due.followUp : due.letter).map((lead) => lead.id);
+
+        // .in() with an empty list matches everything, not nothing.
+        query = ids.length > 0 ? query.in("id", ids) : query.eq("id", NO_SUCH_LEAD);
+    }
+
+    const { data, count } = await query;
     const leads = (data ?? []) as unknown as LeadRow[];
+    const total = count ?? 0;
+    const lastPage = Math.max(1, Math.ceil(total / PER_PAGE));
 
     return (
         <div className="text-[#17233B]">
@@ -225,13 +310,79 @@ async function Board({ searchParams }: PageProps) {
             <div className="mt-8">
                 <DueList due={due} />
 
-                <Pipeline counts={counts} />
+                <Pipeline counts={counts} params={params} />
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+            {/* A GET form, so every filter is in the URL and a board
+                worth coming back to can be bookmarked or sent to
+                somebody. Page is deliberately not carried: changing a
+                filter should land on the first page of the new list,
+                not page four of it. */}
+            <form method="get" action="/admin/sales" className="mt-6 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Input
+                        type="search"
+                        name="q"
+                        defaultValue={params.q ?? ""}
+                        placeholder="Search by name"
+                        aria-label="Search by name"
+                    />
+
+                    <select
+                        name="area"
+                        defaultValue={params.area ?? ""}
+                        aria-label="Area"
+                        className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                    >
+                        <option value="">Everywhere</option>
+                        {areas.map((area) => (
+                            <option key={area.id} value={area.id}>
+                                {area.cities?.name ? `${area.name} · ${area.cities.name}` : area.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <select
+                        name="category"
+                        defaultValue={params.category ?? ""}
+                        aria-label="Category"
+                        className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                    >
+                        <option value="">Every trade</option>
+                        {categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <div className="flex items-center gap-2">
+                        <Button type="submit" size="sm">Filter</Button>
+
+                        {filtered && (
+                            <Button
+                                render={<Link href="/admin/sales" />}
+                                nativeButton={false}
+                                variant="ghost"
+                                size="sm"
+                            >
+                                Clear
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Kept as hidden fields so the chips above and the
+                    stage tiles are not thrown away by pressing Filter. */}
+                {params.stage && <input type="hidden" name="stage" value={params.stage} />}
+                {params.post === "1" && <input type="hidden" name="post" value="1" />}
+                {params.due && <input type="hidden" name="due" value={params.due} />}
+            </form>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
                 <Link
-                    href="/admin/sales"
-                    className={`rounded-full px-3 py-1.5 ${!params.stage && params.post !== "1" ? "bg-[#17233B] text-white" : "border border-[#17233B]/15"}`}
+                    href={withParams(params, { stage: null, post: null, due: null, page: null })}
+                    className={`rounded-full px-3 py-1.5 ${!params.stage && params.post !== "1" && !params.due ? "bg-[#17233B] text-white" : "border border-[#17233B]/15"}`}
                 >
                     Everyone
                 </Link>
@@ -240,16 +391,37 @@ async function Board({ searchParams }: PageProps) {
                     cuts across all of them. A business we may not email
                     still gets a letter. */}
                 <Link
-                    href="/admin/sales?post=1"
+                    href={withParams(params, { post: params.post === "1" ? null : "1", page: null })}
                     className={`rounded-full px-3 py-1.5 ${params.post === "1" ? "bg-[#17233B] text-white" : "border border-[#17233B]/15"}`}
                 >
                     Post only · {postOnly}
                 </Link>
 
+                {due.followUp.length > 0 && (
+                    <Link
+                        href={withParams(params, { due: params.due === "followup" ? null : "followup", page: null })}
+                        className={`rounded-full px-3 py-1.5 ${params.due === "followup" ? "bg-[#FF593F] text-white" : "border border-[#FF593F]/40 text-[#FF593F]"}`}
+                    >
+                        Due a follow-up · {due.followUp.length}
+                    </Link>
+                )}
+
+                {due.letter.length > 0 && (
+                    <Link
+                        href={withParams(params, { due: params.due === "letter" ? null : "letter", page: null })}
+                        className={`rounded-full px-3 py-1.5 ${params.due === "letter" ? "bg-[#FF593F] text-white" : "border border-[#FF593F]/40 text-[#FF593F]"}`}
+                    >
+                        Due a letter · {due.letter.length}
+                    </Link>
+                )}
+
                 {params.stage && (
-                    <span className="text-[#17233B]/60">
-                        Showing {STAGE_LABELS[params.stage] ?? params.stage}
-                    </span>
+                    <Link
+                        href={withParams(params, { stage: null, page: null })}
+                        className="rounded-full border border-[#17233B]/15 px-3 py-1.5"
+                    >
+                        {STAGE_LABELS[params.stage] ?? params.stage} ✕
+                    </Link>
                 )}
             </div>
 
@@ -333,6 +505,48 @@ async function Board({ searchParams }: PageProps) {
                             </Card>
                         </Link>
                     ))}
+                </div>
+            )}
+
+            {/* Only when there is more than one page of it. A pager under
+                a list of six is furniture. */}
+            {lastPage > 1 && (
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <p className="text-[#17233B]/60">
+                        {from + 1}–{Math.min(from + PER_PAGE, total)} of {total}
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                        {page > 1 ? (
+                            <Link
+                                href={withParams(params, { page: page === 2 ? null : String(page - 1) })}
+                                className="rounded-full border border-[#17233B]/15 px-3 py-1.5"
+                            >
+                                Previous
+                            </Link>
+                        ) : (
+                            <span className="rounded-full border border-[#17233B]/10 px-3 py-1.5 text-[#17233B]/35">
+                                Previous
+                            </span>
+                        )}
+
+                        <span className="text-[#17233B]/60">
+                            Page {page} of {lastPage}
+                        </span>
+
+                        {page < lastPage ? (
+                            <Link
+                                href={withParams(params, { page: String(page + 1) })}
+                                className="rounded-full border border-[#17233B]/15 px-3 py-1.5"
+                            >
+                                Next
+                            </Link>
+                        ) : (
+                            <span className="rounded-full border border-[#17233B]/10 px-3 py-1.5 text-[#17233B]/35">
+                                Next
+                            </span>
+                        )}
+                    </div>
                 </div>
             )}
 

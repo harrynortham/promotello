@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
@@ -13,6 +14,7 @@ import {
     letterDue,
     whenSaid,
 } from "@/lib/sales-pipeline";
+import { TOUCHES } from "@/lib/sales-due";
 
 const now = new Date("2026-11-18T09:00:00Z");
 const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOString();
@@ -244,4 +246,22 @@ test("a DM starts the fortnight, the same as any other touch", () => {
 
 test("a DM is a labelled event, not a raw column name", () => {
     assert.equal(eventLabel("dm_sent"), "DM sent");
+});
+
+test("the database and the app agree on what counts as a touch", () => {
+    // Two lists, because one has to be in SQL for the trigger and one in
+    // TypeScript for the rule. They decide the same thing — when the
+    // clock starts — so they are read side by side here rather than
+    // drifting quietly apart.
+    const sql = readFileSync(
+        new URL("../../supabase/migrations/20270216090000_how_long_since_anything_happened.sql", import.meta.url),
+        "utf8",
+    );
+
+    const inTrigger = sql
+        .slice(sql.indexOf("if new.kind in ("), sql.indexOf(") then"))
+        .match(/'([a-z_]+)'/g)
+        ?.map((quoted) => quoted.replace(/'/g, ""));
+
+    assert.deepEqual([...(inTrigger ?? [])].sort(), [...TOUCHES].sort());
 });
