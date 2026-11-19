@@ -166,15 +166,6 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     {signedIn ? `Claim ${preview.business_name}` : `Claim ${preview.business_name} for free`}
                 </SubmitButton>
             </form>
-            {placesLeft !== null && placesLeft > 0 && placesLeft < FOUNDING_MEMBER_LIMIT && (
-                // Only once some have gone: "50 of 50 left" tells them
-                // nobody has taken it.
-                <p className="text-sm font-medium text-[#FF593F]">
-                    {placesLeft} of {FOUNDING_MEMBER_LIMIT} founding places left at{" "}
-                    {plans.pro_founding_monthly.price} a month for life.
-                </p>
-            )}
-
         </div>
     );
 
@@ -225,7 +216,14 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                             below, drawn by the component the directory
                             uses, and two different pictures of the same
                             offer is one too many. */}
+                        {/* A width of its own. The frame is a block in
+                            a flex column, so without one it sizes to its
+                            contents — and a business with a short
+                            description got a visibly smaller page than
+                            one with a long description, which is the
+                            last thing a preview should vary by. */}
                         <BusinessPagePreview
+                            className="w-full"
                             follow
                             offers={1}
                             page={{
