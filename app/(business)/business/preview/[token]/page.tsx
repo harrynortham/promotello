@@ -166,15 +166,6 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                     {signedIn ? `Claim ${preview.business_name}` : `Claim ${preview.business_name} for free`}
                 </SubmitButton>
             </form>
-            {placesLeft !== null && placesLeft > 0 && placesLeft < FOUNDING_MEMBER_LIMIT && (
-                // Only once some have gone: "50 of 50 left" tells them
-                // nobody has taken it.
-                <p className="text-sm font-medium text-[#FF593F]">
-                    {placesLeft} of {FOUNDING_MEMBER_LIMIT} founding places left at{" "}
-                    {plans.pro_founding_monthly.price} a month for life.
-                </p>
-            )}
-
         </div>
     );
 
