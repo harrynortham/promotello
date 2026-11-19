@@ -6,11 +6,8 @@ import { FiArrowRight, FiCheckCircle, FiGift, FiTag } from "react-icons/fi";
 
 import { ExpiredPreview } from "./expired-preview";
 import { BusinessPagePreview } from "@/components/business-page-preview";
-import { LoyaltyCard } from "@/components/loyalty-card";
 import { OfferCard } from "@/components/offer-card";
-import { PhoneFrame, PosterVisual } from "@/components/product-visuals";
-import { StampQr } from "@/components/stamp-qr";
-import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
+import { LoyaltyCardScreen, PosterVisual } from "@/components/product-visuals";
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -308,33 +305,16 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
                             Customers keep it on their phone. Staff stamp it by scanning, so no paper cards to lose.
                         </p>
-                        {/* The real card, the same component the business
-                            sees on their own loyalty page — not an
-                            illustration of one. What they are shown here is
-                            what they get, and a drawing that drifts from the
-                            product is worse than no drawing. */}
+                        {/* The same component the marketing pages use,
+                            which is the same card a customer holds. */}
                         <div className="mt-6 flex justify-center">
-                            {/* Wider than the illustrations elsewhere,
-                                because this is the card itself rather
-                                than a drawing of one — at w-64 the
-                                stamps shrink to 12px and stop reading
-                                as stamps. */}
-                            <PhoneFrame
-                                label="A customer's loyalty card on their phone"
-                                className="w-full max-w-[17rem]"
-                            >
-                            <LoyaltyCard
+                            <LoyaltyCardScreen
                                 businessName={preview.business_name}
                                 logoUrl={preview.logo_url}
-                                stampsRequired={preview.sample_stamps}
+                                required={preview.sample_stamps}
                                 reward={preview.sample_reward}
                                 stamps={Math.max(1, preview.sample_stamps - 3)}
-                                code={SAMPLE_CARD_CODE}
-                                qr={<StampQr code={SAMPLE_CARD_CODE} />}
-                                narrow
-                                className="border-[#17233B]/10"
                             />
-                            </PhoneFrame>
                         </div>
                     </div>
                 </div>
