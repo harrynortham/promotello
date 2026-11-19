@@ -8,6 +8,15 @@ import { FiArrowLeft, FiArrowRight, FiTrash2 } from "react-icons/fi";
 
 import { ImagePicker } from "@/components/image-picker";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { uploadBusinessImage } from "@/lib/business-images";
 import {
@@ -46,6 +55,10 @@ export function PhotosManager({
     const [busy, setBusy] = useState(false);
     const [problem, setProblem] = useState("");
     const [dragging, setDragging] = useState<number | null>(null);
+    // The photo waiting on a yes. Deleting takes the file as well as the
+    // row, so there is nothing to undo it with — and the bin sits beside
+    // two arrows that are one pixel's worth of aim away.
+    const [confirming, setConfirming] = useState<BusinessPhoto | null>(null);
     // Bumped after each upload to remount the picker.
     //
     // ImagePicker holds the chosen file and keeps showing it, which is
@@ -245,6 +258,38 @@ export function PhotosManager({
                 )}
             </div>
 
+            <Dialog open={confirming !== null} onOpenChange={(next) => !next && setConfirming(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Remove this photo?</DialogTitle>
+                        <DialogDescription>
+                            It comes off your page and the file is deleted. There is no
+                            undo — you would have to upload it again.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <DialogClose
+                            render={<Button type="button" variant="outline" disabled={busy} />}
+                        >
+                            Keep it
+                        </DialogClose>
+
+                        <Button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                                const going = confirming;
+                                setConfirming(null);
+                                if (going) void remove(going);
+                            }}
+                        >
+                            {busy ? "Removing…" : "Remove it"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {photos.length > 0 && (
                 <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {photos.map((photo, at) => (
@@ -340,7 +385,7 @@ export function PhotosManager({
                                     size="sm"
                                     variant="ghost"
                                     disabled={busy}
-                                    onClick={() => void remove(photo)}
+                                    onClick={() => setConfirming(photo)}
                                     className="text-[#17233B]/60 hover:text-red-700"
                                     aria-label={`Remove ${photoAlt(photo, businessName, at)}`}
                                 >
