@@ -692,11 +692,32 @@ async function Lead({ params, searchParams }: PageProps) {
                                     </div>
                                 </div>
 
+                                {/* Both are worth a look before writing to
+                                    them — the site says what they sell, the
+                                    feed says whether anybody is minding it —
+                                    and the address was sitting in a box you
+                                    had to copy out of. Only when there is
+                                    something to open. */}
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-1">
-                                        <Label htmlFor="website" className="text-xs">
-                                            Website
-                                        </Label>
+                                        <div className="flex items-baseline justify-between gap-2">
+                                            <Label htmlFor="website" className="text-xs">
+                                                Website
+                                            </Label>
+
+                                            {lead.website && (
+                                                <a
+                                                    href={lead.website}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-xs text-[#FF593F] underline underline-offset-2"
+                                                >
+                                                    Open
+                                                    <FiExternalLink aria-hidden="true" />
+                                                </a>
+                                            )}
+                                        </div>
+
                                         <Input
                                             id="website"
                                             name="website"
@@ -707,9 +728,28 @@ async function Lead({ params, searchParams }: PageProps) {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <Label htmlFor="instagramHandle" className="text-xs">
-                                            Instagram
-                                        </Label>
+                                        <div className="flex items-baseline justify-between gap-2">
+                                            <Label htmlFor="instagramHandle" className="text-xs">
+                                                Instagram
+                                            </Label>
+
+                                            {/* The profile, not the DM —
+                                                that is its own button under
+                                                "Write to them". This is for
+                                                looking before deciding. */}
+                                            {dmHandle && (
+                                                <a
+                                                    href={`https://instagram.com/${dmHandle}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-xs text-[#FF593F] underline underline-offset-2"
+                                                >
+                                                    @{dmHandle}
+                                                    <FiExternalLink aria-hidden="true" />
+                                                </a>
+                                            )}
+                                        </div>
+
                                         <Input
                                             id="instagramHandle"
                                             name="instagramHandle"
@@ -724,18 +764,6 @@ async function Lead({ params, searchParams }: PageProps) {
                                     <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
                                         Save the details
                                     </SubmitButton>
-
-                                    {lead.website && (
-                                        <a
-                                            href={lead.website}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1 text-xs text-[#17233B]/60 hover:text-[#FF593F]"
-                                        >
-                                            Open their site
-                                            <FiExternalLink aria-hidden="true" className="size-3" />
-                                        </a>
-                                    )}
                                 </div>
                             </form>
                         </CardContent>
