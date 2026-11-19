@@ -7,6 +7,8 @@ import { FiArrowLeft } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FormPageLoading } from "@/components/dashboard-skeletons";
+import { freeFor } from "@/lib/billing";
+import { trialOnOffer } from "@/lib/founding-places";
 import { loadLoyaltyEditor } from "../loyalty-data";
 import { LoyaltyCardBuilder } from "../program-form";
 
@@ -90,6 +92,7 @@ async function NewLoyaltyCard({ params }: PageProps) {
                 replacing={Boolean(current)}
                 submitLabel={current ? "Start the new card" : "Start this card"}
                 locked={!editor.hasPro}
+                trialLength={freeFor(await trialOnOffer())}
                 trialSpent={editor.trialSpent}
             />
         </div>

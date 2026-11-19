@@ -1,6 +1,11 @@
 import { cacheLife } from "next/cache";
 
-import { FOUNDING_MEMBER_LIMIT, countFoundingMembers } from "@/lib/billing";
+import {
+    FOUNDING_MEMBER_LIMIT,
+    FOUNDING_TRIAL_DAYS,
+    TRIAL_DAYS,
+    countFoundingMembers,
+} from "@/lib/billing";
 
 // How many founding places are left, for any page that wants to say so.
 //
@@ -23,4 +28,21 @@ export async function foundingPlacesLeft() {
         // says the limit exists without claiming a number.
         return null;
     }
+}
+
+// How long a trial a business starting Pro right now would get.
+//
+// Three months while founding places remain, one month after they are
+// gone. Asked once, here, because the answer was being guessed in
+// several places at once: the loyalty card said "30 days" to everybody
+// including the businesses being offered three months, and billing then
+// said something different one click later.
+//
+// freeFor() turns it into words.
+export async function trialOnOffer() {
+    const left = await foundingPlacesLeft();
+
+    // A count we could not read falls to the shorter one. Promising
+    // three months and giving one is worse than the other way round.
+    return left !== null && left > 0 ? FOUNDING_TRIAL_DAYS : TRIAL_DAYS;
 }

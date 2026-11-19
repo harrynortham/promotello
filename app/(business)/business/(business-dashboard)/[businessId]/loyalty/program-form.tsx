@@ -267,6 +267,7 @@ export function LoyaltyCardBuilder({
     submitLabel,
     locked = false,
     trialSpent = false,
+    trialLength,
     suggested = null,
 }: {
     businessId: string;
@@ -278,9 +279,15 @@ export function LoyaltyCardBuilder({
     submitLabel: string;
     locked?: boolean;
     // The business has had its one free trial, so Pro now starts with a
-    // card form. Promising "free for 30 days and no card to start"
-    // would be found out one click later.
+    // card form. Promising a free trial here would be found out one
+    // click later.
     trialSpent?: boolean;
+    // How long their trial would actually be. Three months while
+    // founding places remain, one month after. This said "30 days"
+    // whoever was reading it, which undersold the thing by two thirds
+    // to exactly the businesses being offered the better deal — and
+    // then billing said something different one click later.
+    trialLength: string;
     // The card we drew in their preview email. Only ever the starting
     // state of a first card, never anything already saved
     // (docs/LAUNCH-FUNNEL.md).
@@ -349,7 +356,7 @@ export function LoyaltyCardBuilder({
                                     today.{" "}
                                     {trialSpent
                                         ? "It is included in Pro, and everything you have set up here is waiting."
-                                        : "It is included in Pro, free for 30 days and no card to start."}
+                                        : `It is included in Pro, free for ${trialLength} and no card to start.`}
                                 </p>
 
                                 <Button

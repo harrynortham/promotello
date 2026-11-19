@@ -46,6 +46,15 @@ export function PhotosManager({
     const [busy, setBusy] = useState(false);
     const [problem, setProblem] = useState("");
     const [dragging, setDragging] = useState<number | null>(null);
+    // Bumped after each upload to remount the picker.
+    //
+    // ImagePicker holds the chosen file and keeps showing it, which is
+    // right where there is one image to set: the preview is the logo
+    // you just picked. Here the photo has already gone into the grid
+    // below, so leaving it in the picker as well said "Change image"
+    // over a job that was finished, and there was no way back to
+    // "Upload from device" without reloading the page.
+    const [uploads, setUploads] = useState(0);
 
     const shown = photos.filter((photo) => !photo.plan_paused_at);
     const paused = photos.filter((photo) => photo.plan_paused_at);
@@ -91,6 +100,7 @@ export function PhotosManager({
         }
 
         setPhotos((current) => [...current, data as BusinessPhoto]);
+        setUploads((count) => count + 1);
         setBusy(false);
         router.refresh();
     }
@@ -211,6 +221,7 @@ export function PhotosManager({
 
             <div className="mt-6 max-w-sm">
                 <ImagePicker
+                    key={uploads}
                     id="add-photo"
                     label="Add a photo"
                     hint="A landscape JPG, PNG or WebP. You can zoom and reposition it next."

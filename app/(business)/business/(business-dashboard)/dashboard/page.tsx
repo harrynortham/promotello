@@ -22,6 +22,8 @@ import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { cn } from "@/lib/utils";
 import { unclaimedPreview } from "@/lib/previews";
 import { storedImage } from "@/lib/images";
+import { freeFor } from "@/lib/billing";
+import { trialOnOffer } from "@/lib/founding-places";
 import { createClient } from "@/utils/supabase/server";
 
 type Business = {
@@ -146,7 +148,10 @@ function BusinessCard({ business }: { business: BusinessSummary }) {
 // The same four the checklist works down once a business exists, in the
 // same order, so the first screen and the second agree about what
 // setting up means.
-const welcomeSteps = [
+// Built per request rather than as a module constant: how long the
+// trial is depends on whether founding places are left, which is a
+// thing that changes while the app is running.
+const welcomeSteps = (trialLength: string) => [
     {
         icon: FiShoppingBag,
         title: "Your profile page",
@@ -173,7 +178,7 @@ const welcomeSteps = [
         title: "Your loyalty card",
         description:
             "Digital stamps that live in a phone rather than the bottom of a bag, so the next one is worth walking past somewhere else for.",
-        time: "On Pro, free for 30 days",
+        time: `On Pro, free for ${trialLength}`,
     },
 ];
 
@@ -183,7 +188,13 @@ const reassurances = [
     "Add your team, your other locations and more offers whenever you like",
 ];
 
-function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
+function NewBusinessWelcome({
+    firstName,
+    trialLength,
+}: {
+    firstName: string | null;
+    trialLength: string;
+}) {
     return (
         <Page>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
@@ -208,7 +219,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                 </p>
 
                 <ol className="mt-7 space-y-6">
-                    {welcomeSteps.map((step, index) => (
+                    {welcomeSteps(trialLength).map((step, index) => (
                         <li key={step.title} className="flex gap-4">
                             <div className="relative shrink-0">
                                 <IconTile
@@ -219,7 +230,7 @@ function NewBusinessWelcome({ firstName }: { firstName: string | null }) {
                                 {/* A line down the margin, through the gap
                                     below, so the four read as one run
                                     rather than four cards. */}
-                                {index < welcomeSteps.length - 1 && (
+                                {index < welcomeSteps(trialLength).length - 1 && (
                                     <span
                                         aria-hidden="true"
                                         className="absolute -bottom-6 left-1/2 top-13 w-px -translate-x-1/2 bg-[#17233B]/10"
@@ -321,7 +332,12 @@ async function BusinessDashboardContent() {
 
     // First visit: one clear next step instead of an empty dashboard.
     if (businesses.length === 0) {
-        return <NewBusinessWelcome firstName={firstName} />;
+        return (
+            <NewBusinessWelcome
+                firstName={firstName}
+                trialLength={freeFor(await trialOnOffer())}
+            />
+        );
     }
 
     // Most people have one business: its overview is their dashboard. Adding
