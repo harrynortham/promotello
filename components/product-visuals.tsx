@@ -13,9 +13,10 @@ import {
     FiStar,
 } from "react-icons/fi";
 
-import { storedImage } from "@/lib/images";
 import { cn } from "@/lib/utils";
-import { cardColour } from "@/lib/loyalty-design";
+import { LoyaltyCard } from "@/components/loyalty-card";
+import { StampQr } from "@/components/stamp-qr";
+import { SAMPLE_CARD_CODE } from "@/lib/loyalty-design";
 import { DailyBars } from "@/components/daily-bars";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { QrPoster } from "@/components/qr-poster";
@@ -71,10 +72,18 @@ export function BrowserFrame({ children, url, label, className = "" }: { childre
 // Customer screens
 // ---------------------------------------------------------------------------
 
-// A customer's card, at phone size. The real LoyaltyCard lays itself out
-// with viewport breakpoints and a full-size QR, which a 200px phone mock
-// cannot hold, so this keeps the card's own colour and stamp from
-// lib/loyalty-design and draws them small.
+// A customer's card, at phone size.
+//
+// The real card, not a drawing of it. There used to be a second design
+// here — a smaller card laid out by hand — which meant the thing shown
+// on the marketing pages and in a preview could drift from the thing a
+// customer actually holds, and had. components/loyalty-card.tsx is the
+// one card design (it is the one /dashboard/loyalty and the business's
+// own loyalty page render), and `narrow` is how it fits somewhere this
+// size: balanced stamp rows, smaller type, a stacked scan panel.
+//
+// One component for all of it, so what is on the marketing pages and
+// what a business is sent in a preview cannot say different things.
 export function LoyaltyCardScreen({
     stamps = 7,
     businessName = business,
@@ -92,43 +101,28 @@ export function LoyaltyCardScreen({
     stampIcon?: string | null;
     logoUrl?: string | null;
 }) {
-    const design = cardColour(colour);
-
     return (
-        <PhoneFrame label="A customer's loyalty card on their phone">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#FF593F]">My loyalty cards</p>
-
-            <div className="mt-3 overflow-hidden rounded-2xl bg-white shadow-sm">
-                <div className="flex items-center gap-2 p-3 text-white" style={{ backgroundColor: design.header }}>
-                    {storedImage(logoUrl) ? (
-                        <Image
-                            src={storedImage(logoUrl)!}
-                            alt=""
-                            width={28}
-                            height={28}
-                            className="size-7 shrink-0 rounded-lg bg-white object-contain"
-                        />
-                    ) : (
-                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/15 text-[11px] font-semibold">
-                            {businessName.trim().charAt(0).toUpperCase()}
-                        </span>
-                    )}
-                    <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold">{businessName}</p>
-                        <p className="text-[11px] text-white/75">{required} stamps for {reward}</p>
-                    </div>
-                </div>
-
-                <div className="p-3">
-                    <LoyaltyStamps stamps={stamps} required={required} size="sm" colour={colour} icon={stampIcon} />
-                    <p className="mt-2 text-[11px] text-[#17233B]/70">{stamps} of {required} stamps</p>
-                </div>
-            </div>
-
-            <div className="mt-3 rounded-2xl bg-white p-4 text-center shadow-sm">
-                <VoucherQr code="HGCARD7Q2K" className="mx-auto w-24" />
-                <p className="mt-2 text-[11px] text-[#17233B]/70">Show this to be stamped</p>
-            </div>
+        <PhoneFrame
+            label="A customer's loyalty card on their phone"
+            // A fixed width, not w-full: in a flex row beside a
+            // dashboard mock it was being squeezed to 180px, and a card
+            // that narrow stops reading as a card. max-w-full so a
+            // phone-width screen still fits it.
+            className="w-[17rem] max-w-full"
+        >
+            <LoyaltyCard
+                narrow
+                businessName={businessName}
+                logoUrl={logoUrl}
+                stampsRequired={required}
+                reward={reward}
+                stamps={stamps}
+                colour={colour}
+                stampIcon={stampIcon}
+                code={SAMPLE_CARD_CODE}
+                qr={<StampQr code={SAMPLE_CARD_CODE} />}
+                className="border-[#17233B]/10"
+            />
         </PhoneFrame>
     );
 }
