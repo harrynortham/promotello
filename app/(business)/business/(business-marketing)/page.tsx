@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -88,7 +89,7 @@ const faqs = [
     },
     {
         question: "What does it cost?",
-        answer: `Free gets you found: a page in the directory, one live offer and a QR poster. Pro is for bringing people back — unlimited offers, a stamp card, posters for every spot, and an email to your followers whenever you post an offer. Growth adds marketing that runs without you. Paid plans start with a 30-day free trial and you can cancel any time.`,
+        answer: `Free gets you found: a page in the directory, one live offer and a QR poster. Pro is for bringing people back — unlimited offers, a stamp card, posters for every spot, and an email to your followers whenever you post an offer. Growth adds marketing that runs without you. Paid plans start with a ${freeFor(TRIAL_DAYS)} free trial — ${freeFor(FOUNDING_TRIAL_DAYS)} for the first ${FOUNDING_MEMBER_LIMIT} on Pro — and you can cancel any time.`,
     },
 ];
 
@@ -370,7 +371,7 @@ export default async function BusinessPage() {
                         <Eyebrow>Pricing</Eyebrow>
                         <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Upgrade when it&apos;s working.</h2>
                         <p className="mt-4 text-lg text-[#17233B]/70">
-                            Paid plans include a 30-day free trial. The first 50 businesses get Pro for £19 a month, for life.
+                            Paid plans include a {freeFor(TRIAL_DAYS)} free trial. The first {FOUNDING_MEMBER_LIMIT} businesses get {freeFor(FOUNDING_TRIAL_DAYS)} free and Pro for {plans.pro_founding_monthly.price} a month, for life.
                         </p>
                     </div>
                     <Button render={<Link href="/business/pricing" />} nativeButton={false} variant="outline">

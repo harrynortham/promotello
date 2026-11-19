@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
@@ -47,7 +48,7 @@ const sections = [
             {
                 question: "Can I try it before I pay?",
                 answer:
-                    "Yes. The Free plan has no time limit, and Pro and Growth start with a 30-day free trial.",
+                    `Yes. The Free plan has no time limit, and Pro and Growth start with a free trial — ${freeFor(FOUNDING_TRIAL_DAYS)} for the first ${FOUNDING_MEMBER_LIMIT} on Pro, ${freeFor(TRIAL_DAYS)} otherwise.`,
             },
         ],
     },
@@ -182,7 +183,7 @@ const sections = [
             {
                 question: "How does the free trial work?",
                 answer:
-                    "Pro and Growth start with a 30-day free trial, and starting one takes no card. Add one before it ends to carry on, or let it stop by itself. Each business gets one trial.",
+                    `Pro and Growth start with a free trial — ${freeFor(FOUNDING_TRIAL_DAYS)} for the first ${FOUNDING_MEMBER_LIMIT} on Pro, ${freeFor(TRIAL_DAYS)} otherwise — and starting one takes no card. Add one before it ends to carry on, or let it stop by itself. Each business gets one trial.`,
             },
             {
                 question: "Are there fees per claim or per customer?",

@@ -20,6 +20,10 @@ export const FOUNDING_MEMBER_LIMIT = 50;
 // hears it as — but derived, so changing FOUNDING_TRIAL_DAYS changes the
 // sentence rather than leaving it quietly wrong.
 export function freeFor(days: number) {
+    // Months wherever it divides, including one. The two trials are
+    // meant to be read against each other — three months against one —
+    // and "90 days against 30 days" makes the reader do the division
+    // themselves.
     if (days % 30 === 0) {
         const months = days / 30;
 

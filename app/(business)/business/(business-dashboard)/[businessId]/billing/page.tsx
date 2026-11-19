@@ -13,9 +13,11 @@ import {
     FOUNDING_MEMBER_LIMIT,
     FREE_LIVE_OFFER_LIMIT,
     TRIAL_DAYS,
+    freeFor,
     planKeyForPriceId,
     plans,
     tierForPlan,
+    trialDays,
     type PlanKey,
 } from "@/lib/billing";
 import { foundingPlacesLeft } from "@/lib/founding-places";
@@ -490,7 +492,7 @@ async function PlanOptions({
                 You&apos;re on the Free plan: your business page and{" "}
                 {FREE_LIVE_OFFER_LIMIT} live offer.{" "}
                 {trialEligible
-                    ? `Pro and Growth start with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. Add one before it ends to carry on, or do nothing and it stops by itself.`
+                    ? `Pro starts with ${freeFor(trialDays(proMonthly))} free and Growth with ${freeFor(TRIAL_DAYS)}, and starting one takes no card. Add one before it ends to carry on, or do nothing and it stops by itself.`
                     : "Pick a plan to reactivate your subscription."}
             </p>
 
