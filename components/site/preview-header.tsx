@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { claimPreview } from "@/app/(business)/business/(business-marketing)/preview/[token]/actions";
+import { claimPreview } from "@/app/(business)/business/preview/[token]/actions";
 import { SubmitButton } from "@/components/submit-button";
 
 // The header on a preview page.
