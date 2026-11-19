@@ -14,6 +14,11 @@ export const STAGES = [
     // Before the email, not after: the point is that the name is
     // already half-familiar when the email lands.
     { key: "social", label: "Following them", blurb: "Followed, and seen about, before we write." },
+    // A DM is a reaching out, not a watching, so it comes after
+    // following them — and before the email, because it is usually
+    // instead of one: a shop that never answers email is on Instagram
+    // every day.
+    { key: "dm", label: "DM sent", blurb: "Messaged on Instagram, waiting." },
     { key: "emailed", label: "Emailed", blurb: "The first email has gone." },
     { key: "followed_up", label: "Followed up", blurb: "The second one has gone too." },
     { key: "letter", label: "Letter posted", blurb: "Paper, after the email went quiet." },
@@ -131,7 +136,7 @@ export function dueToday(leads: DueLead[], now: Date) {
         // either for a fortnight was invisible to this rule, which is
         // how a sole trader — reachable by post and nothing else — could
         // sit there for good.
-        if (["emailed", "followed_up", "preview", "social"].includes(lead.stage) && age >= LETTER_AFTER_DAYS) {
+        if (["emailed", "followed_up", "preview", "social", "dm"].includes(lead.stage) && age >= LETTER_AFTER_DAYS) {
             letter.push(lead);
         }
     }
