@@ -37,7 +37,10 @@ export function AddLeadForm({ cities }: { cities: CityOption[] }) {
         setProblem("");
         setIsSaving(true);
 
-        const data = new FormData(event.currentTarget);
+        // Held now, because currentTarget is null by the time the await
+        // comes back.
+        const form = event.currentTarget;
+        const data = new FormData(form);
         if (matches) data.set("confirmed", "1");
 
         const result = await addLead(data);
@@ -53,6 +56,15 @@ export function AddLeadForm({ cities }: { cities: CityOption[] }) {
             setIsSaving(false);
             return;
         }
+
+        // Emptied before we leave. These inputs are uncontrolled, and
+        // coming back to this page is a soft navigation — React keeps
+        // the same DOM nodes, so whatever was typed is still sitting in
+        // them. Adding a second lead started with the first one's name,
+        // address and contact already filled in, which is how two of the
+        // same business get written down.
+        form.reset();
+        setMatches(null);
 
         router.push(`/admin/sales/${result.leadId}`);
     }
