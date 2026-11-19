@@ -285,3 +285,47 @@ test("a lead left on a DM is owed a letter, like one left on an email", () => {
 
     assert.deepEqual(letter.map((lead) => lead.id), ["a"]);
 });
+
+test("last night is yesterday, not today", () => {
+    // It counted whole 24-hour periods, so an email sent at 21:33 read
+    // "sent today" at 11:00 the next morning — thirteen hours old, and a
+    // day late by the only measure anybody uses.
+    const morning = new Date("2026-11-19T11:00:00Z");
+
+    assert.equal(whenSaid("2026-11-18T21:33:00Z", morning), "yesterday");
+    assert.equal(whenSaid("2026-11-19T00:05:00Z", morning), "today");
+    assert.equal(whenSaid("2026-11-19T10:59:00Z", morning), "today");
+});
+
+test("the days before that are counted the same way", () => {
+    const now = new Date("2026-11-19T11:00:00Z");
+
+    // Late on the 16th is three days ago on the 19th, however few hours
+    // have actually passed.
+    assert.equal(whenSaid("2026-11-16T23:50:00Z", now), "3 days ago");
+    assert.equal(whenSaid("2026-11-01T09:00:00Z", now), "2 weeks ago");
+});
+
+test("deciding what is due still counts elapsed time, not dates", () => {
+    // The two answer different questions, and this one is a schedule: a
+    // follow-up is owed four days after the email went, not on the
+    // fourth date after it.
+    const now = new Date("2026-11-19T11:00:00Z");
+    const lateOnTheFifteenth = "2026-11-15T23:50:00Z";
+
+    assert.equal(whenSaid(lateOnTheFifteenth, now), "4 days ago");
+    assert.equal(followUpDue(lateOnTheFifteenth, now), false, "not yet four whole days");
+});
+
+test("what day it was does not depend on where the server is", () => {
+    // This machine runs Europe/Gibraltar and Vercel runs UTC, so the
+    // same instant was two different dates depending on where the page
+    // rendered. Every business on here is in the UK.
+    const justBeforeUkMidnight = "2026-11-18T23:50:00Z";
+    const nextMorning = new Date("2026-11-19T09:00:00Z");
+
+    assert.equal(whenSaid(justBeforeUkMidnight, nextMorning), "yesterday");
+
+    // Ten minutes later is the next day in London, and so is the answer.
+    assert.equal(whenSaid("2026-11-19T00:10:00Z", nextMorning), "today");
+});

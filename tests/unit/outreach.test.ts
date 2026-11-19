@@ -114,18 +114,24 @@ test("it promises the link is private, and offers a way out", () => {
     assert.match(body, /Not for you\? Reply and I'll delete it/);
 });
 
-test("it stops before the sign-off, because the signature is the sign-off", () => {
-    const body = email();
 
-    assert.doesNotMatch(body, /Harry/, "no name in the body");
-    assert.doesNotMatch(body, /17546946/, "and no registered office");
-});
 
 // --- The follow-up ---------------------------------------------------
 
 const followUp = (over: Partial<Parameters<typeof outreachFollowUp>[0]> = {}) =>
     outreachFollowUp({ preview, placesLeft: 38, contactName: "Sam", ...over });
 
+test("both emails end with a sign-off, and leave the small print to the signature", () => {
+    // Two different things. The sign-off ends the letter; the signature
+    // is the block a business email has to carry. A letter that stops
+    // dead at its last sentence and goes straight into a registered
+    // office reads like a notice rather than a note.
+    for (const body of [email(), followUp()]) {
+        assert.match(body, /\n\nCheers,\nHarry$/, "ends on the sign-off");
+        assert.doesNotMatch(body, /17546946/, "no registered office in the body");
+        assert.doesNotMatch(body, /Founder/, "and no signature block");
+    }
+});
 test("the follow-up is short, and carries the link again", () => {
     const body = followUp();
 
@@ -184,15 +190,15 @@ test("the full DM carries the link and the offer", () => {
     assert.match(dm, /A QR poster goes in your window/);
     assert.match(dm, /the Bristol directory/);
     assert.match(dm, new RegExp(`first ${FOUNDING_MEMBER_LIMIT} businesses get Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}`));
-    assert.match(dm, /Not for you\? Just say and I'll delete it\.$/);
+    assert.match(dm, /Not for you\? Just say and I'll delete it\./);
 });
 
-test("neither DM signs off, because both open with the name", () => {
-    for (const variant of ["full", "opener"] as const) {
-        const dm = outreachDm({ ...dmArgs, variant });
-
-        assert.ok(!/—\s*Harry\s*$/.test(dm), `${variant} should not sign off twice`);
-    }
+test("the full DM signs off; the opener does not", () => {
+    // A sign-off under a one-line question is a letter pretending to be
+    // a message. Under a message that ran to a few paragraphs it is
+    // just how you end one.
+    assert.match(outreachDm(dmArgs), /\n\nCheers,\nHarry$/);
+    assert.doesNotMatch(outreachDm({ ...dmArgs, variant: "opener" }), /Cheers/);
 });
 
 test("the personal line reaches both DMs", () => {

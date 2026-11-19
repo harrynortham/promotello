@@ -84,6 +84,7 @@ type PageProps = {
         undeletable?: string;
         confirm?: string;
         saved?: string;
+        queued?: string;
         error?: string;
     }>;
 };
@@ -111,7 +112,7 @@ async function Lead({ params, searchParams }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
-    const { already, undeletable, confirm, saved, error } = await searchParams;
+    const { already, undeletable, confirm, saved, queued, error } = await searchParams;
     const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
@@ -270,9 +271,31 @@ async function Lead({ params, searchParams }: PageProps) {
                 </p>
             )}
 
+            {/* Queueing moves the draft somewhere else, so it needs to
+                say where it went and offer the way there. */}
+            {queued && (
+                <p className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    {queued === "follow_up" ? "The follow-up is" : "The first email is"} in the
+                    outbox. Nothing goes until you read it and press send.
+                    <Link href="/admin/sales/outbox" className="font-medium underline">
+                        Open the outbox
+                    </Link>
+                </p>
+            )}
+
             {error && (
                 <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-900">
-                    {error === "no_name"
+                    {error === "post_only"
+                        ? "Not queued: this lead is post only until Companies House says otherwise."
+                        : error === "no_email"
+                            ? "Not queued: there is no address to write to."
+                            : error === "no_preview"
+                                ? "Not queued: build the preview first — the email is a link to it."
+                                : error === "no_first_email"
+                                    ? "Not queued: the first email has not gone yet, so there is nothing to follow up."
+                                    : error === "already_queued"
+                                        ? "That one is already waiting in the outbox."
+                                        : error === "no_name"
                         ? "A lead needs a name."
                         : error === "duplicate"
                             ? "Another lead already has that name and postcode."
@@ -595,7 +618,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                         name="personalLine"
                                         defaultValue={lead.personal_line ?? ""}
                                         maxLength={200}
-                                        placeholder="You’ve got 4.8 stars from over 300 reviews, which is why you’re one of the first places I wanted on here."
+                                        placeholder="I see you’ve got 4.8 stars from over 300 reviews, which is why you’re one of the first places I wanted on here."
                                     />
                                     <p className="text-[11px] leading-5 text-[#17233B]/55">
                                         One specific, true sentence about this business, e.g. something
@@ -846,9 +869,9 @@ async function Lead({ params, searchParams }: PageProps) {
                                             <form action={queueOutreach}>
                                                 <input type="hidden" name="leadId" value={lead.id} />
                                                 <input type="hidden" name="kind" value="first" />
-                                                <Button type="submit" size="sm">
+                                                <SubmitButton pendingLabel="Queueing…" size="sm">
                                                     Queue the first email
-                                                </Button>
+                                                </SubmitButton>
                                             </form>
                                         ) : (
                                             <p className="text-xs text-[#17233B]/60">
@@ -861,13 +884,13 @@ async function Lead({ params, searchParams }: PageProps) {
                                                 <form action={queueOutreach}>
                                                     <input type="hidden" name="leadId" value={lead.id} />
                                                     <input type="hidden" name="kind" value="follow_up" />
-                                                    <Button
-                                                        type="submit"
+                                                    <SubmitButton
+                                                        pendingLabel="Queueing…"
                                                         size="sm"
                                                         variant={followUpDue(firstSentAt) ? "default" : "outline"}
                                                     >
                                                         Queue a follow-up
-                                                    </Button>
+                                                    </SubmitButton>
                                                 </form>
 
                                                 <p className="text-xs text-[#17233B]/60">

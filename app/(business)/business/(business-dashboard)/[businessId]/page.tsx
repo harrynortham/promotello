@@ -151,7 +151,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
         { count: printedPosterCount },
         { count: loyaltyCount },
         hasPro,
-        { data: isPlatformAdmin },
         starter,
         { data: trial },
     ] = await Promise.all([
@@ -226,10 +225,6 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
             .eq("business_id", businessId),
 
         businessHasPro(supabase, businessId),
-
-        // Only for us: the sales pack is a sheet for selling, and a
-        // business that already pays has no use for a page of prices.
-        supabase.rpc("is_platform_admin"),
 
         // The offer and the reward we put in their preview email, so
         // the first screen after claiming is the thing they said yes to
@@ -880,15 +875,11 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                         View analytics
                     </Button>
 
-                    {isPlatformAdmin && (
-                        <Button
-                            render={<Link href={`/sales-pack/${businessId}`} />}
-                            nativeButton={false}
-                            size="sm"
-                        >
-                            Sales pack
-                        </Button>
-                    )}
+                    {/* No sales pack here. It is a thing we print to sell
+                        with, not a thing a business does with their own
+                        page — and this dashboard belongs to them even
+                        when an admin is the one looking at it. Admins
+                        reach it from Sales, through the demo business. */}
                 </CardContent>
             </Card>
         </div>
