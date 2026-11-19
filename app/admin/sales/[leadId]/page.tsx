@@ -595,7 +595,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                         name="personalLine"
                                         defaultValue={lead.personal_line ?? ""}
                                         maxLength={200}
-                                        placeholder="You’ve got 4.8 stars from over 300 reviews, which is why you’re one of the first places I wanted on here."
+                                        placeholder="I see you’ve got 4.8 stars from over 300 reviews, which is why you’re one of the first places I wanted on here."
                                     />
                                     <p className="text-[11px] leading-5 text-[#17233B]/55">
                                         One specific, true sentence about this business, e.g. something
