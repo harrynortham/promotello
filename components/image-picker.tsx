@@ -29,6 +29,7 @@ export function ImagePicker({
     aspect = 1,
     allowSpace = false,
     maxSize = 1600,
+    quality,
     convertToJpeg = false,
     imageUrl = null,
     modal = false,
@@ -46,6 +47,9 @@ export function ImagePicker({
     allowSpace?: boolean;
     // The longest edge of the cropped image, in pixels.
     maxSize?: number;
+    // JPEG quality, where the default suits one image rather than a wall
+    // of them.
+    quality?: number;
     // Photos become JPEG to keep them small; leave off to keep PNG or
     // WebP transparency.
     convertToJpeg?: boolean;
@@ -109,6 +113,7 @@ export function ImagePicker({
             const blob = await cropImage(chosenUrl, cropArea, {
                 type: convertToJpeg ? "image/jpeg" : "auto",
                 maxSize,
+                quality,
             });
             const type = blob.type;
             const name = chosen.name.replace(/\.[^.]+$/, "") + (type === "image/jpeg" ? ".jpg" : ".png");

@@ -4,8 +4,16 @@ export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export const IMAGE_ACCEPT = IMAGE_TYPES.join(",");
 
 // A business's logo or cover photo. Both are cropped and resized in the
-// browser, so a big phone photo is fine to choose; the upload is much smaller.
+// browser, so a big phone photo is fine to choose; the upload is much
+// smaller.
+//
+// These two are the ones with a column of their own on businesses, and
+// the forms that edit them are keyed by this. A gallery photo is a row
+// in business_photos rather than a column, so it is not one of these —
+// it is only the same upload.
 export type BusinessImageKind = "logo" | "cover";
+
+export type UploadKind = BusinessImageKind | "photo";
 
 const MAX_CHOSEN_MB = 20;
 
@@ -21,7 +29,7 @@ export function imageFileError(file: File) {
 export async function uploadBusinessImage(
     supabase: ReturnType<typeof createClient>,
     businessId: string,
-    kind: BusinessImageKind,
+    kind: UploadKind,
     file: File,
     { generated = false }: { generated?: boolean } = {},
 ) {
@@ -34,7 +42,10 @@ export async function uploadBusinessImage(
 
     if (error) return { error: error.message };
 
-    return { url: supabase.storage.from("business-logos").getPublicUrl(path).data.publicUrl };
+    return {
+        path,
+        url: supabase.storage.from("business-logos").getPublicUrl(path).data.publicUrl,
+    };
 }
 
 // A cover we drew is a stand-in until the business sends a photograph,

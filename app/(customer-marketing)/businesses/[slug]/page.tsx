@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { businessHasPro } from "@/lib/billing";
+import { BusinessGallery } from "@/components/business-gallery";
+import { photoUrl } from "@/lib/business-photos";
 import { SocialLinks } from "@/components/social-links";
 import { socialsOf } from "@/lib/social-links";
 import Image from "next/image";
@@ -258,6 +260,24 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         minimum_role: "admin",
     });
     const dashboard = `/business/${businessId}`;
+
+    // The photos the plan is showing. business_photos_public_select
+    // already hides the paused ones, so this is the same list a
+    // visitor would get.
+    const { data: photoRows } = await supabase
+        .from("business_photos")
+        .select("id, storage_path, caption, sort_order")
+        .eq("business_id", businessId)
+        .is("plan_paused_at", null)
+        .order("sort_order")
+        .order("created_at");
+
+    // The url is built here rather than in the browser, so the bucket
+    // is named in one place.
+    const photos = (photoRows ?? []).map((photo) => ({
+        ...photo,
+        url: photoUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", photo.storage_path),
+    }));
 
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
@@ -792,6 +812,31 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </Card>
                             )}
                         </section>
+
+                        {/* The room, the counter, what they make.
+                            Below the offers, because the offers are
+                            why somebody opened the page and these are
+                            what make them go. Nothing at all when
+                            there are none — a heading over an empty
+                            space reads as something broken. */}
+                        {photos.length > 0 && (
+                            <section aria-labelledby="photos-heading" className="mt-10">
+                                <div className="mb-5 flex items-start justify-between gap-4">
+                                    <h2
+                                        id="photos-heading"
+                                        className="text-2xl font-semibold tracking-tight"
+                                    >
+                                        Inside {business.name}
+                                    </h2>
+
+                                    {canEdit && (
+                                        <OwnerEdit href={`${dashboard}/photos`} label="Edit your photos" />
+                                    )}
+                                </div>
+
+                                <BusinessGallery photos={photos} businessName={business.name} />
+                            </section>
+                        )}
                     </div>
 
                     {/* Visiting information */}

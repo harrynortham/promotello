@@ -134,7 +134,15 @@ function hasTransparency(context: CanvasRenderingContext2D, width: number, heigh
 export async function cropImage(
     src: string,
     area: Area,
-    { type = "auto", maxSize = 1024 }: { type?: string; maxSize?: number } = {},
+    {
+        type = "auto",
+        maxSize = 1024,
+        // 0.92 is right for a logo and a cover, where there is one of
+        // each. A gallery is twenty-five of them, and the difference
+        // between 0.92 and 0.82 on a photograph is hard to see and
+        // roughly half the bytes.
+        quality = 0.92,
+    }: { type?: string; maxSize?: number; quality?: number } = {},
 ) {
     const image = await loadImage(src);
     const scale = Math.min(1, maxSize / Math.max(area.width, area.height));
@@ -181,7 +189,7 @@ export async function cropImage(
         canvas.toBlob(
             (blob) => (blob ? resolve(blob) : reject(new Error("The image couldn't be cropped."))),
             encodeAs,
-            0.92,
+            quality,
         );
     });
 }

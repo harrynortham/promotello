@@ -4,6 +4,11 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { FiArrowLeft, FiExternalLink } from "react-icons/fi";
 
+import Image from "next/image";
+
+import { SubmitButton } from "@/components/submit-button";
+import { photoAlt, photoUrl } from "@/lib/business-photos";
+import { removeBusinessPhoto } from "../actions";
 import { BusinessStatusBadge } from "@/components/business-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,6 +149,18 @@ async function Overview({ params }: PageProps) {
         })),
     ].sort((a, b) => b.at.localeCompare(a.at));
 
+    // Everything they have put up, paused ones included: an admin
+    // looking at a business should see what is there, not only what the
+    // plan is showing.
+    const { data: photoRows } = await admin
+        .from("business_photos")
+        .select("id, storage_path, caption, sort_order")
+        .eq("business_id", businessId)
+        .order("sort_order")
+        .order("created_at");
+
+    const photos = photoRows ?? [];
+
     return (
         <div>
             <Button render={<Link href="/admin/businesses" />} nativeButton={false} variant="ghost" size="sm">
@@ -182,6 +199,50 @@ async function Overview({ params }: PageProps) {
                     <FiExternalLink aria-hidden="true" />
                 </Button>
             </header>
+
+            {/* Photos the business put up. No queue and no pending
+                state — they were approved before they went live — but
+                somewhere to take one down if it needs taking down. */}
+            {photos.length > 0 && (
+                <Card className="mt-8 border-[#17233B]/10">
+                    <CardHeader>
+                        <h2 className="text-lg font-semibold">
+                            Photos <span className="text-sm font-normal text-[#17233B]/55">({photos.length})</span>
+                        </h2>
+                    </CardHeader>
+
+                    <CardContent>
+                        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-6">
+                            {photos.map((photo, at) => (
+                                <div key={photo.id} className="space-y-1">
+                                    <div className="relative aspect-square overflow-hidden rounded-lg bg-[#FFF8F0]">
+                                        <Image
+                                            src={photoUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", photo.storage_path)}
+                                            alt={photoAlt(photo, row.name, at)}
+                                            fill
+                                            sizes="10rem"
+                                            className="object-cover"
+                                        />
+                                    </div>
+
+                                    <form action={removeBusinessPhoto}>
+                                        <input type="hidden" name="photoId" value={photo.id} />
+                                        <input type="hidden" name="businessId" value={row.id} />
+                                        <SubmitButton
+                                            pendingLabel="Removing…"
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 w-full text-xs text-[#17233B]/60 hover:text-red-700"
+                                        >
+                                            Remove
+                                        </SubmitButton>
+                                    </form>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="mt-8 grid gap-6 lg:grid-cols-2">
                 <Card className="border-[#17233B]/10">

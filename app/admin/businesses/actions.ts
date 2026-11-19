@@ -1,5 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
 import { emailBusinessReviewed, type ReviewDecision } from "@/lib/business-review-emails";
 import {
     businessApproved,
@@ -60,4 +63,37 @@ export async function notifyBusinessReviewed(
     }
 
     return { sent };
+}
+
+// Take one photo off a business's page.
+//
+// There is no review queue: the business was approved before it went
+// live, and twenty-five photos from one of them should not be
+// twenty-five things to click. This is the lever for the one case that
+// needs it, and it takes the file as well as the row.
+export async function removeBusinessPhoto(formData: FormData) {
+    const photoId = String(formData.get("photoId") ?? "");
+    const businessId = String(formData.get("businessId") ?? "");
+
+    const supabase = await createClient();
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+
+    if (!isAdmin) {
+        redirect("/admin");
+    }
+
+    const { data: photo } = await supabase
+        .from("business_photos")
+        .select("storage_path")
+        .eq("id", photoId)
+        .maybeSingle();
+
+    await supabase.from("business_photos").delete().eq("id", photoId);
+
+    if (photo?.storage_path) {
+        await supabase.storage.from("business-logos").remove([photo.storage_path]);
+    }
+
+    revalidatePath(`/admin/businesses/${businessId}`);
+    redirect(`/admin/businesses/${businessId}?removed=photo`);
 }
