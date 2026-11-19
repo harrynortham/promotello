@@ -26,7 +26,21 @@ export function LoyaltyCard({
     scanHint = "They can scan it or type the code.",
     // Big enough for a phone held over it. A poster asks for more: it
     // is read from the other side of a window.
-    qrSize = "size-52 sm:size-32",
+    // Big enough for a phone held over it. A poster asks for more: it
+    // is read from the other side of a window.
+    qrSize,
+    // The card is somewhere narrow — a phone frame on the preview page,
+    // not the width of a dashboard. It stays stacked rather than going
+    // side by side, because sm: asks how wide the WINDOW is, and the
+    // window being wide says nothing about the box the card is in.
+    //
+    // Tried as a container query first. @container sets
+    // container-type: inline-size, which makes the card's width stop
+    // depending on its contents — and inside the shrink-to-fit parent
+    // on the sales pack it collapsed the card to two pixels. A prop
+    // says the same thing without changing how any other card is laid
+    // out.
+    narrow = false,
     qr,
     colour,
     header,
@@ -59,6 +73,7 @@ export function LoyaltyCard({
     scanTitle?: string;
     scanHint?: string;
     qrSize?: string;
+    narrow?: boolean;
     qr: ReactNode;
     // The business's chosen look, from its loyalty programme.
     colour?: string | null;
@@ -205,8 +220,20 @@ export function LoyaltyCard({
                     to scan, no stamp to collect. It stays in the list
                     as what it is, something they finished. */}
                 {!finished && (
-                <div className="mt-6 flex flex-col items-center gap-4 rounded-xl bg-[#FFF8F0] p-5 text-center sm:flex-row sm:gap-5 sm:p-4 sm:text-left">
-                    <div className={`shrink-0 rounded-xl bg-white p-2 ${qrSize} [&_svg]:h-full [&_svg]:w-full`}>
+                <div className={cn(
+                    "mt-6 flex flex-col items-center gap-4 rounded-xl bg-[#FFF8F0] p-5 text-center",
+                    // Side by side once there is room for it. On a card
+                    // in a phone frame there is not, and the panel used
+                    // to squash "Show this to staff" into a
+                    // two-character column.
+                    !narrow && "sm:flex-row sm:gap-5 sm:p-4 sm:text-left",
+                )}>
+                    <div
+                        className={cn(
+                            "shrink-0 rounded-xl bg-white p-2 [&_svg]:h-full [&_svg]:w-full",
+                            qrSize ?? (narrow ? "size-40" : "size-52 sm:size-32"),
+                        )}
+                    >
                         {qr}
                     </div>
 

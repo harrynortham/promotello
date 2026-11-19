@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 
 import { storedImage } from "@/lib/images";
+import { cn } from "@/lib/utils";
 import { cardColour } from "@/lib/loyalty-design";
 import { DailyBars } from "@/components/daily-bars";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
@@ -30,11 +31,18 @@ const business = "Harbour Grind";
 // Frames
 // ---------------------------------------------------------------------------
 
+// w-64 is right for the little illustrations on the marketing pages. A
+// real card put inside one needs more — merged rather than appended, so
+// a width passed in actually replaces it instead of depending on which
+// rule the browser happens to apply last.
 export function PhoneFrame({ children, label, className = "" }: { children: ReactNode; label: string; className?: string }) {
     return (
         <figure
             aria-label={label}
-            className={`w-64 shrink-0 rounded-[2.5rem] border-[10px] border-[#17233B] bg-[#FFF8F0] shadow-2xl shadow-[#17233B]/20 ${className}`}
+            className={cn(
+                "w-64 shrink-0 rounded-[2.5rem] border-[10px] border-[#17233B] bg-[#FFF8F0] shadow-2xl shadow-[#17233B]/20",
+                className,
+            )}
         >
             <div className="mx-auto mt-2 h-1.5 w-16 rounded-full bg-[#17233B]/15" aria-hidden="true" />
             <div className="px-4 pb-6 pt-4 text-[#17233B]">{children}</div>
