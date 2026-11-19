@@ -22,6 +22,18 @@
 import { readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+// lucide's own search words, so "cocktail" finds Martini and "barber"
+// finds Scissors. They are not in lucide-react — it ships components,
+// not metadata — so they come from lucide-static, which is the same
+// project publishing the same icons. Fetched rather than depended on:
+// that package is 57MB unpacked for one file of a few hundred
+// kilobytes.
+//
+// Pinned to the version of lucide-react in package.json, so the words
+// describe the icons we actually draw. If the fetch fails the file is
+// still written, just without tags, and search falls back to names.
+const TAGS = (version) => `https://unpkg.com/lucide-static@${version}/tags.json`;
+
 const ICONS = "node_modules/lucide-react/dist/esm/icons";
 const OUT = "lib/cover-icon-shapes.ts";
 
@@ -30,7 +42,24 @@ const OUT = "lib/cover-icon-shapes.ts";
 const pascal = (file) =>
     file.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase());
 
+const { default: pkg } = await import("../package.json", { with: { type: "json" } });
+const version = pkg.dependencies["lucide-react"].replace(/^[^0-9]*/, "");
+
+let tags = {};
+
+try {
+    const response = await fetch(TAGS(version));
+
+    if (!response.ok) throw new Error(String(response.status));
+
+    tags = await response.json();
+    console.log(`tags for ${Object.keys(tags).length} icons from lucide-static@${version}`);
+} catch (error) {
+    console.warn(`no tags (${error.message}) — search will match names only`);
+}
+
 const shapes = {};
+const words = {};
 const dropped = [];
 
 for (const file of readdirSync(ICONS).sort()) {
@@ -53,6 +82,13 @@ for (const file of readdirSync(ICONS).sort()) {
 
             return [tag, rest];
         });
+
+        // Keyed by the same name the shapes are, and only where there
+        // are any — an empty array per icon would be a third of the
+        // file saying nothing.
+        const found = tags[file.replace(/\.mjs$/, "")];
+
+        if (found?.length) words[name] = found;
     } catch {
         dropped.push(name);
     }
@@ -73,10 +109,14 @@ writeFileSync(
         "",
         `const shapes: Record<string, IconShapes> = ${JSON.stringify(shapes)};`,
         "",
+        "// lucide's own search words: Martini is tagged \"cocktail\", which is",
+        "// the word somebody actually types.",
+        `export const iconTags: Record<string, string[]> = ${JSON.stringify(words)};`,
+        "",
         "export default shapes;",
         "",
     ].join("\n"),
 );
 
-console.log(`${Object.keys(shapes).length} icons written to ${OUT}`);
+console.log(`${Object.keys(shapes).length} icons written to ${OUT}, ${Object.keys(words).length} with search words`);
 if (dropped.length) console.log(`${dropped.length} skipped: ${dropped.slice(0, 5).join(", ")}…`);

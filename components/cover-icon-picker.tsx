@@ -15,6 +15,7 @@ import type { IconShapes } from "@/lib/cover-icon-shapes";
 // Loaded when the picker is first opened, not with the page. It is four
 // hundred kilobytes and this is one control on one admin page.
 type Library = Record<string, IconShapes>;
+type Tags = Record<string, string[]>;
 
 // Shown before anybody types. Not a limit — the search reaches the
 // whole library — but "Beer" and "Scissors" are the answer often
@@ -27,7 +28,7 @@ const SUGGESTED = [
     "HeartPulse", "Stethoscope", "Hotel", "Ticket", "Hammer", "Leaf",
 ];
 
-const SHOWN = 72;
+const SHOWN = 120;
 
 export function CoverIconPicker({
     value,
@@ -40,7 +41,14 @@ export function CoverIconPicker({
 }) {
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState("");
+    const [limit, setLimit] = useState(SHOWN);
     const [library, setLibrary] = useState<Library | null>(null);
+    const [tags, setTags] = useState<Tags>({});
+    // Browsing rather than searching: the whole library, in order, as
+    // many as the grid will take. Typing "cocktail" finds Martini now,
+    // but somebody who cannot think of the word still needs to be able
+    // to look.
+    const [browsing, setBrowsing] = useState(false);
 
     useEffect(() => {
         if (!isOpen || library) return;
@@ -48,7 +56,10 @@ export function CoverIconPicker({
         let live = true;
 
         void import("@/lib/cover-icon-shapes").then((module) => {
-            if (live) setLibrary(module.default);
+            if (!live) return;
+
+            setLibrary(module.default);
+            setTags(module.iconTags);
         });
 
         return () => {
@@ -59,20 +70,42 @@ export function CoverIconPicker({
     const results = useMemo(() => {
         if (!library) return [];
 
+        const names = Object.keys(library);
         const wanted = query.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-        if (!wanted) return SUGGESTED.filter((name) => name in library);
+        if (!wanted) {
+            return browsing ? names : SUGGESTED.filter((name) => name in library);
+        }
 
-        // Starts-with first: typing "bea" should offer Beaker before
-        // Headphones, which also contains the letters.
-        const names = Object.keys(library);
-        const hay = (name: string) => name.toLowerCase();
+        const plain = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-        return [
-            ...names.filter((name) => hay(name).startsWith(wanted)),
-            ...names.filter((name) => !hay(name).startsWith(wanted) && hay(name).includes(wanted)),
-        ].slice(0, SHOWN);
-    }, [library, query]);
+        // Ranked, because "bar" matches Barcode by name and Martini by
+        // word, and the one whose name starts with it is what was meant.
+        // A word match counts — "cocktail" is in none of the names and
+        // is what somebody types to find a martini glass.
+        const rank = (name: string) => {
+            const flat = plain(name);
+
+            if (flat === wanted) return 0;
+            if (flat.startsWith(wanted)) return 1;
+            if ((tags[name] ?? []).some((word) => plain(word) === wanted)) return 2;
+            if (flat.includes(wanted)) return 3;
+            if ((tags[name] ?? []).some((word) => plain(word).startsWith(wanted))) return 4;
+            if ((tags[name] ?? []).some((word) => plain(word).includes(wanted))) return 5;
+
+            return 99;
+        };
+
+        return names
+            .map((name) => [name, rank(name)] as const)
+            .filter(([, at]) => at < 99)
+            .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0]))
+            .map(([name]) => name);
+    }, [library, query, tags, browsing]);
+
+    // Everything matching is counted; only this many are drawn, with
+    // more on demand. Eighteen hundred <svg>s at once is a locked tab.
+    const shown = results.slice(0, limit);
 
     const chosen = library?.[value];
 
@@ -96,20 +129,49 @@ export function CoverIconPicker({
                     <Input
                         autoFocus
                         value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Search — beer, barber, bakery…"
+                        onChange={(event) => {
+                            setQuery(event.target.value);
+                            setLimit(SHOWN);
+                        }}
+                        placeholder="Search — cocktail, barber, bakery…"
                         className="h-10 bg-white text-sm"
                     />
+
+                    <div className="flex items-center justify-between text-xs text-[#17233B]/55">
+                        <span>
+                            {!library
+                                ? "Loading…"
+                                : query.trim()
+                                  ? `${results.length} match${results.length === 1 ? "" : "es"}`
+                                  : browsing
+                                    ? `All ${results.length}`
+                                    : "A few to start with"}
+                        </span>
+
+                        {library && !query.trim() && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setBrowsing((all) => !all);
+                                    setLimit(SHOWN);
+                                }}
+                                className="font-medium text-[#FF593F] underline underline-offset-2"
+                            >
+                                {browsing ? "Just the common ones" : `Browse all ${Object.keys(library).length}`}
+                            </button>
+                        )}
+                    </div>
 
                     {!library ? (
                         <p className="py-6 text-center text-xs text-[#17233B]/55">Loading the icons…</p>
                     ) : results.length === 0 ? (
                         <p className="py-6 text-center text-xs text-[#17233B]/55">
-                            Nothing called that. Try the thing itself — a pint, a comb, a spanner.
+                            Nothing called that, and nothing tagged it. Try the thing
+                            itself — a pint, a comb, a spanner — or browse the lot.
                         </p>
                     ) : (
                         <div className="grid max-h-60 grid-cols-[repeat(auto-fill,minmax(4.25rem,1fr))] gap-1 overflow-y-auto">
-                            {results.map((name) => {
+                            {shown.map((name) => {
                                 const shapes = library[name];
 
                                 return (
@@ -134,6 +196,16 @@ export function CoverIconPicker({
                                 );
                             })}
                         </div>
+                    )}
+
+                    {library && results.length > shown.length && (
+                        <button
+                            type="button"
+                            onClick={() => setLimit((count) => count + 240)}
+                            className="w-full rounded-lg bg-white py-2 text-xs font-medium text-[#FF593F] transition hover:bg-white/70"
+                        >
+                            Show more ({results.length - shown.length} to go)
+                        </button>
                     )}
                 </div>
             )}
