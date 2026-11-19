@@ -7,7 +7,6 @@ import { connection } from "next/server";
 import { notFound, permanentRedirect } from "next/navigation";
 import {
     FiArrowUpRight,
-    FiCamera,
     FiClock,
     FiGift,
     FiGlobe,
@@ -252,14 +251,6 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
     });
     const dashboard = `/business/${businessId}`;
 
-    // A page built from a lead that its owner has not taken over yet.
-    // Asked of the database rather than read off business_previews,
-    // which holds the claim token and stays admin-only — this gives
-    // back a boolean and nothing that would let somebody claim a
-    // business they have no connection to.
-    const { data: unclaimed } = await supabase.rpc("business_is_unclaimed", {
-        requested_business_id: businessId,
-    });
     const isPreview = business.approval_status !== "approved";
     const today = new Date().toISOString().slice(0, 10);
 
@@ -529,23 +520,6 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             </div>
                         )}
 
-                        {/* Laid over the cover rather than drawn into it:
-                            the image is the business's to keep, and this
-                            has to disappear the moment somebody claims
-                            the page — which a baked-in caption could not
-                            do without regenerating every cover. */}
-                        {unclaimed && !canEdit && (
-                            <Link
-                                href="/business/register"
-                                className="absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-medium text-[#17233B] shadow-sm backdrop-blur transition hover:bg-white sm:text-sm"
-                            >
-                                <FiCamera aria-hidden="true" className="size-4 text-[#FF593F]" />
-                                <span>
-                                    Add your shopfront photo
-                                    <span className="text-[#17233B]/55"> — claim this page</span>
-                                </span>
-                            </Link>
-                        )}
                     </div>
 
                     <div className="px-6 pb-7 sm:px-8">
