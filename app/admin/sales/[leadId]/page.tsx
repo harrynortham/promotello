@@ -85,6 +85,8 @@ type PageProps = {
         confirm?: string;
         saved?: string;
         queued?: string;
+        moved?: string;
+        crawled?: string;
         error?: string;
     }>;
 };
@@ -112,7 +114,7 @@ async function Lead({ params, searchParams }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
-    const { already, undeletable, confirm, saved, queued, error } = await searchParams;
+    const { already, undeletable, confirm, saved, queued, moved, crawled, error } = await searchParams;
     const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
@@ -271,6 +273,24 @@ async function Lead({ params, searchParams }: PageProps) {
                 </p>
             )}
 
+            {moved && (
+                <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    Moved to {moved}.
+                </p>
+            )}
+
+            {/* Reading their site takes a few seconds and often finds
+                nothing, which looked like a button that did nothing. */}
+            {crawled && (
+                <p className="mt-4 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
+                    {crawled === "email"
+                        ? "Read their site and found an email."
+                        : crawled === "address"
+                            ? "Read their site and found an address, but no email."
+                            : "Read their site. Nothing on it we could use — add the email by hand."}
+                </p>
+            )}
+
             {/* Queueing moves the draft somewhere else, so it needs to
                 say where it went and offer the way there. */}
             {queued && (
@@ -285,7 +305,9 @@ async function Lead({ params, searchParams }: PageProps) {
 
             {error && (
                 <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-900">
-                    {error === "post_only"
+                    {error === "post_only_stage"
+                        ? "Not moved: this lead is post only until Companies House says otherwise."
+                        : error === "post_only"
                         ? "Not queued: this lead is post only until Companies House says otherwise."
                         : error === "no_email"
                             ? "Not queued: there is no address to write to."
@@ -382,9 +404,14 @@ async function Lead({ params, searchParams }: PageProps) {
                                 {!typedEmail && (
                                     <form action={enrichLead}>
                                         <input type="hidden" name="leadId" value={lead.id} />
-                                        <Button type="submit" size="sm" variant="outline" disabled={!lead.website}>
+                                        <SubmitButton
+                                            pendingLabel="Reading…"
+                                            size="sm"
+                                            variant="outline"
+                                            disabled={!lead.website}
+                                        >
                                             {lead.email ? "Look again" : "Read their site"}
-                                        </Button>
+                                        </SubmitButton>
                                     </form>
                                 )}
                             </div>
@@ -1025,9 +1052,9 @@ async function Lead({ params, searchParams }: PageProps) {
                                     className="w-full rounded-lg border border-input bg-background p-3 text-sm"
                                     placeholder="Anything worth remembering before writing."
                                 />
-                                <Button type="submit" size="sm" variant="outline">
+                                <SubmitButton pendingLabel="Saving…" size="sm" variant="outline">
                                     Save notes
-                                </Button>
+                                </SubmitButton>
                             </form>
                         </CardContent>
                     </Card>
@@ -1064,9 +1091,9 @@ async function Lead({ params, searchParams }: PageProps) {
                                     ))}
                                 </NativeSelect>
 
-                                <Button type="submit" size="sm" className="w-full">
+                                <SubmitButton pendingLabel="Moving…" size="sm" className="w-full">
                                     Move
-                                </Button>
+                                </SubmitButton>
 
                                 {!lead.can_email && (
                                     <p className="text-xs leading-5 text-[#17233B]/60">
