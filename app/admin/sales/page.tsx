@@ -300,6 +300,10 @@ async function Board({ searchParams }: PageProps) {
                 </div>
 
                 <div className="flex shrink-0 gap-3">
+                    <Button render={<Link href="/admin/sales/import" />} nativeButton={false} variant="outline">
+                        Import
+                    </Button>
+
                     <Button render={<Link href="/admin/sales/outbox" />} nativeButton={false} variant="outline">
                         Outbox{waiting > 0 ? ` · ${waiting}` : ""}
                     </Button>

@@ -66,6 +66,13 @@ export async function GET(request: Request) {
 
     const { data: expiredPreviews } = await createAdminClient().rpc("delete_expired_business_previews");
     const oldNotifications = await deleteOldNotifications();
+
+    // Google-derived names and addresses, thirty days on. The place_id
+    // stays — it is the one field the Places policies exempt, and the
+    // one that stops a later sweep offering the same business again.
+    const { data: clearedFromGoogle } = await createAdminClient().rpc(
+        "clear_expired_candidate_cache",
+    );
     const indexNow = await submitRecentPosts().catch(() => ({ submitted: 0 }));
 
     // Monthly value reports go out on the 1st (UK date).
@@ -85,6 +92,7 @@ export async function GET(request: Request) {
         ourQueues,
         expiredPreviews,
         oldNotifications,
+        clearedFromGoogle,
         indexNow,
         reports,
     });
