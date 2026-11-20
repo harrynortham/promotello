@@ -273,6 +273,12 @@ export const EXTRA_TRADES = [
     "furniture restorer", "electrical shop", "computer shop", "games shop",
     "model shop", "pet shop", "aquarium shop", "cycle shop", "outdoor shop",
     "golf shop", "music shop", "instrument shop", "record shop", "camera shop",
+    // The plain words for the three categories added in
+    // 20270224090000. A category's name sorts the directory; it is a
+    // poor thing to ask Google — "Off-licence & wine" found two on
+    // Gloucester Road where "off licence" and "wine shop" found ten
+    // between them.
+    "sports shop", "running shop", "game shop", "baby shop", "kids clothes",
 
     // Food and drink the categories miss
     "sandwich shop", "deli", "juice bar", "bubble tea", "street food",
