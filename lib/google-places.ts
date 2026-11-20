@@ -285,6 +285,13 @@ export const EXTRA_TRADES = [
     "fish and chip shop", "kebab shop", "pizza takeaway", "curry house",
     "chinese takeaway", "thai restaurant", "turkish restaurant", "vegan restaurant",
     "brunch spot", "wine bar", "cocktail bar", "micropub", "brewery", "bottle shop",
+    // Measured on Gloucester Road against "Restaurants": bistro found
+    // eighteen places that term missed, burger six, grill and brunch
+    // and breakfast two each. A word Google's own listings use is
+    // worth more than a word that describes the trade.
+    "bistro", "burger", "grill", "tapas", "sushi", "eatery", "brunch", "breakfast",
+    "italian restaurant", "mexican restaurant", "greek restaurant", "korean restaurant",
+    "noodle bar", "steakhouse", "gastropub", "small plates",
 
     // Health, care and learning
     "nursery", "preschool", "after school club", "tutor", "music teacher",
