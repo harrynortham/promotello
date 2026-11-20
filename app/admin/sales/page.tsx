@@ -497,10 +497,14 @@ async function Board({ searchParams }: PageProps) {
                             {/* The link covers the card rather than
                                 wrapping it, so the copy button beside
                                 the name is a button next to a link
-                                instead of a button inside one. */}
+                                instead of a button inside one. It opens in
+                                a new tab, so working down a list keeps the
+                                filter and page the lead was found on. */}
                             <Link
                                 href={`/admin/sales/${lead.id}`}
                                 aria-label={lead.name}
+                                target="_blank"
+                                rel="noreferrer"
                                 className="absolute inset-0 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
                             />
                             <CardHeader className="pb-3">
