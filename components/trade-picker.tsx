@@ -18,7 +18,9 @@ export function TradePicker({
     ours,
     others,
 }: {
-    ours: { id: string; name: string }[];
+    // searches: one of ours is several of Google's words, so ticking
+    // it is several billed searches rather than one.
+    ours: { id: string; name: string; searches: number }[];
     others: string[];
 }) {
     const [open, setOpen] = useState(false);
@@ -27,8 +29,13 @@ export function TradePicker({
 
     const everything = useMemo(
         () => [
-            ...ours.map((category) => ({ key: `ours:${category.id}`, name: category.name, mine: true })),
-            ...others.map((trade) => ({ key: `trade:${trade}`, name: trade, mine: false })),
+            ...ours.map((category) => ({
+                key: `ours:${category.id}`,
+                name: category.name,
+                mine: true,
+                searches: category.searches,
+            })),
+            ...others.map((trade) => ({ key: `trade:${trade}`, name: trade, mine: false, searches: 1 })),
         ],
         [ours, others],
     );
@@ -111,8 +118,13 @@ export function TradePicker({
                     </div>
 
                     <p className="text-xs text-[#17233B]/55">
-                        {showing.length} shown, {chosen.size} ticked. Each ticked trade is one
-                        to three billed searches.
+                        {showing.length} shown, {chosen.size} ticked —{" "}
+                        {everything
+                            .filter((trade) => chosen.has(trade.key))
+                            .reduce((total, trade) => total + trade.searches, 0)}{" "}
+                        searches before paging, so up to three times that billed. One of
+                        ours asks several of Google&apos;s words, because its own name is a
+                        poor thing to search for.
                     </p>
 
                     <div className="grid max-h-64 grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-x-3 gap-y-1 overflow-y-auto">
@@ -131,7 +143,11 @@ export function TradePicker({
                                 {/* Ours put the lead straight into a
                                     category; Google's leave it without
                                     one. */}
-                                {trade.mine && <span className="shrink-0 text-[10px] text-[#FF593F]">ours</span>}
+                                {trade.mine && (
+                                    <span className="shrink-0 text-[10px] text-[#FF593F]">
+                                        ours · {trade.searches}
+                                    </span>
+                                )}
                             </label>
                         ))}
                     </div>

@@ -10,6 +10,7 @@ import {
     placesQuery,
     searchPlacesReportingLimit,
     splitViewport,
+    tradesForCategory,
 } from "@/lib/google-places";
 import { findContactDetails } from "@/lib/lead-jobs";
 import { compare, splitAddress } from "@/lib/lead-enrichment";
@@ -143,9 +144,19 @@ export async function sweepArea(formData: FormData) {
     }
 
     const trades: { name: string; categoryId: string | null }[] = [
+        // A ticked category becomes the words Google understands for
+        // it, all still tagged with that category. "Home & gifts" as a
+        // search found one business on Gloucester Road; "gift shop",
+        // "homeware", "home goods store" and "furniture shop" found
+        // twenty-six.
         ...(categories ?? [])
             .filter((category) => wanted.has(`ours:${category.id}`))
-            .map((category) => ({ name: category.name, categoryId: category.id })),
+            .flatMap((category) =>
+                tradesForCategory(category.name).map((name) => ({
+                    name,
+                    categoryId: category.id,
+                })),
+            ),
         ...EXTRA_TRADES.filter((name) => wanted.has(`trade:${name}`)).map((name) => ({
             name,
             categoryId: null,

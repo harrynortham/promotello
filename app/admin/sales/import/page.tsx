@@ -12,7 +12,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { TradePicker } from "@/components/trade-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SubmitButton } from "@/components/submit-button";
-import { EXTRA_TRADES } from "@/lib/google-places";
+import { EXTRA_TRADES, tradesForCategory } from "@/lib/google-places";
 import { createClient } from "@/utils/supabase/server";
 import { deepenSweep, handleCandidates, sweepArea } from "./actions";
 
@@ -74,7 +74,12 @@ async function Importer({ searchParams }: PageProps) {
     ]);
 
     const candidates = waiting ?? [];
-    const tradeCategories = ourTrades ?? [];
+    // How many searches a category actually costs, since one of ours
+    // is several of Google's words.
+    const tradeCategories = (ourTrades ?? []).map((category) => ({
+        ...category,
+        searches: tradesForCategory(category.name).length,
+    }));
 
     return (
         <div className="text-[#17233B]">
