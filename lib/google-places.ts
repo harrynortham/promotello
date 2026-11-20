@@ -162,8 +162,13 @@ function withoutHouseNumber(part: string) {
     return words.join(" ");
 }
 
-export function inTheArea(address: string | null, area: string) {
+export function inTheArea(address: string | null, area: string, city?: string) {
     if (!address) return false;
+
+    // The city, where we know it. London has a Gloucester Road too, and
+    // a sweep of ours picked up a jeweller on it in South Kensington —
+    // right street, wrong country end.
+    if (city && !forComparing(address).includes(forComparing(city))) return false;
 
     const wanted = forComparing(area);
 

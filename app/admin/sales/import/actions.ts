@@ -97,7 +97,7 @@ export async function sweepArea(formData: FormData) {
             // sweep of Gloucester Road came back 747 businesses and 313
             // were on it. Importing the rest would bury the street in
             // its own city.
-            if (!inTheArea(place.address, area.name)) continue;
+            if (!inTheArea(place.address, area.name, city?.name)) continue;
             if (heldPlaceIds.has(place.placeId)) continue;
             if (heldNames.has(compare(place.name))) continue;
 

@@ -188,3 +188,20 @@ test("a house number or a range in front of it is still the street", () => {
         assert.equal(inTheArea(address, "Gloucester Road"), true, address);
     }
 });
+
+// London has a Gloucester Road. A sweep of Bristol's picked up a
+// jeweller on South Kensington's.
+test("the right street in the wrong city does not count", () => {
+    assert.equal(
+        inTheArea("66 Gloucester Rd, South Kensington, London SW7 4QT, UK", "Gloucester Road", "Bristol"),
+        false,
+    );
+    assert.equal(
+        inTheArea("393 Gloucester Rd, Bristol BS7 8TS, UK", "Gloucester Road", "Bristol"),
+        true,
+    );
+});
+
+test("without a city named, the street alone still decides", () => {
+    assert.equal(inTheArea("393 Gloucester Rd, Bristol BS7 8TS, UK", "Gloucester Road"), true);
+});
