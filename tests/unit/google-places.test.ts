@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { MAX_RESULTS, PAGE_SIZE, inTheArea, placesQuery, searchPlaces } from "@/lib/google-places";
+import {
+    MAX_RESULTS,
+    PAGE_SIZE,
+    inTheArea,
+    placesQuery,
+    searchPlaces,
+    splitViewport,
+} from "@/lib/google-places";
 
 test("the query reads like something somebody would type into Maps", () => {
     assert.equal(
@@ -204,4 +211,50 @@ test("the right street in the wrong city does not count", () => {
 
 test("without a city named, the street alone still decides", () => {
     assert.equal(inTheArea("393 Gloucester Rd, Bristol BS7 8TS, UK", "Gloucester Road"), true);
+});
+
+// Sixty is a ceiling with no page four, so the only way past it is a
+// smaller question. Splitting Gloucester Road in half took one trade
+// from 60 results to 98.
+test("an area splits into bands running across it", () => {
+    const road = {
+        low: { latitude: 51.47, longitude: -2.595 },
+        high: { latitude: 51.49, longitude: -2.583 },
+    };
+
+    const halves = splitViewport(road, 2);
+
+    assert.equal(halves.length, 2);
+    // South half starts at the south edge, north half ends at the north.
+    assert.equal(halves[0].low.latitude, 51.47);
+    assert.equal(halves[1].high.latitude, 51.49);
+    // They meet in the middle, with no gap and no overlap.
+    assert.equal(halves[0].high.latitude, halves[1].low.latitude);
+    // The width is untouched: a street is cut across, not along.
+    for (const band of halves) {
+        assert.equal(band.low.longitude, -2.595);
+        assert.equal(band.high.longitude, -2.583);
+    }
+});
+
+test("one band is the whole area again", () => {
+    const area = {
+        low: { latitude: 51.47, longitude: -2.595 },
+        high: { latitude: 51.49, longitude: -2.583 },
+    };
+
+    assert.deepEqual(splitViewport(area, 1), [area]);
+});
+
+test("more bands still cover it end to end", () => {
+    const area = {
+        low: { latitude: 51.47, longitude: -2.595 },
+        high: { latitude: 51.49, longitude: -2.583 },
+    };
+
+    const bands = splitViewport(area, 4);
+
+    assert.equal(bands.length, 4);
+    assert.equal(bands[0].low.latitude, 51.47);
+    assert.ok(Math.abs(bands[3].high.latitude - 51.49) < 1e-9);
 });

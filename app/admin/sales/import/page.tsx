@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SubmitButton } from "@/components/submit-button";
 import { EXTRA_TRADES } from "@/lib/google-places";
 import { createClient } from "@/utils/supabase/server";
-import { handleCandidates, sweepArea } from "./actions";
+import { deepenSweep, handleCandidates, sweepArea } from "./actions";
 
 export const metadata: Metadata = { title: "Import leads", robots: { index: false } };
 
@@ -26,6 +26,7 @@ type PageProps = {
         calls?: string;
         capped?: string;
         cappedCount?: string;
+        deepened?: string;
         made?: string;
         crawled?: string;
         skipped?: string;
@@ -133,15 +134,48 @@ async function Importer({ searchParams }: PageProps) {
                         {params.cappedCount} {params.cappedCount === "1" ? "trade" : "trades"} hit
                         Google&apos;s limit of 60
                     </AlertTitle>
-                    <AlertDescription>
-                        <span className="text-amber-900">{params.capped}</span>
-                        {Number(params.cappedCount) > 6 ? " and others" : ""} returned the most
-                        Google will give for one search, so this street almost certainly has
-                        more of them. Ask something narrower — &ldquo;pizza
-                        restaurant&rdquo; and &ldquo;curry house&rdquo; rather than
-                        &ldquo;restaurants&rdquo; — and sweep again.
+                    <AlertDescription className="space-y-3">
+                        <p className="text-amber-900">
+                            {(params.capped ?? "").split("|").join(", ")} returned the most
+                            Google will give for one search, so this area almost certainly
+                            has more of them. There is no page four — but the same question
+                            asked of half the area at a time gets past it. On Gloucester
+                            Road that took one trade from 60 results to 98.
+                        </p>
+
+                        {/* Only the capped ones. The rest came back
+                            complete, and asking again is money for
+                            nothing. */}
+                        <form action={deepenSweep}>
+                            <input type="hidden" name="areaId" value={params.area ?? ""} />
+                            {(params.capped ?? "")
+                                .split("|")
+                                .filter(Boolean)
+                                .map((trade) => (
+                                    <input key={trade} type="hidden" name="cappedTrade" value={trade} />
+                                ))}
+
+                            <SubmitButton pendingLabel="Sweeping the halves…" size="sm" variant="outline">
+                                Sweep these {params.cappedCount} again, half the area at a time
+                            </SubmitButton>
+                        </form>
                     </AlertDescription>
                 </Alert>
+            )}
+
+            {params.deepened && (
+                <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+                    Asked {params.trades} capped{" "}
+                    {params.trades === "1" ? "trade" : "trades"} again over each half of the
+                    area and found {params.deepened} more, in {params.calls} billed searches.
+                </p>
+            )}
+
+            {params.error === "no_viewport" && (
+                <p className="mt-6 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
+                    Google could not say where that area is, so it cannot be split. Ask a
+                    narrower trade instead.
+                </p>
             )}
 
             {params.made && (

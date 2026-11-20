@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 
 import {
     EXTRA_TRADES,
+    areaViewport,
     inTheArea,
     placesQuery,
     searchPlacesReportingLimit,
+    splitViewport,
 } from "@/lib/google-places";
 import { findContactDetails } from "@/lib/lead-jobs";
 import { compare, splitAddress } from "@/lib/lead-enrichment";
@@ -171,7 +173,12 @@ export async function sweepArea(formData: FormData) {
     }
 
     revalidatePath(IMPORT);
-    const cappedNote = capped.length > 0 ? `&capped=${encodeURIComponent(capped.slice(0, 6).join(", "))}&cappedCount=${capped.length}` : "";
+    // The names travel whole, because the button that asks them again
+    // needs to know which they were — a preview would not do.
+    const cappedNote =
+        capped.length > 0
+            ? `&capped=${encodeURIComponent(capped.join("|"))}&cappedCount=${capped.length}`
+            : "";
 
     redirect(
         `${IMPORT}?area=${area.id}&swept=${found}&trades=${searched}&calls=${requests}${cappedNote}`,
@@ -339,4 +346,116 @@ export async function skipCandidates(formData: FormData) {
 
     revalidatePath(IMPORT);
     redirect(`${IMPORT}?area=${areaId}&skipped=${ids.length}`);
+}
+
+// Ask the capped trades again, half a street at a time.
+//
+// Sixty is Google's ceiling for one query and there is no page four,
+// so a trade that came back full has been cut off and no button can
+// continue it. What can be done is ask a smaller question: the same
+// search over the north half and the south half of Gloucester Road
+// returned 98 businesses between them where one query returned 60.
+//
+// Only the trades that were capped, because the rest were complete and
+// asking again is money for nothing.
+export async function deepenSweep(formData: FormData) {
+    const supabase = await adminClient();
+    const areaId = String(formData.get("areaId") ?? "");
+    const trades = formData.getAll("cappedTrade").map(String).filter(Boolean);
+
+    const { data: area } = await supabase
+        .from("areas")
+        .select("id, name, cities ( name )")
+        .eq("id", areaId)
+        .maybeSingle();
+
+    if (!area || trades.length === 0) redirect(`${IMPORT}?area=${areaId}&error=no_trades`);
+
+    const city = Array.isArray(area.cities) ? area.cities[0] : area.cities;
+    const cityName = city?.name ?? "Bristol";
+
+    const viewport = await areaViewport(`${area.name}, ${cityName}`);
+
+    if (!viewport) redirect(`${IMPORT}?area=${areaId}&error=no_viewport`);
+
+    // Two bands. Enough to roughly double the ceiling, and few enough
+    // that the bill stays small — each band is a full search of every
+    // capped trade.
+    const bands = splitViewport(viewport, 2);
+
+    const { data: known } = await supabase.from("lead_candidates").select("place_id");
+    const { data: leads } = await supabase.from("leads").select("name, place_id");
+    const { data: businesses } = await supabase.from("businesses").select("name");
+
+    const heldPlaceIds = new Set([
+        ...(known ?? []).map((row) => row.place_id),
+        ...(leads ?? []).map((row) => row.place_id).filter(Boolean),
+    ]);
+
+    const heldNames = new Set([
+        ...(leads ?? []).map((row) => compare(row.name)),
+        ...(businesses ?? []).map((row) => compare(row.name)),
+    ]);
+
+    const { data: categories } = await supabase
+        .from("categories")
+        .select("id, name")
+        .not("parent_id", "is", null);
+
+    let found = 0;
+    let requests = 0;
+
+    for (const trade of trades) {
+        const ours = (categories ?? []).find((category) => category.name === trade);
+
+        for (const band of bands) {
+            let results;
+
+            try {
+                const answer = await searchPlacesReportingLimit(
+                    placesQuery(trade, area.name, cityName),
+                    {
+                        within: band,
+                        onRequest: () => {
+                            requests += 1;
+                        },
+                    },
+                );
+
+                results = answer.places;
+            } catch {
+                continue;
+            }
+
+            const rows: Record<string, unknown>[] = [];
+
+            for (const place of results) {
+                if (!inTheArea(place.address, area.name, cityName)) continue;
+                if (heldPlaceIds.has(place.placeId)) continue;
+                if (heldNames.has(compare(place.name))) continue;
+
+                heldPlaceIds.add(place.placeId);
+
+                rows.push({
+                    place_id: place.placeId,
+                    area_id: area.id,
+                    category_id: ours?.id ?? null,
+                    website: place.website,
+                    cached_name: place.name,
+                    cached_address: place.address,
+                });
+            }
+
+            if (rows.length > 0) {
+                const { error } = await supabase
+                    .from("lead_candidates")
+                    .upsert(rows, { onConflict: "place_id", ignoreDuplicates: true });
+
+                if (!error) found += rows.length;
+            }
+        }
+    }
+
+    revalidatePath(IMPORT);
+    redirect(`${IMPORT}?area=${area.id}&deepened=${found}&trades=${trades.length}&calls=${requests}`);
 }

@@ -56,7 +56,20 @@ type SearchPage = {
     nextPageToken?: string;
 };
 
-async function onePage(key: string, textQuery: string, pageToken?: string): Promise<SearchPage> {
+// A box on the map. Used to ask the same question of half a street at
+// a time, and never stored: coordinates may only be kept thirty days
+// and there is no reason to keep these at all.
+export type Rectangle = {
+    low: { latitude: number; longitude: number };
+    high: { latitude: number; longitude: number };
+};
+
+async function onePage(
+    key: string,
+    textQuery: string,
+    pageToken?: string,
+    within?: Rectangle,
+): Promise<SearchPage> {
     const response = await fetch(ENDPOINT, {
         method: "POST",
         headers: {
@@ -66,7 +79,12 @@ async function onePage(key: string, textQuery: string, pageToken?: string): Prom
         },
         // Every parameter but the token has to match the first call, or
         // the API refuses the page with INVALID_ARGUMENT.
-        body: JSON.stringify({ textQuery, pageSize: PAGE_SIZE, ...(pageToken ? { pageToken } : {}) }),
+        body: JSON.stringify({
+            textQuery,
+            pageSize: PAGE_SIZE,
+            ...(within ? { locationRestriction: { rectangle: within } } : {}),
+            ...(pageToken ? { pageToken } : {}),
+        }),
     });
 
     if (!response.ok) {
@@ -85,7 +103,11 @@ async function onePage(key: string, textQuery: string, pageToken?: string): Prom
 // watched the count would ask forever.
 export async function searchPlaces(
     textQuery: string,
-    { key = process.env.GOOGLE_PLACES_API_KEY, onRequest }: { key?: string; onRequest?: () => void } = {},
+    {
+        key = process.env.GOOGLE_PLACES_API_KEY,
+        onRequest,
+        within,
+    }: { key?: string; onRequest?: () => void; within?: Rectangle } = {},
 ) {
     if (!key) throw new Error("GOOGLE_PLACES_API_KEY is not set.");
 
@@ -98,7 +120,7 @@ export async function searchPlaces(
         // budget for.
         onRequest?.();
 
-        const page: SearchPage = await onePage(key, textQuery, token);
+        const page: SearchPage = await onePage(key, textQuery, token, within);
 
         for (const place of page.places ?? []) {
             if (!place.id || !place.displayName?.text) continue;
@@ -129,7 +151,7 @@ export async function searchPlaces(
 // "curry house" rather than "restaurant".
 export async function searchPlacesReportingLimit(
     textQuery: string,
-    options: { key?: string; onRequest?: () => void } = {},
+    options: { key?: string; onRequest?: () => void; within?: Rectangle } = {},
 ) {
     const places = await searchPlaces(textQuery, options);
 
@@ -271,3 +293,49 @@ export const EXTRA_TRADES = [
     "tattoo studio", "piercing studio", "art gallery", "community centre",
     "church", "village hall", "storage", "car hire", "taxi firm", "mot centre",
 ];
+
+// Where an area is, so the same question can be asked of part of it.
+//
+// Sixty is Google's ceiling for a query and there is no way to ask for
+// the sixty-first — but there is a way to ask a smaller question.
+// "restaurants on Gloucester Road" returns sixty; the same search over
+// the north half and the south half returns ninety-eight between them.
+export async function areaViewport(
+    textQuery: string,
+    { key = process.env.GOOGLE_PLACES_API_KEY } = {},
+): Promise<Rectangle | null> {
+    if (!key) throw new Error("GOOGLE_PLACES_API_KEY is not set.");
+
+    const response = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": key,
+            "X-Goog-FieldMask": "places.viewport",
+        },
+        body: JSON.stringify({ textQuery, pageSize: 1 }),
+    });
+
+    if (!response.ok) return null;
+
+    const body = (await response.json()) as { places?: { viewport?: Rectangle }[] };
+    const viewport = body.places?.[0]?.viewport;
+
+    return viewport?.low && viewport?.high ? viewport : null;
+}
+
+// An area cut into bands, north to south.
+//
+// A street is longer than it is wide, so the cut runs across it: two
+// bands of Gloucester Road are its north half and its south half,
+// which is how a shopper would describe it too.
+export function splitViewport(viewport: Rectangle, bands: number): Rectangle[] {
+    const south = viewport.low.latitude;
+    const north = viewport.high.latitude;
+    const step = (north - south) / bands;
+
+    return Array.from({ length: bands }, (_, at) => ({
+        low: { latitude: south + step * at, longitude: viewport.low.longitude },
+        high: { latitude: south + step * (at + 1), longitude: viewport.high.longitude },
+    }));
+}
