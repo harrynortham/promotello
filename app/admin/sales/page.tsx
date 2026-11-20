@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { FiArrowRight, FiBriefcase, FiClock, FiMail, FiMapPin, FiSend } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
+import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -134,15 +135,26 @@ function DueGroup({ title, note, leads }: { title: string; note: string; leads: 
 
                     <ul className="mt-2 space-y-1">
                         {leads.map((lead) => (
-                            <li key={lead.id}>
+                            <li key={lead.id} className="flex items-center gap-2">
                                 <Link
                                     href={`/admin/sales/${lead.id}`}
                                     className="text-sm font-medium text-[#FF593F] hover:underline"
                                 >
                                     {lead.name}
                                 </Link>
+
+                                {/* Dragging across a link starts a drag
+                                    rather than a selection, so the name
+                                    cannot be copied by hand here either. */}
+                                <CopyButton
+                                    text={lead.name}
+                                    label={`Copy ${lead.name}`}
+                                    iconOnly
+                                    className="shrink-0 cursor-pointer text-[#17233B]/35 transition hover:text-[#FF593F]"
+                                />
+
                                 {!lead.can_email && (
-                                    <span className="ml-2 text-xs text-[#17233B]/55">post only</span>
+                                    <span className="text-xs text-[#17233B]/55">post only</span>
                                 )}
                             </li>
                         ))}
@@ -480,16 +492,30 @@ async function Board({ searchParams }: PageProps) {
                         link inside a link and no second tab stop for the
                         same destination. */}
                     {leads.map((lead) => (
-                        <Link
-                            key={lead.id}
-                            href={`/admin/sales/${lead.id}`}
-                            className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
-                        >
+                        <div key={lead.id} className="relative">
                             <Card className="border-[#17233B]/10 transition hover:border-[#FF593F]/40 hover:shadow-sm">
+                            {/* The link covers the card rather than
+                                wrapping it, so the copy button beside
+                                the name is a button next to a link
+                                instead of a button inside one. */}
+                            <Link
+                                href={`/admin/sales/${lead.id}`}
+                                aria-label={lead.name}
+                                className="absolute inset-0 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF593F]"
+                            />
                             <CardHeader className="pb-3">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div>
-                                        <CardTitle className="text-base">{lead.name}</CardTitle>
+                                        <div className="flex items-center gap-2">
+                                            <CardTitle className="text-base">{lead.name}</CardTitle>
+
+                                            <CopyButton
+                                                text={lead.name}
+                                                label={`Copy ${lead.name}`}
+                                                iconOnly
+                                                className="relative shrink-0 cursor-pointer text-[#17233B]/35 transition hover:text-[#FF593F]"
+                                            />
+                                        </div>
 
                                         <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#17233B]/60">
                                             {lead.areas?.name && (
@@ -533,7 +559,7 @@ async function Board({ searchParams }: PageProps) {
                                 </div>
                             </CardHeader>
                             </Card>
-                        </Link>
+                        </div>
                     ))}
                 </div>
             )}
