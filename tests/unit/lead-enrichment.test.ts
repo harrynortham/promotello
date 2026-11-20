@@ -293,3 +293,35 @@ test("the comparison key folds the ways a name is written", () => {
     assert.notEqual(key("Joes Bakery"), key("Joes Butchers"));
     assert.notEqual(key("Sams Kitchen"), key("Sams Kitchens"));
 });
+
+// All three came out of a real import of Gloucester Road and went onto
+// leads as the address.
+test("a footer's invitations are not the first line of an address", () => {
+    const html = `<p>Rent our space</p><p>See our classes</p>
+        <p>info@432studios.co.uk</p><p>432 Gloucester Road</p><p>Bristol BS7 8TZ</p>`;
+
+    assert.equal(addressFromHtml(html), "432 Gloucester Road, Bristol, BS7 8TZ");
+});
+
+test("an email beside the address does not become part of it", () => {
+    const html = `<div>Contact ask@arolingbristol.org</div><div>215A Gloucester Road</div>
+        <div>Bristol BS7 8NZ</div>`;
+
+    assert.equal(addressFromHtml(html), "215A Gloucester Road, Bristol, BS7 8NZ");
+});
+
+test("a Find us: label is dropped and the address under it kept", () => {
+    const html = `<p>Find us:</p><p>Unit 8</p><p>Tweed Road Industrial Estate</p>
+        <p>Tweed Road</p><p>Bristol BS21 6RR</p>`;
+
+    assert.equal(
+        addressFromHtml(html),
+        "Unit 8, Tweed Road Industrial Estate, Tweed Road, Bristol, BS21 6RR",
+    );
+});
+
+test("a real address is still read whole", () => {
+    const html = `<p>79-81 Gloucester Road</p><p>Bristol BS7 8AS</p>`;
+
+    assert.equal(addressFromHtml(html), "79-81 Gloucester Road, Bristol, BS7 8AS");
+});

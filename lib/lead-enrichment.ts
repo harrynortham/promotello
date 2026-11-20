@@ -292,6 +292,11 @@ function findPostalAddress(node: unknown, depth = 0): string | null {
 // Failing that, the text around a postcode. Footers are where addresses
 // live, and a postcode is the one part of a UK address that cannot be
 // mistaken for prose.
+// What a footer says around an address rather than in it. Matched at
+// the start of a part, so a street called Market Place is untouched.
+const ASKS_YOU_TO =
+    /^(find|see|rent|contact|follow|book|call|email|visit|shop|buy|order|subscribe|join|read|learn|discover|explore|click|download|sign|get in touch|opening|open)\b/i;
+
 function fromText(html: string): string | null {
     const text = html
         .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
@@ -326,6 +331,21 @@ function fromText(html: string): string | null {
         // A sentence, not a line of an address: too long, or it ends
         // like prose. Either way, the address starts after it.
         if (part.length > 45 || /[.!?]$/.test(part) || part.split(/\s+/).length > 8) {
+            break;
+        }
+
+        // An address line is not an email or a link. Footers put both
+        // right beside the address, and "info@432studios.co.uk" came
+        // through as the first line of one.
+        if (/@|https?:|www\./i.test(part)) {
+            break;
+        }
+
+        // Nor is it an invitation. "Find us on Spotify", "Rent our
+        // space", "See our classes" are all short enough and
+        // punctuated like an address line, and all three ended up on
+        // envelopes in a real import.
+        if (ASKS_YOU_TO.test(part)) {
             break;
         }
 
