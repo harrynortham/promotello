@@ -181,7 +181,14 @@ function Pipeline({ counts, params }: { counts: Record<string, number>; params: 
                 <Link
                     key={stage.key}
                     href={withParams(params, { stage: stage.key, page: null })}
-                    className="shrink-0 rounded-xl border border-[#17233B]/10 bg-white px-4 py-3 hover:border-[#FF593F]/40 sm:shrink"
+                    // The one being shown is marked, which matters most
+                    // on the first load: the board opens on New, and a
+                    // strip of unmarked counts would not say so.
+                    className={`shrink-0 rounded-xl border bg-white px-4 py-3 hover:border-[#FF593F]/40 sm:shrink ${
+                        (params.stage ?? "new") === stage.key
+                            ? "border-[#FF593F]"
+                            : "border-[#17233B]/10"
+                    }`}
                 >
                     <p className="text-xs text-[#17233B]/60">{stage.label}</p>
                     <p className="mt-1 text-xl font-semibold">{counts[stage.key] ?? 0}</p>
@@ -238,8 +245,20 @@ async function Board({ searchParams }: PageProps) {
     const areas = (areaRows ?? []) as unknown as AreaOption[];
     const categories = (categoryRows ?? []) as { id: string; name: string }[];
 
-    // Whether anything is narrowing the list, which is what decides if
-    // a Clear button is worth showing.
+    // New leads, unless something else is asked for.
+    //
+    // The board opens on the work that has not been started rather than
+    // on everything ever found. A list of three hundred leads at every
+    // stage does not say what to do next; the ones nobody has touched
+    // do.
+    //
+    // "all" is the word for everything, so the chip has something to
+    // link to — an absent stage cannot mean both "new" and "all".
+    const stage = params.stage ?? "new";
+    const showingAll = stage === "all";
+
+    // Whether anything is narrowing the list beyond that default, which
+    // is what decides if a Clear button is worth showing.
     const filtered = Boolean(
         params.q || params.area || params.category || params.stage || params.post || params.due,
     );
@@ -260,7 +279,7 @@ async function Board({ searchParams }: PageProps) {
         .order("last_touch_at", { ascending: true })
         .range(from, from + PER_PAGE - 1);
 
-    if (params.stage) query = query.eq("stage", params.stage);
+    if (!showingAll) query = query.eq("stage", stage);
     if (params.post === "1") query = query.eq("can_email", false);
     if (params.area) query = query.eq("area_id", params.area);
     if (params.category) query = query.eq("category_id", params.category);
@@ -389,9 +408,11 @@ async function Board({ searchParams }: PageProps) {
             </form>
 
             <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                {/* "all" rather than nothing, because nothing now
+                    means new. */}
                 <Link
-                    href={withParams(params, { stage: null, post: null, due: null, page: null })}
-                    className={`rounded-full px-3 py-1.5 ${!params.stage && params.post !== "1" && !params.due ? "bg-[#17233B] text-white" : "border border-[#17233B]/15"}`}
+                    href={withParams(params, { stage: "all", post: null, due: null, page: null })}
+                    className={`rounded-full px-3 py-1.5 ${showingAll && params.post !== "1" && !params.due ? "bg-[#17233B] text-white" : "border border-[#17233B]/15"}`}
                 >
                     Everyone
                 </Link>
@@ -424,7 +445,7 @@ async function Board({ searchParams }: PageProps) {
                     </Link>
                 )}
 
-                {params.stage && (
+                {params.stage && !showingAll && (
                     <Link
                         href={withParams(params, { stage: null, page: null })}
                         className="rounded-full border border-[#17233B]/15 px-3 py-1.5"
