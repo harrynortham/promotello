@@ -22,6 +22,8 @@ import {
     whenSaid,
 } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
+import { JumpToField } from "@/components/jump-to-field";
+import { SavingForm } from "@/components/saving-form";
 import { SubmitButton } from "@/components/submit-button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CopyButton } from "@/components/copy-button";
@@ -345,7 +347,16 @@ async function Lead({ params, searchParams }: PageProps) {
 
             <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-semibold tracking-tight">{lead.name}</h1>
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h1 className="text-3xl font-semibold tracking-tight">{lead.name}</h1>
+
+                        <JumpToField
+                            target="name"
+                            className="cursor-pointer text-sm text-[#17233B]/65 underline-offset-4 hover:text-[#FF593F] hover:underline"
+                        >
+                            Rename
+                        </JumpToField>
+                    </div>
                     <p className="mt-2 text-sm text-[#17233B]/65">
                         {[leadAddress(lead), area?.name].filter(Boolean).join(" · ") || "No address yet"}
                     </p>
@@ -443,7 +454,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                     used to be fixed at the moment it was
                                     added, which made a lead filed in the
                                     wrong part of town unfixable. */}
-                                <form action={saveLeadAddress} className="mt-3 space-y-4">
+                                <SavingForm action={saveLeadAddress} className="mt-3 space-y-4">
                                     <input type="hidden" name="leadId" value={lead.id} />
 
                                     <div className="space-y-1">
@@ -489,7 +500,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                     <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
                                         Save this address
                                     </SubmitButton>
-                                </form>
+                                </SavingForm>
 
                             </div>
 
@@ -525,7 +536,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                 it unlocks — a number is what makes a lead
                                 emailable, and clearing it puts them back to
                                 post only. */}
-                            <form action={saveLeadCompany} className="space-y-3 border-t pt-4">
+                            <SavingForm action={saveLeadCompany} className="space-y-3 border-t pt-4">
                                 <input type="hidden" name="leadId" value={lead.id} />
 
                                 <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -586,7 +597,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                     A number here makes them emailable. Clearing it puts them back to
                                     post only.
                                 </p>
-                            </form>
+                            </SavingForm>
 
                         </CardContent>
                     </Card>
@@ -601,7 +612,7 @@ async function Lead({ params, searchParams }: PageProps) {
                         </CardHeader>
 
                         <CardContent>
-                            <form action={saveLeadDetails} className="space-y-5 text-sm">
+                            <SavingForm action={saveLeadDetails} className="space-y-5 text-sm">
                                 <input type="hidden" name="leadId" value={lead.id} />
 
                                 <div className="grid gap-4 sm:grid-cols-2">
@@ -765,7 +776,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                         Save the details
                                     </SubmitButton>
                                 </div>
-                            </form>
+                            </SavingForm>
                         </CardContent>
                     </Card>
 
@@ -1071,7 +1082,7 @@ async function Lead({ params, searchParams }: PageProps) {
                         </CardHeader>
 
                         <CardContent>
-                            <form action={saveLeadNotes} className="space-y-3">
+                            <SavingForm action={saveLeadNotes} className="space-y-3">
                                 <input type="hidden" name="leadId" value={lead.id} />
                                 <textarea
                                     name="notes"
@@ -1083,7 +1094,7 @@ async function Lead({ params, searchParams }: PageProps) {
                                 <SubmitButton pendingLabel="Saving…" size="sm" variant="outline">
                                     Save notes
                                 </SubmitButton>
-                            </form>
+                            </SavingForm>
                         </CardContent>
                     </Card>
                 </div>

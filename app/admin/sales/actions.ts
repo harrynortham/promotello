@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
+import type { SaveResult } from "@/components/saving-form";
 import { redirect } from "next/navigation";
 
 import {
@@ -452,14 +454,19 @@ export async function moveLead(formData: FormData) {
     redirect(`/admin/sales/${leadId}?moved=${encodeURIComponent(STAGE_LABELS[stage] ?? stage)}`);
 }
 
-export async function saveLeadNotes(formData: FormData) {
+export async function saveLeadNotes(_state: SaveResult, formData: FormData): Promise<SaveResult> {
     const supabase = await adminClient();
     const leadId = text(formData, "leadId");
 
-    await supabase.from("leads").update({ notes: text(formData, "notes") }).eq("id", leadId);
+    const { error } = await supabase
+        .from("leads")
+        .update({ notes: text(formData, "notes") })
+        .eq("id", leadId);
+
+    if (error) return { error: error.message };
 
     revalidatePath(`/admin/sales/${leadId}`);
-    redirect(`/admin/sales/${leadId}?saved=notes`);
+    return { saved: "Notes saved" };
 }
 
 // --- The outreach queue -------------------------------------------
@@ -685,7 +692,7 @@ export async function sendOutreach(formData: FormData) {
 // about a business on a street, and typing it is not caching anybody's
 // API response. It outranks both the provisional import and the crawler,
 // which is why enrichment leaves a typed address alone.
-export async function saveLeadAddress(formData: FormData) {
+export async function saveLeadAddress(_state: SaveResult, formData: FormData): Promise<SaveResult> {
     const supabase = await adminClient();
     const leadId = text(formData, "leadId");
     const line1 = text(formData, "addressLine1");
@@ -717,7 +724,7 @@ export async function saveLeadAddress(formData: FormData) {
 
         await record(supabase, leadId, "note", "Address cleared.");
         revalidatePath(`/admin/sales/${leadId}`);
-        redirect(`/admin/sales/${leadId}?saved=address`);
+        return { saved: "Address cleared" };
     }
 
 
@@ -735,6 +742,7 @@ export async function saveLeadAddress(formData: FormData) {
 
     await record(supabase, leadId, "note", `Address entered by hand: ${[line1, town, typedPostcode].filter(Boolean).join(", ")}`);
     revalidatePath(`/admin/sales/${leadId}`);
+    return { saved: "Address saved" };
 }
 
 // Removing a lead, for the ones added twice or added by mistake.
@@ -786,14 +794,12 @@ export async function deleteLead(formData: FormData) {
 // Everything about a lead that is not its address or its company, in
 // one form. Typed beats found: an email written down here is marked
 // typed and the crawler leaves it alone.
-export async function saveLeadDetails(formData: FormData) {
+export async function saveLeadDetails(_state: SaveResult, formData: FormData): Promise<SaveResult> {
     const supabase = await adminClient();
     const leadId = text(formData, "leadId");
     const name = text(formData, "name");
 
-    if (!name) {
-        redirect(`/admin/sales/${leadId}?error=no_name`);
-    }
+    if (!name) return { error: "A lead needs a name." };
 
     const { data: before } = await supabase
         .from("leads")
@@ -830,19 +836,17 @@ export async function saveLeadDetails(formData: FormData) {
         .eq("id", leadId);
 
     if (error?.code === "23505") {
-        redirect(`/admin/sales/${leadId}?error=duplicate`);
+        return { error: "Another lead already has that name or place." };
     }
 
-    if (error) {
-        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
-    }
+    if (error) return { error: error.message };
 
     if (changed && email) {
         await record(supabase, leadId, "email_found", `${email} — entered by hand`);
     }
 
     revalidatePath(`/admin/sales/${leadId}`);
-    redirect(`/admin/sales/${leadId}?saved=details`);
+    return { saved: "Details saved" };
 }
 
 // A company looked up by hand and written down. Stored exactly as the
@@ -851,7 +855,7 @@ export async function saveLeadDetails(formData: FormData) {
 // it. The gate in 20270131090000 still decides what it unlocks: a
 // number is what makes a lead emailable, and without one it stays post
 // only whatever is typed here.
-export async function saveLeadCompany(formData: FormData) {
+export async function saveLeadCompany(_state: SaveResult, formData: FormData): Promise<SaveResult> {
     const supabase = await adminClient();
     const leadId = text(formData, "leadId");
 
@@ -867,15 +871,17 @@ export async function saveLeadCompany(formData: FormData) {
             .update({ company_number: null, company_name: null, can_email: false })
             .eq("id", leadId);
 
-        if (cleared) redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(cleared.message)}`);
+        if (cleared) return { error: cleared.message };
 
         await record(supabase, leadId, "companies_house_checked", "Company cleared by hand — post only");
         revalidatePath(`/admin/sales/${leadId}`);
-        redirect(`/admin/sales/${leadId}?saved=company`);
+        return { saved: "Company cleared — post only" };
     }
 
     if (!/^(\d{8}|[A-Z]{2}\d{6})$/.test(number)) {
-        redirect(`/admin/sales/${leadId}?error=bad_company_number`);
+        return {
+            error: "A company number is eight digits, or two letters and six digits.",
+        };
     }
 
     const { error } = await supabase
@@ -888,9 +894,7 @@ export async function saveLeadCompany(formData: FormData) {
         })
         .eq("id", leadId);
 
-    if (error) {
-        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
-    }
+    if (error) return { error: error.message };
 
     await record(
         supabase,
@@ -900,7 +904,7 @@ export async function saveLeadCompany(formData: FormData) {
     );
 
     revalidatePath(`/admin/sales/${leadId}`);
-    redirect(`/admin/sales/${leadId}?saved=company`);
+    return { saved: "Company saved" };
 }
 
 // A preview, built from the lead that prompted it.
