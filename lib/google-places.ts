@@ -276,7 +276,7 @@ export const EXTRA_TRADES = [
     // The plain words for the three categories added in
     // 20270224090000. A category's name sorts the directory; it is a
     // poor thing to ask Google — "Off-licence & wine" found two on
-    // Gloucester Road where "off licence" and "wine shop" found ten
+    // Gloucester Road where  and  found ten
     // between them.
     "sports shop", "running shop", "game shop", "baby shop", "kids clothes",
 
@@ -285,7 +285,7 @@ export const EXTRA_TRADES = [
     "fish and chip shop", "kebab shop", "pizza takeaway", "curry house",
     "chinese takeaway", "thai restaurant", "turkish restaurant", "vegan restaurant",
     "brunch spot", "wine bar", "cocktail bar", "micropub", "brewery", "bottle shop",
-    // Measured on Gloucester Road against "Restaurants": bistro found
+    // Measured on Gloucester Road against : bistro found
     // eighteen places that term missed, burger six, grill and brunch
     // and breakfast two each. A word Google's own listings use is
     // worth more than a word that describes the trade.
@@ -299,6 +299,35 @@ export const EXTRA_TRADES = [
     "pilates studio", "climbing wall", "swimming pool", "osteopath", "chiropractor",
     "acupuncture", "counsellor", "podiatrist", "audiologist", "veterinary surgery",
     "dog groomer", "dog walker", "care agency",
+
+    // Google's own words for what is on a street.
+    //
+    // Collected rather than guessed: a broad sweep of Gloucester Road
+    // asking for places.primaryTypeDisplayName returned 316 businesses
+    // and what Google calls each of them. These are the labels that
+    // came back more than once and that nothing here already said.
+    //
+    // Worth having because Google indexes a place under its own label,
+    // not under the word a person would use for the trade. "Bistro"
+    // found eighteen places that  did not, and that is
+    // the same lesson: "thrift store" is what it calls a charity shop,
+    // "takeout restaurant" what it calls a takeaway.
+    //
+    // The list being long costs nothing. A sweep is billed per trade
+    // ticked, not per trade offered, so this is more to choose from
+    // rather than more to pay for.
+    //
+    // To extend it for a new area: sweep broadly with
+    // places.primaryTypeDisplayName in the field mask and count what
+    // comes back.
+    "hair salon", "beauty salon", "barber shop", "nail salon", "skin care clinic",
+    "fast food restaurant", "pizza restaurant",
+    "indian restaurant", "south indian restaurant", "brunch restaurant",
+    "coffee shop", "dessert shop", "grocery store",
+    "convenience store", "health food store", "clothing store", "home goods store",
+    "electronics store", "toy store", "liquor store", "bicycle shop", "butcher shop",
+    "building materials store", "medical clinic", "dental clinic",
+    "car repair and maintenance service", "general contractor", "laundry",
 
     // The rest of a street
     "post office", "bank", "building society", "funeral director", "travel agent",

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+    EXTRA_TRADES,
     MAX_RESULTS,
     PAGE_SIZE,
     inTheArea,
@@ -257,4 +258,32 @@ test("more bands still cover it end to end", () => {
     assert.equal(bands.length, 4);
     assert.equal(bands[0].low.latitude, 51.47);
     assert.ok(Math.abs(bands[3].high.latitude - 51.49) < 1e-9);
+});
+
+// Every trade in the list is a billed search when it is ticked, so a
+// repeat is money for the same answer twice. Five had crept in by the
+// time the list reached two hundred, which is exactly when nobody is
+// reading it top to bottom any more.
+test("no trade is listed twice", () => {
+    const seen = new Set<string>();
+    const twice: string[] = [];
+
+    for (const trade of EXTRA_TRADES) {
+        if (seen.has(trade)) twice.push(trade);
+        seen.add(trade);
+    }
+
+    assert.deepEqual(twice, []);
+});
+
+// Case and spacing count: "Thrift Store" and "thrift store" are one
+// search and two charges.
+test("nor in a different case or with odd spacing", () => {
+    const tidied = EXTRA_TRADES.map((trade) => trade.toLowerCase().replace(/\s+/g, " ").trim());
+
+    assert.equal(new Set(tidied).size, EXTRA_TRADES.length);
+});
+
+test("and none of them is blank", () => {
+    assert.equal(EXTRA_TRADES.filter((trade) => !trade.trim()).length, 0);
 });
