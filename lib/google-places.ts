@@ -83,13 +83,21 @@ async function onePage(key: string, textQuery: string, pageToken?: string): Prom
 // Stops on a missing token as well as on the ceiling: a street with
 // eleven bakeries returns one page and no token, and a loop that only
 // watched the count would ask forever.
-export async function searchPlaces(textQuery: string, { key = process.env.GOOGLE_PLACES_API_KEY } = {}) {
+export async function searchPlaces(
+    textQuery: string,
+    { key = process.env.GOOGLE_PLACES_API_KEY, onRequest }: { key?: string; onRequest?: () => void } = {},
+) {
     if (!key) throw new Error("GOOGLE_PLACES_API_KEY is not set.");
 
     const found: PlaceResult[] = [];
     let token: string | undefined;
 
     do {
+        // Counted, because every one is billed and a sweep makes
+        // hundreds. A number nobody can see is a number nobody can
+        // budget for.
+        onRequest?.();
+
         const page: SearchPage = await onePage(key, textQuery, token);
 
         for (const place of page.places ?? []) {
@@ -107,6 +115,25 @@ export async function searchPlaces(textQuery: string, { key = process.env.GOOGLE
     } while (token && found.length < MAX_RESULTS);
 
     return found.slice(0, MAX_RESULTS);
+}
+
+// The same search, saying whether Google ran out of room.
+//
+// Sixty is a ceiling, and a query that comes back full has almost
+// certainly been cut off — there is no way to ask for the sixty-first.
+// A sweep that quietly stops at sixty "restaurants" on a busy street
+// has missed businesses and said nothing, which is the one thing worth
+// knowing when the whole point is to have found everybody.
+//
+// The answer is to ask a narrower question: "pizza restaurant" and
+// "curry house" rather than "restaurant".
+export async function searchPlacesReportingLimit(
+    textQuery: string,
+    options: { key?: string; onRequest?: () => void } = {},
+) {
+    const places = await searchPlaces(textQuery, options);
+
+    return { places, hitTheLimit: places.length >= MAX_RESULTS };
 }
 
 // Whether a result is actually in the area that was asked for.

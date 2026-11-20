@@ -9,8 +9,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
+import { TradePicker } from "@/components/trade-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SubmitButton } from "@/components/submit-button";
+import { EXTRA_TRADES } from "@/lib/google-places";
 import { createClient } from "@/utils/supabase/server";
 import { handleCandidates, sweepArea } from "./actions";
 
@@ -21,6 +23,9 @@ type PageProps = {
         area?: string;
         swept?: string;
         trades?: string;
+        calls?: string;
+        capped?: string;
+        cappedCount?: string;
         made?: string;
         crawled?: string;
         skipped?: string;
@@ -38,8 +43,14 @@ async function Importer({ searchParams }: PageProps) {
 
     const params = await searchParams;
 
-    const [{ data: areas }, { data: waiting }] = await Promise.all([
+    const [{ data: areas }, { data: ourTrades }, { data: waiting }] = await Promise.all([
         supabase.from("areas").select("id, name, cities ( name )").order("name"),
+        supabase
+            .from("categories")
+            .select("id, name")
+            .not("parent_id", "is", null)
+            .eq("is_active", true)
+            .order("name"),
         params.area
             ? supabase
                   .from("lead_candidates")
@@ -52,6 +63,7 @@ async function Importer({ searchParams }: PageProps) {
     ]);
 
     const candidates = waiting ?? [];
+    const tradeCategories = ourTrades ?? [];
 
     return (
         <div className="text-[#17233B]">
@@ -95,8 +107,30 @@ async function Importer({ searchParams }: PageProps) {
             {params.swept && (
                 <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
                     Swept {params.trades} trades and found {params.swept} businesses we
-                    did not already have.
+                    did not already have, in {params.calls} billed searches.
                 </p>
+            )}
+
+            {/* Sixty is Google's ceiling and there is no way to ask
+                for the sixty-first. A trade that came back full has
+                almost certainly been cut off, and the only thing to be
+                done is ask a narrower question. Saying so beats a
+                sweep that quietly missed half a street. */}
+            {params.cappedCount && (
+                <Alert className="mt-6 border-amber-200 bg-amber-50">
+                    <AlertTitle>
+                        {params.cappedCount} {params.cappedCount === "1" ? "trade" : "trades"} hit
+                        Google&apos;s limit of 60
+                    </AlertTitle>
+                    <AlertDescription>
+                        <span className="text-amber-900">{params.capped}</span>
+                        {Number(params.cappedCount) > 6 ? " and others" : ""} returned the most
+                        Google will give for one search, so this street almost certainly has
+                        more of them. Ask something narrower — &ldquo;pizza
+                        restaurant&rdquo; and &ldquo;curry house&rdquo; rather than
+                        &ldquo;restaurants&rdquo; — and sweep again.
+                    </AlertDescription>
+                </Alert>
             )}
 
             {params.made && (
@@ -114,7 +148,8 @@ async function Importer({ searchParams }: PageProps) {
 
             <Card className="mt-8 border-[#17233B]/10">
                 <CardContent className="p-5">
-                    <form action={sweepArea} className="flex flex-wrap items-end gap-3">
+                    <form action={sweepArea} className="space-y-4">
+                        <div className="flex flex-wrap items-end gap-3">
                         <div className="min-w-56 flex-1 space-y-1">
                             <label htmlFor="areaId" className="text-xs text-[#17233B]/65">
                                 Area
@@ -136,29 +171,24 @@ async function Importer({ searchParams }: PageProps) {
                             </NativeSelect>
                         </div>
 
-                        {/* Our categories sort a directory of offers;
-                            they are not a census of a high street.
-                            Gloucester Road gave 312 on ours and
-                            eighteen trades we do not cover added
-                            fifty-four more. */}
-                        <div className="min-w-48 flex-1 space-y-1">
-                            <label htmlFor="depth" className="text-xs text-[#17233B]/65">
-                                How wide
-                            </label>
-                            <NativeSelect id="depth" name="depth" defaultValue="everything">
-                                <option value="everything">Every trade on the street</option>
-                                <option value="categories">Only our categories</option>
-                            </NativeSelect>
+                            <SubmitButton pendingLabel="Sweeping…">Sweep it</SubmitButton>
                         </div>
 
-                        <SubmitButton pendingLabel="Sweeping…">Sweep it</SubmitButton>
+                        {/* Which trades, rather than how wide. A street
+                            nobody has touched wants all of them; one
+                            half-done wants the few that are left, and
+                            each trade is billed. */}
+                        <TradePicker ours={tradeCategories} others={EXTRA_TRADES} />
                     </form>
 
                     <p className="mt-3 text-xs leading-5 text-[#17233B]/55">
                         One search a trade, because Google gives at most sixty results a
                         query, and only results whose address is in the area are kept.
-                        Our categories are 44 searches and take a couple of minutes;
-                        every trade is 183 and takes nearer ten. Each search is billed.
+                        Our categories are 44 trades and every trade is 183, each
+                        needing one to three searches. Google gives 5,000 Text Search
+                        requests a month before charging, so a handful of sweeps a
+                        month costs nothing — and results are saved as they are found,
+                        so a sweep that stops partway keeps what it got.
                     </p>
                 </CardContent>
             </Card>

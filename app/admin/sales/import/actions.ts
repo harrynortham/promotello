@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { EXTRA_TRADES, inTheArea, placesQuery, searchPlaces } from "@/lib/google-places";
+import {
+    EXTRA_TRADES,
+    inTheArea,
+    placesQuery,
+    searchPlacesReportingLimit,
+} from "@/lib/google-places";
 import { findContactDetails } from "@/lib/lead-jobs";
 import { compare, splitAddress } from "@/lib/lead-enrichment";
 import { createClient } from "@/utils/supabase/server";
@@ -66,24 +71,49 @@ export async function sweepArea(formData: FormData) {
         ...(businesses ?? []).map((row) => compare(row.name)),
     ]);
 
-    // Our own categories always; Google's wider trades when asked for.
-    // A trade with no category of ours leaves category_id null —
-    // whoever decides the lead is worth writing to picks one then.
-    const everything = String(formData.get("depth")) === "everything";
+    // Which trades to ask about. The picker submits one field a trade,
+    // "ours:<category id>" or "trade:<name>"; nothing submitted means
+    // everything, which is what an untouched street wants.
+    //
+    // A Google trade has no category of ours, so the lead is made
+    // without one and whoever decides it is worth writing to picks one
+    // then.
+    const wanted = new Set(formData.getAll("trade").map(String));
+    const pickedSome = wanted.size > 0;
 
     const trades: { name: string; categoryId: string | null }[] = [
-        ...(categories ?? []).map((category) => ({ name: category.name, categoryId: category.id })),
-        ...(everything ? EXTRA_TRADES.map((name) => ({ name, categoryId: null })) : []),
+        ...(categories ?? [])
+            .filter((category) => !pickedSome || wanted.has(`ours:${category.id}`))
+            .map((category) => ({ name: category.name, categoryId: category.id })),
+        ...EXTRA_TRADES.filter((name) => !pickedSome || wanted.has(`trade:${name}`)).map((name) => ({
+            name,
+            categoryId: null,
+        })),
     ];
 
-    const rows: Record<string, unknown>[] = [];
+    let found = 0;
     let searched = 0;
+    let requests = 0;
+    // Trades where Google returned its full sixty, which almost
+    // certainly means there were more it would not give.
+    const capped: string[] = [];
 
     for (const trade of trades) {
-        let found;
+        let results;
 
         try {
-            found = await searchPlaces(placesQuery(trade.name, area.name, city?.name ?? "Bristol"));
+            const answer = await searchPlacesReportingLimit(
+                placesQuery(trade.name, area.name, city?.name ?? "Bristol"),
+                {
+                    onRequest: () => {
+                        requests += 1;
+                    },
+                },
+            );
+
+            results = answer.places;
+
+            if (answer.hitTheLimit) capped.push(trade.name);
         } catch {
             // One trade failing is not a reason to lose the rest of the
             // sweep: the ones already found are still worth having.
@@ -92,7 +122,9 @@ export async function sweepArea(formData: FormData) {
 
         searched += 1;
 
-        for (const place of found) {
+        const rows: Record<string, unknown>[] = [];
+
+        for (const place of results) {
             // Google reads the area as a hint rather than a boundary: a
             // sweep of Gloucester Road came back 747 businesses and 313
             // were on it. Importing the rest would bury the street in
@@ -112,18 +144,31 @@ export async function sweepArea(formData: FormData) {
                 cached_address: place.address,
             });
         }
-    }
 
-    if (rows.length > 0) {
-        // Ignores anything a parallel sweep inserted first.
-        await supabase.from("lead_candidates").upsert(rows, {
-            onConflict: "place_id",
-            ignoreDuplicates: true,
-        });
+        // Written as the sweep goes rather than banked to the end.
+        //
+        // Banking it meant a sweep that died — a dev server restarted
+        // under it, a timeout, a closed tab — threw away everything it
+        // had already paid Google for, and showed nothing at all while
+        // it ran. One trade's worth is a small write and the work is
+        // kept.
+        if (rows.length > 0) {
+            // Ignores anything an earlier sweep inserted first.
+            const { error } = await supabase.from("lead_candidates").upsert(rows, {
+                onConflict: "place_id",
+                ignoreDuplicates: true,
+            });
+
+            if (!error) found += rows.length;
+        }
     }
 
     revalidatePath(IMPORT);
-    redirect(`${IMPORT}?area=${area.id}&swept=${rows.length}&trades=${searched}`);
+    const cappedNote = capped.length > 0 ? `&capped=${encodeURIComponent(capped.slice(0, 6).join(", "))}&cappedCount=${capped.length}` : "";
+
+    redirect(
+        `${IMPORT}?area=${area.id}&swept=${found}&trades=${searched}&calls=${requests}${cappedNote}`,
+    );
 }
 
 // One form, two buttons. SubmitButton wraps useFormStatus so it can say
