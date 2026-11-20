@@ -10,6 +10,7 @@ import {
     placesQuery,
     searchPlacesReportingLimit,
     splitViewport,
+    tradesForCategory,
 } from "@/lib/google-places";
 import { findContactDetails } from "@/lib/lead-jobs";
 import { compare, splitAddress } from "@/lib/lead-enrichment";
@@ -27,6 +28,29 @@ const IMPORT = "/admin/sales/import";
 // trades are left, and pressing again carries on — a place_id already
 // held is skipped, so nothing is paid for twice.
 const ACTION_BUDGET_MS = 240_000;
+
+// Everything in a table, a thousand at a time.
+//
+// PostgREST stops at max_rows, which is 1000 here, and says nothing
+// about it: a select of 1100 rows returns 1000 and looks complete.
+// The sweep's dedupe read every lead and every business that way, so
+// past a thousand it quietly went blind to the oldest of them and
+// started offering businesses that were already leads.
+async function everyRow<T>(
+    read: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+) {
+    const PAGE = 1000;
+    const all: T[] = [];
+
+    for (let from = 0; ; from += PAGE) {
+        const { data } = await read(from, from + PAGE - 1);
+        const batch = data ?? [];
+
+        all.push(...batch);
+
+        if (batch.length < PAGE) return all;
+    }
+}
 
 async function adminClient() {
     const supabase = await createClient();
@@ -59,30 +83,48 @@ export async function sweepArea(formData: FormData) {
 
     const city = Array.isArray(area.cities) ? area.cities[0] : area.cities;
 
-    const [{ data: categories }, { data: known }, { data: leads }, { data: businesses }] =
-        await Promise.all([
-            supabase
-                .from("categories")
-                .select("id, name")
-                .not("parent_id", "is", null)
-                .eq("is_active", true)
-                .order("name"),
-            supabase.from("lead_candidates").select("place_id"),
-            supabase.from("leads").select("name, place_id"),
-            supabase.from("businesses").select("name"),
-        ]);
-
-    const heldPlaceIds = new Set([
-        ...(known ?? []).map((row) => row.place_id),
-        ...(leads ?? []).map((row) => row.place_id).filter(Boolean),
+    const [{ data: categories }, leadNames, businessNames] = await Promise.all([
+        supabase
+            .from("categories")
+            .select("id, name")
+            .not("parent_id", "is", null)
+            .eq("is_active", true)
+            .order("name"),
+        // Paged, because there will be more than a thousand leads.
+        everyRow<{ name: string }>((from, to) =>
+            supabase.from("leads").select("name").range(from, to),
+        ),
+        everyRow<{ name: string }>((from, to) =>
+            supabase.from("businesses").select("name").range(from, to),
+        ),
     ]);
 
     // Names are compared the way the lead form already compares them,
-    // so "The Anchor" and "the anchor" are one business.
+    // so "The Anchor" and "the anchor" are one business. This is the
+    // only way to notice somebody already on Promotello that we have
+    // never held a place_id for — and writing to them to ask them to
+    // join it is the mistake worth most.
     const heldNames = new Set([
-        ...(leads ?? []).map((row) => compare(row.name)),
-        ...(businesses ?? []).map((row) => compare(row.name)),
+        ...leadNames.map((row) => compare(row.name)),
+        ...businessNames.map((row) => compare(row.name)),
     ]);
+
+    // place_id is asked about rather than loaded. Sixty ids a trade is
+    // a question the database can answer exactly, and no row limit can
+    // make the answer quietly wrong.
+    const alreadyHeld = async (ids: string[]) => {
+        if (ids.length === 0) return new Set<string>();
+
+        const [{ data: candidates }, { data: asLeads }] = await Promise.all([
+            supabase.from("lead_candidates").select("place_id").in("place_id", ids),
+            supabase.from("leads").select("place_id").in("place_id", ids),
+        ]);
+
+        return new Set([
+            ...(candidates ?? []).map((row) => row.place_id),
+            ...(asLeads ?? []).map((row) => row.place_id).filter(Boolean),
+        ]);
+    };
 
     // Which trades to ask about. The picker submits one field a trade,
     // "ours:<category id>" or "trade:<name>".
@@ -102,9 +144,19 @@ export async function sweepArea(formData: FormData) {
     }
 
     const trades: { name: string; categoryId: string | null }[] = [
+        // A ticked category becomes the words Google understands for
+        // it, all still tagged with that category. "Home & gifts" as a
+        // search found one business on Gloucester Road; "gift shop",
+        // "homeware", "home goods store" and "furniture shop" found
+        // twenty-six.
         ...(categories ?? [])
             .filter((category) => wanted.has(`ours:${category.id}`))
-            .map((category) => ({ name: category.name, categoryId: category.id })),
+            .flatMap((category) =>
+                tradesForCategory(category.name).map((name) => ({
+                    name,
+                    categoryId: category.id,
+                })),
+            ),
         ...EXTRA_TRADES.filter((name) => wanted.has(`trade:${name}`)).map((name) => ({
             name,
             categoryId: null,
@@ -150,16 +202,18 @@ export async function sweepArea(formData: FormData) {
 
         const rows: Record<string, unknown>[] = [];
 
-        for (const place of results) {
-            // Google reads the area as a hint rather than a boundary: a
-            // sweep of Gloucester Road came back 747 businesses and 313
-            // were on it. Importing the rest would bury the street in
-            // its own city.
-            if (!inTheArea(place.address, area.name, city?.name)) continue;
-            if (heldPlaceIds.has(place.placeId)) continue;
+        // Google reads the area as a hint rather than a boundary: a
+        // sweep of Gloucester Road came back 747 businesses and 313
+        // were on it. Importing the rest would bury the street in its
+        // own city.
+        const here = results.filter((place) => inTheArea(place.address, area.name, city?.name));
+        const held = await alreadyHeld(here.map((place) => place.placeId));
+
+        for (const place of here) {
+            if (held.has(place.placeId)) continue;
             if (heldNames.has(compare(place.name))) continue;
 
-            heldPlaceIds.add(place.placeId);
+            held.add(place.placeId);
 
             rows.push({
                 place_id: place.placeId,
@@ -398,24 +452,49 @@ export async function deepenSweep(formData: FormData) {
 
     if (!viewport) redirect(`${IMPORT}?area=${areaId}&error=no_viewport`);
 
-    // Two bands. Enough to roughly double the ceiling, and few enough
-    // that the bill stays small — each band is a full search of every
-    // capped trade.
-    const bands = splitViewport(viewport, 2);
+    // How finely to cut. Two the first time, and the page offers to
+    // double it while anything is still coming back full — a band that
+    // returns sixty is as truncated as the whole street was, and
+    // without saying so the sweep looks finished when it is not.
+    //
+    // Eight is the ceiling. Each band is a full search of every capped
+    // trade, so the bill doubles with it, and by eight the bands are a
+    // couple of hundred metres of street — past that the answer is a
+    // narrower trade, not a smaller box.
+    const asked = Number(formData.get("bands")) || 2;
+    const howMany = Math.min(Math.max(asked, 2), 8);
+    const bands = splitViewport(viewport, howMany);
 
-    const { data: known } = await supabase.from("lead_candidates").select("place_id");
-    const { data: leads } = await supabase.from("leads").select("name, place_id");
-    const { data: businesses } = await supabase.from("businesses").select("name");
-
-    const heldPlaceIds = new Set([
-        ...(known ?? []).map((row) => row.place_id),
-        ...(leads ?? []).map((row) => row.place_id).filter(Boolean),
+    // The same two rules as the sweep, for the same reasons: names read
+    // completely rather than to the first thousand, and place_ids asked
+    // about rather than loaded.
+    const [leadNames, businessNames] = await Promise.all([
+        everyRow<{ name: string }>((from, to) =>
+            supabase.from("leads").select("name").range(from, to),
+        ),
+        everyRow<{ name: string }>((from, to) =>
+            supabase.from("businesses").select("name").range(from, to),
+        ),
     ]);
 
     const heldNames = new Set([
-        ...(leads ?? []).map((row) => compare(row.name)),
-        ...(businesses ?? []).map((row) => compare(row.name)),
+        ...leadNames.map((row) => compare(row.name)),
+        ...businessNames.map((row) => compare(row.name)),
     ]);
+
+    const alreadyHeld = async (ids: string[]) => {
+        if (ids.length === 0) return new Set<string>();
+
+        const [{ data: candidates }, { data: asLeads }] = await Promise.all([
+            supabase.from("lead_candidates").select("place_id").in("place_id", ids),
+            supabase.from("leads").select("place_id").in("place_id", ids),
+        ]);
+
+        return new Set([
+            ...(candidates ?? []).map((row) => row.place_id),
+            ...(asLeads ?? []).map((row) => row.place_id).filter(Boolean),
+        ]);
+    };
 
     const { data: categories } = await supabase
         .from("categories")
@@ -424,6 +503,9 @@ export async function deepenSweep(formData: FormData) {
 
     let found = 0;
     let requests = 0;
+    // Trades where a band came back full. Still truncated, however
+    // finely it has been cut.
+    const stillCapped = new Set<string>();
 
     for (const trade of trades) {
         const ours = (categories ?? []).find((category) => category.name === trade);
@@ -443,18 +525,22 @@ export async function deepenSweep(formData: FormData) {
                 );
 
                 results = answer.places;
+
+                if (answer.hitTheLimit) stillCapped.add(trade);
             } catch {
                 continue;
             }
 
             const rows: Record<string, unknown>[] = [];
 
-            for (const place of results) {
-                if (!inTheArea(place.address, area.name, cityName)) continue;
-                if (heldPlaceIds.has(place.placeId)) continue;
+            const here = results.filter((place) => inTheArea(place.address, area.name, cityName));
+            const held = await alreadyHeld(here.map((place) => place.placeId));
+
+            for (const place of here) {
+                if (held.has(place.placeId)) continue;
                 if (heldNames.has(compare(place.name))) continue;
 
-                heldPlaceIds.add(place.placeId);
+                held.add(place.placeId);
 
                 rows.push({
                     place_id: place.placeId,
@@ -477,5 +563,15 @@ export async function deepenSweep(formData: FormData) {
     }
 
     revalidatePath(IMPORT);
-    redirect(`${IMPORT}?area=${area.id}&deepened=${found}&trades=${trades.length}&calls=${requests}`);
+
+    // Said plainly either way. "Found 30 more" with nothing else reads
+    // as finished, and the one thing worth knowing is whether it is.
+    const more =
+        stillCapped.size > 0
+            ? `&capped=${encodeURIComponent([...stillCapped].join("|"))}&cappedCount=${stillCapped.size}&bands=${howMany}`
+            : "";
+
+    redirect(
+        `${IMPORT}?area=${area.id}&deepened=${found}&trades=${trades.length}&calls=${requests}&split=${howMany}${more}`,
+    );
 }

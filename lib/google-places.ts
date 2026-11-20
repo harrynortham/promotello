@@ -276,7 +276,7 @@ export const EXTRA_TRADES = [
     // The plain words for the three categories added in
     // 20270224090000. A category's name sorts the directory; it is a
     // poor thing to ask Google — "Off-licence & wine" found two on
-    // Gloucester Road where "off licence" and "wine shop" found ten
+    // Gloucester Road where  and  found ten
     // between them.
     "sports shop", "running shop", "game shop", "baby shop", "kids clothes",
 
@@ -285,6 +285,13 @@ export const EXTRA_TRADES = [
     "fish and chip shop", "kebab shop", "pizza takeaway", "curry house",
     "chinese takeaway", "thai restaurant", "turkish restaurant", "vegan restaurant",
     "brunch spot", "wine bar", "cocktail bar", "micropub", "brewery", "bottle shop",
+    // Measured on Gloucester Road against : bistro found
+    // eighteen places that term missed, burger six, grill and brunch
+    // and breakfast two each. A word Google's own listings use is
+    // worth more than a word that describes the trade.
+    "bistro", "burger", "grill", "tapas", "sushi", "eatery", "brunch", "breakfast",
+    "italian restaurant", "mexican restaurant", "greek restaurant", "korean restaurant",
+    "noodle bar", "steakhouse", "gastropub", "small plates",
 
     // Health, care and learning
     "nursery", "preschool", "after school club", "tutor", "music teacher",
@@ -292,6 +299,35 @@ export const EXTRA_TRADES = [
     "pilates studio", "climbing wall", "swimming pool", "osteopath", "chiropractor",
     "acupuncture", "counsellor", "podiatrist", "audiologist", "veterinary surgery",
     "dog groomer", "dog walker", "care agency",
+
+    // Google's own words for what is on a street.
+    //
+    // Collected rather than guessed: a broad sweep of Gloucester Road
+    // asking for places.primaryTypeDisplayName returned 316 businesses
+    // and what Google calls each of them. These are the labels that
+    // came back more than once and that nothing here already said.
+    //
+    // Worth having because Google indexes a place under its own label,
+    // not under the word a person would use for the trade. "Bistro"
+    // found eighteen places that  did not, and that is
+    // the same lesson: "thrift store" is what it calls a charity shop,
+    // "takeout restaurant" what it calls a takeaway.
+    //
+    // The list being long costs nothing. A sweep is billed per trade
+    // ticked, not per trade offered, so this is more to choose from
+    // rather than more to pay for.
+    //
+    // To extend it for a new area: sweep broadly with
+    // places.primaryTypeDisplayName in the field mask and count what
+    // comes back.
+    "hair salon", "beauty salon", "barber shop", "nail salon", "skin care clinic",
+    "fast food restaurant", "pizza restaurant",
+    "indian restaurant", "south indian restaurant", "brunch restaurant",
+    "coffee shop", "dessert shop", "grocery store",
+    "convenience store", "health food store", "clothing store", "home goods store",
+    "electronics store", "toy store", "liquor store", "bicycle shop", "butcher shop",
+    "building materials store", "medical clinic", "dental clinic",
+    "car repair and maintenance service", "general contractor", "laundry",
 
     // The rest of a street
     "post office", "bank", "building society", "funeral director", "travel agent",
@@ -344,4 +380,83 @@ export function splitViewport(viewport: Rectangle, bands: number): Rectangle[] {
         low: { latitude: south + step * at, longitude: viewport.low.longitude },
         high: { latitude: south + step * (at + 1), longitude: viewport.high.longitude },
     }));
+}
+
+// The words to ask Google for each of our categories.
+//
+// A category name is a label for a directory, not a search. Run as
+// one, sixteen of the forty-seven found two businesses or fewer on
+// Gloucester Road, and "Home & gifts" found one — against twenty-six
+// for "gift shop", "homeware" and "home goods store" together.
+//
+// The ampersand is most of it: "Childcare & nurseries" is not a thing
+// anybody writes on a shopfront, and Google indexes what is on the
+// shopfront. So each category names the words it should actually be
+// asked by, and the category name itself is not among them unless it
+// happens to be one.
+//
+// Anything absent falls back to its own name, which is right where the
+// name is already the word — Bakeries, Dentists, Opticians, Takeaways.
+export const CATEGORY_TRADES: Record<string, string[]> = {
+    // Food & drink
+    "Cafés & coffee": ["cafe", "coffee shop", "brunch"],
+    Restaurants: ["restaurant", "bistro", "burger", "grill"],
+    "Pubs & bars": ["pub", "bar", "micropub"],
+    Takeaways: ["takeaway", "takeout restaurant", "fish and chip shop", "kebab shop"],
+    "Ice cream & desserts": ["ice cream", "dessert shop", "cake shop"],
+    "Delis & grocers": ["deli", "grocery store", "greengrocer", "health food store"],
+    "Farm shops & producers": ["farm shop", "greengrocer"],
+    "Butchers & fishmongers": ["butcher shop", "fishmonger"],
+    "Off-licence & wine": ["off licence", "wine shop", "bottle shop", "liquor store"],
+
+    // Health & beauty
+    "Hair & barbers": ["hair salon", "barber shop", "hairdresser"],
+    "Beauty & nails": ["beauty salon", "nail salon", "skin care clinic"],
+    "Spas & massage": ["spa", "massage"],
+    "Clinics & physio": ["medical clinic", "physiotherapist", "chiropractor", "osteopath"],
+    "Tattoo & piercing": ["tattoo studio", "piercing studio"],
+    "Yoga & wellbeing": ["yoga studio", "pilates studio", "wellness centre"],
+    Dentists: ["dental clinic", "dentist"],
+
+    // Services
+    "Bike repair": ["bicycle shop", "bike repair"],
+    "Car wash & valeting": ["car wash", "valeting"],
+    "Childcare & nurseries": ["nursery", "day nursery", "childminder", "preschool"],
+    "Driving schools": ["driving instructor", "driving school"],
+    "Dry cleaning & laundry": ["dry cleaner", "launderette", "laundry"],
+    "Garages & MOT": ["car repair and maintenance service", "mot centre", "garage"],
+    "Home & garden": ["garden centre", "diy shop", "hardware store", "building materials store"],
+    "Pet care": ["pet shop", "dog groomer", "veterinary surgery"],
+    "Phone & computer repair": ["phone repair", "computer shop", "electronics store"],
+    "Professional services": ["accountant", "solicitor", "estate agent", "consultant"],
+    "Repairs & alterations": ["tailor", "shoe repair", "key cutting", "watch repair"],
+    "Taxis & transport": ["taxi", "minicab", "car hire"],
+
+    // Shopping
+    "Books & music": ["book store", "record shop", "music shop"],
+    "Fashion & vintage": ["clothing store", "vintage shop", "thrift store"],
+    "Home & gifts": ["gift shop", "homeware", "home goods store", "furniture shop"],
+    "Jewellery & watches": ["jewelry store", "watch shop"],
+    "Makers & markets": ["craft shop", "farmers market", "art gallery"],
+    "Newsagents & convenience": ["convenience store", "newsagent", "supermarket"],
+    "Plants & flowers": ["florist", "garden centre", "plant shop"],
+    "Sports & outdoor": ["sports shop", "outdoor shop", "running shop", "golf shop"],
+    "Toys, games & kids": ["toy store", "game shop", "baby shop", "kids clothes"],
+
+    // Things to do
+    "Activities & experiences": ["activity centre", "escape room", "bowling alley", "climbing wall"],
+    Attractions: ["tourist attraction", "museum"],
+    "Cinema & theatre": ["cinema", "theatre"],
+    "Classes & workshops": ["classes", "workshop", "dance school", "art studio"],
+    "Fitness & sport": ["gym", "fitness centre", "sports club", "swimming pool"],
+
+    // Travel & stays
+    "Hotels & B&Bs": ["hotel", "bed and breakfast", "guest house"],
+    "Tours & days out": ["tour", "days out", "travel agent"],
+};
+
+// What a category should actually be asked by. Its own name where
+// nothing better is written down.
+export function tradesForCategory(name: string) {
+    return CATEGORY_TRADES[name] ?? [name];
 }

@@ -12,7 +12,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { TradePicker } from "@/components/trade-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SubmitButton } from "@/components/submit-button";
-import { EXTRA_TRADES } from "@/lib/google-places";
+import { EXTRA_TRADES, tradesForCategory } from "@/lib/google-places";
 import { createClient } from "@/utils/supabase/server";
 import { deepenSweep, handleCandidates, sweepArea } from "./actions";
 
@@ -34,6 +34,8 @@ type PageProps = {
         capped?: string;
         cappedCount?: string;
         deepened?: string;
+        split?: string;
+        bands?: string;
         left?: string;
         made?: string;
         crawled?: string;
@@ -72,7 +74,12 @@ async function Importer({ searchParams }: PageProps) {
     ]);
 
     const candidates = waiting ?? [];
-    const tradeCategories = ourTrades ?? [];
+    // How many searches a category actually costs, since one of ours
+    // is several of Google's words.
+    const tradeCategories = (ourTrades ?? []).map((category) => ({
+        ...category,
+        searches: tradesForCategory(category.name).length,
+    }));
 
     return (
         <div className="text-[#17233B]">
@@ -158,15 +165,35 @@ async function Importer({ searchParams }: PageProps) {
                             {(params.capped ?? "").split("|").join(", ")} returned the most
                             Google will give for one search, so this area almost certainly
                             has more of them. There is no page four — but the same question
-                            asked of half the area at a time gets past it. On Gloucester
-                            Road that took one trade from 60 results to 98.
+                            asked of a smaller box gets past it.
+                            {params.bands
+                                ? ` Cut into ${params.bands}, ${Number(params.bands) === 1 ? "it" : "a part"} still came back full. Cutting finer will find more.`
+                                : " On Gloucester Road, halving the street took one trade from 60 results to 98."}
                         </p>
+
+                        {Number(params.bands) >= 8 && (
+                            <p className="text-xs leading-5 text-amber-900/80">
+                                Eight is as fine as it goes — each part is a couple of hundred
+                                metres of street by now, and the bill doubles with every split.
+                                Past this the answer is a narrower trade: tick &ldquo;pizza
+                                restaurant&rdquo; and &ldquo;curry house&rdquo; rather than
+                                &ldquo;restaurants&rdquo;.
+                            </p>
+                        )}
 
                         {/* Only the capped ones. The rest came back
                             complete, and asking again is money for
                             nothing. */}
+                        {Number(params.bands ?? 0) < 8 && (
                         <form action={deepenSweep}>
                             <input type="hidden" name="areaId" value={params.area ?? ""} />
+                            {/* Twice as fine as last time. Absent on a
+                                first sweep, which starts at two. */}
+                            <input
+                                type="hidden"
+                                name="bands"
+                                value={params.bands ? Number(params.bands) * 2 : 2}
+                            />
                             {(params.capped ?? "")
                                 .split("|")
                                 .filter(Boolean)
@@ -174,10 +201,13 @@ async function Importer({ searchParams }: PageProps) {
                                     <input key={trade} type="hidden" name="cappedTrade" value={trade} />
                                 ))}
 
-                            <SubmitButton pendingLabel="Sweeping the halves…" size="sm" variant="outline">
-                                Sweep these {params.cappedCount} again, half the area at a time
+                            <SubmitButton pendingLabel="Splitting further…" size="sm" variant="outline">
+                                {params.bands
+                                    ? `Split into ${Number(params.bands) * 2} and sweep these ${params.cappedCount} again`
+                                    : `Sweep these ${params.cappedCount} again, half the area at a time`}
                             </SubmitButton>
                         </form>
+                        )}
                     </AlertDescription>
                 </Alert>
             )}
@@ -185,8 +215,14 @@ async function Importer({ searchParams }: PageProps) {
             {params.deepened && (
                 <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
                     Asked {params.trades} capped{" "}
-                    {params.trades === "1" ? "trade" : "trades"} again over each half of the
+                    {params.trades === "1" ? "trade" : "trades"} again over{" "}
+                    {params.split === "2" ? "each half" : `each of ${params.split} parts`} of the
                     area and found {params.deepened} more, in {params.calls} billed searches.
+                    {/* The thing worth knowing: whether that is all of
+                        them. "Found 30 more" on its own reads as
+                        finished. */}
+                    {!params.cappedCount &&
+                        " Nothing came back full this time, so there is nothing obvious left — cutting finer than this found two more on Gloucester Road and then stopped."}
                 </p>
             )}
 

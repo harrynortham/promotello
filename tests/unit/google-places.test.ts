@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+    CATEGORY_TRADES,
+    EXTRA_TRADES,
     MAX_RESULTS,
     PAGE_SIZE,
     inTheArea,
     placesQuery,
     searchPlaces,
     splitViewport,
+    tradesForCategory,
 } from "@/lib/google-places";
 
 test("the query reads like something somebody would type into Maps", () => {
@@ -257,4 +260,71 @@ test("more bands still cover it end to end", () => {
     assert.equal(bands.length, 4);
     assert.equal(bands[0].low.latitude, 51.47);
     assert.ok(Math.abs(bands[3].high.latitude - 51.49) < 1e-9);
+});
+
+// Every trade in the list is a billed search when it is ticked, so a
+// repeat is money for the same answer twice. Five had crept in by the
+// time the list reached two hundred, which is exactly when nobody is
+// reading it top to bottom any more.
+test("no trade is listed twice", () => {
+    const seen = new Set<string>();
+    const twice: string[] = [];
+
+    for (const trade of EXTRA_TRADES) {
+        if (seen.has(trade)) twice.push(trade);
+        seen.add(trade);
+    }
+
+    assert.deepEqual(twice, []);
+});
+
+// Case and spacing count: "Thrift Store" and "thrift store" are one
+// search and two charges.
+test("nor in a different case or with odd spacing", () => {
+    const tidied = EXTRA_TRADES.map((trade) => trade.toLowerCase().replace(/\s+/g, " ").trim());
+
+    assert.equal(new Set(tidied).size, EXTRA_TRADES.length);
+});
+
+test("and none of them is blank", () => {
+    assert.equal(EXTRA_TRADES.filter((trade) => !trade.trim()).length, 0);
+});
+
+// A category's own name is a label for a directory, not a search. Run
+// as one on Gloucester Road, "Home & gifts" found a single business
+// against twenty-six for the words below it.
+test("a mapped category asks words rather than its own name", () => {
+    assert.deepEqual(tradesForCategory("Home & gifts"), [
+        "gift shop",
+        "homeware",
+        "home goods store",
+        "furniture shop",
+    ]);
+});
+
+// Bakeries, Opticians and Pharmacies are already the word somebody
+// would type, so there is nothing to map.
+test("an unmapped category falls back to its own name", () => {
+    assert.deepEqual(tradesForCategory("Bakeries"), ["Bakeries"]);
+    assert.deepEqual(tradesForCategory("Something we invented later"), [
+        "Something we invented later",
+    ]);
+});
+
+// Each word is a billed search, and the same word twice under one
+// category is the same answer bought twice.
+test("no category asks the same word twice", () => {
+    for (const [category, words] of Object.entries(CATEGORY_TRADES)) {
+        assert.equal(new Set(words).size, words.length, category);
+        assert.ok(words.length > 0, category);
+    }
+});
+
+test("an ampersand never reaches Google", () => {
+    // The thing that made the names bad searches in the first place.
+    for (const [category, words] of Object.entries(CATEGORY_TRADES)) {
+        for (const word of words) {
+            assert.ok(!word.includes("&"), `${category}: ${word}`);
+        }
+    }
 });
