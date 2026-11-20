@@ -17,6 +17,17 @@ import { createClient } from "@/utils/supabase/server";
 
 const IMPORT = "/admin/sales/import";
 
+// How long a sweep gives itself before stopping and saying where it
+// got to.
+//
+// Vercel's ceiling for a Node function is five minutes, and a sweep of
+// every trade is longer than that. Being killed at the ceiling loses
+// the redirect and leaves the page spinning, so this stops short of it
+// on purpose: what was found is already saved, the page says how many
+// trades are left, and pressing again carries on — a place_id already
+// held is skipped, so nothing is paid for twice.
+const ACTION_BUDGET_MS = 240_000;
+
 async function adminClient() {
     const supabase = await createClient();
     const { data: isAdmin } = await supabase.rpc("is_platform_admin");
@@ -100,6 +111,8 @@ export async function sweepArea(formData: FormData) {
         })),
     ];
 
+    const startedAt = Date.now();
+
     let found = 0;
     let searched = 0;
     let requests = 0;
@@ -108,6 +121,10 @@ export async function sweepArea(formData: FormData) {
     const capped: string[] = [];
 
     for (const trade of trades) {
+        // Stopped rather than cut off. The ones already written stay,
+        // and the page says how many are left.
+        if (Date.now() - startedAt > ACTION_BUDGET_MS) break;
+
         let results;
 
         try {
@@ -180,8 +197,11 @@ export async function sweepArea(formData: FormData) {
             ? `&capped=${encodeURIComponent(capped.join("|"))}&cappedCount=${capped.length}`
             : "";
 
+    const unfinished = trades.length - searched;
+    const leftNote = unfinished > 0 ? `&left=${unfinished}` : "";
+
     redirect(
-        `${IMPORT}?area=${area.id}&swept=${found}&trades=${searched}&calls=${requests}${cappedNote}`,
+        `${IMPORT}?area=${area.id}&swept=${found}&trades=${searched}&calls=${requests}${cappedNote}${leftNote}`,
     );
 }
 

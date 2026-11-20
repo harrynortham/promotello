@@ -18,6 +18,13 @@ import { deepenSweep, handleCandidates, sweepArea } from "./actions";
 
 export const metadata: Metadata = { title: "Import leads", robots: { index: false } };
 
+// A sweep is hundreds of calls to Google, one after another, and
+// Vercel kills a function at sixty seconds by default. Five minutes is
+// the most a Node function may ask for, and the sweep stops itself
+// before then (ACTION_BUDGET_MS in ./actions) so it returns a result
+// rather than being cut off mid-trade.
+export const maxDuration = 300;
+
 type PageProps = {
     searchParams: Promise<{
         area?: string;
@@ -27,6 +34,7 @@ type PageProps = {
         capped?: string;
         cappedCount?: string;
         deepened?: string;
+        left?: string;
         made?: string;
         crawled?: string;
         skipped?: string;
@@ -120,6 +128,17 @@ async function Importer({ searchParams }: PageProps) {
                 <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
                     Swept {params.trades} trades and found {params.swept} businesses we
                     did not already have, in {params.calls} billed searches.
+                    {params.left && (
+                        <>
+                            {" "}
+                            <strong>
+                                {params.left} {params.left === "1" ? "trade is" : "trades are"} still
+                                to do
+                            </strong>{" "}
+                            — press Sweep again with the same trades ticked and it carries on
+                            where it stopped. Nothing is searched or paid for twice.
+                        </>
+                    )}
                 </p>
             )}
 
