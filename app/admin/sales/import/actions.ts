@@ -72,20 +72,27 @@ export async function sweepArea(formData: FormData) {
     ]);
 
     // Which trades to ask about. The picker submits one field a trade,
-    // "ours:<category id>" or "trade:<name>"; nothing submitted means
-    // everything, which is what an untouched street wants.
+    // "ours:<category id>" or "trade:<name>".
+    //
+    // Nothing submitted is refused rather than taken to mean
+    // everything. All 183 is around five hundred billed searches, and
+    // an empty form is the easiest way to arrive at it by accident —
+    // which is exactly the press nobody should be one slip away from.
     //
     // A Google trade has no category of ours, so the lead is made
     // without one and whoever decides it is worth writing to picks one
     // then.
     const wanted = new Set(formData.getAll("trade").map(String));
-    const pickedSome = wanted.size > 0;
+
+    if (wanted.size === 0) {
+        redirect(`${IMPORT}?area=${area.id}&error=no_trades`);
+    }
 
     const trades: { name: string; categoryId: string | null }[] = [
         ...(categories ?? [])
-            .filter((category) => !pickedSome || wanted.has(`ours:${category.id}`))
+            .filter((category) => wanted.has(`ours:${category.id}`))
             .map((category) => ({ name: category.name, categoryId: category.id })),
-        ...EXTRA_TRADES.filter((name) => !pickedSome || wanted.has(`trade:${name}`)).map((name) => ({
+        ...EXTRA_TRADES.filter((name) => wanted.has(`trade:${name}`)).map((name) => ({
             name,
             categoryId: null,
         })),

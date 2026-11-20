@@ -98,6 +98,17 @@ async function Importer({ searchParams }: PageProps) {
                 </Alert>
             )}
 
+            {params.error === "no_trades" && (
+                <Alert variant="destructive" className="mt-6">
+                    <AlertTitle>Nothing was swept</AlertTitle>
+                    <AlertDescription>
+                        Tick the trades you want first. An empty list is not taken to mean
+                        all 183 — that is around five hundred billed searches, and not
+                        something to arrive at by pressing a button twice.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {params.error === "none_picked" && (
                 <p className="mt-6 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
                     Nothing was ticked, so nothing was imported.
@@ -184,11 +195,10 @@ async function Importer({ searchParams }: PageProps) {
                     <p className="mt-3 text-xs leading-5 text-[#17233B]/55">
                         One search a trade, because Google gives at most sixty results a
                         query, and only results whose address is in the area are kept.
-                        Our categories are 44 trades and every trade is 183, each
-                        needing one to three searches. Google gives 5,000 Text Search
-                        requests a month before charging, so a handful of sweeps a
-                        month costs nothing — and results are saved as they are found,
-                        so a sweep that stops partway keeps what it got.
+                        Each ticked trade is one to three billed searches, and only
+                        results whose address is in the area are kept. Google gives 5,000
+                        a month before charging. Results are saved as they are found, so
+                        a sweep that stops partway keeps what it got.
                     </p>
                 </CardContent>
             </Card>

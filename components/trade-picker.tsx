@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 
 // Which trades to ask Google about for this area.
 //
-// Sweeping everything is the right default for a street nobody has
-// touched. It is the wrong one for a street already half done, or when
-// only the trades that convert are worth the searches — each one is
-// billed, and a sweep of everything is 183 of them.
+// Nothing is ticked to start with, and a sweep with nothing ticked is
+// refused rather than taken to mean everything. All 183 is around five
+// hundred billed searches — a tenth of the monthly allowance — and it
+// is not a thing to arrive at by pressing a button twice.
 //
-// Ours and Google's are shown apart because they mean different things:
-// ours put a lead straight into a category, Google's leave it without
-// one for somebody to pick later.
+// Ours and Google's are shown apart because they mean different
+// things: ours put a lead straight into a category, Google's leave it
+// without one for somebody to pick later.
 export function TradePicker({
     ours,
     others,
@@ -23,8 +23,7 @@ export function TradePicker({
 }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    // null means all of them, which is what an untouched area wants.
-    const [picked, setPicked] = useState<Set<string> | null>(null);
+    const [picked, setPicked] = useState<Set<string>>(new Set());
 
     const everything = useMemo(
         () => [
@@ -40,16 +39,16 @@ export function TradePicker({
         return wanted ? everything.filter((trade) => trade.name.toLowerCase().includes(wanted)) : everything;
     }, [everything, query]);
 
-    const chosen = picked ?? new Set(everything.map((trade) => trade.key));
-
     function toggle(key: string) {
-        const next = new Set(chosen);
+        const next = new Set(picked);
 
         if (next.has(key)) next.delete(key);
         else next.add(key);
 
         setPicked(next);
     }
+
+    const chosen = picked;
 
     return (
         <div className="space-y-2">
@@ -67,8 +66,8 @@ export function TradePicker({
                     className="flex items-center gap-2 rounded-lg border border-[#17233B]/15 bg-white px-3 py-2 text-xs text-[#17233B] transition hover:border-[#17233B]/30"
                 >
                     <span>
-                        {picked === null
-                            ? `Every trade · ${everything.length}`
+                        {chosen.size === 0
+                            ? `Pick the trades to sweep · ${everything.length} to choose from`
                             : `${chosen.size} of ${everything.length} trades`}
                     </span>
                     <span aria-hidden="true" className="text-[#17233B]/40">
@@ -76,13 +75,13 @@ export function TradePicker({
                     </span>
                 </button>
 
-                {picked !== null && (
+                {chosen.size > 0 && (
                     <button
                         type="button"
-                        onClick={() => setPicked(null)}
+                        onClick={() => setPicked(new Set())}
                         className="text-xs text-[#17233B]/60 underline underline-offset-4"
                     >
-                        Back to every trade
+                        Clear
                     </button>
                 )}
             </div>
@@ -97,26 +96,23 @@ export function TradePicker({
                             className="h-10 flex-1 bg-white text-sm"
                         />
 
+                        {/* Adds to what is ticked rather than
+                            replacing it, so three searches can build
+                            up one list. */}
                         <button
                             type="button"
-                            onClick={() => setPicked(new Set(showing.map((trade) => trade.key)))}
+                            onClick={() =>
+                                setPicked(new Set([...picked, ...showing.map((trade) => trade.key)]))
+                            }
                             className="text-xs font-medium text-[#FF593F] underline underline-offset-2"
                         >
-                            Only these
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setPicked(new Set())}
-                            className="text-xs text-[#17233B]/60 underline underline-offset-2"
-                        >
-                            None
+                            Add these {showing.length}
                         </button>
                     </div>
 
                     <p className="text-xs text-[#17233B]/55">
-                        {showing.length} shown. Each ticked trade is one to three billed
-                        searches.
+                        {showing.length} shown, {chosen.size} ticked. Each ticked trade is one
+                        to three billed searches.
                     </p>
 
                     <div className="grid max-h-64 grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-x-3 gap-y-1 overflow-y-auto">
