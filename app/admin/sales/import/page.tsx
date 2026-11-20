@@ -37,6 +37,7 @@ type PageProps = {
         split?: string;
         bands?: string;
         left?: string;
+        failed?: string;
         made?: string;
         crawled?: string;
         skipped?: string;
@@ -107,6 +108,18 @@ async function Importer({ searchParams }: PageProps) {
                 deleted by the nightly job.
             </p>
 
+            {params.error === "no_key" && (
+                <Alert variant="destructive" className="mt-6">
+                    <AlertTitle>Google has not been given a key</AlertTitle>
+
+                    <AlertDescription>
+                        GOOGLE_PLACES_API_KEY is not set where this is running, so
+                        nothing can be searched. Nothing was billed. Set it in the
+                        hosting environment and deploy again.
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {params.error === "no_area" && (
                 <Alert variant="destructive" className="mt-6">
                     <AlertTitle>That area is not one of ours</AlertTitle>
@@ -118,9 +131,10 @@ async function Importer({ searchParams }: PageProps) {
                 <Alert variant="destructive" className="mt-6">
                     <AlertTitle>Nothing was swept</AlertTitle>
                     <AlertDescription>
-                        Tick the trades you want first. An empty list is not taken to mean
-                        all 183 — that is around five hundred billed searches, and not
-                        something to arrive at by pressing a button twice.
+                        Tick the trades you want first. An empty list is not taken to
+                        mean all {EXTRA_TRADES.length} — that is {EXTRA_TRADES.length * 3}{" "}
+                        billed searches at worst, and not something to arrive at by
+                        pressing a button twice.
                     </AlertDescription>
                 </Alert>
             )}
@@ -144,6 +158,18 @@ async function Importer({ searchParams }: PageProps) {
                             </strong>{" "}
                             — press Sweep again with the same trades ticked and it carries on
                             where it stopped. Nothing is searched or paid for twice.
+                        </>
+                    )}
+                    {params.failed && (
+                        <>
+                            {" "}
+                            <strong>
+                                {params.failed} {params.failed === "1" ? "was" : "were"} refused
+                                by Google
+                            </strong>{" "}
+                            — a different thing from running out of time, and pressing Sweep
+                            again does the same thing. Worth a look at the logs if it keeps
+                            happening.
                         </>
                     )}
                 </p>

@@ -81,6 +81,14 @@ export async function sweepArea(formData: FormData) {
 
     if (!area) redirect(`${IMPORT}?error=no_area`);
 
+    // Before anything is billed. Without this the key being unset is
+    // swallowed by the per-trade catch below — fifty throws, fifty
+    // continues, and a redirect reading "found 0 businesses in 0
+    // billed searches", which is what an empty street looks like too.
+    if (!process.env.GOOGLE_PLACES_API_KEY) {
+        redirect(`${IMPORT}?area=${area.id}&error=no_key`);
+    }
+
     const city = Array.isArray(area.cities) ? area.cities[0] : area.cities;
 
     const [{ data: categories }, leadNames, businessNames] = await Promise.all([
@@ -167,6 +175,7 @@ export async function sweepArea(formData: FormData) {
 
     let found = 0;
     let searched = 0;
+    let failed = 0;
     let requests = 0;
     // Trades where Google returned its full sixty, which almost
     // certainly means there were more it would not give.
@@ -195,6 +204,7 @@ export async function sweepArea(formData: FormData) {
         } catch {
             // One trade failing is not a reason to lose the rest of the
             // sweep: the ones already found are still worth having.
+            failed += 1;
             continue;
         }
 
@@ -251,11 +261,15 @@ export async function sweepArea(formData: FormData) {
             ? `&capped=${encodeURIComponent(capped.join("|"))}&cappedCount=${capped.length}`
             : "";
 
-    const unfinished = trades.length - searched;
+    // Two different unfinished. One ran out of time and can be asked
+    // again; the other was refused by Google and asking again does the
+    // same thing, so they are counted apart.
+    const unfinished = trades.length - searched - failed;
     const leftNote = unfinished > 0 ? `&left=${unfinished}` : "";
+    const failedNote = failed > 0 ? `&failed=${failed}` : "";
 
     redirect(
-        `${IMPORT}?area=${area.id}&swept=${found}&trades=${searched}&calls=${requests}${cappedNote}${leftNote}`,
+        `${IMPORT}?area=${area.id}&swept=${found}&trades=${searched}&calls=${requests}${cappedNote}${leftNote}${failedNote}`,
     );
 }
 
@@ -451,6 +465,10 @@ export async function deepenSweep(formData: FormData) {
     const viewport = await areaViewport(`${area.name}, ${cityName}`);
 
     if (!viewport) redirect(`${IMPORT}?area=${areaId}&error=no_viewport`);
+
+    if (!process.env.GOOGLE_PLACES_API_KEY) {
+        redirect(`${IMPORT}?area=${areaId}&error=no_key`);
+    }
 
     // How finely to cut. Two the first time, and the page offers to
     // double it while anything is still coming back full — a band that
