@@ -398,10 +398,18 @@ export async function deepenSweep(formData: FormData) {
 
     if (!viewport) redirect(`${IMPORT}?area=${areaId}&error=no_viewport`);
 
-    // Two bands. Enough to roughly double the ceiling, and few enough
-    // that the bill stays small — each band is a full search of every
-    // capped trade.
-    const bands = splitViewport(viewport, 2);
+    // How finely to cut. Two the first time, and the page offers to
+    // double it while anything is still coming back full — a band that
+    // returns sixty is as truncated as the whole street was, and
+    // without saying so the sweep looks finished when it is not.
+    //
+    // Eight is the ceiling. Each band is a full search of every capped
+    // trade, so the bill doubles with it, and by eight the bands are a
+    // couple of hundred metres of street — past that the answer is a
+    // narrower trade, not a smaller box.
+    const asked = Number(formData.get("bands")) || 2;
+    const howMany = Math.min(Math.max(asked, 2), 8);
+    const bands = splitViewport(viewport, howMany);
 
     const { data: known } = await supabase.from("lead_candidates").select("place_id");
     const { data: leads } = await supabase.from("leads").select("name, place_id");
@@ -424,6 +432,9 @@ export async function deepenSweep(formData: FormData) {
 
     let found = 0;
     let requests = 0;
+    // Trades where a band came back full. Still truncated, however
+    // finely it has been cut.
+    const stillCapped = new Set<string>();
 
     for (const trade of trades) {
         const ours = (categories ?? []).find((category) => category.name === trade);
@@ -443,6 +454,8 @@ export async function deepenSweep(formData: FormData) {
                 );
 
                 results = answer.places;
+
+                if (answer.hitTheLimit) stillCapped.add(trade);
             } catch {
                 continue;
             }
@@ -477,5 +490,15 @@ export async function deepenSweep(formData: FormData) {
     }
 
     revalidatePath(IMPORT);
-    redirect(`${IMPORT}?area=${area.id}&deepened=${found}&trades=${trades.length}&calls=${requests}`);
+
+    // Said plainly either way. "Found 30 more" with nothing else reads
+    // as finished, and the one thing worth knowing is whether it is.
+    const more =
+        stillCapped.size > 0
+            ? `&capped=${encodeURIComponent([...stillCapped].join("|"))}&cappedCount=${stillCapped.size}&bands=${howMany}`
+            : "";
+
+    redirect(
+        `${IMPORT}?area=${area.id}&deepened=${found}&trades=${trades.length}&calls=${requests}&split=${howMany}${more}`,
+    );
 }
