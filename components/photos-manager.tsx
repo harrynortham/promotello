@@ -40,12 +40,16 @@ export function PhotosManager({
     photos: saved,
     limit,
     hasPro,
+    howItWorks,
 }: {
     businessId: string;
     businessName: string;
     photos: BusinessPhoto[];
     limit: number;
     hasPro: boolean;
+    // Rendered by the page, because this one is a client component and
+    // the dialog is the page's to place.
+    howItWorks?: React.ReactNode;
 }) {
     const router = useRouter();
 
@@ -188,12 +192,25 @@ export function PhotosManager({
 
     return (
         <div className="text-[#17233B]">
-            <h1 className="text-2xl font-semibold tracking-tight">Photos</h1>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <h1 className="text-2xl font-semibold tracking-tight">Photos</h1>
+                {howItWorks}
+            </div>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#17233B]/70">
                 The room, the counter, what you make. These show on your page under
                 your offers, and they are the reason somebody picks you over the
                 place next door.
+            </p>
+
+            {/* Said here rather than only behind the dialog: most people
+                will not open it, and the order is the part they can get
+                wrong without noticing. */}
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#17233B]/70">
+                They show as a grid, and tapping one fills the screen. Drag them into
+                the order you want &mdash; the first is the one almost everybody sees.
+                Shoot the place itself in daylight, close up: a sign or a price list
+                tells somebody nothing your page has not already told them.
             </p>
 
             <p className="mt-4 text-sm text-[#17233B]/65">
