@@ -151,7 +151,7 @@ export default function RefundsPage() {
             title="Refund and cancellation policy"
             description="How cancelling and refunds work for businesses on Promotello's paid plans."
             updatedAt="23 November 2026"
-            version="1.0"
+            version="1.1"
             summary={summary}
             sections={sections}
         />

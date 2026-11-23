@@ -271,7 +271,7 @@ export default function TermsPage() {
             title="Terms of service"
             description="The terms that apply when you use Promotello, as a customer or a business."
             updatedAt="23 November 2026"
-            version="1.0"
+            version="1.1"
             summary={summary}
             sections={sections}
         />
