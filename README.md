@@ -375,8 +375,6 @@ most of stage 3 is guesswork until it is.
   1st of the month adds every monthly report. Supabase's sign-in emails come out
   of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
 
-**Put border around logo** for dark mode emails - update app and supabase auth emails to use promotello-email-logo-stroke.png
-
 **Test automations feature**How ca
 
 -- Apply apply apple developer account for the oneclick oauth
