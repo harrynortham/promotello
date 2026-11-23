@@ -188,3 +188,51 @@ test("a gift without them reads as it always did", () => {
     assert.ok(!html.includes("undefined"));
     assert.ok(!html.includes("null"));
 });
+
+// The gift is from the business, so their name and logo sit above it,
+// the way every other email about a business already opens. It used to
+// start with ours and nothing of theirs but a line of small caps.
+test("a gift opens with the business, not with us", () => {
+    const { html } = automationEmail({
+        voucher_id: "00000000-0000-4000-8000-000000000000",
+        kind: "welcome",
+        reward: "A free coffee on your first visit",
+        code: "G1A2B3C4D5",
+        expires_at: "2026-11-24T00:00:00Z",
+        business_id: "00000000-0000-4000-8000-000000000000",
+        business_name: "Dublin Pub",
+        email: "someone@example.com",
+        first_name: "Harry",
+        unsubscribe_token: "00000000-0000-4000-8000-000000000001",
+        terms: null,
+        image_url: null,
+        business_logo_url: "https://example.supabase.co/storage/v1/object/public/business-logos/a/b.png",
+    });
+
+    assert.match(html, /<img src="https:\/\/example\.supabase\.co[^"]+b\.png"[^>]*width="44"/);
+    // Theirs above ours: the reader followed them, not Promotello.
+    assert.ok(html.indexOf("b.png") < html.indexOf("Welcome, Harry"));
+});
+
+// Most businesses have no logo, and a broken box would be worse than
+// none: emailBusinessRow() stands initials in instead.
+test("a gift from a business with no logo shows its initials", () => {
+    const { html } = automationEmail({
+        voucher_id: "00000000-0000-4000-8000-000000000000",
+        kind: "winback",
+        reward: "A free coffee when you pop back in",
+        code: "G1A2B3C4D5",
+        expires_at: "2026-11-24T00:00:00Z",
+        business_id: "00000000-0000-4000-8000-000000000000",
+        business_name: "Dublin Pub",
+        email: "someone@example.com",
+        first_name: null,
+        unsubscribe_token: "00000000-0000-4000-8000-000000000001",
+        terms: null,
+        image_url: null,
+        business_logo_url: null,
+    });
+
+    assert.match(html, />DP</);
+    assert.ok(!html.includes("undefined"));
+});

@@ -26,7 +26,7 @@ type CardRow = {
     } | null;
 };
 
-type CardBusiness = { id: string; slug: string; name: string; logo_url: string | null };
+type CardBusiness = { id: string; slug: string; name: string; logo_url: string | null; is_sample: boolean };
 
 export type CustomerLoyaltyCard = {
     id: string;
@@ -67,7 +67,7 @@ export async function getLoyaltyCards(userId: string): Promise<CustomerLoyaltyCa
         .select(
             `
                 id, card_code, stamps, rewards_redeemed, last_stamped_at, finished_at,
-                loyalty_programs ( id, closed_at, stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon, is_active, businesses ( id, slug, name, logo_url ) )
+                loyalty_programs ( id, closed_at, stamps_required, reward, terms, card_colour, card_header, card_accent, stamp_icon, is_active, businesses ( id, slug, name, logo_url, is_sample ) )
             `,
         )
         .eq("user_id", userId)

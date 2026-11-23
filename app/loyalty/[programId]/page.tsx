@@ -7,6 +7,7 @@ import { FiArrowRight } from "react-icons/fi";
 
 import { AppFooter } from "@/components/site/footers";
 import { CustomerAppHeader } from "@/components/site/headers";
+import { FollowNudge } from "@/components/follow-nudge";
 import { LiveLoyaltyCard } from "@/components/live-loyalty-card";
 import { LoyaltyCardsLive } from "@/components/loyalty-cards-live";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,6 +73,19 @@ async function Card({ params }: PageProps) {
     const qr = await qrSvg(`${origin}/stamp/${card.code}`);
     const business = card.business;
 
+    // Asked on the card because this is the page somebody lands on when
+    // they join and the one they hold out to be stamped -- the two
+    // moments where coming back is already the point. Nothing is asked
+    // of somebody who follows already.
+    const { data: follows } = business
+        ? await supabase
+            .from("business_followers")
+            .select("business_id")
+            .eq("business_id", business.id)
+            .eq("user_id", user.id)
+            .maybeSingle()
+        : { data: null };
+
     return (
         <>
             {/* The card going grey is its own doing; the way on to the
@@ -123,6 +137,14 @@ async function Card({ params }: PageProps) {
                     ? "This card is done: the reward on it has been claimed, and it stays here as part of your history."
                     : "Show this when you pay and staff scan the code to add a stamp. Add the page to your home screen and it is one tap away when you pay."}
             </p>
+
+            {business && !business.is_sample && !follows && !card.finished && (
+                <FollowNudge
+                    businessId={business.id}
+                    businessName={business.name}
+                    reason={`Get an email when ${business.name} has a new offer, and any treat they send you.`}
+                />
+            )}
 
             <Link
                 href="/dashboard/loyalty"
