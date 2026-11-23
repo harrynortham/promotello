@@ -384,11 +384,6 @@ most of stage 3 is guesswork until it is.
 **Test automations feature**How ca
 
 
-- **"One stamp per visit" is really ten minutes.** The loyalty card says it,
-  and the terms placeholder on the setup form repeats it, but the rule in
-  `20261025100000_loyalty_cards.sql:364` is `last_stamped_at > now() -
-interval '10 minutes'`. A customer back at the counter eleven minutes later
-  gets a second stamp. Either say ten minutes or enforce a visit.
 
 **Should we add the new business to the approval queue before** business hours, logo and cover photo are added and send them a nudge email to add these before we can approve it? I fear we might miss some business and they will be stuck without approval. Or we tell them on the dashboard that these things b=must be added before we can review this business?
 
