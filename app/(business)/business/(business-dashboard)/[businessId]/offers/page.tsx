@@ -82,7 +82,7 @@ const offerJourney = [
     {
         art: <RedeemMarkArt />,
         title: "You redeem it",
-        body: "Claiming saves a voucher to their phone. Scan it at the till and it is marked used, so it can't be claimed twice.",
+        body: "Claiming saves a voucher to their phone. Scan it on your phone and it is marked used, so it can't be claimed twice.",
     },
 ];
 

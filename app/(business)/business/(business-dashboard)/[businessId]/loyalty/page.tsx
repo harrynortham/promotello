@@ -289,7 +289,7 @@ async function LoyaltyContent({ params, searchParams }: PageProps) {
                             size="lg"
                         >
                             <FiPrinter aria-hidden="true" />
-                            Print the till guide
+                            Print the staff guide
                         </Button>
                     </div>
                 </div>

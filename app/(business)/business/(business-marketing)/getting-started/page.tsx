@@ -24,7 +24,7 @@ import {
 export const metadata: Metadata = {
     title: { absolute: "Getting Started | Promotello for Business" },
     description:
-        "Get set up on Promotello: your business page, first offer, loyalty card and QR poster, and how your team scans at the till.",
+        "Get set up on Promotello: your business page, first offer, loyalty card and QR poster, and how your team scans a code on their phone.",
 };
 
 const preparationItems = [
@@ -119,7 +119,7 @@ const steps = [
         art: RedeemMarkArt,
         title: "Welcome your first customers",
         description:
-            "Customers show their phone at the till, your team scans it, and that's it.",
+            "Customers show their phone when they pay, your team scans it, and that's it.",
         tasks: [
             "Scan the voucher or loyalty card",
             "Apply the offer or add the stamp",

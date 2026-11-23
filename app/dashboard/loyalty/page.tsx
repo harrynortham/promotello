@@ -73,7 +73,7 @@ async function LoyaltyCardsContent({ searchParams }: PageProps) {
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
                         <AlertTitle>You&apos;ve joined</AlertTitle>
                         <AlertDescription>
-                            Your card is below. Tip: add this page to your home screen so it&apos;s one tap away at the till.
+                            Your card is below. Tip: add this page to your home screen so it&apos;s one tap away when you pay.
                         </AlertDescription>
                     </Alert>
                 )}

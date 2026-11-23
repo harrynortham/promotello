@@ -37,7 +37,7 @@ const freeFeatures = [
     "Business profile with location, opening hours and contact details",
     `${FREE_LIVE_OFFER_LIMIT} live offer at a time`,
     "Offer images, claim limits and expiry dates",
-    "Customer redemption codes, with scan-to-redeem at the till",
+    "Customer redemption codes, scanned on your staff's phones",
     "1 printable QR poster with scan tracking",
     "Offer performance reporting",
     "Team access for your colleagues",

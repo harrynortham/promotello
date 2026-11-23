@@ -135,7 +135,7 @@ const guides: HelpGuide[] = [
         id: "collect-stamp",
         category: "Loyalty cards",
         title: "Collect a stamp",
-        description: "What to do at the till.",
+        description: "What to do when you pay.",
         steps: [
             "Open My loyalty cards and pick the card for the business you are in.",
             "Show the QR code on the card to a member of staff when you pay.",

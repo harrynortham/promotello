@@ -362,11 +362,6 @@ what's behind.
 Not a build. Nothing below is worth another commit until this is underway, and
 most of stage 3 is guesswork until it is.
 
-1. **Walk the whole flow once on a phone.** Preview email, claim, profile, QR
-   for the page, QR for an offer, claim and scan it, voucher and its QR, scan
-   that, then sign in as the business and redeem both. Create loyalty card and test also. Again as a business that
-   never got a preview email, and once with Google sign-in, and subscribing via stripe each time. This is final full test before we send emails to live businesses.
-
 2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
    the legal gate, the preview tooling and the copy are all finished.
 
@@ -388,42 +383,21 @@ most of stage 3 is guesswork until it is.
 
 **Test automations feature**How ca
 
-- **Stop saying "the till".** Business copy says "redeem at your till", "scan at
-  the till", "the till tools" and "Print the till guide" — 75 user-visible uses
-  across about 40 files, plus 31 more in comments. `app/llms.txt/route.ts:19`
-  says the opposite in as many words: "there's no card reader or till
-  integration". A business owner reading the marketing can reasonably expect
-  their EPOS to be involved, and then has to be told it isn't. Only the
-  mechanism uses need changing — staff scan a QR on their own phone. "A poster
-  by the till" is a place, not a mechanism, and can stay. Worst offenders:
-  `/staff-guide` is titled "At the till" and its button is "Print the till
-  guide".
 
 - **"One stamp per visit" is really ten minutes.** The loyalty card says it,
   and the terms placeholder on the setup form repeats it, but the rule in
   `20261025100000_loyalty_cards.sql:364` is `last_stamped_at > now() -
-  interval '10 minutes'`. A customer back at the counter eleven minutes later
+interval '10 minutes'`. A customer back at the counter eleven minutes later
   gets a second stamp. Either say ten minutes or enforce a visit.
 - **The "you're approved" notification tells you to add an offer** even when
   you already have one. `businessApproved()` in `lib/notifications.ts:85`
   hardcodes "Add an offer to give them a reason to come in", so a business
   approved alongside its first offer gets two notifications a minute apart that
   contradict each other.
-- **Take the 23 November test records off production.** The end-to-end walk
-  left `E2E Test Cafe (delete me)` (approved, live in the Bristol directory,
-  `is_sample = false`, with an offer, a loyalty card, a QR poster and a Pro
-  trial in live-mode Stripe), `E2E Preview Test (delete me)` (pending, created
-  by building a preview), the `E2E Preview Test (delete me)` lead, and a Google
-  review link on Dublin Pub pointing at Google's Sydney office. The test cafe
-  is the urgent one: unlike the nineteen samples it is not flagged
-  `is_sample`, so a real customer browsing Bristol can claim a free coffee that
-  does not exist.
 
 **Should we add the new business to the approval queue before** business hours, logo and cover photo are added and send them a nudge email to add these before we can approve it? I fear we might miss some business and they will be stuck without approval. Or we tell them on the dashboard that these things b=must be added before we can review this business?
 
 **Check offer and business page** reject reason options and supporting documents in helo cnetre.
-
-**Create a google business profile**
 
 -- Apply apply apple developer account for the oneclick oauth
 

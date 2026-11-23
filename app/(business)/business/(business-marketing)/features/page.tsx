@@ -57,7 +57,7 @@ export default async function FeaturesPage() {
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
                             Your page in the local directory, offers customers claim on their phone, QR
                             posters, a loyalty card, follower emails and results. Customers use it in their
-                            phone&apos;s browser, and your staff use their own phones at the till.
+                            phone&apos;s browser, and your staff scan it on their own phones.
                         </p>
                         <div className="mt-8">
                             <PrimaryActions />
