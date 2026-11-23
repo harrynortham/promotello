@@ -38,6 +38,8 @@ export type IssuedVoucher = {
     email: string;
     first_name: string | null;
     unsubscribe_token: string;
+    terms: string | null;
+    image_url: string | null;
 };
 
 // No exclamation marks, the same as every other message we send
@@ -75,6 +77,14 @@ export function automationEmail(voucher: IssuedVoucher): Email {
         eyebrow: voucher.business_name,
         title,
         paragraphs: [intro, `Your reward: ${voucher.reward}.`, `Use it by ${until}.`],
+        // Their own photograph, where an offer email shows the offer's.
+        // It decorates: the email reads the same with images turned off.
+        ...(voucher.image_url
+            ? { picture: { url: voucher.image_url, alt: voucher.reward } }
+            : {}),
+        // Quieter than a paragraph, because terms are read when a
+        // question comes up at the counter rather than straight through.
+        ...(voucher.terms ? { details: [{ label: "Terms", text: voucher.terms }] } : {}),
         // The same card the offer page shows, and the same card the
         // voucher for a claimed offer arrives in: one thing to hold up at
         // the till, whichever way the voucher was earned.

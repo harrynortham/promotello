@@ -9,12 +9,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CardStackLoading } from "@/components/dashboard-skeletons";
 import { automationDetails, type AutomationKind } from "@/lib/automations";
 import { businessTier } from "@/lib/billing";
 import { createClient } from "@/utils/supabase/server";
 import { AutomationsHowItWorks } from "./how-it-works";
 import { saveAutomation } from "./actions";
+import { GiftImageField } from "./gift-image-field";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
@@ -27,10 +29,13 @@ type Automation = {
     reward: string;
     valid_days: number;
     inactive_days: number;
+    terms: string | null;
+    image_url: string | null;
 };
 
 const errorMessages: Record<string, string> = {
     invalid: "Describe the reward in 3 to 120 characters, and choose how long it lasts (7 to 90 days).",
+    terms: "Keep the terms under 500 characters.",
     save: "We couldn't save that. Automations need the Growth plan, and only owners and admins can change them.",
 };
 
@@ -136,6 +141,29 @@ function AutomationCard({
                         )}
                     </div>
 
+                    <div className="space-y-2">
+                        <Label htmlFor={`${kind}-terms`}>Terms (optional)</Label>
+                        <Textarea
+                            id={`${kind}-terms`}
+                            name="terms"
+                            rows={2}
+                            maxLength={500}
+                            placeholder="e.g. One per customer. Not with any other offer."
+                            defaultValue={automation?.terms ?? ""}
+                            disabled={!canUse}
+                        />
+                        <p className="text-xs text-[#17233B]/60">
+                            Shown in the email and on the screen your staff see when they scan it.
+                        </p>
+                    </div>
+
+                    <GiftImageField
+                        businessId={businessId}
+                        kind={kind}
+                        savedImageUrl={automation?.image_url ?? null}
+                        disabled={!canUse}
+                    />
+
                     <label className="flex items-center gap-3 text-sm font-medium">
                         <input
                             type="checkbox"
@@ -191,7 +219,7 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
         businessTier(supabase, businessId).catch(() => "free" as const),
         supabase
             .from("business_automations")
-            .select("kind, enabled, reward, valid_days, inactive_days")
+            .select("kind, enabled, reward, valid_days, inactive_days, terms, image_url")
             .eq("business_id", businessId),
         supabase
             .from("reward_vouchers")
