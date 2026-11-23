@@ -385,8 +385,6 @@ most of stage 3 is guesswork until it is.
 
 
 
-**Should we add the new business to the approval queue before** business hours, logo and cover photo are added and send them a nudge email to add these before we can approve it? I fear we might miss some business and they will be stuck without approval. Or we tell them on the dashboard that these things b=must be added before we can review this business?
-
 **Check offer and business page** reject reason options and supporting documents in helo cnetre.
 
 -- Apply apply apple developer account for the oneclick oauth
