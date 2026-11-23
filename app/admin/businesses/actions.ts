@@ -40,6 +40,16 @@ export async function notifyBusinessReviewed(
         .eq("id", businessId)
         .maybeSingle();
 
+    // Whether they already have an offer, so the approval notification
+    // does not ask for one they have written. Pending counts: it is
+    // written, it is with us, and "add an offer" is not the next thing
+    // they need to hear.
+    const { count: offers } = await createAdminClient()
+        .from("offers")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .in("approval_status", ["pending", "approved"]);
+
     if (business) {
         // The reason comes off the row rather than from the browser:
         // review_business() has already checked there is one.
@@ -58,7 +68,7 @@ export async function notifyBusinessReviewed(
                     ? businessRejected(business, review)
                     : previous === "suspended"
                         ? businessRestored(business, at)
-                        : businessApproved(business),
+                        : businessApproved(business, (offers ?? 0) > 0),
         );
     }
 

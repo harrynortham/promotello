@@ -55,16 +55,24 @@ export async function requestBusinessReview(formData: FormData) {
             if (live) {
                 await emailBusinessReviewed(businessId, "approved").catch(() => undefined);
 
-                const { data: business } = await createAdminClient()
-                    .from("businesses")
-                    .select("id, name")
-                    .eq("id", businessId)
-                    .maybeSingle();
+                const admin = createAdminClient();
+
+                const [{ data: business }, { count: offers }] = await Promise.all([
+                    admin.from("businesses").select("id, name").eq("id", businessId).maybeSingle(),
+                    // So the notification does not ask for an offer they
+                    // have already written.
+                    admin
+                        .from("offers")
+                        .select("id", { count: "exact", head: true })
+                        .eq("business_id", businessId)
+                        .in("approval_status", ["pending", "approved"]),
+                ]);
 
                 if (business) {
-                    await notifyBusinessManagers(businessId, businessApproved(business)).catch(
-                        () => undefined,
-                    );
+                    await notifyBusinessManagers(
+                        businessId,
+                        businessApproved(business, (offers ?? 0) > 0),
+                    ).catch(() => undefined);
                 }
             }
 
