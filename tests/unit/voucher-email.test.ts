@@ -4,6 +4,12 @@ import { test } from "node:test";
 import { voucherConfirmationEmail } from "@/lib/account-emails";
 import { automationEmail } from "@/lib/automations";
 
+// storedImage() trusts one origin, the configured Supabase one, and
+// reads it when it is called rather than when it is imported. A picture
+// on any other host is dropped silently, so the tests below have to use
+// this one or they would be asserting against the local stack.
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+
 const voucher = () =>
     voucherConfirmationEmail({
         to: "someone@example.com",
@@ -109,6 +115,8 @@ test("a reward voucher arrives in the same card", () => {
         email: "someone@example.com",
         first_name: "Harry",
         unsubscribe_token: "00000000-0000-4000-8000-000000000001",
+        terms: null,
+        image_url: null,
     });
 
     assert.equal(subject, "Thanks for following Dublin Pub");
@@ -127,4 +135,56 @@ test("a reward voucher arrives in the same card", () => {
     // for the picture.
     assert.doesNotMatch(html, /Show code G1A2B3C4D5 at the till/);
     assert.match(text, /Your redemption code: G1A2B3C4D5/);
+});
+
+// Terms and a picture arrived late: a gift used to go out with a reward
+// and nothing else, while an offer had both from the start. The counter
+// is where that showed, because "can I use this with the other one?" is
+// asked of staff rather than of us.
+test("a gift carries its terms and its picture", () => {
+    const { html, text } = automationEmail({
+        voucher_id: "00000000-0000-4000-8000-000000000000",
+        kind: "welcome",
+        reward: "A free coffee on your first visit",
+        code: "G1A2B3C4D5",
+        expires_at: "2026-11-24T00:00:00Z",
+        business_id: "00000000-0000-4000-8000-000000000000",
+        business_name: "Dublin Pub",
+        email: "someone@example.com",
+        first_name: "Harry",
+        unsubscribe_token: "00000000-0000-4000-8000-000000000001",
+        terms: "One per customer. Not with any other offer.",
+        image_url: "https://example.supabase.co/storage/v1/object/public/offer-images/a/b.jpg",
+    });
+
+    assert.match(html, /Terms/);
+    assert.match(html, /One per customer\. Not with any other offer\./);
+    assert.match(text, /One per customer\./);
+
+    // The picture decorates. Mail clients block images by default, so
+    // the words have to stand without it.
+    assert.match(html, /<img src="https:\/\/example\.supabase\.co[^"]+b\.jpg"/);
+    assert.doesNotMatch(text, /b\.jpg/);
+});
+
+// Neither is required, and every automation running today has neither.
+test("a gift without them reads as it always did", () => {
+    const { html } = automationEmail({
+        voucher_id: "00000000-0000-4000-8000-000000000000",
+        kind: "birthday",
+        reward: "A free slice of cake on us",
+        code: "G1A2B3C4D5",
+        expires_at: "2026-11-24T00:00:00Z",
+        business_id: "00000000-0000-4000-8000-000000000000",
+        business_name: "Dublin Pub",
+        email: "someone@example.com",
+        first_name: null,
+        unsubscribe_token: "00000000-0000-4000-8000-000000000001",
+        terms: null,
+        image_url: null,
+    });
+
+    assert.doesNotMatch(html, /Terms/);
+    assert.ok(!html.includes("undefined"));
+    assert.ok(!html.includes("null"));
 });

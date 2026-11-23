@@ -18,9 +18,17 @@ export async function saveAutomation(formData: FormData) {
     const reward = String(formData.get("reward") ?? "").trim();
     const validDays = Number(formData.get("validDays"));
     const inactiveDays = Number(formData.get("inactiveDays") ?? 60);
+    // Optional, both of them: a gift worked without either until now, and
+    // making them required would switch off every automation already running.
+    const terms = String(formData.get("terms") ?? "").trim();
+    const imageUrl = String(formData.get("imageUrl") ?? "").trim();
 
     if (reward.length < 3 || reward.length > 120 || !(validDays >= 7 && validDays <= 90) || !(inactiveDays >= 30 && inactiveDays <= 365)) {
         redirect(`${path}?error=invalid#${kind}`);
+    }
+
+    if (terms.length > 500) {
+        redirect(`${path}?error=terms#${kind}`);
     }
 
     // RLS checks the caller is an admin, and that switching on needs Growth.
@@ -31,6 +39,8 @@ export async function saveAutomation(formData: FormData) {
         reward,
         valid_days: validDays,
         inactive_days: inactiveDays,
+        terms: terms || null,
+        image_url: imageUrl || null,
         updated_at: new Date().toISOString(),
     });
 
