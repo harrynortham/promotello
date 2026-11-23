@@ -117,3 +117,17 @@ export function sortCards<T extends Groupable>(cards: T[]): T[] {
 
     return [...groups.ready, ...groups.collecting, ...groups.finished];
 }
+
+// What a card is, in one line, wherever one is needed.
+//
+// "8 stamps, then a free coffee" was the old shape, and it left the
+// first half doing two jobs: a reader cannot tell whether eight is what
+// they have or what they need, and "then" implies the reward follows
+// the eighth stamp rather than being swapped for the full card. Both
+// verbs are now said out loud, and the reward reads as a thing they
+// get rather than a price they pay.
+export function cardLine(stampsRequired: number, reward: string) {
+    const lower = reward.charAt(0).toLowerCase() + reward.slice(1);
+
+    return `Collect ${stampsRequired} ${stampsRequired === 1 ? "stamp" : "stamps"}, get ${lower}`;
+}

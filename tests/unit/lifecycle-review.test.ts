@@ -314,7 +314,10 @@ test("the welcome names the offer and the card we drew for them", () => {
     // notice, and the pieces are written lowercase so either can come
     // first, then capitalised once joined.
     assert.match(email.text, /Thanks for signing up\. Your offer, “2 for 1 on coffee”/);
-    assert.match(email.text, /your loyalty card \(9 stamps, then a free flat white\) are waiting/);
+    // "9 stamps, then a free flat white" left the first half doing two
+    // jobs -- is nine what I have or what I need? cardLine() says both
+    // verbs out loud, here and everywhere else a card is described.
+    assert.match(email.text, /your loyalty card \(collect 9 stamps, get a free flat white\) are waiting/);
     assert.match(email.text, /Nothing is live yet/);
 });
 
@@ -342,7 +345,7 @@ test("a half they have already done is not offered back", () => {
     )!;
 
     assert.ok(!email.text.includes("2 for 1 on coffee"));
-    assert.match(email.text, /Your loyalty card \(9 stamps/, "capitalised when it leads");
+    assert.match(email.text, /Your loyalty card \(collect 9 stamps/, "capitalised when it leads");
     assert.match(email.text, /is waiting on your dashboard/, "one thing, so singular");
     assert.match(email.text, /it opens filled in/, "and singular all the way through");
 });

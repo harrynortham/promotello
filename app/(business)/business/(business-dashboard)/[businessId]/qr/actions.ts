@@ -67,7 +67,7 @@ export async function createQrCode(formData: FormData) {
     // triggers enforce the Free plan's single code (P0004) and that the
     // business is approved (P0003).
     // A code opens one thing: the business page, an offer, or the card.
-    const { error } = await supabase.from("qr_codes").insert({
+    const { data, error } = await supabase.from("qr_codes").insert({
         business_id: businessId,
         label,
         offer_id: isTargetless(target) ? null : target,
@@ -84,7 +84,7 @@ export async function createQrCode(formData: FormData) {
         // business kept or wrote are stored.
         poster_description: target === "business" ? null : posterDescription || null,
         created_by: user.id,
-    });
+    }).select("id").single();
 
     if (error) {
         const reason = { P0004: "limit", P0003: "approval" }[error.code] ?? "create";
@@ -92,7 +92,9 @@ export async function createQrCode(formData: FormData) {
     }
 
     revalidatePath(page);
-    redirect(`${page}?created=1`);
+    // Which one: a business with several posters up needs to be told
+    // what it just made, not that it made something.
+    redirect(`${page}?created=${data?.id ?? "1"}`);
 }
 
 export async function deleteQrCode(formData: FormData) {
