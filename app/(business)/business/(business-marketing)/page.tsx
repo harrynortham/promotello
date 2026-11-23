@@ -257,7 +257,7 @@ export default async function BusinessPage() {
                 tinted
                 eyebrow="Loyalty cards"
                 title="A stamp card that never gets lost in a coat pocket."
-                body="Set your reward once, like a free coffee after nine. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp themselves. Your card also sits on your Promotello page and your poster, so someone who has never been in can join before their first visit."
+                body="Set your reward once, like a free coffee after nine stamps. Customers keep the card on their phone, and staff stamp it by scanning, so nobody can stamp their own card. Your card also sits on your Promotello page and your poster, so someone who has never been in can join before their first visit."
                 points={[
                     "Choose how many stamps and what the reward is",
                     "Staff use their own phone: no card reader",
@@ -277,7 +277,7 @@ export default async function BusinessPage() {
                 reverse
                 eyebrow="Followers"
                 title="Every new offer lands in your followers' inboxes."
-                body="Customers follow you from your page or your poster. When a new offer passes review, everyone who follows you gets an email about it, with your name as the sender."
+                body="Customers follow you from your page or your poster. When a new offer passes review, everyone who follows you gets an email about it, sent as your business name, via Promotello."
                 points={[
                     "Nothing to write: the emails send themselves",
                     "Every email has an unsubscribe link",
@@ -326,7 +326,7 @@ export default async function BusinessPage() {
                 points={[
                     "Page and offer views, claims and visits",
                     "Scans for each QR poster",
-                    "A monthly value report on Growth",
+                    "A monthly summary by email, in full on Growth",
                 ]}
                 visual={<MonthlyReportEmail />}
             />

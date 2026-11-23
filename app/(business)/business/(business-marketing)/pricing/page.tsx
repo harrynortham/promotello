@@ -151,8 +151,8 @@ async function FoundingPlacesLeft() {
 
     return (
         <>
-            Only <strong>{placesLeft}</strong> of {FOUNDING_MEMBER_LIMIT}{" "}
-            founding places left.
+            <strong>{placesLeft}</strong> of {FOUNDING_MEMBER_LIMIT} founding{" "}
+            places left.
         </>
     );
 }

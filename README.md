@@ -365,7 +365,6 @@ most of stage 3 is guesswork until it is.
 2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
    the legal gate, the preview tooling and the copy are all finished.
 
-
 ### Stage 2 — True before you email a single business
 
 3. Pull data from https://ratings.food.gov.uk/ into a spreadsheet and sort by business type and then street. This is all for bristol https://ratings.food.gov.uk/api/open-data-files/FHRS855en-GB.xml.
@@ -376,7 +375,7 @@ most of stage 3 is guesswork until it is.
   1st of the month adds every monthly report. Supabase's sign-in emails come out
   of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
 
-**Put border around logo** for dark mode emails
+**Put border around logo** for dark mode emails - update app and supabase auth emails to use promotello-email-logo-stroke.png
 
 **Test automations feature**How ca
 

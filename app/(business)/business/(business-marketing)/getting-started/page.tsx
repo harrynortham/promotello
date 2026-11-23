@@ -33,7 +33,7 @@ const preparationItems = [
     "Your logo",
     "Your address and opening hours",
     "An idea for your first offer",
-    "A loyalty reward, like a free coffee after nine",
+    "A loyalty reward, like a free coffee after nine stamps",
     "Your Google review link, if you have one",
 ];
 
@@ -109,7 +109,7 @@ const steps = [
         tasks: [
             "Invite staff from the Team page",
             "Show them how to scan a customer's QR code",
-            "Tap \"Mark as used\" for a voucher or \"Add stamp\" for a loyalty card",
+            "Tap \"Mark as used\" for a voucher or \"Add a stamp\" for a loyalty card",
         ],
         tip: "Working on your own? You can do everything yourself, and inviting a team is optional.",
         href: "/business/dashboard",

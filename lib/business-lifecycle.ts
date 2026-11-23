@@ -626,7 +626,7 @@ export function lifecycleEmail(
             title: `Turn ${name}'s first-time visitors into regulars`,
             paragraphs: [
                 "Paper stamp cards get lost, forgotten and put through the wash. A Promotello loyalty card lives on your customers' phones, so they always have it with them.",
-                "You choose the reward, like a free coffee after nine. Customers join from your page in the Promotello directory or by scanning your poster — so somebody who has never been in can join before their first visit — and your staff add a stamp by scanning the customer's phone with your own. When the card is full they show it to you and you hand the reward over.",
+                "You choose the reward, like a free coffee after nine stamps. Customers join from your page in the Promotello directory or by scanning your poster — so somebody who has never been in can join before their first visit — and your staff add a stamp by scanning the customer's phone with your own. When the card is full they show it to you and you hand the reward over.",
                 `Loyalty cards are part of Pro, ${plans.pro_monthly.price} a month. ${terms.pitch}`,
             ],
             action: tryPro,

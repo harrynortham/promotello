@@ -104,7 +104,7 @@ export function voucherConfirmationEmail({
         // still the hero — this is what they are going in for.
         picture: offerImageUrl ? { url: offerImageUrl, alt: offerTitle } : undefined,
         eyebrow: `Your voucher for ${businessName}`,
-        title: `${discount}: ${offerTitle}`,
+        title: discount === offerTitle ? offerTitle : `${discount}: ${offerTitle}`,
         paragraphs: until
             ? [`Use it by ${until}.`]
             : ["It's yours whenever you're next in."],

@@ -68,7 +68,10 @@ You're getting this because you follow ${e(business)} on Promotello.<br>
 
     return {
         to,
-        subject: `${offer.discount}: ${offer.title}`,
+        // A business often titles an offer exactly what offer-kinds.ts
+        // builds from it, and "Free late checkout: Free late checkout" is
+        // what that reads as in an inbox.
+        subject: offer.discount === offer.title ? offer.title : `${offer.discount}: ${offer.title}`,
         senderName: offer.businesses?.name,
         html,
         text,

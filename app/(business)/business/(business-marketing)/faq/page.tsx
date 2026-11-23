@@ -119,7 +119,7 @@ const sections = [
             {
                 question: "What does following my business do?",
                 answer:
-                    "Customers who follow you get an email whenever you post a new offer (on Pro and Growth). The emails send themselves, with your business name as the sender.",
+                    "Customers who follow you get an email whenever you post a new offer (on Pro and Growth). The emails send themselves, sent as your business name, via Promotello.",
             },
             {
                 question: "Can I see who follows me?",

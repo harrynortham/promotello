@@ -33,7 +33,7 @@ export default function BusinessContactPage() {
                     </Badge>
 
                     <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
-                        A good conversation could be your next{" "}
+                        A good conversation is often the{" "}
                         <span className="text-[#FF593F]">
                             first step.
                         </span>

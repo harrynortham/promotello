@@ -26,7 +26,7 @@ const guides: HelpGuide[] = [
         description: "Create a profile and prepare for review.",
         steps: [
             "Create an account or sign in.",
-            "Open the business dashboard and choose Add another business.",
+            "Open the business dashboard and choose Add your business.",
             "Complete the onboarding form with your business details.",
             "After creation, choose Open to carry on setting up your profile.",
             "Check the approval status shown in your business overview.",

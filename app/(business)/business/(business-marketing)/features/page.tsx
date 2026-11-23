@@ -199,7 +199,7 @@ export default async function FeaturesPage() {
                 eyebrow="Results"
                 title="See exactly what Promotello brings in."
                 body="Analytics shows the last 30 days against the 30 before: page and offer views, claims, vouchers used, QR scans, loyalty stamps and review clicks. On Growth, a summary arrives by email on the 1st."
-                points={["A daily views chart", "Every offer's claims and redemptions", "A monthly value report on Growth"]}
+                points={["A daily views chart", "Every offer's claims and redemptions", "A monthly summary by email, in full on Growth"]}
                 visual={<MonthlyReportEmail />}
             />
 
