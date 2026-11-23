@@ -77,7 +77,7 @@ const steps = [
     {
         art: <RedeemArt />,
         title: "You redeem it",
-        body: "Scan their voucher at the till, or type the code on the Redemptions page, and it is marked used so it can't be claimed twice.",
+        body: "Scan their voucher on your phone, or type the code on the Redemptions page, and it is marked used so it can't be claimed twice.",
     },
 ];
 
@@ -85,7 +85,7 @@ export function OffersHowItWorks() {
     return (
         <HowItWorksDialog
             title="How offers work"
-            description="From writing an offer to redeeming it at the till."
+            description="From writing an offer to redeeming it when they pay."
             steps={steps}
         />
     );

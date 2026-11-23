@@ -177,7 +177,7 @@ function Loyalty({ stampQr }: { stampQr: string }) {
             <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#17233B] p-5 text-white">
                 <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#FF8F7D]" />
                 <p className="text-sm leading-6 text-white/80">
-                    <strong className="text-white">At the till:</strong> the customer shows their card, your
+                    <strong className="text-white">When they pay:</strong> the customer shows their card, your
                     staff scan it with their phone camera and tap &ldquo;Add stamp&rdquo;. No app or
                     hardware to buy.
                 </p>
@@ -294,7 +294,7 @@ function BusinessProfile() {
 function Redemptions() {
     return (
         <Panel
-            title="Redeeming takes seconds at the till"
+            title="Redeeming takes seconds when they pay"
             description="Point your phone camera at the QR code on the customer's voucher. It opens here, you tap Mark as used, and it can't be used twice."
         >
             <div className="overflow-x-auto rounded-2xl border border-[#17233B]/10 bg-white">

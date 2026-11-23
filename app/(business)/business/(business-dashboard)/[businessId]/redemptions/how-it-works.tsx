@@ -57,7 +57,7 @@ const steps = [
     {
         art: <ShowArt />,
         title: "They get a voucher",
-        body: "It is saved in their Promotello account with its own ten-character code and a QR code, ready to show at the till.",
+        body: "It is saved in their Promotello account with its own ten-character code and a QR code, ready to show when they pay.",
     },
     {
         art: <RedeemScanArt />,
@@ -80,7 +80,7 @@ export function RedemptionsHowItWorks() {
     return (
         <HowItWorksDialog
             title="How redemptions work"
-            description="From a customer claiming an offer to marking it used at the till."
+            description="From a customer claiming an offer to marking it used when they pay."
             steps={steps}
         />
     );

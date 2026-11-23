@@ -11,7 +11,7 @@ import { createClient } from "@/utils/supabase/server";
 
 import { PrintToolbar } from "./print-toolbar";
 
-// The page for the wall behind the till.
+// The page for the wall behind the counter.
 //
 // Everything else in the product is for the owner, on a laptop, with
 // time. This is for whoever is on the counter at four on a Saturday
@@ -20,7 +20,7 @@ import { PrintToolbar } from "./print-toolbar";
 //
 // One sheet of A4, printed once and stuck up. It takes the business's
 // own card so the person reading it knows what they are promising,
-// and a QR that opens the till tools on their own phone.
+// and a QR that opens the staff tools on their own phone.
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const robots = { index: false, follow: false };
@@ -38,12 +38,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         .maybeSingle();
 
     if (!business) {
-        return { title: { absolute: "At the till" }, robots };
+        return { title: { absolute: "Staff guide" }, robots };
     }
 
     const name = business.name.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
 
-    return { title: { absolute: `${name} - At the till` }, robots };
+    return { title: { absolute: `${name} - Staff guide` }, robots };
 }
 
 type PageProps = { params: Promise<{ businessId: string }> };
@@ -106,7 +106,7 @@ async function Guide({ params }: PageProps) {
         requestOrigin(),
     ]);
 
-    // Opens the till tools on the phone in their apron pocket: the
+    // Opens the staff tools on the phone in their apron pocket: the
     // scanner, the code box, and everything they have been stamped.
     const qr = await qrSvg(`${origin}/business/${businessId}/loyalty`);
     const reward = card?.reward?.trim()
@@ -133,7 +133,7 @@ async function Guide({ params }: PageProps) {
 
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                                    At the till
+                                    Staff guide
                                 </p>
                                 <h1 className="mt-1 text-3xl font-semibold tracking-tight">
                                     {business?.name ?? "Your business"}
@@ -150,7 +150,7 @@ async function Guide({ params }: PageProps) {
                                 dangerouslySetInnerHTML={{ __html: qr }}
                             />
                             <p className="mt-1 w-24 text-[0.65rem] leading-4 text-[#17233B]/65">
-                                Scan to open the till tools
+                                Scan to open the staff tools
                             </p>
                         </div>
                     </header>

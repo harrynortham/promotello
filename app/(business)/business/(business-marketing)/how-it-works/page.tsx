@@ -55,7 +55,7 @@ const customerSteps = [
     "Scan your poster or find you on Promotello",
     "Sign up with their email in seconds, with no app to download",
     "Follow you, claim your offer or join your loyalty card",
-    "Show their phone at the till",
+    "Show their phone when they pay",
     "Get emails about your new offers (and can unsubscribe any time)",
 ];
 
@@ -162,7 +162,7 @@ export default async function HowItWorksPage() {
             <FeatureSection
                 tinted
                 eyebrow="Step 5"
-                title="Staff scan at the till."
+                title="Staff scan it on their phone."
                 body="The customer shows their phone and your staff scan it with their own. One tap adds a stamp or redeems a voucher, and nobody can stamp their own card."
                 points={["Works on any staff phone", "Warns about used or expired vouchers"]}
                 visual={<StaffScanScreen />}

@@ -214,13 +214,13 @@ export default async function BusinessPage() {
             <FeatureSection
                 tinted
                 eyebrow="Offers"
-                title="Offers people claim in seconds and redeem at your till."
+                title="Offers people claim in seconds and redeem when they pay."
                 body="Create an offer in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it on your page, in the Promotello directory or through your QR poster, claim it on their phone, and get their own voucher."
                 points={[
                     "Customers filter the directory by the kind of offer: freebies, 2 for 1, money off",
                     "You choose the deal, the terms, the end date and how many can be claimed",
                     "Each customer gets a personal voucher with a QR code",
-                    "Staff scan it at the till, and it can't be used twice",
+                    "Staff scan it on their phone, and it can't be used twice",
                     "See claims and redemptions for every offer",
                 ]}
                 visual={

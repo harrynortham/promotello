@@ -350,7 +350,7 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
                         size="lg"
                     >
                         <FiPrinter aria-hidden="true" />
-                        Print the till guide
+                        Print the staff guide
                     </Button>
                 </div>
             </div>
@@ -380,7 +380,7 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
 
                 <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Quickest at the till
+                        Quickest when they pay
                     </p>
 
                     <h2 className="mt-2 text-xl font-semibold text-[#17233B]">

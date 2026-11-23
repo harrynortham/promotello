@@ -249,8 +249,8 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
                             {town && section
-                                ? `This is how it looks to someone browsing ${section.toLowerCase()} in ${town}. They claim it on their phone and show the code at the till.`
-                                : "This is how it looks to someone browsing the directory. They claim it on their phone and show the code at the till."}
+                                ? `This is how it looks to someone browsing ${section.toLowerCase()} in ${town}. They claim it on their phone and show the code when they pay.`
+                                : "This is how it looks to someone browsing the directory. They claim it on their phone and show the code when they pay."}
                         </p>
                         {/* The card the directory draws, not a drawing
                             of one — the same component /offers lists.
@@ -281,7 +281,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         </h2>
                         <p className="mt-2 text-sm leading-6 text-[#17233B]/65">
                             Print it in a minute and put it in the window. People scan it, claim your
-                            offer on their phone, and show the code at the till.
+                            offer on their phone, and show the code when they pay.
                             {nearby ? ` Every scan on ${nearby} is counted, so you can see what's working.` : " Every scan is counted, so you can see what's working."}
                         </p>
                         <div className="mt-10 flex justify-center">

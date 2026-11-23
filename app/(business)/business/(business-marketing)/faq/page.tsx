@@ -55,7 +55,7 @@ const sections = [
     {
         id: "promotions",
         title: "Offers and vouchers",
-        description: "Creating offers and redeeming them at the till.",
+        description: "Creating offers and redeeming them when a customer pays.",
         questions: [
             {
                 question: "Do I have to offer a big discount?",

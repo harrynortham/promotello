@@ -235,7 +235,7 @@ const guides: HelpGuide[] = [
         id: "validate-code",
         category: "Customer redemptions",
         title: "Redeem a customer’s voucher",
-        description: "Scan it at the till and mark it as used.",
+        description: "Scan it on your phone and mark it as used.",
         steps: [
             "Sign in to Promotello on your phone with your business account.",
             "Point your phone camera at the QR code on the customer’s voucher and open the link.",
@@ -270,7 +270,7 @@ const guides: HelpGuide[] = [
             "Compare the code carefully with the customer’s screen.",
             "Check whether it has already been marked as used.",
             "Check the offer’s end date and terms.",
-            "Contact support with the offer name and what happened if you cannot sort it at the till.",
+            "Contact support with the offer name and what happened if you cannot sort it there and then.",
         ],
         note:
             "Do not ask a customer to claim again from another account to get round a problem. Contact us and we will sort it properly.",
@@ -302,7 +302,7 @@ const guides: HelpGuide[] = [
         steps: [
             "Owners invite people and manage who has access.",
             "Owners and admins can edit the business and its offers.",
-            "Members can see redemptions and mark vouchers as used at the till.",
+            "Members can see redemptions and mark vouchers as used when a customer pays.",
             "Missing a page you expected? Ask the owner to check your role.",
         ],
         note:
@@ -374,7 +374,7 @@ const guides: HelpGuide[] = [
         id: "stamp-card",
         category: "Loyalty cards",
         title: "Stamp a customer’s card",
-        description: "Add a stamp by scanning at the till.",
+        description: "Add a stamp by scanning their phone.",
         steps: [
             "Ask the customer to open their loyalty card on their phone.",
             "Scan the QR code on their card with your phone camera and open the link.",
@@ -385,17 +385,17 @@ const guides: HelpGuide[] = [
             "Only members of your team can add stamps, and nobody can stamp their own card. Scanning the same card twice within ten minutes is treated as a double scan and refused.",
     },
     {
-        id: "till-guide",
+        id: "staff-guide",
         category: "Loyalty cards",
-        title: "Print the guide for your till",
+        title: "Print the guide for your staff",
         description: "One page for whoever is on the counter.",
         steps: [
             "Open your business and choose Loyalty card or Redemptions.",
-            "Choose Print the till guide.",
+            "Choose Print the staff guide.",
             "Print it, or save it as a PDF and send it to your team.",
         ],
         note:
-            "One sheet of A4: what to do when somebody holds out a voucher or a loyalty card, and what each message on the screen means. It names your own card, so whoever reads it knows what they are promising, and it carries a QR code that opens the till tools on their phone.",
+            "One sheet of A4: what to do when somebody holds out a voucher or a loyalty card, and what each message on the screen means. It names your own card, so whoever reads it knows what they are promising, and it carries a QR code that opens the staff tools on their phone.",
         link: { label: "Open business dashboard", href: "/business/dashboard" },
     },
     {
@@ -411,7 +411,7 @@ const guides: HelpGuide[] = [
             "If you have no card on offer at that moment, they are given one as soon as you start the next.",
         ],
         note:
-            "At the till, a full card that is no longer handed out says “This card is full”: redeem the reward rather than stamping it. Hand the old card out again and everybody holding one picks it up from where their stamps stand.",
+            "When somebody pays, a full card that is no longer handed out says “This card is full”: redeem the reward rather than stamping it. Hand the old card out again and everybody holding one picks it up from where their stamps stand.",
     },
     {
         id: "qr-posters",
@@ -510,7 +510,7 @@ export default function BusinessHelpPage() {
         <HelpCentre
             audience="Business help centre"
             title="Let’s keep your business moving."
-            description="Practical guides for offers, loyalty cards, QR posters, scanning at the till, automations and more."
+            description="Practical guides for offers, loyalty cards, QR posters, scanning a code, automations and more."
             searchPlaceholder="Search scanning, loyalty, posters, billing…"
             guides={guides}
             contactHref="/business/contact"

@@ -121,7 +121,7 @@ async function Card({ params }: PageProps) {
             <p className="mt-5 text-sm leading-6 text-[#17233B]/70">
                 {card.finished
                     ? "This card is done: the reward on it has been claimed, and it stays here as part of your history."
-                    : "Show this when you pay and staff scan the code to add a stamp. Add the page to your home screen and it is one tap away at the till."}
+                    : "Show this when you pay and staff scan the code to add a stamp. Add the page to your home screen and it is one tap away when you pay."}
             </p>
 
             <Link

@@ -8,7 +8,7 @@ import { getGroupedWallet } from "./wallet";
 // The Ready to use, Used and Expired pages: one status's vouchers in full.
 
 const descriptions: Record<StatusFilter, string> = {
-    ready: "Tap one to show its QR code at the till. The ones ending soonest are first.",
+    ready: "Tap one to show its QR code when you pay. The ones ending soonest are first.",
     used: "Vouchers you've used, most recent first.",
     expired: "Offers that ended before you used them.",
 };
