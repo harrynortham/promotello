@@ -367,6 +367,8 @@ The code needs the database to be ready first. That is what every
 - **Only `npm run db:ship` sends things live**, and it asks first.
 - **Never type `--remote` on a reset.**
 - **Never edit a migration that has already gone live.** Write a new one.
+- **Dropping a function re-opens it.** `revoke all ... from public` after
+  every `create function`, and check the grants rather than assume them.
 - **If a push fails, fix the file, not the database.**
 
 ## For later
@@ -390,6 +392,39 @@ live database with `pg_get_functiondef` and check the md5 before
 editing, rather than trusting the file. The file has differed from live
 more than once — eleven characters in `claim_monthly_reports`, and five
 behaviours in `claim_business_lifecycle_emails`.
+
+**Write down who could execute it before you drop it, and check again
+after.** Changing a return type means `drop` and `create`, and Postgres
+grants `execute` to `PUBLIC` on every function it creates. The grants
+you then write do not replace that default, they add to it — so a
+function that was `service_role` only comes back callable by `anon`,
+and the migration reads as though it set the permissions.
+
+`revoke all ... from public` is the line that does the work:
+
+```sql
+drop function if exists public.thing(uuid);
+create function public.thing(...) ...;
+
+revoke all on function public.thing(uuid) from public;
+grant execute on function public.thing(uuid) to service_role;
+```
+
+This has happened here once, to `issue_automation_vouchers` — which is
+`security definer`, inserts rows, and with no arguments runs the whole
+automation batch and sends real email. It reached the live database
+before anyone noticed, because a `db:reset` rebuilds grants too and
+nobody had looked at them. The schema was checked; the permissions were
+not.
+
+So the check is a query, not a reading of the file:
+
+```sql
+select p.proname, r.rolname, has_function_privilege(r.rolname, p.oid, 'EXECUTE')
+from pg_proc p
+cross join (values ('anon'),('authenticated'),('service_role')) as r(rolname)
+where p.proname in ('the_function');
+```
 
 ### Things only the live site can test
 
