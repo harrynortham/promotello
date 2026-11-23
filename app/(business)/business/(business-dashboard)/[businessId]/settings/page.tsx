@@ -21,7 +21,6 @@ type PageProps = {
 const errorMessages: Record<string, string> = {
     name: "That didn't match the business name. Nothing has changed.",
     owner: "Only an owner can close a business.",
-    already: "That business is already closed.",
     billing: "We couldn't cancel the subscription, so nothing was closed. Please try again, or cancel it on the Billing page first.",
     close: "We couldn't close that business. Please try again.",
 };

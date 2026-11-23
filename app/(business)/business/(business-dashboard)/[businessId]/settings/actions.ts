@@ -90,8 +90,20 @@ export async function closeBusiness(formData: FormData) {
         requested_business_id: businessId,
     });
 
+    // Already closed is the outcome they asked for, so it is not an
+    // error to report. It is what a second press looks like when the
+    // first one worked, and telling somebody their business could not
+    // be closed because it is closed helps nobody. Straight to the
+    // dashboard, the same as a close that ran here — but without
+    // telling the followers again, since the first close already did.
+    if (error?.code === "P0008") {
+        revalidatePath("/business/dashboard");
+        revalidatePath(`/business/${businessId}`);
+        redirect("/business/dashboard?closed=1");
+    }
+
     if (error) {
-        const reason = { "42501": "owner", P0008: "already" }[error.code ?? ""] ?? "close";
+        const reason = error.code === "42501" ? "owner" : "close";
         redirect(`${page}?error=${reason}`);
     }
 
