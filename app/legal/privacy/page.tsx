@@ -5,7 +5,7 @@ import {
     LegalDocument,
     type LegalSection,
 } from "@/components/legal-document";
-import { companyLine } from "@/lib/legal";
+import { companyLine, ico } from "@/lib/legal";
 
 export const metadata: Metadata = {
     title: "Privacy Policy",
@@ -31,7 +31,12 @@ const sections: LegalSection[] = [
                     Promotello is operated by {companyLine()} (&ldquo;we&rdquo;,
                     &ldquo;us&rdquo;). We are the
                     controller of the personal information described in this
-                    policy.
+                    policy, and are registered with the Information
+                    Commissioner&apos;s Office under reference{" "}
+                    <a href={ico.certificate} target="_blank" rel="noreferrer">
+                        {ico.reference}
+                    </a>
+                    .
                 </p>
                 <p>
                     For anything about your personal information, email{" "}
@@ -502,7 +507,7 @@ export default function PrivacyPage() {
         <LegalDocument
             title="Privacy policy"
             description="How we handle personal information when you visit or use Promotello."
-            updatedAt="11 November 2026"
+            updatedAt="23 November 2026"
             version="1.1"
             summary={summary}
             sections={sections}
