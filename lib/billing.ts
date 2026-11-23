@@ -34,6 +34,21 @@ export function freeFor(days: number) {
 }
 
 
+// The founding offer in words, so the pricing page, the features page,
+// why-promotello and llms.txt cannot describe it three different ways.
+//
+// Both halves of it. The longer trial was the better half and it only
+// ever appeared on the billing page, which a business reaches after it
+// has decided — so every page that does the selling quoted the standard
+// month and sold the offer short.
+//
+// A sentence rather than numbers to assemble: numbers in one place still
+// let four pages word them four ways, and "locked for life" is the part
+// that does the work.
+export function foundingOffer() {
+    return `the first ${FOUNDING_MEMBER_LIMIT} businesses pay ${plans.pro_founding_monthly.price} a month for Pro, locked for life, and get ${freeFor(FOUNDING_TRIAL_DAYS)} free instead of ${freeFor(TRIAL_DAYS)}`;
+}
+
 export function trialDays(plan: PlanKey) {
     return plan === "pro_founding_monthly" ? FOUNDING_TRIAL_DAYS : TRIAL_DAYS;
 }

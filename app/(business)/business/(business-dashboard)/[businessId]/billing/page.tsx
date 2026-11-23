@@ -518,6 +518,10 @@ async function PlanOptions({
                     const monthly = plans[card.monthly];
                     const yearly = plans[card.yearly];
                     const isFounding = card.monthly === "pro_founding_monthly";
+                    // What a year on the founding price actually costs, so
+                    // the comparison beside the yearly button cannot drift
+                    // from the price above it.
+                    const foundingYear = `£${Number(monthly.price.replace(/[^0-9.]/g, "")) * 12}`;
 
                     return (
                         <Card
@@ -592,6 +596,24 @@ async function PlanOptions({
                                     <CheckoutButton businessId={businessId} plan={card.yearly}>
                                         {trialEligible ? "Or start yearly" : "Or choose yearly"} · {yearly.price}/year
                                     </CheckoutButton>
+
+                                    {/* Yearly is the standard price, so for a
+                                        founding member it is the dearer of the
+                                        two and the shorter trial as well —
+                                        {plans.pro_yearly.price} against twelve
+                                        months of {plans.pro_founding_monthly.price},
+                                        and the founding price does not come
+                                        back. Said beside the button rather
+                                        than after the charge. */}
+                                    {isFounding && (
+                                        <p className="text-xs leading-5 text-amber-800">
+                                            Yearly is the standard price: {yearly.price} against{" "}
+                                            {foundingYear} a year at your founding price, with{" "}
+                                            {freeFor(TRIAL_DAYS)} free instead of{" "}
+                                            {freeFor(FOUNDING_TRIAL_DAYS)}. Taking it gives up the
+                                            founding price, and it can&apos;t be got back.
+                                        </p>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
