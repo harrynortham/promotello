@@ -26,6 +26,7 @@ export function LocationFields({
     fields,
     errors,
     waitlist = true,
+    optional = false,
 }: {
     cities: CityOption[];
     defaults?: { city?: string | null; area?: string | null; postalCode?: string | null };
@@ -37,6 +38,12 @@ export function LocationFields({
     // it there is a sentence that reads as if we have lost track of who
     // is at the keyboard.
     waitlist?: boolean;
+    // A business telling us where they are must give a postcode. Admin
+    // looking at an address the crawler got wrong is in the opposite
+    // position: the form would not submit while the box was empty, so a
+    // junk address could be overwritten but never taken away, and it sat
+    // there looking postable.
+    optional?: boolean;
 }) {
     const [cityName, setCityName] = useState(
         cities.find((city) => city.name === defaults?.city)?.name ?? cities[0]?.name ?? "",
@@ -127,7 +134,7 @@ export function LocationFields({
                 <Input
                     id="postalCode"
                     name="postalCode"
-                    required
+                    required={!optional}
                     maxLength={10}
                     defaultValue={defaults?.postalCode ?? ""}
                     placeholder="e.g. BS7 8AA"

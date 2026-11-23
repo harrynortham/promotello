@@ -718,7 +718,13 @@ export async function saveLeadAddress(_state: SaveResult, formData: FormData): P
                 address_line_2: null,
                 address_source: null,
                 address_found_at: null,
-                ...(typedPostcode ? { postcode: typedPostcode } : {}),
+                // The postcode goes with it. It is part of the address,
+                // not the filing — the town and the area above are what
+                // decide where a lead is listed. Keeping it meant a lead
+                // whose address had just been cleared still showed a
+                // postcode, and a wrong one reads exactly like a right
+                // one on an envelope.
+                postcode: typedPostcode,
             })
             .eq("id", leadId);
 
