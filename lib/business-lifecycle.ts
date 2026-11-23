@@ -953,7 +953,18 @@ export async function sendTrialStartedEmail(stripeSubscriptionId: string) {
 
     const [{ data: emails }, { count: loyaltyPrograms }] = await Promise.all([
         admin.rpc("business_manager_emails", { requested_business_id: business.id }),
-        admin.from("loyalty_programs").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("is_active", true),
+        // Open to new members, not merely switched on. The line this
+        // sets says "put your QR poster by the counter so customers can
+        // join", and a card the business has closed behind a newer one
+        // takes nobody (20270225090000_two_ways_a_card_stops.sql). A
+        // business whose only card is closed wants the other branch,
+        // which is the one that tells them to start a card.
+        admin
+            .from("loyalty_programs")
+            .select("id", { count: "exact", head: true })
+            .eq("business_id", business.id)
+            .eq("is_active", true)
+            .is("closed_at", null),
     ]);
     const details = {
         tier: subscription.tier === "growth" ? "growth" as const : "pro" as const,
