@@ -187,7 +187,7 @@ export default function CookiesPage() {
     return (
         <LegalDocument
             title="Cookie policy"
-            description="Information about cookies, similar technologies, and your choices when using Promotello."
+            description="Information about cookies, similar technologies and your choices when using Promotello."
             updatedAt="11 November 2026"
             version="1.1"
             summary={summary}

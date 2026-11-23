@@ -30,7 +30,7 @@ const settingsLinks = [
     {
         title: "Personal details",
         description:
-            "Update your display name, profile photo, and preferred town or city.",
+            "Update your display name, profile photo and preferred town or city.",
         href: "/account/profile",
         action: "Edit profile",
         icon: FiUser,
@@ -88,7 +88,7 @@ export default function AccountPrivacyPage() {
 
                 <CardContent>
                     <p className="text-sm leading-7 text-muted-foreground">
-                        Business profiles, team access, and business
+                        Business profiles, team access and business
                         notification settings are managed separately in each
                         business dashboard.
                     </p>

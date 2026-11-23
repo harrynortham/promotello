@@ -325,7 +325,7 @@ function Redemptions() {
             <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#17233B] p-5 text-white">
                 <FiCamera aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#FF8F7D]" />
                 <p className="text-sm leading-6 text-white/80">
-                    <strong className="text-white">Already used, expired, or outside its hours?</strong> Your
+                    <strong className="text-white">Already used, expired or outside its hours?</strong> Your
                     staff see a clear warning before they hand anything over.
                 </p>
             </div>

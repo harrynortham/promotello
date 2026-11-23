@@ -21,7 +21,7 @@ import { getVisitorContext } from "@/lib/visitor";
 export const metadata: Metadata = {
     title: "Categories",
     description:
-        "Browse local offers by category: food and drink, things to do, shopping, health and beauty, services, and places to stay.",
+        "Browse local offers by category: food and drink, things to do, shopping, health and beauty, services and places to stay.",
     alternates: { canonical: "/categories" },
 };
 

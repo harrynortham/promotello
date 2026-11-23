@@ -21,7 +21,7 @@ import {
 export const metadata: Metadata = {
     title: { absolute: "About Promotello | Find Your Next Local Favourite" },
     description:
-        "Discover what Promotello is about: local discoveries, clear offers, and more reasons to enjoy the businesses around you.",
+        "Discover what Promotello is about: local discoveries, clear offers and more reasons to enjoy the businesses around you.",
 };
 
 const discoveries = [
@@ -29,7 +29,7 @@ const discoveries = [
         icon: FiGift,
         title: "A little more to look forward to.",
         description:
-            "Find an offer that turns an ordinary lunch, catch-up, or afternoon out into something worth making plans for.",
+            "Find an offer that turns an ordinary lunch, catch-up or afternoon out into something worth making plans for.",
     },
     {
         icon: FiCompass,
@@ -50,7 +50,7 @@ const steps = [
         number: "01",
         title: "Find something you like",
         description:
-            "Browse offers, explore categories, or get to know a local business.",
+            "Browse offers, explore categories or get to know a local business.",
     },
     {
         number: "02",

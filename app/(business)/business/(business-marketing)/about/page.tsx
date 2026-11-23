@@ -28,7 +28,7 @@ const principles = [
         number: "02",
         title: "Built for local businesses",
         description:
-            "Promotello is designed around the realities of running a local business: limited time, changing demand, and the need to see what is working.",
+            "Promotello is designed around the realities of running a local business: limited time, changing demand and the need to see what is working.",
     },
     {
         number: "03",

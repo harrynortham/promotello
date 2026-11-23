@@ -146,7 +146,7 @@ const sections: LegalSection[] = [
                     <strong>Website analytics.</strong> We count page views
                     with Vercel Web Analytics, which sets no cookies. Each
                     view records the time, the page, the page you came from,
-                    your approximate location, your device type, and your
+                    your approximate location, your device type and your
                     browser and operating system. To tell one visit from
                     another it uses a value worked out from the request
                     itself, which resets every day — so it can&apos;t

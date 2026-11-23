@@ -7,7 +7,7 @@ import HelpCentre, {
 export const metadata: Metadata = {
     title: "Help Centre",
     description:
-        "Help with finding offers, claiming offers, using redemption codes, and managing your Promotello account.",
+        "Help with finding offers, claiming offers, using redemption codes and managing your Promotello account.",
 };
 
 const guides: HelpGuide[] = [
@@ -15,11 +15,11 @@ const guides: HelpGuide[] = [
         id: "find-a-deal",
         category: "Discovering offers",
         title: "Find an offer you’ll enjoy",
-        description: "Search, browse categories, and discover businesses.",
+        description: "Search, browse categories and discover businesses.",
         steps: [
-            "Open Explore to see what is on near you.",
+            "Open Explore to see what's on near you.",
             "Search for an offer or a business, or pick a category.",
-            "Sort by newest, most popular, or ending soon.",
+            "Sort by newest, most popular or ending soon.",
             "Open anything that catches your eye and read the full details before you claim.",
         ],
         link: {
@@ -31,10 +31,10 @@ const guides: HelpGuide[] = [
         id: "business-details",
         category: "Discovering offers",
         title: "Check a business before visiting",
-        description: "Find its location, opening hours, and contact details.",
+        description: "Find its location, opening hours and contact details.",
         steps: [
             "Find the business in the directory.",
-            "Open its page to read about it and see what it is offering.",
+            "Open its page to read about it and see what it's offering.",
             "Check the address and opening hours before you set off.",
             "Use its website or contact details for anything you need to ask first.",
         ],
@@ -53,12 +53,12 @@ const guides: HelpGuide[] = [
         steps: [
             "Open the offer and read what you get.",
             "Check when you can use it, when it ends, and any conditions.",
-            "Sign in, or create an account if you have not got one.",
+            "Sign in, or create an account if you haven't got one.",
             "Choose Get this deal. Your voucher appears straight away.",
             "Have it ready on your phone when you visit.",
         ],
         note:
-            "Claiming is not booking. If the offer says to book a table or an appointment, do that too.",
+            "Claiming isn't booking. If the offer says to book a table or an appointment, do that too.",
         link: {
             label: "Browse offers",
             href: "/offers",
@@ -75,7 +75,7 @@ const guides: HelpGuide[] = [
             "Find the offer and open it to show its QR code and short code.",
         ],
         note:
-            "No confirmation email? Check My vouchers before claiming again — the voucher is there even when the email is not.",
+            "No confirmation email? Check My vouchers before claiming again — the voucher is there even when the email isn't.",
         link: {
             label: "Open my vouchers",
             href: "/dashboard/redemptions",
@@ -87,7 +87,7 @@ const guides: HelpGuide[] = [
         title: "Use your offer at the business",
         description: "Know what to do when you arrive.",
         steps: [
-            "Check the offer has not ended and applies to the visit you are making.",
+            "Check the offer hasn't ended and applies to the visit you're making.",
             "Follow anything it says about booking or times.",
             "Show the voucher on your phone to a member of staff.",
             "They scan it and mark it used as they give you the deal.",
@@ -99,15 +99,15 @@ const guides: HelpGuide[] = [
         id: "code-problem",
         category: "Claims & vouchers",
         title: "Get help with a redemption",
-        description: "What to check if your code cannot be used.",
+        description: "What to check if your code won't work.",
         steps: [
-            "Check the offer has not ended, and that you are inside any days or times it sets.",
+            "Check the offer hasn't ended, and that you're inside any days or times it sets.",
             "Check whether the voucher is already marked as used.",
             "Ask the business to look the code up on their side.",
             "Still stuck? Contact us with the business name, the offer and what happened.",
         ],
         note:
-            "If a voucher was marked used by mistake, ask the business or contact us. Making a second account to claim again is not the way round it.",
+            "If a voucher was marked used by mistake, ask the business or contact us. Making a second account to claim again isn't the way round it.",
         link: {
             label: "Contact support",
             href: "/contact",
@@ -125,7 +125,7 @@ const guides: HelpGuide[] = [
             "Your card appears under My loyalty cards, ready for its first stamp.",
         ],
         note:
-            "The card lives in your Promotello account, so there is nothing to download and nothing to leave at home. Some cards are not taking new members, and the business\u2019s page says so \u2014 the people already collecting on one carry on as normal.",
+            "The card lives in your Promotello account, so there's nothing to download and nothing to leave at home. Some cards aren't taking new members, and the business\u2019s page says so \u2014 the people already collecting on one carry on as normal.",
         link: {
             label: "My loyalty cards",
             href: "/dashboard/loyalty",
@@ -137,7 +137,7 @@ const guides: HelpGuide[] = [
         title: "Collect a stamp",
         description: "What to do when you pay.",
         steps: [
-            "Open My loyalty cards and pick the card for the business you are in.",
+            "Open My loyalty cards and pick the card for the business you're in.",
             "Show the QR code on the card to a member of staff when you pay.",
             "They scan it with their own phone and the stamp appears on your card.",
             "If their camera will not scan it, they can type the code printed under the QR instead.",
@@ -174,7 +174,7 @@ const guides: HelpGuide[] = [
             "Every card and every stamp is where you left it.",
         ],
         note:
-            "Stamps are kept against your account, so a new phone or a cleared browser does not lose them.",
+            "Stamps are kept against your account, so a new phone or a cleared browser doesn't lose them.",
         link: {
             label: "Sign in",
             href: "/login",
@@ -184,15 +184,15 @@ const guides: HelpGuide[] = [
         id: "edit-profile",
         category: "Your account",
         title: "Update your profile",
-        description: "Change your name, photo, or preferred town.",
+        description: "Change your name, photo or preferred town.",
         steps: [
             "Open Account settings from the header menu.",
             "Choose Profile.",
             "Update your display name or optional town or city, then save.",
-            "Use Upload photo, Change photo, or Remove to manage your profile image.",
+            "Use Upload photo, Change photo or Remove to manage your profile image.",
         ],
         note:
-            "Photos must be JPG, PNG, or WebP and smaller than 2 MB. Your personal profile is shared across customer and business areas.",
+            "Photos must be JPG, PNG or WebP and smaller than 2 MB. Your personal profile is shared across customer and business areas.",
         link: {
             label: "Edit my profile",
             href: "/account/profile",
@@ -240,7 +240,7 @@ const guides: HelpGuide[] = [
         steps: [
             "Open the account menu in the header. A dot on your photo means something is unread.",
             "Choose Notifications.",
-            "Open one to go to what it is about, or mark it read and leave it.",
+            "Open one to go to what it's about, or mark it read and leave it.",
         ],
         note:
             "We email you as well. Which emails arrive is up to you, on Email preferences; what has happened is here either way.",
@@ -275,7 +275,7 @@ const guides: HelpGuide[] = [
             "Open Privacy in your account settings.",
             "Read what we hold and what you can ask for.",
             "Email support from your account address and tell us what you need.",
-            "We may ask you to confirm it is you before we act.",
+            "We may ask you to confirm it's you before we act.",
         ],
         note:
             "If you also run a business on Promotello, hand it over or cancel its subscription first, because deleting your account affects it too.",
@@ -291,7 +291,7 @@ export default function CustomerHelpPage() {
         <HelpCentre
             audience="Customer help centre"
             title="A little help along the way."
-            description="Find clear steps for discovering deals, using your codes, and looking after your account."
+            description="Find clear steps for discovering deals, using your codes and looking after your account."
             searchPlaceholder="Search claims, sign-in codes, profile photos…"
             guides={guides}
             contactHref="/contact"

@@ -60,7 +60,7 @@ const sections = [
             {
                 question: "Do I have to offer a big discount?",
                 answer:
-                    "No. Plenty of businesses offer an extra instead, like a free pastry with a coffee, a bundle, or an introductory treatment. Choose something that suits your margins.",
+                    "No. Plenty of businesses offer an extra instead, like a free pastry with a coffee, a bundle or an introductory treatment. Choose something that suits your margins.",
             },
             {
                 question: "How do customers claim an offer?",
@@ -339,7 +339,7 @@ export default function BusinessFaqPage() {
                         </h2>
 
                         <p className="mt-4 text-lg leading-8 text-[#17233B]/70">
-                            Start free, try the demo, or talk to us about your
+                            Start free, try the demo or talk to us about your
                             business.
                         </p>
 

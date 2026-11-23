@@ -177,7 +177,7 @@ export default function ProfileForm({
         const extension = imageExtensions[file.type];
 
         if (!extension) {
-            setErrorMessage("Choose a JPG, PNG, or WebP image.");
+            setErrorMessage("Choose a JPG, PNG or WebP image.");
             return;
         }
 
@@ -381,7 +381,7 @@ export default function ProfileForm({
                             </div>
 
                             <p className="mt-3 text-xs leading-6 text-muted-foreground">
-                                JPG, PNG, or WebP. Maximum 2 MB.
+                                JPG, PNG or WebP. Maximum 2 MB.
                                 Photos are publicly accessible by URL.
                             </p>
                         </div>

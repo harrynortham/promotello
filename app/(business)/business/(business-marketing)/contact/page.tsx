@@ -72,7 +72,7 @@ export default function BusinessContactPage() {
                         {[
                             {
                                 title: "Thinking about joining?",
-                                text: "Ask about features, plans, or getting your business set up. You can also try the demo first.",
+                                text: "Ask about features, plans or getting your business set up. You can also try the demo first.",
                             },
                             {
                                 title: "Managing several businesses?",

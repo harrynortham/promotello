@@ -137,22 +137,22 @@ const promotionQuestions = [
     {
         title: "What does the customer receive?",
         description:
-            "Describe the product, service, or experience clearly. Avoid making customers guess what is included.",
+            "Describe the product, service or experience clearly. Avoid making customers guess what is included.",
     },
     {
         title: "When can they use it?",
         description:
-            "State any days, times, booking requirements, and the expiry date.",
+            "State any days, times, booking requirements and the expiry date.",
     },
     {
         title: "What can your business accommodate?",
         description:
-            "Think about stock, staffing, and capacity before choosing your total claim limit.",
+            "Think about stock, staffing and capacity before choosing your total claim limit.",
     },
     {
         title: "Are there any conditions?",
         description:
-            "Make exclusions, minimum spends, and other requirements easy to understand before someone claims.",
+            "Make exclusions, minimum spends and other requirements easy to understand before someone claims.",
     },
 ];
 
