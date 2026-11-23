@@ -40,20 +40,24 @@ export type IssuedVoucher = {
     unsubscribe_token: string;
 };
 
+// No exclamation marks, the same as every other message we send
+// (lib/notifications.ts). These three were the only ones in lib, and a
+// welcome or a birthday is warm because of what it carries — a reward
+// with their name on it — not because of the punctuation.
 const copy: Record<AutomationKind, (v: IssuedVoucher) => { subject: string; title: string; intro: string }> = {
     welcome: (v) => ({
         subject: `Thanks for following ${v.business_name}`,
-        title: `Welcome${v.first_name ? `, ${v.first_name}` : ""}!`,
+        title: `Welcome${v.first_name ? `, ${v.first_name}` : ""}`,
         intro: `Thanks for following ${v.business_name}. Here's a little something to say hello.`,
     }),
     birthday: (v) => ({
         subject: `Happy birthday from ${v.business_name}`,
-        title: `Happy birthday${v.first_name ? `, ${v.first_name}` : ""}!`,
+        title: `Happy birthday${v.first_name ? `, ${v.first_name}` : ""}`,
         intro: `Everyone at ${v.business_name} hopes you have a lovely day. Here's a treat from us.`,
     }),
     winback: (v) => ({
         subject: `We've missed you at ${v.business_name}`,
-        title: "It's been a while!",
+        title: "It's been a while",
         intro: `We haven't seen you at ${v.business_name} for a bit, so here's a reason to pop back in.`,
     }),
 };

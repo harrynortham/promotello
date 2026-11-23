@@ -308,7 +308,7 @@ const imageTypes = ["image/jpeg", "image/png", "image/webp"];
 // Why an image can't be used, or null if it's fine.
 export function imageProblem(file: File | null) {
     if (!file) return null;
-    if (!imageTypes.includes(file.type)) return "Please upload a JPG, PNG, or WebP image.";
+    if (!imageTypes.includes(file.type)) return "Please upload a JPG, PNG or WebP image.";
     if (file.size > 5 * 1024 * 1024) return "The image must be smaller than 5MB.";
     return null;
 }

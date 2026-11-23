@@ -45,7 +45,7 @@ const sections: LegalSection[] = [
                 <p>
                     The lists below are not exhaustive. We can decline a
                     business or an offer that isn&apos;t named here if listing
-                    it would break the law, mislead customers, or put people at
+                    it would break the law, mislead customers or put people at
                     risk.
                 </p>
             </>

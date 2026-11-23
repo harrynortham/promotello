@@ -7,7 +7,7 @@ import HelpCentre, {
 export const metadata: Metadata = {
     title: "Help Centre",
     description:
-        "Help with finding offers, claiming offers, using redemption codes, and managing your Promotello account.",
+        "Help with finding offers, claiming offers, using redemption codes and managing your Promotello account.",
 };
 
 const guides: HelpGuide[] = [
@@ -15,11 +15,11 @@ const guides: HelpGuide[] = [
         id: "find-a-deal",
         category: "Discovering offers",
         title: "Find an offer you’ll enjoy",
-        description: "Search, browse categories, and discover businesses.",
+        description: "Search, browse categories and discover businesses.",
         steps: [
             "Open Explore to see what is on near you.",
             "Search for an offer or a business, or pick a category.",
-            "Sort by newest, most popular, or ending soon.",
+            "Sort by newest, most popular or ending soon.",
             "Open anything that catches your eye and read the full details before you claim.",
         ],
         link: {
@@ -31,7 +31,7 @@ const guides: HelpGuide[] = [
         id: "business-details",
         category: "Discovering offers",
         title: "Check a business before visiting",
-        description: "Find its location, opening hours, and contact details.",
+        description: "Find its location, opening hours and contact details.",
         steps: [
             "Find the business in the directory.",
             "Open its page to read about it and see what it is offering.",
@@ -184,15 +184,15 @@ const guides: HelpGuide[] = [
         id: "edit-profile",
         category: "Your account",
         title: "Update your profile",
-        description: "Change your name, photo, or preferred town.",
+        description: "Change your name, photo or preferred town.",
         steps: [
             "Open Account settings from the header menu.",
             "Choose Profile.",
             "Update your display name or optional town or city, then save.",
-            "Use Upload photo, Change photo, or Remove to manage your profile image.",
+            "Use Upload photo, Change photo or Remove to manage your profile image.",
         ],
         note:
-            "Photos must be JPG, PNG, or WebP and smaller than 2 MB. Your personal profile is shared across customer and business areas.",
+            "Photos must be JPG, PNG or WebP and smaller than 2 MB. Your personal profile is shared across customer and business areas.",
         link: {
             label: "Edit my profile",
             href: "/account/profile",
@@ -291,7 +291,7 @@ export default function CustomerHelpPage() {
         <HelpCentre
             audience="Customer help centre"
             title="A little help along the way."
-            description="Find clear steps for discovering deals, using your codes, and looking after your account."
+            description="Find clear steps for discovering deals, using your codes and looking after your account."
             searchPlaceholder="Search claims, sign-in codes, profile photos…"
             guides={guides}
             contactHref="/contact"

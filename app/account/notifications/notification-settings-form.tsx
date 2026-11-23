@@ -65,7 +65,7 @@ const preferences = [
         key: "local_deals_enabled",
         title: "Deals & discoveries",
         description:
-            "Optional emails about offers, businesses, and places to explore.",
+            "Optional emails about offers, businesses and places to explore.",
         icon: FiGift,
     },
     {
@@ -365,7 +365,7 @@ export default function NotificationSettingsForm({
 
                     <p className="mt-4 text-sm leading-7 text-muted-foreground">
                         You’ll still receive necessary messages such as
-                        sign-in codes, email confirmations, and important
+                        sign-in codes, email confirmations and important
                         account or security notices. These are separate from
                         optional updates.
                     </p>

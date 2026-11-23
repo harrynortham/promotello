@@ -56,7 +56,7 @@ export default function ContactPage() {
                     </Badge>
 
                     <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
-                        A question, an idea, or a little{" "}
+                        A question, an idea or a little{" "}
                         <span className="text-[#FF593F]">
                             help along the way?
                         </span>
@@ -109,7 +109,7 @@ export default function ContactPage() {
                             </CardTitle>
 
                             <CardDescription className="leading-7">
-                                For bookings, opening hours, or questions about
+                                For bookings, opening hours or questions about
                                 what a deal includes, the business can usually
                                 give you the most direct answer.
                             </CardDescription>

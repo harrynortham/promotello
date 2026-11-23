@@ -31,7 +31,7 @@ const settings = [
     {
         title: "Your profile",
         description:
-            "Manage your display name, profile photo, and personal details.",
+            "Manage your display name, profile photo and personal details.",
         href: "/account/profile",
         action: "Edit profile",
         icon: FiUser,
@@ -236,7 +236,7 @@ async function AccountContent() {
                     </h2>
 
                     <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                        Business profiles, team access, and business email
+                        Business profiles, team access and business email
                         preferences are managed separately in your business
                         dashboard.
                     </p>

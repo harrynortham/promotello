@@ -43,7 +43,7 @@ const guides: HelpGuide[] = [
         id: "update-business",
         category: "Business setup",
         title: "Update your public business profile",
-        description: "Manage your logo, description, location, and hours.",
+        description: "Manage your logo, description, location and hours.",
         steps: [
             "Open your business dashboard and choose Open on the business you want.",
             "Choose Business profile from the business navigation.",
@@ -108,7 +108,7 @@ const guides: HelpGuide[] = [
         id: "when-an-offer-runs",
         category: "Offers",
         title: "Say when an offer can be used",
-        description: "Certain days, certain times, or new customers only.",
+        description: "Certain days, certain times or new customers only.",
         steps: [
             "Create or edit an offer.",
             "Under When can it be used?, choose Any time you're open, Certain days, or Certain days and times.",
@@ -342,7 +342,7 @@ const guides: HelpGuide[] = [
         id: "personal-account",
         category: "Your account",
         title: "Update your own account",
-        description: "Manage your personal profile, login, and preferences.",
+        description: "Manage your personal profile, login and preferences.",
         steps: [
             "Open the account menu in the header and choose Account settings.",
             "Use Profile for your name and photo.",
