@@ -1,4 +1,4 @@
-import { FREE_LIVE_OFFER_LIMIT, TRIAL_DAYS, foundingOffer, plans } from "@/lib/billing";
+import { FOUNDING_TRIAL_DAYS, FREE_LIVE_OFFER_LIMIT, TRIAL_DAYS, foundingOffer, plans } from "@/lib/billing";
 import { getPosts } from "@/lib/blog";
 import { getLiveCities, listPlaces } from "@/lib/cities";
 import { absoluteUrl } from "@/lib/site";
@@ -23,7 +23,7 @@ Promotello is for independent cafés, bakeries, restaurants, pubs, barbers, hair
 - Free: a business page, ${FREE_LIVE_OFFER_LIMIT} live offer and a QR poster, with no time limit.
 - Pro: ${plans.pro_monthly.price} a month (${plans.pro_yearly.price} a year): unlimited offers, a digital loyalty card, QR posters with scan counts, followers and new-offer emails, Google review prompts, staff scanning, team accounts. Founding members: ${foundingOffer()}.
 - Growth: ${plans.growth_monthly.price} a month: everything in Pro plus automated welcome, birthday and win-back offers, quiet hours that a voucher enforces when staff scan it, and a monthly report.
-- Paid plans start with a ${TRIAL_DAYS}-day free trial, longer for founding members, and starting one takes no card. Prices are in GBP; Promotello isn't VAT registered.
+- Paid plans start with a ${TRIAL_DAYS}-day free trial, or ${FOUNDING_TRIAL_DAYS} days on a founding place, and starting one takes no card. Prices are in GBP; Promotello isn't VAT registered.
 
 ## For businesses
 

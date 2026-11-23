@@ -297,14 +297,28 @@ function resultsList(d: LifecycleDue["details"]) {
 //
 // These used to say a card was taken at the start, because it was.
 // docs/LAUNCH-FUNNEL.md is why it isn't.
-export const trialTerms = {
-    pitch: `Pro is free for ${TRIAL_DAYS} days and starting takes no card. Add one before the end to keep it, or let it stop on its own — either way nothing is charged in the meantime.`,
-    // A founding place now carries the longer trial, so the sentence
-    // beside it has to say so rather than the usual thirty days.
-    founding: `A place is held the moment you start the trial — ${FOUNDING_TRIAL_DAYS} days free, no card to start it, and nothing charged unless you decide at the end to keep it.`,
-    adds: `The first ${TRIAL_DAYS} days are free and there's no card to start. Add one before the trial is up to carry on, or do nothing and it stops by itself.`,
-    results: `Trying it is free for ${TRIAL_DAYS} days with no card to begin, and it stops by itself unless you add one — so there's nothing to remember to cancel.`,
-};
+// How long the business reading this would actually get, in days. The
+// founding trial was written into `founding` alone and the three
+// sentences beside it went on saying thirty — so a business that signed
+// up and stalled was told both numbers, days apart, by the same
+// sequence. placesLeft is already passed in for the scarcity line; it
+// decides this too.
+export function trialDaysOnOffer(placesLeft: number | null | undefined) {
+    return placesLeft === null || placesLeft === undefined || placesLeft > 0
+        ? FOUNDING_TRIAL_DAYS
+        : TRIAL_DAYS;
+}
+
+export function trialTermsFor(placesLeft: number | null | undefined) {
+    const days = trialDaysOnOffer(placesLeft);
+
+    return {
+        pitch: `Pro is free for ${days} days and starting takes no card. Add one before the end to keep it, or let it stop on its own — either way nothing is charged in the meantime.`,
+        founding: `A place is held the moment you start the trial — ${FOUNDING_TRIAL_DAYS} days free, no card to start it, and nothing charged unless you decide at the end to keep it.`,
+        adds: `The first ${days} days are free and there's no card to start. Add one before the trial is up to carry on, or do nothing and it stops by itself.`,
+        results: `Trying it is free for ${days} days with no card to begin, and it stops by itself unless you add one — so there's nothing to remember to cancel.`,
+    };
+}
 
 // The token lets someone stop these without signing in, which is what the
 // List-Unsubscribe header needs and what the visible link should offer too.
@@ -602,7 +616,8 @@ export function lifecycleEmail(
     }
 
     const billing = absoluteUrl(`/business/${due.business_id}/billing`);
-    const tryPro = { label: `Try Pro free for ${TRIAL_DAYS} days`, url: billing };
+    const terms = trialTermsFor(foundingPlacesLeft);
+    const tryPro = { label: `Try Pro free for ${trialDaysOnOffer(foundingPlacesLeft)} days`, url: billing };
 
     if (due.kind === "loyalty_pitch") {
         const { html, text } = brandedEmail({
@@ -612,13 +627,13 @@ export function lifecycleEmail(
             paragraphs: [
                 "Paper stamp cards get lost, forgotten and put through the wash. A Promotello loyalty card lives on your customers' phones, so they always have it with them.",
                 "You choose the reward, like a free coffee after nine. Customers join from your page in the Promotello directory or by scanning your poster — so somebody who has never been in can join before their first visit — and your staff add a stamp by scanning the customer's phone with your own. When the card is full they show it to you and you hand the reward over.",
-                `Loyalty cards are part of Pro, ${plans.pro_monthly.price} a month. ${trialTerms.pitch}`,
+                `Loyalty cards are part of Pro, ${plans.pro_monthly.price} a month. ${terms.pitch}`,
             ],
             action: tryPro,
             ...tipsFooter(optOutToken),
         });
 
-        return { to, subject: `A loyalty card for ${name}, free for ${TRIAL_DAYS} days`, html, text, headers: unsubscribeHeaders(optOutToken) };
+        return { to, subject: `A loyalty card for ${name}, free for ${trialDaysOnOffer(foundingPlacesLeft)} days`, html, text, headers: unsubscribeHeaders(optOutToken) };
     }
 
     if (due.kind === "founding_places") {
@@ -634,7 +649,7 @@ export function lifecycleEmail(
                 paragraphs: [
                     `The first ${FOUNDING_MEMBER_LIMIT} businesses on Pro pay ${founding} a month for as long as they stay, instead of ${plans.pro_monthly.price}. ${foundingPlacesLeft === 1 ? "There's 1 place left." : `There are ${foundingPlacesLeft} places left.`}`,
                     proAddsWithoutPrice,
-                    trialTerms.founding,
+                    terms.founding,
                 ],
                     action: { label: "Claim a founding place", url: billing },
                 ...tipsFooter(optOutToken),
@@ -643,7 +658,7 @@ export function lifecycleEmail(
                 business: mark,
                 eyebrow: "Promotello Pro",
                 title: `What Pro adds for ${name}`,
-                paragraphs: [proAdds, trialTerms.adds],
+                paragraphs: [proAdds, terms.adds],
                     action: tryPro,
                 ...tipsFooter(optOutToken),
             });
@@ -672,7 +687,7 @@ export function lifecycleEmail(
                 paragraphs: [
                     `Since ${formatDate(d.since)}, ${name} has had ${resultsList(d).join(", ")} through Promotello.`,
                     `Pro helps bring those customers back: they join your loyalty card and return for their next stamp, and your followers hear about every new offer. It's ${plans.pro_monthly.price} a month.`,
-                    trialTerms.results,
+                    terms.results,
                 ],
                 action: tryPro,
                 ...tipsFooter(optOutToken),

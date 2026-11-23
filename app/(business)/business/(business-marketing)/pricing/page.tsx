@@ -78,14 +78,14 @@ const principles = [
     {
         icon: FiMessageCircle,
         title: "Try it before you pay",
-        description: `Every Pro plan starts with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. Nothing is charged unless you add one.`,
+        description: `Pro starts with ${freeFor(TRIAL_DAYS)} free, or ${freeFor(FOUNDING_TRIAL_DAYS)} on a founding place, and starting one takes no card. Nothing is charged unless you add one.`,
     },
 ];
 
 const questions = [
     {
         question: "How does the free trial work?",
-        answer: `Pro and Growth start with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. If you want to carry on, add a card before the trial ends; if you don't, it stops by itself and nothing is charged — there's nothing to remember to cancel. Each business can have one free trial.`,
+        answer: `Pro and Growth start with ${freeFor(TRIAL_DAYS)} free — ${freeFor(FOUNDING_TRIAL_DAYS)} on a founding place — and starting one takes no card. If you want to carry on, add a card before the trial ends; if you don't, it stops by itself and nothing is charged — there's nothing to remember to cancel. Each business can have one free trial.`,
     },
     {
         question: "What is the founding member price?",

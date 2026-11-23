@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import HelpCentre, {
     type HelpGuide,
 } from "@/components/help-centre";
@@ -495,7 +496,7 @@ const guides: HelpGuide[] = [
         description: "Free, Pro and Growth.",
         steps: [
             "Open your business and choose Billing.",
-            "Pick Pro or Growth. The first 30 days are free, and starting a trial takes no card.",
+            `Pick Pro or Growth. The first ${freeFor(TRIAL_DAYS)} is free — ${freeFor(FOUNDING_TRIAL_DAYS)} on a founding place — and starting a trial takes no card.`,
             "Add a card before the trial ends to carry on. Do nothing and it stops on that day, with nothing charged and nothing to remember to cancel.",
             "Already subscribed? Switch between Pro and Growth from the same page.",
             "Use Manage billing to add or update your card, see invoices or cancel.",

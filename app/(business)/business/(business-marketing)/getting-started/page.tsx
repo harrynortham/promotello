@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
 
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,7 +81,7 @@ const steps = [
             "Choose the reward",
             "Add any terms, like one stamp per visit",
         ],
-        tip: "Loyalty cards are part of Pro, which starts with a 30-day free trial.",
+        tip: `Loyalty cards are part of Pro, which starts with ${freeFor(TRIAL_DAYS)} free — ${freeFor(FOUNDING_TRIAL_DAYS)} if you take a founding place.`,
         href: "/business/dashboard",
         action: "Open your dashboard",
     },
