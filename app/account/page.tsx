@@ -108,7 +108,7 @@ async function AccountContent() {
                 </h1>
 
                 <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
-                    Your details, preferences, and security—all in one place.
+                    Your details, preferences and security — all in one place.
                     These settings apply wherever you use Promotello.
                 </p>
             </div>

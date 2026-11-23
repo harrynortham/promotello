@@ -89,7 +89,7 @@ const steps = [
     {
         art: <StampArt />,
         title: "You add a stamp",
-        body: "Scan the QR on their card with your phone, or type the code. Only you can add stamps, so nobody can stamp their own.",
+        body: "Scan the QR on their card with your phone, or type the code. Only you and your team can add stamps, so nobody can stamp their own card.",
     },
     {
         art: <FillArt />,

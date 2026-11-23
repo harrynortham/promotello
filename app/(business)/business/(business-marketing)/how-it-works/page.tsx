@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FiCheck } from "react-icons/fi";
 
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import { Eyebrow, FeatureSection, FinalCta, PrimaryActions } from "@/components/business-marketing";
 import {
     BrowserFrame,
@@ -86,7 +87,7 @@ const faqs = [
     },
     {
         question: "Can I try it before paying?",
-        answer: "Yes. The Free plan has no time limit, and Pro and Growth both start with a 30-day free trial, which takes no card to start. Add one before it ends to carry on, or do nothing and it stops by itself with nothing charged.",
+        answer: `Yes. The Free plan has no time limit, and Pro and Growth both start with ${freeFor(TRIAL_DAYS)} free — ${freeFor(FOUNDING_TRIAL_DAYS)} on a founding place — which takes no card to start. Add one before it ends to carry on, or do nothing and it stops by itself with nothing charged.`,
     },
 ];
 
@@ -173,7 +174,7 @@ export default async function HowItWorksPage() {
                 eyebrow="Step 6"
                 title="Keep them coming back, and see it working."
                 body="Followers get an email about every new offer, and on Growth they get welcome, birthday and win-back rewards automatically. Your dashboard shows what it's all bringing in."
-                points={["Visits, followers and scans compared month to month", "A monthly report in your inbox on Growth"]}
+                points={["Visits, followers and scans compared month to month", "A monthly summary by email, in full on Growth"]}
                 visual={
                     <div className="relative w-full max-w-lg">
                         <DashboardScreen />

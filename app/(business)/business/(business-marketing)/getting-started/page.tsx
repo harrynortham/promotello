@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FiArrowRight, FiCheck } from "react-icons/fi";
 
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +33,7 @@ const preparationItems = [
     "Your logo",
     "Your address and opening hours",
     "An idea for your first offer",
-    "A loyalty reward, like a free coffee after nine",
+    "A loyalty reward, like a free coffee after nine stamps",
     "Your Google review link, if you have one",
 ];
 
@@ -80,7 +81,7 @@ const steps = [
             "Choose the reward",
             "Add any terms, like one stamp per visit",
         ],
-        tip: "Loyalty cards are part of Pro, which starts with a 30-day free trial.",
+        tip: `Loyalty cards are part of Pro, which starts with ${freeFor(TRIAL_DAYS)} free — ${freeFor(FOUNDING_TRIAL_DAYS)} if you take a founding place.`,
         href: "/business/dashboard",
         action: "Open your dashboard",
     },
@@ -108,7 +109,7 @@ const steps = [
         tasks: [
             "Invite staff from the Team page",
             "Show them how to scan a customer's QR code",
-            "Tap \"Mark as used\" for a voucher or \"Add stamp\" for a loyalty card",
+            "Tap \"Mark as used\" for a voucher or \"Add a stamp\" for a loyalty card",
         ],
         tip: "Working on your own? You can do everything yourself, and inviting a team is optional.",
         href: "/business/dashboard",

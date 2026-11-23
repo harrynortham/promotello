@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TRIAL_DAYS, foundingOffer, freeFor, plans } from "@/lib/billing";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, foundingOffer, freeFor, plans } from "@/lib/billing";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import Link from "next/link";
 
@@ -199,7 +199,7 @@ export default async function FeaturesPage() {
                 eyebrow="Results"
                 title="See exactly what Promotello brings in."
                 body="Analytics shows the last 30 days against the 30 before: page and offer views, claims, vouchers used, QR scans, loyalty stamps and review clicks. On Growth, a summary arrives by email on the 1st."
-                points={["A daily views chart", "Every offer's claims and redemptions", "A monthly value report on Growth"]}
+                points={["A daily views chart", "Every offer's claims and redemptions", "A monthly summary by email, in full on Growth"]}
                 visual={<MonthlyReportEmail />}
             />
 
@@ -229,7 +229,7 @@ export default async function FeaturesPage() {
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">What&apos;s in each plan</h2>
                 <p className="mt-3 text-lg text-[#17233B]/70">
                     Free to start. Pro is {plans.pro_monthly.price} a month and Growth is{" "}
-                    {plans.growth_monthly.price}, both with a {freeFor(TRIAL_DAYS)} free trial and
+                    {plans.growth_monthly.price}, both with a {freeFor(TRIAL_DAYS)} free trial — {freeFor(FOUNDING_TRIAL_DAYS)} on a founding place — and
                     no card to start one.{founding ? ` Right now ${foundingOffer()}.` : ""}{" "}
                     <Link href="/business/pricing" className="font-medium text-[#FF593F] underline underline-offset-4">
                         See pricing

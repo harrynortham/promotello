@@ -6,6 +6,7 @@ import {
     INK,
     StepFrame,
 } from "@/components/how-it-works-dialog";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import { company } from "@/lib/legal";
 
 function PlanArt() {
@@ -80,7 +81,7 @@ const steps = [
     {
         art: <TrialArt />,
         title: "Your free trial",
-        body: "The trial runs for 30 days and takes no card to start. Add one before the last day to carry on; leave it and the plan stops on its own, with nothing charged.",
+        body: `The trial runs for ${freeFor(TRIAL_DAYS)} and takes no card to start — ${freeFor(FOUNDING_TRIAL_DAYS)} on a founding place. Add a card before the last day to carry on; leave it and the plan stops on its own, with nothing charged.`,
     },
     {
         art: <CardArt />,

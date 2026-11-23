@@ -51,7 +51,7 @@ export function handOverEmail({
             "You'll manage offers, loyalty cards, QR posters and your team, and can start your free Pro trial whenever you're ready.",
             "Sign in or create an account with this email address to accept. The link lasts 14 days.",
         ],
-        action: { label: "Take over my business", url: absoluteUrl(`/invite/${token}`) },
+        action: { label: "Accept and take it over", url: absoluteUrl(`/invite/${token}`) },
         footer: "If you weren't expecting this, you can ignore it.",
     });
 
@@ -104,7 +104,7 @@ export function voucherConfirmationEmail({
         // still the hero — this is what they are going in for.
         picture: offerImageUrl ? { url: offerImageUrl, alt: offerTitle } : undefined,
         eyebrow: `Your voucher for ${businessName}`,
-        title: `${discount}: ${offerTitle}`,
+        title: discount === offerTitle ? offerTitle : `${discount}: ${offerTitle}`,
         paragraphs: until
             ? [`Use it by ${until}.`]
             : ["It's yours whenever you're next in."],

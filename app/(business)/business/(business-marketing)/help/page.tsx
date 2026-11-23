@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor } from "@/lib/billing";
 import HelpCentre, {
     type HelpGuide,
 } from "@/components/help-centre";
 import {
     BUSINESS_REASONS,
     BUSINESS_SUSPENSIONS,
+    fixOnAPage,
     HELP_ANCHORS,
     OFFER_REASONS,
     OFFER_SUSPENSIONS,
@@ -25,7 +27,7 @@ const guides: HelpGuide[] = [
         description: "Create a profile and prepare for review.",
         steps: [
             "Create an account or sign in.",
-            "Open the business dashboard and choose Add another business.",
+            "Open the business dashboard and choose Add your business.",
             "Complete the onboarding form with your business details.",
             "After creation, choose Open to carry on setting up your profile.",
             "Check the approval status shown in your business overview.",
@@ -149,7 +151,7 @@ const guides: HelpGuide[] = [
             {
                 title: "The reasons we turn a business down",
                 items: BUSINESS_REASONS.filter((reason) => reason.says !== "").map(
-                    (reason) => `${reason.says} ${reason.fix}`,
+                    (reason) => `${reason.says} ${fixOnAPage(reason.fix)}`,
                 ),
             },
         ],
@@ -172,7 +174,7 @@ const guides: HelpGuide[] = [
             {
                 title: "The reasons we turn an offer down",
                 items: OFFER_REASONS.filter((reason) => reason.says !== "").map(
-                    (reason) => `${reason.says} ${reason.fix}`,
+                    (reason) => `${reason.says} ${fixOnAPage(reason.fix)}`,
                 ),
             },
         ],
@@ -495,7 +497,7 @@ const guides: HelpGuide[] = [
         description: "Free, Pro and Growth.",
         steps: [
             "Open your business and choose Billing.",
-            "Pick Pro or Growth. The first 30 days are free, and starting a trial takes no card.",
+            `Pick Pro or Growth. The first ${freeFor(TRIAL_DAYS)} is free — ${freeFor(FOUNDING_TRIAL_DAYS)} on a founding place — and starting a trial takes no card.`,
             "Add a card before the trial ends to carry on. Do nothing and it stops on that day, with nothing charged and nothing to remember to cancel.",
             "Already subscribed? Switch between Pro and Growth from the same page.",
             "Use Manage billing to add or update your card, see invoices or cancel.",
