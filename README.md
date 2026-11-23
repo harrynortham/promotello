@@ -365,11 +365,6 @@ most of stage 3 is guesswork until it is.
 2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
    the legal gate, the preview tooling and the copy are all finished.
 
-3. **The legal pages still say a flat 30 days.** `app/legal/refunds` and
-   `app/legal/terms` state one trial length for every plan, which is wrong for
-   a founding member getting three months. The marketing now says both, but a
-   legal document is versioned — changing it means deciding the wording and
-   bumping the date on the page.
 
 ### Stage 2 — True before you email a single business
 

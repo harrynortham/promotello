@@ -5,7 +5,7 @@ import {
     LegalDocument,
     type LegalSection,
 } from "@/components/legal-document";
-import { TRIAL_DAYS } from "@/lib/billing";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS } from "@/lib/billing";
 import { company, companyLine } from "@/lib/legal";
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 // Must agree with the "Plans, trials and payment" section of the terms.
 const summary = [
     "Only businesses pay Promotello. Customers never pay us: browsing, claiming offers and loyalty cards are free.",
-    `Paid plans start with a ${TRIAL_DAYS}-day free trial, and starting one takes no card. Nothing is charged unless you add one before it ends.`,
+    `Paid plans start with a ${TRIAL_DAYS}-day free trial — ${FOUNDING_TRIAL_DAYS} days on the founding-member price — and starting one takes no card. Nothing is charged unless you add one before it ends.`,
     "Cancel any time from your Billing page. You keep your plan until the end of the period you've paid for, and you won't be charged again.",
     "Payments already made aren't refunded, except where we've charged you in error or the law requires it.",
 ];
@@ -52,8 +52,10 @@ const sections: LegalSection[] = [
         content: (
             <p>
                 Each paid plan starts with a {TRIAL_DAYS}-day free trial, one
-                per business. Starting one takes no card details, so nothing is
-                charged while it runs and there is nothing to cancel. Add a card
+                per business, and the founding-member price starts with{" "}
+                {FOUNDING_TRIAL_DAYS} days. Starting one takes no card details,
+                so nothing is charged while it runs and there is nothing to
+                cancel. Add a card
                 before the trial ends and the plan carries on, with the first
                 payment taken on that date; add nothing and the plan stops then,
                 with nothing charged. We email you before the trial ends either
@@ -148,7 +150,7 @@ export default function RefundsPage() {
         <LegalDocument
             title="Refund and cancellation policy"
             description="How cancelling and refunds work for businesses on Promotello's paid plans."
-            updatedAt="29 October 2026"
+            updatedAt="23 November 2026"
             version="1.0"
             summary={summary}
             sections={sections}
