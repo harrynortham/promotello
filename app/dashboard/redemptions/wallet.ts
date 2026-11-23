@@ -66,7 +66,7 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
 
     let gifts = supabase
         .from("reward_vouchers")
-        .select("id, code, kind, reward, created_at, expires_at, used_at, businesses ( id, slug, name )")
+        .select("id, code, kind, reward, terms, image_url, created_at, expires_at, used_at, businesses ( id, slug, name )")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
@@ -128,9 +128,12 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                 availability: "One use. Show the code or QR to staff.",
                 window: null,
                 expiresAt: gift.expires_at,
-                terms: "A personal gift from the business. It can't be swapped for cash.",
+                // The business's own terms when they wrote some, and the
+                // standing line when they did not. A gift carries what
+                // it was issued with, so this is what the email said.
+                terms: gift.terms ?? "A personal gift from the business. It can't be swapped for cash.",
                 approved: true,
-                imageUrl: null,
+                imageUrl: gift.image_url,
             },
             business: business ? { id: business.id, slug: business.slug, name: business.name, address: "" } : null,
         };

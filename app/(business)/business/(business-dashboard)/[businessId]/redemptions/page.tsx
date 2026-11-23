@@ -41,22 +41,20 @@ function today() {
     return new Date().toISOString().slice(0, 10);
 }
 
-type OfferRow = {
+// One row of business_voucher_history: a voucher claimed from an offer,
+// or a gift an automation sent. The page treats them alike -- a gift's
+// reward is its title and its kind reads where a discount would.
+type Row = {
     id: string;
+    source: "offer" | "gift";
+    code: string;
+    claimed_at: string;
+    used_at: string | null;
+    expires_on: string;
     title: string;
     discount: string;
     description: string | null;
     terms: string | null;
-    expires_at: string;
-    business_id: string;
-};
-
-type Row = {
-    id: string;
-    redemption_code: string;
-    redeemed_at: string;
-    used_at: string | null;
-    offers: OfferRow | OfferRow[] | null;
 };
 
 async function markRedemptionUsed(formData: FormData) {
@@ -173,41 +171,27 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
     const page = Math.max(Number.parseInt(query.page ?? "1", 10) || 1, 1);
     const from = (page - 1) * PER_PAGE;
 
-    const columns = `
-        id,
-        redemption_code,
-        redeemed_at,
-        used_at,
-        offers!inner (
-          id,
-          title,
-          discount,
-          description,
-          terms,
-          expires_at,
-          business_id
-        )
-    `;
+    const columns = "id, source, code, claimed_at, used_at, expires_on, title, discount, description, terms";
 
     // Which of them, in each of the three states a voucher can be in. A
     // searched code ignores the tabs: somebody holding a code wants that
     // voucher, wherever it has got to.
     function forFilter(filter: Filter, select: string, options?: { head?: boolean }) {
         let rows = supabase
-            .from("offer_redemptions")
+            .from("business_voucher_history")
             .select(select, options?.head ? { count: "exact", head: true } : undefined)
-            .eq("offers.business_id", businessId);
+            .eq("business_id", businessId);
 
         if (offerId) {
             rows = rows.eq("offer_id", offerId);
         }
 
         if (filter === "to-use") {
-            rows = rows.is("used_at", null).gte("offers.expires_at", today());
+            rows = rows.is("used_at", null).gte("expires_on", today());
         } else if (filter === "used") {
             rows = rows.not("used_at", "is", null);
         } else if (filter === "expired") {
-            rows = rows.is("used_at", null).lt("offers.expires_at", today());
+            rows = rows.is("used_at", null).lt("expires_on", today());
         }
 
         return rows;
@@ -216,13 +200,13 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
     const [listed, counts, justUsed] = await Promise.all([
         code
             ? supabase
-                .from("offer_redemptions")
+                .from("business_voucher_history")
                 .select(columns)
-                .eq("offers.business_id", businessId)
-                .eq("redemption_code", code)
-                .order("redeemed_at", { ascending: false })
+                .eq("business_id", businessId)
+                .eq("code", code)
+                .order("claimed_at", { ascending: false })
             : forFilter(show, columns)
-                .order("redeemed_at", { ascending: false })
+                .order("claimed_at", { ascending: false })
                 .range(from, from + PER_PAGE - 1),
 
         Promise.all(
@@ -230,8 +214,7 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
                 id: filter.id,
                 // The join has to be in the select for a filter on it to
                 // mean anything, even when only the count is wanted.
-                count: (await forFilter(filter.id, "id, offers!inner ( business_id, expires_at )", { head: true }))
-                    .count ?? 0,
+                count: (await forFilter(filter.id, "id", { head: true })).count ?? 0,
             })),
         ),
 
@@ -239,10 +222,10 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
         // be on this page of the list, so it is asked for by name.
         query.used
             ? supabase
-                .from("offer_redemptions")
-                .select("redemption_code, offers!inner ( discount, business_id )")
-                .eq("offers.business_id", businessId)
-                .eq("redemption_code", String(query.used).toUpperCase())
+                .from("business_voucher_history")
+                .select("code, discount")
+                .eq("business_id", businessId)
+                .eq("code", String(query.used).toUpperCase())
                 .maybeSingle()
             : Promise.resolve({ data: null }),
     ]);
@@ -260,26 +243,20 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
             .maybeSingle()
         : { data: null };
 
-    const rows: RedemptionRow[] = ((listed.data ?? []) as unknown as Row[]).map((row) => {
-        const offer = Array.isArray(row.offers) ? row.offers[0] : row.offers;
-
-        return {
-            id: row.id,
-            code: row.redemption_code,
-            claimedAt: row.redeemed_at,
-            usedAt: row.used_at,
-            expired: Boolean(offer && offer.expires_at < today()),
-            offer: offer
-                ? {
-                    title: offer.title,
-                    discount: offer.discount,
-                    description: offer.description,
-                    terms: offer.terms,
-                    expiresAt: offer.expires_at,
-                }
-                : null,
-        };
-    });
+    const rows: RedemptionRow[] = ((listed.data ?? []) as unknown as Row[]).map((row) => ({
+        id: row.id,
+        code: row.code,
+        claimedAt: row.claimed_at,
+        usedAt: row.used_at,
+        expired: row.expires_on < today(),
+        offer: {
+            title: row.title,
+            discount: row.discount,
+            description: row.description,
+            terms: row.terms,
+            expiresAt: row.expires_on,
+        },
+    }));
 
     // Who claimed each of them. Names live in auth.users, which a
     // business can't read, so they come back from a function that checks
@@ -304,8 +281,7 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
     const countFor = (id: Filter) => counts.find((count) => count.id === id)?.count ?? 0;
     const total = countFor(show);
     const pages = Math.max(Math.ceil(total / PER_PAGE), 1);
-    const usedRow = (justUsed as { data: { redemption_code: string; offers: { discount: string } | { discount: string }[] } | null }).data;
-    const usedOffer = usedRow ? (Array.isArray(usedRow.offers) ? usedRow.offers[0] : usedRow.offers) : null;
+    const usedRow = (justUsed as { data: { code: string; discount: string } | null }).data;
 
     const linkTo = (next: { show?: Filter; page?: number; offer?: string | null }) => {
         const params = new URLSearchParams();
@@ -355,7 +331,7 @@ async function RedemptionsContent({ params, searchParams }: PageProps) {
                 </div>
             </div>
 
-            {usedRow && <JustUsed code={usedRow.redemption_code} discount={usedOffer?.discount ?? null} />}
+            {usedRow && <JustUsed code={usedRow.code} discount={usedRow.discount ?? null} />}
 
             {chosenOffer && (
                 <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#17233B]/10 bg-white px-4 py-3">
