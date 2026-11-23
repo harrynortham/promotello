@@ -6,7 +6,7 @@
 // never fails — record_qr_scan falls back to the business page — but the
 // business is the one who can fix it, and only if they're told.
 
-export type QrTargetKind = "offer" | "card" | "business" | "retired";
+export type QrTargetKind = "offer" | "card" | "follow" | "business" | "retired";
 
 export type QrTarget = {
     kind: QrTargetKind;
@@ -38,6 +38,7 @@ export type QrLoyaltyProgram = {
 export type QrCodeRow = {
     archived_at?: string | null;
     former_target?: string | null;
+    follows?: boolean | null;
     offers?: QrOffer;
     loyalty_programs?: QrLoyaltyProgram;
 };
@@ -54,6 +55,13 @@ export function qrTarget(code: QrCodeRow, today: string, hasPro = true): QrTarge
             name: code.former_target ?? null,
             problem: "You retired this code. Anyone scanning the poster still lands on your page.",
         };
+    }
+
+    // Nothing to go wrong with this one: it does not depend on an offer
+    // running or a card being open, so it is live for as long as the
+    // business is.
+    if (code.follows) {
+        return { kind: "follow", live: true, name: null, problem: null };
     }
 
     const offer = code.offers ?? null;

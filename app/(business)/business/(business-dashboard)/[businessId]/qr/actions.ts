@@ -23,6 +23,13 @@ async function requireUser() {
 // Kept here so this server file does not pull in the palette's React side.
 const POSTER_COLOURS = ["navy", "coral", "forest", "plum", "ocean", "charcoal"];
 
+// The targets that are not an offer. Everything else in the field is an
+// offer's id, so a new one has to be named here or it would be stored as
+// one and the poster would point at nothing.
+function isTargetless(target: string) {
+    return target === "business" || target === "loyalty" || target === "follow";
+}
+
 export async function createQrCode(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
     const label = String(formData.get("label") ?? "").trim();
@@ -63,8 +70,9 @@ export async function createQrCode(formData: FormData) {
     const { error } = await supabase.from("qr_codes").insert({
         business_id: businessId,
         label,
-        offer_id: target === "business" || target === "loyalty" ? null : target,
+        offer_id: isTargetless(target) ? null : target,
         loyalty_program_id: target === "loyalty" ? (loyaltyProgramId || null) : null,
+        follows: target === "follow",
         poster_colour: posterColour,
         poster_layout: posterLayout,
         poster_header: ownColours ? posterHeader : null,
@@ -122,8 +130,9 @@ export async function pointQrCode(formData: FormData) {
     const { error } = await supabase
         .from("qr_codes")
         .update({
-            offer_id: target === "business" || target === "loyalty" ? null : target,
+            offer_id: isTargetless(target) ? null : target,
             loyalty_program_id: target === "loyalty" ? loyaltyProgramId || null : null,
+            follows: target === "follow",
             // Whatever it used to say, it says this now.
             former_target: null,
         })

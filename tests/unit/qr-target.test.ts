@@ -140,3 +140,37 @@ test("a card poster on the Free plan has nothing to offer a passer-by", () => {
     // never reported as broken to somebody who cannot fix it.
     assert.ok(onFree.live || !onFree.problem);
 });
+
+// A poster that asks to be followed. It does not depend on an offer
+// running or a card being open, so there is nothing about it that can
+// quietly stop working -- which is the whole job of this function.
+test("a follow poster is live for as long as the business is", () => {
+    const target = qrTarget({ follows: true }, "2026-11-23");
+
+    assert.equal(target.kind, "follow");
+    assert.equal(target.live, true);
+    assert.equal(target.problem, null);
+});
+
+// The check in the database says a follow code carries neither, but the
+// dashboard reads rows written before it existed too.
+test("a follow poster is read as one even beside a stale offer row", () => {
+    const target = qrTarget(
+        {
+            follows: true,
+            offers: { title: "Old", approval_status: "approved", expires_at: "2020-01-01", plan_paused_at: null },
+        },
+        "2026-11-23",
+    );
+
+    assert.equal(target.kind, "follow");
+    assert.equal(target.live, true);
+});
+
+// Retiring one still wins: the sheet is in a window either way.
+test("a retired follow poster still reads as retired", () => {
+    const target = qrTarget({ follows: true, archived_at: "2026-11-01" }, "2026-11-23");
+
+    assert.equal(target.kind, "retired");
+    assert.equal(target.live, false);
+});

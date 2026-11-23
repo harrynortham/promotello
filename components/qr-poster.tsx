@@ -72,6 +72,12 @@ export const POSTER_LAYOUTS = [
         hint: "No colour block. Quiet enough for a smart window.",
     },
     {
+        value: "follow",
+        label: "Follow us",
+        hint: "Why it's worth following, for a counter or a door.",
+        forFollow: true,
+    },
+    {
         value: "stamp_card",
         label: "Stamp card",
         hint: "The card itself, so people see what they are collecting.",
@@ -85,6 +91,15 @@ export const POSTER_LAYOUTS = [
     },
 ] as const;
 
+// What following is worth, in the order somebody standing in the shop
+// cares about. The same three the landing page lists, so the sheet and
+// the screen it opens say one thing.
+export const FOLLOW_REASONS = [
+    "A welcome reward, when they have one on",
+    "A treat on your birthday",
+    "An email whenever they post a new offer",
+] as const;
+
 export type PosterLayout = (typeof POSTER_LAYOUTS)[number]["value"];
 
 // The two that draw a card are offered only where there is one to draw.
@@ -94,6 +109,17 @@ export const LOYALTY_LAYOUTS = POSTER_LAYOUTS.filter(
 
 export function isLoyaltyLayout(value: string | null | undefined) {
     return LOYALTY_LAYOUTS.includes(value as PosterLayout);
+}
+
+// Offered only on a code that follows, and the only one offered there:
+// the others all say "scan for offers", which is not what the sheet is
+// for.
+export const FOLLOW_LAYOUTS = POSTER_LAYOUTS.filter(
+    (option) => "forFollow" in option && option.forFollow,
+).map((option) => option.value) as readonly PosterLayout[];
+
+export function isFollowLayout(value: string | null | undefined) {
+    return FOLLOW_LAYOUTS.includes(value as PosterLayout);
 }
 
 export function posterLayout(value: string | null | undefined): PosterLayout {
@@ -471,15 +497,22 @@ export function QrPoster(props: PosterProps) {
         accent: card?.accent,
     }).stamp;
     const dark = chosen === "bold";
+    const follows = chosen === "follow";
     const pill =
-        eyebrow?.trim() || eyebrowFallback?.trim() || (offer ? "Exclusive offer" : "Scan for offers");
-    const title = headline?.trim() || (offer ? offer.discount : `See what's on at ${businessName}`);
-    const body = offer ? detail?.trim() || offer.description : null;
+        eyebrow?.trim() ||
+        eyebrowFallback?.trim() ||
+        (follows ? "Follow us" : offer ? "Exclusive offer" : "Scan for offers");
+    const title =
+        headline?.trim() ||
+        (follows ? "Be first to know" : offer ? offer.discount : `See what's on at ${businessName}`);
+    const body = follows ? detail?.trim() || null : offer ? detail?.trim() || offer.description : null;
     const scanLine =
         caption?.trim() ||
-        (offer
-            ? "Claim it free on Promotello, then show your code when you pay."
-            : "Every offer is free to claim on Promotello. Show your code when you pay.");
+        (follows
+            ? "Scan to follow. No app to download, and you can stop any time."
+            : offer
+                ? "Claim it free on Promotello, then show your code when you pay."
+                : "Every offer is free to claim on Promotello. Show your code when you pay.");
 
     // A written headline is usually a sentence, so it needs smaller type.
     const titleSize = headline?.trim() ? "3.4em" : offer ? "5.4em" : "3.8em";
@@ -491,6 +524,55 @@ export function QrPoster(props: PosterProps) {
         fontSize: `${fontSize}px`,
         ...(dark ? { backgroundColor: theme.header, color: theme.ink } : {}),
     };
+
+    if (follows) {
+        return (
+            <article className={sheet} style={style}>
+                {/* Their name on the band, because this sheet asks for
+                    something rather than giving something away: the
+                    person has to know whose list they are joining
+                    before they point a camera at it. */}
+                <header
+                    className="flex items-center gap-[1em] px-[2.5em] py-[1.4em]"
+                    style={{ backgroundColor: theme.header, color: theme.ink }}
+                >
+                    <Logo url={logoUrl} size="3.2em" />
+                    <Name businessName={businessName} place={place} onColour />
+                </header>
+
+                <div className="flex flex-1 flex-col items-center justify-center gap-[0.5em] px-[2.5em] py-[1.4em] text-center">
+                    <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+                    <Title size={headline?.trim() ? "3em" : "4.2em"}>{title}</Title>
+                    {body && <Body dark={dark}>{body}</Body>}
+
+                    {/* The reasons, not a paragraph. Nobody reads a
+                        poster; they read three lines of it, and these
+                        are the three worth having. */}
+                    <ul className="mt-[0.7em] space-y-[0.5em] text-left">
+                        {FOLLOW_REASONS.map((reason) => (
+                            <li key={reason} className="flex items-start gap-[0.6em]">
+                                <span
+                                    className="mt-[0.35em] inline-block shrink-0 rounded-full"
+                                    style={{ width: "0.5em", height: "0.5em", backgroundColor: theme.accent }}
+                                />
+                                <span style={{ fontSize: "1.25em", lineHeight: 1.45 }}>{reason}</span>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div className="mt-[0.9em]">
+                        <Code markup={qrMarkup} size="19em" />
+                    </div>
+
+                    <div className="mt-[0.5em]">
+                        <ScanLines caption={scanLine} dark={dark} />
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
 
     if (chosen === "code_first") {
         return (

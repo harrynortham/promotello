@@ -40,6 +40,7 @@ type QrCode = {
     created_at: string;
     archived_at: string | null;
     former_target: string | null;
+    follows: boolean | null;
     loyalty_program_id: string | null;
     offers: QrOffer | QrOffer[] | null;
     loyalty_programs: QrLoyaltyProgram | QrLoyaltyProgram[] | null;
@@ -107,7 +108,7 @@ async function QrContent({ params, searchParams }: PageProps) {
         supabase
             .from("qr_codes")
             .select(
-                "id, code, label, created_at, archived_at, former_target, loyalty_program_id, offers ( title, discount, approval_status, expires_at, plan_paused_at ), loyalty_programs ( name, is_active, closed_at )",
+                "id, code, label, created_at, archived_at, former_target, follows, loyalty_program_id, offers ( title, discount, approval_status, expires_at, plan_paused_at ), loyalty_programs ( name, is_active, closed_at )",
             )
             .eq("business_id", businessId)
             // Retired codes come too: the poster is still in a window, so
@@ -376,6 +377,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 const target = qrTarget(
                                     {
                                         former_target: code.former_target,
+                                        follows: code.follows,
                                         offers: one(code.offers),
                                         loyalty_programs: one(code.loyalty_programs),
                                     },
@@ -402,7 +404,9 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                         ? `“${target.name}” offer`
                                                         : target.kind === "card"
                                                             ? "your loyalty card"
-                                                            : "your business profile page"}
+                                                            : target.kind === "follow"
+                                                                ? "a follow: one scan and they're on your list"
+                                                                : "your business profile page"}
                                                 </p>
 
                                                 <a
