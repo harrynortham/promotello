@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
+import { TRIAL_DAYS, foundingOffer, freeFor, plans } from "@/lib/billing";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 import Link from "next/link";
 
 import { Eyebrow, FeatureSection, FinalCta, PrimaryActions } from "@/components/business-marketing";
@@ -43,6 +44,11 @@ const sections = [
 
 export default async function FeaturesPage() {
     const posterQr = await qrSvg("https://www.promotello.com/business/demo");
+    // Only while there are places. An offer that has gone is worse on a
+    // page than no offer at all: the business arrives at billing and
+    // finds the thing it came for sold.
+    const foundingLeft = await foundingPlacesLeft();
+    const founding = foundingLeft === null || foundingLeft > 0;
 
     return (
         <main className="overflow-hidden bg-background text-[#17233B]">
@@ -223,7 +229,8 @@ export default async function FeaturesPage() {
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">What&apos;s in each plan</h2>
                 <p className="mt-3 text-lg text-[#17233B]/70">
                     Free to start. Pro is {plans.pro_monthly.price} a month and Growth is{" "}
-                    {plans.growth_monthly.price}, both with a {freeFor(TRIAL_DAYS)} free trial.{" "}
+                    {plans.growth_monthly.price}, both with a {freeFor(TRIAL_DAYS)} free trial and
+                    no card to start one.{founding ? ` Right now ${foundingOffer()}.` : ""}{" "}
                     <Link href="/business/pricing" className="font-medium text-[#FF593F] underline underline-offset-4">
                         See pricing
                     </Link>

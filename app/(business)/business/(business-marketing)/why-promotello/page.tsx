@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { FOUNDING_MEMBER_LIMIT, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
+import { TRIAL_DAYS, foundingOffer, freeFor, plans } from "@/lib/billing";
+import { foundingPlacesLeft } from "@/lib/founding-places";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -99,7 +100,11 @@ function Plan({
     );
 }
 
-export default function WhyPromotelloPage() {
+export default async function WhyPromotelloPage() {
+    // The founding offer is only worth printing while it is open.
+    const foundingLeft = await foundingPlacesLeft();
+    const founding = foundingLeft === null || foundingLeft > 0;
+
     return (
         <main className="bg-[#FFF8F0] px-6 py-10 text-[#17233B] sm:py-16 print:bg-white print:p-0">
             <article className="mx-auto max-w-4xl print:max-w-none">
@@ -187,10 +192,11 @@ export default function WhyPromotelloPage() {
                             features={["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet hours enforced when scanned", "Monthly value report"]}
                         />
                     </div>
-                    <p className="mt-3 text-sm text-[#17233B]/70">
-                        Founding members: the first {FOUNDING_MEMBER_LIMIT} businesses pay{" "}
-                        {plans.pro_founding_monthly.price} a month for Pro, locked for life.
-                    </p>
+                    {founding && (
+                        <p className="mt-3 text-sm text-[#17233B]/70">
+                            Founding members: {foundingOffer()}.
+                        </p>
+                    )}
                 </section>
 
                 <section className="mt-10 flex flex-col gap-4 rounded-3xl bg-[#17233B] p-8 text-white sm:flex-row sm:items-center sm:justify-between print:mt-4 print:break-inside-avoid print:rounded-xl print:p-4">

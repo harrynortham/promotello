@@ -22,15 +22,17 @@ import { Separator } from "@/components/ui/separator";
 import { RegisterLink } from "@/components/register-link";
 import {
     FOUNDING_MEMBER_LIMIT,
+    FOUNDING_TRIAL_DAYS,
     FREE_LIVE_OFFER_LIMIT,
     TRIAL_DAYS,
+    freeFor,
     plans,
 } from "@/lib/billing";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 
 export const metadata: Metadata = {
     title: "Business Pricing",
-    description: `Start free with ${FREE_LIVE_OFFER_LIMIT} live offer, go Pro for unlimited offers and loyalty cards at ${plans.pro_monthly.price}/month, or Growth for automated marketing at ${plans.growth_monthly.price}/month, each with a ${TRIAL_DAYS}-day free trial. Founding members pay ${plans.pro_founding_monthly.price}/month.`,
+    description: `Start free with ${FREE_LIVE_OFFER_LIMIT} live offer, go Pro for unlimited offers and loyalty cards at ${plans.pro_monthly.price}/month, or Growth for automated marketing at ${plans.growth_monthly.price}/month, each with a ${TRIAL_DAYS}-day free trial. Founding members pay ${plans.pro_founding_monthly.price}/month and get ${freeFor(FOUNDING_TRIAL_DAYS)} free.`,
 };
 
 const freeFeatures = [
@@ -87,7 +89,7 @@ const questions = [
     },
     {
         question: "What is the founding member price?",
-        answer: `The first ${FOUNDING_MEMBER_LIMIT} businesses to join Pro pay ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, locked in for life. It includes everything in Pro, now and as Pro grows.`,
+        answer: `The first ${FOUNDING_MEMBER_LIMIT} businesses to join Pro pay ${plans.pro_founding_monthly.price} a month instead of ${plans.pro_monthly.price}, locked in for life, and start with ${freeFor(FOUNDING_TRIAL_DAYS)} free rather than ${freeFor(TRIAL_DAYS)}. It includes everything in Pro, now and as Pro grows.`,
     },
     {
         question: "What counts as a live offer?",
@@ -208,7 +210,9 @@ export default function BusinessPricingPage() {
 
                             <p className="mt-2 text-xl font-semibold text-[#17233B]">
                                 Pro for {plans.pro_founding_monthly.price} a
-                                month, locked in for life.
+                                month, locked in for life, with{" "}
+                                {freeFor(FOUNDING_TRIAL_DAYS)} free instead of{" "}
+                                {freeFor(TRIAL_DAYS)}.
                             </p>
 
                             <p className="mt-2 text-sm text-[#17233B]/70">
