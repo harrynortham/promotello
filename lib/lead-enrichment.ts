@@ -214,7 +214,15 @@ export function matchCompany(
 
 // A UK postcode, which is the anchor for everything below: find one and
 // the address is the line it sits on and the few before it.
-const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
+//
+// The letters are restricted to the ones Royal Mail actually uses, not
+// A-Z. [A-Z]{1,2}\d… also matches "Q1 2PS", and a crawled page produced
+// exactly that out of some minified script left on the page — which then
+// dragged four lines of junk in front of it onto an envelope. No real
+// postcode starts with Q, V or X, takes I, J or Z as its second letter,
+// or ends in C, I, K, M, O or V, so spelling that out costs nothing and
+// throws the false anchors away before anything is built on them.
+const POSTCODE = /\b([A-PR-UWYZ][A-HK-Y]?\d[A-HJKPSTUW\d]?)\s*(\d[ABD-HJLNP-UW-Z]{2})\b/i;
 
 export function postcodeFrom(text: string) {
     const match = POSTCODE.exec(text);
@@ -338,6 +346,13 @@ function fromText(html: string): string | null {
         // right beside the address, and "info@432studios.co.uk" came
         // through as the first line of one.
         if (/@|https?:|www\./i.test(part)) {
+            break;
+        }
+
+        // Nor does a street carry quotes or braces. Those belong to
+        // script or JSON that outlived the tag stripping above, and
+        // they are the shape the junk arrives in when it does.
+        if (/["{}[\]]/.test(part)) {
             break;
         }
 

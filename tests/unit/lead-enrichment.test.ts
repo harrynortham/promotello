@@ -168,6 +168,45 @@ test("a postcode is read whatever the spacing and case", () => {
     assert.equal(postcodeFrom("Call us on 0117 123 4567"), null);
 });
 
+test("letters Royal Mail never uses are not a postcode", () => {
+    // "Q1 2PS" came off a real page and anchored four lines of minified
+    // script onto an envelope. No postcode starts with Q, V or X.
+    assert.equal(postcodeFrom("Q1 2PS"), null);
+    assert.equal(postcodeFrom("V1 2PS"), null);
+    assert.equal(postcodeFrom("X1 2PS"), null);
+    // Nor takes I, J or Z second, nor ends in C, I, K, M, O or V.
+    assert.equal(postcodeFrom("BI7 8NU"), null);
+    assert.equal(postcodeFrom("BS7 8NC"), null);
+    // The ones that are real still read.
+    assert.equal(postcodeFrom("BS7 8NZ"), "BS7 8NZ");
+    assert.equal(postcodeFrom("N1 1AA"), "N1 1AA");
+    assert.equal(postcodeFrom("BS21 6RR"), "BS21 6RR");
+});
+
+test("script left on the page is not an address", () => {
+    // The whole failure, end to end: a false postcode anchoring quoted
+    // fragments, which is what reached the pipeline as a postal address.
+    const html = `
+        <footer>
+            <p>"fuiv1", "ra07b", "clorl", "fq8lb", Bristol, Q1 2PS</p>
+        </footer>`;
+
+    assert.equal(addressFromHtml(html), null);
+});
+
+test("quoted fragments beside a real postcode are left behind", () => {
+    const html = `
+        <footer>
+            <p>{"id": "x7"}, 240 Gloucester Road, Bristol, BS7 8NU</p>
+        </footer>`;
+
+    const found = addressFromHtml(html);
+
+    assert.ok(found, "the real address is still found");
+    assert.ok(!/[{}"]/.test(found!), `no script punctuation: ${found}`);
+    assert.match(found!, /240 Gloucester Road/);
+});
+
 test("a locality on its own is not an address worth posting to", () => {
     const html = `
         <script type="application/ld+json">

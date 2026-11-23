@@ -13,6 +13,20 @@ export const company = {
   supportEmail: "support@promotello.com",
 };
 
+// Registration with the Information Commissioner's Office. A UK controller
+// processing names, emails, birthdays and visit history has to register and
+// pay the data protection fee, and the reference belongs on the privacy
+// policy. It lapses on `expires` unless the fee is paid again, so that date
+// is here and not only on the certificate.
+export const ico = {
+  reference: "ZC305565",
+  registered: "2026-11-17",
+  expires: "2027-11-16",
+  tier: "Tier 1",
+  // Served from public/documents, linked from the privacy policy.
+  certificate: "/documents/ico-registration-zc305565.pdf",
+};
+
 // For legal pages: "Promotello Ltd, a company registered in England and
 // Wales (company number 17546946), whose registered office is at …".
 export function companyLine() {
