@@ -5,7 +5,7 @@ import {
     LegalDocument,
     type LegalSection,
 } from "@/components/legal-document";
-import { TRIAL_DAYS } from "@/lib/billing";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS } from "@/lib/billing";
 import { company, companyLine } from "@/lib/legal";
 
 export const metadata: Metadata = {
@@ -157,7 +157,9 @@ const sections: LegalSection[] = [
                 </p>
                 <p>
                     Paid plans start with a {TRIAL_DAYS}-day free trial, one per
-                    business. Starting one takes no card details. Add a card
+                    business, except the founding-member price, which starts
+                    with {FOUNDING_TRIAL_DAYS} days. Starting one takes no card
+                    details. Add a card
                     before the trial ends and the plan carries on, with the
                     first payment taken on that date; add nothing and the plan
                     stops on that date and you are charged nothing. There is
@@ -268,7 +270,7 @@ export default function TermsPage() {
         <LegalDocument
             title="Terms of service"
             description="The terms that apply when you use Promotello, as a customer or a business."
-            updatedAt="28 October 2026"
+            updatedAt="23 November 2026"
             version="1.0"
             summary={summary}
             sections={sections}
