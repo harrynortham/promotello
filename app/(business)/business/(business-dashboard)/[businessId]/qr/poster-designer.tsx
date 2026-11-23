@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
-import { isLoyaltyLayout, POSTER_LAYOUTS, QrPoster, type PosterLayout } from "@/components/qr-poster";
+import { isFollowLayout, isLoyaltyLayout, POSTER_LAYOUTS, QrPoster, type PosterLayout } from "@/components/qr-poster";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,27 +106,38 @@ export function PosterDesigner({
     // what is on screen is what comes out of the printer.
     const chosenOffer = offers.find((option) => option.id === target) ?? null;
     const chosenLoyalty = target === "loyalty" ? loyalty : null;
+    const follows = target === "follow";
 
     // What the poster says when the business hasn't written its own
     // words: the offer's, the card's, or the business page's.
-    const suggestedEyebrow = chosenLoyalty
-        ? `Collect ${chosenLoyalty.stamps_required} stamps`
-        : chosenOffer
-            ? "Exclusive offer"
-            : "Scan for offers";
+    const suggestedEyebrow = follows
+        ? "Follow us"
+        : chosenLoyalty
+            ? `Collect ${chosenLoyalty.stamps_required} stamps`
+            : chosenOffer
+                ? "Exclusive offer"
+                : "Scan for offers";
 
-    const suggestedHeadline = chosenLoyalty
-        ? `Get ${chosenLoyalty.reward.charAt(0).toLowerCase() + chosenLoyalty.reward.slice(1)}`
-        : chosenOffer
-            ? chosenOffer.discount
-            : `See what's on at ${businessName}`;
+    const suggestedHeadline = follows
+        ? "Be first to know"
+        : chosenLoyalty
+            ? `Get ${chosenLoyalty.reward.charAt(0).toLowerCase() + chosenLoyalty.reward.slice(1)}`
+            : chosenOffer
+                ? chosenOffer.discount
+                : `See what's on at ${businessName}`;
 
     const description = detail ?? chosenOffer?.description ?? chosenLoyalty?.terms ?? "";
 
-    // Four arrangements for anything, and two more that draw the card.
-    const layoutsOnOffer = POSTER_LAYOUTS.filter(
-        (option) => !("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty),
-    );
+    // Four arrangements for anything, two more that draw the card, and
+    // one that asks to be followed -- which is the only one offered on a
+    // follow code, because the rest promise offers instead.
+    const layoutsOnOffer = follows
+        ? POSTER_LAYOUTS.filter((option) => "forFollow" in option && option.forFollow)
+        : POSTER_LAYOUTS.filter(
+            (option) =>
+                !("forFollow" in option && option.forFollow) &&
+                (!("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty)),
+        );
 
     const width = PREVIEW_WIDTH;
 
@@ -203,13 +214,18 @@ export function PosterDesigner({
                             // nothing left to draw.
                             if (next === "loyalty") {
                                 setLayout("stamp_card");
-                            } else if (isLoyaltyLayout(layout)) {
+                            } else if (next === "follow") {
+                                // The other layouts all say "scan for
+                                // offers", which this sheet is not for.
+                                setLayout("follow");
+                            } else if (isLoyaltyLayout(layout) || isFollowLayout(layout)) {
                                 setLayout("classic");
                             }
                         }}
                         className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm"
                     >
                         <option value="business">Your business profile page</option>
+                        <option value="follow">Follow us: a scan puts them on your list</option>
                         {loyalty && (
                             <option value="loyalty">Loyalty card: {loyalty.name}</option>
                         )}
