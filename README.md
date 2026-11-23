@@ -404,10 +404,6 @@ most of stage 3 is guesswork until it is.
   `20261025100000_loyalty_cards.sql:364` is `last_stamped_at > now() -
   interval '10 minutes'`. A customer back at the counter eleven minutes later
   gets a second stamp. Either say ten minutes or enforce a visit.
-- **A business can hold several active loyalty cards.** Dublin Pub has four —
-  "A free coffee" twice, plus two pastry variants — and the business page shows
-  one of them without saying so. Decide whether more than one active card is
-  meant to be possible; if it is, the page has to let people choose.
 - **The "you're approved" notification tells you to add an offer** even when
   you already have one. `businessApproved()` in `lib/notifications.ts:85`
   hardcodes "Add an offer to give them a reason to come in", so a business
