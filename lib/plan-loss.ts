@@ -125,6 +125,17 @@ export function whatSurvives(standing: Standing): Consequence[] {
         });
     }
 
+    // The question a business actually asks on the way out, and the one
+    // nothing answered: the free coffee I promised somebody last week --
+    // am I about to make a liar of myself? No. A voucher already issued
+    // is the customer's, and nothing about the plan reaches it.
+    if (standing.tier === "growth") {
+        survives.push({
+            heading: "Gifts you have already sent still work",
+            body: "A welcome reward or a birthday treat sitting in somebody's inbox is theirs. Your staff can still scan it and it still counts, long after the automation that sent it has stopped.",
+        });
+    }
+
     survives.push({
         heading: "Nothing is deleted",
         body: "Come back and the paused offers go live again, the automations pick up where they left off, and your numbers are all still there.",

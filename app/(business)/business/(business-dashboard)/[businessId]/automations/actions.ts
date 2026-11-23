@@ -31,7 +31,14 @@ export async function saveAutomation(formData: FormData) {
         redirect(`${path}?error=terms#${kind}`);
     }
 
-    // RLS checks the caller is an admin, and that switching on needs Growth.
+    // RLS checks the caller is an admin. It does not check the plan, and
+    // nor does a trigger: what stops a business without Growth sending
+    // anything is issue_automation_vouchers, which only looks at
+    // followers of a business that business_has_growth() says yes to.
+    // So a row here may read "on" for a business that is not on Growth
+    // -- one that was, and dropped -- and nothing will go out. Those
+    // settings are kept on purpose, so coming back turns them on again
+    // exactly as they were.
     const { error } = await (await createClient()).from("business_automations").upsert({
         business_id: businessId,
         kind,
