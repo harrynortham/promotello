@@ -40,6 +40,10 @@ export type IssuedVoucher = {
     unsubscribe_token: string;
     terms: string | null;
     image_url: string | null;
+    // Looked up beside the vouchers rather than returned by the RPC:
+    // adding a column there means dropping and recreating a security
+    // definer function, which is worth avoiding for a logo.
+    business_logo_url?: string | null;
 };
 
 // No exclamation marks, the same as every other message we send
@@ -74,6 +78,10 @@ export function automationEmail(voucher: IssuedVoucher): Email {
     const unsubscribeUrl = absoluteUrl(`/unsubscribe/${voucher.unsubscribe_token}`);
 
     const { html, text } = brandedEmail({
+        // Whose gift this is, above everything: the reader followed them,
+        // not us. emailBusinessRow() stands initials in where there is no
+        // logo, so this is safe for a business that never uploaded one.
+        business: { name: voucher.business_name, logoUrl: voucher.business_logo_url },
         eyebrow: voucher.business_name,
         title,
         paragraphs: [intro, `Your reward: ${voucher.reward}.`, `Use it by ${until}.`],
@@ -113,6 +121,29 @@ export function automationEmail(voucher: IssuedVoucher): Email {
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
     };
+}
+
+// The logo for the row at the top of the email. One query for every
+// business in the batch rather than a lookup each, and a failure here
+// costs initials rather than the email.
+async function attachLogos(vouchers: IssuedVoucher[]) {
+    if (vouchers.length === 0) return;
+
+    const { data, error } = await createAdminClient()
+        .from("businesses")
+        .select("id, logo_url")
+        .in("id", [...new Set(vouchers.map((voucher) => voucher.business_id))]);
+
+    if (error) {
+        console.error("Automations: could not read business logos", error);
+        return;
+    }
+
+    const logos = new Map((data ?? []).map((row) => [row.id, row.logo_url]));
+
+    for (const voucher of vouchers) {
+        voucher.business_logo_url = logos.get(voucher.business_id) ?? null;
+    }
 }
 
 async function notifyAboutVouchers(vouchers: IssuedVoucher[]) {
@@ -156,6 +187,8 @@ export async function runAutomations(scope?: { businessId: string; userId: strin
     }
 
     const vouchers = (data ?? []) as IssuedVoucher[];
+
+    await attachLogos(vouchers);
 
     // Beside the email, and before it: the voucher is already theirs,
     // and a failed send must not be the reason nobody hears about it.
