@@ -168,7 +168,13 @@ export async function sendEmails(
 // don't show SVG), at twice its display size for sharp screens, with alt
 // text for apps that block images.
 export function emailLogoRow() {
-    return `<tr><td style="padding:0 0 4px"><img src="${absoluteUrl("/brand/promotello-email-logo.png")}" width="150" height="40" alt="Promotello" style="display:block;width:150px;height:auto;border:0;outline:none;text-decoration:none;color:#FF593F;font-size:20px;font-weight:700"></td></tr>`;
+    // The wordmark is navy, and a client in dark mode paints the shell
+    // behind it dark too — on #17233B the letters disappear completely
+    // and only the coral symbol survives. The stroke version carries a
+    // thin light outline that is invisible on white and on the brand
+    // cream, so one file serves both and nothing has to switch on a
+    // media query an email client may not honour.
+    return `<tr><td style="padding:0 0 4px"><img src="${absoluteUrl("/brand/promotello-email-logo-stroke.png")}" width="150" height="40" alt="Promotello" style="display:block;width:150px;height:auto;border:0;outline:none;text-decoration:none;color:#FF593F;font-size:20px;font-weight:700"></td></tr>`;
 }
 
 export function escapeHtml(value: string) {
