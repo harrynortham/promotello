@@ -6,7 +6,16 @@ import {
     offerEditReviewedEmail,
     offerReviewedEmail,
 } from "@/lib/business-review-emails";
-import { findReason } from "@/lib/review-reasons";
+import {
+    BUSINESS_REASONS,
+    BUSINESS_SUSPENSIONS,
+    findReason,
+    OFFER_REASONS,
+    OFFER_SUSPENSIONS,
+    type ReviewAction,
+    type ReviewOf,
+    type ReviewReason,
+} from "@/lib/review-reasons";
 
 // What a business reads when something is turned down.
 //
@@ -32,6 +41,42 @@ test("a declined business is told the cause and what to change", () => {
     // Somewhere to act, not only somewhere to ask.
     assert.ok(email.html.includes("/business/b-1/edit"), "straight to the profile");
     assert.ok(email.html.includes("business-declined"), "and the article that explains it");
+});
+
+// Every code, not one of each. The tests above prove the wiring for a
+// single reason, and the reason lists have their own tests for shape —
+// but nothing held the two together, so a reason could be added and
+// reach nobody. declineParts() drops any paragraph equal to the fix,
+// which is the kind of thing that eats a cause silently.
+test("every reason reaches the business in the email", () => {
+    const lists: [ReviewOf, ReviewAction, ReviewReason[]][] = [
+        ["business", "rejected", BUSINESS_REASONS],
+        ["offer", "rejected", OFFER_REASONS],
+        ["business", "suspended", BUSINESS_SUSPENSIONS],
+        ["offer", "suspended", OFFER_SUSPENSIONS],
+    ];
+
+    for (const [of_, action, reasons] of lists) {
+        for (const reason of reasons) {
+            const note = "What we saw when we looked.";
+            const review = { reason: reason.code, note };
+            const email =
+                of_ === "business"
+                    ? businessReviewedEmail(business, action, "owner@example.com", review)
+                    : offerReviewedEmail(offer, action, "owner@example.com", review);
+
+            const where = `${of_} ${action} ${reason.code}`;
+
+            // "Something else" has no stock sentence on purpose: the
+            // note is the whole message, which is why it is required.
+            if (reason.says !== "") {
+                assert.ok(email.text.includes(reason.says), `${where}: the cause is missing`);
+            }
+
+            assert.ok(email.text.includes(note), `${where}: the note is missing`);
+            assert.ok(email.text.includes(reason.fix), `${where}: what to do about it is missing`);
+        }
+    }
 });
 
 test("a declined offer goes to its own editor, because saving re-queues it", () => {
