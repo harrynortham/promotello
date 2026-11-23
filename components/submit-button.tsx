@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 type SubmitButtonProps = {
     children: React.ReactNode;
     pendingLabel: string;
-    variant?: "default" | "outline";
+    variant?: "default" | "outline" | "destructive";
     size?: "default" | "sm" | "lg";
     className?: string;
     name?: string;

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/submit-button";
 import { confirmsName } from "@/lib/close-business";
 import { closeBusiness } from "./actions";
 
@@ -152,9 +153,20 @@ export function CloseBusiness({
                                 Keep it open
                             </Button>
 
-                            <Button type="submit" variant="destructive" size="lg" disabled={!matches}>
+                            {/* Closing calls Stripe before it does
+                                anything else, so there is a wait with
+                                nothing to see. A plain button sat there
+                                looking unpressed, and the second press
+                                came back "already closed" — which is
+                                true, and reads like a failure. */}
+                            <SubmitButton
+                                pendingLabel="Closing…"
+                                variant="destructive"
+                                size="lg"
+                                disabled={!matches}
+                            >
                                 Close {businessName}
-                            </Button>
+                            </SubmitButton>
                         </DialogFooter>
                     </form>
                 </DialogContent>
