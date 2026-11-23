@@ -77,6 +77,18 @@ test("a business hears what happened to its page", () => {
         dedupeKey: "business:b-1:approved",
     });
 
+    // A business approved alongside its first offer was told to add one.
+    assert.equal(
+        businessApproved(business, true).body,
+        "Customers can find your page now. Put a QR poster in your window so passers-by can scan it.",
+        "with an offer already written, the nudge is the poster",
+    );
+    assert.equal(
+        businessApproved(business, true).dedupeKey,
+        businessApproved(business).dedupeKey,
+        "either way it is the same notification, so it is sent once",
+    );
+
     const no = businessRejected(business, { reason: "address", note: null });
     assert.equal(no.title, "We couldn't approve Dublin Pub yet");
     // It used to send them to the contact form: asking us was the only

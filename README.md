@@ -389,11 +389,6 @@ most of stage 3 is guesswork until it is.
   `20261025100000_loyalty_cards.sql:364` is `last_stamped_at > now() -
 interval '10 minutes'`. A customer back at the counter eleven minutes later
   gets a second stamp. Either say ten minutes or enforce a visit.
-- **The "you're approved" notification tells you to add an offer** even when
-  you already have one. `businessApproved()` in `lib/notifications.ts:85`
-  hardcodes "Add an offer to give them a reason to come in", so a business
-  approved alongside its first offer gets two notifications a minute apart that
-  contradict each other.
 
 **Should we add the new business to the approval queue before** business hours, logo and cover photo are added and send them a nudge email to add these before we can approve it? I fear we might miss some business and they will be stuck without approval. Or we tell them on the dashboard that these things b=must be added before we can review this business?
 

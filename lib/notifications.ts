@@ -78,11 +78,18 @@ function whyNot(of: ReviewOf, action: ReviewAction, review: Review | undefined, 
 // Reviews
 // ---------------------------------------------------------------------------
 
-export function businessApproved(business: Business): NotificationContent {
+// `hasOffer` is passed in rather than looked up, because nothing in
+// this file reads the database. A business approved alongside its first
+// offer was told to add one: two notifications a minute apart, the
+// second contradicting the first. Where there is already an offer the
+// next thing worth doing is a poster, so it says that instead.
+export function businessApproved(business: Business, hasOffer = false): NotificationContent {
     return {
         type: "business_approved",
         title: `${business.name} is live on Promotello`,
-        body: "Customers can find your page now. Add an offer to give them a reason to come in.",
+        body: hasOffer
+            ? "Customers can find your page now. Put a QR poster in your window so passers-by can scan it."
+            : "Customers can find your page now. Add an offer to give them a reason to come in.",
         href: `/business/${business.id}`,
         businessId: business.id,
         dedupeKey: `business:${business.id}:approved`,
