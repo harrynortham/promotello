@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { businessHasPro } from "@/lib/billing";
+import { followPromises } from "@/lib/follow-promises";
 import { qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
@@ -32,7 +33,7 @@ export async function loadDesigner(businessId: string) {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    const [{ data: offers }, { data: business }, { data: loyalty }, { count: codeCount }, hasPro, origin] = await Promise.all([
+    const [{ data: offers }, { data: business }, { data: loyalty }, { count: codeCount }, hasPro, origin, promises] = await Promise.all([
         supabase
             .from("offers")
             .select("id, title, discount, description, approval_status")
@@ -60,6 +61,9 @@ export async function loadDesigner(businessId: string) {
             .is("archived_at", null),
         businessHasPro(supabase, businessId),
         requestOrigin(),
+        // What a follow poster can honestly promise today, so the
+        // preview is the sheet that comes out of the printer.
+        followPromises(businessId),
     ]);
 
     const location = Array.isArray(business?.business_locations)
@@ -81,6 +85,7 @@ export async function loadDesigner(businessId: string) {
         isLive: business?.approval_status === "approved",
         codeCount: codeCount ?? 0,
         atFreeLimit: !hasPro && (codeCount ?? 0) >= 1,
+        promises,
         previewLink,
         previewSvg: await qrSvg(previewLink),
     };

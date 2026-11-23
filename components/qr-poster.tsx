@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { followReasons, type FollowPromises } from "@/lib/follow-reasons";
 import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
@@ -91,14 +92,7 @@ export const POSTER_LAYOUTS = [
     },
 ] as const;
 
-// What following is worth, in the order somebody standing in the shop
-// cares about. The same three the landing page lists, so the sheet and
-// the screen it opens say one thing.
-export const FOLLOW_REASONS = [
-    "A welcome reward, when they have one on",
-    "A treat on your birthday",
-    "An email whenever they post a new offer",
-] as const;
+export { followReasons, type FollowPromises } from "@/lib/follow-reasons";
 
 export type PosterLayout = (typeof POSTER_LAYOUTS)[number]["value"];
 
@@ -161,6 +155,9 @@ type PosterProps = {
     // The line under "Point your phone camera here". A claim and a
     // stamp card ask for different things.
     caption?: string | null;
+    // What this business can actually promise a follower, for the sheet
+    // that asks for one. Nothing is listed when nothing is true.
+    promises?: FollowPromises;
     // The loyalty card this code opens, for the layouts that draw one.
     // Its own colours, not the poster's: what is on the wall should be
     // what lands in their phone.
@@ -472,6 +469,7 @@ export function QrPoster(props: PosterProps) {
         headerColour,
         accentColour,
         layout,
+        promises,
         eyebrow,
         headline,
         detail,
@@ -549,7 +547,9 @@ export function QrPoster(props: PosterProps) {
                         poster; they read three lines of it, and these
                         are the three worth having. */}
                     <ul className="mt-[0.7em] space-y-[0.5em] text-left">
-                        {FOLLOW_REASONS.map((reason) => (
+                        {followReasons(
+                            promises ?? { emailsOffers: false, welcome: false, birthday: false },
+                        ).map((reason) => (
                             <li key={reason} className="flex items-start gap-[0.6em]">
                                 <span
                                     className="mt-[0.35em] inline-block shrink-0 rounded-full"

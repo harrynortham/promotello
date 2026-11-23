@@ -1,9 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
-import { isFollowLayout, isLoyaltyLayout, POSTER_LAYOUTS, QrPoster, type PosterLayout } from "@/components/qr-poster";
+import {
+    followReasons,
+    isFollowLayout,
+    isLoyaltyLayout,
+    POSTER_LAYOUTS,
+    QrPoster,
+    type FollowPromises,
+    type PosterLayout,
+} from "@/components/qr-poster";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +40,7 @@ export function PosterDesigner({
     logoUrl,
     offers,
     loyalty,
+    promises,
     previewSvg,
     previewLink,
     waitingForApproval = false,
@@ -67,6 +77,7 @@ export function PosterDesigner({
         card_accent: string | null;
         stamp_icon: string | null;
     } | null;
+    promises: FollowPromises;
     previewSvg: string;
     previewLink: string;
 }) {
@@ -107,6 +118,23 @@ export function PosterDesigner({
     const chosenOffer = offers.find((option) => option.id === target) ?? null;
     const chosenLoyalty = target === "loyalty" ? loyalty : null;
     const follows = target === "follow";
+    const promised = followReasons(promises);
+
+    // Named rather than listed as features: a business reading this is
+    // deciding whether the sheet is worth printing, not shopping.
+    const missing: string[] = [];
+
+    if (!promises.emailsOffers) {
+        missing.push("On Pro, every offer you publish is emailed to them.");
+    }
+
+    if (!promises.welcome || !promises.birthday) {
+        missing.push(
+            promises.emailsOffers
+                ? "On Growth, they also get a reward for following and a treat on their birthday."
+                : "On Growth they also get a reward for following and a treat on their birthday.",
+        );
+    }
 
     // What the poster says when the business hasn't written its own
     // words: the offer's, the card's, or the business page's.
@@ -167,6 +195,7 @@ export function PosterDesigner({
             }
             : null,
         qrMarkup: previewSvg,
+        promises,
         link: previewLink,
         colour,
         headerColour: custom?.header,
@@ -243,6 +272,50 @@ export function PosterDesigner({
                             );
                         })}
                     </select>
+
+                    {/* What a follower actually gets from this business
+                        today, and what they would get on a bigger plan.
+                        The sheet only prints what is true, so this is
+                        where the business finds out why a line it
+                        expected is not on it. */}
+                    {follows && (
+                        <div className="rounded-xl border border-[#17233B]/10 bg-[#FFF8F0] p-4 text-sm leading-6">
+                            <p className="font-medium text-[#17233B]">
+                                Following you means they hear from you without having to look.
+                            </p>
+
+                            {promised.length > 0 ? (
+                                <>
+                                    <p className="mt-2 text-[#17233B]/75">
+                                        Your poster promises{promised.length === 1 ? "" : ":"}
+                                    </p>
+                                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[#17233B]/75">
+                                        {promised.map((line) => (
+                                            <li key={line}>{line}</li>
+                                        ))}
+                                    </ul>
+                                </>
+                            ) : (
+                                <p className="mt-2 text-[#17233B]/75">
+                                    Right now the poster promises nothing, because nothing is sent
+                                    to your followers on Free. It still works: a scan puts them on
+                                    your list, and they hear from you the moment you move up.
+                                </p>
+                            )}
+
+                            {missing.length > 0 && (
+                                <p className="mt-3 text-[#17233B]/75">
+                                    {missing.join(" ")}{" "}
+                                    <Link
+                                        href={`/business/${businessId}/billing`}
+                                        className="font-medium text-[#FF593F] underline-offset-4 hover:underline"
+                                    >
+                                        See the plans
+                                    </Link>
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {offers.some((option) => option.approval_status === "pending") && (
                         <p className="text-xs leading-5 text-muted-foreground">

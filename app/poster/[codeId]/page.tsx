@@ -7,6 +7,7 @@ import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { QrPoster } from "@/components/qr-poster";
+import { followPromises } from "@/lib/follow-promises";
 import { PrintToolbar } from "./print-toolbar";
 import { posterSize, sheetSize } from "@/lib/poster-sizes";
 
@@ -87,7 +88,7 @@ async function Poster({ params, searchParams }: PageProps) {
         .from("qr_codes")
         .select(
             `
-                id, code, label, offer_id, loyalty_program_id, business_id, poster_colour, poster_layout, poster_header, poster_accent,
+                id, code, label, offer_id, loyalty_program_id, follows, business_id, poster_colour, poster_layout, poster_header, poster_accent,
                 poster_eyebrow, poster_headline, poster_description,
                 businesses ( name, logo_url, category, business_locations ( region, city ) )
             `,
@@ -132,10 +133,13 @@ async function Poster({ params, searchParams }: PageProps) {
             .maybeSingle()
         : Promise.resolve({ data: null });
 
-    const [{ data: offers }, { data: loyalty }, origin] = await Promise.all([
+    const [{ data: offers }, { data: loyalty }, origin, promises] = await Promise.all([
         offerQuery,
         loyaltyQuery,
         requestOrigin(),
+        // Only the sheet that asks to be followed lists them, and it
+        // lists what this business can actually do today.
+        qr.follows ? followPromises(qr.business_id) : Promise.resolve(undefined),
     ]);
     const offer = offers?.[0] ?? null;
     const link = qrLink(origin, qr.code);
@@ -221,6 +225,7 @@ async function Poster({ params, searchParams }: PageProps) {
                                 : null)
                         }
                         eyebrowFallback={loyalty ? `Collect ${loyalty.stamps_required} stamps` : null}
+                        promises={promises}
                         card={
                             loyalty
                                 ? {

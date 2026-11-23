@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardGridLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
+import { followPromises } from "@/lib/follow-promises";
 import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
@@ -104,7 +105,7 @@ async function QrContent({ params, searchParams }: PageProps) {
     const canManage = ["owner", "admin"].includes(membership.role);
     const { since30, since7, today } = scanWindows();
 
-    const [{ data: codes }, { data: offers }, { data: business }, { data: loyalty }, hasPro, origin] = await Promise.all([
+    const [{ data: codes }, { data: offers }, { data: business }, { data: loyalty }, hasPro, origin, promises] = await Promise.all([
         supabase
             .from("qr_codes")
             .select(
@@ -138,6 +139,7 @@ async function QrContent({ params, searchParams }: PageProps) {
             .maybeSingle(),
         businessHasPro(supabase, businessId),
         requestOrigin(),
+        followPromises(businessId),
     ]);
 
     const allCodes = (codes ?? []) as unknown as QrCode[];
@@ -302,6 +304,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 logoUrl={business?.logo_url}
                                 offers={offers ?? []}
                                 loyalty={loyalty}
+                                promises={promises}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
                                 waitingForApproval={!isLive}

@@ -6,8 +6,9 @@ import { FiCheckCircle, FiGift, FiMail, FiStar } from "react-icons/fi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FOLLOW_REASONS } from "@/components/qr-poster";
+import { followReasons } from "@/components/qr-poster";
 import { runAutomations } from "@/lib/automations";
+import { followPromises } from "@/lib/follow-promises";
 import { storedImage } from "@/lib/images";
 import { businessPath } from "@/lib/slugs";
 import { createClient } from "@/utils/supabase/server";
@@ -22,10 +23,9 @@ type PageProps = { params: Promise<{ businessId: string }> };
 
 const uuid = /^[0-9a-f-]{36}$/i;
 
-// The words come from the poster, so the sheet somebody scanned and the
-// page it opens say the same three things in the same order.
-const icons = [FiGift, FiStar, FiMail];
-const reasons = FOLLOW_REASONS.map((text, index) => ({ text, icon: icons[index] }));
+// Drawn from the same function as the poster, so the sheet somebody
+// scanned and the page it opens promise the same things -- and promise
+// nothing this business cannot do.
 
 async function FollowView({ params }: PageProps) {
     await connection();
@@ -47,9 +47,12 @@ async function FollowView({ params }: PageProps) {
         return <Gone />;
     }
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const [{ data: { user } }, promises] = await Promise.all([
+        supabase.auth.getUser(),
+        followPromises(business.id),
+    ]);
+
+    const reasons = followReasons(promises);
 
     // No account, no follow: business_followers is keyed to a user. The
     // poster still did its job, so this says what is on the other side
@@ -60,7 +63,7 @@ async function FollowView({ params }: PageProps) {
         return (
             <Card business={business}>
                 <h1 className="mt-5 text-3xl font-semibold tracking-tight">Follow {business.name}</h1>
-                <Reasons />
+                <Reasons reasons={reasons} />
 
                 <div className="mt-7 space-y-3">
                     <Button
@@ -135,7 +138,7 @@ async function FollowView({ params }: PageProps) {
                         {existing ? "You already follow them" : "You're following"}
                     </p>
                     <h1 className="mt-3 text-3xl font-semibold tracking-tight">{business.name}</h1>
-                    <Reasons />
+                    <Reasons reasons={reasons} />
                 </>
             )}
 
@@ -167,10 +170,18 @@ async function FollowView({ params }: PageProps) {
     );
 }
 
-function Reasons() {
+const icons = [FiGift, FiStar, FiMail];
+
+function Reasons({ reasons }: { reasons: string[] }) {
+    // Nothing true to say, on Free with no automations: better a short
+    // page than three lines the business cannot keep.
+    if (reasons.length === 0) {
+        return null;
+    }
+
     return (
         <ul className="mt-6 space-y-3">
-            {reasons.map((reason) => (
+            {reasons.map((text, index) => ({ text, icon: icons[index] })).map((reason) => (
                 <li key={reason.text} className="flex items-start gap-3">
                     <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#FF593F]/10 text-[#FF593F]">
                         <reason.icon aria-hidden="true" className="size-3.5" />
