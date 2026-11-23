@@ -168,7 +168,7 @@ export const priceSheet = {
     heading: "What you get, and what it costs",
     blurb:
         "One price, every month, no commission on anything you sell. Cancel whenever you like and the page stays up.",
-    note: "Prices per shop, per month, VAT included. Yearly is two months free.",
+    note: "Prices per shop, per month. No VAT \u2014 we're not VAT registered. Yearly is two months free.",
 };
 
 export const reportSheet = {

@@ -334,8 +334,8 @@ export default function BusinessPricingPage() {
                                 </Button>
 
                                 <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-                                    Card required. You won&apos;t be charged
-                                    until your trial ends.
+                                    No card needed. Nothing is charged
+                                    unless you add one before the trial ends.
                                 </p>
 
                                 <Separator className="my-7" />
@@ -394,8 +394,8 @@ export default function BusinessPricingPage() {
                                 </Button>
 
                                 <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">
-                                    Card required. You won&apos;t be charged
-                                    until your trial ends.
+                                    No card needed. Nothing is charged
+                                    unless you add one before the trial ends.
                                 </p>
 
                                 <Separator className="my-7" />
