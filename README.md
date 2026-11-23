@@ -379,13 +379,7 @@ most of stage 3 is guesswork until it is.
 
 **Put border around logo** for dark mode emails
 
-**Test google review feature**
-
 **Test automations feature**How ca
-
-
-
-**Check offer and business page** reject reason options and supporting documents in helo cnetre.
 
 -- Apply apply apple developer account for the oneclick oauth
 
