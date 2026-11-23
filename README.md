@@ -365,7 +365,15 @@ most of stage 3 is guesswork until it is.
 2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
    the legal gate, the preview tooling and the copy are all finished.
 
-3. Check pricing on billing page is correct
+3. **The marketing undersells the trial.** The billing page and the dashboard
+   ask `trialOnOffer()` and say three months while founding places remain. The
+   pricing page, the features page, why-promotello and `llms.txt` all use the
+   raw `TRIAL_DAYS` and say one month — so the pages doing the selling are the
+   ones hiding the better half of the offer. It is not a find-and-replace:
+   Growth really is one month, so the sentence has to carry two numbers the way
+   the billing page's does. `app/legal/refunds` and `app/legal/terms` state the
+   flat 30 days as well, which for a founding member is wrong rather than
+   merely shy — and changing those means bumping the document's date.
 
 ### Stage 2 — True before you email a single business
 

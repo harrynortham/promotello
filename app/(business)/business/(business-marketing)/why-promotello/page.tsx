@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TRIAL_DAYS, freeFor } from "@/lib/billing";
+import { FOUNDING_MEMBER_LIMIT, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
@@ -175,20 +175,21 @@ export default function WhyPromotelloPage() {
                         />
                         <Plan
                             name="Pro"
-                            price="£24"
+                            price={plans.pro_monthly.price}
                             note={`a month · ${freeFor(TRIAL_DAYS)} free trial`}
                             highlight
                             features={["Unlimited live offers", "Digital loyalty cards", "QR posters for every spot", "Followers emailed every new offer", "Google review prompts"]}
                         />
                         <Plan
                             name="Growth"
-                            price="£39"
+                            price={plans.growth_monthly.price}
                             note={`a month · ${freeFor(TRIAL_DAYS)} free trial`}
                             features={["Everything in Pro", "Welcome, birthday and win-back emails", "Quiet hours enforced when scanned", "Monthly value report"]}
                         />
                     </div>
                     <p className="mt-3 text-sm text-[#17233B]/70">
-                        Founding members: the first 50 businesses pay £19 a month for Pro, locked for life.
+                        Founding members: the first {FOUNDING_MEMBER_LIMIT} businesses pay{" "}
+                        {plans.pro_founding_monthly.price} a month for Pro, locked for life.
                     </p>
                 </section>
 

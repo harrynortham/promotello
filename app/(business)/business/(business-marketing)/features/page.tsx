@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TRIAL_DAYS, freeFor } from "@/lib/billing";
+import { TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import Link from "next/link";
 
 import { Eyebrow, FeatureSection, FinalCta, PrimaryActions } from "@/components/business-marketing";
@@ -222,7 +222,8 @@ export default async function FeaturesPage() {
                 <Eyebrow>Plans</Eyebrow>
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">What&apos;s in each plan</h2>
                 <p className="mt-3 text-lg text-[#17233B]/70">
-                    Free to start. Pro is {"£24"} a month and Growth is {"£39"}, both with a {freeFor(TRIAL_DAYS)} free trial.{" "}
+                    Free to start. Pro is {plans.pro_monthly.price} a month and Growth is{" "}
+                    {plans.growth_monthly.price}, both with a {freeFor(TRIAL_DAYS)} free trial.{" "}
                     <Link href="/business/pricing" className="font-medium text-[#FF593F] underline underline-offset-4">
                         See pricing
                     </Link>
