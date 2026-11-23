@@ -299,6 +299,21 @@ export function declineSummary(
     return written ?? reason.says;
 }
 
+// The same sentence, for a page rather than an inbox.
+//
+// Every `fix` is written for the email it is sent in, where "reply to
+// this email" is the lowest-friction thing a business can do. The help
+// articles are built from these same lists so the two cannot disagree
+// — but on a web page there is no email to reply to, and four of these
+// sentences said so anyway.
+export function fixOnAPage(fix: string) {
+    return fix
+        .replace(/^Reply to this email and tell us/, "Get in touch and tell us")
+        .replace(/^Reply to this email whenever/, "Get in touch whenever")
+        .replace(/^Reply to this email if/, "Get in touch if")
+        .replace(/^Reply to this email and/, "Get in touch and");
+}
+
 export function helpAnchor(of: ReviewOf, action: ReviewAction) {
     return `/business/help#${action === "suspended" ? HELP_ANCHORS.suspended : HELP_ANCHORS[of]}`;
 }

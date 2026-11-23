@@ -7,6 +7,7 @@ import HelpCentre, {
 import {
     BUSINESS_REASONS,
     BUSINESS_SUSPENSIONS,
+    fixOnAPage,
     HELP_ANCHORS,
     OFFER_REASONS,
     OFFER_SUSPENSIONS,
@@ -150,7 +151,7 @@ const guides: HelpGuide[] = [
             {
                 title: "The reasons we turn a business down",
                 items: BUSINESS_REASONS.filter((reason) => reason.says !== "").map(
-                    (reason) => `${reason.says} ${reason.fix}`,
+                    (reason) => `${reason.says} ${fixOnAPage(reason.fix)}`,
                 ),
             },
         ],
@@ -173,7 +174,7 @@ const guides: HelpGuide[] = [
             {
                 title: "The reasons we turn an offer down",
                 items: OFFER_REASONS.filter((reason) => reason.says !== "").map(
-                    (reason) => `${reason.says} ${reason.fix}`,
+                    (reason) => `${reason.says} ${fixOnAPage(reason.fix)}`,
                 ),
             },
         ],

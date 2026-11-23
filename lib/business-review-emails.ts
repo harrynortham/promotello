@@ -161,7 +161,10 @@ export function businessReviewedEmail(
         footerLinks: parts.footerLinks,
     });
 
-    return { to, subject: `About ${business.name} on Promotello`, html, text };
+    // The offer decline says what happened in its subject; this one said
+    // "About…", which is what a bank writes before bad news and tells a
+    // business nothing while they are scanning an inbox.
+    return { to, subject: `We couldn't approve ${business.name} yet`, html, text };
 }
 
 type OfferForEmail = {
