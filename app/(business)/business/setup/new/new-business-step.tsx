@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { requiredText } from "@/lib/validation";
 import { setupSteps } from "@/lib/setup-steps";
 import { createClient } from "@/utils/supabase/client";
+import Link from "next/link";
 import { welcomeNewBusiness } from "@/app/(business)/onboarding/actions";
 import { SetupShell } from "../setup-shell";
 
@@ -38,6 +39,14 @@ const schema = z
     );
 
 type Values = z.infer<typeof schema>;
+
+type UnclaimedPage = {
+    page_name: string;
+    page_slug: string;
+    page_address: string | null;
+    page_area: string | null;
+    page_city: string | null;
+};
 
 // Nothing is done yet, and nothing can be: the steps are shown so the
 // shape of what's coming is visible, but there is no business to jump
@@ -64,6 +73,11 @@ export function NewBusinessStep({
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [name, setName] = useState("");
 
+    // A page we built for them before they ever heard of us
+    // (20270310090000). Held rather than acted on: we are guessing from
+    // a name, and the person who knows is the one typing it.
+    const [maybeTheirs, setMaybeTheirs] = useState<UnclaimedPage[] | null>(null);
+
     const {
         register,
         handleSubmit,
@@ -81,6 +95,27 @@ export function NewBusinessStep({
         setErrorMessage("");
 
         const client = createClient();
+
+        // Ask before making a second page for a shop that already has
+        // one. Pages first means the page they are about to duplicate is
+        // public, picking up search traffic, and the one thing standing
+        // between them and a declined listing a week from now.
+        //
+        // Only once: if they say it is a different business, it is a
+        // different business, and a flow that keeps asking is a flow
+        // that calls them a liar.
+        if (maybeTheirs === null) {
+            const { data: pages } = await client.rpc("unclaimed_pages_like", {
+                search_name: values.businessName,
+            });
+
+            if ((pages ?? []).length > 0) {
+                setMaybeTheirs(pages as UnclaimedPage[]);
+                return;
+            }
+
+            setMaybeTheirs([]);
+        }
 
         // Theirs before the business is theirs: every email from here
         // on is addressed to a person, and this is the only screen that
@@ -163,6 +198,61 @@ export function NewBusinessStep({
                             </div>
                         )}
 
+                        {/* We think we have already built this one a
+                            page. Shown instead of making a second, with
+                            the way out underneath for the pub on the
+                            next road with the same name. */}
+                        {maybeTheirs !== null && maybeTheirs.length > 0 && (
+                            <div className="rounded-xl border border-[#FF593F]/30 bg-[#FF593F]/[0.04] p-5">
+                                <p className="font-semibold">
+                                    {maybeTheirs.length === 1
+                                        ? "We may already have a page for this"
+                                        : "We may already have a page for one of these"}
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-[#17233B]/70">
+                                    We build pages for local businesses before they join. If one of
+                                    these is you, claim it rather than starting again: it is already
+                                    public, and everything on it becomes yours to change.
+                                </p>
+
+                                <ul className="mt-4 space-y-3">
+                                    {maybeTheirs.map((page) => (
+                                        <li
+                                            key={page.page_slug}
+                                            className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white px-4 py-3"
+                                        >
+                                            <div className="min-w-0">
+                                                <p className="font-medium">{page.page_name}</p>
+                                                <p className="truncate text-sm text-[#17233B]/65">
+                                                    {[page.page_address, page.page_area, page.page_city]
+                                                        .filter(Boolean)
+                                                        .join(", ")}
+                                                </p>
+                                            </div>
+
+                                            <Button
+                                                render={
+                                                    <Link
+                                                        href={`/businesses/${page.page_slug}#claim`}
+                                                        target="_blank"
+                                                    />
+                                                }
+                                                nativeButton={false}
+                                                size="sm"
+                                            >
+                                                That&apos;s us, claim it
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <p className="mt-4 text-sm text-[#17233B]/65">
+                                    {maybeTheirs.length === 1 ? "Not you?" : "None of them you?"}{" "}
+                                    Carry on below and we&apos;ll set up a new one.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <Label htmlFor="businessName">Business name</Label>
 
@@ -175,7 +265,13 @@ export function NewBusinessStep({
                                 readOnly={busy}
                                 {...register("businessName", {
                                     // The page beside this takes the name as they type it.
-                                    onChange: (event) => setName(event.target.value),
+                                    // Changing it also asks the duplicate question again: a
+                                    // different name is a different question, and the answer
+                                    // to the last one was about a different shop.
+                                    onChange: (event) => {
+                                        setName(event.target.value);
+                                        setMaybeTheirs(null);
+                                    },
                                 })}
                                 {...invalidProps("businessName-error", errors.businessName)}
                             />
@@ -235,7 +331,11 @@ export function NewBusinessStep({
 
                     <div className="mt-6">
                         <Button type="submit" size="lg" disabled={busy}>
-                            {busy ? "Adding your business…" : "Add my business"}
+                            {busy
+                                ? "Adding your business…"
+                                : maybeTheirs !== null && maybeTheirs.length > 0
+                                    ? "Mine's a different business"
+                                    : "Add my business"}
                             <FiArrowRight aria-hidden="true" />
                         </Button>
                     </div>
