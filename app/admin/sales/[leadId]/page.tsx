@@ -26,6 +26,7 @@ import { JumpToField } from "@/components/jump-to-field";
 import { SavingForm } from "@/components/saving-form";
 import { SubmitButton } from "@/components/submit-button";
 import { businessPath } from "@/lib/slugs";
+import { whyNotIndexed } from "@/lib/indexing";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CopyButton } from "@/components/copy-button";
 import { LetterCard } from "./letter-card";
@@ -64,6 +65,7 @@ import {
     saveLeadDetails,
     saveLeadNotes,
     declinePageClaim,
+    fillInLeadPage,
     publishLeadPage,
     releasePageClaim,
     saveLeadPreviewSamples,
@@ -94,6 +96,7 @@ type PageProps = {
         already?: string;
         undeletable?: string;
         confirm?: string;
+        filled?: string;
         saved?: string;
         queued?: string;
         moved?: string;
@@ -125,7 +128,7 @@ async function Lead({ params, searchParams }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
-    const { already, undeletable, confirm, saved, queued, moved, crawled, error } = await searchParams;
+    const { already, undeletable, confirm, saved, queued, moved, crawled, filled, error } = await searchParams;
     const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
@@ -209,7 +212,7 @@ async function Lead({ params, searchParams }: PageProps) {
     const { data: previewBusiness } = lead.preview_business_id
         ? await supabase
               .from("businesses")
-              .select("slug, listed_at, approval_status, description")
+              .select("slug, listed_at, approval_status, description, business_hours ( day_of_week )")
               .eq("id", lead.preview_business_id)
               .maybeSingle()
         : { data: null };
@@ -225,6 +228,17 @@ async function Lead({ params, searchParams }: PageProps) {
 
     const livePage = previewBusiness?.listed_at
         ? absoluteUrl(businessPath({ slug: previewBusiness.slug }))
+        : null;
+
+    // Why a published page is being kept out of Google, if it is. Ten
+    // pages with a name and a map between them is thin, and thin is
+    // judged site-wide (lib/indexing.ts).
+    const thin = previewBusiness
+        ? whyNotIndexed({
+            unclaimed: previewBusiness.approval_status !== "approved",
+            description: previewBusiness.description,
+            hasHours: (previewBusiness.business_hours ?? []).length > 0,
+        })
         : null;
 
     // The two emails as they stand today, so they can be read before
@@ -323,6 +337,14 @@ async function Lead({ params, searchParams }: PageProps) {
                                 : saved === "claim_declined"
                                     ? "Closed. Nothing was sent — write to them yourself if they are owed an answer."
                                     : "Saved."}
+                </p>
+            )}
+
+            {filled && (
+                <p className="mt-4 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
+                    {filled === "nothing"
+                        ? "Read their site and found no published hours. Nothing was changed."
+                        : `Read their site and filled in ${filled}.`}
                 </p>
             )}
 
@@ -897,6 +919,39 @@ async function Lead({ params, searchParams }: PageProps) {
                                                     category and map only: no offer or card can show until they
                                                     claim it.
                                                 </p>
+
+                                                {thin ? (
+                                                    <div className="mt-3 rounded-lg bg-[#FFF4E8] px-3 py-2.5">
+                                                        <p className="text-xs font-medium">
+                                                            Not in Google yet: it needs {thin}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-[#17233B]/60">
+                                                            The page works and is in the directory. It carries a
+                                                            noindex and stays out of the sitemap until there is
+                                                            enough on it to be worth a click.
+                                                        </p>
+
+                                                        <form action={fillInLeadPage} className="mt-2">
+                                                            <input type="hidden" name="leadId" value={lead.id} />
+                                                            <input
+                                                                type="hidden"
+                                                                name="businessId"
+                                                                value={lead.preview_business_id ?? ""}
+                                                            />
+                                                            <SubmitButton
+                                                                pendingLabel="Reading their site…"
+                                                                variant="outline"
+                                                                size="sm"
+                                                            >
+                                                                Fill it in from their site
+                                                            </SubmitButton>
+                                                        </form>
+                                                    </div>
+                                                ) : (
+                                                    <p className="mt-2 text-xs text-[#17233B]/55">
+                                                        Enough on it to be indexed, and in the sitemap.
+                                                    </p>
+                                                )}
 
                                                 {!preview.claimed_at && (
                                                     <form action={unpublishLeadPage} className="mt-3">
