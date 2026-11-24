@@ -337,3 +337,70 @@ test("the guarantee comes before the founding price", () => {
 
     assert.ok(body.indexOf("take my word") < body.indexOf("first 50 businesses"));
 });
+
+// --- Once the page is live ------------------------------------------
+//
+// Pages first (20270307090000) put the page up before the email goes.
+// Everything above still has to be true of a lead whose page has not
+// been published, which is why the fixture at the top has no listed_at
+// and why these use their own.
+
+const livePreview = {
+    ...preview,
+    businesses: {
+        ...preview.businesses,
+        slug: "little-loaf-gloucester-road-bristol-ab12cd",
+        listed_at: "2026-11-24T09:00:00.000Z",
+    },
+} as typeof preview;
+
+const liveEmail = (over: Partial<Parameters<typeof outreachMessage>[0]> = {}) =>
+    outreachMessage({ preview: livePreview, placesLeft: 38, contactName: "Sam", ...over });
+
+test("the subject says the page is live rather than offering a preview", () => {
+    assert.equal(outreachSubject(livePreview), "I built Little Loaf a page, and it's live");
+    assert.equal(outreachSubject(preview), "Little Loaf, I built you a preview");
+});
+
+test("the email points at the public page, not only the claim link", () => {
+    const body = liveEmail();
+
+    assert.match(body, /\/businesses\/little-loaf-gloucester-road-bristol-ab12cd/);
+    assert.match(body, /already live/);
+});
+
+test("it still carries the claim link, which is the one that needs no request", () => {
+    assert.match(liveEmail(), /no form to fill in/);
+    assert.match(liveEmail(), /11111111-2222-3333-4444-555555555555/);
+});
+
+// The sentence pages first made false. They are on the directory page
+// already; claiming is what gets them the controls.
+test("it does not promise the directory listing they already have", () => {
+    const body = liveEmail();
+
+    assert.doesNotMatch(body, /Claim it and you're on the Gloucester Road page/);
+    assert.match(body, /already on the Gloucester Road page/);
+});
+
+test("it says the page is public whether or not they claim it", () => {
+    assert.match(liveEmail(), /public whether or not you claim it/);
+    assert.match(liveEmail(), /take it down/);
+});
+
+test("an unpublished lead still gets the preview wording, every word of it", () => {
+    const body = email();
+
+    assert.match(body, /I've built a preview of Little Loaf/);
+    assert.match(body, /The preview is private/);
+    assert.match(body, /Claim it and you're on the Gloucester Road page/);
+    assert.doesNotMatch(body, /already live/);
+});
+
+test("the follow-up says the page is up and unclaimed", () => {
+    const chased = outreachFollowUp({ preview: livePreview, placesLeft: 38, contactName: "Sam" });
+
+    assert.match(chased, /page is up and still unclaimed/);
+    assert.match(chased, /take it down/);
+    assert.doesNotMatch(chased, /Your preview of Little Loaf is still waiting/);
+});
