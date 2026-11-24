@@ -1119,6 +1119,33 @@ export async function unpublishLeadPage(formData: FormData) {
     redirect(`/admin/sales/${leadId}?saved=page_unpublished`);
 }
 
+// A street, not a page at a time. list_lead_pages() publishes every
+// unclaimed page that is ready and hands back a row per business, so
+// what went up and what was skipped can be said by name rather than as
+// a number.
+export async function publishEveryLeadPage() {
+    const supabase = await adminClient();
+
+    const { data, error } = await supabase.rpc("list_lead_pages");
+
+    if (error) {
+        redirect(`/admin/sales?error=${encodeURIComponent(error.message)}`);
+    }
+
+    const rows = (data ?? []) as { lead_name: string; published: boolean; reason: string | null }[];
+    const published = rows.filter((row) => row.published);
+    const skipped = rows.filter((row) => !row.published);
+
+    revalidatePath("/admin/sales");
+    revalidatePath("/businesses");
+
+    redirect(
+        `/admin/sales?published=${published.length}&skipped=${encodeURIComponent(
+            skipped.map((row) => row.lead_name).join(", "),
+        )}`,
+    );
+}
+
 // Somebody found a page we published and says it is theirs. Releasing it
 // mints a fresh token and emails the claim link to the address on the
 // request — never to whoever happens to be signed in, and never to the
