@@ -7,38 +7,50 @@ const long = "A corner pub on Gloucester Road with six cask lines, a back garden
 const short = "A corner pub on Gloucester Road.";
 
 test("a claimed business is indexed however short it kept its page", () => {
-    assert.equal(worthIndexing({ unclaimed: false, description: short, hasHours: false }), true);
-    assert.equal(worthIndexing({ unclaimed: false, description: null, hasHours: false }), true);
+    assert.equal(worthIndexing({ unclaimed: false, description: short, hasAddress: false }), true);
+    assert.equal(worthIndexing({ unclaimed: false, description: null, hasAddress: false }), true);
 });
 
-test("an unclaimed page needs both the words and the hours", () => {
-    assert.equal(worthIndexing({ unclaimed: true, description: long, hasHours: true }), true);
-    assert.equal(worthIndexing({ unclaimed: true, description: long, hasHours: false }), false);
-    assert.equal(worthIndexing({ unclaimed: true, description: short, hasHours: true }), false);
-    assert.equal(worthIndexing({ unclaimed: true, description: null, hasHours: true }), false);
+test("an unclaimed page needs words somebody wrote and somewhere to go", () => {
+    assert.equal(worthIndexing({ unclaimed: true, description: long, hasAddress: true }), true);
+    assert.equal(worthIndexing({ unclaimed: true, description: long, hasAddress: false }), false);
+    assert.equal(worthIndexing({ unclaimed: true, description: short, hasAddress: true }), false);
+    assert.equal(worthIndexing({ unclaimed: true, description: null, hasAddress: true }), false);
 });
 
 test("whitespace is not a description", () => {
     const padded = " ".repeat(ENOUGH_DESCRIPTION + 10);
 
-    assert.equal(worthIndexing({ unclaimed: true, description: padded, hasHours: true }), false);
+    assert.equal(worthIndexing({ unclaimed: true, description: padded, hasAddress: true }), false);
 });
 
 test("it says what is missing, for the admin page", () => {
     assert.equal(
-        whyNotIndexed({ unclaimed: true, description: short, hasHours: false }),
-        "a longer description and opening hours",
+        whyNotIndexed({ unclaimed: true, description: short, hasAddress: false }),
+        "a longer description and an address",
     );
-    assert.equal(whyNotIndexed({ unclaimed: true, description: long, hasHours: false }), "opening hours");
-    assert.equal(whyNotIndexed({ unclaimed: true, description: long, hasHours: true }), null);
-    assert.equal(whyNotIndexed({ unclaimed: false, description: null, hasHours: false }), null);
+    assert.equal(whyNotIndexed({ unclaimed: true, description: long, hasAddress: false }), "an address");
+    assert.equal(whyNotIndexed({ unclaimed: true, description: long, hasAddress: true }), null);
+    assert.equal(whyNotIndexed({ unclaimed: false, description: null, hasAddress: false }), null);
 });
 
-// The Blue Lagoon's description was 30 characters on the day this was
-// written, and Google should not be asked to rank that.
-test("the live example that prompted this", () => {
-    assert.equal(
-        worthIndexing({ unclaimed: true, description: "A cafe and bar on Gloucester Rd", hasHours: true }),
-        false,
-    );
+// Opening hours were a requirement here until the first ten pages went
+// looking for some and not one of the eight businesses with a website
+// published any. A bar nothing can clear is an off switch, not a gate.
+test("hours are not required, because none of these businesses publish them", () => {
+    assert.equal(worthIndexing({ unclaimed: true, description: long, hasAddress: true }), true);
+});
+
+// The two live pages that should stay out, and the eight that should not.
+test("the live examples that decided the threshold", () => {
+    const blueLagoon = "A cafe and bar on Gloucester Rd";
+    const superStar = "A chip shop on Gloucester Road doing cod, haddock and the usual sides, open into the evening.";
+
+    assert.equal(blueLagoon.length < ENOUGH_DESCRIPTION, true);
+    assert.equal(superStar.length < ENOUGH_DESCRIPTION, true);
+    assert.equal(worthIndexing({ unclaimed: true, description: blueLagoon, hasAddress: true }), false);
+    assert.equal(worthIndexing({ unclaimed: true, description: superStar, hasAddress: true }), false);
+
+    // The Drapers Arms, at 246 characters, is the shape that passes.
+    assert.equal(worthIndexing({ unclaimed: true, description: long, hasAddress: true }), true);
 });

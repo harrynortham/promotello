@@ -130,7 +130,7 @@ export async function generateMetadata({
     const { data: business } = await createPublicClient()
         .from("businesses")
         .select(
-            "id, slug, name, category, description, logo_url, is_sample, approval_status, business_locations ( city, region ), business_hours ( day_of_week )",
+            "id, slug, name, category, description, logo_url, is_sample, approval_status, business_locations ( city, region )",
         )
         .eq("slug", slug)
         .maybeSingle();
@@ -187,7 +187,7 @@ export async function generateMetadata({
             : worthIndexing({
                 unclaimed,
                 description: business.description,
-                hasHours: (business.business_hours ?? []).length > 0,
+                hasAddress: Boolean(location),
             })
                 ? undefined
                 : { index: false, follow: true },

@@ -80,7 +80,7 @@ async function getPublicListings() {
         // it, so the sitemap has to leave it out itself.
         supabase
             .from("businesses")
-            .select("slug, updated_at, approval_status, description, business_hours ( day_of_week )")
+            .select("slug, updated_at, approval_status, description, business_locations ( city )")
             .eq("is_sample", false)
             .is("closed_at", null),
         supabase
@@ -95,7 +95,7 @@ async function getPublicListings() {
             worthIndexing({
                 unclaimed: business.approval_status !== "approved",
                 description: business.description,
-                hasHours: (business.business_hours ?? []).length > 0,
+                hasAddress: (business.business_locations ?? []).length > 0,
             }),
         ),
         offers,

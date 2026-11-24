@@ -1136,18 +1136,34 @@ export async function fillInLeadPage(formData: FormData) {
         if (!error) found.push("opening hours");
     }
 
+    // Which of the four it was, not just that it was none of them. The
+    // first version said "their site publishes no hours" whatever had
+    // happened, so a site that was down and a site that had never
+    // listed its hours read identically — and one of those is worth
+    // trying again tomorrow.
+    const why = hours.hours
+        ? null
+        : {
+            no_website: "we have no website for them",
+            blocked: "their robots.txt asks us not to read it",
+            unreachable: "their site did not answer",
+            not_published: "their site does not publish its hours",
+        }[hours.reason];
+
     await record(
         supabase,
         leadId,
         "note",
         found.length > 0
-            ? `Filled the page in from their own site: ${found.join(" and ")}.`
-            : "Nothing to fill the page in with: their site publishes no hours.",
+            ? `Filled the page in from their own site: ${found.join(" and ")}.${why ? ` No hours: ${why}.` : ""}`
+            : `Nothing to fill the page in with: ${why ?? "nothing new to add"}.`,
     );
 
     revalidatePath(`/admin/sales/${leadId}`);
     redirect(
-        `/admin/sales/${leadId}?filled=${encodeURIComponent(found.join(" and ") || "nothing")}`,
+        `/admin/sales/${leadId}?filled=${encodeURIComponent(found.join(" and ") || "nothing")}${
+            why ? `&nohours=${encodeURIComponent(why)}` : ""
+        }`,
     );
 }
 
