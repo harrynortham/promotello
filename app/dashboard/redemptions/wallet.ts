@@ -81,6 +81,26 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
         return { vouchers: [], error: true };
     }
 
+    // Quiet hours are enforced only on Growth, so only a business on
+    // Growth has a window worth warning anybody about. Telling somebody
+    // their voucher will not scan before five, when it will, is the
+    // kind of thing that stops them going in at all.
+    const businessIds = [
+        ...new Set(
+            (data ?? [])
+                .map((row) => firstRelation(firstRelation(row.offers)?.businesses)?.id)
+                .filter((id): id is string => Boolean(id)),
+        ),
+    ];
+
+    const { data: growthRows } = businessIds.length
+        ? await supabase.rpc("businesses_with_growth", { requested_ids: businessIds })
+        : { data: null };
+
+    const enforces = new Set(
+        ((growthRows ?? []) as { business_id: string }[]).map((row) => row.business_id),
+    );
+
     const redemptions: WalletRedemption[] = (data ?? []).map((redemption) => {
         const offer = firstRelation(redemption.offers);
         const business = offer ? firstRelation(offer.businesses) : null;
@@ -99,7 +119,10 @@ export async function getWallet(userId: string, id?: string): Promise<{ vouchers
                     description: offer.description,
                     discount: offer.discount,
                     availability: offer.availability,
-                    window: scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end),
+                    window:
+                        business && enforces.has(business.id)
+                            ? scheduleFrom(offer.schedule_days, offer.schedule_start, offer.schedule_end)
+                            : null,
                     expiresAt: offer.expires_at,
                     terms: offer.terms,
                     approved: offer.approval_status === "approved" && business?.approval_status === "approved",

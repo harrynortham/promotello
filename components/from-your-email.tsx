@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cardLine } from "@/lib/loyalty-state";
 import { FiGift, FiTag } from "react-icons/fi";
 
 import { Button } from "@/components/ui/button";
@@ -84,7 +85,7 @@ export function FromYourEmail({
                                 Your loyalty card
                             </p>
                             <p className="mt-2 font-semibold leading-6">
-                                {card.stamps} stamps, then {card.reward}
+                                {cardLine(card.stamps, card.reward)}
                             </p>
                         </div>
 

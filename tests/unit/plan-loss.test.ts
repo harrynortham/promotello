@@ -166,3 +166,29 @@ test("coming back is paying with no end date on it", () => {
     assert.equal(cameBack(state("active", true)), false);
     assert.equal(cameBack(state("canceled")), false);
 });
+
+// The question a business asks on the way out, which nothing answered:
+// the free coffee I promised somebody last week — am I about to make a
+// liar of myself? A voucher already issued is the customer's, and
+// mark_reward_voucher_used never looks at the plan.
+test("a business leaving Growth is told its sent gifts still work", () => {
+    const survives = whatSurvives(standing({ tier: "growth" }));
+
+    assert.ok(survives.some((line) => /already sent still work/i.test(line.heading)));
+});
+
+// Pro never sent any, so the reassurance would only raise a question.
+test("a business leaving Pro is not told about gifts it never sent", () => {
+    const survives = whatSurvives(standing({ tier: "pro" }));
+
+    assert.ok(!survives.some((line) => /already sent/i.test(line.heading)));
+});
+
+// This one was already promised on the page while the database went on
+// enforcing the window regardless of plan. The copy was right and the
+// code was wrong; it is the code that changed.
+test("leaving Growth still says quiet hours stop being enforced", () => {
+    const stops = whatStops(standing({ tier: "growth" }));
+
+    assert.ok(stops.some((line) => /quiet hours/i.test(line.heading)));
+});

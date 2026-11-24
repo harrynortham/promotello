@@ -15,6 +15,7 @@ import { notifyBusinessManagers } from "@/lib/notify";
 import { firstNameOf, greeting } from "@/lib/recipients";
 import { readStarterRow, starterToShow } from "@/lib/starter";
 import { loadWhatIsPaused, type WhatIsPaused } from "@/lib/what-is-paused";
+import { cardLine } from "@/lib/loyalty-state";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 // Emails that guide a new business through setup, on to a free Pro trial
@@ -393,7 +394,8 @@ export function lifecycleEmail(
 
         const waiting = [
             theirs.offer && `your offer, “${theirs.offer}”`,
-            theirs.card && `your loyalty card (${theirs.card.stamps} stamps, then ${theirs.card.reward})`,
+            theirs.card &&
+                `your loyalty card (${cardLine(theirs.card.stamps, theirs.card.reward).toLowerCase()})`,
         ].filter(Boolean) as string[];
 
         // Joined, then capitalised: the pieces are written lowercase so

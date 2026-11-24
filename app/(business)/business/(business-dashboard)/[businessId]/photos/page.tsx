@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
 import { PhotosManager } from "@/components/photos-manager";
+import { PhotosHowItWorks } from "./how-it-works";
 import { businessHasPro } from "@/lib/billing";
 import { photoLimit, type BusinessPhoto } from "@/lib/business-photos";
 import { createClient } from "@/utils/supabase/server";
@@ -43,6 +44,7 @@ export default async function PhotosPage({ params }: PageProps) {
             photos={(photos ?? []) as BusinessPhoto[]}
             limit={photoLimit(hasPro)}
             hasPro={hasPro}
+            howItWorks={<PhotosHowItWorks />}
         />
     );
 }

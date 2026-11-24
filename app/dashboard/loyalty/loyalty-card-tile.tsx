@@ -6,11 +6,11 @@ import { LoyaltyStamps } from "@/components/loyalty-stamps";
 
 import type { CustomerLoyaltyCard } from "./cards";
 import { storedImage } from "@/lib/images";
+import { cardLine } from "@/lib/loyalty-state";
 
 // A loyalty card in brief, the same shape as a compact voucher. Opens the
 // card on the loyalty cards page, where its QR code is.
 export function LoyaltyCardTile({ card }: { card: CustomerLoyaltyCard }) {
-    const reward = card.reward.charAt(0).toLowerCase() + card.reward.slice(1);
 
     return (
         <Link
@@ -28,7 +28,7 @@ export function LoyaltyCardTile({ card }: { card: CustomerLoyaltyCard }) {
             <div className="min-w-0 flex-1 p-4">
                 <p className="truncate text-sm text-[#17233B]/70">{card.business?.name ?? "Business"}</p>
                 <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">
-                    {card.stampsRequired} stamps for {reward}
+                    {cardLine(card.stampsRequired, card.reward)}
                 </p>
 
                 <div className="mt-3">

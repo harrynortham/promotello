@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardGridLoading } from "@/components/dashboard-skeletons";
 import { businessHasPro } from "@/lib/billing";
+import { followPromises } from "@/lib/follow-promises";
 import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
@@ -73,6 +74,25 @@ function scanWindows() {
     };
 }
 
+// What a code opens, as a phrase that reads inside a sentence. The list
+// below says the same thing in its own shape; this is the one place
+// those words are chosen.
+function describeTarget(target: ReturnType<typeof qrTarget>) {
+    if (target.kind === "offer" && target.name) {
+        return `your “${target.name}” offer`;
+    }
+
+    if (target.kind === "card") {
+        return "your loyalty card, ready to join";
+    }
+
+    if (target.kind === "follow") {
+        return "a follow — one scan and they are on your list";
+    }
+
+    return "your business page";
+}
+
 async function QrContent({ params, searchParams }: PageProps) {
     await connection();
 
@@ -104,7 +124,7 @@ async function QrContent({ params, searchParams }: PageProps) {
     const canManage = ["owner", "admin"].includes(membership.role);
     const { since30, since7, today } = scanWindows();
 
-    const [{ data: codes }, { data: offers }, { data: business }, { data: loyalty }, hasPro, origin] = await Promise.all([
+    const [{ data: codes }, { data: offers }, { data: business }, { data: loyalty }, hasPro, origin, promises] = await Promise.all([
         supabase
             .from("qr_codes")
             .select(
@@ -138,9 +158,13 @@ async function QrContent({ params, searchParams }: PageProps) {
             .maybeSingle(),
         businessHasPro(supabase, businessId),
         requestOrigin(),
+        followPromises(businessId),
     ]);
 
     const allCodes = (codes ?? []) as unknown as QrCode[];
+    // The poster just made, so the message can name it rather than say
+    // that something happened. Older links carry "1" and still work.
+    const madeCode = created ? allCodes.find((code) => code.id === created) ?? null : null;
     const qrCodes = allCodes.filter((code) => !code.archived_at);
     const codeIds = allCodes.map((code) => code.id);
 
@@ -218,9 +242,31 @@ async function QrContent({ params, searchParams }: PageProps) {
 
                 {created && !error && (
                     <Alert className="mt-8 border-emerald-200 bg-emerald-50 text-emerald-900">
-                        <AlertTitle>Poster made</AlertTitle>
+                        <AlertTitle>
+                            {madeCode ? `“${madeCode.label}” poster made` : "Poster made"}
+                        </AlertTitle>
                         <AlertDescription>
-                            Print it below and put it where customers will see it.
+                            {madeCode ? (
+                                <>
+                                    It opens {describeTarget(qrTarget(
+                                        {
+                                            archived_at: madeCode.archived_at,
+                                            former_target: madeCode.former_target,
+                                            follows: madeCode.follows,
+                                            offers: one(madeCode.offers),
+                                            loyalty_programs: one(madeCode.loyalty_programs),
+                                        },
+                                        today,
+                                        hasPro,
+                                    ))}, and its code is{" "}
+                                    <span className="font-mono font-semibold">{madeCode.code}</span>.
+                                    Print it below and put it up where you said:{" "}
+                                    {madeCode.label.toLowerCase()}. Every scan is counted
+                                    separately, so you can tell which spot is working.
+                                </>
+                            ) : (
+                                "Print it below and put it where customers will see it."
+                            )}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -302,6 +348,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 logoUrl={business?.logo_url}
                                 offers={offers ?? []}
                                 loyalty={loyalty}
+                                promises={promises}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
                                 waitingForApproval={!isLive}
