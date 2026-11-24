@@ -261,6 +261,24 @@ Everything else — the dashboard, the checklist, the queue, the emails — is
 the same for both, deliberately, so a new feature never has to ask which
 kind of business it is looking at.
 
+### How one stops
+
+Four ways, and only one of them is permanent.
+
+| | Who | What happens |
+| --- | --- | --- |
+| **Reject** | Admin | Never goes public. The owner is told why. |
+| **Suspend** | Admin | Comes off the directory with its offers. Nothing is deleted, and claimed vouchers still work. |
+| **Close** | The owner | Their own decision, from Settings. Invisible, and the subscription is cancelled at period end. |
+| **Delete** | Admin | Permanent. Everything goes, including vouchers and stamp cards their customers hold. |
+
+Delete exists for test businesses and for a business that asks to be erased,
+not for a decision that could be a suspension. The name has to be typed back,
+checked in `admin_delete_business()` rather than only in the browser, Stripe is
+cancelled outright first, and what was destroyed is counted into the audit log
+before the row goes — with no `business_id`, because `audit_logs` cascades and
+the record would otherwise delete itself.
+
 ## Signing in
 
 There are no passwords. Somebody types their email address, Supabase emails
@@ -352,28 +370,17 @@ from memory. The tracks referred to are the ones in
 Things get deleted when they're done rather than ticked.
 
 **Where it actually stands.** 1,156 commits since October. 113 leads, 56 of
-them cleared to email, 1 written to. 19 sample businesses and **one real
-paying-shaped customer** (Quayside Coffee). 2 claims ever, 1 of them used.
-2 followers. 14 loyalty cards, 12 of them held by someone with no account.
+them cleared to email, 1 written to. 19 sample businesses, **one real
+customer** (Quayside Coffee) and Dublin Pub closed. 2 claims ever, 1 of them
+used. 2 followers. 14 loyalty cards, 12 of them held by someone with no
+account.
+
+Nothing is in the way of the next email. The two test businesses that were
+sitting in the public directory are deleted, `OUTREACH_EMAIL_FROM` is set, and
+both pending migrations are live.
 
 **The ordering rule has not changed:** the biggest risk is building too long
 before selling. The product is not what's behind.
-
-### Stage 0 — Before the next email goes out
-
-Short, and all of it is in the way.
-
-- **Delete `Automation Test Cafe (delete me)`.** It is approved, open and in
-  the public Bristol directory right now, under that name. Anyone following a
-  link in an outreach email can see it.
-- **Decide what the `Promotello` business entry is for.** Approved, live, no
-  offers. Either give it a reason to be listed or take it down.
-- **`npm run db:ship`** — the migration that stops `anon` calling
-  `businesses_with_growth` is written and merged and not yet live.
-- **Check `OUTREACH_EMAIL_FROM` is set in Vercel.** Without it
-  `outreachSender()` returns null, the outbox drafts and holds, and the Send
-  button stays off. It is not in `.env.production.local`, so it may not be set
-  at all.
 
 ### Stage 1 — Send the first batch
 
