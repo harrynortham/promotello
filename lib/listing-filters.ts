@@ -53,6 +53,10 @@ export type ListingBusiness = ListingPlace & {
     coverImageUrl: string | null;
     // One of the sample businesses that show how Promotello works.
     isSample: boolean;
+    // A page we built and published before the business claimed it. It
+    // has a name, a category and a map and nothing else: RLS cannot
+    // serve an offer or a card for a business that isn't approved yet.
+    unclaimed: boolean;
     topOffer: { slug: string; title: string; discount: string } | null;
 };
 
@@ -130,6 +134,22 @@ export function filterOffers(
 
         return b.createdAt.localeCompare(a.createdAt);
     });
+}
+
+// The directory's default order: businesses with a live offer first,
+// then the ones that have claimed their page, then newest.
+//
+// The last two clauses are what keeps pages-first honest. Publishing a
+// street puts forty unclaimed pages up in one afternoon, all of them
+// newer than everything else on the site, and newest-first alone would
+// hand them the entire first screen — a visitor would open the
+// directory and find forty shops with nothing to claim.
+export function byDirectoryOrder(a: ListingBusiness, b: ListingBusiness) {
+    return (
+        Number(b.offerCount > 0) - Number(a.offerCount > 0) ||
+        Number(a.unclaimed) - Number(b.unclaimed) ||
+        b.createdAt.localeCompare(a.createdAt)
+    );
 }
 
 export function filterBusinesses(

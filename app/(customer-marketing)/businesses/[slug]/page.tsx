@@ -49,6 +49,7 @@ import { LoyaltyCallout } from "./loyalty-callout";
 import { BusinessClosedNotice } from "./closed-notice";
 import { OwnerBar, OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
+import { ClaimPanel } from "./claim-panel";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
 import { businessPath, canonicalPath, offerPath } from "@/lib/slugs";
@@ -127,7 +128,9 @@ export async function generateMetadata({
 
     const { data: business } = await createPublicClient()
         .from("businesses")
-        .select("id, slug, name, category, description, logo_url, is_sample, business_locations ( city, region )")
+        .select(
+            "id, slug, name, category, description, logo_url, is_sample, approval_status, business_locations ( city, region )",
+        )
         .eq("slug", slug)
         .maybeSingle();
 
@@ -150,14 +153,27 @@ export async function generateMetadata({
         .filter((part, index, parts) => part && parts.indexOf(part) === index)
         .join(", ");
     const place = location?.city ? ` in ${location.city}` : "";
+
+    // A page published before it was claimed has no offers and no card,
+    // and cannot have: the title and the fallback description must not
+    // promise either (20270307090000). Anything RLS hands an anonymous
+    // visitor that is not approved is one of those pages.
+    const unclaimed = business.approval_status !== "approved";
+
     const description = truncate(
         business.description ||
-            `${business.name} is a ${business.category.toLowerCase()} business${place}. See their latest offers and opening hours on ${siteName}.`,
+            (unclaimed
+                ? `${business.name} is a ${business.category.toLowerCase()} business${place}, on ${siteName}. Is it yours? Claim the page free.`
+                : `${business.name} is a ${business.category.toLowerCase()} business${place}. See their latest offers and opening hours on ${siteName}.`),
     );
     const path = businessPath(business);
 
     return {
-        title: where ? `${business.name}, ${where}: offers and loyalty card` : business.name,
+        title: where
+            ? unclaimed
+                ? `${business.name}, ${where}`
+                : `${business.name}, ${where}: offers and loyalty card`
+            : business.name,
         description,
         alternates: { canonical: path },
         // Sample (demo) listings must never appear in search results.
@@ -198,6 +214,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                 slug,
                 name,
                 closed_at,
+                listed_at,
                 review_requested_at,
                 logo_url,
                 cover_image_url,
@@ -279,7 +296,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         url: photoUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", photo.storage_path),
     }));
 
-    const isPreview = business.approval_status !== "approved";
+    // A page we built and published before the business claimed it
+    // (20270307090000). RLS hands an unapproved business to its own team
+    // and to admins, who get the preview they have always had, and to
+    // anyone at all once listed_at is set — and that visitor is not
+    // previewing anything. They are looking at a real page for a real
+    // shop that nobody has taken over yet.
+    const isUnclaimed =
+        business.listed_at !== null && business.approval_status === "pending" && !canEdit;
+
+    const isPreview = business.approval_status !== "approved" && !isUnclaimed;
     const today = new Date().toISOString().slice(0, 10);
 
     // The card on offer. Cards closed to new joiners are still being
@@ -642,14 +668,17 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             </div>
 
                             <div className="flex shrink-0 flex-wrap gap-2">
-                                <Button
-                                    render={<Link href="#offers" />}
-                                    nativeButton={false}
-                                >
-                                    View offers
-                                </Button>
+                                {isUnclaimed ? (
+                                    <Button render={<Link href="#claim" />} nativeButton={false}>
+                                        Claim your free page
+                                    </Button>
+                                ) : (
+                                    <Button render={<Link href="#offers" />} nativeButton={false}>
+                                        View offers
+                                    </Button>
+                                )}
 
-                                {!isPreview && (
+                                {!isPreview && !isUnclaimed && (
                                     <FollowButton
                                         businessId={business.id}
                                         initialFollowing={Boolean(follow)}
@@ -726,6 +755,11 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             </section>
                         )}
 
+                        {isUnclaimed && (
+                            <ClaimPanel businessId={business.id} businessName={business.name} />
+                        )}
+
+                        {!isUnclaimed && (
                         <section
                             id="offers"
                             aria-labelledby="offers-heading"
@@ -812,6 +846,7 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </Card>
                             )}
                         </section>
+                        )}
 
                         {/* The room, the counter, what they make.
                             Below the offers, because the offers are

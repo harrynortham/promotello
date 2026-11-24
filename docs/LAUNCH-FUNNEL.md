@@ -189,6 +189,66 @@ days, the pricing will take care of itself. If it is weeks, we have a
 poster-in-the-window problem rather than a pricing problem, and the
 answer is 2 and 3 rather than the price.
 
+## Pages first
+
+Added 24 November 2026, and it changes the first step rather than the
+funnel's shape.
+
+Everything above starts with an email about a page nobody else can see.
+A preview is private by design: the business stays `pending`, so RLS
+hides it from every listing, and the only way in is the token we post
+them. That works, and it leaves the directory empty until businesses
+start saying yes — which is backwards, because the directory is the
+thing that makes saying yes worth it.
+
+So a lead's page goes up **before** we contact them, and the sale becomes
+"claim your free page". A street can be live in a day.
+
+`listed_at` on `businesses` is the whole mechanism
+(`20270307090000_a_page_before_they_claim_it.sql`), and it does not touch
+approval. A listed business is still `pending`, which matters more than
+it looks: `offers_public_select_approved` and
+`loyalty_programs_public_select` both require an approved business, and
+neither was changed. **An unclaimed page cannot serve an offer or a
+loyalty card to a visitor even if a page asked it to.** That is a
+property of the database, not a rule somebody has to remember in a
+component.
+
+What a visitor gets is what we knew before we ever spoke to them: the
+name, the category, where it is, and a map. No follow button, no offers
+section, no card.
+
+| | Who sees it | What is on it |
+| --- | --- | --- |
+| Not listed | Its own team, admins | The preview, as before |
+| Listed, unclaimed | Everybody | Name, category, address, map, and the claim panel |
+| Claimed and approved | Everybody | The page, offers and card included |
+
+Three things are worth knowing:
+
+- **Where it appears.** In the directory, the area and category pages and
+  the search, badged "Not claimed yet", and in the sitemap, because an
+  owner searching their own business name and finding the page we built
+  is the whole point. `byDirectoryOrder()` keeps it below every claimed
+  business: publishing forty pages in an afternoon makes forty rows
+  newer than everything else on the site, and newest-first alone would
+  hand them the entire first screen.
+- **How somebody claims one.** The button does not claim anything. It
+  files a `page_claim_requests` row through a definer function — anon can
+  ask, and cannot read back a thing — and an admin releases the page from
+  the lead, which mints a fresh token and emails the claim link to the
+  address on the request. The secret token is still the only thing that
+  hands a page over, so a page cannot be taken by someone who can type
+  its name. Three open requests per page, one per email address.
+- **How one comes down.** `unlist_lead_page()`, from the lead. For a
+  business that asks and for a page we got wrong. Once a page is claimed
+  and approved, taking it down is a suspension instead, so its owner is
+  told why.
+
+Publishing refuses a page with no description or no address — the same
+bar `claim_business_preview()` uses — because fifty names on empty
+screens is how a new site teaches Google to ignore it.
+
 ## Progress
 
 - [x] 1 · Card-less trial

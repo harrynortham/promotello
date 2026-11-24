@@ -21,6 +21,7 @@ import { absoluteUrl, jsonLd } from "@/lib/site";
 import { getLiveCities, placeIsOneCity, placeName, type City, type Place } from "@/lib/cities";
 import {
     areasFrom,
+    byDirectoryOrder,
     citiesWithArea,
     filterBusinesses,
     interleaveByCity,
@@ -95,9 +96,7 @@ async function Directory({ city, searchParams }: ListingProps) {
         }
     }
 
-    const found = filterBusinesses(businesses, groups, params)
-        // Businesses with live offers first, then newest.
-        .sort((a, b) => Number(b.offerCount > 0) - Number(a.offerCount > 0) || b.createdAt.localeCompare(a.createdAt));
+    const found = filterBusinesses(businesses, groups, params).sort(byDirectoryOrder);
 
     // Across cities, one from each in turn, so the newest city doesn't take
     // the whole first screen.

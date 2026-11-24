@@ -16,7 +16,7 @@ import {
 } from "@/lib/preview-email";
 import { neighboursIn } from "@/lib/neighbours";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { sendEmails } from "@/lib/email";
+import { brandedEmail, sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
@@ -1073,6 +1073,118 @@ export async function deleteLeadPreview(formData: FormData) {
 //
 // A claimed preview is theirs, and the offer on it is whatever they
 // made of it, so this refuses one.
+// Pages first: a lead's page goes up before we contact them, and the
+// sale becomes "claim your free page". list_lead_page() refuses one
+// without a description or an address, and says which is missing, so
+// the error here is worth showing rather than swallowing.
+export async function publishLeadPage(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const businessId = text(formData, "businessId");
+
+    const { error } = await supabase.rpc("list_lead_page", {
+        requested_business_id: businessId,
+    });
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    // The one event on a lead that a stranger can now see the result of.
+    await record(supabase, leadId, "note", "Page published, unclaimed. Public, with no offer or card on it.");
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    revalidatePath("/businesses");
+    redirect(`/admin/sales/${leadId}?saved=page_published`);
+}
+
+// Down again: for a business that asks, and for a page we got wrong.
+export async function unpublishLeadPage(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const businessId = text(formData, "businessId");
+
+    const { error } = await supabase.rpc("unlist_lead_page", {
+        requested_business_id: businessId,
+    });
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    await record(supabase, leadId, "note", "Page taken down. Not public any more.");
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    revalidatePath("/businesses");
+    redirect(`/admin/sales/${leadId}?saved=page_unpublished`);
+}
+
+// Somebody found a page we published and says it is theirs. Releasing it
+// mints a fresh token and emails the claim link to the address on the
+// request — never to whoever happens to be signed in, and never to the
+// address we scraped, because the person who asked is the person who
+// proved they can read that inbox.
+export async function releasePageClaim(formData: FormData) {
+    const supabase = await adminClient();
+    const requestId = text(formData, "requestId");
+    const back = text(formData, "back") || "/admin/sales";
+
+    const { data, error } = await supabase.rpc("release_page_claim", {
+        requested_request_id: requestId,
+    });
+
+    const released = Array.isArray(data) ? data[0] : data;
+
+    if (error || !released) {
+        redirect(`${back}?error=${encodeURIComponent(error?.message ?? "That request could not be released.")}`);
+    }
+
+    const link = absoluteUrl(previewLink(released.token, released.business_name));
+
+    const { html, text: body } = brandedEmail({
+        eyebrow: "Your page",
+        title: `${released.business_name} is yours to claim`,
+        paragraphs: [
+            `Thanks for getting in touch about ${released.business_name}. The page is yours — open the link below and it is in your name.`,
+            "You can change anything on it: your own photos and words, an offer customers claim on their phone, and a stamp card. Nothing to download, and nothing to pay to claim it.",
+        ],
+        action: { label: "Claim your page", url: link },
+        footer: "If you didn't ask for this, you can ignore it: the page stays as it is.",
+    });
+
+    await sendEmails([
+        {
+            to: released.contact_email,
+            subject: `Claim ${released.business_name} on Promotello`,
+            html,
+            text: body,
+        },
+    ]).catch((sendError) => {
+        console.error("Could not email the claim link", sendError);
+    });
+
+    revalidatePath(back);
+    redirect(`${back}?saved=claim_released`);
+}
+
+export async function declinePageClaim(formData: FormData) {
+    const supabase = await adminClient();
+    const requestId = text(formData, "requestId");
+    const back = text(formData, "back") || "/admin/sales";
+
+    const { error } = await supabase.rpc("decline_page_claim", {
+        requested_request_id: requestId,
+        reason: text(formData, "reason") || null,
+    });
+
+    if (error) {
+        redirect(`${back}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    revalidatePath(back);
+    redirect(`${back}?saved=claim_declined`);
+}
+
 export async function saveLeadPreviewSamples(formData: FormData) {
     const supabase = await adminClient();
     const leadId = text(formData, "leadId");
