@@ -1,6 +1,7 @@
 import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
 import { neighboursLine, type Neighbours } from "@/lib/neighbours";
 import { absoluteUrl } from "@/lib/site";
+import { businessPath } from "@/lib/slugs";
 import { SIGNED_BY } from "@/lib/email-signature";
 import { previewLink } from "@/lib/previews";
 
@@ -18,6 +19,10 @@ export type PreviewRow = {
     claimed_at: string | null;
     businesses: {
         name: string;
+        slug: string;
+        // Set once the page is public (20270307090000). What the whole
+        // email hangs on now.
+        listed_at: string | null;
         approval_status: string;
         review_requested_at: string | null;
         closed_at: string | null;
@@ -38,7 +43,31 @@ export type PreviewRow = {
 };
 
 export const previewColumns =
-    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, area_id, cities ( name ), areas ( name ) ) )";
+    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, slug, listed_at, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, area_id, cities ( name ), areas ( name ) ) )";
+
+// Pages first changed what this email is for.
+//
+// It used to offer a page that existed nowhere else: private, ours, and
+// real only once they said yes. Now the page is usually already up and
+// anybody can find it, which is a far better thing to write to somebody
+// about -- it is a fact they can check in one click rather than an
+// offer they have to picture.
+//
+// Both versions stay, because a lead whose page has not been published
+// is still a preview and telling them otherwise would be a lie in the
+// one email that cannot afford one. Every piece of outreach below asks
+// this first.
+function isLive(preview: PreviewRow) {
+    return Boolean(preview.businesses?.listed_at);
+}
+
+// Their page as a customer reaches it. The claim link is a different
+// thing and does a different job: this one is the proof, that one is
+// the way in.
+function livePage(preview: PreviewRow) {
+    const slug = preview.businesses?.slug;
+    return slug ? absoluteUrl(businessPath({ slug })) : null;
+}
 
 // Signed by a real name where there is one. A DM from a brand account
 // signed "The Promotello team" reads worse than one signed by nobody.
@@ -197,7 +226,12 @@ export function instagramDmUrl(handle: string) {
 // sitting there, which is a notification. Waiting is a thing that wants
 // them, which is why they open it.
 export function outreachSubject(preview: PreviewRow) {
-    return `${preview.businesses?.name ?? "Your business"}, I built you a preview`;
+    const name = preview.businesses?.name ?? "Your business";
+
+    // "I built you a preview" is an offer. "It's live" is a fact, and a
+    // fact about their own business is the only thing in an inbox from
+    // a company they have never heard of that is worth opening.
+    return isLive(preview) ? `I built ${name} a page, and it's live` : `${name}, I built you a preview`;
 }
 
 // The follow-up goes as a reply in the same thread, so it carries the
@@ -260,6 +294,7 @@ export function outreachMessage({
 }) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
+    const live = isLive(preview) ? livePage(preview) : null;
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";
     // Their street, not their city. "The Bristol directory" is a place
@@ -287,15 +322,27 @@ export function outreachMessage({
         `Hi ${contactName || "there"},`,
         "",
         ...(opening ? [/[.!?]$/.test(opening) ? opening : `${opening}.`, ""] : []),
-        `I've built a preview of ${name} on Promotello. Take a look:`,
-        "",
-        url,
+        ...(live
+            ? [
+                `I've built ${name} a page on Promotello, and it's already live:`,
+                "",
+                live,
+            ]
+            : [`I've built a preview of ${name} on Promotello. Take a look:`, "", url]),
         "",
         "Promotello turns passers-by into regulars. A QR poster goes in your window. Customers scan it, claim your offer and show it when they pay. A loyalty card brings them back.",
         "",
-        area
-            ? `Claim it and you're on the ${area} page of the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`
-            : `Claim it and you're listed in the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`,
+        // The directory line is the one that pages first made false.
+        // "Claim it and you're on the Gloucester Road page" was the
+        // offer; they are on it already, and what claiming gets them is
+        // the controls.
+        live
+            ? area
+                ? `You're already on the ${area} page of the ${town} directory, where local people can find you. Claim the page and it's yours to change: your photos, your words, your offer.`
+                : `You're already in the ${town} directory, where local people can find you. Claim the page and it's yours to change: your photos, your words, your offer.`
+            : area
+                ? `Claim it and you're on the ${area} page of the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`
+                : `Claim it and you're listed in the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`,
         "",
         // Named neighbours beat any argument we could make about the
         // directory, so they go directly under it -- and only when
@@ -313,7 +360,13 @@ export function outreachMessage({
         "",
         foundingOffer(placesLeft),
         "",
-        "The preview is private and the offers on it are only examples. Claim it and it's yours to edit. Not for you? Reply and I'll delete it.",
+        // Two links, each with a job: the page above is what convinces
+        // them, and this is the one that hands it over without the
+        // claim request a stranger has to file.
+        ...(live ? ["This link claims it, with no form to fill in:", "", url, ""] : []),
+        live
+            ? "The page is public whether or not you claim it, and the offers on it are only examples until you write your own. Not for you? Reply and I'll take it down."
+            : "The preview is private and the offers on it are only examples. Claim it and it's yours to edit. Not for you? Reply and I'll delete it.",
         "",
         ...signOff(SIGNED_BY),
     ].join("\n");
@@ -344,7 +397,9 @@ export function outreachLetter({
     return [
         `Dear ${contactName || "Sir or Madam"},`,
         "",
-        `${personalOpening(personalLine)}I have built ${name} a page on Promotello, a new site for local businesses in Bristol, and it is waiting for you to claim.`,
+        isLive(preview)
+            ? `${personalOpening(personalLine)}I have built ${name} a page on Promotello, a new site for local businesses in Bristol. It is already live, and it is waiting for you to claim.`
+            : `${personalOpening(personalLine)}I have built ${name} a page on Promotello, a new site for local businesses in Bristol, and it is waiting for you to claim.`,
         "",
         "Scan the code at the bottom of this page, or type:",
         "",
@@ -352,7 +407,9 @@ export function outreachLetter({
         "",
         "Your page lists your offers and a loyalty card, and it is free to claim and free to keep. Customers find you in the directory, claim an offer on their phone and show it when they pay. Nothing to install, and no card reader.",
         "",
-        "If it is not for you, nothing else will arrive.",
+        isLive(preview)
+            ? "If it is not for you, nothing else will arrive, and I will take the page down if you would rather it was not there."
+            : "If it is not for you, nothing else will arrive.",
     ].join("\n");
 }
 
@@ -370,16 +427,21 @@ export function outreachFollowUp({
 }) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
+    const live = isLive(preview);
     const gone = placesLeft === null || placesLeft <= 0;
 
     return [
         `Hi ${contactName || "there"},`,
         "",
-        `Your preview of ${name} is still waiting:`,
+        live
+            ? `${name}'s page is up and still unclaimed:`
+            : `Your preview of ${name} is still waiting:`,
         "",
         url,
         "",
-        "It takes two minutes to claim and it's free to keep. One poster in the window is all you need to start.",
+        live
+            ? "It takes two minutes to claim and it's free to keep, and until you do it's a page about you that you can't change. One poster in the window is all you need to start."
+            : "It takes two minutes to claim and it's free to keep. One poster in the window is all you need to start.",
         "",
         // The count only once some have gone. "50 of the 50 places left"
         // is a sentence that says nobody has taken one, which is the
@@ -391,7 +453,9 @@ export function outreachFollowUp({
                 ? `${placesLeft} of the ${FOUNDING_MEMBER_LIMIT} founding places are left. Each comes with Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}, then ${plans.pro_founding_monthly.price} a month for life.`
                 : `A founding place comes with Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}, then ${plans.pro_founding_monthly.price} a month for life.`,
         "",
-        `Not for you? Reply "no thanks" and I'll delete it.`,
+        live
+            ? `Not for you? Reply "no thanks" and I'll take it down.`
+            : `Not for you? Reply "no thanks" and I'll delete it.`,
         "",
         ...signOff(SIGNED_BY),
     ].join("\n");
@@ -450,7 +514,9 @@ export function outreachDm({
         return [
             who,
             line,
-            `I've built a free preview page for ${name} in our ${town} directory, with an example offer and loyalty card.`,
+            isLive(preview)
+                ? `I've built ${name} a page in our ${town} directory and it's already live, with an example offer and loyalty card on it.`
+                : `I've built a free preview page for ${name} in our ${town} directory, with an example offer and loyalty card.`,
             "Want me to send the link?",
         ]
             .filter(Boolean)
@@ -473,17 +539,21 @@ export function outreachDm({
         who,
         ...(line ? ["", line] : []),
         "",
-        `I've built a preview of ${name} on Promotello. Take a look:`,
+        isLive(preview)
+            ? `I've built ${name} a page on Promotello, and it's already live. Take a look:`
+            : `I've built a preview of ${name} on Promotello. Take a look:`,
         "",
         url,
         "",
         "A QR poster goes in your window. Customers scan it, claim your offer and show it when they pay. A loyalty card brings them back.",
         "",
-        `Claim it and you're listed in the ${town} directory, where local people can find you.`,
+        isLive(preview)
+            ? `You're already in the ${town} directory, where local people can find you. Claim the page and it's yours to change.`
+            : `Claim it and you're listed in the ${town} directory, where local people can find you.`,
         "",
         founding,
         "",
-        "Not for you? Just say and I'll delete it.",
+        isLive(preview) ? "Not for you? Just say and I'll take it down." : "Not for you? Just say and I'll delete it.",
         "",
         ...signOff(SIGNED_BY),
     ].join("\n");
