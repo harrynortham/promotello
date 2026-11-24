@@ -367,8 +367,9 @@ The code needs the database to be ready first. That is what every
 - **Only `npm run db:ship` sends things live**, and it asks first.
 - **Never type `--remote` on a reset.**
 - **Never edit a migration that has already gone live.** Write a new one.
-- **Dropping a function re-opens it.** `revoke all ... from public` after
-  every `create function`, and check the grants rather than assume them.
+- **Creating a function opens it, twice over.** `revoke all ... from
+  public, anon` after every `create function` or `create view`, and
+  check the grants with a query rather than by reading the migration.
 - **If a push fails, fix the file, not the database.**
 
 ## For later
@@ -406,16 +407,35 @@ and the migration reads as though it set the permissions.
 drop function if exists public.thing(uuid);
 create function public.thing(...) ...;
 
-revoke all on function public.thing(uuid) from public;
+revoke all on function public.thing(uuid) from public, anon;
 grant execute on function public.thing(uuid) to service_role;
 ```
 
-This has happened here once, to `issue_automation_vouchers` — which is
+**Revoking from `public` is not revoking from `anon`.** There are two
+separate ways a new function ends up callable by everybody, and closing
+one leaves the other open. Postgres grants `execute` to the **`PUBLIC`
+pseudo-role** on every function it creates; and Supabase keeps an
+`alter default privileges in schema public grant execute on functions
+to anon, authenticated, service_role`, so the same function is **also
+granted to `anon` by name** the moment it is created. Revoking from
+`PUBLIC` does not touch a grant a role holds in its own right.
+
+The same default privileges reach **views**, so a new view is readable
+by `anon` too. And all of it fires on `create`, not on `drop`: a
+brand-new function needs the revoke just as much as a replaced one.
+
+This has happened here twice. First to `issue_automation_vouchers` — which is
 `security definer`, inserts rows, and with no arguments runs the whole
 automation batch and sends real email. It reached the live database
 before anyone noticed, because a `db:reset` rebuilds grants too and
 nobody had looked at them. The schema was checked; the permissions were
 not.
+
+Then, hours after the rule above was first written down, to
+`businesses_with_growth`: that migration revoked from `public` exactly
+as the rule then said, and the function still went live callable by
+`anon`, because the rule only covered half of it. The line was there,
+it looked right, and it was not.
 
 So the check is a query, not a reading of the file:
 
@@ -425,6 +445,16 @@ from pg_proc p
 cross join (values ('anon'),('authenticated'),('service_role')) as r(rolname)
 where p.proname in ('the_function');
 ```
+
+And for a view:
+
+```sql
+select has_table_privilege('anon', 'public.the_view', 'SELECT');
+```
+
+`anon` is the one to look at. It means anybody on the internet, holding
+nothing — and a `security definer` function reads past RLS, so `anon`
+on one of those is the whole table.
 
 ### Things only the live site can test
 
