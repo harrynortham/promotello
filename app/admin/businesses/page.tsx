@@ -35,7 +35,7 @@ import {
     type Decline,
 } from "@/components/decline-reason";
 
-import { notifyBusinessReviewed } from "./actions";
+import { deleteBusinessCompletely, notifyBusinessReviewed } from "./actions";
 
 type Business = {
     id: string;
@@ -107,6 +107,13 @@ export default function AdminBusinessesPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [activeBusinessId, setActiveBusinessId] = useState("");
+    // Deleting is not a review decision, so it has its own dialog and
+    // its own state: the business, the name typed back, and what went
+    // wrong if it did.
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+    const [typedName, setTypedName] = useState("");
+    const [deleteProblem, setDeleteProblem] = useState("");
+    const [deleting, setDeleting] = useState(false);
     // Edits a business made to its own page after we approved it. They
     // are already live; this is how many nobody has read yet.
     const [unreadEdits, setUnreadEdits] = useState(0);
@@ -649,6 +656,22 @@ export default function AdminBusinessesPage() {
                                                         Put it back
                                                     </Button>
                                                 )}
+
+                                                {/* Last, and a link rather than a button: it is
+                                                    not a review decision and should not sit
+                                                    beside them looking like one. */}
+                                                <button
+                                                    type="button"
+                                                    disabled={activeBusinessId === business.id}
+                                                    onClick={() => {
+                                                        setDeleteTarget({ id: business.id, name: business.name });
+                                                        setTypedName("");
+                                                        setDeleteProblem("");
+                                                    }}
+                                                    className="ml-auto text-sm font-medium text-red-700 underline-offset-4 hover:underline disabled:opacity-50"
+                                                >
+                                                    Delete for good
+                                                </button>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -692,6 +715,86 @@ export default function AdminBusinessesPage() {
                     </>
                 )}
             </div>
+
+            <Dialog
+                open={deleteTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open && !deleting) {
+                        setDeleteTarget(null);
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete {deleteTarget?.name} for good?</DialogTitle>
+                        <DialogDescription>
+                            This cannot be undone. Their page, offers, posters, photos, team and
+                            every voucher and stamp card their customers are holding go with it.
+                            Any subscription is cancelled at Stripe first.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="confirm-name">
+                            Type <strong>{deleteTarget?.name}</strong> to confirm
+                        </Label>
+                        <Input
+                            id="confirm-name"
+                            value={typedName}
+                            autoComplete="off"
+                            disabled={deleting}
+                            onChange={(event) => setTypedName(event.target.value)}
+                        />
+                    </div>
+
+                    {deleteProblem && (
+                        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+                            {deleteProblem}
+                        </p>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={deleting}
+                            onClick={() => setDeleteTarget(null)}
+                        >
+                            Keep it
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            // Checked again on the server, where it counts.
+                            disabled={deleting || typedName.trim() !== deleteTarget?.name}
+                            onClick={async () => {
+                                if (!deleteTarget) return;
+
+                                setDeleting(true);
+                                setDeleteProblem("");
+
+                                const result = await deleteBusinessCompletely(
+                                    deleteTarget.id,
+                                    typedName.trim(),
+                                );
+
+                                setDeleting(false);
+
+                                if (result.error) {
+                                    setDeleteProblem(result.error);
+                                    return;
+                                }
+
+                                setDeleteTarget(null);
+                                setRefreshKey((key) => key + 1);
+                            }}
+                        >
+                            {deleting ? "Deleting…" : "Delete for good"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog
                 open={reviewAction !== null}

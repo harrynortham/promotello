@@ -13,6 +13,7 @@ import {
 import { notifyBusinessManagers } from "@/lib/notify";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
+import { createStripeClient } from "@/utils/stripe/server";
 
 // Called after an admin approves, rejects or suspends a business: tells
 // its owners. `previous` is the status it came from, which the row no
@@ -106,4 +107,53 @@ export async function removeBusinessPhoto(formData: FormData) {
 
     revalidatePath(`/admin/businesses/${businessId}`);
     redirect(`/admin/businesses/${businessId}?removed=photo`);
+}
+
+// Delete a business, for good.
+//
+// Stripe first, because once the row is gone the webhook has nothing to
+// write back to and a live subscription would bill against a business
+// that no longer exists. Cancelled outright rather than at period end,
+// for the same reason: there is no period end to wait for.
+//
+// Then the RPC, which checks the caller is an admin and that the name
+// was typed correctly, records what it destroyed, and deletes. Called
+// with the admin's own session so auth.uid() is them in the audit row.
+export async function deleteBusinessCompletely(businessId: string, confirmName: string) {
+    const supabase = await createClient();
+
+    const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("stripe_subscription_id, status")
+        .eq("business_id", businessId)
+        .not("stripe_subscription_id", "is", null)
+        .maybeSingle();
+
+    if (subscription?.stripe_subscription_id) {
+        try {
+            await createStripeClient().subscriptions.cancel(subscription.stripe_subscription_id);
+        } catch (error) {
+            // A subscription already cancelled at Stripe throws, and that
+            // is not a reason to refuse: the thing we wanted is true.
+            const message = error instanceof Error ? error.message : String(error);
+
+            if (!/No such subscription|already canceled/i.test(message)) {
+                console.error("Delete business: could not cancel the subscription", error);
+                return { error: "The subscription could not be cancelled, so nothing was deleted." };
+            }
+        }
+    }
+
+    const { data, error } = await supabase.rpc("admin_delete_business", {
+        requested_business_id: businessId,
+        confirm_name: confirmName,
+    });
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath("/admin/businesses");
+
+    return { summary: data as Record<string, string | number> };
 }
