@@ -29,6 +29,28 @@ export const NO_STARTER: Starter = { offer: null, reward: null, stamps: null };
 const MAX_OFFER = 80;
 const MAX_REWARD = 60;
 
+// The card builder's own range, and the card we draw when one is asked
+// for without a number on it.
+export const STAMPS_MIN = 3;
+export const STAMPS_MAX = 20;
+export const DEFAULT_STAMPS = 9;
+
+function inRange(stamps: number) {
+    return Number.isInteger(stamps) && stamps >= STAMPS_MIN && stamps <= STAMPS_MAX;
+}
+
+// The three columns as the two places that write them should write
+// them: building a preview, and changing the examples on one already
+// built. Both clamped and truncated by hand, which is how two write
+// paths drift from the rules readStarterRow reads them back by.
+export function sampleValues(offer: string, reward: string, stamps: number) {
+    return {
+        sample_offer: offer.slice(0, MAX_OFFER),
+        sample_reward: reward.slice(0, MAX_REWARD),
+        sample_stamps: inRange(stamps) ? stamps : DEFAULT_STAMPS,
+    };
+}
+
 function tidy(value: unknown, max: number) {
     if (typeof value !== "string") return null;
 
@@ -49,9 +71,9 @@ export function readStarterRow(row: unknown): Starter {
     return {
         offer: tidy(held.sample_offer, MAX_OFFER),
         reward: tidy(held.sample_reward, MAX_REWARD),
-        // The card builder's own range. Anything outside it was never a
-        // card we would have drawn.
-        stamps: Number.isInteger(stamps) && stamps >= 3 && stamps <= 20 ? stamps : null,
+        // Anything outside the range was never a card we would have
+        // drawn.
+        stamps: inRange(stamps) ? stamps : null,
     };
 }
 
@@ -79,7 +101,7 @@ export function starterToShow(
 ) {
     const offer = !hasOffer && starter.offer !== null ? starter.offer : null;
     const card = !hasLoyalty && starter.reward !== null
-        ? { reward: starter.reward, stamps: starter.stamps ?? 9 }
+        ? { reward: starter.reward, stamps: starter.stamps ?? DEFAULT_STAMPS }
         : null;
 
     return { offer, card, any: offer !== null || card !== null };

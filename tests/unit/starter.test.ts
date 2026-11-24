@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { NO_STARTER, readStarterRow, starterToShow } from "@/lib/starter";
+import { DEFAULT_STAMPS, NO_STARTER, readStarterRow, sampleValues, starterToShow } from "@/lib/starter";
 
 // What we put in their preview email, handed back to them on the first
 // screen after claiming. Until this existed, sample_offer and
@@ -92,4 +92,35 @@ test("a reward with no usable stamp count still makes a card", () => {
     );
 
     assert.deepEqual(shown.card, { reward: "A free flat white", stamps: 9 });
+});
+
+// What the two write paths put in the columns: building a preview, and
+// changing the examples on one already built. They clamped and
+// truncated by hand, so a preview could be saved with a stamp count
+// readStarterRow would then refuse to read back.
+
+test("the examples are written the way they are read back", () => {
+    const values = sampleValues("Free side with any main, before 5pm", "A free main", 9);
+
+    assert.deepEqual(readStarterRow(values), {
+        offer: "Free side with any main, before 5pm",
+        reward: "A free main",
+        stamps: 9,
+    });
+});
+
+test("a stamp count outside the card builder's range becomes the one we would have drawn", () => {
+    assert.equal(sampleValues("Free side", "A free main", 40).sample_stamps, DEFAULT_STAMPS);
+    assert.equal(sampleValues("Free side", "A free main", 2).sample_stamps, DEFAULT_STAMPS);
+    assert.equal(sampleValues("Free side", "A free main", 9.5).sample_stamps, DEFAULT_STAMPS);
+    assert.equal(sampleValues("Free side", "A free main", Number.NaN).sample_stamps, DEFAULT_STAMPS);
+});
+
+// The offer is the poster headline as well as the card title, and the
+// column is 80 characters: a longer one is cut rather than refused.
+test("an offer past the column length is cut to it", () => {
+    const values = sampleValues("x".repeat(200), "y".repeat(200), 9);
+
+    assert.equal(values.sample_offer.length, 80);
+    assert.equal(values.sample_reward.length, 60);
 });

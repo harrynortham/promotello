@@ -46,6 +46,7 @@ import {
 } from "@/lib/preview-email";
 import { neighboursIn } from "@/lib/neighbours";
 import { previewLink } from "@/lib/previews";
+import { DEFAULT_STAMPS, STAMPS_MAX, STAMPS_MIN } from "@/lib/starter";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { absoluteUrl } from "@/lib/site";
 import { CategorySelect } from "@/components/category-select";
@@ -61,6 +62,7 @@ import {
     saveLeadCompany,
     saveLeadDetails,
     saveLeadNotes,
+    saveLeadPreviewSamples,
 } from "../actions";
 
 // The business, not "Lead". Several of these are open at once while a
@@ -188,7 +190,9 @@ async function Lead({ params, searchParams }: PageProps) {
     const { data: preview } = lead.preview_business_id
         ? await supabase
               .from("business_previews")
-              .select("token, view_count, last_viewed_at, claimed_at")
+              .select(
+                  "token, view_count, last_viewed_at, claimed_at, sample_offer, sample_reward, sample_stamps",
+              )
               .eq("business_id", lead.preview_business_id)
               .maybeSingle()
         : { data: null };
@@ -829,6 +833,72 @@ async function Lead({ params, searchParams }: PageProps) {
                                             </p>
                                         )}
                                     </div>
+
+                                    {/* The examples, changeable without a
+                                        rebuild: rebuilding mints a new token
+                                        and dead-links the email already sent. */}
+                                    {!preview.claimed_at && (
+                                        <form
+                                            action={saveLeadPreviewSamples}
+                                            className="space-y-3 border-t pt-4"
+                                        >
+                                            <input type="hidden" name="leadId" value={lead.id} />
+                                            <input
+                                                type="hidden"
+                                                name="businessId"
+                                                value={lead.preview_business_id ?? ""}
+                                            />
+
+                                            <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                                The examples on it
+                                            </p>
+
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="sampleOffer">The offer</Label>
+                                                <Input
+                                                    id="sampleOffer"
+                                                    name="sampleOffer"
+                                                    defaultValue={preview.sample_offer ?? ""}
+                                                    maxLength={80}
+                                                    placeholder="Free side with any main, before 5pm"
+                                                />
+                                                <p className="text-xs leading-5 text-[#17233B]/55">
+                                                    The offer card and the poster headline. They write
+                                                    the real one when they claim the page, so this is
+                                                    better showing the shape than guessing their menu.
+                                                </p>
+                                            </div>
+
+                                            <div className="grid gap-3 sm:grid-cols-[1fr_6rem]">
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="sampleReward">The card gives</Label>
+                                                    <Input
+                                                        id="sampleReward"
+                                                        name="sampleReward"
+                                                        defaultValue={preview.sample_reward ?? ""}
+                                                        maxLength={60}
+                                                        placeholder="A free main"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1.5">
+                                                    <Label htmlFor="sampleStamps">Stamps</Label>
+                                                    <Input
+                                                        id="sampleStamps"
+                                                        name="sampleStamps"
+                                                        type="number"
+                                                        min={STAMPS_MIN}
+                                                        max={STAMPS_MAX}
+                                                        defaultValue={preview.sample_stamps ?? DEFAULT_STAMPS}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <SubmitButton pendingLabel="Saving…" variant="outline" size="sm">
+                                                Save the examples
+                                            </SubmitButton>
+                                        </form>
+                                    )}
 
                                     {/* The RPC refuses a claimed preview, so this
                                         cannot take a live business with it. */}
