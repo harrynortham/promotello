@@ -346,8 +346,6 @@ function BusinessForm({
         offerCount: 0,
         coverImageUrl: business.cover_image_url,
         isSample: false,
-        // They are editing it, so it is theirs.
-        unclaimed: false,
         topOffer: null,
     };
 

@@ -96,12 +96,13 @@ function lastTouch(lead: LeadRow) {
 // ran in the daily job and wrote a note on the lead, so finding out
 // whose turn it was meant opening every lead in the pipeline one at a
 // time. Here it is the first thing on the board.
-// Pages first, a street at a time. The pages are not published when a
-// preview is built: publishing puts a real page about a real business in
-// front of strangers and into Google, so it is a thing somebody presses.
+// Pages first, a street at a time. Building a page does not publish it:
+// it is unlisted, reachable only by the link we send, and in no listing
+// or index until its business claims it (lib/indexing.ts).
 //
-// Which is why this says the number out loud before it does anything,
-// and names what it is about to leave behind.
+// Still a thing somebody presses, and it still says the number out loud
+// first -- forty pages is forty real businesses, and the one it gets
+// wrong is somebody's shop.
 function PublishStreet({
     ready,
     notReady,
@@ -119,8 +120,8 @@ function PublishStreet({
                 <CardTitle className="flex items-center gap-2 text-base">
                     <FiGlobe aria-hidden="true" className="size-4 text-[#FF593F]" />
                     {ready.length > 0
-                        ? `${ready.length} ${ready.length === 1 ? "page" : "pages"} ready to publish`
-                        : "Nothing ready to publish"}
+                        ? `${ready.length} ${ready.length === 1 ? "page" : "pages"} ready to build`
+                        : "Nothing ready to build"}
                 </CardTitle>
             </CardHeader>
 
@@ -128,9 +129,10 @@ function PublishStreet({
                 {ready.length > 0 && !confirming && (
                     <>
                         <p className="leading-6 text-[#17233B]/70">
-                            Each one becomes a public page with its name, category, address and a
-                            map, and a button asking its owner to claim it. No offer or card can
-                            show on one until they do.
+                            Each becomes a real page at the address it will keep, with its name,
+                            category, address and a map, and a button asking its owner to claim
+                            it. Nobody can find one until they do: no listing, no search, no
+                            Google.
                         </p>
 
                         <Button
@@ -138,7 +140,7 @@ function PublishStreet({
                             nativeButton={false}
                             size="sm"
                         >
-                            Publish {ready.length} {ready.length === 1 ? "page" : "pages"}
+                            Build {ready.length} {ready.length === 1 ? "page" : "pages"}
                         </Button>
                     </>
                 )}
@@ -146,9 +148,9 @@ function PublishStreet({
                 {ready.length > 0 && confirming && (
                     <>
                         <p className="leading-6 text-[#17233B]/70">
-                            These {ready.length === 1 ? "page goes" : "pages go"} public and into
-                            the sitemap, so people who are not us can read{" "}
-                            {ready.length === 1 ? "it" : "them"}:
+                            {ready.length === 1 ? "This page" : "These pages"} will exist at{" "}
+                            {ready.length === 1 ? "its" : "their"} own address, for whoever we send
+                            the link to:
                         </p>
 
                         <ul className="list-disc space-y-0.5 pl-5 text-[#17233B]/80">
@@ -158,13 +160,14 @@ function PublishStreet({
                         </ul>
 
                         <p className="text-xs leading-6 text-[#17233B]/60">
-                            Each can be taken down again from its own lead, one at a time.
+                            Nothing is listed or indexed. Each can be taken down again from its
+                            own lead, one at a time.
                         </p>
 
                         <div className="flex items-center gap-3">
                             <form action={publishEveryLeadPage}>
                                 <SubmitButton pendingLabel="Publishing…" size="sm">
-                                    Yes, publish {ready.length === 1 ? "it" : "them all"}
+                                    Yes, build {ready.length === 1 ? "it" : "them all"}
                                 </SubmitButton>
                             </form>
 
@@ -470,7 +473,7 @@ async function Board({ searchParams }: PageProps) {
                 <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                     {params.published === "0"
                         ? "Nothing went up."
-                        : `${params.published} ${params.published === "1" ? "page is" : "pages are"} live, unclaimed.`}
+                        : `${params.published} ${params.published === "1" ? "page is" : "pages are"} built, unlisted.`}
                     {params.skipped ? ` Skipped: ${params.skipped}.` : ""}
                 </p>
             )}

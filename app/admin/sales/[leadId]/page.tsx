@@ -26,7 +26,6 @@ import { JumpToField } from "@/components/jump-to-field";
 import { SavingForm } from "@/components/saving-form";
 import { SubmitButton } from "@/components/submit-button";
 import { businessPath } from "@/lib/slugs";
-import { whyNotIndexed } from "@/lib/indexing";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CopyButton } from "@/components/copy-button";
 import { LetterCard } from "./letter-card";
@@ -232,16 +231,8 @@ async function Lead({ params, searchParams }: PageProps) {
         ? absoluteUrl(businessPath({ slug: previewBusiness.slug }))
         : null;
 
-    // Why a published page is being kept out of Google, if it is. Ten
-    // pages with a name and a map between them is thin, and thin is
-    // judged site-wide (lib/indexing.ts).
-    const thin = previewBusiness
-        ? whyNotIndexed({
-            unclaimed: previewBusiness.approval_status !== "approved",
-            description: previewBusiness.description,
-            hasAddress: (previewBusiness.business_locations ?? []).length > 0,
-        })
-        : null;
+    // An unclaimed page is theirs to look at and nobody else's to find.
+    const unclaimedPage = previewBusiness?.approval_status !== "approved";
 
     // The two emails as they stand today, so they can be read before
     // anything is queued. Built from the same functions that draft them,
@@ -331,9 +322,9 @@ async function Lead({ params, searchParams }: PageProps) {
             {saved && (
                 <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                     {saved === "page_published"
-                        ? "The page is live. It is in the directory and the sitemap, with no offer or card on it."
+                        ? "The page is built, at the address it will keep. Unlisted: only somebody with the link can see it."
                         : saved === "page_unpublished"
-                            ? "The page is down. Nobody but us can see it now."
+                            ? "The page is down. The link stops working."
                             : saved === "claim_released"
                                 ? "Sent. The claim link is on its way to the address on the request."
                                 : saved === "claim_declined"
@@ -917,20 +908,19 @@ async function Lead({ params, searchParams }: PageProps) {
                                                     <FiExternalLink aria-hidden="true" className="size-3 shrink-0" />
                                                 </a>
                                                 <p className="mt-1 text-xs text-[#17233B]/55">
-                                                    Live since <When value={previewBusiness!.listed_at!} />. Name,
+                                                    Built <When value={previewBusiness!.listed_at!} />. Name,
                                                     category and map only: no offer or card can show until they
                                                     claim it.
                                                 </p>
 
-                                                {thin ? (
+                                                {unclaimedPage && (
                                                     <div className="mt-3 rounded-lg bg-[#FFF4E8] px-3 py-2.5">
                                                         <p className="text-xs font-medium">
-                                                            Not in Google yet: it needs {thin}
+                                                            Only people with the link
                                                         </p>
                                                         <p className="mt-1 text-xs text-[#17233B]/60">
-                                                            The page works and is in the directory. It carries a
-                                                            noindex and stays out of the sitemap until there is
-                                                            enough on it to be worth a click.
+                                                            It is in no listing, no search and no index until they
+                                                            claim it. Send them the link and it works.
                                                         </p>
 
                                                         <form action={fillInLeadPage} className="mt-2">
@@ -949,10 +939,6 @@ async function Lead({ params, searchParams }: PageProps) {
                                                             </SubmitButton>
                                                         </form>
                                                     </div>
-                                                ) : (
-                                                    <p className="mt-2 text-xs text-[#17233B]/55">
-                                                        Enough on it to be indexed, and in the sitemap.
-                                                    </p>
                                                 )}
 
                                                 {!preview.claimed_at && (

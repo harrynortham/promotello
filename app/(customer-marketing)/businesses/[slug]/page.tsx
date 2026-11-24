@@ -178,17 +178,13 @@ export async function generateMetadata({
         description,
         alternates: { canonical: path },
         // Sample (demo) listings must never appear in search results.
-        // An unclaimed page we built stays out until it carries enough to
-        // be worth a click (lib/indexing.ts) — public and linked either
-        // way, just not submitted as a stub. follow stays on: the links
-        // off it go to real pages.
+        // Nor does a page we built that nobody has claimed: it works for
+        // anyone we send the link to and it is not ours to advertise
+        // (lib/indexing.ts). follow stays on, because the links off it
+        // go to real pages.
         robots: business.is_sample
             ? { index: false, follow: false }
-            : worthIndexing({
-                unclaimed,
-                description: business.description,
-                hasAddress: Boolean(location),
-            })
+            : worthIndexing({ unclaimed })
                 ? undefined
                 : { index: false, follow: true },
         openGraph: {
