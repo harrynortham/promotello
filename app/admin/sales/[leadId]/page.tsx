@@ -97,6 +97,7 @@ type PageProps = {
         undeletable?: string;
         confirm?: string;
         filled?: string;
+        nohours?: string;
         saved?: string;
         queued?: string;
         moved?: string;
@@ -128,7 +129,8 @@ async function Lead({ params, searchParams }: PageProps) {
     if (!isAdmin) redirect("/admin");
 
     const { leadId } = await params;
-    const { already, undeletable, confirm, saved, queued, moved, crawled, filled, error } = await searchParams;
+    const { already, undeletable, confirm, saved, queued, moved, crawled, filled, nohours, error } =
+        await searchParams;
     const confirming = confirm === "delete";
 
     const { data: lead } = await supabase
@@ -212,7 +214,7 @@ async function Lead({ params, searchParams }: PageProps) {
     const { data: previewBusiness } = lead.preview_business_id
         ? await supabase
               .from("businesses")
-              .select("slug, listed_at, approval_status, description, business_hours ( day_of_week )")
+              .select("slug, listed_at, approval_status, description, business_locations ( city )")
               .eq("id", lead.preview_business_id)
               .maybeSingle()
         : { data: null };
@@ -237,7 +239,7 @@ async function Lead({ params, searchParams }: PageProps) {
         ? whyNotIndexed({
             unclaimed: previewBusiness.approval_status !== "approved",
             description: previewBusiness.description,
-            hasHours: (previewBusiness.business_hours ?? []).length > 0,
+            hasAddress: (previewBusiness.business_locations ?? []).length > 0,
         })
         : null;
 
@@ -343,8 +345,8 @@ async function Lead({ params, searchParams }: PageProps) {
             {filled && (
                 <p className="mt-4 rounded-lg border border-[#17233B]/15 bg-white px-4 py-3 text-sm text-[#17233B]/75">
                     {filled === "nothing"
-                        ? "Read their site and found no published hours. Nothing was changed."
-                        : `Read their site and filled in ${filled}.`}
+                        ? `Nothing to add: ${nohours ?? "nothing new was found"}.`
+                        : `Filled in ${filled}.${nohours ? ` No hours: ${nohours}.` : ""}`}
                 </p>
             )}
 

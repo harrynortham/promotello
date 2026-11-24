@@ -33,28 +33,43 @@ export type PageSubstance = {
     // second-guess, however short they kept it.
     unclaimed: boolean;
     description: string | null | undefined;
-    // Opening hours are the thing that makes a local listing a listing
-    // rather than a card: different on every page, factual, and what
-    // somebody searching at six in the evening is actually after.
-    hasHours: boolean;
+    // Where it is. A local listing without one is a card, and the map is
+    // most of what somebody came to the page for.
+    hasAddress: boolean;
 };
 
-export function worthIndexing({ unclaimed, description, hasHours }: PageSubstance) {
+// This asked for opening hours too, until the first ten pages went
+// looking for some.
+//
+// Not one of the eight businesses with a website published structured
+// hours -- four had no JSON-LD at all, and the four that did used it for
+// something else. That is what a street of independents on Wix and
+// Squarespace looks like, and it made this function an off switch
+// rather than a gate: a requirement nothing could ever meet, quietly
+// keeping every unclaimed page out of Google for good and throwing away
+// the reason for publishing them early.
+//
+// So hours are a bonus the crawl picks up where it can, and the bar is
+// what every one of these pages can actually clear: words somebody
+// wrote about this business, and somewhere to go. Eight of the ten pass
+// it. The two that do not have 30 and 95 characters on them, which is
+// exactly the discrimination worth making.
+export function worthIndexing({ unclaimed, description, hasAddress }: PageSubstance) {
     if (!unclaimed) return true;
 
-    return (description ?? "").trim().length >= ENOUGH_DESCRIPTION && hasHours;
+    return (description ?? "").trim().length >= ENOUGH_DESCRIPTION && hasAddress;
 }
 
 // Why it is being held back, for the admin page. Never shown to a
 // visitor: the page says nothing about its own indexing, because that
 // is a conversation between us and a crawler.
-export function whyNotIndexed({ unclaimed, description, hasHours }: PageSubstance) {
+export function whyNotIndexed({ unclaimed, description, hasAddress }: PageSubstance) {
     if (!unclaimed) return null;
 
     const missing: string[] = [];
 
     if ((description ?? "").trim().length < ENOUGH_DESCRIPTION) missing.push("a longer description");
-    if (!hasHours) missing.push("opening hours");
+    if (!hasAddress) missing.push("an address");
 
     return missing.length > 0 ? missing.join(" and ") : null;
 }

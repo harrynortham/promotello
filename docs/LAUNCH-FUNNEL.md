@@ -291,15 +291,29 @@ copied to the business. A link on the page, and a `sameAs` tying the
 listing to an account Google already knows.
 
 **A gate on indexing.** `worthIndexing()` in `lib/indexing.ts`: an
-unclaimed page needs a description past `ENOUGH_DESCRIPTION` and some
-opening hours before it goes in the sitemap or loses its `noindex`. It
-stays completely public either way — in the directory, on its area page,
+unclaimed page needs a description past `ENOUGH_DESCRIPTION` and an
+address before it goes in the sitemap or loses its `noindex`. It stays
+completely public either way — in the directory, on its area page,
 reachable, claimable, linked. It is simply not submitted as a stub. A
 claimed business is always indexed, however short its owner kept it:
 that is their listing, not ours to second-guess.
 
 The lead says which of the two is missing and offers to read their site
 for it.
+
+**It asked for opening hours too, for about an hour.** Then the first
+ten pages went looking for some, and not one of the eight businesses
+with a website published any — four had no JSON-LD at all, and the four
+that did used it for something else. That is what a street of
+independents on Wix and Squarespace looks like.
+
+A requirement nothing can meet is an off switch, not a gate: it would
+have kept every unclaimed page out of Google for good and thrown away
+the reason for publishing them early. So hours are a bonus the crawl
+picks up where it can, and the bar is what these pages can actually
+clear. Eight of the ten pass it. The two that do not have 30 and 95
+characters written about them, which is the discrimination worth
+making — and no crawl fixes that, only somebody writing a sentence.
 
 **What is deliberately not here:** writing a description for a business
 that has not asked us to. Generating words to clear a length check is
