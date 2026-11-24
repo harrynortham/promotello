@@ -14,6 +14,8 @@ import {
     previewColumns,
     type PreviewRow,
 } from "@/lib/preview-email";
+import { neighboursIn } from "@/lib/neighbours";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
@@ -565,6 +567,13 @@ export async function queueOutreach(formData: FormData) {
                     placesLeft,
                     contactName: lead.contact_name,
                     personalLine: lead.personal_line,
+                    // The draft shown on the lead page is built the same
+                    // way, so what is approved is what is sent.
+                    neighbours: await neighboursIn(
+                        createAdminClient(),
+                        row.businesses?.business_locations?.[0]?.area_id ?? null,
+                        row.business_id,
+                    ),
                 }),
             }
             : {

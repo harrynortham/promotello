@@ -1,4 +1,5 @@
 import { FOUNDING_MEMBER_LIMIT, FOUNDING_TRIAL_DAYS, TRIAL_DAYS, freeFor, plans } from "@/lib/billing";
+import { neighboursLine, type Neighbours } from "@/lib/neighbours";
 import { absoluteUrl } from "@/lib/site";
 import { SIGNED_BY } from "@/lib/email-signature";
 import { previewLink } from "@/lib/previews";
@@ -26,12 +27,18 @@ export type PreviewRow = {
         // the email because "a page in the Bristol directory" is a place
         // in general and "listed under Bakeries" is their place.
         categories: { name: string } | null;
-        business_locations: { city: string | null; region: string | null; cities: { name: string } | null }[];
+        business_locations: {
+            city: string | null;
+            region: string | null;
+            area_id: string | null;
+            cities: { name: string } | null;
+            areas: { name: string } | null;
+        }[];
     } | null;
 };
 
 export const previewColumns =
-    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, cities ( name ) ) )";
+    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, area_id, cities ( name ), areas ( name ) ) )";
 
 // Signed by a real name where there is one. A DM from a brand account
 // signed "The Promotello team" reads worse than one signed by nobody.
@@ -240,11 +247,15 @@ export function outreachMessage({
     placesLeft,
     contactName,
     personalLine,
+    neighbours,
 }: {
     preview: PreviewRow;
     placesLeft: number | null;
     contactName: string | null;
     personalLine?: string | null;
+    // Who else on their street is already here. Null until there are
+    // enough of them to be worth saying (lib/neighbours.ts).
+    neighbours?: Neighbours | null;
 }) {
     const name = preview.businesses?.name ?? "your business";
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
@@ -278,6 +289,11 @@ export function outreachMessage({
         "",
         `Claim it and you're listed in the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`,
         "",
+        // Named neighbours beat any argument we could make about the
+        // directory, so they go directly under it -- and only when
+        // there are enough of them to read as a street rather than as
+        // an empty one.
+        ...(neighboursLine(neighbours) ? [neighboursLine(neighbours)!, ""] : []),
         "It's free. There's no app for customers to download and nothing for you to install.",
         "",
         foundingOffer(placesLeft),

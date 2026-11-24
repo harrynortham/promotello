@@ -44,7 +44,9 @@ import {
     senderName,
     type PreviewRow,
 } from "@/lib/preview-email";
+import { neighboursIn } from "@/lib/neighbours";
 import { previewLink } from "@/lib/previews";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { absoluteUrl } from "@/lib/site";
 import { CategorySelect } from "@/components/category-select";
 import {
@@ -228,6 +230,11 @@ async function Lead({ params, searchParams }: PageProps) {
         ? await (async () => {
               const row = previewRow as unknown as PreviewRow;
               const placesLeft = await foundingPlacesLeft();
+              // Who else is on their street. Admin client because it
+              // counts every approved business in the area, not only
+              // the ones this admin can see through RLS.
+              const area = row.businesses?.business_locations?.[0]?.area_id ?? null;
+              const nearby = await neighboursIn(createAdminClient(), area, row.business_id);
 
               return [
                   {
@@ -238,6 +245,7 @@ async function Lead({ params, searchParams }: PageProps) {
                           placesLeft,
                           contactName: lead.contact_name,
                           personalLine: lead.personal_line,
+                          neighbours: nearby,
                       }),
                   },
                   {
