@@ -75,7 +75,11 @@ export const BUSINESS_REASONS: ReviewReason[] = [
         code: "duplicate",
         label: "Already on Promotello",
         says: "This business is already on Promotello, so we've left the page that's there in place rather than splitting it in two.",
-        fix: "Reply to this email and we'll give you access to the existing page instead.",
+        // Pages first means the page that is already there is usually one
+        // we built, and it has a claim button on it. Sending them to it
+        // beats sending them to an inbox: "reply and wait" was the whole
+        // reason they signed up a second time instead.
+        fix: "Open your page on Promotello and press \u201cClaim your free page\u201d, and we'll hand it over. Or reply to this email and we'll sort it out.",
     },
     {
         code: "not-listed",
