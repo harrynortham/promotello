@@ -4,11 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { FiArrowRight, FiExternalLink } from "react-icons/fi";
 import { SocialIcon } from "react-social-icons/component";
-import "react-social-icons/x";
+import "react-social-icons/instagram";
 import "react-social-icons/facebook";
+import "react-social-icons/x";
 import "react-social-icons/youtube";
 import "react-social-icons/linkedin";
-import "react-social-icons/instagram";
 import "react-social-icons/tiktok";
 
 import { Button } from "@/components/ui/button";

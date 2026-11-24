@@ -33,10 +33,10 @@ export function jsonLd(data: unknown) {
 // Organization structured data, which is how a search engine ties the
 // site and the accounts together as one thing.
 export const socialProfiles = [
-    { label: "X", network: "x", url: "https://x.com/promotello" },
+    { label: "Instagram", network: "instagram", url: "https://www.instagram.com/promotello/" },
     { label: "Facebook", network: "facebook", url: "https://www.facebook.com/promotello/" },
+    { label: "X", network: "x", url: "https://x.com/promotello" },
     { label: "YouTube", network: "youtube", url: "https://www.youtube.com/@promotello" },
     { label: "LinkedIn", network: "linkedin", url: "https://www.linkedin.com/company/promotello/" },
-    { label: "Instagram", network: "instagram", url: "https://www.instagram.com/promotello/" },
     { label: "TikTok", network: "tiktok", url: "https://www.tiktok.com/@promotello" },
 ];

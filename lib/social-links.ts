@@ -27,7 +27,24 @@ export type SocialNetwork = {
     placeholder: string;
 };
 
-export type SocialKey = "instagram" | "facebook" | "tiktok" | "x" | "youtube" | "linkedin";
+export type SocialKey = "instagram" | "facebook" | "x" | "youtube" | "linkedin" | "tiktok";
+
+// The order every row of these goes in, everywhere: the site footer, the
+// email footer, the signature, a business's own page, and the form that
+// asks for them. Instagram and Facebook lead because that is where these
+// businesses actually are, and TikTok sits last.
+//
+// Written down because it is kept in three lists that cannot import one
+// another cleanly — this one, socialProfiles in lib/site.ts and the
+// signature's HTML — and a unit test holds each of them to it.
+export const SOCIAL_ORDER: SocialKey[] = [
+    "instagram",
+    "facebook",
+    "x",
+    "youtube",
+    "linkedin",
+    "tiktok",
+];
 
 // The six worth asking about. Instagram and Facebook are where nearly
 // all of these businesses already are; the rest are here so the ones
@@ -48,15 +65,6 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         prefix: "https://facebook.com/",
         hosts: ["facebook.com", "www.facebook.com", "m.facebook.com", "fb.com", "fb.me"],
         placeholder: "yourpagename",
-    },
-    {
-        key: "tiktok",
-        label: "TikTok",
-        column: "tiktok_url",
-        // TikTok handles carry the @ in the path, unlike the others.
-        prefix: "https://tiktok.com/@",
-        hosts: ["tiktok.com", "www.tiktok.com", "vm.tiktok.com"],
-        placeholder: "@yourhandle",
     },
     {
         key: "x",
@@ -81,6 +89,15 @@ export const SOCIAL_NETWORKS: SocialNetwork[] = [
         prefix: "https://linkedin.com/company/",
         hosts: ["linkedin.com", "www.linkedin.com", "uk.linkedin.com"],
         placeholder: "company/your-business",
+    },
+    {
+        key: "tiktok",
+        label: "TikTok",
+        column: "tiktok_url",
+        // TikTok handles carry the @ in the path, unlike the others.
+        prefix: "https://tiktok.com/@",
+        hosts: ["tiktok.com", "www.tiktok.com", "vm.tiktok.com"],
+        placeholder: "@yourhandle",
     },
 ];
 

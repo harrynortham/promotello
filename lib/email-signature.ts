@@ -42,16 +42,6 @@ export const SIGNATURE_HTML = `<div
   </div>
   <div><br /></div>
   <div>
-    <a href="https://www.x.com/promotello/" style="text-decoration: none">
-      <img
-        src="https://lh3.googleusercontent.com/d/1-bBUvr4V-5--zDYSNhNY0ycEg7bME6z8"
-        width="24"
-        height="24"
-        alt="X"
-        style="width: 30px; height: 30px; border: 0; display: inline-block"
-      />
-    </a>
-    &nbsp;
     <a
       href="https://www.instagram.com/promotello/"
       style="text-decoration: none"
@@ -78,12 +68,12 @@ export const SIGNATURE_HTML = `<div
       />
     </a>
     &nbsp;
-    <a href="https://www.tiktok.com/@promotello" style="text-decoration: none">
+    <a href="https://www.x.com/promotello/" style="text-decoration: none">
       <img
-        src="https://lh3.googleusercontent.com/d/1dsLLXin1gXLdHrLUO9kO_hAXO0xMOsXI"
+        src="https://lh3.googleusercontent.com/d/1-bBUvr4V-5--zDYSNhNY0ycEg7bME6z8"
         width="24"
         height="24"
-        alt="TikTok"
+        alt="X"
         style="width: 30px; height: 30px; border: 0; display: inline-block"
       />
     </a>
@@ -94,6 +84,16 @@ export const SIGNATURE_HTML = `<div
         width="24"
         height="24"
         alt="Youtube"
+        style="width: 30px; height: 30px; border: 0; display: inline-block"
+      />
+    </a>
+    &nbsp;
+    <a href="https://www.tiktok.com/@promotello" style="text-decoration: none">
+      <img
+        src="https://lh3.googleusercontent.com/d/1dsLLXin1gXLdHrLUO9kO_hAXO0xMOsXI"
+        width="24"
+        height="24"
+        alt="TikTok"
         style="width: 30px; height: 30px; border: 0; display: inline-block"
       />
     </a>

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { SOCIAL_NETWORKS, socialHandle, socialUrl, socialsOf } from "@/lib/social-links";
+import { SOCIAL_NETWORKS, SOCIAL_ORDER, socialHandle, socialUrl, socialsOf } from "@/lib/social-links";
+import { socialProfiles } from "@/lib/site";
 
 const url = (key: Parameters<typeof socialUrl>[0], value: string) => {
     const result = socialUrl(key, value);
@@ -110,4 +111,17 @@ test("only the ones filled in are shown, in a fixed order", () => {
 
     assert.deepEqual(shown.map((entry) => entry.network.key), ["instagram", "tiktok"]);
     assert.deepEqual(socialsOf({}), []);
+});
+
+// One order for every row of these, everywhere. The three lists cannot
+// import one another cleanly — the networks a business can fill in, the
+// accounts Promotello keeps, and the signature's hand-written HTML — so
+// this is what stops one of them being reordered on its own.
+
+test("the networks a business can fill in are in the house order", () => {
+    assert.deepEqual(SOCIAL_NETWORKS.map((network) => network.key), SOCIAL_ORDER);
+});
+
+test("Promotello's own accounts are in the house order", () => {
+    assert.deepEqual(socialProfiles.map((profile) => profile.network), SOCIAL_ORDER);
 });
