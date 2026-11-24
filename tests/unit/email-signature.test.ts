@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import { SIGNATURE_HTML } from "@/lib/email-signature";
+import { SOCIAL_ORDER } from "@/lib/social-links";
 import { asHtml, withSignature } from "@/lib/outreach-queue";
 
 // The file is what a person edits; the constant is what the server
@@ -44,4 +45,17 @@ test("the letter is still the letter", () => {
 
     assert.ok(body.startsWith("Hi Sam,"), "it opens with the letter");
     assert.ok(body.includes("Harry Northam"), "and ends signed");
+});
+
+// The signature's icons are hand-written HTML rather than a loop over a
+// list, so nothing else would notice them drifting out of the order the
+// footers use. LinkedIn is not on it, which is allowed — what is there
+// has to be in order, not all of it present.
+test("the signature's icons are in the house order", () => {
+    const found = [...SIGNATURE_HTML.matchAll(/https:\/\/www\.([a-z]+)\.com/g)]
+        .map((match) => match[1])
+        .filter((host) => SOCIAL_ORDER.includes(host as (typeof SOCIAL_ORDER)[number]));
+
+    assert.deepEqual(found, SOCIAL_ORDER.filter((key) => found.includes(key)));
+    assert.ok(found.length >= 4, `only found ${found.join(", ")}`);
 });

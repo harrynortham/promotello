@@ -72,6 +72,18 @@ integration.
 looking at the screen while they read it. "Add another business" only
 appears once you have one.
 
+**Social icons go in one order, everywhere:** Instagram, Facebook, X,
+YouTube, LinkedIn, TikTok. The site footer, the email footer, Harry's
+signature, a business's own page and the form that asks for them all use
+it. Instagram and Facebook lead because that is where these businesses
+already are; TikTok sits last. A list that has only some of them keeps
+the same relative order rather than inventing its own — the signature has
+no LinkedIn, and is still in order.
+
+`SOCIAL_ORDER` in `lib/social-links.ts` is the order, and
+`tests/unit/social-links.test.ts` and `tests/unit/email-signature.test.ts`
+fail if one of the lists is reordered on its own.
+
 ## Numbers come from code, never from the keyboard
 
 Prices, trial lengths, plan limits and the number of founding places are all
