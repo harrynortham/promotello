@@ -25,6 +25,7 @@ import { createClient } from "@/utils/supabase/server";
 import { JumpToField } from "@/components/jump-to-field";
 import { SavingForm } from "@/components/saving-form";
 import { SubmitButton } from "@/components/submit-button";
+import { businessPath } from "@/lib/slugs";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CopyButton } from "@/components/copy-button";
 import { LetterCard } from "./letter-card";
@@ -62,7 +63,11 @@ import {
     saveLeadCompany,
     saveLeadDetails,
     saveLeadNotes,
+    declinePageClaim,
+    publishLeadPage,
+    releasePageClaim,
     saveLeadPreviewSamples,
+    unpublishLeadPage,
 } from "../actions";
 
 // The business, not "Lead". Several of these are open at once while a
@@ -199,6 +204,29 @@ async function Lead({ params, searchParams }: PageProps) {
 
     const publicPreview = preview ? absoluteUrl(previewLink(preview.token, lead.name)) : null;
 
+    // Pages first: whether this lead's page is already public, and the
+    // open claim requests on it.
+    const { data: previewBusiness } = lead.preview_business_id
+        ? await supabase
+              .from("businesses")
+              .select("slug, listed_at, approval_status, description")
+              .eq("id", lead.preview_business_id)
+              .maybeSingle()
+        : { data: null };
+
+    const { data: claimRequests } = lead.preview_business_id
+        ? await supabase
+              .from("page_claim_requests")
+              .select("id, contact_name, contact_email, connection, created_at")
+              .eq("business_id", lead.preview_business_id)
+              .eq("status", "open")
+              .order("created_at", { ascending: true })
+        : { data: null };
+
+    const livePage = previewBusiness?.listed_at
+        ? absoluteUrl(businessPath({ slug: previewBusiness.slug }))
+        : null;
+
     // The two emails as they stand today, so they can be read before
     // anything is queued. Built from the same functions that draft them,
     // or this would be a second version that drifts.
@@ -281,9 +309,20 @@ async function Lead({ params, searchParams }: PageProps) {
                 ← The pipeline
             </Button>
 
+            {/* "Saved." is right for a field. Publishing a page puts it
+                in front of strangers, and releasing one gives it away, so
+                those say what actually happened. */}
             {saved && (
                 <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    Saved.
+                    {saved === "page_published"
+                        ? "The page is live. It is in the directory and the sitemap, with no offer or card on it."
+                        : saved === "page_unpublished"
+                            ? "The page is down. Nobody but us can see it now."
+                            : saved === "claim_released"
+                                ? "Sent. The claim link is on its way to the address on the request."
+                                : saved === "claim_declined"
+                                    ? "Closed. Nothing was sent — write to them yourself if they are owed an answer."
+                                    : "Saved."}
                 </p>
             )}
 
@@ -833,6 +872,130 @@ async function Lead({ params, searchParams }: PageProps) {
                                             </p>
                                         )}
                                     </div>
+
+                                    {/* Pages first. The page goes up before
+                                        they are contacted, so the email is
+                                        about a page that already exists. */}
+                                    <div className="border-t pt-4">
+                                        <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                            The public page
+                                        </p>
+
+                                        {livePage ? (
+                                            <>
+                                                <a
+                                                    href={livePage}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="mt-1 inline-flex items-center gap-1 break-all font-medium hover:text-[#FF593F]"
+                                                >
+                                                    {livePage.replace(/^https?:\/\//, "")}
+                                                    <FiExternalLink aria-hidden="true" className="size-3 shrink-0" />
+                                                </a>
+                                                <p className="mt-1 text-xs text-[#17233B]/55">
+                                                    Live since <When value={previewBusiness!.listed_at!} />. Name,
+                                                    category and map only: no offer or card can show until they
+                                                    claim it.
+                                                </p>
+
+                                                {!preview.claimed_at && (
+                                                    <form action={unpublishLeadPage} className="mt-3">
+                                                        <input type="hidden" name="leadId" value={lead.id} />
+                                                        <input
+                                                            type="hidden"
+                                                            name="businessId"
+                                                            value={lead.preview_business_id ?? ""}
+                                                        />
+                                                        <SubmitButton
+                                                            pendingLabel="Taking it down…"
+                                                            variant="outline"
+                                                            size="sm"
+                                                        >
+                                                            Take the page down
+                                                        </SubmitButton>
+                                                    </form>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="mt-1 font-medium">Not published</p>
+                                                <p className="mt-1 text-xs text-[#17233B]/55">
+                                                    Publishing puts it in the directory and the sitemap, so they
+                                                    can find it by searching their own name.
+                                                </p>
+
+                                                <form action={publishLeadPage} className="mt-3">
+                                                    <input type="hidden" name="leadId" value={lead.id} />
+                                                    <input
+                                                        type="hidden"
+                                                        name="businessId"
+                                                        value={lead.preview_business_id ?? ""}
+                                                    />
+                                                    <SubmitButton pendingLabel="Publishing…" size="sm">
+                                                        Publish the page
+                                                    </SubmitButton>
+                                                </form>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {(claimRequests ?? []).length > 0 && (
+                                        <div className="border-t pt-4">
+                                            <p className="text-xs uppercase tracking-wide text-[#FF593F]">
+                                                Somebody says it is theirs
+                                            </p>
+
+                                            <ul className="mt-2 space-y-3">
+                                                {(claimRequests ?? []).map((request) => (
+                                                    <li key={request.id} className="rounded-lg bg-[#FF593F]/[0.04] p-3">
+                                                        <p className="font-medium">{request.contact_name}</p>
+                                                        <p className="break-all text-xs text-[#17233B]/70">
+                                                            {request.contact_email}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-[#17233B]/70">
+                                                            &ldquo;{request.connection}&rdquo; ·{" "}
+                                                            <When value={request.created_at} />
+                                                        </p>
+
+                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                            <form action={releasePageClaim}>
+                                                                <input type="hidden" name="requestId" value={request.id} />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="back"
+                                                                    value={`/admin/sales/${lead.id}`}
+                                                                />
+                                                                <SubmitButton pendingLabel="Sending…" size="sm">
+                                                                    Release the page
+                                                                </SubmitButton>
+                                                            </form>
+
+                                                            <form action={declinePageClaim}>
+                                                                <input type="hidden" name="requestId" value={request.id} />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="back"
+                                                                    value={`/admin/sales/${lead.id}`}
+                                                                />
+                                                                <SubmitButton
+                                                                    pendingLabel="Declining…"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                >
+                                                                    Decline
+                                                                </SubmitButton>
+                                                            </form>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            <p className="mt-2 text-xs text-[#17233B]/55">
+                                                Releasing emails the claim link to the address above, and starts
+                                                its own 90 days.
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {/* The examples, changeable without a
                                         rebuild: rebuilding mints a new token

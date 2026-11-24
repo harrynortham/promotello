@@ -114,7 +114,7 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         .select(
             `
                 id, slug, name, description, logo_url, cover_image_url, category, category_id, created_at, is_sample,
-                closed_at,
+                closed_at, approval_status,
                 business_locations ( region, city, city_id, area_id ),
                 offers ( slug, title, discount, image_url, created_at )
             `,
@@ -146,6 +146,9 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
             // Its own cover photo, or else its newest offer photo.
             coverImageUrl: row.cover_image_url ?? offers.find((offer) => offer.image_url)?.image_url ?? null,
             isSample: row.is_sample,
+            // RLS returns approved businesses and unclaimed listed pages,
+            // and nothing else, so anything not approved is the latter.
+            unclaimed: row.approval_status !== "approved",
             topOffer: latest
                 ? { slug: latest.slug, title: latest.title, discount: latest.discount }
                 : null,

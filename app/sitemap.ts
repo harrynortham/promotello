@@ -67,7 +67,11 @@ async function getPublicListings() {
     const supabase = createPublicClient();
 
     // RLS limits both queries to what an anonymous visitor can see:
-    // approved businesses, and approved, unexpired, unpaused offers.
+    // approved businesses, the pages we published before they were
+    // claimed (20270307090000), and approved, unexpired, unpaused
+    // offers. Unclaimed pages belong here: an owner searching their own
+    // business name finding the page we built for them is the whole
+    // point of publishing it before we write to them.
     // Sample (demo) listings are left out so search engines never index them.
     const [{ data: businesses }, { data: offers }] = await Promise.all([
         // A closed business keeps its row so customers' records still name
