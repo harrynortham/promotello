@@ -86,8 +86,9 @@ export function introduction(sender: string, town: string, street: string | null
 export function ownNumbers(sender: string) {
     const team = sender === DEFAULT_SENDER;
 
-    // Not "it's new, so…": introduction() has already said that, two
-    // paragraphs up, and an email that says it twice sounds unsure.
+    // Not "it's new, so…". The email does not say that anywhere else,
+    // and leading with it here would turn the one checkable promise in
+    // the letter into an apology for needing to make it.
     return `You don't have to take ${team ? "our" : "my"} word for any of it: your dashboard shows how many customers Promotello actually sent you, and if that's zero after a month, tell ${team ? "us" : "me"} and we'll sort it out.`;
 }
 
@@ -302,6 +303,13 @@ export function outreachMessage({
         // an empty one.
         ...(neighboursLine(neighbours) ? [neighboursLine(neighbours)!, ""] : []),
         "It's free. There's no app for customers to download and nothing for you to install.",
+        "",
+        // Before the price, not after it: the reason to believe any of
+        // this has to land before the ask does. It was written months
+        // ago, tested, and then never wired into the email that goes
+        // out -- so the one answer to "why risk it" from a company
+        // nobody has heard of was sitting in lib doing nothing.
+        ownNumbers(SIGNED_BY),
         "",
         foundingOffer(placesLeft),
         "",
