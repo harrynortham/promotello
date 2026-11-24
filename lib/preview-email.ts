@@ -261,6 +261,11 @@ export function outreachMessage({
     const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";
+    // Their street, not their city. "The Bristol directory" is a place
+    // in general; "the Gloucester Road page" is the one they are
+    // standing on, and it exists -- /explore/[city]/[area] is a real
+    // page, not a filter described generously.
+    const area = location?.areas?.name?.trim() || null;
 
     // The personal line stands on its own now rather than running into
     // the next sentence. It is the one thing in here that could not have
@@ -287,7 +292,9 @@ export function outreachMessage({
         "",
         "Promotello turns passers-by into regulars. A QR poster goes in your window. Customers scan it, claim your offer and show it when they pay. A loyalty card brings them back.",
         "",
-        `Claim it and you're listed in the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`,
+        area
+            ? `Claim it and you're on the ${area} page of the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`
+            : `Claim it and you're listed in the ${town} directory, where local people can find you, claim your offers and join your loyalty card.`,
         "",
         // Named neighbours beat any argument we could make about the
         // directory, so they go directly under it -- and only when

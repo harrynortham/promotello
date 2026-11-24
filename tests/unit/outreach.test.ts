@@ -18,7 +18,14 @@ const preview = {
     businesses: {
         name: "Little Loaf",
         categories: { name: "Bakeries" },
-        business_locations: [{ city: "Bristol", region: "Gloucester Road", cities: { name: "Bristol" } }],
+        business_locations: [
+            {
+                city: "Bristol",
+                region: "Gloucester Road",
+                cities: { name: "Bristol" },
+                areas: { name: "Gloucester Road" },
+            },
+        ],
     },
     token: "11111111-2222-3333-4444-555555555555",
 } as unknown as Parameters<typeof outreachMessage>[0]["preview"];
@@ -283,4 +290,32 @@ test("the follow-up does not say nobody has joined", () => {
         outreachFollowUp({ preview, placesLeft: 31, contactName: "Sam" }),
         new RegExp(`31 of the ${FOUNDING_MEMBER_LIMIT} founding places are left`),
     );
+});
+
+// "The Bristol directory" is a place in general. "The Gloucester Road
+// page" is the one they are standing on — and it exists, at
+// /explore/[city]/[area], so this is not a filter described generously.
+test("it names their street, not just their city", () => {
+    const body = email();
+
+    assert.match(body, /on the Gloucester Road page of the Bristol directory/);
+    assert.ok(!body.includes("listed in the Bristol directory"));
+});
+
+// An area we could not resolve falls back rather than writing "the
+// undefined page", which is the failure this shape invites.
+test("a lead with no area still reads correctly", () => {
+    const nowhere = {
+        ...preview,
+        businesses: {
+            ...preview.businesses,
+            business_locations: [{ city: "Bristol", cities: { name: "Bristol" } }],
+        },
+    } as typeof preview;
+
+    const body = outreachMessage({ preview: nowhere, placesLeft: 38, contactName: "Sam" });
+
+    assert.match(body, /listed in the Bristol directory/);
+    assert.ok(!body.includes("undefined"));
+    assert.ok(!body.includes("null"));
 });
