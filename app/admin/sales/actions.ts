@@ -25,6 +25,7 @@ import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
 import { letterAddress, letterDestination, letterTemplate, sendLetter } from "@/lib/letters";
 import { asHtml, outreachSender, withSignature } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
+import { sampleValues } from "@/lib/starter";
 import { absoluteUrl } from "@/lib/site";
 import { createClient } from "@/utils/supabase/server";
 
@@ -1013,9 +1014,7 @@ export async function createPreviewFromLead(
 
     const { error: previewError } = await supabase.from("business_previews").insert({
         business_id: businessId,
-        sample_offer: sampleOffer.slice(0, 80),
-        sample_reward: sampleReward.slice(0, 60),
-        sample_stamps: Number.isInteger(stamps) && stamps >= 3 && stamps <= 20 ? stamps : 9,
+        ...sampleValues(sampleOffer, sampleReward, stamps),
         created_by: user.user?.id ?? null,
     });
 
@@ -1061,6 +1060,68 @@ export async function deleteLeadPreview(formData: FormData) {
 
     revalidatePath(`/admin/sales/${leadId}`);
     redirect(`/admin/sales/${leadId}?saved=preview_deleted`);
+}
+
+// Changing the offer and the card on a preview that is already built.
+//
+// Rebuilding was the only way to do this, and it mints a new token: the
+// link already sitting in their inbox stops working, and the email that
+// carried it has to be cancelled and sent again. The examples are the
+// one part of a preview we are still guessing at — their menu is not on
+// the lead — so they are the one part worth changing without taking the
+// page away.
+//
+// A claimed preview is theirs, and the offer on it is whatever they
+// made of it, so this refuses one.
+export async function saveLeadPreviewSamples(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const businessId = text(formData, "businessId");
+
+    const offer = text(formData, "sampleOffer");
+    const reward = text(formData, "sampleReward");
+    const stamps = Number(formData.get("sampleStamps"));
+
+    if (offer.length < 3 || reward.length < 3) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent("A preview needs an offer and a reward on it.")}`);
+    }
+
+    const { data: preview } = await supabase
+        .from("business_previews")
+        .select("claimed_at")
+        .eq("business_id", businessId)
+        .maybeSingle();
+
+    if (!preview) redirect(`/admin/sales/${leadId}?error=no_preview`);
+
+    if (preview.claimed_at) {
+        redirect(
+            `/admin/sales/${leadId}?error=${encodeURIComponent("They have claimed this page. What is on it is theirs now.")}`,
+        );
+    }
+
+    const values = sampleValues(offer, reward, stamps);
+
+    const { error } = await supabase
+        .from("business_previews")
+        .update(values)
+        .eq("business_id", businessId);
+
+    if (error) {
+        redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
+    }
+
+    // Worth writing down: it changes what they see when they open a link
+    // we have already sent, and nothing else would say it had moved.
+    await record(
+        supabase,
+        leadId,
+        "note",
+        `Preview examples changed to \u201c${values.sample_offer}\u201d and \u201c${values.sample_reward}\u201d, ${values.sample_stamps} stamps.`,
+    );
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    redirect(`/admin/sales/${leadId}?saved=preview_samples`);
 }
 
 // The letter. The last thing in the sequence, and the only one that
