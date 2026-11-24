@@ -319,3 +319,21 @@ test("a lead with no area still reads correctly", () => {
     assert.ok(!body.includes("undefined"));
     assert.ok(!body.includes("null"));
 });
+
+// The guarantee was written, tested, and never wired into the email
+// that goes out — so the one answer to "why risk it" from a company
+// nobody has heard of sat in lib doing nothing for months.
+test("the email carries the guarantee", () => {
+    const body = email();
+
+    assert.match(body, /don't have to take my word/i);
+    assert.match(body, /zero after a month/i);
+});
+
+// Before the price, not after it: the reason to believe has to land
+// before the ask does.
+test("the guarantee comes before the founding price", () => {
+    const body = email();
+
+    assert.ok(body.indexOf("take my word") < body.indexOf("first 50 businesses"));
+});
