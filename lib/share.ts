@@ -10,6 +10,13 @@ export function offerShareCaption(offer: { title: string; discount: string; busi
     return `${offer.discount} at ${offer.businessName}: ${offer.title}. Claim it free on Promotello 👇`;
 }
 
+// A page, rather than one thing on it: it stays true whether or not
+// they have an offer running or a card to join, which is the whole
+// point of sharing the page instead of the offer.
+export function businessShareCaption(business: { businessName: string }) {
+    return `${business.businessName} is on Promotello. See what we're running and claim it free on your phone, nothing to download 👇`;
+}
+
 export function loyaltyShareCaption(card: { stampsRequired: number; reward: string; businessName: string }) {
     return `Our loyalty card is live: collect ${card.stampsRequired} stamps at ${card.businessName} and get ${rewardWording(card.reward)}. Join it free, nothing to download 👇`;
 }

@@ -33,6 +33,10 @@ type SharePanelProps = {
     images: ShareImage[];
     stats?: { views: number; sharedViews: number };
     triggerLabel?: string;
+    // What is being shared. An offer, unless somebody says otherwise:
+    // this panel was an offer's for long enough that its own heading
+    // said so out loud.
+    heading?: string;
 };
 
 function useCopy() {
@@ -51,9 +55,18 @@ function useCopy() {
     return { copied, copy };
 }
 
-// Share an offer: its link, a suggested caption, one-tap links to each
-// network, and ready-made images for Instagram and Facebook.
-export function SharePanel({ title, url, caption, images, stats, triggerLabel = "Share" }: SharePanelProps) {
+// Share something: its link, a suggested caption, one-tap links to each
+// network, and ready-made images for Instagram and Facebook. An offer
+// or a business's own page — both have the two images already.
+export function SharePanel({
+    title,
+    url,
+    caption,
+    images,
+    stats,
+    triggerLabel = "Share",
+    heading = "Share this offer",
+}: SharePanelProps) {
     const { copied, copy } = useCopy();
     const [sharing, setSharing] = useState(false);
     const links = shareLinks({ url, text: caption });
@@ -91,7 +104,7 @@ export function SharePanel({ title, url, caption, images, stats, triggerLabel = 
 
             <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Share this offer</DialogTitle>
+                    <DialogTitle>{heading}</DialogTitle>
                     <DialogDescription>{title}</DialogDescription>
                 </DialogHeader>
 
