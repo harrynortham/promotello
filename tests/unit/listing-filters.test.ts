@@ -5,7 +5,6 @@ import type { CategoryGroup } from "@/lib/categories";
 import {
     areaPhoto,
     areasFrom,
-    byDirectoryOrder,
     categoryPageImage,
     citiesWithArea,
     filterBusinesses,
@@ -51,7 +50,6 @@ function business(place: ListingPlace, over: Partial<ListingBusiness> = {}): Lis
         offerCount: 0,
         coverImageUrl: null,
         isSample: false,
-        unclaimed: false,
         topOffer: null,
         ...over,
     };
@@ -393,62 +391,4 @@ test("a category page shows a subcategory's own picture, else its parent's", () 
         categoryPageImage({ slug: "things-to-do", image_url: "https://cdn.example/group.jpg" }),
         "https://cdn.example/group.jpg",
     );
-});
-
-// Pages first: publishing a street puts a lot of unclaimed pages up at
-// once, and every one of them is newer than everything else on the site.
-const claimedWithOffer = business(places.bristolCentre, {
-    id: "has-offer",
-    offerCount: 2,
-    createdAt: "2026-01-01T00:00:00.000Z",
-});
-const claimedNoOffer = business(places.bristolCentre, {
-    id: "claimed",
-    offerCount: 0,
-    createdAt: "2026-02-01T00:00:00.000Z",
-});
-const unclaimedToday = business(places.bristolCentre, {
-    id: "unclaimed-new",
-    offerCount: 0,
-    unclaimed: true,
-    createdAt: "2026-11-24T00:00:00.000Z",
-});
-const unclaimedOlder = business(places.bristolCentre, {
-    id: "unclaimed-old",
-    offerCount: 0,
-    unclaimed: true,
-    createdAt: "2026-11-01T00:00:00.000Z",
-});
-
-test("a business with a live offer comes first in the directory", () => {
-    const order = [unclaimedToday, claimedNoOffer, claimedWithOffer].sort(byDirectoryOrder);
-
-    assert.equal(order[0].id, "has-offer");
-});
-
-test("a page nobody has claimed stays below one that has been, however new it is", () => {
-    const order = [unclaimedToday, claimedNoOffer].sort(byDirectoryOrder);
-
-    assert.deepEqual(order.map((row) => row.id), ["claimed", "unclaimed-new"]);
-});
-
-test("the unclaimed are still newest-first among themselves", () => {
-    const order = [unclaimedOlder, unclaimedToday].sort(byDirectoryOrder);
-
-    assert.deepEqual(order.map((row) => row.id), ["unclaimed-new", "unclaimed-old"]);
-});
-
-test("a whole street published at once does not take the first screen", () => {
-    const street = Array.from({ length: 40 }, (_, index) =>
-        business(places.bristolCentre, {
-            id: `street-${index}`,
-            offerCount: 0,
-            unclaimed: true,
-            createdAt: `2026-11-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
-        }),
-    );
-
-    const order = [...street, claimedWithOffer, claimedNoOffer].sort(byDirectoryOrder);
-
-    assert.deepEqual(order.slice(0, 2).map((row) => row.id), ["has-offer", "claimed"]);
 });

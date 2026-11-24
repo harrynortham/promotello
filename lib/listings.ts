@@ -125,7 +125,24 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
         throw error;
     }
 
-    return data.filter((row) => !row.closed_at && inCity(row.business_locations, cityId)).map((row) => {
+    // A page we built and published before anybody claimed it is
+    // deliberately not in here. It is reachable at its own address by
+    // anyone we send the link to, and it is in no listing, no search and
+    // no sitemap until its business takes it over — which is the whole
+    // of the rule, kept in one place because this function is what the
+    // home page, /businesses, /explore, the area pages and the category
+    // pages all read.
+    //
+    // RLS hands us approved businesses and unclaimed listed pages, and
+    // nothing else, so anything not approved is the latter.
+    return data
+        .filter(
+            (row) =>
+                !row.closed_at
+                && row.approval_status === "approved"
+                && inCity(row.business_locations, cityId),
+        )
+        .map((row) => {
         // RLS only returns live offers here; newest first.
         const offers = [...(row.offers ?? [])].sort((a, b) =>
             b.created_at.localeCompare(a.created_at),
@@ -146,9 +163,6 @@ export async function getPublicBusinesses(cityId?: string): Promise<ListingBusin
             // Its own cover photo, or else its newest offer photo.
             coverImageUrl: row.cover_image_url ?? offers.find((offer) => offer.image_url)?.image_url ?? null,
             isSample: row.is_sample,
-            // RLS returns approved businesses and unclaimed listed pages,
-            // and nothing else, so anything not approved is the latter.
-            unclaimed: row.approval_status !== "approved",
             topOffer: latest
                 ? { slug: latest.slug, title: latest.title, discount: latest.discount }
                 : null,

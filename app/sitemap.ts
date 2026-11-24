@@ -70,17 +70,16 @@ async function getPublicListings() {
     // RLS limits both queries to what an anonymous visitor can see:
     // approved businesses, the pages we published before they were
     // claimed (20270307090000), and approved, unexpired, unpaused
-    // offers. An unclaimed page belongs here once it carries enough to
-    // be worth a click, and not before: submitting a name and a map as
-    // a page is how a new site teaches Google to discount the rest of
-    // it (lib/indexing.ts). It stays public and linked either way.
+    // offers. An unclaimed page is left out: it is reachable by anyone
+    // we send the link to and it is not ours to advertise until its
+    // business takes it over (lib/indexing.ts).
     // Sample (demo) listings are left out so search engines never index them.
     const [{ data: businesses }, { data: offers }] = await Promise.all([
         // A closed business keeps its row so customers' records still name
         // it, so the sitemap has to leave it out itself.
         supabase
             .from("businesses")
-            .select("slug, updated_at, approval_status, description, business_locations ( city )")
+            .select("slug, updated_at, approval_status")
             .eq("is_sample", false)
             .is("closed_at", null),
         supabase
@@ -92,11 +91,7 @@ async function getPublicListings() {
 
     return {
         businesses: (businesses ?? []).filter((business) =>
-            worthIndexing({
-                unclaimed: business.approval_status !== "approved",
-                description: business.description,
-                hasAddress: (business.business_locations ?? []).length > 0,
-            }),
+            worthIndexing({ unclaimed: business.approval_status !== "approved" }),
         ),
         offers,
     };

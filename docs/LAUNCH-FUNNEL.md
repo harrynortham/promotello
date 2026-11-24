@@ -262,65 +262,66 @@ reason beside its name and the other nine still go live. The
 confirmation names every page before it goes up, and the banner
 afterwards names what was skipped.
 
-## Thin pages, and not asking Google to rank them
+## Built, but unlisted until claimed
 
-Ten unclaimed pages went up on Gloucester Road carrying a name, a
-category, one sentence and a map. One of those is useful to somebody
-searching that business by name. Ten with the same shape and a few words
-between them is thin content, and thin content is assessed site-wide
-rather than page by page — ten pages is too few to matter, and the same
-mechanism at five hundred is a problem that takes months to undo.
+A page goes up before we contact them, and it is **not** published.
 
-Three things, and the first two are what make the third unnecessary most
-of the time.
+It exists at the address it will keep for good, it loads for anyone with
+the link, and it is in no listing, no search on this site and no index
+until its business claims it. One rule, three surfaces:
 
-**Hours, from their own website.** Not from Google. The Places policies
-name "copy and save business names, addresses" as a prohibited use and
-permit storing nothing but the `place_id`, so hours from Maps are not
-ours to keep — `lib/google-places.ts` has said so since it was written.
-Hours a business publishes on its own site are a different thing: they
-put them there to be read, which is the same source and the same
-justification as the email crawl. `hoursFromHtml()` takes only
-structured hours, out of the schema.org JSON-LD most sites carry to get
-the hours panel in a search result. Prose is left alone — a page saying
-"open late on Fridays" is not something to turn into 21:00 on somebody
-else's listing.
+| | |
+| --- | --- |
+| The directory, areas, categories, search | `getPublicBusinesses()` drops anything not approved |
+| The sitemap | `worthIndexing()` in `app/sitemap.ts` |
+| The page's own `robots` | `worthIndexing()` on the business page |
 
-**Instagram.** The handle has been on the lead all along and was never
-copied to the business. A link on the page, and a `sameAs` tying the
-listing to an account Google already knows.
+That is the whole of `lib/indexing.ts`, which exists to say it in one
+place rather than to decide anything clever.
 
-**A gate on indexing.** `worthIndexing()` in `lib/indexing.ts`: an
-unclaimed page needs a description past `ENOUGH_DESCRIPTION` and an
-address before it goes in the sitemap or loses its `noindex`. It stays
-completely public either way — in the directory, on its area page,
-reachable, claimable, linked. It is simply not submitted as a stub. A
-claimed business is always indexed, however short its owner kept it:
-that is their listing, not ours to second-guess.
+**Why not published.** The first ten went up listed and indexable, and
+two things followed within the afternoon. Ten pages carrying a name, a
+category, one sentence and a map are thin, and thin is judged site-wide
+rather than page by page — the same mechanism at five hundred pages is
+a problem that takes months to undo. And publishing a page about a real
+business that has not been asked is a thing to be sure about, not a
+thing to discover you are doing.
 
-The lead says which of the two is missing and offers to read their site
-for it.
+Unlisted answers both outright. There is nothing for Google to judge,
+and nothing in front of anybody who was not sent it.
 
-**It asked for opening hours too, for about an hour.** Then the first
-ten pages went looking for some, and not one of the eight businesses
-with a website published any — four had no JSON-LD at all, and the four
-that did used it for something else. That is what a street of
-independents on Wix and Squarespace looks like.
+**What it gives up:** the directory no longer fills before businesses
+join, and nobody finds their own page by searching for themselves. That
+was the argument for publishing, and it is a real loss.
 
-A requirement nothing can meet is an off switch, not a gate: it would
-have kept every unclaimed page out of Google for good and thrown away
-the reason for publishing them early. So hours are a bonus the crawl
-picks up where it can, and the bar is what these pages can actually
-clear. Eight of the ten pass it. The two that do not have 30 and 95
-characters written about them, which is the discrimination worth
-making — and no crawl fixes that, only somebody writing a sentence.
+**What it keeps:** the page is real, at its permanent URL, with their
+name, category, address and map on it. "I could build you one" and
+"here it is, it's yours, nobody can see it but you" are not the same
+conversation. The second is what the email and the doorstep now say.
 
-**What is deliberately not here:** writing a description for a business
-that has not asked us to. Generating words to clear a length check is
-what Google's own spam policy calls scaled content abuse, and it would
-put invented sentences on a page with a real business's name at the top
-of it. The page gets thicker from what they published themselves, or it
-waits.
+**What the outreach says.** Never that the page is live, because it is
+not. `isBuilt()` branches every piece — a lead whose page has not been
+built is still a preview — and the built version leads with the fact and
+then the offer:
+
+> I've built Little Loaf a page on Promotello. Here it is: …
+>
+> Nobody else can find it yet. It's not in the directory or on Google
+> until you claim it.
+>
+> Claim it and you're on the Gloucester Road page of the Bristol
+> directory, where local people can find you…
+
+A test holds it to that, including that it never says "already live".
+
+**Hours and Instagram** are still worth having on the page — it is the
+thing a business is being shown — and **Fill it in from their site**
+reads their own website for published hours and copies the handle
+across. Hours come from their site rather than Google, whose policies
+permit storing nothing but the `place_id` (`lib/google-places.ts`), and
+only from structured JSON-LD. Of the first ten, not one of the eight
+with a website published any, which is worth knowing before relying on
+it.
 
 ## Progress
 

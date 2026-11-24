@@ -88,10 +88,11 @@ export function ClaimPanel({
                     Is this your business?
                 </h2>
                 <p className="mt-2 max-w-prose text-[15px] leading-relaxed text-[#17233B]/75">
-                    We built this page for {businessName} so people looking for somewhere nearby can
-                    find you. Claim it and it&apos;s yours: put your own photos and words on it, run
-                    an offer customers claim on their phone, and start a stamp card. Free to claim,
-                    and free to keep using.
+                    We built this page for {businessName}, and nobody can find it: it&apos;s in no
+                    listing and no search until somebody claims it. Claim it and it&apos;s yours —
+                    your own photos and words, an offer customers claim on their phone, a stamp
+                    card, and a place in the directory where local people look. Free to claim, and
+                    free to keep using.
                 </p>
             </div>
 

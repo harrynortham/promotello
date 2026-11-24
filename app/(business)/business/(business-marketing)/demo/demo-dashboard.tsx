@@ -68,7 +68,6 @@ const listing = {
     offerCount: 2,
     coverImageUrl: null,
     isSample: false,
-    unclaimed: false,
     topOffer: { slug: "demo", title: "Free pastry with any coffee before 10am", discount: "Free pastry" },
 };
 

@@ -1185,7 +1185,12 @@ export async function publishLeadPage(formData: FormData) {
     }
 
     // The one event on a lead that a stranger can now see the result of.
-    await record(supabase, leadId, "note", "Page published, unclaimed. Public, with no offer or card on it.");
+    await record(
+        supabase,
+        leadId,
+        "note",
+        "Page built at its own address, unlisted. Only somebody with the link can see it.",
+    );
 
     revalidatePath(`/admin/sales/${leadId}`);
     revalidatePath("/businesses");
@@ -1206,7 +1211,7 @@ export async function unpublishLeadPage(formData: FormData) {
         redirect(`/admin/sales/${leadId}?error=${encodeURIComponent(error.message)}`);
     }
 
-    await record(supabase, leadId, "note", "Page taken down. Not public any more.");
+    await record(supabase, leadId, "note", "Page taken down. The link stops working.");
 
     revalidatePath(`/admin/sales/${leadId}`);
     revalidatePath("/businesses");

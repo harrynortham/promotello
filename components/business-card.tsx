@@ -30,12 +30,6 @@ export function BusinessCard({ business, showCity = false }: { business: Listing
 
                 {business.isSample && <ExampleBadge className="absolute left-3 top-3" />}
 
-                {business.unclaimed && (
-                    <span className="absolute right-3 top-3 rounded-full bg-[#17233B]/75 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                        Not claimed yet
-                    </span>
-                )}
-
                 {business.offerCount > 0 && (
                     <span className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#17233B] shadow-sm">
                         {business.offerCount} {business.offerCount === 1 ? "offer" : "offers"}
@@ -86,15 +80,6 @@ export function BusinessCard({ business, showCity = false }: { business: Listing
                 {business.description && (
                     <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-[#17233B]/65">
                         {business.description}
-                    </p>
-                )}
-
-                {/* A page nobody has taken over yet. It cannot have an
-                    offer to show, so the space says why rather than
-                    leaving a card that looks broken. */}
-                {business.unclaimed && (
-                    <p className="mt-4 rounded-xl bg-[#FFF8F0] px-3 py-2.5 text-sm text-[#17233B]/70">
-                        We built this page. No offers until its owner claims it.
                     </p>
                 )}
 
