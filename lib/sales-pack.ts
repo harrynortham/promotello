@@ -38,7 +38,7 @@ export const cover = {
     points: [
         {
             heading: "People are already looking",
-            body: "They search for somewhere nearby before they walk out of the house. Your page is where they land: your offers, your hours, your photos, in a directory of independents rather than a list of chains.",
+            body: "They search for somewhere nearby before they walk out of the house. Your page is where they land: your offers, your hours, your photos, in a directory of local places rather than a list of national chains.",
         },
         {
             heading: "Coming back is the whole business",

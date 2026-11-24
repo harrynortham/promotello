@@ -11,7 +11,7 @@ import { createPublicClient } from "@/utils/supabase/public";
 
 export const metadata: Metadata = {
     title: "Local events",
-    description: "Tastings, live music, workshops and more at independent local businesses.",
+    description: "Tastings, live music, workshops and more at local businesses.",
     alternates: { canonical: "/events" },
 };
 
@@ -63,7 +63,7 @@ export default function EventsPage() {
                     <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#FF593F]">What&apos;s on</p>
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Local events</h1>
                     <p className="mt-3 max-w-2xl text-lg text-[#17233B]/65">
-                        Tastings, live music, workshops and late openings at independent businesses.
+                        Tastings, live music, workshops and late openings at local businesses.
                     </p>
                 </div>
             </section>

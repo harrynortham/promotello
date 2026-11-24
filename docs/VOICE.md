@@ -62,6 +62,25 @@ One name per thing. The review found each of these said two ways:
 | Add a stamp | Add stamp |
 | staff scan it on their phone | scan it at the till |
 | review prompts | review requests |
+| local businesses | independents, independent businesses |
+
+**Local, not independent.** The site said "independent" about 70 times, and
+it was drawing a line Promotello does not want to draw: a business can be
+local without being a single-site independent. A franchise, a second branch
+and a three-shop chain are all exactly as local as the shop next door, and
+the old word quietly told them this was not for them. "Local" is the claim
+the product actually makes — a directory by city and by neighbourhood.
+
+Say it once per sentence. "Local offers from independent businesses" became
+"Local offers from businesses near you", not "local offers from local
+businesses". Where a place name is already there, it is doing the work:
+"Bristol's local businesses" on the directory, "Local businesses" on the
+merged pages ([MULTI-CITY.md](MULTI-CITY.md)).
+
+The word is still right about the market, and the roadmap keeps it where it
+is a cited fact: Amex ranked Gloucester Road third in the UK for independent
+shopping, and the ONS micro-business count is the closest official proxy for
+independents. "Bristol Independents" is an organisation's name.
 
 **A till is a place, not our mechanism.** A poster can go by the till. A
 voucher is never redeemed "at the till" — staff scan a QR code on their own

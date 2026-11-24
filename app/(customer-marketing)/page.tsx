@@ -33,7 +33,7 @@ const steps = [
     {
         icon: FiSearch,
         title: "Find an offer",
-        description: "Browse deals from independent cafés, shops and studios near you.",
+        description: "Browse deals from local cafés, shops and studios near you.",
     },
     {
         icon: FiSmartphone,
@@ -173,8 +173,8 @@ async function HomeListings({ city }: { city: City | null }) {
 
                             <p className="mt-4 max-w-lg text-white/70">
                                 {city
-                                    ? `See what independent businesses are offering in each part of ${place}.`
-                                    : `See what independent businesses are offering, ${destinations.length === 1 ? "in" : "city by city, across"} ${place}.`}
+                                    ? `See what local businesses are offering in each part of ${place}.`
+                                    : `See what local businesses are offering, ${destinations.length === 1 ? "in" : "city by city, across"} ${place}.`}
 
                             </p>
 
@@ -275,7 +275,7 @@ async function HeroStats({ city }: { city: City | null }) {
             <span className="font-semibold text-white">{offers.length} live offers</span>{" "}
             from{" "}
             <span className="font-semibold text-white">
-                {businesses.length} independent businesses
+                {businesses.length} local businesses
             </span>
             {oneCity ? ` across ${place}` : ""}
         </p>
@@ -311,7 +311,7 @@ async function VisitorHome() {
                 <div className="mx-auto max-w-7xl px-6 py-24 sm:px-10 sm:py-32">
                     <div className="max-w-2xl md:max-w-[47rem]">
                         <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 backdrop-blur">
-                            {oneCity ? `${place}'s local offers, in one place` : "Local offers from independent businesses"}
+                            {oneCity ? `${place}'s local offers, in one place` : "Local offers from businesses near you"}
                         </p>
 
                         <h1 className="mt-6 max-w-2xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
@@ -319,7 +319,7 @@ async function VisitorHome() {
                         </h1>
 
                         <p className="mt-5 max-w-xl text-lg leading-8 text-white/80">
-                            Discover offers from independent cafés, shops,
+                            Discover offers from local cafés, shops,
                             studios and stays, and support the businesses that
                             make your neighbourhood.
                         </p>

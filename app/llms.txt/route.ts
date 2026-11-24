@@ -14,9 +14,9 @@ export async function GET() {
 
     const text = `# Promotello
 
-> Promotello is a local marketplace for independent businesses in the UK${cityNames.length ? `, live in ${listPlaces(cityNames)}` : ""}. Businesses use it to turn first-time visitors into regulars: customers keep a digital stamp card on their phone (no app to download), claim offers, and follow businesses for new-offer emails. Customers find businesses in a local directory.
+> Promotello is a marketplace for local businesses in the UK${cityNames.length ? `, live in ${listPlaces(cityNames)}` : ""}. Businesses use it to turn first-time visitors into regulars: customers keep a digital stamp card on their phone (no app to download), claim offers, and follow businesses for new-offer emails. Customers find businesses in a local directory.
 
-Promotello is for independent cafés, bakeries, restaurants, pubs, barbers, hair and beauty salons, gyms and studios and independent shops. Staff stamp loyalty cards and redeem vouchers by scanning a QR code with their phone camera, so there's no card reader or till integration.
+Promotello is for local cafés, bakeries, restaurants, pubs, barbers, hair and beauty salons, gyms and studios and shops. Staff stamp loyalty cards and redeem vouchers by scanning a QR code with their phone camera, so there's no card reader or till integration.
 
 ## Plans
 
@@ -43,9 +43,9 @@ ${posts.map((post) => link(post.title, `/blog/md/${post.slug}`, post.summary)).j
 ## For customers
 
 ${[
-        link("All offers", "/offers", "live offers from independent businesses"),
+        link("All offers", "/offers", "live offers from local businesses"),
         ...cities.flatMap((city) => [
-            link(`Offers in ${city.name}`, `/offers/${city.slug}`, `live offers from independent businesses in ${city.name}`),
+            link(`Offers in ${city.name}`, `/offers/${city.slug}`, `live offers from local businesses in ${city.name}`),
             link(`Explore ${city.name}`, `/explore/${city.slug}`, "businesses and offers by neighbourhood"),
         ]),
     ].join("\n")}

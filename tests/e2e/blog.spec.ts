@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
 
 test("the blog lists published posts and links to them", async ({ page }) => {
     await page.goto("/blog");
-    await expect(page.getByRole("heading", { name: "Guides for independent business owners", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Guides for local business owners", level: 1 })).toBeVisible();
 
     await page.getByRole("link", { name: /How to fill quiet hours/ }).click();
     await page.waitForURL("**/blog/how-to-fill-quiet-hours");

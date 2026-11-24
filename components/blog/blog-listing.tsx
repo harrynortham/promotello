@@ -8,7 +8,7 @@ import { blogCategories } from "@/keystatic.config";
 import type { PostSummary } from "@/lib/blog";
 import { RegisterLink } from "@/components/register-link";
 
-export const BLOG_TITLE = "Guides for independent business owners";
+export const BLOG_TITLE = "Guides for local business owners";
 export const BLOG_INTRO =
     "Practical ideas for getting more repeat customers, filling quiet hours and making loyalty work, written for cafés, salons, barbers and shops.";
 
@@ -79,7 +79,7 @@ export function BlogListing({
                     <div>
                         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Turn first-time visitors into regulars</h2>
                         <p className="mt-2 max-w-xl text-white/80">
-                            A local directory, offers, QR posters and stamp cards for independent businesses. Free to start.
+                            A local directory, offers, QR posters and stamp cards for local businesses. Free to start.
                         </p>
                     </div>
                     <Button render={<RegisterLink />} nativeButton={false} size="lg" className="shrink-0">

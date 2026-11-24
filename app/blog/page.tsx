@@ -4,9 +4,9 @@ import { BLOG_INTRO, BLOG_TITLE, BlogListing } from "@/components/blog/blog-list
 import { getPosts, paginatePosts } from "@/lib/blog";
 
 export const metadata: Metadata = {
-    title: "Blog: guides for independent business owners",
+    title: "Blog: guides for local business owners",
     description:
-        "Practical guides on loyalty cards, offers and getting more repeat customers, for independent cafés, salons and shops.",
+        "Practical guides on loyalty cards, offers and getting more repeat customers, for local cafés, salons and shops.",
     alternates: {
         canonical: "/blog",
         types: { "application/rss+xml": "/blog/rss.xml" },

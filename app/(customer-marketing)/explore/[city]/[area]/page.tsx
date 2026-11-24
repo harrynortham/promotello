@@ -67,10 +67,10 @@ function kindsOf(businesses: { categoryName: string }[]) {
 
 function describe(name: string, cityName: string, businessCount: number, offerCount: number, kinds: string) {
     if (businessCount === 0) {
-        return `Independent businesses in ${name}, ${cityName}, are joining Promotello. Check back soon for local offers and loyalty cards.`;
+        return `Local businesses in ${name}, ${cityName}, are joining Promotello. Check back soon for local offers and loyalty cards.`;
     }
 
-    return `${businessCount} independent ${businessCount === 1 ? "business" : "businesses"} in ${name}, ${cityName}${kinds ? `, including ${kinds},` : ""} with ${offerCount} live ${offerCount === 1 ? "offer" : "offers"} and digital loyalty cards on Promotello.`;
+    return `${businessCount} local ${businessCount === 1 ? "business" : "businesses"} in ${name}, ${cityName}${kinds ? `, including ${kinds},` : ""} with ${offerCount} live ${offerCount === 1 ? "offer" : "offers"} and digital loyalty cards on Promotello.`;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -141,7 +141,7 @@ async function AreaContent({ params }: PageProps) {
         {
             "@context": "https://schema.org",
             "@type": "ItemList",
-            name: `Independent businesses in ${name}, ${place.name}`,
+            name: `Local businesses in ${name}, ${place.name}`,
             itemListElement: businesses.map((business, index) => ({
                 "@type": "ListItem",
                 position: index + 1,

@@ -16,7 +16,7 @@ protection as a private individual**: unsolicited marketing email needs their
 consent. **A limited company (or an LLP) can be emailed without consent**, as
 long as the sender is identified and every message offers a way to opt out.
 
-Plenty of independent cafés and barbers are sole traders, so this is not a
+Plenty of local cafés and barbers are sole traders, so this is not a
 technicality that can be skipped. In practice:
 
 - **Check Companies House before adding anyone to the email list.** Search the
@@ -44,13 +44,13 @@ marketing is the place to start.
 In rough order of how much work each one is per business.
 
 1. **Walk the street on Google Maps.** Street View along Gloucester Road from
-   the Arches to Horfield, listing every independent shop, café, barber and
+   the Arches to Horfield, listing every local shop, café, barber and
    salon. This is the most reliable source of who actually exists and is still
    trading, and it costs an afternoon once per street.
 2. **The business's own website.** The email is nearly always on a contact
    page. This is a person publishing an address for people to use, which is
    the cleanest way to get it.
-3. **Instagram bios.** Independents often put a booking or enquiry address
+3. **Instagram bios.** Local businesses often put a booking or enquiry address
    there. Note that a DM is also electronic mail for PECR, so the same rules
    apply to messaging them as to emailing them.
 4. **Bristol Independents, the Gloucester Road Traders association, and BID

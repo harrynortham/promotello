@@ -133,7 +133,7 @@ export function accountWelcomeEmail({ to, firstName }: { to: string; firstName: 
         eyebrow: "Welcome to Promotello",
         title: firstName ? `Welcome, ${firstName}` : "Welcome to Promotello",
         paragraphs: [
-            "Your account is ready. Promotello is free for you: find offers from independent places near you, claim them in a tap and show your voucher when you pay.",
+            "Your account is ready. Promotello is free for you: find offers from local places near you, claim them in a tap and show your voucher when you pay.",
             "Follow the places you like to hear about their new offers first, and collect stamps on their loyalty cards every time you visit.",
             "Everything you claim and collect is kept in your account, under My vouchers and Loyalty cards.",
         ],

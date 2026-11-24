@@ -68,7 +68,7 @@ const marketingFooters = {
     },
     business: {
         homeHref: "/business",
-        tagline: "Turn first-time visitors into regulars. A local directory, offers, QR posters and stamp cards for independent businesses.",
+        tagline: "Turn first-time visitors into regulars. A local directory, offers, QR posters and stamp cards for local businesses.",
         groups: [
             {
                 title: "Product",
