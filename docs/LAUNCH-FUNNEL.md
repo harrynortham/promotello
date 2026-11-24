@@ -249,6 +249,19 @@ Publishing refuses a page with no description or no address — the same
 bar `claim_business_preview()` uses — because fifty names on empty
 screens is how a new site teaches Google to ignore it.
 
+**A street at a time.** One page per press turned out to be ten clicks
+on the first street, so `/admin/sales` publishes the lot
+(`20270309090000_a_whole_street_in_one_press.sql`). Two functions, and
+only one of them decides anything: `lead_pages_to_publish()` is
+read-only and feeds the confirmation, and `list_lead_pages()` does it by
+calling `list_lead_page()` per business — still the only thing that sets
+`listed_at`, and still the thing that refuses a page with nothing on it.
+
+Each business is its own block, so one that is refused comes back as a
+reason beside its name and the other nine still go live. The
+confirmation names every page before it goes up, and the banner
+afterwards names what was skipped.
+
 ## Progress
 
 - [x] 1 · Card-less trial

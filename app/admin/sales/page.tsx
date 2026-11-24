@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FiArrowRight, FiBriefcase, FiClock, FiMail, FiMapPin, FiSend } from "react-icons/fi";
+import { FiArrowRight, FiBriefcase, FiClock, FiGlobe, FiMail, FiMapPin, FiSend } from "react-icons/fi";
 
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/copy-button";
@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dueColumns, toDueLeads, WAITING_STAGES } from "@/lib/sales-due";
+import { SubmitButton } from "@/components/submit-button";
+import { publishEveryLeadPage } from "./actions";
 import { STAGES, STAGE_LABELS, dueToday, leadAddress, whenSaid, type DueLead } from "@/lib/sales-pipeline";
 import { createClient } from "@/utils/supabase/server";
 
@@ -27,6 +29,10 @@ type PageProps = {
         q?: string;
         due?: string;
         page?: string;
+        confirm?: string;
+        published?: string;
+        skipped?: string;
+        error?: string;
     }>;
 };
 
@@ -90,6 +96,109 @@ function lastTouch(lead: LeadRow) {
 // ran in the daily job and wrote a note on the lead, so finding out
 // whose turn it was meant opening every lead in the pipeline one at a
 // time. Here it is the first thing on the board.
+// Pages first, a street at a time. The pages are not published when a
+// preview is built: publishing puts a real page about a real business in
+// front of strangers and into Google, so it is a thing somebody presses.
+//
+// Which is why this says the number out loud before it does anything,
+// and names what it is about to leave behind.
+function PublishStreet({
+    ready,
+    notReady,
+    confirming,
+}: {
+    ready: { lead_name: string }[];
+    notReady: { lead_name: string; reason: string | null }[];
+    confirming: boolean;
+}) {
+    if (ready.length === 0 && notReady.length === 0) return null;
+
+    return (
+        <Card className="mt-8 border-[#FF593F]/30 bg-[#FF593F]/[0.04]">
+            <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                    <FiGlobe aria-hidden="true" className="size-4 text-[#FF593F]" />
+                    {ready.length > 0
+                        ? `${ready.length} ${ready.length === 1 ? "page" : "pages"} ready to publish`
+                        : "Nothing ready to publish"}
+                </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-4 text-sm">
+                {ready.length > 0 && !confirming && (
+                    <>
+                        <p className="leading-6 text-[#17233B]/70">
+                            Each one becomes a public page with its name, category, address and a
+                            map, and a button asking its owner to claim it. No offer or card can
+                            show on one until they do.
+                        </p>
+
+                        <Button
+                            render={<Link href="/admin/sales?confirm=publish_street" />}
+                            nativeButton={false}
+                            size="sm"
+                        >
+                            Publish {ready.length} {ready.length === 1 ? "page" : "pages"}
+                        </Button>
+                    </>
+                )}
+
+                {ready.length > 0 && confirming && (
+                    <>
+                        <p className="leading-6 text-[#17233B]/70">
+                            These {ready.length === 1 ? "page goes" : "pages go"} public and into
+                            the sitemap, so people who are not us can read{" "}
+                            {ready.length === 1 ? "it" : "them"}:
+                        </p>
+
+                        <ul className="list-disc space-y-0.5 pl-5 text-[#17233B]/80">
+                            {ready.map((row) => (
+                                <li key={row.lead_name}>{row.lead_name}</li>
+                            ))}
+                        </ul>
+
+                        <p className="text-xs leading-6 text-[#17233B]/60">
+                            Each can be taken down again from its own lead, one at a time.
+                        </p>
+
+                        <div className="flex items-center gap-3">
+                            <form action={publishEveryLeadPage}>
+                                <SubmitButton pendingLabel="Publishing…" size="sm">
+                                    Yes, publish {ready.length === 1 ? "it" : "them all"}
+                                </SubmitButton>
+                            </form>
+
+                            <Button
+                                render={<Link href="/admin/sales" />}
+                                nativeButton={false}
+                                variant="ghost"
+                                size="sm"
+                            >
+                                Not yet
+                            </Button>
+                        </div>
+                    </>
+                )}
+
+                {notReady.length > 0 && (
+                    <div className={ready.length > 0 ? "border-t border-[#17233B]/10 pt-4" : undefined}>
+                        <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                            Skipped, until somebody fills {notReady.length === 1 ? "it" : "them"} in
+                        </p>
+                        <ul className="mt-2 space-y-0.5 text-[#17233B]/70">
+                            {notReady.map((row) => (
+                                <li key={row.lead_name}>
+                                    {row.lead_name} — {row.reason?.toLowerCase() ?? "not ready"}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 function DueList({ due }: { due: { followUp: DueLead[]; letter: DueLead[] } }) {
     const total = due.followUp.length + due.letter.length;
 
@@ -229,6 +338,16 @@ async function Board({ searchParams }: PageProps) {
 
     const postOnly = (all ?? []).filter((lead) => !lead.can_email).length;
 
+    // Pages first: what a bulk publish would put up, read before it does
+    // anything. The function is read-only and is the same list the press
+    // walks, so the confirmation cannot promise a page the press skips.
+    const { data: toPublish } = await supabase.rpc("lead_pages_to_publish");
+    const candidates = (toPublish ?? []) as {
+        lead_name: string;
+        ready: boolean;
+        reason: string | null;
+    }[];
+
     const { count: waitingCount } = await supabase
         .from("outreach_messages")
         .select("id", { count: "exact", head: true })
@@ -347,7 +466,28 @@ async function Board({ searchParams }: PageProps) {
             </div>
 
 
+            {params.published && (
+                <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    {params.published === "0"
+                        ? "Nothing went up."
+                        : `${params.published} ${params.published === "1" ? "page is" : "pages are"} live, unclaimed.`}
+                    {params.skipped ? ` Skipped: ${params.skipped}.` : ""}
+                </p>
+            )}
+
+            {params.error && (
+                <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+                    {params.error}
+                </p>
+            )}
+
             <div className="mt-8">
+                <PublishStreet
+                    ready={candidates.filter((row) => row.ready)}
+                    notReady={candidates.filter((row) => !row.ready)}
+                    confirming={params.confirm === "publish_street"}
+                />
+
                 <DueList due={due} />
 
                 <Pipeline counts={counts} params={params} />
