@@ -102,9 +102,13 @@ before anybody else, because they already understand a stamp card.
    looks like them is the entire argument, so this is worth the two minutes.
 5. **Open the preview** and read it as they would. If the sample offer is
    wrong for that business, fix it before sending.
-6. **Copy the subject and the message** from the preview page and send it from
-   Gmail, so the signature and its disclosure go with it. (The approve-and-send
-   queue is the next piece of work; until it lands this step is still by hand.)
+6. **Send it from the outbox** at `/admin/sales/outbox`. The draft is built
+   from the preview, the signature and its Companies Act disclosure are added
+   to it (`withSignature()`), and what you read before approving is what goes.
+   Cold email leaves on its own sender, `OUTREACH_EMAIL_FROM` — not the address
+   that carries vouchers and receipts, so a spam complaint against outreach
+   cannot stop a customer getting the voucher they just claimed. Without that
+   setting the queue drafts and holds, and the page says so.
 7. **Move the lead to Emailed.** This is what stops the same business being
    written to twice, so do it before closing the tab.
 

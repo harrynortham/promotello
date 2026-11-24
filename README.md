@@ -345,77 +345,103 @@ It starts the dev server if it isn't running. The setup creates test users and b
 
 ## Still to do
 
-Re-cut 16 November 2026 against [docs/ROADMAP.md](docs/ROADMAP.md), which was
-re-cut at the same time. The old list was mostly a loyalty-card build plan; the
-model is a local channel that can prove what it sent, so the order changed. The
-tracks referred to below are the ones in the roadmap.
+Re-cut 24 November 2026, against the state of the live database rather than
+from memory. The tracks referred to are the ones in
+[docs/ROADMAP.md](docs/ROADMAP.md).
 
 Things get deleted when they're done rather than ticked.
 
-**The ordering rule has not changed, and is now the whole of stage 1:** the
-biggest risk is building too long before selling. Roughly 500 commits since
-October, zero outreach emails sent, five offers ever claimed. The product is not
-what's behind.
+**Where it actually stands.** 1,156 commits since October. 113 leads, 56 of
+them cleared to email, 1 written to. 19 sample businesses and **one real
+paying-shaped customer** (Quayside Coffee). 2 claims ever, 1 of them used.
+2 followers. 14 loyalty cards, 12 of them held by someone with no account.
 
-### Stage 1 — Send the previews
+**The ordering rule has not changed:** the biggest risk is building too long
+before selling. The product is not what's behind.
 
-Not a build. Nothing below is worth another commit until this is underway, and
-most of stage 3 is guesswork until it is.
+### Stage 0 — Before the next email goes out
 
-2. **Send the first batch**, per [docs/OUTREACH.md](docs/OUTREACH.md). The list,
-   the legal gate, the preview tooling and the copy are all finished.
+Short, and all of it is in the way.
 
-### Stage 2 — True before you email a single business
+- **Delete `Automation Test Cafe (delete me)`.** It is approved, open and in
+  the public Bristol directory right now, under that name. Anyone following a
+  link in an outreach email can see it.
+- **Decide what the `Promotello` business entry is for.** Approved, live, no
+  offers. Either give it a reason to be listed or take it down.
+- **`npm run db:ship`** — the migration that stops `anon` calling
+  `businesses_with_growth` is written and merged and not yet live.
+- **Check `OUTREACH_EMAIL_FROM` is set in Vercel.** Without it
+  `outreachSender()` returns null, the outbox drafts and holds, and the Send
+  button stays off. It is not in `.env.production.local`, so it may not be set
+  at all.
 
-3. Pull data from https://ratings.food.gov.uk/ into a spreadsheet and sort by business type and then street. This is all for bristol https://ratings.food.gov.uk/api/open-data-files/FHRS855en-GB.xml.
+### Stage 1 — Send the first batch
 
-- **Resend's limits.** The free plan is 3,000 a month _and_ 100 a day, and the
-  daily cap goes first: daily summaries alone are about 75 a day at 50 active
-  businesses, one offer announced to 150 followers is 150 in a burst, and the
-  1st of the month adds every monthly report. Supabase's sign-in emails come out
-  of the same quota. Move to Pro ($20/mo) before daily sends reach ~70.
+Not a build. Nothing below stage 2 is worth another commit until this is
+underway.
 
-**Test automations feature**How ca
+- **Send them**, per [docs/OUTREACH.md](docs/OUTREACH.md). 56 leads are cleared
+  and waiting. A handful a day from the outbox, each one read before it goes.
+- **Watch the first ten before sending the next forty.** Opened and not
+  claimed means the preview is not convincing; nobody opening means the subject
+  is wrong. The previews page tells those apart, and they need different fixes.
 
--- Apply apply apple developer account for the oneclick oauth
+### Stage 2 — What happens when one says yes
 
-- ~~Apply for the Apple Developer and Google Wallet issuer accounts.~~ Moved to
-  stage 5: Wallet passes went from first on the build list to track C2, so the
-  weeks of approval are no longer on the critical path. Apply when C2 is next.
+Nothing here is built for a queue of one. It is built for the week after the
+first business claims its page, which is the first time any of it is used in
+anger.
+
+- **Walk a claim end to end on the live site, as them.** Claim the preview,
+  finish the page, publish an offer, print a poster, add a stamp. It has been
+  walked in pieces and not as one sitting.
+- **Watch the approval queue daily** while the numbers are small enough that a
+  business waiting a day is a business that goes quiet.
+- **Resend's limits.** Free is 3,000 a month _and_ 100 a day, and the daily cap
+  goes first: daily summaries alone are ~75 a day at 50 active businesses, one
+  offer announced to 150 followers is 150 in a burst, and the 1st adds every
+  monthly report. Supabase's sign-in emails come out of the same quota. Move to
+  Pro ($20/mo) before daily sends reach ~70.
 
 ### Stage 3 — The half that doesn't exist
 
-Track B in the roadmap, and the largest hole in the product. One follower and
-five claims is not a cold start, it is an empty room — and the pitch, the
-pricing and three of our own claims all assume customers browsing a directory.
+Track B, and the largest hole in the product. Two followers and two claims is
+not a cold start, it is an empty room — and the pitch, the pricing and three of
+our own claims all assume customers browsing a directory.
 
-- **Decide the consumer acquisition plan.** Not a build and not a feature: local
-  Instagram, press, the businesses' own channels, or paid. Everything else in
-  this stage is worth less until this is answered, because there is no point
-  building a weekly email with nobody to send it to.
-- **Take the example businesses down.** Nineteen of the twenty businesses on the
-  live site are the sample Bristol shops that fill the directory until real ones
-  are in it — `is_sample = true`, so they are already left out of the sitemap and
-  marked noindex, and `node scripts/sample-data.mjs remove` takes them away. They
-  are scaffolding for showing the site to a business, which is exactly the wrong
+- **Decide the consumer acquisition plan.** Not a build and not a feature:
+  local Instagram, press, the businesses' own channels, or paid. Everything
+  else in this stage is worth less until this is answered, because there is no
+  point building a weekly email with nobody to send it to.
+- **Guest cards do not become followers.** 12 of the 14 cards held are guest
+  cards with no account, and following needs a user — so those people cannot be
+  reached by anything, ever, and no number of follow buttons changes it. The
+  guest card page already asks them to make an account. Measure that step before
+  building anything else here.
+- **Win-back cannot reach the people it is for.** It targets customers who have
+  visited before, and only emails followers. Either it reaches people with a
+  card or a past redemption, with its own unsubscribe, or it stays a feature
+  that mostly cannot fire. This is a consent decision, not a build.
+- **Take the example businesses down.** Nineteen of the twenty-two live
+  businesses are samples — `is_sample = true`, already out of the sitemap and
+  noindexed, removed by `node scripts/sample-data.mjs remove`. They are
+  scaffolding for showing the site to a business, which is exactly the wrong
   thing for a customer to browse: an offer that cannot be claimed anywhere. So
-  they come down before customers are invited, not before businesses are. Decide
-  the threshold — probably enough real businesses that the directory does not
-  look empty without them — and check what their removal leaves behind
-  (`node scripts/remove-unused-images.mjs` for the pictures).
+  they come down before customers are invited, not before businesses are.
+  Decide the threshold, and check what removal leaves behind
+  (`node scripts/remove-unused-images.mjs`).
 - **A reason to come back.** A weekly "new near you" by area, from the offers
   that went live that week. The per-business follower email already does the
   hard half.
 - **Open now, and near me.** Hours are stored; the listings don't use them. The
   one filter that makes a directory worth opening at six o'clock.
-- **The claim that never became a visit.** Three in five claims here have never
-  been used, and each one is the cheapest attributed visit available. A nudge a
+- **The claim that never became a visit.** Half the claims here have never been
+  used, and each one is the cheapest attributed visit available. A nudge a
   couple of days after claiming, not just before expiry.
 - **One wallet for the street** — group the customer's vouchers and cards by
   area rather than by business. Claim 2 of the three in "How we sell it", still
   unbuilt, and cheap.
-- Find a way to request printed stickers for the QR codes, sent to business, work out costs
-- **Search** make the search more intelligent
+- **Search** — make it more intelligent.
 
 ### Stage 4 — Make the number real
 
@@ -436,16 +462,35 @@ thinner than the pitch implies.
 
 Kept, not forgotten. Nothing here stops a business paying.
 
+**Sales and sourcing**
+
+- Pull the Bristol food hygiene data into a spreadsheet, sorted by type then
+  street: https://ratings.food.gov.uk/api/open-data-files/FHRS855en-GB.xml
+- Join Visit West: https://www.visitwest.co.uk/membership/about-membership/
+- Printed QR stickers posted to businesses — find a supplier and work out costs.
+- Design the post page in Stannp.
+- Reword the sales pack title and description on the Sales page.
+- Three real names on `/business/testimonials`, which redirects until they
+  exist. The guarantee in the outreach email stands in for them meanwhile.
+
+**Product**
+
+- **Stronger Growth features.** Automations and quiet hours are not enough
+  reason to move up from Pro, and a business that reads the comparison can see
+  that.
+- **Multi-location businesses.** One business on Gloucester Road may not want
+  the same offer at both shops. Needs a view on how the profile page, offers
+  and the loyalty card split.
+- **Discounted subscription for two or more businesses.**
 - **Wallet passes (Apple and Google), and the developer accounts for them.**
-  Demoted from first to track C2: weeks of work for parity on a comparison we
-  refuse, and it moves nothing in track A. The "our own wallet app with our own
-  push and scanning" idea is a bigger version of the same trade — same evidence
-  needed, from a paying business asking twice.
-- **The wheel.** A spin at the counter, one per device per day, prizes and
-  quantities set by the business, a branded poster beside the till. The one
-  parked idea with a poster behind it, which is why it unparks first — and it
-  belongs to stage 3's problem, not to loyalty. Needs a view on whether a prize
-  draw is a lottery under the Gambling Act before any of it is built.
+  Track C2: weeks of work for parity on a comparison we refuse, and it moves
+  nothing in track A. Apply for the accounts when C2 is next, not before.
+- **Apple sign-in** on login and register: quicker than verifying email. Needs
+  an Apple Developer account.
+- **The wheel.** A spin at the counter, one per device per day, prizes set by
+  the business, a branded poster beside the till. Belongs to stage 3's problem,
+  not to loyalty. Needs a view on whether a prize draw is a lottery under the
+  Gambling Act before any of it is built.
 - Card design and multi-stamp, then the switching kit (import members and paper
   balances). Cheap, and they close deals once there are deals to close.
 - Customer list, segments and CSV export.
@@ -453,29 +498,32 @@ Kept, not forgotten. Nothing here stops a business paying.
 - The passport trail and group/BID accounts — behind stage 3's gate. A trail
   across businesses nobody visits has no users.
 - Business profiles: photo gallery and social links.
-- The "Promotello isn't in your area yet" bar with an email field, as a waitlist
-  rather than a dead end. Note [docs/MULTI-CITY.md](docs/MULTI-CITY.md): the IP
-  lookup names the wrong town often enough that it was removed on purpose, so
-  this belongs in the location search where someone names their own town. Needs
-  a decision on how a waitlist is told when its city opens.
+- The "Promotello isn't in your area yet" bar with an email field, as a
+  waitlist rather than a dead end. Note
+  [docs/MULTI-CITY.md](docs/MULTI-CITY.md): the IP lookup names the wrong town
+  often enough that it was removed on purpose, so this belongs in the location
+  search where someone names their own town. Needs a decision on how a waitlist
+  is told when its city opens.
+- Events: built and hidden until there are enough customers (`lib/features.ts`).
+- Android and iOS apps with notifications.
+
+**Housekeeping**
+
+- Test signing up with Google: does the claim happen automatically and land on
+  the dashboard?
 - Custom Supabase domain.
 - Secure every social account with keychain passwords and the right phone
   numbers and email addresses.
-- 3 December: transfer the YouTube channel to harry@promotello.com (not possible
-  until the Google account is out of trial — set up YouTube for the user, make
-  them a manager, wait 7 days), then add YouTube to Search Console.
+- 3 December: transfer the YouTube channel to harry@promotello.com (not
+  possible until the Google account is out of trial — set up YouTube for the
+  user, make them a manager, wait 7 days), then add YouTube to Search Console.
 - A BIMI mark certificate (VMC or CMC) so Gmail and Apple Mail show the logo.
   The logo and the DNS record are already in place.
-- Apple sign-in on the login and register pages: quicker than verifying email.
-- Stripe Managed Payments needs a VAT ID we won't have until the £90k threshold.
-  At that point registering for VAT and turning on Stripe Tax is far cheaper
-  than Managed Payments' extra ~3.5%. Nothing to do now.
-- Events: built and hidden until there are enough customers (`lib/features.ts`).
+- Stripe Managed Payments needs a VAT ID we won't have until the £90k
+  threshold. At that point registering for VAT and turning on Stripe Tax is far
+  cheaper than Managed Payments' extra ~3.5%. Nothing to do now.
 - Security and email preference guides in both help centres are still in the
   older formal voice. Left that way on purpose.
-- Three real names on `/business/testimonials`, which redirects until they
-  exist. The guarantee in the outreach email stands in for them meanwhile.
 - Social icons in email footers, once there's a following worth sending anyone
   to. The artwork, the links and the test are all still there — `social` in
   `emailShell()` turns them back on.
-- Android and iOS apps with notifications.
