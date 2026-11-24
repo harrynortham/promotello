@@ -3,10 +3,12 @@ import {
     bestEmail,
     contactPaths,
     emailsFromHtml,
+    hoursFromHtml,
     matchCompany,
     postcodeFrom,
     type CompanyCandidate,
     type CompanyMatch,
+    type OpeningHours,
 } from "@/lib/lead-enrichment";
 
 // The two jobs that touch somebody else's server: reading a business's own
@@ -163,6 +165,48 @@ export async function findContactDetails(
 // Companies House. The key is free from their developer portal and the
 // data is Open Government Licence, so unlike the Places result this is
 // ours to keep. Basic auth with the key as the username and no password.
+// When a business publishes its hours, they are almost always on the
+// home page, in the JSON-LD that gets them the hours panel in a search
+// result. A contact page is worth one more request when the home page
+// had none, and that is the budget: this is somebody else's server and
+// we are reading it to fill in a page they have not asked for yet.
+export type FoundHours =
+    | { hours: OpeningHours[]; source: string }
+    | { hours: null; reason: "no_website" | "blocked" | "unreachable" | "not_published" };
+
+export async function findOpeningHours(website: string | null | undefined): Promise<FoundHours> {
+    if (!website?.trim()) return { hours: null, reason: "no_website" };
+
+    let home: URL;
+
+    try {
+        home = new URL(website.startsWith("http") ? website : `https://${website}`);
+    } catch {
+        return { hours: null, reason: "no_website" };
+    }
+
+    if (!(await allowed(home.origin, home.pathname))) return { hours: null, reason: "blocked" };
+
+    const landing = await get(home.toString());
+
+    if (!landing) return { hours: null, reason: "unreachable" };
+
+    const fromHome = hoursFromHtml(landing);
+
+    if (fromHome) return { hours: fromHome, source: home.toString() };
+
+    for (const path of contactPaths(landing, home.toString())) {
+        if (!(await allowed(home.origin, new URL(path).pathname))) continue;
+
+        const page = await get(path);
+        const found = page && hoursFromHtml(page);
+
+        if (found) return { hours: found, source: path };
+    }
+
+    return { hours: null, reason: "not_published" };
+}
+
 export async function searchCompanies(name: string): Promise<CompanyCandidate[] | null> {
     const key = process.env.COMPANIES_HOUSE_API_KEY?.trim();
 

@@ -20,8 +20,9 @@ import { brandedEmail, sendEmails } from "@/lib/email";
 import { foundingPlacesLeft } from "@/lib/founding-places";
 import { compare, postcodeFrom, splitAddress } from "@/lib/lead-enrichment";
 import { normalisePostcode } from "@/lib/locations";
+import { socialUrl } from "@/lib/social-links";
 import { STAGE_LABELS } from "@/lib/sales-pipeline";
-import { checkCompaniesHouse, findContactDetails } from "@/lib/lead-jobs";
+import { checkCompaniesHouse, findContactDetails, findOpeningHours } from "@/lib/lead-jobs";
 import { letterAddress, letterDestination, letterTemplate, sendLetter } from "@/lib/letters";
 import { asHtml, outreachSender, withSignature } from "@/lib/outreach-queue";
 import { previewLink } from "@/lib/previews";
@@ -1010,6 +1011,15 @@ export async function createPreviewFromLead(
         return { error: error?.message ?? "The business couldn't be created." };
     }
 
+    // Their Instagram, which the lead has had all along and the page
+    // never got. A link on the page, and a sameAs in the structured
+    // data tying the listing to an account Google already knows.
+    const instagram = socialUrl("instagram", lead.instagram_handle);
+
+    if ("url" in instagram && instagram.url) {
+        await supabase.from("businesses").update({ instagram_url: instagram.url }).eq("id", businessId);
+    }
+
     const { data: user } = await supabase.auth.getUser();
 
     const { error: previewError } = await supabase.from("business_previews").insert({
@@ -1073,6 +1083,74 @@ export async function deleteLeadPreview(formData: FormData) {
 //
 // A claimed preview is theirs, and the offer on it is whatever they
 // made of it, so this refuses one.
+// Filling a page in before asking Google to rank it.
+//
+// An unclaimed page is a name, a category, a sentence and a map, and ten
+// of them are ten pages with the same shape and a few words between
+// them. Thin, and thin at scale is a site-wide problem rather than a
+// page-level one (docs/LAUNCH-FUNNEL.md).
+//
+// Two things we can honestly add without putting words in a business's
+// mouth: the hours they publish on their own website, and the Instagram
+// handle the lead has had all along. Neither is invented and neither is
+// Google's to keep.
+export async function fillInLeadPage(formData: FormData) {
+    const supabase = await adminClient();
+    const leadId = text(formData, "leadId");
+    const businessId = text(formData, "businessId");
+
+    const { data: lead } = await supabase
+        .from("leads")
+        .select("website, instagram_handle")
+        .eq("id", leadId)
+        .maybeSingle();
+
+    if (!lead) redirect(`/admin/sales/${leadId}?error=no_lead`);
+
+    const found: string[] = [];
+
+    const instagram = socialUrl("instagram", lead.instagram_handle);
+
+    if ("url" in instagram && instagram.url) {
+        const { error } = await supabase
+            .from("businesses")
+            .update({ instagram_url: instagram.url })
+            .eq("id", businessId)
+            .is("instagram_url", null);
+
+        if (!error) found.push("Instagram");
+    }
+
+    const hours = await findOpeningHours(lead.website);
+
+    if (hours.hours) {
+        // Replaced rather than merged: a business that has changed its
+        // hours has changed them, and half an old week left behind is
+        // worse on their page than no week at all.
+        await supabase.from("business_hours").delete().eq("business_id", businessId);
+
+        const { error } = await supabase.from("business_hours").insert(
+            hours.hours.map((day) => ({ ...day, business_id: businessId })),
+        );
+
+        if (!error) found.push("opening hours");
+    }
+
+    await record(
+        supabase,
+        leadId,
+        "note",
+        found.length > 0
+            ? `Filled the page in from their own site: ${found.join(" and ")}.`
+            : "Nothing to fill the page in with: their site publishes no hours.",
+    );
+
+    revalidatePath(`/admin/sales/${leadId}`);
+    redirect(
+        `/admin/sales/${leadId}?filled=${encodeURIComponent(found.join(" and ") || "nothing")}`,
+    );
+}
+
 // Pages first: a lead's page goes up before we contact them, and the
 // sale becomes "claim your free page". list_lead_page() refuses one
 // without a description or an address, and says which is missing, so

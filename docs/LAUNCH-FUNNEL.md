@@ -262,6 +262,52 @@ reason beside its name and the other nine still go live. The
 confirmation names every page before it goes up, and the banner
 afterwards names what was skipped.
 
+## Thin pages, and not asking Google to rank them
+
+Ten unclaimed pages went up on Gloucester Road carrying a name, a
+category, one sentence and a map. One of those is useful to somebody
+searching that business by name. Ten with the same shape and a few words
+between them is thin content, and thin content is assessed site-wide
+rather than page by page — ten pages is too few to matter, and the same
+mechanism at five hundred is a problem that takes months to undo.
+
+Three things, and the first two are what make the third unnecessary most
+of the time.
+
+**Hours, from their own website.** Not from Google. The Places policies
+name "copy and save business names, addresses" as a prohibited use and
+permit storing nothing but the `place_id`, so hours from Maps are not
+ours to keep — `lib/google-places.ts` has said so since it was written.
+Hours a business publishes on its own site are a different thing: they
+put them there to be read, which is the same source and the same
+justification as the email crawl. `hoursFromHtml()` takes only
+structured hours, out of the schema.org JSON-LD most sites carry to get
+the hours panel in a search result. Prose is left alone — a page saying
+"open late on Fridays" is not something to turn into 21:00 on somebody
+else's listing.
+
+**Instagram.** The handle has been on the lead all along and was never
+copied to the business. A link on the page, and a `sameAs` tying the
+listing to an account Google already knows.
+
+**A gate on indexing.** `worthIndexing()` in `lib/indexing.ts`: an
+unclaimed page needs a description past `ENOUGH_DESCRIPTION` and some
+opening hours before it goes in the sitemap or loses its `noindex`. It
+stays completely public either way — in the directory, on its area page,
+reachable, claimable, linked. It is simply not submitted as a stub. A
+claimed business is always indexed, however short its owner kept it:
+that is their listing, not ours to second-guess.
+
+The lead says which of the two is missing and offers to read their site
+for it.
+
+**What is deliberately not here:** writing a description for a business
+that has not asked us to. Generating words to clear a length check is
+what Google's own spam policy calls scaled content abuse, and it would
+put invented sentences on a page with a real business's name at the top
+of it. The page gets thicker from what they published themselves, or it
+waits.
+
 ## Progress
 
 - [x] 1 · Card-less trial

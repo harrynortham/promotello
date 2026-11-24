@@ -11,6 +11,7 @@ import { EVENTS_ENABLED } from "@/lib/features";
 
 import { absoluteUrl } from "@/lib/site";
 import { createPublicClient } from "@/utils/supabase/public";
+import { worthIndexing } from "@/lib/indexing";
 
 const staticPaths = [
     "/",
@@ -69,16 +70,17 @@ async function getPublicListings() {
     // RLS limits both queries to what an anonymous visitor can see:
     // approved businesses, the pages we published before they were
     // claimed (20270307090000), and approved, unexpired, unpaused
-    // offers. Unclaimed pages belong here: an owner searching their own
-    // business name finding the page we built for them is the whole
-    // point of publishing it before we write to them.
+    // offers. An unclaimed page belongs here once it carries enough to
+    // be worth a click, and not before: submitting a name and a map as
+    // a page is how a new site teaches Google to discount the rest of
+    // it (lib/indexing.ts). It stays public and linked either way.
     // Sample (demo) listings are left out so search engines never index them.
     const [{ data: businesses }, { data: offers }] = await Promise.all([
         // A closed business keeps its row so customers' records still name
         // it, so the sitemap has to leave it out itself.
         supabase
             .from("businesses")
-            .select("slug, updated_at")
+            .select("slug, updated_at, approval_status, description, business_hours ( day_of_week )")
             .eq("is_sample", false)
             .is("closed_at", null),
         supabase
@@ -88,7 +90,16 @@ async function getPublicListings() {
             .is("businesses.closed_at", null),
     ]);
 
-    return { businesses, offers };
+    return {
+        businesses: (businesses ?? []).filter((business) =>
+            worthIndexing({
+                unclaimed: business.approval_status !== "approved",
+                description: business.description,
+                hasHours: (business.business_hours ?? []).length > 0,
+            }),
+        ),
+        offers,
+    };
 }
 
 // Area pages and subcategory pages, only where there's something to show:

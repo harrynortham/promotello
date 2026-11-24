@@ -430,3 +430,157 @@ export function splitAddress(address: string | null | undefined) {
         postcode,
     };
 }
+
+// ---------------------------------------------------------------------------
+// Opening hours, from the business's own website
+// ---------------------------------------------------------------------------
+//
+// Read here rather than from Google, deliberately. The Places policies
+// name "copy and save business names, addresses" as a prohibited use and
+// permit storing nothing but the place_id, so hours from Maps are not
+// ours to keep (lib/google-places.ts). Hours a business publishes on its
+// own site are a different thing entirely: they put them there to be
+// read, and this is the same source and the same justification as the
+// email crawl above.
+//
+// Only structured hours are taken. Most sites that bother to publish
+// opening times put them in schema.org JSON-LD, because that is what
+// gets them the hours panel in a search result — and a machine-readable
+// block is the one place on a web page where "Mon 9-5" is not a guess.
+// Prose is left alone: a page that says "open late on Fridays" is not
+// something to turn into 21:00 on somebody else's listing.
+
+export type OpeningHours = {
+    // 0 is Sunday, matching business_hours.day_of_week.
+    day_of_week: number;
+    is_closed: boolean;
+    opens_at: string | null;
+    closes_at: string | null;
+};
+
+const DAY_NUMBERS: Record<string, number> = {
+    sunday: 0, sun: 0, su: 0,
+    monday: 1, mon: 1, mo: 1,
+    tuesday: 2, tue: 2, tues: 2, tu: 2,
+    wednesday: 3, wed: 3, we: 3,
+    thursday: 4, thu: 4, thur: 4, thurs: 4, th: 4,
+    friday: 5, fri: 5, fr: 5,
+    saturday: 6, sat: 6, sa: 6,
+};
+
+function dayNumber(value: unknown): number | null {
+    if (typeof value !== "string") return null;
+
+    // schema.org writes these as URLs: https://schema.org/Monday.
+    const word = value.trim().toLowerCase().split("/").pop() ?? "";
+    const day = DAY_NUMBERS[word];
+
+    return day === undefined ? null : day;
+}
+
+// "09:00", "9:00 am", "09:00:00". Returned as HH:MM, which is what the
+// column holds.
+function timeOfDay(value: unknown): string | null {
+    if (typeof value !== "string") return null;
+
+    const match = value.trim().match(/^(\d{1,2})[:.](\d{2})(?::\d{2})?\s*(am|pm)?/i);
+
+    if (!match) return null;
+
+    let hour = Number(match[1]);
+    const minute = Number(match[2]);
+    const half = match[3]?.toLowerCase();
+
+    if (!Number.isInteger(hour) || hour > 23 || minute > 59) return null;
+
+    if (half === "pm" && hour < 12) hour += 12;
+    if (half === "am" && hour === 12) hour = 0;
+
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function everyJsonLd(html: string): unknown[] {
+    const blocks: unknown[] = [];
+
+    for (const match of html.matchAll(
+        /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    )) {
+        try {
+            blocks.push(JSON.parse(match[1].trim()));
+        } catch {
+            // Somebody else's page. A block that will not parse is not
+            // worth a repair attempt.
+        }
+    }
+
+    return blocks;
+}
+
+// Walks whatever shape the page used: a bare object, an array, or
+// @graph, nested as deeply as it likes.
+function collectSpecs(node: unknown, found: unknown[]) {
+    if (Array.isArray(node)) {
+        for (const item of node) collectSpecs(item, found);
+        return;
+    }
+
+    if (!node || typeof node !== "object") return;
+
+    const record = node as Record<string, unknown>;
+
+    if (record.openingHoursSpecification) {
+        const spec = record.openingHoursSpecification;
+        found.push(...(Array.isArray(spec) ? spec : [spec]));
+    }
+
+    for (const value of Object.values(record)) {
+        if (value && typeof value === "object") collectSpecs(value, found);
+    }
+}
+
+export function hoursFromHtml(html: string): OpeningHours[] | null {
+    const specs: unknown[] = [];
+
+    for (const block of everyJsonLd(html)) collectSpecs(block, specs);
+
+    if (specs.length === 0) return null;
+
+    // Days nobody mentioned are closed. A site that lists Monday to
+    // Friday is saying it is shut at the weekend, and a table with two
+    // blank rows reads as missing data rather than as a closed shop.
+    const week = new Map<number, OpeningHours>();
+
+    for (const spec of specs) {
+        if (!spec || typeof spec !== "object") continue;
+
+        const record = spec as Record<string, unknown>;
+        const days = Array.isArray(record.dayOfWeek) ? record.dayOfWeek : [record.dayOfWeek];
+        const opens = timeOfDay(record.opens);
+        const closes = timeOfDay(record.closes);
+
+        for (const day of days) {
+            const number = dayNumber(day);
+
+            if (number === null) continue;
+
+            // A spec with no usable times is the page saying the shop is
+            // shut that day, which is worth keeping.
+            week.set(number, {
+                day_of_week: number,
+                is_closed: !opens || !closes,
+                opens_at: opens && closes ? opens : null,
+                closes_at: opens && closes ? closes : null,
+            });
+        }
+    }
+
+    if (week.size === 0) return null;
+
+    // Nothing worth writing down: every day shut is a page we have
+    // misread far more often than it is a business that never opens.
+    if ([...week.values()].every((day) => day.is_closed)) return null;
+
+    return Array.from({ length: 7 }, (_, day) =>
+        week.get(day) ?? { day_of_week: day, is_closed: true, opens_at: null, closes_at: null },
+    );
+}

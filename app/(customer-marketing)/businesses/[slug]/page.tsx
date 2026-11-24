@@ -50,6 +50,7 @@ import { BusinessClosedNotice } from "./closed-notice";
 import { OwnerBar, OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
 import { ClaimPanel } from "./claim-panel";
+import { worthIndexing } from "@/lib/indexing";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
 import { businessPath, canonicalPath, offerPath } from "@/lib/slugs";
@@ -129,7 +130,7 @@ export async function generateMetadata({
     const { data: business } = await createPublicClient()
         .from("businesses")
         .select(
-            "id, slug, name, category, description, logo_url, is_sample, approval_status, business_locations ( city, region )",
+            "id, slug, name, category, description, logo_url, is_sample, approval_status, business_locations ( city, region ), business_hours ( day_of_week )",
         )
         .eq("slug", slug)
         .maybeSingle();
@@ -177,7 +178,19 @@ export async function generateMetadata({
         description,
         alternates: { canonical: path },
         // Sample (demo) listings must never appear in search results.
-        robots: business.is_sample ? { index: false, follow: false } : undefined,
+        // An unclaimed page we built stays out until it carries enough to
+        // be worth a click (lib/indexing.ts) — public and linked either
+        // way, just not submitted as a stub. follow stays on: the links
+        // off it go to real pages.
+        robots: business.is_sample
+            ? { index: false, follow: false }
+            : worthIndexing({
+                unclaimed,
+                description: business.description,
+                hasHours: (business.business_hours ?? []).length > 0,
+            })
+                ? undefined
+                : { index: false, follow: true },
         openGraph: {
             type: "website",
             url: path,
