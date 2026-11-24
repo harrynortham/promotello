@@ -56,7 +56,7 @@ function CategoriesIcon({ className }: IconProps) {
     );
 }
 
-// A shop front with a striped awning, for independent businesses.
+// A shop front with a striped awning, for local businesses.
 function BusinessesIcon({ className }: IconProps) {
     return (
         <Svg className={className}>

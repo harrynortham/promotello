@@ -29,7 +29,7 @@ export async function GET() {
     <title>${siteName} blog</title>
     <link>${absoluteUrl("/blog")}</link>
     <atom:link href="${absoluteUrl("/blog/rss.xml")}" rel="self" type="application/rss+xml" />
-    <description>Guides for independent business owners: loyalty, offers and repeat customers.</description>
+    <description>Guides for local business owners: loyalty, offers and repeat customers.</description>
     <language>en-GB</language>
 ${items}
   </channel>

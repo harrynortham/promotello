@@ -37,7 +37,7 @@ export async function exploreMetadata(city: City | null): Promise<Metadata> {
 
     return {
         title: `Explore ${place} neighbourhoods`,
-        description: `Explore local offers and independent businesses in ${place}, neighbourhood by neighbourhood.`,
+        description: `Explore local offers and businesses in ${place}, neighbourhood by neighbourhood.`,
         alternates: { canonical: city ? `/explore/${city.slug}` : "/explore" },
     };
 }
@@ -310,7 +310,7 @@ export async function ExploreListing({ city, searchParams }: ListingProps) {
                     </h1>
 
                     <p className="mt-4 max-w-2xl text-lg text-white/75">
-                        Pick an area to see the independent businesses there and
+                        Pick an area to see the local businesses there and
                         what they&apos;re offering right now.
                     </p>
 

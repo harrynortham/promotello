@@ -115,7 +115,7 @@ export default async function WhyPromotelloPage() {
 
                 <header className="mt-6 print:mt-0">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
-                        Promotello for independent businesses
+                        Promotello for local businesses
                     </p>
                     <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl print:text-3xl">
                         Turn first-time visitors into regulars.

@@ -37,7 +37,7 @@ export async function offersMetadata(city: City | null): Promise<Metadata> {
 
     return {
         title: `Offers in ${place}`,
-        description: `Browse every live offer from independent cafés, restaurants, shops, salons and stays across ${place}.`,
+        description: `Browse every live offer from local cafés, restaurants, shops, salons and stays across ${place}.`,
         alternates: { canonical: city ? `/offers/${city.slug}` : "/offers" },
     };
 }
@@ -382,7 +382,7 @@ export async function OffersListing({ city, searchParams }: ListingProps) {
                     </p>
 
                     <h1 className="text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
-                        {oneCity ? `Offers across ${place}` : "Offers from independent businesses"}
+                        {oneCity ? `Offers across ${place}` : "Offers from local businesses"}
                     </h1>
 
                     <p className="mt-3 hidden max-w-2xl text-lg text-[#17233B]/65 sm:block">

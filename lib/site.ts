@@ -6,7 +6,7 @@ export const siteUrl = (
 ).replace(/\/$/, "");
 
 export const siteDescription =
-    "Discover discounts and offers from independent shops, cafés and local businesses near you.";
+    "Discover discounts and offers from local shops, cafés and businesses near you.";
 
 export function absoluteUrl(path: string) {
     return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;

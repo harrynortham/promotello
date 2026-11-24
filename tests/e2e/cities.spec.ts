@@ -24,7 +24,7 @@ test("listing pages show every city by default, and one city when added to the U
     await expect(page.getByRole("heading", { name: "Offers across Bristol" })).toBeVisible();
 
     await page.goto("/businesses/bristol");
-    await expect(page.getByRole("heading", { name: "Bristol's independents" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Bristol's local businesses" })).toBeVisible();
 
     await page.goto("/categories/food-drink/bristol");
     await expect(page).toHaveTitle(/Food & drink offers in Bristol/);

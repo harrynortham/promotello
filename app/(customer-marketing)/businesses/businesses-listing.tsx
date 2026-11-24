@@ -37,8 +37,8 @@ export async function businessesMetadata(city: City | null): Promise<Metadata> {
     const place = await placeName(city);
 
     return {
-        title: `Independent businesses in ${place}`,
-        description: `Discover independent cafés, shops, salons, studios and stays across ${place}, and the offers they're running right now.`,
+        title: `Local businesses in ${place}`,
+        description: `Discover local cafés, shops, salons, studios and stays across ${place}, and the offers they're running right now.`,
         alternates: { canonical: city ? `/businesses/${city.slug}` : "/businesses" },
     };
 }
@@ -333,7 +333,7 @@ export async function BusinessesListing({ city, searchParams }: ListingProps) {
                         </p>
 
                         <h1 className="text-2xl font-semibold tracking-tight sm:mt-3 sm:text-5xl">
-                            {oneCity ? `${place}'s independents` : "Independent businesses"}
+                            {oneCity ? `${place}'s local businesses` : "Local businesses"}
                         </h1>
 
                         <p className="mt-3 hidden max-w-2xl text-lg text-[#17233B]/65 sm:block">

@@ -73,7 +73,7 @@ export async function categoryMetadata(slug: string, city: City | null, sub?: st
         : `${category.name} offers in ${place}`;
     const description = truncate(
         subcategory
-            ? `${offerCount > 0 ? `${offerCount} live` : "Live"} ${category.name.toLowerCase()} offers and loyalty cards from independent businesses in ${place}.`
+            ? `${offerCount > 0 ? `${offerCount} live` : "Live"} ${category.name.toLowerCase()} offers and loyalty cards from local businesses in ${place}.`
             : `${group.name} offers in ${place}. ${group.description ?? ""}`,
     );
 
@@ -188,7 +188,7 @@ export async function CategoryContent({
 
                         <p className="mt-4 text-lg leading-8 text-white/80">
                             {subcategory
-                                ? `${subcategory.name} offers from independent businesses${oneCity ? ` across ${place}` : ""}.`
+                                ? `${subcategory.name} offers from local businesses${oneCity ? ` across ${place}` : ""}.`
                                 : group.description}
                         </p>
 

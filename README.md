@@ -49,7 +49,7 @@ conversation about stamps per reward is a conversation we lose on price.
    return. _Live: the card and join button on the business page, the loyalty
    poster. Planned: cards on the listing pages and a filter for them._
 2. **One wallet for the whole street.** Customers keep one Promotello wallet with
-   every nearby independent in it, not a pass per shop. Every business that signs
+   every nearby business in it, not a pass per shop. Every business that signs
    up makes the customer side better for the rest, which is why the pitch to the
    twentieth business on a street is stronger than the pitch to the first. _Live:
    `/dashboard` holding vouchers and cards. Planned: grouping by area, and the

@@ -20,9 +20,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const page = Number((await params).page);
 
     return {
-        title: `Blog: guides for independent business owners (page ${page})`,
+        title: `Blog: guides for local business owners (page ${page})`,
         description:
-            "Practical guides on loyalty cards, offers and getting more repeat customers, for independent cafés, salons and shops.",
+            "Practical guides on loyalty cards, offers and getting more repeat customers, for local cafés, salons and shops.",
         alternates: { canonical: `/blog/page/${page}` },
     };
 }

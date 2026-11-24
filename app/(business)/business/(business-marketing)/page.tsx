@@ -104,7 +104,7 @@ export default async function BusinessPage() {
 
                 <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-[1.05fr_1fr]">
                     <div>
-                        <Eyebrow>For independent local businesses</Eyebrow>
+                        <Eyebrow>For local businesses</Eyebrow>
                         <h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
                             Turn first-time visitors into{" "}
                             <span className="text-[#FF593F]">regulars.</span>

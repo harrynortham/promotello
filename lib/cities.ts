@@ -74,7 +74,7 @@ export async function placeName(city: City | null) {
 }
 
 // Whether "where" is a single place, so copy can use its name possessively
-// ("Bristol's independents") instead of a list ("Bristol and Bath's").
+// ("Bristol's local businesses") instead of a list ("Bristol and Bath's").
 export async function placeIsOneCity(city: City | null) {
     return Boolean(city) || (await getLiveCities()).length === 1;
 }
@@ -91,9 +91,9 @@ export async function cityPhotosFor(city: City | null) {
 // Promotello's own photos, for pages that aren't about any one city.
 const sitePhotos = {
     hero: "/images/home/hero.jpg",
-    heroAlt: "Independent local businesses",
+    heroAlt: "Local businesses",
     feature: "/images/home/harbourside.jpg",
-    featureAlt: "Local independent businesses",
+    featureAlt: "Local shops and cafés",
 };
 
 // A city that hasn't had photos added yet. Deliberately not Promotello's own
@@ -110,7 +110,7 @@ export function cityPhotos(place: Pick<Place, "name" | "heroImageUrl" | "feature
 
     return {
         hero: place.heroImageUrl ?? unphotographed.hero,
-        heroAlt: `Independent businesses in ${place.name}`,
+        heroAlt: `Local businesses in ${place.name}`,
         feature: place.featureImageUrl ?? unphotographed.feature,
         featureAlt: `Out and about in ${place.name}`,
     };

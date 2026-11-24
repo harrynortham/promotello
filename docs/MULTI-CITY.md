@@ -124,16 +124,16 @@ first-time visitors see. Two things keep it honest:
 
 It always reads correctly after a preposition — "offers in X", "across X" —
 and is **never** used possessively, because a list can't take an apostrophe.
-Copy that wants "Bristol's independents" asks `placeIsOneCity()` first and
-uses "Independent businesses in Bristol and Bath" otherwise.
+Copy that wants "Bristol's local businesses" asks `placeIsOneCity()` first
+and uses "Local businesses in Bristol and Bath" otherwise.
 
 Never write "your area". It tells a visitor nothing, and it is what every one
 of these sentences said before a second city existed.
 
 **And never treat a list of cities as somewhere a visitor is.** "Offers across
 Bristol, Bath and London" is true of the page and false of the reader. The
-headings on the merged pages drop the place entirely — "Offers from
-independent businesses", "Independent businesses" — and the location search
+headings on the merged pages drop the place entirely — "Offers from local
+businesses", "Local businesses" — and the location search
 is how they narrow it. `placeName()` is still right for anything that
 describes the *page*, which is why the titles keep it.
 

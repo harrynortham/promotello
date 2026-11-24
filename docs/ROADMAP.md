@@ -137,7 +137,7 @@ to cheaper specialists. Split that list in two:
    worth joining*.
 2. **One wallet for the street.** The customer pain in digital loyalty is
    fragmentation — a pass per shop, an app per chain. One place holding every
-   independent nearby means each business signed makes the consumer product
+   local business nearby means each business signed makes the consumer product
    better for every other business. Nothing single-tenant has this loop.
 3. **Attributed repeat visits — the number nobody else can print.** *"Promotello
    sent you 41 first-time customers this quarter. 12 came back. 5 are now
@@ -314,7 +314,7 @@ is the one we have.
 
 Start on Gloucester Road and win it street by street before moving across the city. Gloucester Road is known for its independent shops, and American Express ranked it third in the UK for independent shopping in 2024 ([source](https://en.wikipedia.org/wiki/Gloucester_Road,_Bristol)). That is exactly the customer Promotello is built for, packed into one stretch.
 
-**Who to sell to first:** cafés and coffee shops, then barbers and salons, bakeries, takeaways and independent retail. Cafés already know paper stamp cards, so a digital card is an easy sell.
+**Who to sell to first:** cafés and coffee shops, then barbers and salons, bakeries, takeaways and local retail. Cafés already know paper stamp cards, so a digital card is an easy sell.
 
 **How to sell it: remote and preview-first.** Every sale happens in writing. There are no shop visits and no phone calls.
 

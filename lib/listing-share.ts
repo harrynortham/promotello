@@ -17,11 +17,11 @@ export async function cityListingShareImage(
 
     return shareImage(
         {
-            eyebrow: kind === "offers" ? "Local offers" : "Local independents",
+            eyebrow: kind === "offers" ? "Local offers" : "Local businesses",
             headline:
                 kind === "offers"
                     ? `Offers across ${city.name}`
-                    : `${city.name}'s independent businesses`,
+                    : `${city.name}'s local businesses`,
             detail:
                 kind === "offers"
                     ? "Claim on your phone. Show the code when you pay."

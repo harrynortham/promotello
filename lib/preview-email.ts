@@ -344,7 +344,7 @@ export function outreachLetter({
     return [
         `Dear ${contactName || "Sir or Madam"},`,
         "",
-        `${personalOpening(personalLine)}I have built ${name} a page on Promotello, a new site for independent businesses in Bristol, and it is waiting for you to claim.`,
+        `${personalOpening(personalLine)}I have built ${name} a page on Promotello, a new site for local businesses in Bristol, and it is waiting for you to claim.`,
         "",
         "Scan the code at the bottom of this page, or type:",
         "",

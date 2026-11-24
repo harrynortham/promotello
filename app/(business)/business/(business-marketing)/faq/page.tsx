@@ -22,7 +22,7 @@ const sections = [
             {
                 question: "What is Promotello?",
                 answer:
-                    "Promotello helps independent businesses turn first-time visitors into regulars. Your business gets a page in the Promotello directory, where customers browse by area, by category and by the kind of offer — freebies, 2 for 1, money off — to find somewhere to go. On top of that you get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place.",
+                    "Promotello helps local businesses turn first-time visitors into regulars. Your business gets a page in the Promotello directory, where customers browse by area, by category and by the kind of offer — freebies, 2 for 1, money off — to find somewhere to go. On top of that you get offers customers claim on their phone, a digital loyalty card, QR posters, follower emails and monthly results, all in one place.",
             },
             {
                 question: "Is it right for my business?",

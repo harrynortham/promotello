@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     return {
         title: `${category.label}: guides for small businesses`,
-        description: `Practical guides on ${category.label.toLowerCase()} for independent cafés, salons and shops.`,
+        description: `Practical guides on ${category.label.toLowerCase()} for local cafés, salons and shops.`,
         alternates: { canonical: `/blog/category/${category.value}` },
     };
 }
@@ -39,7 +39,7 @@ export default async function BlogCategoryPage({ params }: PageProps) {
             posts={pagePosts}
             category={category.value}
             title={category.label}
-            intro={`Practical guides on ${category.label.toLowerCase()} for independent cafés, salons, barbers and shops.`}
+            intro={`Practical guides on ${category.label.toLowerCase()} for local cafés, salons, barbers and shops.`}
             basePath={`/blog/category/${category.value}`}
             page={page}
             totalPages={totalPages}

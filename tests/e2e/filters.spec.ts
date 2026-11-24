@@ -61,7 +61,7 @@ test.describe("a visitor we can't place", () => {
     // With one city live, everything on the page is that city's whether or
     // not we worked out where the visitor is — so the neighbourhoods have to
     // be on offer either way. They weren't: the filter was hiding from
-    // anyone outside Bristol while the page said "Bristol's independents".
+    // anyone outside Bristol while the page said "Bristol's local businesses".
     for (const path of ["/businesses", "/offers"]) {
         test(`still gets the neighbourhoods on ${path}`, async ({ page }) => {
             await page.goto(path);

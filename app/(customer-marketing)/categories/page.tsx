@@ -140,7 +140,7 @@ async function Categories({ city }: { city: City | null }) {
 
                 <p className="mx-auto mt-5 max-w-2xl text-lg text-[#17233B]/65">
                     From a morning coffee to a night away, explore offers from
-                    independent businesses{oneCity ? ` in ${place}` : ""} by the things you enjoy.
+                    local businesses{oneCity ? ` in ${place}` : ""} by the things you enjoy.
                 </p>
 
                 {places.length > 1 && (

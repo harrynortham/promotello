@@ -14,7 +14,7 @@ import { RegisterLink } from "@/components/register-link";
 export const metadata = {
     title: { absolute: "About Promotello for Businesses" },
     description:
-        "Promotello helps independent businesses turn first-time visitors into regulars: a local directory that sends them customers, and the offers, posters and stamp cards that bring them back.",
+        "Promotello helps local businesses turn first-time visitors into regulars: a local directory that sends them customers, and the offers, posters and stamp cards that bring them back.",
 };
 
 const principles = [
@@ -70,13 +70,13 @@ export default function About() {
                         </Badge>
 
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-                            Helping independent businesses turn first-time
+                            Helping local businesses turn first-time
                             visitors into regulars.
                         </h1>
 
                         <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
                             Big chains have apps and loyalty schemes. Promotello
-                            gives independent cafés, shops, salons, studios and
+                            gives local cafés, shops, salons, studios and
                             more the same tools, without the cost or the
                             complexity.
                         </p>
@@ -121,7 +121,7 @@ export default function About() {
 
                     <div className="space-y-6 text-lg leading-8 text-[#17233B]/70">
                         <p>
-                            Most independent businesses don&apos;t struggle to
+                            Most local businesses don&apos;t struggle to
                             make a good first impression. The hard part is
                             getting that first-time visitor to come back, and
                             knowing whether anything you try is working.
