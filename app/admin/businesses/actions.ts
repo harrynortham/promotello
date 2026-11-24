@@ -122,6 +122,25 @@ export async function removeBusinessPhoto(formData: FormData) {
 export async function deleteBusinessCompletely(businessId: string, confirmName: string) {
     const supabase = await createClient();
 
+    // Asked before Stripe is touched. admin_delete_business() refuses an
+    // unclaimed preview too (20270312090000) and is the real guard, but
+    // it only runs after the subscription has been cancelled — and
+    // cancelling a subscription for a delete that is then refused is a
+    // thing nobody can put back. A preview has no subscription today,
+    // so this is belt and braces; it costs one query.
+    const { data: preview } = await supabase
+        .from("business_previews")
+        .select("claimed_at")
+        .eq("business_id", businessId)
+        .maybeSingle();
+
+    if (preview && !preview.claimed_at) {
+        return {
+            error:
+                "This business is an unclaimed preview with a page and a link somebody may be holding. Delete the preview from its lead instead.",
+        };
+    }
+
     const { data: subscription } = await supabase
         .from("subscriptions")
         .select("stripe_subscription_id, status")
