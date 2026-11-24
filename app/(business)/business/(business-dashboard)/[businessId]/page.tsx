@@ -31,6 +31,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { businessHasPro, isLiveOffer } from "@/lib/billing";
 import { readStarter, starterToShow } from "@/lib/starter";
 import { businessPath } from "@/lib/slugs";
+import { SharePanel } from "@/components/share-panel";
+import { businessShareCaption, shareLink } from "@/lib/share";
 import { storedImage } from "@/lib/images";
 import { uploadedCover } from "@/lib/business-images";
 import { createClient } from "@/utils/supabase/server";
@@ -900,6 +902,34 @@ async function BusinessOverviewContent({ params, searchParams }: PageProps) {
                     >
                         View analytics
                     </Button>
+
+                    {/* Only once the page is public: the share images are
+                        built by a route that 404s for a business customers
+                        cannot see yet, so the dialog would open on two
+                        broken pictures. */}
+                    {isLive && (
+                        <SharePanel
+                            heading="Share your page"
+                            triggerLabel="Share your page"
+                            title={business.name}
+                            url={shareLink(businessPath(business))}
+                            caption={businessShareCaption({ businessName: business.name })}
+                            images={[
+                                {
+                                    label: "Story",
+                                    href: `${businessPath(business)}/story-image`,
+                                    filename: `${business.slug}-story.png`,
+                                    aspect: "aspect-[9/16]",
+                                },
+                                {
+                                    label: "Square post",
+                                    href: `${businessPath(business)}/post-image`,
+                                    filename: `${business.slug}-post.png`,
+                                    aspect: "aspect-square",
+                                },
+                            ]}
+                        />
+                    )}
 
                     {/* No sales pack here. It is a thing we print to sell
                         with, not a thing a business does with their own
