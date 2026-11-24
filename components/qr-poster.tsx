@@ -5,6 +5,12 @@ import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar }
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { storedImage } from "@/lib/images";
 import {
+    isLoyaltyLayout,
+    isReviewLayout,
+    posterLayout,
+    type PosterLayout,
+} from "@/lib/poster-layouts";
+import {
     cardTheme,
     readableInk,
     stampIcon as readStampIcon,
@@ -51,76 +57,9 @@ const stampIcons: Record<StampIcon, typeof FiCheck> = {
 // Paper is not decided here. Any of them prints at A4, A5 or two to a
 // sheet.
 
-export const POSTER_LAYOUTS = [
-    {
-        value: "classic",
-        label: "Classic",
-        hint: "Your name across the top, the offer in the middle.",
-    },
-    {
-        value: "code_first",
-        label: "Code first",
-        hint: "The code up top, for tables and tills where they're already close.",
-    },
-    {
-        value: "bold",
-        label: "Bold",
-        hint: "The whole sheet in colour, to read through a window.",
-    },
-    {
-        value: "minimal",
-        label: "Minimal",
-        hint: "No colour block. Quiet enough for a smart window.",
-    },
-    {
-        value: "follow",
-        label: "Follow us",
-        hint: "Why it's worth following, for a counter or a door.",
-        forFollow: true,
-    },
-    {
-        value: "stamp_card",
-        label: "Stamp card",
-        hint: "The card itself, so people see what they are collecting.",
-        forLoyalty: true,
-    },
-    {
-        value: "stamp_strip",
-        label: "Stamp strip",
-        hint: "A line of stamps across the sheet, with the reward above it.",
-        forLoyalty: true,
-    },
-] as const;
+export * from "@/lib/poster-layouts";
 
 export { followReasons, type FollowPromises } from "@/lib/follow-reasons";
-
-export type PosterLayout = (typeof POSTER_LAYOUTS)[number]["value"];
-
-// The two that draw a card are offered only where there is one to draw.
-export const LOYALTY_LAYOUTS = POSTER_LAYOUTS.filter(
-    (option) => "forLoyalty" in option && option.forLoyalty,
-).map((option) => option.value) as readonly PosterLayout[];
-
-export function isLoyaltyLayout(value: string | null | undefined) {
-    return LOYALTY_LAYOUTS.includes(value as PosterLayout);
-}
-
-// Offered only on a code that follows, and the only one offered there:
-// the others all say "scan for offers", which is not what the sheet is
-// for.
-export const FOLLOW_LAYOUTS = POSTER_LAYOUTS.filter(
-    (option) => "forFollow" in option && option.forFollow,
-).map((option) => option.value) as readonly PosterLayout[];
-
-export function isFollowLayout(value: string | null | undefined) {
-    return FOLLOW_LAYOUTS.includes(value as PosterLayout);
-}
-
-export function posterLayout(value: string | null | undefined): PosterLayout {
-    return POSTER_LAYOUTS.some((option) => option.value === value)
-        ? (value as PosterLayout)
-        : "classic";
-}
 
 type PosterProps = {
     width: string;
@@ -494,23 +433,41 @@ export function QrPoster(props: PosterProps) {
         header: card?.header,
         accent: card?.accent,
     }).stamp;
-    const dark = chosen === "bold";
+    const reviews = isReviewLayout(chosen);
+    const dark = chosen === "bold" || chosen === "review_bold";
     const follows = chosen === "follow";
     const pill =
         eyebrow?.trim() ||
         eyebrowFallback?.trim() ||
-        (follows ? "Follow us" : offer ? "Exclusive offer" : "Scan for offers");
+        (reviews
+            ? "Enjoyed it?"
+            : follows
+                ? "Follow us"
+                : offer
+                    ? "Exclusive offer"
+                    : "Scan for offers");
     const title =
         headline?.trim() ||
-        (follows ? "Be first to know" : offer ? offer.discount : `See what's on at ${businessName}`);
-    const body = follows ? detail?.trim() || null : offer ? detail?.trim() || offer.description : null;
+        (reviews
+            ? "Leave us a review"
+            : follows
+                ? "Be first to know"
+                : offer
+                    ? offer.discount
+                    : `See what's on at ${businessName}`);
+    const body = follows || reviews ? detail?.trim() || null : offer ? detail?.trim() || offer.description : null;
     const scanLine =
         caption?.trim() ||
-        (follows
-            ? "Scan to follow. No app to download, and you can stop any time."
-            : offer
-                ? "Claim it free on Promotello, then show your code when you pay."
-                : "Every offer is free to claim on Promotello. Show your code when you pay.");
+        (reviews
+            // Said plainly, because the ask is the whole sheet. "It
+            // takes a minute" is the objection answered before it is
+            // raised, and it is true.
+            ? "Scan to leave a review on Google. It takes a minute, and it helps us more than you'd think."
+            : follows
+                ? "Scan to follow. No app to download, and you can stop any time."
+                : offer
+                    ? "Claim it free on Promotello, then show your code when you pay."
+                    : "Every offer is free to claim on Promotello. Show your code when you pay.");
 
     // A written headline is usually a sentence, so it needs smaller type.
     const titleSize = headline?.trim() ? "3.4em" : offer ? "5.4em" : "3.8em";
@@ -567,6 +524,69 @@ export function QrPoster(props: PosterProps) {
                     <div className="mt-[0.5em]">
                         <ScanLines caption={scanLine} dark={dark} />
                     </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
+
+    // Asking for a review, in three arrangements of the same parts. The
+    // business's name is on every one of them: a code on a till with no
+    // name over it is the shape of every parking-meter scam people are
+    // told to ignore.
+    if (reviews) {
+        const codeFirst = chosen === "review_code_first";
+        const quiet = chosen === "review_quiet";
+
+        return (
+            <article className={sheet} style={style}>
+                {codeFirst && (
+                    <div
+                        className="flex items-center justify-center py-[2.2em]"
+                        style={{ backgroundColor: theme.header }}
+                    >
+                        <Code markup={qrMarkup} size="21em" />
+                    </div>
+                )}
+
+                {!codeFirst && (
+                    <header
+                        className={`flex items-center gap-[1em] px-[2.5em] py-[1.4em] ${quiet ? "" : ""}`}
+                        style={
+                            quiet
+                                ? undefined
+                                : { backgroundColor: theme.header, color: theme.ink }
+                        }
+                    >
+                        <Logo url={logoUrl} size="3.2em" />
+                        <Name businessName={businessName} place={place} onColour={!quiet} />
+                    </header>
+                )}
+
+                <div className="flex flex-1 flex-col items-center justify-center gap-[0.6em] px-[2.5em] py-[1.4em] text-center">
+                    <Pill colour={theme.accent} ink={theme.accentInk} dark={dark}>{pill}</Pill>
+                    <Title size={headline?.trim() ? "3.2em" : "4.6em"}>{title}</Title>
+                    {body && <Body dark={dark}>{body}</Body>}
+
+                    {!codeFirst && (
+                        <div className="mt-[1em]">
+                            <Code markup={qrMarkup} size="21em" />
+                        </div>
+                    )}
+
+                    <div className="mt-[0.6em]">
+                        <ScanLines caption={scanLine} dark={dark} />
+                    </div>
+
+                    {codeFirst && (
+                        <div className="mt-[0.8em] flex items-center gap-[1em]">
+                            <Logo url={logoUrl} size="3.2em" />
+                            <p className="truncate font-semibold" style={{ fontSize: "1.6em" }}>
+                                {businessName}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <Footer link={link} dark={dark} />

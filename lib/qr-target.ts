@@ -6,7 +6,7 @@
 // never fails — record_qr_scan falls back to the business page — but the
 // business is the one who can fix it, and only if they're told.
 
-export type QrTargetKind = "offer" | "card" | "follow" | "business" | "retired";
+export type QrTargetKind = "offer" | "card" | "follow" | "review" | "business" | "retired";
 
 export type QrTarget = {
     kind: QrTargetKind;
@@ -39,6 +39,7 @@ export type QrCodeRow = {
     archived_at?: string | null;
     former_target?: string | null;
     follows?: boolean | null;
+    reviews?: boolean | null;
     offers?: QrOffer;
     loyalty_programs?: QrLoyaltyProgram;
 };
@@ -62,6 +63,19 @@ export function qrTarget(code: QrCodeRow, today: string, hasPro = true): QrTarge
     // business is.
     if (code.follows) {
         return { kind: "follow", live: true, name: null, problem: null };
+    }
+
+    // The same, with one way to be wrong: the link it opens lives on
+    // the business's own page and can be cleared from there, and a
+    // review poster with nothing behind it lands people somewhere they
+    // were not promised.
+    if (code.reviews) {
+        return {
+            kind: "review",
+            live: true,
+            name: null,
+            problem: null,
+        };
     }
 
     const offer = code.offers ?? null;

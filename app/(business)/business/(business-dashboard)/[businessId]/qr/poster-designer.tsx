@@ -6,6 +6,7 @@ import { useState } from "react";
 import { LoyaltyDesignPicker } from "@/components/loyalty-design-picker";
 import {
     followReasons,
+    isReviewLayout,
     isFollowLayout,
     isLoyaltyLayout,
     POSTER_LAYOUTS,
@@ -41,6 +42,7 @@ export function PosterDesigner({
     offers,
     loyalty,
     promises,
+    reviewUrl,
     previewSvg,
     previewLink,
     waitingForApproval = false,
@@ -78,6 +80,9 @@ export function PosterDesigner({
         stamp_icon: string | null;
     } | null;
     promises: FollowPromises;
+    // Their Google reviews link, if they have added one. Without it
+    // there is nothing for a review poster to open.
+    reviewUrl?: string | null;
     previewSvg: string;
     previewLink: string;
 }) {
@@ -118,6 +123,7 @@ export function PosterDesigner({
     const chosenOffer = offers.find((option) => option.id === target) ?? null;
     const chosenLoyalty = target === "loyalty" ? loyalty : null;
     const follows = target === "follow";
+    const reviews = target === "review";
     const promised = followReasons(promises);
 
     // Named rather than listed as features: a business reading this is
@@ -138,17 +144,21 @@ export function PosterDesigner({
 
     // What the poster says when the business hasn't written its own
     // words: the offer's, the card's, or the business page's.
-    const suggestedEyebrow = follows
-        ? "Follow us"
-        : chosenLoyalty
+    const suggestedEyebrow = reviews
+        ? "Enjoyed it?"
+        : follows
+            ? "Follow us"
+            : chosenLoyalty
             ? `Collect ${chosenLoyalty.stamps_required} stamps`
             : chosenOffer
                 ? "Exclusive offer"
                 : "Scan for offers";
 
-    const suggestedHeadline = follows
-        ? "Be first to know"
-        : chosenLoyalty
+    const suggestedHeadline = reviews
+        ? "Leave us a review"
+        : follows
+            ? "Be first to know"
+            : chosenLoyalty
             ? `Get ${chosenLoyalty.reward.charAt(0).toLowerCase() + chosenLoyalty.reward.slice(1)}`
             : chosenOffer
                 ? chosenOffer.discount
@@ -156,16 +166,20 @@ export function PosterDesigner({
 
     const description = detail ?? chosenOffer?.description ?? chosenLoyalty?.terms ?? "";
 
-    // Four arrangements for anything, two more that draw the card, and
-    // one that asks to be followed -- which is the only one offered on a
-    // follow code, because the rest promise offers instead.
-    const layoutsOnOffer = follows
-        ? POSTER_LAYOUTS.filter((option) => "forFollow" in option && option.forFollow)
-        : POSTER_LAYOUTS.filter(
-            (option) =>
-                !("forFollow" in option && option.forFollow) &&
-                (!("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty)),
-        );
+    // Four arrangements for anything, two more that draw the card, one
+    // that asks to be followed and three that ask for a review. The last
+    // two kinds are the only ones offered on their own codes, because
+    // every other layout promises offers somewhere on it.
+    const layoutsOnOffer = reviews
+        ? POSTER_LAYOUTS.filter((option) => "forReview" in option && option.forReview)
+        : follows
+            ? POSTER_LAYOUTS.filter((option) => "forFollow" in option && option.forFollow)
+            : POSTER_LAYOUTS.filter(
+                (option) =>
+                    !("forFollow" in option && option.forFollow) &&
+                    !("forReview" in option && option.forReview) &&
+                    (!("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty)),
+            );
 
     const width = PREVIEW_WIDTH;
 
@@ -247,7 +261,13 @@ export function PosterDesigner({
                                 // The other layouts all say "scan for
                                 // offers", which this sheet is not for.
                                 setLayout("follow");
-                            } else if (isLoyaltyLayout(layout) || isFollowLayout(layout)) {
+                            } else if (next === "review") {
+                                setLayout("review_quiet");
+                            } else if (
+                                isLoyaltyLayout(layout)
+                                || isFollowLayout(layout)
+                                || isReviewLayout(layout)
+                            ) {
                                 setLayout("classic");
                             }
                         }}
@@ -255,6 +275,13 @@ export function PosterDesigner({
                     >
                         <option value="business">Your business profile page</option>
                         <option value="follow">Follow us: a scan puts them on your list</option>
+                        {/* Only where there is somewhere to send them.
+                            A review poster with no Google link behind it
+                            lands on the business's own page, which is
+                            not what the sheet promised. */}
+                        {reviewUrl && (
+                            <option value="review">Review us: a scan opens your Google reviews</option>
+                        )}
                         {loyalty && (
                             <option value="loyalty">Loyalty card: {loyalty.name}</option>
                         )}

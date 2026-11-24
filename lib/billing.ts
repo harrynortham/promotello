@@ -56,6 +56,13 @@ export function trialDays(plan: PlanKey) {
 // Must match the limit in public.enforce_offer_plan_limit().
 export const FREE_LIVE_OFFER_LIMIT = 1;
 
+// Review posters are free, on every plan, and sit outside the single QR
+// code the Free plan includes (20270311090000). Three is a window, a
+// till and a table, which is the whole of what a shop needs — and the
+// trigger that enforces it is the authority, this is the number the
+// words on screen come from.
+export const REVIEW_POSTER_LIMIT = 3;
+
 // Subscription states that give a business Pro features. Must match
 // public.business_has_pro(); past_due keeps Pro while Stripe retries.
 export const PRO_SUBSCRIPTION_STATUSES = ["trialing", "active", "past_due"];

@@ -189,24 +189,44 @@ async function Poster({ params, searchParams }: PageProps) {
                     a4: `/poster/${qr.id}?size=a4`,
                     a5: `/poster/${qr.id}?size=a5`,
                     a5x2: `/poster/${qr.id}?size=a5x2`,
+                    a6x4: `/poster/${qr.id}?size=a6x4`,
                 }}
             />
 
-            {/* Two copies share a landscape sheet, to be cut down the
-                middle. On screen they sit side by side with the cut
-                line between them; on paper the line is all that is
-                added. */}
-            <div
-                className={`flex justify-center bg-[#E9E4DD] py-10 print:bg-white print:py-0 ${
-                    dims.copies > 1 ? "print:flex" : "print:block"
-                }`}
-            >
+            {/* Copies sharing a sheet, to be cut apart. Two sit side by
+                side on a landscape A4; four tile two by two on a
+                portrait one. On screen the cut lines sit between them;
+                on paper the lines are all that is added. */}
+            <div className="flex justify-center bg-[#E9E4DD] py-10 print:bg-white print:py-0">
+                <div
+                    // A grid rather than a wrapping row: the cut line is
+                    // a 1px border, which is enough to push the second
+                    // card past the sheet's width and drop it onto a
+                    // row of its own. Columns do not reflow.
+                    className={dims.copies === 4 ? "grid grid-cols-2" : "flex"}
+                    style={dims.copies === 4 ? { width: sheet.width } : undefined}
+                >
                 {Array.from({ length: dims.copies }, (_, copy) => (
                     <div
                         key={copy}
-                        className={
-                            copy > 0 ? "border-l border-dashed border-[#17233B]/30" : undefined
-                        }
+                        className={[
+                            // Down the middle, and across it when there
+                            // are four: the second of each pair carries
+                            // the vertical line, the bottom pair the
+                            // horizontal one.
+                            dims.copies === 4
+                                ? copy % 2 === 1
+                                    ? "border-l border-dashed border-[#17233B]/30"
+                                    : ""
+                                : copy > 0
+                                    ? "border-l border-dashed border-[#17233B]/30"
+                                    : "",
+                            dims.copies === 4 && copy >= 2
+                                ? "border-t border-dashed border-[#17233B]/30"
+                                : "",
+                        ]
+                            .filter(Boolean)
+                            .join(" ") || undefined}
                     >
                     <QrPoster
                         width={dims.width}
@@ -257,6 +277,7 @@ async function Poster({ params, searchParams }: PageProps) {
                     />
                     </div>
                 ))}
+                </div>
             </div>
         </>
     );
