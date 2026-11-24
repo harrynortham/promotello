@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardGridLoading } from "@/components/dashboard-skeletons";
-import { businessHasPro } from "@/lib/billing";
+import { REVIEW_POSTER_LIMIT, businessHasPro } from "@/lib/billing";
 import { followPromises } from "@/lib/follow-promises";
 import { qrLink, qrSvg } from "@/lib/qr";
 import { requestOrigin } from "@/lib/request-origin";
@@ -42,6 +42,7 @@ type QrCode = {
     archived_at: string | null;
     former_target: string | null;
     follows: boolean | null;
+    reviews: boolean | null;
     loyalty_program_id: string | null;
     offers: QrOffer | QrOffer[] | null;
     loyalty_programs: QrLoyaltyProgram | QrLoyaltyProgram[] | null;
@@ -56,6 +57,7 @@ function one<T>(value: T | T[] | null | undefined): T | null {
 const errorMessages: Record<string, string> = {
     label: "Give the poster a name between 2 and 60 characters, like “Front window”.",
     limit: "The Free plan includes 1 poster. Upgrade to Pro for one in every spot.",
+    review_limit: `${REVIEW_POSTER_LIMIT} review posters is the limit: one for the window, one for the till, one for a table.`,
     approval: "A poster can be made once your page is approved. We check every new business, usually the same day.",
     create: "We couldn't make that poster. Please try again.",
     delete: "We couldn't retire that poster. Please try again.",
@@ -88,6 +90,10 @@ function describeTarget(target: ReturnType<typeof qrTarget>) {
 
     if (target.kind === "follow") {
         return "a follow — one scan and they are on your list";
+    }
+
+    if (target.kind === "review") {
+        return "your Google reviews, ready to write one";
     }
 
     return "your business page";
@@ -128,7 +134,7 @@ async function QrContent({ params, searchParams }: PageProps) {
         supabase
             .from("qr_codes")
             .select(
-                "id, code, label, created_at, archived_at, former_target, follows, loyalty_program_id, offers ( title, discount, approval_status, expires_at, plan_paused_at ), loyalty_programs ( name, is_active, closed_at )",
+                "id, code, label, created_at, archived_at, former_target, follows, reviews, loyalty_program_id, offers ( title, discount, approval_status, expires_at, plan_paused_at ), loyalty_programs ( name, is_active, closed_at )",
             )
             .eq("business_id", businessId)
             // Retired codes come too: the poster is still in a window, so
@@ -145,7 +151,7 @@ async function QrContent({ params, searchParams }: PageProps) {
             .order("created_at", { ascending: false }),
         supabase
             .from("businesses")
-            .select("name, slug, logo_url, approval_status, business_locations ( region, city )")
+            .select("name, slug, logo_url, approval_status, google_review_url, business_locations ( region, city )")
             .eq("id", businessId)
             .maybeSingle(),
         // The card being handed out, for a poster by the till.
@@ -194,7 +200,9 @@ async function QrContent({ params, searchParams }: PageProps) {
 
     const totalById = Object.fromEntries(totals);
     const svgs = await Promise.all(qrCodes.map((code) => qrSvg(qrLink(origin, code.code))));
-    const atFreeLimit = !hasPro && qrCodes.length >= 1;
+    // Review posters are free and sit outside the one the Free plan
+    // includes (20270311090000), so they are not counted against it.
+    const atFreeLimit = !hasPro && qrCodes.filter((code) => !code.reviews).length >= 1;
 
     // The poster preview: their own branding, their newest offer, and a
     // code that opens their page, so it is the real thing in miniature.
@@ -349,6 +357,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                                 offers={offers ?? []}
                                 loyalty={loyalty}
                                 promises={promises}
+                                reviewUrl={business?.google_review_url}
                                 previewSvg={previewSvg}
                                 previewLink={previewLink}
                                 waitingForApproval={!isLive}
@@ -453,7 +462,9 @@ async function QrContent({ params, searchParams }: PageProps) {
                                                             ? "your loyalty card"
                                                             : target.kind === "follow"
                                                                 ? "a follow: one scan and they're on your list"
-                                                                : "your business profile page"}
+                                                                : target.kind === "review"
+                                                                    ? "your Google reviews"
+                                                                    : "your business profile page"}
                                                 </p>
 
                                                 <a

@@ -27,7 +27,12 @@ const POSTER_COLOURS = ["navy", "coral", "forest", "plum", "ocean", "charcoal"];
 // offer's id, so a new one has to be named here or it would be stored as
 // one and the poster would point at nothing.
 function isTargetless(target: string) {
-    return target === "business" || target === "loyalty" || target === "follow";
+    return (
+        target === "business"
+        || target === "loyalty"
+        || target === "follow"
+        || target === "review"
+    );
 }
 
 export async function createQrCode(formData: FormData) {
@@ -73,6 +78,7 @@ export async function createQrCode(formData: FormData) {
         offer_id: isTargetless(target) ? null : target,
         loyalty_program_id: target === "loyalty" ? (loyaltyProgramId || null) : null,
         follows: target === "follow",
+        reviews: target === "review",
         poster_colour: posterColour,
         poster_layout: posterLayout,
         poster_header: ownColours ? posterHeader : null,
@@ -87,7 +93,8 @@ export async function createQrCode(formData: FormData) {
     }).select("id").single();
 
     if (error) {
-        const reason = { P0004: "limit", P0003: "approval" }[error.code] ?? "create";
+        const reason =
+            { P0004: "limit", P0005: "review_limit", P0003: "approval" }[error.code] ?? "create";
         redirect(`${page}?error=${reason}`);
     }
 
@@ -135,6 +142,7 @@ export async function pointQrCode(formData: FormData) {
             offer_id: isTargetless(target) ? null : target,
             loyalty_program_id: target === "loyalty" ? loyaltyProgramId || null : null,
             follows: target === "follow",
+            reviews: target === "review",
             // Whatever it used to say, it says this now.
             former_target: null,
         })

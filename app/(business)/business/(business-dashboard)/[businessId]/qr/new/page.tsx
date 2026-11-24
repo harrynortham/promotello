@@ -89,6 +89,7 @@ async function NewQrCode({ params, searchParams }: PageProps) {
                         offers={designer.offers}
                         loyalty={designer.loyalty}
                         promises={designer.promises}
+                        reviewUrl={designer.reviewUrl}
                         previewSvg={designer.previewSvg}
                         previewLink={designer.previewLink}
                         startOn={openOn ?? null}

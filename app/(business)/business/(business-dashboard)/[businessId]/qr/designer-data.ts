@@ -44,7 +44,7 @@ export async function loadDesigner(businessId: string) {
             .order("created_at", { ascending: false }),
         supabase
             .from("businesses")
-            .select("name, slug, logo_url, approval_status, business_locations ( region, city )")
+            .select("name, slug, logo_url, approval_status, google_review_url, business_locations ( region, city )")
             .eq("id", businessId)
             .maybeSingle(),
         supabase
@@ -58,7 +58,12 @@ export async function loadDesigner(businessId: string) {
             .from("qr_codes")
             .select("id", { count: "exact", head: true })
             .eq("business_id", businessId)
-            .is("archived_at", null),
+            .is("archived_at", null)
+            // Review codes sit outside the Free plan's one
+            // (20270311090000), so they do not count towards it here
+            // either -- the number on screen has to be the number the
+            // trigger is counting.
+            .eq("reviews", false),
         businessHasPro(supabase, businessId),
         requestOrigin(),
         // What a follow poster can honestly promise today, so the
@@ -86,6 +91,9 @@ export async function loadDesigner(businessId: string) {
         codeCount: codeCount ?? 0,
         atFreeLimit: !hasPro && (codeCount ?? 0) >= 1,
         promises,
+        // Without one there is nothing for a review poster to open, so
+        // the target is not offered.
+        reviewUrl: business?.google_review_url ?? null,
         previewLink,
         previewSvg: await qrSvg(previewLink),
     };
