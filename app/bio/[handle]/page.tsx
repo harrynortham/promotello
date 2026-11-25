@@ -175,8 +175,9 @@ function Examples({
     reward: string | null;
     stamps: number;
     logoUrl: string | null;
-    // The whole page as somebody browsing the directory would meet it:
-    // the offer drawn by the card /offers lists, not a drawing of one.
+    // The preview page, which shows each of these the way somebody
+    // browsing the directory meets it. The two links below land on the
+    // offer and on the card.
     customerView: string;
 }) {
     if (!offer && !reward) return null;
@@ -196,6 +197,7 @@ function Examples({
                         An offer
                     </p>
                     <p className="mt-1 font-medium leading-6">{offer}</p>
+                    <PreviewLink href={`${customerView}#offer`}>Preview the offer</PreviewLink>
                 </div>
             )}
 
@@ -217,6 +219,8 @@ function Examples({
                         scanTitle="Customers show this"
                         scanHint="Your staff scan it and a stamp goes on."
                     />
+
+                    <PreviewLink href={`${customerView}#card`}>Preview the card</PreviewLink>
                 </div>
             )}
 
@@ -225,20 +229,22 @@ function Examples({
                 and the words are yours.
             </p>
 
-            {/* A document load rather than a router navigation: the
-                page it opens streams, and arriving through the router
-                left it scrolled somewhere arbitrary. No #offer either,
-                for the same reason -- a hash cannot find an element
-                that is not in the shell yet, and landing at the top of
-                a page that opens by explaining itself is no loss. */}
-            <a
-                href={customerView}
-                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] underline underline-offset-4"
-            >
-                See it the way a customer would
-                <FiArrowUpRight aria-hidden="true" className="size-4" />
-            </a>
         </section>
+    );
+}
+
+// A plain anchor, not a Link. The page it opens streams, and arriving
+// through the router left it scrolled somewhere arbitrary. A document
+// load lets ScrollToHash over there do the landing.
+function PreviewLink({ href, children }: { href: string; children: React.ReactNode }) {
+    return (
+        <a
+            href={href}
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] underline underline-offset-4"
+        >
+            {children}
+            <FiArrowUpRight aria-hidden="true" className="size-4" />
+        </a>
     );
 }
 
