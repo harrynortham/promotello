@@ -9,7 +9,7 @@ import { EmailCodeForm } from "@/components/email-code-form";
 import { SocialSignIn } from "@/components/social-sign-in";
 import { safeNextPath } from "@/lib/redirects";
 
-export function SignupForm() {
+export function SignupForm({ defaultEmail }: { defaultEmail?: string }) {
     const searchParams = useSearchParams();
 
     // Return to the page that sent them here, e.g. an offer to claim.
@@ -58,8 +58,11 @@ export function SignupForm() {
                             mode="sign-up"
                             next={requestedNext ?? undefined}
                             idPrefix="signup"
-                            // Prefilled from team invitations (?email=).
-                            defaultEmail={searchParams.get("email") ?? ""}
+                            // Prefilled from team invitations (?email=),
+                            // or by the page itself, which is how a guest
+                            // card's address gets here without travelling
+                            // in the URL.
+                            defaultEmail={defaultEmail || (searchParams.get("email") ?? "")}
                             otherWayHref={loginHref}
                         />
 
