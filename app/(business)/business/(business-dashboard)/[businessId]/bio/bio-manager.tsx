@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { moved, type BioKind, type BioSection } from "@/lib/bio-sections";
+import { BioPreview } from "./bio-preview";
 import { addLink, moveLink, removeLink, saveArrangement, saveBioDetails } from "./actions";
 
 // Arranging the bio page.
@@ -55,6 +56,7 @@ type Row = {
 
 export function BioManager({
     businessId,
+    businessName,
     bioUrl,
     initialSections,
     rows,
@@ -65,9 +67,10 @@ export function BioManager({
     taps,
 }: {
     businessId: string;
+    businessName: string;
     bioUrl: string;
     initialSections: BioSection[];
-    rows: Record<string, { note: string; edit?: string; locked?: string }>;
+    rows: Record<string, { note: string; edit?: string; locked?: string; empty?: boolean }>;
     links: { id: string; label: string; url: string }[];
     notice: string;
     noticeUntil: string;
@@ -165,6 +168,7 @@ export function BioManager({
                 </div>
             </div>
 
+            <div className="grid gap-8 lg:grid-cols-[1fr_18rem]">
             <section aria-labelledby="sections-heading">
                 <div className="flex items-end justify-between gap-4">
                     <div>
@@ -261,6 +265,17 @@ export function BioManager({
                     })}
                 </ul>
             </section>
+
+            <BioPreview
+                businessName={businessName}
+                sections={sections}
+                rows={rows}
+                names={names}
+                icons={icons}
+                links={links}
+                notice={notice}
+            />
+            </div>
 
             <LinksEditor businessId={businessId} links={links} />
 
