@@ -25,6 +25,7 @@ import { storedImage } from "@/lib/images";
 import { cardLine } from "@/lib/loyalty-state";
 import { DEFAULT_STAMPS, readStarterRow } from "@/lib/starter";
 import { absoluteUrl, siteName, truncate } from "@/lib/site";
+import { previewLink } from "@/lib/previews";
 import { businessPath, offerPath } from "@/lib/slugs";
 import { socialsOf } from "@/lib/social-links";
 import { createClient } from "@/utils/supabase/server";
@@ -167,12 +168,16 @@ function Examples({
     reward,
     stamps,
     logoUrl,
+    customerView,
 }: {
     businessName: string;
     offer: string | null;
     reward: string | null;
     stamps: number;
     logoUrl: string | null;
+    // The whole page as somebody browsing the directory would meet it:
+    // the offer drawn by the card /offers lists, not a drawing of one.
+    customerView: string;
 }) {
     if (!offer && !reward) return null;
 
@@ -219,6 +224,20 @@ function Examples({
                 Examples, not promises — we wrote them to show you the shape of it. Claim the page
                 and the words are yours.
             </p>
+
+            {/* A document load rather than a router navigation: the
+                page it opens streams, and arriving through the router
+                left it scrolled somewhere arbitrary. No #offer either,
+                for the same reason -- a hash cannot find an element
+                that is not in the shell yet, and landing at the top of
+                a page that opens by explaining itself is no loss. */}
+            <a
+                href={customerView}
+                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] underline underline-offset-4"
+            >
+                See it the way a customer would
+                <FiArrowUpRight aria-hidden="true" className="size-4" />
+            </a>
         </section>
     );
 }
@@ -474,6 +493,7 @@ async function BioContent({ params, searchParams }: PageProps) {
                             reward={examples.reward}
                             stamps={examples.stamps ?? DEFAULT_STAMPS}
                             logoUrl={business.logo_url}
+                            customerView={previewLink(offeredToken!, business.name)}
                         />
 
                         <OneTap
