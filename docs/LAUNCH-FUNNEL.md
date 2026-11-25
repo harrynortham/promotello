@@ -323,6 +323,36 @@ only from structured JSON-LD. Of the first ten, not one of the eight
 with a website published any, which is worth knowing before relying on
 it.
 
+## Three ways to claim a page, and which to send
+
+Added 25 November 2026. There are now three, which is two more than is
+obvious, so here is which is which.
+
+| | Address | What happens | Send it when |
+| --- | --- | --- | --- |
+| The preview link | `/business/preview/<name>-<token>` | One tap. Signing up on the way claims it for them — `afterSignIn()` sees the preview in `next` and finishes the job | Email and letters, where the URL is not read aloud |
+| The DM link | `/@theirhandle?c=<token>` | The same token and the same one tap, on an address that reads as theirs | Instagram, and anywhere a link is looked at before it is opened |
+| The page itself | `/@theirhandle` | Files a claim request for an admin to release | Nowhere — it is for somebody who found the page on their own |
+
+The first two are the same secret. The token is the proof that this
+business was written to on purpose, and whoever holds the link can
+claim, which is why neither is published anywhere. The third exists
+because a page with no way in at all is a page the owner cannot do
+anything about.
+
+`preview_token_is()` is the check behind the second: it answers yes or
+no about a token the caller already holds, and only while that token
+would still be accepted — unclaimed, inside the 90 days
+`claim_business_preview()` enforces. A spent token drops the page back
+to the request form, so a forwarded link claims nothing.
+
+**One trap worth knowing.** The claim action's redirect target is not
+just "where they came from": `afterSignIn()` recognises a preview in
+`next` and completes the claim itself, so sending somebody anywhere
+else after sign-up costs them a second tap on a button they have
+already pressed. It always goes to the preview link, whichever page the
+claim was pressed on.
+
 ## Progress
 
 - [x] 1 · Card-less trial

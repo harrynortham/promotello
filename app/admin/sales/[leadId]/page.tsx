@@ -227,6 +227,21 @@ async function Lead({ params, searchParams }: PageProps) {
               .order("created_at", { ascending: true })
         : { data: null };
 
+    // The same token on an address that reads as theirs, for a DM.
+    // Nobody opens a /business/preview/... URL from Instagram.
+    const { data: handleRow } = lead.preview_business_id
+        ? await supabase
+            .from("business_handles")
+            .select("handle")
+            .eq("business_id", lead.preview_business_id)
+            .eq("is_current", true)
+            .maybeSingle()
+        : { data: null };
+
+    const dmLink = handleRow && preview && !preview.claimed_at
+        ? absoluteUrl(`/@${handleRow.handle}?c=${preview.token}`)
+        : null;
+
     const livePage = previewBusiness?.listed_at
         ? absoluteUrl(businessPath({ slug: previewBusiness.slug }))
         : null;
@@ -869,6 +884,24 @@ async function Lead({ params, searchParams }: PageProps) {
                                             <FiExternalLink aria-hidden="true" className="size-3 shrink-0" />
                                         </a>
                                     </div>
+
+                                    {dmLink && (
+                                        <div className="border-t pt-4">
+                                            <p className="text-xs uppercase tracking-wide text-[#17233B]/55">
+                                                The link for a DM
+                                            </p>
+                                            <p className="mt-1 break-all font-medium">
+                                                {dmLink.replace(/^https?:\/\//, "")}
+                                            </p>
+                                            <div className="mt-2">
+                                                <CopyButton text={dmLink} label="Copy the DM link" size="sm" />
+                                            </div>
+                                            <p className="mt-2 text-xs text-[#17233B]/55">
+                                                Same token, one tap, and it reads as their page. Treat it
+                                                like the one above: whoever holds it can claim.
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <div className="border-t pt-4">
                                         <p className="text-xs uppercase tracking-wide text-[#17233B]/55">

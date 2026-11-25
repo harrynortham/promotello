@@ -11,6 +11,13 @@ import { createClient } from "@/utils/supabase/server";
 export async function claimPreview(formData: FormData) {
     const token = String(formData.get("token") ?? "");
     const name = String(formData.get("name") ?? "");
+    // Always the preview link, including when the claim was pressed on
+    // /@theirhandle. It is not just where they came from: afterSignIn()
+    // recognises a preview in `next` and finishes the claim itself, so
+    // somebody who had to make an account lands on their business
+    // rather than back on a button they have already pressed. Sending
+    // them anywhere else costs them a second tap.
+    const back = previewLink(token, name);
     const supabase = await createClient();
 
     const {
@@ -27,13 +34,13 @@ export async function claimPreview(formData: FormData) {
     });
 
     if (!user) {
-        redirect(`/business/register?next=${encodeURIComponent(previewLink(token, name))}`);
+        redirect(`/business/register?next=${encodeURIComponent(back)}`);
     }
 
     const { businessId, error } = await claimFor(supabase, token, user.email);
 
     if (!businessId) {
-        redirect(`${previewLink(token, name)}?error=${encodeURIComponent(error ?? "We couldn't claim this business.")}`);
+        redirect(`${back}?error=${encodeURIComponent(error ?? "We couldn't claim this business.")}`);
     }
 
     redirect(`/business/setup/${businessId}?welcome=1`);
