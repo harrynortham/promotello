@@ -12,12 +12,12 @@ import {
     FiGlobe,
     FiMapPin,
     FiPhone,
+    FiTag,
 } from "react-icons/fi";
 
 import { SubmitButton } from "@/components/submit-button";
 import { claimPreview } from "@/app/(business)/business/preview/[token]/actions";
 import { ExampleBadge } from "@/components/example-badge";
-import { LoyaltyCard } from "@/components/loyalty-card";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { SocialLinks } from "@/components/social-links";
 import { addressParts, directionsUrl } from "@/lib/address";
@@ -162,22 +162,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // What we drew up for them, marked as what it is. Never shown without
 // the token: an example offer on a page for a real café is something
 // somebody can walk in and ask for.
+//
+// Two rows in the same shape as Find us and Our website, because this
+// is a page of rows and an example that arrives as a slab of its own
+// reads as an advert dropped into one. The offer is here in words.
+// The card is not drawn: it is a card, it wants a phone around it, and
+// the preview page already puts it in one.
 function Examples({
-    businessName,
     offer,
     reward,
     stamps,
-    logoUrl,
     customerView,
 }: {
-    businessName: string;
     offer: string | null;
     reward: string | null;
     stamps: number;
-    logoUrl: string | null;
     // The preview page, which shows each of these the way somebody
-    // browsing the directory meets it. The two links below land on the
-    // offer and on the card.
+    // browsing the directory meets it.
     customerView: string;
 }) {
     if (!offer && !reward) return null;
@@ -191,60 +192,31 @@ function Examples({
                 <ExampleBadge />
             </div>
 
-            {offer && (
-                <div className="mt-4 rounded-xl bg-[#FFF8F0] px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF593F]">
-                        An offer
-                    </p>
-                    <p className="mt-1 font-medium leading-6">{offer}</p>
-                    <PreviewLink href={`${customerView}#offer`}>Preview the offer</PreviewLink>
-                </div>
-            )}
-
-            {reward && (
-                <div className="mt-4">
-                    <LoyaltyCard
-                        businessName={businessName}
-                        logoUrl={logoUrl}
-                        stampsRequired={stamps}
-                        reward={reward}
-                        stamps={0}
-                        narrow
-                        qr={
-                            <div
-                                aria-hidden="true"
-                                className="h-full w-full rounded-lg border-2 border-dashed border-[#17233B]/15"
-                            />
-                        }
-                        scanTitle="Customers show this"
-                        scanHint="Your staff scan it and a stamp goes on."
+            <div className="mt-4 flex flex-col gap-3">
+                {offer && (
+                    <Action
+                        href={`${customerView}#offer`}
+                        icon={FiTag}
+                        label="Your offer"
+                        note={offer}
                     />
+                )}
 
-                    <PreviewLink href={`${customerView}#card`}>Preview the card</PreviewLink>
-                </div>
-            )}
+                {reward && (
+                    <Action
+                        href={`${customerView}#card`}
+                        icon={FiGift}
+                        label="Your loyalty card"
+                        note={cardLine(stamps, reward)}
+                    />
+                )}
+            </div>
 
             <p className="mt-4 text-sm leading-6 text-[#17233B]/65">
                 Examples, not promises — we wrote them to show you the shape of it. Claim the page
                 and the words are yours.
             </p>
-
         </section>
-    );
-}
-
-// A plain anchor, not a Link. The page it opens streams, and arriving
-// through the router left it scrolled somewhere arbitrary. A document
-// load lets ScrollToHash over there do the landing.
-function PreviewLink({ href, children }: { href: string; children: React.ReactNode }) {
-    return (
-        <a
-            href={href}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#FF593F] underline underline-offset-4"
-        >
-            {children}
-            <FiArrowUpRight aria-hidden="true" className="size-4" />
-        </a>
     );
 }
 
@@ -494,11 +466,9 @@ async function BioContent({ params, searchParams }: PageProps) {
                         {/* The pitch before the ask: a mock-up of their
                             own page beats any description of one. */}
                         <Examples
-                            businessName={business.name}
                             offer={examples.offer}
                             reward={examples.reward}
                             stamps={examples.stamps ?? DEFAULT_STAMPS}
-                            logoUrl={business.logo_url}
                             customerView={previewLink(offeredToken!, business.name)}
                         />
 
