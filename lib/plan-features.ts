@@ -21,6 +21,16 @@ export const planComparison: ComparisonRow[] = [
     { feature: "Followers emailed every new offer", free: false, pro: true, growth: true },
     { feature: "Google review prompts", free: false, pro: true, growth: true, plus: "Google review prompts after a visit" },
     { feature: "Share links, Instagram images and captions", free: true, pro: true, growth: true },
+    // Free because it spreads Promotello: every bio link is our address
+    // in somebody's Instagram profile. Taps per row follow the same
+    // 30 days as the rest of the analytics.
+    {
+        feature: "Link-in-bio page you arrange",
+        free: true,
+        pro: true,
+        growth: true,
+        plus: "One link for your Instagram bio, with your offers, card and hours on it",
+    },
     { feature: "30-day analytics", free: true, pro: true, growth: true },
     { feature: "Welcome, birthday and win-back automations", free: false, pro: false, growth: true, plus: "Welcome, birthday and win-back emails that run themselves" },
     // The report is the proof, and the business that most needs it is
