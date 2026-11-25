@@ -412,9 +412,14 @@ async function BioContent({ params, searchParams }: PageProps) {
                         />
                     ))}
 
+                    {/* Straight to the card rather than to the page it
+                        sits on. Somebody who pressed this was promised
+                        stamps, and a directory listing with the card
+                        somewhere down it is an extra scroll between
+                        them and the thing they asked for. */}
                     {card && (
                         <Action
-                            href={onward(businessPath(business))}
+                            href={onward(`/join/${card.id}`)}
                             icon={FiGift}
                             label="Collect stamps with us"
                             note={cardLine(card.stamps_required, card.reward)}
