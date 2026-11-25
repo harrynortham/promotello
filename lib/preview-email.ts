@@ -503,10 +503,15 @@ export function outreachDm({
         return [
             who,
             line,
+            // The bio link, not the directory. This is a message sent
+            // to a business on Instagram, where the one link they are
+            // allowed is a problem they already have and have already
+            // tried to solve. A directory page is a thing we want; a
+            // tidier bio link is a thing they want.
             isBuilt(preview)
-                ? `I've built ${name} a page for our ${town} directory, with an example offer and loyalty card on it. Nobody can see it but you.`
-                : `I've built a free preview page for ${name} in our ${town} directory, with an example offer and loyalty card.`,
-            "Want me to send the link?",
+                ? `I've made ${name} a free link for your bio — your offers, a stamp card and your hours on one page — and a listing in our ${town} directory. Nobody can see it but you.`
+                : `I've made ${name} a free link for your bio — your offers, a stamp card and your hours on one page — and a listing in our ${town} directory.`,
+            "Want me to send it?",
         ]
             .filter(Boolean)
             .join(" ");
@@ -529,14 +534,19 @@ export function outreachDm({
         ...(line ? ["", line] : []),
         "",
         isBuilt(preview)
-            ? `I've built ${name} a page on Promotello. Take a look:`
-            : `I've built a preview of ${name} on Promotello. Take a look:`,
+            ? `I've made ${name} a free link for your Instagram bio. Take a look:`
+            : `I've made ${name} a free link for your Instagram bio. Take a look:`,
         "",
         url,
         "",
-        "A QR poster goes in your window. Customers scan it, claim your offer and show it when they pay. A loyalty card brings them back.",
+        // What goes on it, in the order a business cares about: the
+        // thing they can give away today, the thing that brings people
+        // back, then the everyday details they are asked for daily.
+        // Kept to one line each. A DM that scrolls is a DM that gets
+        // read later, which means never.
+        "Your offers, a stamp card and your hours on one link, arranged how you like. It tells you what people tapped.",
         "",
-        `Claim it and you're listed in the ${town} directory, where local people can find you.`,
+        `Claim it and you're in the ${town} directory too, with a QR poster for your window.`,
         "",
         founding,
         "",
