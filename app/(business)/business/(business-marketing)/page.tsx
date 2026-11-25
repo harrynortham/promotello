@@ -46,16 +46,21 @@ import { Button } from "@/components/ui/button";
 import { qrSvg } from "@/lib/qr";
 
 export const metadata: Metadata = {
-    title: { absolute: "Promotello for Business | Turn First-Time Visitors into Regulars" },
+    title: { absolute: "Promotello for Business | One Link, and Everyone Who Came Through It" },
     description:
-        "A local directory that sends you customers, plus the offers, QR posters and stamp cards that turn them into regulars. Free to start, 15 minutes to set up.",
+        "One link for your Instagram bio with your offers, stamp card and hours on it, and the same page behind the QR code in your window. See which of them brought people in. Free to start.",
 };
 
+// Four doors, in the order a customer meets them. The titles stay
+// outcomes -- a business does not want a bio link, it wants the people
+// who follow it to come in -- and the bodies name the thing that does
+// it. The directory is a line inside the first, not a step of its own:
+// a high street business has been pitched three of them this year.
 const loop = [
-    { icon: FiGrid, title: "Get noticed", body: "A QR poster in your window and a page in the Promotello directory." },
-    { icon: FiGift, title: "Bring them in", body: "An offer worth trying, shared everywhere and claimed on their phone in seconds." },
-    { icon: FiAward, title: "Bring them back", body: "A loyalty card on their phone, and automatic reasons to return." },
-    { icon: FiBarChart2, title: "See it working", body: "Visits, followers and scans every month, compared with the last." },
+    { icon: FiGrid, title: "Get noticed", body: "One link in your Instagram bio with everything on it, the same page behind a QR code in your window, and a listing in the local directory." },
+    { icon: FiGift, title: "Bring them in", body: "An offer worth trying, claimed on their phone in seconds and shown when they pay." },
+    { icon: FiAward, title: "Bring them back", body: "A stamp card on their phone, and reasons to return that send themselves." },
+    { icon: FiBarChart2, title: "See it working", body: "Taps, scans, claims and who came back — every month, against the last." },
 ];
 
 // Examples across Promotello's categories, so no one thinks it's only for cafés.
@@ -89,7 +94,7 @@ const faqs = [
     },
     {
         question: "What does it cost?",
-        answer: `Free gets you found: a page in the directory, one live offer and a QR poster. Pro is for bringing people back — unlimited offers, a stamp card, posters for every spot and an email to your followers whenever you post an offer. Growth adds marketing that runs without you. Paid plans start with a ${freeFor(TRIAL_DAYS)} free trial — ${freeFor(FOUNDING_TRIAL_DAYS)} for the first ${FOUNDING_MEMBER_LIMIT} on Pro — and you can cancel any time.`,
+        answer: `Free gets you found: your bio link and the page behind it, one live offer, a QR poster for your window and a listing in the directory. Pro is for bringing people back — unlimited offers, a stamp card, posters for every spot and an email to your followers whenever you post an offer. Growth adds marketing that runs without you. Paid plans start with a ${freeFor(TRIAL_DAYS)} free trial — ${freeFor(FOUNDING_TRIAL_DAYS)} for the first ${FOUNDING_MEMBER_LIMIT} on Pro — and you can cancel any time.`,
     },
 ];
 
@@ -105,15 +110,25 @@ export default async function BusinessPage() {
                 <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 py-16 sm:px-10 sm:py-24 lg:grid-cols-[1.05fr_1fr]">
                     <div>
                         <Eyebrow>For local businesses</Eyebrow>
+                        {/* "Already notice you" rather than "first-time
+                            visitors": it names something the business
+                            owns -- followers, and the people who walk
+                            past -- instead of implying they have no
+                            customers. */}
                         <h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-                            Turn first-time visitors into{" "}
+                            Turn the people who already notice you into{" "}
                             <span className="text-[#FF593F]">regulars.</span>
                         </h1>
                         <p className="mt-6 max-w-xl text-lg leading-8 text-[#17233B]/70">
-                            Your page in a local directory customers already browse, offers they claim on
-                            their phone, and a stamp card that brings them back. It works from day one with
-                            your own customers, and gets better as your street joins. No hardware, no
-                            contract.
+                            One link for your Instagram bio — your offers, your stamp card, your
+                            hours — and the same page behind the QR code in your window. Change it
+                            once and it changes everywhere.
+                        </p>
+                        {/* The sentence nobody else in this market can
+                            write. We own both ends: the tap, and what
+                            they do when they walk in. */}
+                        <p className="mt-4 max-w-xl text-lg font-semibold leading-8">
+                            Linktree counts clicks. Promotello counts who walked in.
                         </p>
 
                         <div className="mt-8">
@@ -215,7 +230,7 @@ export default async function BusinessPage() {
                 tinted
                 eyebrow="Offers"
                 title="Offers people claim in seconds and redeem when they pay."
-                body="Create an offer in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it on your page, in the Promotello directory or through your QR poster, claim it on their phone, and get their own voucher."
+                body="Create an offer in a minute: a free pastry with a coffee, two for one on Mondays, 10% off a first treatment. Customers find it through your bio link, your QR poster or the local directory, claim it on their phone, and get their own voucher."
                 points={[
                     "Customers filter the directory by the kind of offer: freebies, 2 for 1, money off",
                     "You choose the deal, the terms, the end date and how many can be claimed",
