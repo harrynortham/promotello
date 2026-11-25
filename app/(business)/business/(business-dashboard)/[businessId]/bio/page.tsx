@@ -210,12 +210,30 @@ async function BioContent({ params }: PageProps) {
     }
 
     return (
-        <div className="mx-auto max-w-6xl px-6 py-10 sm:px-10">
-            <h1 className="text-2xl font-semibold tracking-tight">Your bio link</h1>
-            <p className="mt-2 leading-7 text-[#17233B]/70">
-                The one address to put in your Instagram bio. What people tap is counted, so you
-                can see what they actually came for.
-            </p>
+        // No container of its own: the dashboard layout already sets
+        // the width and the padding, and wrapping it again made this
+        // page narrower than every other one.
+        <div className="text-[#17233B]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Bio link
+                    </p>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                        One link for your Instagram bio
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                        Instagram gives you one link. This is the one to use: your offers, your
+                        stamp card, your hours, your menu and anything else worth a row, all on a
+                        page you arrange yourself. Change it here and it changes everywhere you
+                        have put the link.
+                    </p>
+                    <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                        Every row counts what people tap, so you can see what they actually came
+                        for — and move it to the top.
+                    </p>
+                </div>
+            </div>
 
             <div className="mt-8">
                 <BioManager

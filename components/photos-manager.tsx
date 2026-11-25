@@ -192,16 +192,27 @@ export function PhotosManager({
 
     return (
         <div className="text-[#17233B]">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <h1 className="text-2xl font-semibold tracking-tight">Photos</h1>
-                {howItWorks}
-            </div>
+            {/* The same header every other page in the dashboard has:
+                the eyebrow, then the headline, then one line saying
+                why. A page that sets its own type scale reads as
+                somebody else's screen. */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#FF593F]">
+                        Photos
+                    </p>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                        Show them the place first
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-[#17233B]/65">
+                        The room, the counter, what you make. These show on your page under your
+                        offers, and they are the reason somebody picks you over the place next
+                        door.
+                    </p>
+                </div>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#17233B]/70">
-                The room, the counter, what you make. These show on your page under
-                your offers, and they are the reason somebody picks you over the
-                place next door.
-            </p>
+                <div className="shrink-0">{howItWorks}</div>
+            </div>
 
             {/* Said here rather than only behind the dialog: most people
                 will not open it, and the order is the part they can get
