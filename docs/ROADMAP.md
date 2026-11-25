@@ -288,7 +288,7 @@ anything.
 | | What | Plan | Work | Already there | Which track it serves |
 | --- | --- | --- | --- | --- | --- |
 | 1 | **Print kit** | Free | Nearly done | A4, A5 and two per sheet are live. Four per sheet and the review poster are on `feat/a-poster-that-asks-for-a-review` | A: every sheet is a scan we can count |
-| 2 | **Offer templates** | Free | Small, 1 to 2 days | `lib/offer-kinds.ts`, and `lib/starter.ts` carrying an offer line into the form | B: a directory of stale offers gives nobody a reason to return |
+| 2 | ~~**Offer templates**~~ **Built** | Free | Already shipped | `lib/offer-templates.ts` has 11, six offered per category, and the new-offer form fills every field from one including the end date and the days | B: a directory of stale offers gives nobody a reason to return |
 | 3 | **Link-in-bio page** | Free | ~~Small, 2 to 3 days~~ **Built** | `/@handle`, and the business arranges it at `/business/<id>/bio`. See [The bio page is theirs](#the-bio-page-is-theirs) | B: their followers arrive on Promotello. Part of the answer to B5 |
 | 4 | **Private feedback option** | Pro | Small, 2 to 3 days | `/review/<business_id>` counts the click and forwards | C. Shown to every customer beside the review link, never in place of it for some |
 | 5 | **Wi-Fi poster** | Free | Small, 2 to 3 days | The poster designer | A. Two codes on one sheet: one code can't both join a network and open a page |
