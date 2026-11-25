@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
 import { FormPageLoading } from "@/components/dashboard-skeletons";
-import { arrangement } from "@/lib/bio-sections";
+import { arrangement, noticeShowing } from "@/lib/bio-sections";
 import { businessHasPro } from "@/lib/billing";
 import { openingLabel, type HoursRow } from "@/lib/business-hours";
 import { absoluteUrl } from "@/lib/site";
@@ -119,29 +119,48 @@ async function BioContent({ params }: PageProps) {
 
     // What each row will show, in the words they would recognise, and
     // where the thing behind it is edited.
-    const rows: Record<string, { note: string; edit?: string; locked?: string }> = {
+    // `empty` is what the page itself would do with this section: a
+    // row with nothing behind it is not drawn out there, so the
+    // preview must not draw it either or it is showing a different
+    // page from the one they are arranging.
+    const noticeNow = noticeShowing(business.bio_notice, business.bio_notice_until);
+
+    const rows: Record<string, { note: string; edit?: string; locked?: string; empty?: boolean }> = {
         notice: {
             note: business.bio_notice?.trim() || "Nothing at the moment",
+            empty: !noticeNow,
         },
         offers: {
             note: offerCount
                 ? `${offerCount} live, newest 3 shown`
                 : "No live offers — it stays hidden until there is one",
             edit: `${dashboard}/offers`,
+            empty: offerCount === 0,
         },
         loyalty: {
             note: card ? `${card.stamps_required} stamps for ${card.reward.toLowerCase()}` : nothing,
             edit: `${dashboard}/loyalty`,
             locked: hasPro ? undefined : "A loyalty card comes with Pro",
+            empty: !card,
         },
         links: {
             note: links?.length ? `${links.length} of your own` : "None yet — add one below",
+            empty: !links?.length,
         },
-        booking: { note: business.booking_url || nothing, edit: `${dashboard}/edit` },
-        menu: { note: business.menu_url || nothing, edit: `${dashboard}/edit` },
+        booking: {
+            note: business.booking_url || nothing,
+            edit: `${dashboard}/edit`,
+            empty: !business.booking_url,
+        },
+        menu: {
+            note: business.menu_url || nothing,
+            edit: `${dashboard}/edit`,
+            empty: !business.menu_url,
+        },
         hours: {
             note: hourRows.length ? `Shows "${openingLabel(hourRows)}"` : nothing,
             edit: `${dashboard}/hours`,
+            empty: hourRows.length === 0,
         },
         find_us: {
             note: location
@@ -150,23 +169,38 @@ async function BioContent({ params }: PageProps) {
                       .join(", ")
                 : nothing,
             edit: `${dashboard}/address`,
+            empty: !location,
         },
-        call: { note: business.phone || nothing, edit: `${dashboard}/edit` },
-        whatsapp: { note: business.whatsapp || "No number yet — add one below" },
-        website: { note: business.website_url || nothing, edit: `${dashboard}/edit` },
+        call: {
+            note: business.phone || nothing,
+            edit: `${dashboard}/edit`,
+            empty: !business.phone,
+        },
+        whatsapp: {
+            note: business.whatsapp || "No number yet — add one below",
+            empty: !business.whatsapp,
+        },
+        website: {
+            note: business.website_url || nothing,
+            edit: `${dashboard}/edit`,
+            empty: !business.website_url,
+        },
         review: {
             note: business.google_review_url || nothing,
             edit: `${dashboard}/qr`,
+            empty: !business.google_review_url,
         },
         photos: {
             note: photoCount ? `${photoCount} photos, first 6 shown` : nothing,
             edit: `${dashboard}/photos`,
+            empty: photoCount === 0,
         },
         socials: {
             note: socialsOf(business).length
                 ? `${socialsOf(business).length} accounts`
                 : nothing,
             edit: `${dashboard}/edit`,
+            empty: socialsOf(business).length === 0,
         },
     };
 
@@ -176,7 +210,7 @@ async function BioContent({ params }: PageProps) {
     }
 
     return (
-        <div className="mx-auto max-w-3xl px-6 py-10 sm:px-10">
+        <div className="mx-auto max-w-6xl px-6 py-10 sm:px-10">
             <h1 className="text-2xl font-semibold tracking-tight">Your bio link</h1>
             <p className="mt-2 leading-7 text-[#17233B]/70">
                 The one address to put in your Instagram bio. What people tap is counted, so you
@@ -186,11 +220,12 @@ async function BioContent({ params }: PageProps) {
             <div className="mt-8">
                 <BioManager
                     businessId={businessId}
+                    businessName={business.name}
                     bioUrl={absoluteUrl(`/@${handle.handle}`)}
                     initialSections={arrangement(sectionRows)}
                     rows={rows}
                     links={links ?? []}
-                    notice={business.bio_notice ?? ""}
+                    notice={noticeNow ?? ""}
                     noticeUntil={business.bio_notice_until ?? ""}
                     whatsapp={business.whatsapp ?? ""}
                     taps={taps}
