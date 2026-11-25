@@ -4,11 +4,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { FiArrowRight } from "react-icons/fi";
 
 import { LoyaltyCard } from "@/components/loyalty-card";
+import { LoyaltyJoin } from "@/components/loyalty-join";
 import { SubmitButton } from "@/components/submit-button";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { storedImage } from "@/lib/images";
 import { absoluteUrl, siteName } from "@/lib/site";
@@ -109,6 +108,14 @@ async function JoinCardContent({ params, searchParams }: PageProps) {
 
     const { programId } = await params;
     const { loyalty: problem } = (await searchParams) ?? {};
+
+    // Why the last attempt did not work, in their words rather than
+    // the database's.
+    const problems: Record<string, string> = {
+        unavailable: "This card isn't taking new members at the moment.",
+        details: "We need your name and an email address to make your card.",
+        signin: "You already have an account with that email. Log in and your card is there.",
+    };
     const found = await findProgram(programId);
 
     if (!found) notFound();
@@ -188,9 +195,9 @@ async function JoinCardContent({ params, searchParams }: PageProps) {
                     />
                 </div>
 
-                {problem === "unavailable" && (
+                {problem && problems[problem] && (
                     <p role="alert" className="mt-5 rounded-lg bg-white px-4 py-3 text-sm text-red-700">
-                        This card isn&apos;t taking new members at the moment.
+                        {problems[problem]}
                     </p>
                 )}
 
@@ -204,26 +211,20 @@ async function JoinCardContent({ params, searchParams }: PageProps) {
                             </SubmitButton>
                         </form>
                     ) : (
-                        <div className="space-y-3">
-                            <Button
-                                render={<Link href={`/signup?next=${afterSignIn}`} />}
-                                nativeButton={false}
-                                className="h-12 w-full bg-[#FF593F] text-base text-white hover:bg-[#FF593F]/90"
-                            >
-                                Get my card
-                                <FiArrowRight aria-hidden="true" />
-                            </Button>
-
-                            <p className="text-center text-sm text-[#17233B]/65">
-                                Already on Promotello?{" "}
-                                <Link
-                                    href={`/login?next=${afterSignIn}`}
-                                    className="font-medium underline underline-offset-4"
-                                >
-                                    Log in
-                                </Link>
-                            </p>
-                        </div>
+                        /* A name and an email, and the card opens. No
+                           account, no password, nothing to download --
+                           which is the whole promise, and asking
+                           somebody arriving from Instagram to sign up
+                           first is where that promise goes. The fields
+                           only appear once they have said yes. */
+                        <LoyaltyJoin
+                            programId={program.id}
+                            businessId={business.id}
+                            loginHref={`/login?next=${afterSignIn}`}
+                            tone="light"
+                            from="join"
+                            startOpen={problem === "details" || problem === "signin"}
+                        />
                     )}
                 </div>
 

@@ -7,11 +7,29 @@ import { FiArrowRight } from "react-icons/fi";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { joinLoyaltyAsGuest } from "./actions";
+import { joinLoyaltyAsGuest } from "@/app/(customer-marketing)/businesses/[slug]/actions";
 
 const action =
     "h-11 w-full bg-[#FF593F] px-6 text-base font-medium text-white transition hover:bg-[#FF593F]/90 " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+
+// The panel this sits on. On a business page it is the dark card; on
+// the card's own page it is the cream one, and white-on-cream is not
+// small print, it is no print.
+const tones = {
+    dark: {
+        box: "bg-white/10",
+        label: "text-white/70",
+        small: "text-white/60",
+        link: "text-white",
+    },
+    light: {
+        box: "bg-white",
+        label: "text-[#17233B]/70",
+        small: "text-[#17233B]/65",
+        link: "text-[#17233B]",
+    },
+};
 
 // Joining needs a name and an email, but a business's page is the wrong
 // place to open with a form: someone reading about a barber hasn't decided
@@ -29,13 +47,21 @@ export function LoyaltyJoin({
     // The server sent them back with something to correct, so the fields
     // need to be open and showing it rather than hidden behind the button.
     startOpen = false,
+    tone = "dark",
+    // Which page to come back to if it goes wrong. Not a path: the
+    // action builds both, so nothing a browser sends decides where
+    // somebody lands.
+    from,
 }: {
     programId: string;
     businessId: string;
     loginHref: string;
     startOpen?: boolean;
+    tone?: keyof typeof tones;
+    from?: "join";
 }) {
     const [open, setOpen] = useState(startOpen);
+    const colours = tones[tone];
 
     if (!open) {
         return (
@@ -49,7 +75,7 @@ export function LoyaltyJoin({
                     <FiArrowRight aria-hidden="true" />
                 </button>
 
-                <p className="mt-3 text-center text-xs text-white/60 sm:text-right">
+                <p className={`mt-3 text-center text-xs sm:text-right ${colours.small}`}>
                     Free, and no app to download.
                 </p>
             </div>
@@ -57,12 +83,13 @@ export function LoyaltyJoin({
     }
 
     return (
-        <form action={joinLoyaltyAsGuest} className="w-full shrink-0 rounded-2xl bg-white/10 p-4 sm:w-80">
+        <form action={joinLoyaltyAsGuest} className={`w-full shrink-0 rounded-2xl p-4 sm:w-80 ${colours.box}`}>
             <input type="hidden" name="programId" value={programId} />
             <input type="hidden" name="businessId" value={businessId} />
+            {from && <input type="hidden" name="from" value={from} />}
 
             <div className="space-y-2">
-                <Label htmlFor="loyalty-name" className="text-xs text-white/70">
+                <Label htmlFor="loyalty-name" className={`text-xs ${colours.label}`}>
                     Your name
                 </Label>
                 <Input
@@ -76,7 +103,7 @@ export function LoyaltyJoin({
                     className="bg-white text-[#17233B]"
                 />
 
-                <Label htmlFor="loyalty-email" className="text-xs text-white/70">
+                <Label htmlFor="loyalty-email" className={`text-xs ${colours.label}`}>
                     Email
                 </Label>
                 <Input
@@ -94,9 +121,9 @@ export function LoyaltyJoin({
                 Get my card
             </SubmitButton>
 
-            <p className="mt-3 text-xs text-white/60">
+            <p className={`mt-3 text-xs ${colours.small}`}>
                 No app and no password. Already have an account?{" "}
-                <Link href={loginHref} className="font-medium text-white underline">
+                <Link href={loginHref} className={`font-medium underline ${colours.link}`}>
                     Log in
                 </Link>
                 .

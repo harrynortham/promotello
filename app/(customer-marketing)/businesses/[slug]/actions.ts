@@ -42,8 +42,16 @@ export async function joinLoyaltyAsGuest(formData: FormData) {
     const name = String(formData.get("name") ?? "").trim();
     const guestEmail = String(formData.get("email") ?? "").trim();
 
+    // Two destinations, both built here. The form says which page it is
+    // on and nothing more: a path from a browser deciding where a
+    // redirect lands is the thing safeNextPath exists to refuse, and
+    // there is no reason to invite it for two known pages.
+    const from = String(formData.get("from") ?? "");
+
     const back = (reason: string) =>
-        `/businesses/${businessId}?loyalty=${reason}#loyalty-${programId}`;
+        from === "join"
+            ? `/join/${programId}?loyalty=${reason}`
+            : `/businesses/${businessId}?loyalty=${reason}#loyalty-${programId}`;
 
     if (!name || !guestEmail) {
         redirect(back("details"));
