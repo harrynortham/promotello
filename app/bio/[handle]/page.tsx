@@ -14,7 +14,6 @@ import {
     FiPhone,
 } from "react-icons/fi";
 
-import { ClaimPanel } from "@/components/claim-panel";
 import { SubmitButton } from "@/components/submit-button";
 import { claimPreview } from "@/app/(business)/business/preview/[token]/actions";
 import { PageViewTracker } from "@/components/page-view-tracker";
@@ -384,17 +383,19 @@ async function BioContent({ params, searchParams }: PageProps) {
                     )}
                 </header>
 
-                {unclaimed && (
+                {/* Only on the link we sent them, and only with the
+                    token on it. The ordinary "is this your business?"
+                    panel is on the business page and belongs there: on
+                    a bio page it is a form shown to a customer, about a
+                    page they do not own, saying out loud that nobody
+                    has claimed it. */}
+                {unclaimed && tokenClaims && (
                     <div className="mt-7">
-                        {tokenClaims ? (
-                            <OneTap
-                                token={offeredToken!}
-                                businessName={business.name}
-                                error={claimError ?? null}
-                            />
-                        ) : (
-                            <ClaimPanel businessId={business.id} businessName={business.name} />
-                        )}
+                        <OneTap
+                            token={offeredToken!}
+                            businessName={business.name}
+                            error={claimError ?? null}
+                        />
                     </div>
                 )}
 
