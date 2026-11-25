@@ -55,6 +55,9 @@ type Business = {
     category_id: string | null;
     description: string | null;
     website_url: string | null;
+    menu_url: string | null;
+    booking_url: string | null;
+    phone: string | null;
     contact_email: string | null;
     logo_url: string | null;
     cover_image_url: string | null;
@@ -88,7 +91,28 @@ const businessShape = {
     // (20261231090000_a_business_we_have_no_category_for.sql).
     otherCategory: z.string().max(100, "Keep it under 100 characters."),
     description: optionalText("The description", 5000),
+    // Their address on Promotello, and the one thing on this form that
+    // somebody else might already have taken.
+    handle: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .refine(
+            (value) => !value || /^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])$/.test(value),
+            "3 to 30 characters: letters, numbers and hyphens, starting and ending with a letter or number.",
+        ),
     website: optionalUrl,
+    // The three a bio needs that a website does not answer: somebody
+    // arriving from Instagram wants the menu, a table or the phone.
+    menuUrl: optionalUrl,
+    bookingUrl: optionalUrl,
+    phone: z
+        .string()
+        .trim()
+        .refine(
+            (value) => !value || /^[0-9+()\s-]{7,20}$/.test(value),
+            "Use digits, spaces and brackets, like 0117 496 0123.",
+        ),
     contactEmail: optionalEmail,
     googleReviewUrl: z
         .string()
@@ -166,6 +190,7 @@ export default function EditBusinessForm({
         business: Business;
         location: Location | null;
         hours: HoursRow[];
+        handle: string | null;
     } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
@@ -177,12 +202,17 @@ export default function EditBusinessForm({
         async function loadBusiness() {
             const supabase = createClient();
 
-            const [{ data: businessData, error: businessError }, locationResult, hoursResult] =
+            const [
+                { data: businessData, error: businessError },
+                locationResult,
+                hoursResult,
+                handleResult,
+            ] =
                 await Promise.all([
                     supabase
                         .from("businesses")
                         .select(
-                            "name, slug, category, category_id, description, website_url, contact_email, logo_url, cover_image_url, google_review_url, instagram_url, facebook_url, tiktok_url, x_url, youtube_url, linkedin_url",
+                            "name, slug, category, category_id, description, website_url, menu_url, booking_url, phone, contact_email, logo_url, cover_image_url, google_review_url, instagram_url, facebook_url, tiktok_url, x_url, youtube_url, linkedin_url",
                         )
                         .eq("id", businessId)
                         .single(),
@@ -202,6 +232,13 @@ export default function EditBusinessForm({
                         .select("day_of_week, is_closed, opens_at, closes_at")
                         .eq("business_id", businessId)
                         .order("day_of_week", { ascending: true }),
+
+                    supabase
+                        .from("business_handles")
+                        .select("handle")
+                        .eq("business_id", businessId)
+                        .eq("is_current", true)
+                        .maybeSingle(),
                 ]);
 
             if (!current) return;
@@ -217,7 +254,12 @@ export default function EditBusinessForm({
                 return;
             }
 
-            setLoaded({ business: businessData, location: locationResult.data, hours: (hoursResult.data ?? []) as HoursRow[] });
+            setLoaded({
+                business: businessData,
+                location: locationResult.data,
+                hours: (hoursResult.data ?? []) as HoursRow[],
+                handle: handleResult.data?.handle ?? null,
+            });
             setIsLoading(false);
         }
 
@@ -260,12 +302,15 @@ function BusinessForm({
     business: initialBusiness,
     location,
     hours,
+    handle,
 }: {
     businessId: string;
     cities: CityOption[];
     business: Business;
     location: Location | null;
     hours: HoursRow[];
+    // Their address on Promotello, the one that goes in a bio.
+    handle: string | null;
 }) {
     const router = useRouter();
 
@@ -278,6 +323,7 @@ function BusinessForm({
         register,
         handleSubmit,
         control,
+        setError,
         formState: { errors, isSubmitting: isSaving },
     } = useForm<Values, unknown, Output>({
         resolver: location ? zodResolver(withLocation(cities)) : zodResolver(withoutLocation),
@@ -289,7 +335,11 @@ function BusinessForm({
             category: business.category_id ?? (business.category ? OTHER_CATEGORY : ""),
             otherCategory: business.category_id ? "" : (business.category ?? ""),
             description: business.description ?? "",
+            handle: handle ?? "",
             website: business.website_url ?? "",
+            menuUrl: business.menu_url ?? "",
+            bookingUrl: business.booking_url ?? "",
+            phone: business.phone ?? "",
             contactEmail: business.contact_email ?? "",
             googleReviewUrl: business.google_review_url ?? "",
             // Shown as the handle, which is what they typed and what
@@ -355,6 +405,10 @@ function BusinessForm({
             "category",
             "description",
             "website",
+            "handle",
+            "menuUrl",
+            "bookingUrl",
+            "phone",
             "contactEmail",
             "googleReviewUrl",
             ...SOCIAL_NETWORKS.map((network) => network.key),
@@ -384,6 +438,9 @@ function BusinessForm({
                     : { category_id: values.category }),
                 description: values.description || null,
                 website_url: values.website || null,
+                menu_url: values.menuUrl || null,
+                booking_url: values.bookingUrl || null,
+                phone: values.phone || null,
                 contact_email: values.contactEmail || null,
                 google_review_url: values.googleReviewUrl || null,
                 // Stored as the full url, whichever way it was typed.
@@ -403,6 +460,27 @@ function BusinessForm({
         if (businessError) {
             setErrorMessage(businessError.message);
             return;
+        }
+
+        // Last, and separately: it is the one field that can fail
+        // because of somebody else, and a taken handle must not take
+        // the rest of the save down with it. The old handle keeps
+        // working either way (20270313090000).
+        if (values.handle && values.handle !== handle) {
+            const { error: handleError } = await supabase.rpc("set_business_handle", {
+                requested_business_id: businessId,
+                requested_handle: values.handle,
+            });
+
+            if (handleError) {
+                setError("handle", {
+                    message: /taken|reserved/i.test(handleError.message)
+                        ? handleError.message
+                        : "That link could not be changed. Try another.",
+                });
+                setErrorMessage("Everything else was saved.");
+                return;
+            }
         }
 
         if (location) {
@@ -646,6 +724,48 @@ function BusinessForm({
                                     />
                                 </div>
 
+                                {/* The one link a business can put in
+                                    an Instagram bio, where only one is
+                                    allowed. Shown before the website,
+                                    because this is the one we are
+                                    asking them to use. */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="handle">Your link</Label>
+
+                                    <div className="flex items-stretch">
+                                        <span className="inline-flex items-center rounded-l-lg border border-r-0 border-input bg-muted/40 px-3 text-sm text-[#17233B]/70">
+                                            promotello.com/@
+                                        </span>
+                                        <Input
+                                            id="handle"
+                                            className="rounded-l-none"
+                                            autoCapitalize="none"
+                                            spellCheck={false}
+                                            placeholder="yourshop"
+                                            {...register("handle")}
+                                            {...invalidProps("handle-error", errors.handle)}
+                                        />
+                                    </div>
+                                    <FieldError id="handle-error" message={errors.handle?.message} />
+
+                                    <p className="text-xs leading-5 text-[#17233B]/70">
+                                        Put it in your Instagram bio: your offers, your card, the
+                                        menu and the way to you, on one page.{" "}
+                                        {handle && (
+                                            <a
+                                                href={`/@${handle}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="underline underline-offset-4 hover:text-[#FF593F]"
+                                            >
+                                                See yours
+                                            </a>
+                                        )}
+                                        {handle ? " " : ""}
+                                        Change it whenever you like — the old one keeps working.
+                                    </p>
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="website">Website</Label>
 
@@ -657,6 +777,52 @@ function BusinessForm({
                                         {...invalidProps("website-error", errors.website)}
                                     />
                                     <FieldError id="website-error" message={errors.website?.message} />
+                                </div>
+
+                                {/* On the link-in-bio page these are
+                                    buttons. Empty simply draws no
+                                    button, so nothing has to be filled
+                                    in for the page to work. */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="menuUrl">Menu link</Label>
+
+                                    <Input
+                                        id="menuUrl"
+                                        type="url"
+                                        placeholder="https://example.com/menu"
+                                        {...register("menuUrl")}
+                                        {...invalidProps("menuUrl-error", errors.menuUrl)}
+                                    />
+                                    <FieldError id="menuUrl-error" message={errors.menuUrl?.message} />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bookingUrl">Booking link</Label>
+
+                                    <Input
+                                        id="bookingUrl"
+                                        type="url"
+                                        placeholder="https://example.com/book"
+                                        {...register("bookingUrl")}
+                                        {...invalidProps("bookingUrl-error", errors.bookingUrl)}
+                                    />
+                                    <FieldError id="bookingUrl-error" message={errors.bookingUrl?.message} />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">Phone number</Label>
+
+                                    <Input
+                                        id="phone"
+                                        type="tel"
+                                        placeholder="0117 496 0123"
+                                        {...register("phone")}
+                                        {...invalidProps("phone-error", errors.phone)}
+                                    />
+                                    <FieldError id="phone-error" message={errors.phone?.message} />
+                                    <p className="text-xs leading-5 text-[#17233B]/70">
+                                        A Call button on your link-in-bio page. Never put in an email.
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">

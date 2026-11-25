@@ -9,9 +9,14 @@ import { createClient } from "@/utils/supabase/client";
 export function PageViewTracker({
     businessId,
     offerId,
+    source: given,
 }: {
     businessId: string;
     offerId?: string;
+    // Where the visit came from, when the page knows and the address
+    // does not. The link-in-bio page is served by a rewrite, so it is
+    // still at /@handle and has no ?ref to read.
+    source?: "bio";
 }) {
     const recorded = useRef(false);
 
@@ -19,9 +24,10 @@ export function PageViewTracker({
         if (recorded.current) return;
         recorded.current = true;
 
-        // ?ref=qr from poster scans, ?ref=share from shared links.
+        // ?ref=qr from poster scans, ?ref=share from shared links,
+        // ?ref=bio from a business's own link-in-bio page.
         const ref = new URLSearchParams(window.location.search).get("ref");
-        const source = ref === "qr" || ref === "share" ? ref : "web";
+        const source = given ?? (ref === "qr" || ref === "share" || ref === "bio" ? ref : "web");
 
         // Supabase queries only send once awaited, so .then() is needed.
         createClient()
@@ -33,7 +39,7 @@ export function PageViewTracker({
             .then(({ error }) => {
                 if (error) console.error("Page view: failed to record", error);
             });
-    }, [businessId, offerId]);
+    }, [businessId, offerId, given]);
 
     return null;
 }
