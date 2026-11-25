@@ -11,7 +11,11 @@ import {
     FiGift,
     FiGlobe,
     FiMapPin,
+    FiClock,
+    FiLink,
+    FiMessageCircle,
     FiPhone,
+    FiStar,
     FiTag,
 } from "react-icons/fi";
 
@@ -19,6 +23,8 @@ import { SubmitButton } from "@/components/submit-button";
 import { claimPreview } from "@/app/(business)/business/preview/[token]/actions";
 import { ExampleBadge } from "@/components/example-badge";
 import { PageViewTracker } from "@/components/page-view-tracker";
+import { BioPhotos } from "@/components/bio-photos";
+import { BioTap } from "@/components/bio-tap";
 import { SocialLinks } from "@/components/social-links";
 import { addressParts, directionsUrl } from "@/lib/address";
 import { storedImage } from "@/lib/images";
@@ -28,6 +34,8 @@ import { absoluteUrl, siteName, truncate } from "@/lib/site";
 import { previewLink } from "@/lib/previews";
 import { businessPath, offerPath } from "@/lib/slugs";
 import { socialsOf } from "@/lib/social-links";
+import { arrangement, noticeShowing, waUrl, type BioKind } from "@/lib/bio-sections";
+import { openingLabel, type HoursRow } from "@/lib/business-hours";
 import { createClient } from "@/utils/supabase/server";
 
 // The page a business puts in its Instagram bio.
@@ -70,6 +78,10 @@ type BioBusiness = {
     menu_url: string | null;
     booking_url: string | null;
     phone: string | null;
+    whatsapp: string | null;
+    bio_notice: string | null;
+    bio_notice_until: string | null;
+    google_review_url: string | null;
     instagram_url: string | null;
     facebook_url: string | null;
     x_url: string | null;
@@ -106,6 +118,7 @@ async function findByHandle(handle: string) {
             `
                 id, slug, name, approval_status, description, logo_url, cover_image_url, category,
                 website_url, menu_url, booking_url, phone,
+                whatsapp, bio_notice, bio_notice_until, google_review_url,
                 instagram_url, facebook_url, x_url, youtube_url, linkedin_url, tiktok_url,
                 business_locations (
                     address_line_1, address_line_2, city, region, postal_code, country_code
@@ -159,6 +172,221 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // written to by name and has already been asked -- the form beside this
 // one is for a stranger who found the page, and asking somebody twice
 // is how you lose them on a phone.
+type BioOffer = { id: string; slug: string; title: string; discount: string };
+type BioCard = { id: string; stamps_required: number; reward: string };
+type BioLink = { id: string; label: string; url: string };
+type BioPhoto = { id: string; storage_path: string; caption: string | null };
+
+// The business plus the two lists that live in their own tables. Block
+// takes this rather than reaching for them itself, so it can stay a
+// plain switch over kinds.
+type BioPage = BioBusiness & { hours: HoursRow[]; photos: BioPhoto[] };
+
+// One kind of block. Everything optional, and everything able to render
+// nothing: a business can switch a section on and have nothing to put
+// in it yet, and that must be a quiet absence rather than an empty
+// heading or a row that goes nowhere.
+function Block({
+    kind,
+    business,
+    offers,
+    card,
+    links,
+    directions,
+    addressLine,
+    notice,
+    onward,
+}: {
+    kind: BioKind;
+    business: BioPage;
+    offers: BioOffer[];
+    card: BioCard | null;
+    links: BioLink[];
+    directions: string | null;
+    addressLine: string;
+    notice: string | null;
+    onward: (path: string) => string;
+}) {
+    switch (kind) {
+        case "notice":
+            return notice ? (
+                <p className="rounded-2xl border border-[#FF593F]/25 bg-[#FF593F]/[0.06] px-5 py-3 text-center text-sm font-medium leading-6">
+                    {notice}
+                </p>
+            ) : null;
+
+        case "offers":
+            return (
+                <>
+                    {offers.map((offer, index) => (
+                        <Action
+                            key={offer.id}
+                            href={onward(offerPath(offer))}
+                            icon={FiGift}
+                            label={offer.discount}
+                            note={offer.title}
+                            // The first offer is the loudest thing on
+                            // the page: it is the only one somebody can
+                            // take away with them today.
+                            lead={index === 0}
+                            businessId={business.id}
+                            tap="offers"
+                        />
+                    ))}
+                </>
+            );
+
+        case "loyalty":
+            // Straight to the card rather than to the page it sits on.
+            // Somebody who pressed this was promised stamps.
+            return card ? (
+                <Action
+                    href={onward(`/join/${card.id}`)}
+                    icon={FiGift}
+                    label="Collect stamps with us"
+                    note={cardLine(card.stamps_required, card.reward)}
+                    lead={offers.length === 0}
+                    businessId={business.id}
+                    tap="loyalty"
+                />
+            ) : null;
+
+        case "links":
+            return (
+                <>
+                    {links.map((link) => (
+                        <Action
+                            key={link.id}
+                            href={link.url}
+                            icon={FiLink}
+                            label={link.label}
+                            external
+                            businessId={business.id}
+                            tap="links"
+                            linkId={link.id}
+                        />
+                    ))}
+                </>
+            );
+
+        case "booking":
+            return business.booking_url ? (
+                <Action
+                    href={business.booking_url}
+                    icon={FiCalendar}
+                    label="Book with us"
+                    external
+                    businessId={business.id}
+                    tap="booking"
+                />
+            ) : null;
+
+        case "menu":
+            return business.menu_url ? (
+                <Action
+                    href={business.menu_url}
+                    icon={FiBookOpen}
+                    label="See the menu"
+                    external
+                    businessId={business.id}
+                    tap="menu"
+                />
+            ) : null;
+
+        case "hours":
+            // Open or shut right now, which is the thing most people
+            // are actually checking.
+            return business.hours ? (
+                <Action
+                    href={onward(`${businessPath(business)}#hours`)}
+                    icon={FiClock}
+                    label={openingLabel(business.hours)}
+                    note="See all our hours"
+                    businessId={business.id}
+                    tap="hours"
+                />
+            ) : null;
+
+        case "find_us":
+            return directions ? (
+                <Action
+                    href={directions}
+                    icon={FiMapPin}
+                    label="Find us"
+                    note={addressLine}
+                    external
+                    businessId={business.id}
+                    tap="find_us"
+                />
+            ) : null;
+
+        case "call":
+            return business.phone ? (
+                <Action
+                    href={`tel:${business.phone.replace(/\s+/g, "")}`}
+                    icon={FiPhone}
+                    label="Call us"
+                    note={business.phone}
+                    external
+                    businessId={business.id}
+                    tap="call"
+                />
+            ) : null;
+
+        case "whatsapp": {
+            const wa = business.whatsapp ? waUrl(business.whatsapp) : null;
+
+            return wa ? (
+                <Action
+                    href={wa}
+                    icon={FiMessageCircle}
+                    label="Message us on WhatsApp"
+                    external
+                    businessId={business.id}
+                    tap="whatsapp"
+                />
+            ) : null;
+        }
+
+        case "website":
+            return business.website_url ? (
+                <Action
+                    href={business.website_url}
+                    icon={FiGlobe}
+                    label="Our website"
+                    external
+                    businessId={business.id}
+                    tap="website"
+                />
+            ) : null;
+
+        case "review":
+            return business.google_review_url ? (
+                <Action
+                    href={business.google_review_url}
+                    icon={FiStar}
+                    label="Leave us a review"
+                    note="It takes a minute and it helps a lot"
+                    external
+                    businessId={business.id}
+                    tap="review"
+                />
+            ) : null;
+
+        case "photos":
+            return business.photos && business.photos.length > 0 ? (
+                <BioPhotos photos={business.photos} businessName={business.name} />
+            ) : null;
+
+        case "socials":
+            return socialsOf(business).length > 0 ? (
+                <div className="flex justify-center pt-1">
+                    <SocialLinks business={business} businessName={business.name} />
+                </div>
+            ) : null;
+    }
+}
+
 // What we drew up for them, marked as what it is. Never shown without
 // the token: an example offer on a page for a real café is something
 // somebody can walk in and ask for.
@@ -269,6 +497,9 @@ function Action({
     note,
     external = false,
     lead = false,
+    businessId,
+    tap,
+    linkId,
 }: {
     href: string;
     icon: typeof FiGift;
@@ -276,6 +507,11 @@ function Action({
     note?: string | null;
     external?: boolean;
     lead?: boolean;
+    // Given on a bio row, left off everywhere else: the same component
+    // draws the rows on the claim panel, and those are not taps.
+    businessId?: string;
+    tap?: string;
+    linkId?: string;
 }) {
     const className = `flex items-center gap-3 rounded-2xl border px-5 py-4 transition ${
         lead
@@ -298,18 +534,22 @@ function Action({
         </>
     );
 
-    if (external) {
-        return (
-            <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
-                {inside}
-            </a>
-        );
-    }
-
-    return (
+    const row = external ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+            {inside}
+        </a>
+    ) : (
         <Link href={href} className={className}>
             {inside}
         </Link>
+    );
+
+    if (!tap || !businessId) return row;
+
+    return (
+        <BioTap businessId={businessId} kind={tap} linkId={linkId}>
+            {row}
+        </BioTap>
     );
 }
 
@@ -356,7 +596,14 @@ async function BioContent({ params, searchParams }: PageProps) {
     const supabase = await createClient();
     const today = new Date().toISOString().slice(0, 10);
 
-    const [{ data: offers }, { data: cards }] = await Promise.all([
+    const [
+        { data: offers },
+        { data: cards },
+        { data: sectionRows },
+        { data: links },
+        { data: hours },
+        { data: photos },
+    ] = await Promise.all([
         supabase
             .from("offers")
             .select("id, slug, title, discount")
@@ -373,7 +620,34 @@ async function BioContent({ params, searchParams }: PageProps) {
             .eq("is_active", true)
             .is("closed_at", null)
             .limit(1),
+        // How they have arranged it. No rows at all is the ordinary
+        // case and means the default order, not an empty page.
+        supabase
+            .from("bio_sections")
+            .select("kind, position, enabled")
+            .eq("business_id", business.id)
+            .order("position"),
+        supabase
+            .from("bio_links")
+            .select("id, label, url")
+            .eq("business_id", business.id)
+            .eq("enabled", true)
+            .order("position"),
+        supabase
+            .from("business_hours")
+            .select("day_of_week, is_closed, opens_at, closes_at")
+            .eq("business_id", business.id),
+        supabase
+            .from("business_photos")
+            .select("id, storage_path, caption")
+            .eq("business_id", business.id)
+            .is("plan_paused_at", null)
+            .order("sort_order")
+            .limit(6),
     ]);
+
+    const sections = arrangement(sectionRows);
+    const notice = noticeShowing(business.bio_notice, business.bio_notice_until);
 
     const location = business.business_locations?.[0] ?? null;
     const lines = addressParts(location);
@@ -382,6 +656,8 @@ async function BioContent({ params, searchParams }: PageProps) {
         .filter((part, index, parts) => part && parts.indexOf(part) === index)
         .join(", ");
     const card = cards?.[0] ?? null;
+    // Shaped once here so Block can stay a plain switch over kinds.
+    const page = { ...business, hours: hours ?? [], photos: photos ?? [] };
 
     // A page nobody has claimed, which is the one we send a business to
     // from an Instagram message. Everybody else arrives here from a bio
@@ -480,73 +756,28 @@ async function BioContent({ params, searchParams }: PageProps) {
                     </div>
                 )}
 
+                {/* Their arrangement, or the default when they have
+                    never touched it. Every block is optional and every
+                    one knows how to render nothing, so a page with one
+                    offer on it and nothing else is still a page. */}
                 <div className="mt-7 space-y-3">
-                    {/* What's on, first and loudest. It is the only thing
-                        here somebody can take away with them today. */}
-                    {(offers ?? []).map((offer, index) => (
-                        <Action
-                            key={offer.id}
-                            href={onward(offerPath(offer))}
-                            icon={FiGift}
-                            label={offer.discount}
-                            note={offer.title}
-                            lead={index === 0}
-                        />
-                    ))}
-
-                    {/* Straight to the card rather than to the page it
-                        sits on. Somebody who pressed this was promised
-                        stamps, and a directory listing with the card
-                        somewhere down it is an extra scroll between
-                        them and the thing they asked for. */}
-                    {card && (
-                        <Action
-                            href={onward(`/join/${card.id}`)}
-                            icon={FiGift}
-                            label="Collect stamps with us"
-                            note={cardLine(card.stamps_required, card.reward)}
-                            lead={(offers ?? []).length === 0}
-                        />
-                    )}
-
-                    {business.booking_url && (
-                        <Action href={business.booking_url} icon={FiCalendar} label="Book with us" external />
-                    )}
-
-                    {business.menu_url && (
-                        <Action href={business.menu_url} icon={FiBookOpen} label="See the menu" external />
-                    )}
-
-                    {directions && (
-                        <Action
-                            href={directions}
-                            icon={FiMapPin}
-                            label="Find us"
-                            note={lines.join(", ")}
-                            external
-                        />
-                    )}
-
-                    {business.phone && (
-                        <Action
-                            href={`tel:${business.phone.replace(/\s+/g, "")}`}
-                            icon={FiPhone}
-                            label="Call us"
-                            note={business.phone}
-                            external
-                        />
-                    )}
-
-                    {business.website_url && (
-                        <Action href={business.website_url} icon={FiGlobe} label="Our website" external />
-                    )}
+                    {sections
+                        .filter((section) => section.enabled)
+                        .map((section) => (
+                            <Block
+                                key={section.kind}
+                                kind={section.kind}
+                                business={page}
+                                offers={offers ?? []}
+                                card={card}
+                                links={links ?? []}
+                                directions={directions}
+                                addressLine={lines.join(", ")}
+                                notice={notice}
+                                onward={onward}
+                            />
+                        ))}
                 </div>
-
-                {socialsOf(business).length > 0 && (
-                    <div className="mt-7 flex justify-center">
-                        <SocialLinks business={business} businessName={business.name} />
-                    </div>
-                )}
 
                 {/* Ours, at the bottom, the size of a credit. Anything
                     louder and this stops being their page. */}
