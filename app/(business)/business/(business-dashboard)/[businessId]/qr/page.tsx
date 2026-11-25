@@ -19,6 +19,7 @@ import { DeleteQrCode } from "./delete-qr-code";
 import { PointQrCode } from "./point-qr-code";
 import { QrHowItWorks } from "./how-it-works";
 import { PosterDesigner } from "./poster-designer";
+import { WifiForm } from "./wifi-form";
 
 type PageProps = {
     params: Promise<{ businessId: string }>;
@@ -175,6 +176,13 @@ async function QrContent({ params, searchParams }: PageProps) {
     const codeIds = allCodes.map((code) => code.id);
 
     // Recent scans for the 7 and 30 day counts, plus an all-time count per code.
+    // Team-only, so this is the business reading its own row.
+    const { data: wifi } = await supabase
+        .from("business_wifi")
+        .select("ssid, password, security, hidden")
+        .eq("business_id", businessId)
+        .maybeSingle();
+
     const [{ data: recentScans }, totals] = await Promise.all([
         codeIds.length
             ? supabase.from("qr_scans").select("qr_code_id, scanned_at").in("qr_code_id", codeIds).gte("scanned_at", since30)
@@ -350,6 +358,7 @@ async function QrContent({ params, searchParams }: PageProps) {
                         </CardHeader>
                         <CardContent>
                             <PosterDesigner
+                                hasWifi={Boolean(wifi?.ssid)}
                                 businessId={businessId}
                                 businessName={business?.name ?? "Your business"}
                                 place={location?.region || location?.city}
@@ -366,6 +375,14 @@ async function QrContent({ params, searchParams }: PageProps) {
                         </CardContent>
                     </Card>
                 )}
+
+                <WifiForm
+                    businessId={businessId}
+                    ssid={wifi?.ssid ?? ""}
+                    security={wifi?.security ?? "WPA"}
+                    password={wifi?.password ?? ""}
+                    hidden={Boolean(wifi?.hidden)}
+                />
 
                 <section className="mt-10">
                     {qrCodes.length === 0 ? (

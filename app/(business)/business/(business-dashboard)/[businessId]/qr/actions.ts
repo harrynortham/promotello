@@ -1,4 +1,5 @@
 "use server";
+import { wifiProblem, type WifiSecurity } from "@/lib/wifi";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -179,4 +180,47 @@ export async function restoreQrCode(formData: FormData) {
 
     revalidatePath(page);
     redirect(`${page}?restored=1`);
+}
+
+// The guest network, for the two-code poster.
+//
+// Stored on its own row rather than on the business, because RLS is
+// row-level: a password on businesses is a password anybody reading a
+// business row can read. Written through RLS as the person doing it,
+// which is already gated on being an admin here.
+export async function saveWifi(businessId: string, formData: FormData) {
+    const ssid = String(formData.get("ssid") ?? "").trim();
+    const security = String(formData.get("security") ?? "WPA") as WifiSecurity;
+    const password = String(formData.get("password") ?? "").trim();
+    const hidden = formData.get("hidden") === "on";
+
+    // Clearing it is saying "we have no guest Wi-Fi", which is a real
+    // answer and not an error.
+    if (!ssid && !password) {
+        const supabase = await createClient();
+        await supabase.from("business_wifi").delete().eq("business_id", businessId);
+        revalidatePath(`/business/${businessId}/qr`);
+        return { error: undefined };
+    }
+
+    const problem = wifiProblem({ ssid, password, security });
+    if (problem) return { error: problem };
+
+    const supabase = await createClient();
+
+    const { error } = await supabase.from("business_wifi").upsert(
+        {
+            business_id: businessId,
+            ssid,
+            password: security === "nopass" ? null : password,
+            security,
+            hidden,
+        },
+        { onConflict: "business_id" },
+    );
+
+    if (error) return { error: error.message };
+
+    revalidatePath(`/business/${businessId}/qr`);
+    return { error: undefined };
 }

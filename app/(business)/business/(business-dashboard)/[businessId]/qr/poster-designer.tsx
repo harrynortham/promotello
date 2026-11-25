@@ -47,6 +47,7 @@ export function PosterDesigner({
     previewLink,
     waitingForApproval = false,
     startOn,
+    hasWifi = false,
 }: {
     businessId: string;
     businessName: string;
@@ -83,6 +84,7 @@ export function PosterDesigner({
     // Their Google reviews link, if they have added one. Without it
     // there is nothing for a review poster to open.
     reviewUrl?: string | null;
+    hasWifi?: boolean;
     previewSvg: string;
     previewLink: string;
 }) {
@@ -178,7 +180,12 @@ export function PosterDesigner({
                 (option) =>
                     !("forFollow" in option && option.forFollow) &&
                     !("forReview" in option && option.forReview) &&
-                    (!("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty)),
+                    (!("forLoyalty" in option && option.forLoyalty) || Boolean(chosenLoyalty)) &&
+                    // Same rule as the card: a layout that cannot draw
+                    // what it promises is not offered. Picking "Wi-Fi
+                    // and offers" with no network saved would print an
+                    // ordinary poster and look like a bug.
+                    (!("forWifi" in option && option.forWifi) || hasWifi),
             );
 
     const width = PREVIEW_WIDTH;

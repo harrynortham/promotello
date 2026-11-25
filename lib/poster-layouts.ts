@@ -51,6 +51,12 @@ export const POSTER_LAYOUTS = [
         forReview: true,
     },
     {
+        value: "wifi",
+        label: "Wi-Fi and offers",
+        hint: "Two codes: one joins your Wi-Fi, one opens your offers.",
+        forWifi: true,
+    },
+    {
         value: "stamp_card",
         label: "Stamp card",
         hint: "The card itself, so people see what they are collecting.",
@@ -81,6 +87,13 @@ export function isLoyaltyLayout(value: string | null | undefined) {
 export const FOLLOW_LAYOUTS = POSTER_LAYOUTS.filter(
     (option) => "forFollow" in option && option.forFollow,
 ).map((option) => option.value) as readonly PosterLayout[];
+
+// A sheet that gives somebody the Wi-Fi earns its place on a wall in
+// a way ours does not: they want the network, and the offers are what
+// is next to it while they wait for the page to load.
+export function isWifiLayout(value: string | null | undefined) {
+    return value === "wifi";
+}
 
 export function isFollowLayout(value: string | null | undefined) {
     return FOLLOW_LAYOUTS.includes(value as PosterLayout);
