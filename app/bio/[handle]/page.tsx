@@ -16,11 +16,14 @@ import {
 
 import { SubmitButton } from "@/components/submit-button";
 import { claimPreview } from "@/app/(business)/business/preview/[token]/actions";
+import { ExampleBadge } from "@/components/example-badge";
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { SocialLinks } from "@/components/social-links";
 import { addressParts, directionsUrl } from "@/lib/address";
 import { storedImage } from "@/lib/images";
 import { cardLine } from "@/lib/loyalty-state";
+import { DEFAULT_STAMPS, readStarterRow } from "@/lib/starter";
 import { absoluteUrl, siteName, truncate } from "@/lib/site";
 import { businessPath, offerPath } from "@/lib/slugs";
 import { socialsOf } from "@/lib/social-links";
@@ -155,6 +158,71 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // written to by name and has already been asked -- the form beside this
 // one is for a stranger who found the page, and asking somebody twice
 // is how you lose them on a phone.
+// What we drew up for them, marked as what it is. Never shown without
+// the token: an example offer on a page for a real café is something
+// somebody can walk in and ask for.
+function Examples({
+    businessName,
+    offer,
+    reward,
+    stamps,
+    logoUrl,
+}: {
+    businessName: string;
+    offer: string | null;
+    reward: string | null;
+    stamps: number;
+    logoUrl: string | null;
+}) {
+    if (!offer && !reward) return null;
+
+    return (
+        <section className="rounded-2xl border border-[#17233B]/10 bg-white p-5">
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#17233B]/55">
+                    What your page could carry
+                </p>
+                <ExampleBadge />
+            </div>
+
+            {offer && (
+                <div className="mt-4 rounded-xl bg-[#FFF8F0] px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FF593F]">
+                        An offer
+                    </p>
+                    <p className="mt-1 font-medium leading-6">{offer}</p>
+                </div>
+            )}
+
+            {reward && (
+                <div className="mt-4">
+                    <LoyaltyCard
+                        businessName={businessName}
+                        logoUrl={logoUrl}
+                        stampsRequired={stamps}
+                        reward={reward}
+                        stamps={0}
+                        narrow
+                        qr={
+                            <div
+                                aria-hidden="true"
+                                className="h-full w-full rounded-lg border-2 border-dashed border-[#17233B]/15"
+                            />
+                        }
+                        scanTitle="Customers show this"
+                        scanHint="Your staff scan it and a stamp goes on."
+                    />
+                </div>
+            )}
+
+            <p className="mt-4 text-sm leading-6 text-[#17233B]/65">
+                Examples, not promises — we wrote them to show you the shape of it. Claim the page
+                and the words are yours.
+            </p>
+        </section>
+    );
+}
+
 function OneTap({
     token,
     businessName,
@@ -331,13 +399,20 @@ async function BioContent({ params, searchParams }: PageProps) {
     // rather than hands anything over.
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    const { data: tokenClaims } =
+    // One call does both: a row back means the token claims this
+    // business, and it is also the offer and card we drew up for them.
+    const { data: exampleRows } =
         unclaimed && offeredToken && uuid.test(offeredToken)
-            ? await supabase.rpc("preview_token_is", {
+            ? await supabase.rpc("preview_examples", {
                 requested_business_id: business.id,
                 candidate: offeredToken,
             })
-            : { data: false };
+            : { data: null };
+
+    const examples = readStarterRow(exampleRows);
+    const tokenClaims = Boolean(
+        exampleRows && (Array.isArray(exampleRows) ? exampleRows.length > 0 : true),
+    );
     const logo = storedImage(business.logo_url);
     const cover = storedImage(business.cover_image_url);
     // Every link out carries where it came from, so the business can be
@@ -390,7 +465,17 @@ async function BioContent({ params, searchParams }: PageProps) {
                     page they do not own, saying out loud that nobody
                     has claimed it. */}
                 {unclaimed && tokenClaims && (
-                    <div className="mt-7">
+                    <div className="mt-7 space-y-5">
+                        {/* The pitch before the ask: a mock-up of their
+                            own page beats any description of one. */}
+                        <Examples
+                            businessName={business.name}
+                            offer={examples.offer}
+                            reward={examples.reward}
+                            stamps={examples.stamps ?? DEFAULT_STAMPS}
+                            logoUrl={business.logo_url}
+                        />
+
                         <OneTap
                             token={offeredToken!}
                             businessName={business.name}
