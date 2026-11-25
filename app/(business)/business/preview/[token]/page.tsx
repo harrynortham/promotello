@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+
+import { ScrollToHash } from "@/components/scroll-to-hash";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -171,6 +173,10 @@ async function PreviewContent({ params, searchParams }: PageProps) {
 
     return (
         <>
+            {/* Inside the boundary on purpose: the sections it looks
+                for do not exist until this content has streamed in. */}
+            <ScrollToHash />
+
             {/* The only state with something to claim, so the only one
                 whose header carries the button. */}
             <PreviewHeader token={token} />
@@ -242,7 +248,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
 
             <section className="border-y border-[#17233B]/10 bg-white">
                 <div className="mx-auto grid max-w-7xl items-start gap-12 px-6 py-14 sm:px-10 lg:grid-cols-3">
-                    <div>
+                    <div id="offer" className="scroll-mt-24">
                         <h2 className="flex items-center gap-2 font-semibold">
                             <FiTag aria-hidden="true" className="text-[#FF593F]" />
                             Your offer
@@ -295,7 +301,7 @@ async function PreviewContent({ params, searchParams }: PageProps) {
                         </div>
                     </div>
 
-                    <div>
+                    <div id="card" className="scroll-mt-24">
                         <h2 className="flex items-center gap-2 font-semibold">
                             <FiGift aria-hidden="true" className="text-[#FF593F]" />
                             Your loyalty card
