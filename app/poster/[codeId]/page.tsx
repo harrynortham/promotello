@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
 import { qrLink, qrSvg } from "@/lib/qr";
+import { wifiPayload, type Wifi } from "@/lib/wifi";
 import { requestOrigin } from "@/lib/request-origin";
 import { createClient } from "@/utils/supabase/server";
 import { QrPoster } from "@/components/qr-poster";
@@ -144,6 +145,23 @@ async function Poster({ params, searchParams }: PageProps) {
     const offer = offers?.[0] ?? null;
     const link = qrLink(origin, qr.code);
     const svg = await qrSvg(link);
+
+    // The network, for the two-code sheet. Read only when that layout
+    // is chosen: the row is team-only and there is no reason to touch
+    // it for a poster that will not print it.
+    const { data: wifi } =
+        qr.poster_layout === "wifi"
+            ? await supabase
+                  .from("business_wifi")
+                  .select("ssid, password, security, hidden")
+                  .eq("business_id", qr.business_id)
+                  .maybeSingle()
+            : { data: null };
+
+    const payload = wifi ? wifiPayload(wifi as Wifi) : null;
+    // A darker code than the page one, because it sits beside it and
+    // two identical squares is the one way somebody scans the wrong one.
+    const wifiSvg = payload ? await qrSvg(payload) : null;
     const dims = size;
     const sheet = sheetSize(size);
     const place = location?.region || location?.city;
@@ -232,6 +250,8 @@ async function Poster({ params, searchParams }: PageProps) {
                         width={dims.width}
                         height={dims.height}
                         fontSize={16 * dims.scale}
+                        wifiMarkup={wifiSvg}
+                        wifiName={wifi?.ssid ?? null}
                         businessName={business?.name ?? ""}
                         place={place}
                         logoUrl={business?.logo_url}

@@ -67,6 +67,12 @@ type PosterProps = {
     // The headline offer, when the poster points at one.
     offer?: { discount: string; description?: string | null } | null;
     qrMarkup: string;
+    // The second code, and the network it joins. Only the Wi-Fi layout
+    // draws them, and it falls back to an ordinary poster without them
+    // — a sheet promising Wi-Fi and showing no code is worse than one
+    // that never mentioned it.
+    wifiMarkup?: string | null;
+    wifiName?: string | null;
     link: string;
     // The business's chosen poster colour, falling back to navy.
     colour?: string | null;
@@ -398,6 +404,8 @@ export function QrPoster(props: PosterProps) {
         logoUrl,
         offer,
         qrMarkup,
+        wifiMarkup,
+        wifiName,
         link,
         colour,
         headerColour,
@@ -412,6 +420,8 @@ export function QrPoster(props: PosterProps) {
         card,
         className = "",
     } = props;
+
+    const wifiReady = layout === "wifi" && Boolean(wifiMarkup && wifiName);
 
     // A code that opens the business page lands on a list of offers, so
     // "claim it" has nothing to point at yet.
@@ -474,6 +484,66 @@ export function QrPoster(props: PosterProps) {
         fontSize: `${fontSize}px`,
         ...(dark ? { backgroundColor: theme.header, color: theme.ink } : {}),
     };
+
+    // Two codes, side by side, with the network one first. Somebody
+    // standing in front of this wants the Wi-Fi; the offers are what
+    // they read while the page loads, which is the only reason this
+    // sheet gets on a wall at all.
+    if (wifiReady) {
+        return (
+            <article className={sheet} style={style}>
+                <header
+                    className="flex items-center gap-[1em] px-[2.5em] py-[1.4em]"
+                    style={{ backgroundColor: theme.header, color: theme.ink }}
+                >
+                    <Logo url={logoUrl} size="3.2em" />
+                    <Name businessName={businessName} place={place} onColour />
+                </header>
+
+                <div className="flex flex-1 flex-col items-center justify-center px-[2.5em] text-center">
+                    <p
+                        className="font-semibold tracking-tight"
+                        style={{ fontSize: "3.4em", lineHeight: 1.05 }}
+                    >
+                        Free Wi-Fi
+                    </p>
+
+                    <div className="mt-[1.2em] grid w-full grid-cols-2 items-start gap-[1.4em]">
+                        <div className="flex flex-col items-center">
+                            <Code markup={wifiMarkup!} size="13em" />
+                            <p className="mt-[0.7em] font-semibold" style={{ fontSize: "1.3em" }}>
+                                Join the Wi-Fi
+                            </p>
+                            {/* The name in print as well as in the code.
+                                A phone that will not scan is the reason
+                                anybody asks at the counter. */}
+                            <p
+                                className="mt-[0.15em] opacity-70"
+                                style={{ fontSize: "1.05em", lineHeight: 1.35 }}
+                            >
+                                {wifiName}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col items-center">
+                            <Code markup={qrMarkup} size="13em" />
+                            <p className="mt-[0.7em] font-semibold" style={{ fontSize: "1.3em" }}>
+                                {offer ? "Claim this offer" : "See what's on"}
+                            </p>
+                            <p
+                                className="mt-[0.15em] opacity-70"
+                                style={{ fontSize: "1.05em", lineHeight: 1.35 }}
+                            >
+                                {offer?.discount ?? "Offers and our loyalty card"}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <Footer link={link} dark={dark} />
+            </article>
+        );
+    }
 
     if (follows) {
         return (
