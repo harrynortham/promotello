@@ -3,7 +3,7 @@ import { neighboursLine, type Neighbours } from "@/lib/neighbours";
 import { absoluteUrl } from "@/lib/site";
 import { businessPath } from "@/lib/slugs";
 import { SIGNED_BY } from "@/lib/email-signature";
-import { previewLink } from "@/lib/previews";
+import { bioClaimLink, previewLink } from "@/lib/previews";
 
 // What a preview looks like wherever it is listed or opened.
 // Who to write to, the email and the Instagram handle all used to be
@@ -28,6 +28,9 @@ export type PreviewRow = {
         closed_at: string | null;
         logo_url: string | null;
         cover_image_url: string | null;
+        // Their address. Every business has one from a trigger, and the
+        // old ones are kept, so the current is the one to write to.
+        business_handles?: { handle: string; is_current: boolean }[] | null;
         // The section of the directory they would be listed in. Named in
         // the email because "a page in the Bristol directory" is a place
         // in general and "listed under Bakeries" is their place.
@@ -43,7 +46,7 @@ export type PreviewRow = {
 };
 
 export const previewColumns =
-    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, slug, listed_at, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, categories ( name ), business_locations ( city, region, area_id, cities ( name ), areas ( name ) ) )";
+    "business_id, token, created_at, view_count, last_viewed_at, claimed_at, businesses ( name, slug, listed_at, approval_status, review_requested_at, closed_at, logo_url, cover_image_url, business_handles ( handle, is_current ), categories ( name ), business_locations ( city, region, area_id, cities ( name ), areas ( name ) ) )";
 
 // Whether the page has been built at its own address yet.
 //
@@ -476,7 +479,15 @@ export function outreachDm({
     variant?: DmVariant;
 }) {
     const name = preview.businesses?.name ?? "your business";
-    const url = absoluteUrl(previewLink(preview.token, preview.businesses?.name));
+    const handle = preview.businesses?.business_handles?.find((row) => row.is_current)?.handle;
+    // Their address rather than ours. The token does the same work on
+    // both -- the bio page checks it before showing the examples and
+    // the one-tap claim -- and a DM carrying promotello.com/@jinzu
+    // reads as their page where /business/preview/jinzu-<token>
+    // reads as the thing people are told not to tap.
+    const url = absoluteUrl(
+        handle ? bioClaimLink(handle, preview.token) : previewLink(preview.token, name),
+    );
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";
 
@@ -533,9 +544,7 @@ export function outreachDm({
         who,
         ...(line ? ["", line] : []),
         "",
-        isBuilt(preview)
-            ? `I've made ${name} a free link for your Instagram bio. Take a look:`
-            : `I've made ${name} a free link for your Instagram bio. Take a look:`,
+        `I've made ${name} a free link for your Instagram bio. Take a look:`,
         "",
         url,
         "",

@@ -80,3 +80,17 @@ export function previewBeingClaimed(next: string) {
 
     return tokenFromPreviewSegment(path.slice("/business/preview/".length));
 }
+
+// The same claim, at their own address.
+//
+// /@theirhandle?c=<token> does everything the preview link does -- the
+// token is what the bio page checks before showing the examples and the
+// one-tap claim -- and reads as their page rather than as ours.
+//
+// Which matters most in a DM. A cold message carrying
+// /business/preview/jinzu-<36-character-token> is the shape of
+// every link people are told not to tap. The same claim at
+// promotello.com/@jinzu leads with their name.
+export function bioClaimLink(handle: string, token: string) {
+    return `/@${handle}?c=${token}`;
+}

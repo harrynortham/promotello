@@ -193,6 +193,8 @@ test("the opener carries no link at all", () => {
 test("the full DM carries the link and the offer", () => {
     const dm = outreachDm(dmArgs);
 
+    // No handle on this fixture, so it falls back to the preview
+    // page. The link a real lead gets is tested below.
     assert.match(dm, /business\/preview\//);
     // The bio link leads now: this goes to a business on Instagram,
     // where the one link they are allowed is a problem they already
@@ -410,4 +412,39 @@ test("the follow-up says it is built and that nobody can find it", () => {
 
     assert.match(chased, /page is built and still waiting for you/);
     assert.match(chased, /nobody can find it until you do/);
+});
+
+// A DM carrying /business/preview/jinzu-<36-character-token> is the
+// shape of every link people are told not to tap. The same claim at
+// promotello.com/@jinzu leads with their name, and the token does the
+// same work on both.
+test("a DM points at their own address when there is one", () => {
+    const withHandle = {
+        ...preview,
+        businesses: {
+            ...preview.businesses,
+            business_handles: [
+                { handle: "oldloaf", is_current: false },
+                { handle: "littleloaf", is_current: true },
+            ],
+        },
+    } as typeof preview;
+
+    const dm = outreachDm({ ...dmArgs, preview: withHandle });
+
+    assert.match(dm, /promotello\.com\/@littleloaf\?c=11111111-2222-3333-4444-555555555555/);
+    assert.ok(!dm.includes("/business/preview/"), dm);
+});
+
+test("a handle they have retired is not the one written to", () => {
+    const retired = {
+        ...preview,
+        businesses: {
+            ...preview.businesses,
+            business_handles: [{ handle: "oldloaf", is_current: false }],
+        },
+    } as typeof preview;
+
+    // Nothing current, so the preview link rather than a dead address.
+    assert.match(outreachDm({ ...dmArgs, preview: retired }), /business\/preview\//);
 });
