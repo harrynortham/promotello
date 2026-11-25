@@ -234,6 +234,16 @@ async function QrContent({ params, searchParams }: PageProps) {
                             loyalty card — and you see how many scans each
                             spot gets.
                         </p>
+                        {/* The sheets have existed for weeks and were
+                            never presented as a set. A business that
+                            knows it is printing a kit prints all of it;
+                            one choosing between A4 and A6 prints one. */}
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#17233B]/65">
+                            Every poster prints as a kit: <strong className="font-semibold">A4</strong>{" "}
+                            for the window, <strong className="font-semibold">A5</strong> for the
+                            counter, and <strong className="font-semibold">four to a sheet</strong>{" "}
+                            for tables. Same code on all of them, so the scans add up together.
+                        </p>
                     </div>
 
                     <div className="shrink-0">

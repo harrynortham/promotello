@@ -12,11 +12,33 @@
 // room full of tables actually needs.
 
 export const POSTER_SIZES = [
-    { value: "a4", label: "A4", width: "210mm", height: "297mm", scale: 1, page: "A4 portrait", copies: 1 },
-    { value: "a5", label: "A5", width: "148mm", height: "210mm", scale: 0.705, page: "A5 portrait", copies: 1 },
+    {
+        value: "a4",
+        label: "A4",
+        // Where it goes. A business choosing between A4 and A6 is
+        // really choosing between a window and a table, and the
+        // millimetres are how we get there rather than the decision.
+        where: "Your window",
+        width: "210mm",
+        height: "297mm",
+        scale: 1,
+        page: "A4 portrait",
+        copies: 1,
+    },
+    {
+        value: "a5",
+        label: "A5",
+        where: "The counter",
+        width: "148mm",
+        height: "210mm",
+        scale: 0.705,
+        page: "A5 portrait",
+        copies: 1,
+    },
     {
         value: "a5x2",
         label: "Two per sheet",
+        where: "A counter and a door",
         width: "148mm",
         height: "210mm",
         scale: 0.705,
@@ -26,6 +48,7 @@ export const POSTER_SIZES = [
     {
         value: "a6x4",
         label: "Four per sheet",
+        where: "Tables, or by the till",
         width: "105mm",
         height: "148mm",
         scale: 0.5,

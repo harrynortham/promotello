@@ -50,8 +50,16 @@ export function PrintToolbar({
                         nativeButton={false}
                         variant={size === option.value ? "default" : "outline"}
                         size="sm"
+                        className="h-auto flex-col items-start gap-0 py-1.5"
                     >
-                        {option.label}
+                        <span className="text-sm leading-5">{option.label}</span>
+                        <span
+                            className={`text-[11px] leading-4 ${
+                                size === option.value ? "text-white/80" : "text-[#17233B]/55"
+                            }`}
+                        >
+                            {option.where}
+                        </span>
                     </Button>
                 ))}
 

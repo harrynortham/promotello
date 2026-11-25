@@ -290,6 +290,17 @@ Everything else — the dashboard, the checklist, the queue, the emails — is
 the same for both, deliberately, so a new feature never has to ask which
 kind of business it is looking at.
 
+### Undoing a claim
+
+A page we wrote is claimed with one button and there was no way back
+from it, which matters because we hold the token for every lead and
+open those links to check them. `unclaim_business_preview()` puts the
+preview back and the business to `pending`. Platform admins only, and
+it leaves two things alone on purpose: the token, so the link already
+sent still works, and the membership row, because whoever built the
+preview owns the business it created and every unclaimed lead page has
+exactly that one member.
+
 ### How one stops
 
 Four ways, and only one of them is permanent.
@@ -436,9 +447,9 @@ from reading the code, not from building anything.
 
 |     | What                           | Plan   | Work                    | What is there already, and what is left                                                                                                                                                                                          |
 | --- | ------------------------------ | ------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Print kit**                  | Free   | Nearly done             | A4, A5 and two per sheet are live. Four per sheet and the review poster are on `feat/a-poster-that-asks-for-a-review`. Left: merge that, then name the set a print kit on the QR page and the features page                     |
+| 1   | **Print kit**                  | Free   | Nearly done             | A4, A5, two per sheet and four per sheet are all live, and the review poster layouts with them. Left: the set has no name — a business sees sizes, not a kit — so the QR page and the features page still sell it one sheet at a time |
 | 2   | ~~**Offer templates**~~ **Built** | Free | Already shipped        | `lib/offer-templates.ts` holds 11, `templatesFor()` offers six by category, and pressing one fills every field the form asks for — including the end date and the days, which are the ones a business forgets                   |
-| 3   | ~~**Link-in-bio page**~~ **Built** | Free | Shipped 25 November 2026 | `/@handle` is the page and `/business/<id>/bio` arranges it: order, what is switched on, their own links, a notice, WhatsApp, opening hours, a photo strip, and taps counted per row. Left: a live preview and their own accent colour. See [The bio page is theirs](docs/ROADMAP.md#the-bio-page-is-theirs) |
+| 3   | ~~**Link-in-bio page**~~ **Built** | Free | Shipped 25 November 2026 | `/@handle` is the page and `/business/<id>/bio` arranges it: order, what is switched on, their own links, a notice, WhatsApp, opening hours, a photo strip, a live preview, and taps counted per row and reported monthly. Left: their own accent colour. See [The bio page is theirs](docs/ROADMAP.md#the-bio-page-is-theirs) |
 | 4   | **Private feedback option**    | Pro    | Small, 2 to 3 days      | `/review/<business_id>` counts the click and forwards to Google. Left: a "tell us directly" choice beside it that emails the owner. Every customer sees both: choosing who gets asked for a review breaks Google's rules         |
 | 5   | **Wi-Fi poster**               | Free   | Small, 2 to 3 days      | The poster designer. Left: a new layout. One code can't both join a network and open a page, so it is two codes on one sheet: Wi-Fi and the offer                                                                                |
 | 6   | **Staff board**                | Pro    | Medium, about a week    | A search found nothing recording which team member scanned a voucher or added a stamp. That comes first, then the board: who brought the most scans and stamps this month                                                        |
