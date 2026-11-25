@@ -34,7 +34,15 @@ import { absoluteUrl, siteName, truncate } from "@/lib/site";
 import { previewLink } from "@/lib/previews";
 import { businessPath, offerPath } from "@/lib/slugs";
 import { socialsOf } from "@/lib/social-links";
-import { arrangement, noticeShowing, waUrl, type BioKind } from "@/lib/bio-sections";
+import {
+    BIO_CORAL,
+    arrangement,
+    bioAccent,
+    inkOn,
+    noticeShowing,
+    waUrl,
+    type BioKind,
+} from "@/lib/bio-sections";
 import { openingLabel, type HoursRow } from "@/lib/business-hours";
 import { createClient } from "@/utils/supabase/server";
 
@@ -81,6 +89,7 @@ type BioBusiness = {
     whatsapp: string | null;
     bio_notice: string | null;
     bio_notice_until: string | null;
+    bio_accent: string | null;
     google_review_url: string | null;
     instagram_url: string | null;
     facebook_url: string | null;
@@ -118,7 +127,7 @@ async function findByHandle(handle: string) {
             `
                 id, slug, name, approval_status, description, logo_url, cover_image_url, category,
                 website_url, menu_url, booking_url, phone,
-                whatsapp, bio_notice, bio_notice_until, google_review_url,
+                whatsapp, bio_notice, bio_notice_until, bio_accent, google_review_url,
                 instagram_url, facebook_url, x_url, youtube_url, linkedin_url, tiktok_url,
                 business_locations (
                     address_line_1, address_line_2, city, region, postal_code, country_code
@@ -195,6 +204,7 @@ function Block({
     directions,
     addressLine,
     notice,
+    accent,
     onward,
 }: {
     kind: BioKind;
@@ -205,12 +215,16 @@ function Block({
     directions: string | null;
     addressLine: string;
     notice: string | null;
+    accent: string;
     onward: (path: string) => string;
 }) {
     switch (kind) {
         case "notice":
             return notice ? (
-                <p className="rounded-2xl border border-[#FF593F]/25 bg-[#FF593F]/[0.06] px-5 py-3 text-center text-sm font-medium leading-6">
+                <p
+                    className="rounded-2xl border px-5 py-3 text-center text-sm font-medium leading-6"
+                    style={{ borderColor: `${accent}40`, backgroundColor: `${accent}10` }}
+                >
                     {notice}
                 </p>
             ) : null;
@@ -229,6 +243,7 @@ function Block({
                             // the page: it is the only one somebody can
                             // take away with them today.
                             lead={index === 0}
+                            accent={accent}
                             businessId={business.id}
                             tap="offers"
                         />
@@ -246,6 +261,7 @@ function Block({
                     label="Collect stamps with us"
                     note={cardLine(card.stamps_required, card.reward)}
                     lead={offers.length === 0}
+                    accent={accent}
                     businessId={business.id}
                     tap="loyalty"
                 />
@@ -261,6 +277,7 @@ function Block({
                             icon={FiLink}
                             label={link.label}
                             external
+                            accent={accent}
                             businessId={business.id}
                             tap="links"
                             linkId={link.id}
@@ -276,6 +293,7 @@ function Block({
                     icon={FiCalendar}
                     label="Book with us"
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="booking"
                 />
@@ -288,6 +306,7 @@ function Block({
                     icon={FiBookOpen}
                     label="See the menu"
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="menu"
                 />
@@ -302,6 +321,7 @@ function Block({
                     icon={FiClock}
                     label={openingLabel(business.hours)}
                     note="See all our hours"
+                    accent={accent}
                     businessId={business.id}
                     tap="hours"
                 />
@@ -315,6 +335,7 @@ function Block({
                     label="Find us"
                     note={addressLine}
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="find_us"
                 />
@@ -328,6 +349,7 @@ function Block({
                     label="Call us"
                     note={business.phone}
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="call"
                 />
@@ -342,6 +364,7 @@ function Block({
                     icon={FiMessageCircle}
                     label="Message us on WhatsApp"
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="whatsapp"
                 />
@@ -355,6 +378,7 @@ function Block({
                     icon={FiGlobe}
                     label="Our website"
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="website"
                 />
@@ -368,6 +392,7 @@ function Block({
                     label="Leave us a review"
                     note="It takes a minute and it helps a lot"
                     external
+                    accent={accent}
                     businessId={business.id}
                     tap="review"
                 />
@@ -497,6 +522,7 @@ function Action({
     note,
     external = false,
     lead = false,
+    accent = BIO_CORAL,
     businessId,
     tap,
     linkId,
@@ -512,16 +538,23 @@ function Action({
     businessId?: string;
     tap?: string;
     linkId?: string;
+    accent?: string;
 }) {
     const className = `flex items-center gap-3 rounded-2xl border px-5 py-4 transition ${
-        lead
-            ? "border-transparent bg-[#FF593F] text-white hover:bg-[#e8462e]"
-            : "border-[#17233B]/12 bg-white hover:border-[#FF593F]/40 hover:shadow-sm"
+        lead ? "border-transparent" : "border-[#17233B]/12 bg-white hover:shadow-sm"
     }`;
+
+    // Inline rather than a class, because it is a value from the
+    // database and Tailwind cannot compile a colour it has not seen.
+    const style = lead ? { backgroundColor: accent, color: inkOn(accent) } : undefined;
 
     const inside = (
         <>
-            <Icon aria-hidden="true" className={`size-5 shrink-0 ${lead ? "" : "text-[#FF593F]"}`} />
+            <Icon
+                aria-hidden="true"
+                className="size-5 shrink-0"
+                style={lead ? undefined : { color: accent }}
+            />
             <span className="min-w-0 flex-1">
                 <span className="block font-semibold leading-6">{label}</span>
                 {note && (
@@ -535,11 +568,11 @@ function Action({
     );
 
     const row = external ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={style}>
             {inside}
         </a>
     ) : (
-        <Link href={href} className={className}>
+        <Link href={href} className={className} style={style}>
             {inside}
         </Link>
     );
@@ -647,6 +680,7 @@ async function BioContent({ params, searchParams }: PageProps) {
     ]);
 
     const sections = arrangement(sectionRows);
+    const accent = bioAccent(business.bio_accent);
     const notice = noticeShowing(business.bio_notice, business.bio_notice_until);
 
     const location = business.business_locations?.[0] ?? null;
@@ -713,7 +747,10 @@ async function BioContent({ params, searchParams }: PageProps) {
                             className="mx-auto size-20 rounded-2xl border-4 border-[#FFF8F0] object-cover shadow-sm"
                         />
                     ) : (
-                        <span className="mx-auto flex size-20 items-center justify-center rounded-2xl border-4 border-[#FFF8F0] bg-white text-2xl font-semibold text-[#FF593F] shadow-sm">
+                        <span
+                            className="mx-auto flex size-20 items-center justify-center rounded-2xl border-4 border-[#FFF8F0] bg-white text-2xl font-semibold shadow-sm"
+                            style={{ color: accent }}
+                        >
                             {business.name.charAt(0).toUpperCase()}
                         </span>
                     )}
@@ -774,6 +811,7 @@ async function BioContent({ params, searchParams }: PageProps) {
                                 directions={directions}
                                 addressLine={lines.join(", ")}
                                 notice={notice}
+                                accent={accent}
                                 onward={onward}
                             />
                         ))}

@@ -2,7 +2,7 @@
 
 import type { IconType } from "react-icons";
 
-import type { BioKind, BioSection } from "@/lib/bio-sections";
+import { inkOn, type BioKind, type BioSection } from "@/lib/bio-sections";
 
 // Their page, as they are arranging it.
 //
@@ -16,6 +16,7 @@ import type { BioKind, BioSection } from "@/lib/bio-sections";
 // question it exists to answer with a lie.
 
 export function BioPreview({
+    accent,
     businessName,
     sections,
     rows,
@@ -24,6 +25,7 @@ export function BioPreview({
     links,
     notice,
 }: {
+    accent: string;
     businessName: string;
     sections: BioSection[];
     rows: Record<string, { note: string; empty?: boolean }>;
@@ -51,7 +53,10 @@ export function BioPreview({
             <div className="mt-3 rounded-[2rem] border-4 border-[#17233B]/15 bg-[#FFF8F0] p-4">
                 <div className="mx-auto max-w-[17rem]">
                     <div className="flex flex-col items-center">
-                        <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-lg font-semibold text-[#FF593F]">
+                        <span
+                            className="flex size-12 items-center justify-center rounded-2xl bg-white text-lg font-semibold"
+                            style={{ color: accent }}
+                        >
                             {businessName.charAt(0).toUpperCase()}
                         </span>
                         <p className="mt-2 text-center text-sm font-semibold leading-5">
@@ -72,7 +77,11 @@ export function BioPreview({
                                 return (
                                     <p
                                         key={section.kind}
-                                        className="rounded-xl border border-[#FF593F]/25 bg-[#FF593F]/[0.06] px-3 py-2 text-center text-[11px] font-medium leading-4"
+                                        className="rounded-xl border px-3 py-2 text-center text-[11px] font-medium leading-4"
+                                        style={{
+                                            borderColor: `${accent}40`,
+                                            backgroundColor: `${accent}10`,
+                                        }}
                                     >
                                         {notice}
                                     </p>
@@ -87,6 +96,7 @@ export function BioPreview({
                                                 key={link.id}
                                                 icon={icons.links}
                                                 label={link.label}
+                                                accent={accent}
                                             />
                                         ))}
                                     </div>
@@ -100,6 +110,7 @@ export function BioPreview({
                                     label={names[section.kind]}
                                     note={rows[section.kind]?.note}
                                     loud={section.kind === loud?.kind}
+                                    accent={accent}
                                 />
                             );
                         })}
@@ -124,23 +135,25 @@ function Row({
     label,
     note,
     loud = false,
+    accent,
 }: {
     icon: IconType;
     label: string;
     note?: string;
     loud?: boolean;
+    accent: string;
 }) {
     return (
         <div
             className={`flex items-center gap-2 rounded-xl px-3 py-2 ${
-                loud
-                    ? "bg-[#FF593F] text-white"
-                    : "border border-[#17233B]/10 bg-white text-[#17233B]"
+                loud ? "" : "border border-[#17233B]/10 bg-white text-[#17233B]"
             }`}
+            style={loud ? { backgroundColor: accent, color: inkOn(accent) } : undefined}
         >
             <Icon
                 aria-hidden="true"
-                className={`size-3.5 shrink-0 ${loud ? "" : "text-[#FF593F]"}`}
+                className="size-3.5 shrink-0"
+                style={loud ? undefined : { color: accent }}
             />
             <span className="min-w-0 flex-1">
                 <span className="block truncate text-[11px] font-semibold leading-4">{label}</span>

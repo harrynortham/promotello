@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { BIO_KINDS, renumbered, tidyUrl, type BioKind, type BioSection } from "@/lib/bio-sections";
+import {
+    BIO_CORAL,
+    BIO_KINDS,
+    renumbered,
+    tidyUrl,
+    type BioKind,
+    type BioSection,
+} from "@/lib/bio-sections";
 import { createClient } from "@/utils/supabase/server";
 
 // Arranging the bio page.
@@ -129,6 +136,14 @@ export async function saveBioDetails(businessId: string, formData: FormData): Pr
     const notice = String(formData.get("notice") ?? "").trim();
     const until = String(formData.get("noticeUntil") ?? "").trim();
     const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+    // Coral is stored as nothing: a business that never chose gets it,
+    // and one that chose it is in the same state, which is the truth.
+    const accentField = String(formData.get("accent") ?? "").trim();
+    const accent = accentField && accentField !== BIO_CORAL ? accentField : null;
+
+    if (accent && !/^#[0-9a-fA-F]{6}$/.test(accent)) {
+        return { error: "That is not a colour we know." };
+    }
 
     if (notice && notice.length < 3) return { error: "A notice needs a few more words." };
     if (notice.length > 140) return { error: "A notice has to fit on one line." };
@@ -140,6 +155,7 @@ export async function saveBioDetails(businessId: string, formData: FormData): Pr
         .update({
             bio_notice: notice || null,
             bio_notice_until: notice && until ? until : null,
+            bio_accent: accent,
             whatsapp: whatsapp || null,
         })
         .eq("id", businessId);

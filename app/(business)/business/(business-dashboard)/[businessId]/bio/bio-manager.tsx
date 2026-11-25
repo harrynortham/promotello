@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { moved, type BioKind, type BioSection } from "@/lib/bio-sections";
+import { BIO_ACCENTS, moved, type BioKind, type BioSection } from "@/lib/bio-sections";
 import { BioPreview } from "./bio-preview";
 import { addLink, moveLink, removeLink, saveArrangement, saveBioDetails } from "./actions";
 
@@ -64,6 +64,7 @@ export function BioManager({
     notice,
     noticeUntil,
     whatsapp,
+    accent,
     taps,
 }: {
     businessId: string;
@@ -75,6 +76,7 @@ export function BioManager({
     notice: string;
     noticeUntil: string;
     whatsapp: string;
+    accent: string;
     taps: Record<string, number>;
 }) {
     const router = useRouter();
@@ -267,6 +269,7 @@ export function BioManager({
             </section>
 
             <BioPreview
+                accent={accent}
                 businessName={businessName}
                 sections={sections}
                 rows={rows}
@@ -284,6 +287,7 @@ export function BioManager({
                 notice={notice}
                 noticeUntil={noticeUntil}
                 whatsapp={whatsapp}
+                accent={accent}
             />
         </div>
     );
@@ -403,16 +407,19 @@ function DetailsEditor({
     notice,
     noticeUntil,
     whatsapp,
+    accent,
 }: {
     businessId: string;
     notice: string;
     noticeUntil: string;
     whatsapp: string;
+    accent: string;
 }) {
     const router = useRouter();
     const [busy, startBusy] = useTransition();
     const [problem, setProblem] = useState<string | null>(null);
     const [saved, setSaved] = useState(false);
+    const [chosen, setChosen] = useState(accent);
 
     return (
         <section aria-labelledby="details-heading">
@@ -472,6 +479,42 @@ function DetailsEditor({
                         />
                     </div>
                 </div>
+
+                <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium">Your colour</legend>
+                    <p className="text-xs leading-5 text-[#17233B]/55">
+                        The top row, your initial and the notice. The same six your loyalty card
+                        offers.
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        {BIO_ACCENTS.map((option) => (
+                            <label
+                                key={option.hex}
+                                className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${
+                                    chosen === option.hex
+                                        ? "border-[#17233B]/30 bg-[#FFF8F0]"
+                                        : "border-[#17233B]/12"
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="accent"
+                                    value={option.hex}
+                                    checked={chosen === option.hex}
+                                    onChange={() => setChosen(option.hex)}
+                                    className="sr-only"
+                                />
+                                <span
+                                    aria-hidden="true"
+                                    className="size-4 rounded-full"
+                                    style={{ backgroundColor: option.hex }}
+                                />
+                                {option.label}
+                            </label>
+                        ))}
+                    </div>
+                </fieldset>
 
                 <div className="flex items-center gap-3">
                     <Button type="submit" variant="outline" disabled={busy}>
