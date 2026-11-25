@@ -287,7 +287,7 @@ anything.
 
 | | What | Plan | Work | Already there | Which track it serves |
 | --- | --- | --- | --- | --- | --- |
-| 1 | **Print kit** | Free | Nearly done | A4, A5 and two per sheet are live. Four per sheet and the review poster are on `feat/a-poster-that-asks-for-a-review` | A: every sheet is a scan we can count |
+| 1 | **Print kit** | Free | Nearly done | A4, A5, two and four per sheet (`a6x4`) are live, and so are the review poster layouts. Left: nothing is called a print kit anywhere a business can see — the QR page and the features page still describe sheets one at a time | A: every sheet is a scan we can count |
 | 2 | ~~**Offer templates**~~ **Built** | Free | Already shipped | `lib/offer-templates.ts` has 11, six offered per category, and the new-offer form fills every field from one including the end date and the days | B: a directory of stale offers gives nobody a reason to return |
 | 3 | **Link-in-bio page** | Free | ~~Small, 2 to 3 days~~ **Built** | `/@handle`, and the business arranges it at `/business/<id>/bio`. See [The bio page is theirs](#the-bio-page-is-theirs) | B: their followers arrive on Promotello. Part of the answer to B5 |
 | 4 | **Private feedback option** | Pro | Small, 2 to 3 days | `/review/<business_id>` counts the click and forwards | C. Shown to every customer beside the review link, never in place of it for some |
@@ -430,8 +430,15 @@ who came back. `bio_taps` counts every row, written only by
 Every bio link is an advert for the directory, and charging to remove it
 would cost more than it earned.
 
-**Still to do:** a live preview beside the list, their own accent
-colour, and holding taps against redemptions in the monthly report.
+**Since:** the live preview beside the list is built, and
+`bio_taps` reaches the monthly report as "Taps on your bio link"
+(20270322090000), counting as interest in a month with nobody through
+the door.
+
+**Still to do:** their own accent colour on the page, and holding taps
+against redemptions rather than beside them — "7 taps, 2 of them came
+in" is the sentence no loyalty app can print, and it needs a month of
+real traffic before it says anything.
 
 Move from one £19 plan to a free tier plus two paid tiers, with a founding price for the first 50 Bristol businesses. For comparison, Stamp Me now charges £39/month for Lite and £49/month for Pro, and Square Loyalty £25 to £65 per location ([Stamp Me pricing](https://stampme.com/punch-card-app/pricing-plans/), [Square Loyalty UK](https://squareup.com/gb/en/software/loyalty)). Promotello bundles loyalty with offers, QR and a directory, so £24 undercuts both while offering more.
 
