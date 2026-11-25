@@ -1,7 +1,7 @@
 # Promotello Product Roadmap
 
 Gates are results, not dates: track B before the trail, 10 live businesses on one
-street before a second one. Oct 23, 2026, re-cut 16 Nov 2026 · @Harry
+street before a second one. Oct 23, 2026, re-cut 16 Nov 2026, plans re-cut 24 Nov 2026 · @Harry
 
 ## Summary
 
@@ -258,6 +258,96 @@ Said plainly so it is a decision rather than a drift:
   trail across businesses nobody visits is a feature with no users; it becomes
   obvious the moment cross-visits are non-zero.
 
+## Beyond the card: what goes in which plan
+
+Added 24 November 2026, the day the first previews went out. Indistamp has sold
+a loyalty card to Bristol's local businesses since 2024. Read side by side, our
+Pro plan was a loyalty card with the limits taken off, which is the comparison
+the Positioning section says to refuse. This section is how the plans stop
+inviting it.
+
+### The rule
+
+- **Free spreads Promotello.** Anything that puts our QR code or our link in
+  front of more shoppers is free. A poster in a window is our advertising
+  whether or not that business ever pays.
+- **Pro earns or saves the business money.** Anything that brings a customer
+  back, brings a new one in or saves the owner time.
+- **Growth runs without them.** Anything that keeps working when nobody at the
+  business is thinking about it.
+
+It sits beside the test in [What the model actually is](#what-the-model-actually-is),
+not in place of it. The test decides whether a feature is worth building. The
+rule decides which plan it goes in.
+
+### Ranked by work
+
+Sizes are estimates from reading the code on 24 November, not from building
+anything.
+
+| | What | Plan | Work | Already there | Which track it serves |
+| --- | --- | --- | --- | --- | --- |
+| 1 | **Print kit** | Free | Nearly done | A4, A5 and two per sheet are live. Four per sheet and the review poster are on `feat/a-poster-that-asks-for-a-review` | A: every sheet is a scan we can count |
+| 2 | **Offer templates** | Free | Small, 1 to 2 days | `lib/offer-kinds.ts`, and `lib/starter.ts` carrying an offer line into the form | B: a directory of stale offers gives nobody a reason to return |
+| 3 | **Link-in-bio page** | Free | ~~Small, 2 to 3 days~~ **Built** | `/@handle`, and the business arranges it at `/business/<id>/bio`. See [The bio page is theirs](#the-bio-page-is-theirs) | B: their followers arrive on Promotello. Part of the answer to B5 |
+| 4 | **Private feedback option** | Pro | Small, 2 to 3 days | `/review/<business_id>` counts the click and forwards | C. Shown to every customer beside the review link, never in place of it for some |
+| 5 | **Wi-Fi poster** | Free | Small, 2 to 3 days | The poster designer | A. Two codes on one sheet: one code can't both join a network and open a page |
+| 6 | **Staff board** | Pro | Medium, about a week | Nothing found that records which team member scanned | The "staff never use it" risk below |
+| 7 | **Refer a neighbour** | Free | Medium, about a week | Nothing. Touches Stripe | D, and density: the invite goes to the shop next door |
+| 8 | **Bring a friend** | Pro | Medium, 1 to 2 weeks | Automations issue vouchers; share links exist | A and C: a friend who redeems is a customer we can prove we sent |
+| 9 | **Joint offers with a neighbour** | Growth | Large | Nothing | B. Behind track B's gate, like the trail |
+| 10 | **Wallet passes** | Pro | Large, weeks | [docs/WALLET-PASSES.md](WALLET-PASSES.md) | Unchanged: C2 |
+
+### The order
+
+1. **Before the next fifty emails: 1, 2 and 3.** About a week between them and
+   all free. Sending does not stop for them (D1 still stands).
+2. **Then 8, bring a friend.** The first Pro feature no loyalty app has, and
+   the only one on this list that adds to the number we sell on.
+3. **4, 5, 6 and 7 as replies ask for them.** None is urgent and each is cheap
+   enough to build the week somebody wants it.
+4. **9 and 10 stay behind their gates.**
+
+### What Growth gets
+
+Added 24 November 2026. Growth's rule is that it runs without them: set once,
+then it keeps working when nobody at the business is thinking about it. Sizes
+are rough, from a quick read of the code.
+
+| | What | Work | Already there | Notes |
+| --- | --- | --- | --- | --- |
+| G1 | **Offers that run themselves again** | Small | An offer already carries its days and hours (`lib/schedule.ts`), and quiet hours enforce them | What is missing is the relaunch: when an offer expires or is fully claimed, a new run starts, so the page never sits empty |
+| G2 | **A weekly post, ready to share** | Small | Share images and captions exist on every plan | Every Monday the owner is emailed an Instagram image and caption for the current offer. Free makes the image; Growth is not having to remember |
+| G3 | **"Nearly there" reminders** | Small | The automation machinery (welcome, birthday, win-back) | An email when a customer is one or two stamps from the reward. Same limit as win-back: it only reaches people who can be emailed |
+| G4 | **The claim that never became a visit** | Small | The expiry reminder | B3 above, as an automation a business can see running. A nudge two days after a claim |
+| G5 | **Quiet-day suggestions** | Medium | The monthly report and its numbers | The report names the slowest day and offers a one-tap offer for it |
+| G6 | **Regulars' reward** | Medium | Repeat visits are counted; automations issue vouchers | The ten most frequent customers get a thank-you voucher each quarter |
+| G7 | **Customer list, groups and export** | Medium | Nothing built. C5 above | Already promised to Growth. Answers "what if I leave?" |
+| G8 | **A second location included** | Medium to large | Nothing in billing. Listed in the README's stage 5 | A reason to pay for Growth that isn't more emails. Needs the multi-location decisions first |
+| G9 | **Street benchmarks** | Large | Repeat rate and cross-visits in admin | "Your repeat rate against the street's." Needs enough businesses on a street that no single shop can be picked out |
+| G10 | **Joint offers with a neighbour** | Large | Nothing | Row 9 in the table above. Behind track B's gate |
+| G11 | **Events** | Built, hidden | `EVENTS_ENABLED` in `lib/features.ts` | Switch on when there are customers to see them |
+
+**Build first: G1, G2 and G8.** G1 and G2 make "marketing that runs without
+you" true every week rather than on a birthday. G8 is the one that changes who
+buys Growth.
+
+**The limit on G3, G4 and G6.** They email customers, and most cards are held
+by guests with no account. Until the consent decision in the README's stage 3
+is made they mostly cannot fire, the same as win-back.
+
+### Considered and left
+
+- **Win-back in Pro.** Small to move, but it is most of what Growth has, and
+  the README already records that it can't reach the people it is for until the
+  consent decision is made.
+- **A review poster that only asks happy customers.** Filtering who is asked
+  for a review breaks Google's rules. The feedback option is offered to
+  everyone or not built.
+- **Growth was thin.** The first cut of this list gave it joint offers and
+  nothing else soon. [What Growth gets](#what-growth-gets) is the answer, and
+  G1, G2 and G8 are the part of it worth building first.
+
 ## Competitor analysis (October 2026)
 
 Stamp Me, Square Loyalty and Loopy Loyalty are the loyalty tools a Bristol café is most likely to have heard of. All three sell loyalty only. None of them has a directory, public offers, events, QR posters or review prompts, and none has a free plan. That bundle is Promotello's edge. The gaps are all in the loyalty card itself: where the card lives, how fast a customer can join, and how flexible the card is.
@@ -293,18 +383,68 @@ the part we have decided not to compete on.
 
 ## Pricing and packaging
 
+Which plan a feature goes in is decided by the rule in [Beyond the card](#beyond-the-card-what-goes-in-which-plan): Free spreads Promotello, Pro earns or saves the business money, Growth runs without them. `planComparison` in `lib/plan-features.ts` is what the site prints; the "Planned" items below join it when they ship, not before.
+
+
+## The bio page is theirs
+
+The link a business puts in an Instagram bio is the only page most of
+them will ever have. It was a fixed list in a fixed order, and a section
+appeared because a column happened to be filled in. Now they arrange it.
+
+**What the screen is not:** a second place to write their opening hours.
+Nearly everything on a bio page already has a home in the dashboard, and
+a row that let them edit it twice would be two sources of one truth.
+Each row says what it will put on the page — "2 live, newest 3 shown",
+"Shows 'Open until 5:00pm'", "Nothing yet — it stays hidden until there
+is" — and sends them to where that content lives. Only what exists
+nowhere else is edited here: the order, what is switched on, their own
+links, and the notice.
+
+**The default is the product.** A business with no `bio_sections` rows
+keeps exactly the page it had before any of this existed. Nothing is
+seeded, so an unclaimed page — which has nobody to arrange it — is
+untouched. `lib/bio-sections.ts` holds the order, and a kind added after
+somebody last saved appears for them at the bottom, switched on, rather
+than being invisible forever.
+
+**New sections, all free:** their own links (the thing a link-in-bio
+page actually is), opening hours as *open or shut right now*, WhatsApp,
+a notice that takes itself down on its date, a photo strip, and the
+Google review link the review poster already stores.
+
+**Why this is the selling point.** Linktree can tell a business how many
+people clicked. Promotello owns the other end of the journey, so it can
+say which of those taps became a redemption and which became a customer
+who came back. `bio_taps` counts every row, written only by
+`record_bio_tap()` so nothing can be stuffed from a console.
+
+| | Free | Pro |
+| --- | --- | --- |
+| Sections, order, on and off | all | all |
+| Their own links | yes | yes |
+| Taps per row | 30 days | full history |
+| The loyalty card row | — | Pro, as the card already is |
+
+**Not for sale:** the "on Promotello" credit at the foot of the page.
+Every bio link is an advert for the directory, and charging to remove it
+would cost more than it earned.
+
+**Still to do:** a live preview beside the list, their own accent
+colour, and holding taps against redemptions in the monthly report.
+
 Move from one £19 plan to a free tier plus two paid tiers, with a founding price for the first 50 Bristol businesses. For comparison, Stamp Me now charges £39/month for Lite and £49/month for Pro, and Square Loyalty £25 to £65 per location ([Stamp Me pricing](https://stampme.com/punch-card-app/pricing-plans/), [Square Loyalty UK](https://squareup.com/gb/en/software/loyalty)). Promotello bundles loyalty with offers, QR and a directory, so £24 undercuts both while offering more.
 
 | Tier   | Price (ex. VAT)             | What's included                                                                                                                       | Available from             |
 | ------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| Free   | £0                          | Directory profile, 1 live offer, redemption codes, **the short monthly report and who came back**                                      | Now                        |
-| Pro    | £24/month, or £240/year     | Unlimited offers, loyalty card, QR posters with scan stats, followers and offer emails, review prompts, staff scanner, unlimited team, the short monthly report | Now (card design and import in track C) |
-| Growth | £39/month                   | Everything in Pro plus automations, quiet-hours offers, the **full** monthly report with every number against last month, first-timers month by month, customer list and export, events | Now (grows with track C) |
+| Free   | £0                          | Page in the directory, 1 live offer, scan-to-redeem vouchers, 1 QR poster with scan counts, team members, share links and Instagram images, 30-day analytics, **the short monthly report and who came back**. Planned: the review poster, print kit, offer templates, link-in-bio page, Wi-Fi poster, refer a neighbour | Now |
+| Pro    | £24/month, or £240/year     | Unlimited offers, loyalty card, a QR poster for every spot with scans compared, followers and offer emails, review prompts, the short monthly report. Planned: bring a friend, a private feedback option, the staff board | Now (card design and import in track C) |
+| Growth | £39/month                   | Everything in Pro plus automations, quiet-hours offers, the **full** monthly report with every number against last month, first-timers month by month. Planned: offers that relaunch themselves, a weekly post ready to share, a second location, customer list and export, joint offers with a neighbour, events (built, hidden). See [What Growth gets](#what-growth-gets) | Now (grows with track C) |
 | Groups | Custom, per member business | Group dashboard, passport trail, shared campaigns for BIDs and associations                                                           | Behind track B's gate      |
 
 **Founding member offer:** the first 50 Bristol businesses get Pro at £19/month, locked for life. This keeps your current price point, rewards early risk and creates a deadline ("only 12 founding spots left").
 
-Every paid tier starts with a 30-day free trial, and **starting one takes no
+Every paid tier starts with a 30-day free trial (three months on a founding place), and **starting one takes no
 card** — it stops by itself unless they add one before the end
 (docs/LAUNCH-FUNNEL.md). Card-up-front converts better per trial started and
 worse per business emailed, and on one road with fifty shops the second number

@@ -9,6 +9,7 @@ import {
     FiCheckCircle,
     FiCreditCard,
     FiHome,
+    FiLink,
     FiPrinter,
     FiSettings,
     FiShoppingBag,
@@ -50,6 +51,11 @@ const baseLinks: SidebarLink[] = [
         label: "Loyalty card",
         path: "/loyalty",
         icon: FiAward,
+    },
+    {
+        label: "Bio link",
+        path: "/bio",
+        icon: FiLink,
     },
     {
         label: "Photos",

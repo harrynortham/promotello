@@ -75,3 +75,57 @@ export function formatHour(value: string) {
     const suffix = hours < 12 ? "am" : "pm";
     return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")}${suffix}`;
 }
+
+// Open or shut, right now, in words.
+//
+// For the bio page, where "Opening hours" is a link somebody has to
+// press to learn the one thing they wanted. Everything here is Europe/
+// London: the whole directory is one country, and a café's closing time
+// is a local fact rather than an instant.
+//
+// A day that runs past midnight closes the next morning, so a bar open
+// until 1am is open at half past midnight rather than shut all day.
+export function openingLabel(rows: HoursRow[], now = new Date()): string {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/London",
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    }).formatToParts(now);
+
+    const at = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = days.indexOf(at("weekday"));
+    const minutes = Number(at("hour")) * 60 + Number(at("minute"));
+
+    if (today === -1) return "Opening hours";
+
+    const dayFor = (offset: number) =>
+        rows.find((row) => row.day_of_week === (today + offset + 7) % 7);
+
+    const asMinutes = (value: string) => {
+        const [hours, mins] = value.split(":").map(Number);
+        return hours * 60 + mins;
+    };
+
+    // Still inside yesterday's late closing.
+    const yesterday = dayFor(-1);
+    if (yesterday && !yesterday.is_closed && yesterday.opens_at && yesterday.closes_at) {
+        const opens = asMinutes(yesterday.opens_at);
+        const closes = asMinutes(yesterday.closes_at);
+        if (closes < opens && minutes < closes) return `Open until ${formatHour(yesterday.closes_at)}`;
+    }
+
+    const day = dayFor(0);
+    if (!day || day.is_closed || !day.opens_at || !day.closes_at) return "Closed today";
+
+    const opens = asMinutes(day.opens_at);
+    const closes = asMinutes(day.closes_at);
+    const overnight = closes < opens;
+
+    if (minutes < opens) return `Opens at ${formatHour(day.opens_at)}`;
+    if (overnight || minutes < closes) return `Open until ${formatHour(day.closes_at)}`;
+
+    return "Closed now";
+}
