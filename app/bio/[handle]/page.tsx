@@ -14,6 +14,7 @@ import {
     FiPhone,
 } from "react-icons/fi";
 
+import { ClaimPanel } from "@/components/claim-panel";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { SocialLinks } from "@/components/social-links";
 import { addressParts, directionsUrl } from "@/lib/address";
@@ -47,6 +48,7 @@ type BioBusiness = {
     id: string;
     slug: string;
     name: string;
+    approval_status: string;
     description: string | null;
     logo_url: string | null;
     cover_image_url: string | null;
@@ -89,7 +91,7 @@ async function findByHandle(handle: string) {
         .from("businesses")
         .select(
             `
-                id, slug, name, description, logo_url, cover_image_url, category,
+                id, slug, name, approval_status, description, logo_url, cover_image_url, category,
                 website_url, menu_url, booking_url, phone,
                 instagram_url, facebook_url, x_url, youtube_url, linkedin_url, tiktok_url,
                 business_locations (
@@ -259,6 +261,14 @@ async function BioContent({ params }: PageProps) {
         .filter((part, index, parts) => part && parts.indexOf(part) === index)
         .join(", ");
     const card = cards?.[0] ?? null;
+
+    // A page nobody has claimed, which is the one we send a business to
+    // from an Instagram message. Everybody else arrives here from a bio
+    // that only exists once somebody has claimed it, so on an unclaimed
+    // page the owner is the likeliest reader by a distance — and there
+    // are no offers to push down, because an unclaimed page cannot have
+    // any (20270307090000).
+    const unclaimed = business.approval_status !== "approved";
     const logo = storedImage(business.logo_url);
     const cover = storedImage(business.cover_image_url);
     // Every link out carries where it came from, so the business can be
@@ -303,6 +313,12 @@ async function BioContent({ params }: PageProps) {
                         </p>
                     )}
                 </header>
+
+                {unclaimed && (
+                    <div className="mt-7">
+                        <ClaimPanel businessId={business.id} businessName={business.name} />
+                    </div>
+                )}
 
                 <div className="mt-7 space-y-3">
                     {/* What's on, first and loudest. It is the only thing
