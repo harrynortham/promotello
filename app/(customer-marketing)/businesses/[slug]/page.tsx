@@ -49,7 +49,6 @@ import { LoyaltyCallout } from "./loyalty-callout";
 import { BusinessClosedNotice } from "./closed-notice";
 import { OwnerBar, OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
-import { ClaimPanel } from "@/components/claim-panel";
 import { BringAFriend } from "@/components/bring-a-friend";
 import { worthIndexing } from "@/lib/indexing";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
@@ -784,10 +783,12 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             </section>
                         )}
 
-                        {isUnclaimed && (
-                            <ClaimPanel businessId={business.id} businessName={business.name} />
-                        )}
-
+                        {/* Nothing here for an unclaimed page any more.
+                            Claiming is by the link we send and only by
+                            that: the token is what says this business
+                            was written to on purpose, and a form on a
+                            public page invites everybody else to ask
+                            about a shop that is not theirs. */}
                         {!isUnclaimed && (
                         <section
                             id="offers"
