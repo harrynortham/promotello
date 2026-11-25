@@ -4,12 +4,27 @@ import { type NextRequest, NextResponse } from "next/server";
 import { safeNextPath } from "@/lib/redirects";
 import { movedAddress } from "@/lib/slugs";
 
-// 1. Old or outdated business and offer addresses (/businesses/<uuid>, a
+// 1. A business's handle, /@harbourgrind, is served by /bio/<handle>.
+//    Rewritten here rather than routed, because a folder named "@..."
+//    in app/ is a parallel route slot to Next rather than a path.
+// 2. Old or outdated business and offer addresses (/businesses/<uuid>, a
 //    renamed business, an old offer slug) redirect permanently.
-// 2. Signed-in users who open /login or /signup go straight to where they
+// 3. Signed-in users who open /login or /signup go straight to where they
 //    were heading (?next=) or their dashboard.
 export async function proxy(request: NextRequest) {
     const { pathname, search } = request.nextUrl;
+
+    if (pathname.startsWith("/@")) {
+        const handle = pathname.slice(2).toLowerCase();
+
+        // Anything that is not handle-shaped is not a handle. A 404 from
+        // the page would do, but this keeps the rewrite honest.
+        if (!/^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])$/.test(handle)) {
+            return NextResponse.next();
+        }
+
+        return NextResponse.rewrite(new URL(`/bio/${handle}${search}`, request.url));
+    }
 
     if (pathname.startsWith("/businesses/") || pathname.startsWith("/offers/")) {
         const moved = await movedAddress(pathname);
@@ -50,5 +65,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/login", "/signup", "/businesses/:segment", "/offers/:segment"],
+    matcher: ["/login", "/signup", "/businesses/:segment", "/offers/:segment", "/@:handle"],
 };
