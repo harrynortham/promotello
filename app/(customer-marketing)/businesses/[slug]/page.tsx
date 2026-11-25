@@ -49,7 +49,7 @@ import { LoyaltyCallout } from "./loyalty-callout";
 import { BusinessClosedNotice } from "./closed-notice";
 import { OwnerBar, OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
-import { ClaimPanel } from "./claim-panel";
+import { ClaimPanel } from "@/components/claim-panel";
 import { BringAFriend } from "@/components/bring-a-friend";
 import { worthIndexing } from "@/lib/indexing";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
