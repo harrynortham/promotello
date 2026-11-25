@@ -19,7 +19,17 @@ type Report = {
         full_report?: boolean;
         followers: number;
         metrics: Partial<
-            Record<"views" | "qr_scans" | "claims" | "visits" | "loyalty_rewards" | "new_followers" | "review_clicks", Change>
+            Record<
+                | "views"
+                | "qr_scans"
+                | "claims"
+                | "visits"
+                | "loyalty_rewards"
+                | "new_followers"
+                | "review_clicks"
+                | "bio_taps",
+                Change
+            >
         >;
     };
 };
@@ -29,6 +39,7 @@ const rows: { key: keyof Report["figures"]["metrics"]; label: string }[] = [
     { key: "claims", label: "Vouchers claimed" },
     { key: "views", label: "Views of your page and offers" },
     { key: "qr_scans", label: "QR poster scans" },
+    { key: "bio_taps", label: "Taps on your bio link" },
     { key: "new_followers", label: "New followers" },
     { key: "loyalty_rewards", label: "Loyalty rewards earned" },
     { key: "review_clicks", label: "Google review clicks" },
@@ -60,7 +71,9 @@ export function monthStrength(report: Report) {
         return "interest" as const;
     }
 
-    return at("views") > 0 || at("qr_scans") > 0 ? "looking" as const : "nothing" as const;
+    return at("views") > 0 || at("qr_scans") > 0 || at("bio_taps") > 0
+        ? ("looking" as const)
+        : ("nothing" as const);
 }
 
 export function monthlyReportEmail(
@@ -97,7 +110,10 @@ export function monthlyReportEmail(
     // (docs/LAUNCH-FUNNEL.md).
     const full = report.figures.full_report !== false;
     const claims = report.figures.metrics.claims ?? empty;
-    const looks = (report.figures.metrics.views ?? empty).current + (report.figures.metrics.qr_scans ?? empty).current;
+    const looks =
+        (report.figures.metrics.views ?? empty).current +
+        (report.figures.metrics.qr_scans ?? empty).current +
+        (report.figures.metrics.bio_taps ?? empty).current;
 
     const headline = strength === "visits"
         ? `${visits.current} customer ${visits.current === 1 ? "visit" : "visits"} came through Promotello in ${monthName}.`

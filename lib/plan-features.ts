@@ -24,6 +24,9 @@ export const planComparison: ComparisonRow[] = [
     // Free because it spreads Promotello: every bio link is our address
     // in somebody's Instagram profile. Taps per row follow the same
     // 30 days as the rest of the analytics.
+    // Free for the same reason the bio link is: a business with
+    // something worth claiming on its page is a page worth visiting.
+    { feature: "Offer templates to start from", free: true, pro: true, growth: true },
     {
         feature: "Link-in-bio page you arrange",
         free: true,
