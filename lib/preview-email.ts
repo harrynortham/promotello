@@ -485,8 +485,15 @@ export function outreachDm({
     // the one-tap claim -- and a DM carrying promotello.com/@jinzu
     // reads as their page where /business/preview/jinzu-<token>
     // reads as the thing people are told not to tap.
+    //
+    // Only once the page is built, which means listed_at is set. Until
+    // then nothing can read the business row -- that is the whole of
+    // the unlisted-until-claimed rule -- so /@theirhandle is a dead
+    // link, and the preview page is the only address that works.
     const url = absoluteUrl(
-        handle ? bioClaimLink(handle, preview.token) : previewLink(preview.token, name),
+        handle && isBuilt(preview)
+            ? bioClaimLink(handle, preview.token)
+            : previewLink(preview.token, name),
     );
     const location = preview.businesses?.business_locations?.[0];
     const town = location?.cities?.name ?? location?.city?.trim() ?? "Bristol";

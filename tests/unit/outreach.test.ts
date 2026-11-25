@@ -423,6 +423,8 @@ test("a DM points at their own address when there is one", () => {
         ...preview,
         businesses: {
             ...preview.businesses,
+            // Built, which is what makes /@handle readable at all.
+            listed_at: "2026-11-24T09:00:00Z",
             business_handles: [
                 { handle: "oldloaf", is_current: false },
                 { handle: "littleloaf", is_current: true },
@@ -447,4 +449,23 @@ test("a handle they have retired is not the one written to", () => {
 
     // Nothing current, so the preview link rather than a dead address.
     assert.match(outreachDm({ ...dmArgs, preview: retired }), /business\/preview\//);
+});
+
+// Until a page is published, nothing can read the business row -- that
+// is the unlisted-until-claimed rule -- so /@theirhandle is a dead
+// link and the preview page is the only address that works.
+test("a DM about an unpublished page uses the preview link", () => {
+    const notBuilt = {
+        ...preview,
+        businesses: {
+            ...preview.businesses,
+            listed_at: null,
+            business_handles: [{ handle: "littleloaf", is_current: true }],
+        },
+    } as typeof preview;
+
+    const dm = outreachDm({ ...dmArgs, preview: notBuilt });
+
+    assert.match(dm, /business\/preview\//);
+    assert.ok(!dm.includes("/@littleloaf"), dm);
 });
