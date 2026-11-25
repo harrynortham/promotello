@@ -15,6 +15,8 @@ import {
 } from "react-icons/fi";
 
 import { ClaimPanel } from "@/components/claim-panel";
+import { SubmitButton } from "@/components/submit-button";
+import { claimPreview } from "@/app/(business)/business/preview/[token]/actions";
 import { PageViewTracker } from "@/components/page-view-tracker";
 import { SocialLinks } from "@/components/social-links";
 import { addressParts, directionsUrl } from "@/lib/address";
@@ -42,7 +44,15 @@ import { createClient } from "@/utils/supabase/server";
 // their followers arrive on Promotello as a side effect. The moment it
 // reads as our page with their name on it, they take it down.
 
-type PageProps = { params: Promise<{ handle: string }> };
+type PageProps = {
+    params: Promise<{ handle: string }>;
+    // ?c=<token> is the one-tap claim, for a business we messaged on
+    // purpose. The token is the proof, exactly as it is in the preview
+    // link -- this is the same secret on an address that reads as
+    // theirs, because nobody opens a /business/preview/... URL from a
+    // DM (20270315090000).
+    searchParams?: Promise<{ c?: string; error?: string }>;
+};
 
 type BioBusiness = {
     id: string;
@@ -142,6 +152,52 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 }
 
+// The link we sent them. One button, because the person reading it was
+// written to by name and has already been asked -- the form beside this
+// one is for a stranger who found the page, and asking somebody twice
+// is how you lose them on a phone.
+function OneTap({
+    token,
+    businessName,
+    error,
+}: {
+    token: string;
+    businessName: string;
+    error: string | null;
+}) {
+    return (
+        <section className="rounded-2xl border border-[#FF593F]/25 bg-[#FF593F]/[0.04] p-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF593F]">
+                Your page
+            </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight">
+                This one is yours, {businessName}
+            </h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#17233B]/75">
+                We built it for you. Claim it and it&apos;s yours to change — your photos, your
+                words, an offer people claim on their phone. Free to claim and free to keep.
+            </p>
+
+            {error && (
+                <p className="mt-4 rounded-lg bg-white px-3 py-2 text-sm text-red-700">{error}</p>
+            )}
+
+            <form action={claimPreview} className="mt-5">
+                <input type="hidden" name="token" value={token} />
+                <input type="hidden" name="name" value={businessName} />
+
+                <SubmitButton pendingLabel="Claiming…" className="h-12 w-full text-base">
+                    Claim {businessName}
+                </SubmitButton>
+            </form>
+
+            <p className="mt-3 text-xs text-[#17233B]/60">
+                Not your business? Nothing happens until you press it.
+            </p>
+        </section>
+    );
+}
+
 function Action({
     href,
     icon: Icon,
@@ -198,10 +254,10 @@ function Action({
 // Same shape as the business page, and the reason for it is the same —
 // without the boundary the whole route bails out of prerendering and
 // Next says so on every request.
-export default function BioPage({ params }: PageProps) {
+export default function BioPage({ params, searchParams }: PageProps) {
     return (
         <Suspense fallback={<Loading />}>
-            <BioContent params={params} />
+            <BioContent params={params} searchParams={searchParams} />
         </Suspense>
     );
 }
@@ -222,10 +278,11 @@ function Loading() {
     );
 }
 
-async function BioContent({ params }: PageProps) {
+async function BioContent({ params, searchParams }: PageProps) {
     await connection();
 
     const { handle } = await params;
+    const { c: offeredToken, error: claimError } = (await searchParams) ?? {};
     const { business, movedTo } = await findByHandle(handle);
 
     if (!business) notFound();
@@ -269,6 +326,19 @@ async function BioContent({ params }: PageProps) {
     // are no offers to push down, because an unclaimed page cannot have
     // any (20270307090000).
     const unclaimed = business.approval_status !== "approved";
+
+    // Only a token that actually claims this business, and only while
+    // it still would. Anything else gets the ordinary panel, which asks
+    // rather than hands anything over.
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    const { data: tokenClaims } =
+        unclaimed && offeredToken && uuid.test(offeredToken)
+            ? await supabase.rpc("preview_token_is", {
+                requested_business_id: business.id,
+                candidate: offeredToken,
+            })
+            : { data: false };
     const logo = storedImage(business.logo_url);
     const cover = storedImage(business.cover_image_url);
     // Every link out carries where it came from, so the business can be
@@ -316,7 +386,15 @@ async function BioContent({ params }: PageProps) {
 
                 {unclaimed && (
                     <div className="mt-7">
-                        <ClaimPanel businessId={business.id} businessName={business.name} />
+                        {tokenClaims ? (
+                            <OneTap
+                                token={offeredToken!}
+                                businessName={business.name}
+                                error={claimError ?? null}
+                            />
+                        ) : (
+                            <ClaimPanel businessId={business.id} businessName={business.name} />
+                        )}
                     </div>
                 )}
 
