@@ -50,6 +50,7 @@ import { BusinessClosedNotice } from "./closed-notice";
 import { OwnerBar, OwnerEdit } from "./owner-edit";
 import { ScannedNote } from "./scanned-note";
 import { ClaimPanel } from "./claim-panel";
+import { BringAFriend } from "@/components/bring-a-friend";
 import { worthIndexing } from "@/lib/indexing";
 import { getLiveCities, getLiveCity } from "@/lib/cities";
 import { RememberCity } from "@/components/remember-city";
@@ -352,6 +353,16 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
         .order("starts_at", { ascending: true })
         .limit(6);
     const events = (eventRows ?? []) as EventSummary[];
+
+    // Bring a friend, when the business is running it. Not for its own
+    // team: a poster behind the counter referring itself is the one
+    // thing this must never pay for.
+    // Through a function rather than the table: business_automations is
+    // the business's own settings and is readable by its team alone, so
+    // a customer reading it directly gets nothing (20270314090000).
+    const { data: friendReward } = isUnclaimed || canEdit
+        ? { data: null }
+        : await supabase.rpc("friend_reward", { requested_business_id: businessId });
 
     const { data: follow } = viewer
         ? await supabase
@@ -746,6 +757,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 closedToNewMembers={cardClosedToNewMembers}
                             />
                         ))}
+
+                        {friendReward && (
+                            <BringAFriend
+                                businessId={business.id}
+                                businessName={business.name}
+                                reward={friendReward}
+                                isSignedIn={Boolean(viewer)}
+                            />
+                        )}
 
                         {events.length > 0 && (
                             <section id="events" aria-labelledby="events-heading">

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { FiGift, FiHeart, FiRefreshCw } from "react-icons/fi";
+import { FiGift, FiHeart, FiRefreshCw, FiUsers } from "react-icons/fi";
 
 import { SubmitButton } from "@/components/submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -47,6 +47,7 @@ const icons: Record<AutomationKind, typeof FiHeart> = {
     welcome: FiHeart,
     birthday: FiGift,
     winback: FiRefreshCw,
+    brought_a_friend: FiUsers,
 };
 
 function AutomationCard({
@@ -228,7 +229,15 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
             .gte("created_at", since),
     ]);
 
-    const canUse = tier === "growth" && ["owner", "admin"].includes(membership.role);
+    // Per automation, not per page: three of these are Growth and
+    // bring a friend is Pro, so one gate for the lot would either
+    // hide a Pro feature from a Pro business or hand Growth's away.
+    const inCharge = ["owner", "admin"].includes(membership.role);
+    const allows = (kind: AutomationKind) =>
+        inCharge
+        && (automationDetails[kind].plan === "growth"
+            ? tier === "growth"
+            : tier === "growth" || tier === "pro");
     const byKind = new Map((automations as Automation[] | null)?.map((row) => [row.kind, row]));
     const statsFor = (kind: AutomationKind) => {
         const rows = (vouchers ?? []).filter((row) => row.kind === kind);
@@ -254,7 +263,11 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
 
             {tier !== "growth" && (
                 <Alert className="border-[#FF593F]/30 bg-[#FF593F]/5">
-                    <AlertTitle>Automations are part of Growth</AlertTitle>
+                    <AlertTitle>
+                        {tier === "pro"
+                            ? "Welcome, birthday and win-back are part of Growth"
+                            : "Automations are part of Growth"}
+                    </AlertTitle>
                     <AlertDescription>
                         Send welcome, birthday and win-back rewards without
                         lifting a finger.{" "}
@@ -276,14 +289,14 @@ async function AutomationsContent({ params, searchParams }: PageProps) {
             )}
 
             <div className="space-y-6">
-                {(["welcome", "birthday", "winback"] as const).map((kind) => (
+                {(["brought_a_friend", "welcome", "birthday", "winback"] as const).map((kind) => (
                     <AutomationCard
                         key={kind}
                         businessId={businessId}
                         kind={kind}
                         automation={byKind.get(kind)}
                         stats={statsFor(kind)}
-                        canUse={canUse}
+                        canUse={allows(kind)}
                         saved={saved === kind}
                     />
                 ))}

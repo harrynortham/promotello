@@ -4,26 +4,45 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { voucherIssued } from "@/lib/notifications";
 import { notifyUsers } from "@/lib/notify";
 
-export type AutomationKind = "welcome" | "birthday" | "winback";
+export type AutomationKind = "welcome" | "birthday" | "winback" | "brought_a_friend";
 
+// Which plan each one belongs to. Three of them run without anybody at
+// the business thinking about it, which is Growth's rule. Bring a
+// friend is not that: it only ever fires because a customer did
+// something, and what it buys is a new customer through the door, which
+// is Pro's.
 export const automationDetails: Record<
     AutomationKind,
-    { title: string; description: string; defaultReward: string }
+    { title: string; description: string; defaultReward: string; plan: "pro" | "growth" }
 > = {
     welcome: {
         title: "Welcome new followers",
         description: "When someone follows you, they get a thank-you reward to bring them in.",
         defaultReward: "10% off your first visit",
+        plan: "growth",
     },
     birthday: {
         title: "Birthday treat",
         description: "Followers who've added their birthday get a treat from you on the day.",
         defaultReward: "A free slice of cake on us",
+        plan: "growth",
     },
     winback: {
         title: "Win back lapsed customers",
         description: "Customers who haven't visited for a while get a nudge to come back.",
         defaultReward: "A free coffee when you pop back in",
+        plan: "growth",
+    },
+    // The one that pays out on somebody else's visit. Said plainly,
+    // because a business reading this is deciding whether to give away
+    // a coffee and needs to know what it buys: nothing is issued until
+    // the friend has actually been in and staff have scanned them.
+    brought_a_friend: {
+        title: "Bring a friend",
+        description:
+            "A customer who brings somebody new gets a reward, once that friend has been in and you've scanned them.",
+        defaultReward: "A free coffee, on us",
+        plan: "pro",
     },
 };
 
@@ -65,6 +84,13 @@ const copy: Record<AutomationKind, (v: IssuedVoucher) => { subject: string; titl
         subject: `We've missed you at ${v.business_name}`,
         title: "It's been a while",
         intro: `We haven't seen you at ${v.business_name} for a bit, so here's a reason to pop back in.`,
+    }),
+    // Said as a thank you rather than as a payout. They did somebody a
+    // favour and told a friend about a shop; this is the shop noticing.
+    brought_a_friend: (v) => ({
+        subject: `Thanks for bringing a friend to ${v.business_name}`,
+        title: `Thanks${v.first_name ? `, ${v.first_name}` : ""}`,
+        intro: `Your friend came in to ${v.business_name}, so here's something from us for sending them.`,
     }),
 };
 
@@ -187,6 +213,25 @@ export async function runAutomations(scope?: { businessId: string; userId: strin
     }
 
     const vouchers = (data ?? []) as IssuedVoucher[];
+
+    // Bring a friend, on the daily run only. A scoped run is one person
+    // who has just done one thing — followed a business — and a friend
+    // reward is not about them. It is also the only automation whose
+    // trigger is somebody else's visit, so there is no event to hang it
+    // on and nothing is lost by waiting a day.
+    if (!scope) {
+        const { data: friends, error: friendError } = await createAdminClient().rpc(
+            "issue_friend_vouchers",
+        );
+
+        if (friendError) {
+            // Said and carried on: the other vouchers in this run are
+            // already issued and still have to be sent.
+            console.error("Automations: failed to issue friend vouchers", friendError);
+        } else {
+            vouchers.push(...((friends ?? []) as IssuedVoucher[]));
+        }
+    }
 
     await attachLogos(vouchers);
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 
-const kinds = ["welcome", "birthday", "winback"] as const;
+const kinds = ["welcome", "birthday", "winback", "brought_a_friend"] as const;
 
 export async function saveAutomation(formData: FormData) {
     const businessId = String(formData.get("businessId") ?? "");
