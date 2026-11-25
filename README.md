@@ -117,6 +117,34 @@ the directory included. The loyalty-only tools run £25 to £49 and bring nobody
 through the door. Compare Promotello with a week of ads, not with a stamp-card
 app.
 
+### What each plan is for
+
+Set 24 November 2026. One rule decides which plan a feature goes in, so it
+isn't argued again each time.
+
+- **Free spreads Promotello.** Anything that puts our QR code or our link in
+  front of more shoppers is free. It is our marketing as much as theirs.
+- **Pro earns or saves the business money.** Anything that brings a customer
+  back, brings a new one in or saves the owner time.
+- **Growth runs without them.** Anything that keeps working when nobody at the
+  business is thinking about it.
+
+| Plan   | Has today                                                                                                                                                                              | Planned                                                                                                  |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Free   | Page in the directory, 1 live offer, scan-to-redeem vouchers, 1 QR poster with scan counts, team members, share links and Instagram images, a link-in-bio page they arrange, 30-day analytics, the short monthly report | The review poster, the print kit, offer templates, a Wi-Fi poster, refer a neighbour |
+| Pro    | Unlimited live offers, the loyalty card, a poster for every spot with scans compared, followers emailed every new offer, review prompts after a visit                                  | Bring a friend, a private feedback option, the staff board                                               |
+| Growth | Welcome, birthday and win-back emails, quiet hours, the full monthly report, first-timers month by month                                                                               | Offers that relaunch themselves, a weekly post ready to share, a second location, the customer list and export, joint offers with a neighbour, events (built, hidden) |
+
+`planComparison` in `lib/plan-features.ts` is what the site prints, and it is
+the source for "Has today". The "Planned" column is intent. Move a feature into
+that file in the same commit that ships it, never ahead of it.
+
+**Why this matters now.** Pro today is a loyalty card with the limits taken
+off, which is what a loyalty app sells. Bring a friend is the first Pro feature
+no loyalty app has, and the free column is what puts our code in a window
+whether or not the business ever pays. The order they get built in is in
+[Still to do](#still-to-do).
+
 ## Stack
 
 - Next.js 16 (App Router, `cacheComponents`, React Compiler), React 19, TypeScript
@@ -230,6 +258,7 @@ Stripe prices are found by lookup key (`pro_monthly`, `growth_monthly` and so on
 
 ### Addresses
 
+- Bio links: `/@harbourgrind`, one per business, arranged by them at `/business/<id>/bio`. A handle they change keeps resolving, because it has been in a bio and on a poster.
 - Businesses: `/businesses/harbour-grind-harbourside-bristol-5d6ki4` (name, area, city, short id). Offers: `/offers/<business>-<title>-<id>`. The database sets these; old addresses (including `/businesses/<uuid>`) redirect permanently from `proxy.ts`.
 - Listing pages show every live city, or one when the city is in the address: `/offers/bristol`, `/explore/bristol/gloucester-road`, `/categories/bakeries/bristol`. Without one, visitors see the city they chose or the one they're in.
 
@@ -265,12 +294,12 @@ kind of business it is looking at.
 
 Four ways, and only one of them is permanent.
 
-| | Who | What happens |
-| --- | --- | --- |
-| **Reject** | Admin | Never goes public. The owner is told why. |
-| **Suspend** | Admin | Comes off the directory with its offers. Nothing is deleted, and claimed vouchers still work. |
-| **Close** | The owner | Their own decision, from Settings. Invisible, and the subscription is cancelled at period end. |
-| **Delete** | Admin | Permanent. Everything goes, including vouchers and stamp cards their customers hold. |
+|             | Who       | What happens                                                                                   |
+| ----------- | --------- | ---------------------------------------------------------------------------------------------- |
+| **Reject**  | Admin     | Never goes public. The owner is told why.                                                      |
+| **Suspend** | Admin     | Comes off the directory with its offers. Nothing is deleted, and claimed vouchers still work.  |
+| **Close**   | The owner | Their own decision, from Settings. Invisible, and the subscription is cancelled at period end. |
+| **Delete**  | Admin     | Permanent. Everything goes, including vouchers and stamp cards their customers hold.           |
 
 Delete exists for test businesses and for a business that asks to be erased,
 not for a decision that could be a suspension. The name has to be typed back,
@@ -393,11 +422,89 @@ underway.
   claimed means the preview is not convincing; nobody opening means the subject
   is wrong. The previews page tells those apart, and they need different fixes.
 
+### Alongside stage 1 — More than a loyalty card
+
+Added 24 November 2026. Indistamp has sold a loyalty card to Bristol's local
+businesses since 2024, so a pitch that reads as "a loyalty card with a
+directory attached" loses to the name they already know. These are the
+features that make the difference visible, ranked by how much work each is.
+Where each one sits follows [What each plan is for](#what-each-plan-is-for).
+
+**This does not pause stage 1.** Sending carries on while these are built, and
+the first replies decide whether the order is right. The sizes are estimates
+from reading the code, not from building anything.
+
+|     | What                           | Plan   | Work                    | What is there already, and what is left                                                                                                                                                                                          |
+| --- | ------------------------------ | ------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Print kit**                  | Free   | Nearly done             | A4, A5 and two per sheet are live. Four per sheet and the review poster are on `feat/a-poster-that-asks-for-a-review`. Left: merge that, then name the set a print kit on the QR page and the features page                     |
+| 2   | **Offer templates**            | Free   | Small, 1 to 2 days      | `lib/offer-kinds.ts` has the kinds and `lib/starter.ts` already carries an offer line into the form. Left: a short list of seasonal presets in front of it, so the one free offer doesn't go stale                              |
+| 3   | ~~**Link-in-bio page**~~ **Built** | Free | Shipped 25 November 2026 | `/@handle` is the page and `/business/<id>/bio` arranges it: order, what is switched on, their own links, a notice, WhatsApp, opening hours, a photo strip, and taps counted per row. Left: a live preview and their own accent colour. See [The bio page is theirs](docs/ROADMAP.md#the-bio-page-is-theirs) |
+| 4   | **Private feedback option**    | Pro    | Small, 2 to 3 days      | `/review/<business_id>` counts the click and forwards to Google. Left: a "tell us directly" choice beside it that emails the owner. Every customer sees both: choosing who gets asked for a review breaks Google's rules         |
+| 5   | **Wi-Fi poster**               | Free   | Small, 2 to 3 days      | The poster designer. Left: a new layout. One code can't both join a network and open a page, so it is two codes on one sheet: Wi-Fi and the offer                                                                                |
+| 6   | **Staff board**                | Pro    | Medium, about a week    | A search found nothing recording which team member scanned a voucher or added a stamp. That comes first, then the board: who brought the most scans and stamps this month                                                        |
+| 7   | **Refer a neighbour**          | Free   | Medium, about a week    | Nothing. An invite link, and a month of Pro for both when the shop next door claims its page. It touches Stripe, which is why it isn't small                                                                                     |
+| 8   | **Bring a friend**             | Pro    | Medium, 1 to 2 weeks    | Automations already issue a voucher to a person, and share links exist. Left: following the friend's first redemption back to who sent them, the reward for both, and limits against abuse                                       |
+| 9   | **Joint offers with a neighbour** | Growth | Large                | Nothing, and worth nothing below ten businesses on a street. Behind stage 3                                                                                                                                                      |
+| 10  | **Wallet passes**              | Pro    | Large, weeks            | [docs/WALLET-PASSES.md](docs/WALLET-PASSES.md). Stays in stage 5, for the reasons given there                                                                                                                                    |
+
+**The cut before the next fifty emails:** 1, 2 and 3. About a week between
+them, all free, and each one is something a business can be shown on day one.
+
+**Then 8, bring a friend.** It is the answer to "how is this different from a
+stamp card", and a friend who redeems is a customer we can prove we sent, so it
+feeds stage 4 as well.
+
+**Considered and left where it is: win-back in Pro.** Moving it is a small
+change, but it is most of what Growth has, and it can't reach the people it is
+for until the consent decision in stage 3 is made.
+
+#### Growth, so it is worth moving up to
+
+Added 24 November 2026. Growth's rule is that it runs without them. The full
+table, with what each one builds on, is
+[What Growth gets](docs/ROADMAP.md#what-growth-gets) in the roadmap. Sizes are
+rough.
+
+**Build first**
+
+- **G1 · Offers that run themselves again.** Small. An offer already carries
+  its days and hours. What is missing is the relaunch: when one expires or is
+  fully claimed, a new run starts, so the page never sits empty.
+- **G2 · A weekly post, ready to share.** Small. Every Monday the owner is
+  emailed an Instagram image and caption for the current offer. The image and
+  caption exist on every plan; Growth is not having to remember.
+- **G8 · A second location included.** Medium to large. The reason to pay for
+  Growth that isn't more emails. Needs the multi-location decisions in stage 5
+  first: how the page, the offers and the loyalty card split between two shops.
+
+**Then, as they are wanted**
+
+- **G5 · Quiet-day suggestions.** Medium. The monthly report names the slowest
+  day and offers a one-tap offer for it.
+- **G7 · Customer list, groups and export.** Medium. Already promised to
+  Growth, and it answers "what if I leave?".
+
+**Held by the consent decision in stage 3.** These email customers, and most
+cards are held by guests with no account, so they mostly can't fire yet.
+
+- **G3 · "Nearly there" reminders.** Small. One or two stamps from the reward.
+- **G4 · The claim that never became a visit.** Small. The same nudge as in
+  stage 3, as an automation the business can see running.
+- **G6 · Regulars' reward.** Medium. A thank-you voucher each quarter for the
+  ten most frequent customers.
+
+**Behind their gates:** G9 street benchmarks and G10 joint offers need a street
+with enough businesses on it. G11 events is built and switched off
+(`lib/features.ts`) until there are customers to see them.
+
 ### Stage 2 — What happens when one says yes
 
 Nothing here is built for a queue of one. It is built for the week after the
 first business claims its page, which is the first time any of it is used in
 anger.
+
+- **Build instagram page** make it look active and enticing
+- **Instagram DM** follow ups
 
 - **Walk a claim end to end on the live site, as them.** Claim the preview,
   finish the page, publish an offer, print a poster, add a stamp. It has been
@@ -482,9 +589,8 @@ Kept, not forgotten. Nothing here stops a business paying.
 
 **Product**
 
-- **Stronger Growth features.** Automations and quiet hours are not enough
-  reason to move up from Pro, and a business that reads the comparison can see
-  that.
+- **Stronger Growth features** moved up: see "Growth, so it is worth moving up
+  to" above.
 - **Multi-location businesses.** One business on Gloucester Road may not want
   the same offer at both shops. Needs a view on how the profile page, offers
   and the loyalty card split.
@@ -501,7 +607,6 @@ Kept, not forgotten. Nothing here stops a business paying.
 - Card design and multi-stamp, then the switching kit (import members and paper
   balances). Cheap, and they close deals once there are deals to close.
 - Customer list, segments and CSV export.
-- Refer-a-friend on the card.
 - The passport trail and group/BID accounts — behind stage 3's gate. A trail
   across businesses nobody visits has no users.
 - Business profiles: photo gallery and social links.
