@@ -4,6 +4,7 @@ import { FiArrowRight } from "react-icons/fi";
 import { LoyaltyStamps } from "@/components/loyalty-stamps";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
+import { LoyaltyJoin } from "@/components/loyalty-join";
 import { joinLoyaltyProgram } from "./actions";
 
 type LoyaltyCalloutProps = {
@@ -134,31 +135,18 @@ export function LoyaltyCallout({
                         </SubmitButton>
                     </form>
                 ) : (
-                    /* The same two doors as claiming an offer, and the
-                       same promise: ?join=1 says what they pressed, so
-                       the card is theirs by the time they land on it
-                       rather than a button to press a second time. */
-                    <div className="w-full shrink-0 space-y-3 sm:w-auto">
-                        <Button
-                            render={<Link href={`/login?next=${encodeURIComponent(`${returnPath}?join=1`)}`} />}
-                            nativeButton={false}
-                            size="lg"
-                            className="w-full bg-white text-[#17233B] hover:bg-white/90 sm:w-auto"
-                        >
-                            Log in to get your card
-                            <FiArrowRight aria-hidden="true" />
-                        </Button>
-
-                        <p className="text-center text-xs text-white/70 sm:text-right">
-                            New to Promotello?{" "}
-                            <Link
-                                href={`/signup?next=${encodeURIComponent(`${returnPath}?join=1`)}`}
-                                className="font-medium text-white underline underline-offset-4"
-                            >
-                                Create a free account
-                            </Link>
-                        </p>
-                    </div>
+                    /* A name and an email, and the card opens. The
+                       fields stay behind the button until somebody has
+                       said yes, because two white boxes on this panel
+                       shout louder than the thing being offered.
+                       Logging in is still there for anybody who has an
+                       account, inside the form. */
+                    <LoyaltyJoin
+                        programId={program.id}
+                        businessId={businessId}
+                        loginHref={`/login?next=${encodeURIComponent(`${returnPath}?join=1`)}`}
+                        startOpen={problem === "details" || problem === "signin"}
+                    />
                 )}
             </div>
         </section>
