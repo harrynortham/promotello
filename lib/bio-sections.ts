@@ -140,3 +140,44 @@ export function waUrl(number: string): string | null {
 
     return `https://wa.me/${international}`;
 }
+
+// Their colour on their page.
+//
+// The same six the loyalty card offers, so a business that has chosen
+// a colour once is not asked to choose a different one for the page it
+// sits on. Promotello coral is the default and the seventh option
+// rather than an absence -- a business that picks it has decided, and
+// one that never opens this gets it anyway.
+//
+// Stored as a hex on businesses.bio_accent, null meaning coral, so
+// nothing has to be migrated when the palette changes.
+export const BIO_CORAL = "#FF593F";
+
+export function bioAccent(value: string | null | undefined): string {
+    const hex = value?.trim();
+    return hex && /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : BIO_CORAL;
+}
+
+// Readable text on top of it. The palette runs from a near-black navy
+// to a mid coral, and white holds on all of them, but a business can
+// be given a free hand later and this is where that would be decided.
+export function inkOn(hex: string): string {
+    const value = hex.replace("#", "");
+    const [r, g, b] = [0, 2, 4].map((at) => parseInt(value.slice(at, at + 2), 16) / 255);
+    // Rec. 709, which is close enough for a choice between two inks.
+    const light = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+    return light > 0.6 ? "#17233B" : "#FFFFFF";
+}
+
+// The six on offer, plus coral. Taken from the loyalty card's palette
+// rather than a second list, so a business that chose a colour once is
+// not asked to choose a different one for the page it sits on.
+export const BIO_ACCENTS: { label: string; hex: string }[] = [
+    { label: "Coral", hex: BIO_CORAL },
+    { label: "Navy", hex: "#17233B" },
+    { label: "Forest", hex: "#1F4034" },
+    { label: "Plum", hex: "#3C2342" },
+    { label: "Ocean", hex: "#13404F" },
+    { label: "Charcoal", hex: "#2B2B2B" },
+];

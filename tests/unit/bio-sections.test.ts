@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+    BIO_CORAL,
     BIO_KINDS,
+    bioAccent,
+    inkOn,
     DEFAULT_ORDER,
     arrangement,
     moved,
@@ -109,4 +112,18 @@ test("a uk mobile becomes an international whatsapp link", () => {
     assert.equal(waUrl("07700 900123"), "https://wa.me/447700900123");
     assert.equal(waUrl("+44 7700 900123"), "https://wa.me/447700900123");
     assert.equal(waUrl("123"), null);
+});
+
+test("an accent falls back to coral rather than to nothing", () => {
+    assert.equal(bioAccent(null), BIO_CORAL);
+    assert.equal(bioAccent(""), BIO_CORAL);
+    assert.equal(bioAccent("rgb(1,2,3)"), BIO_CORAL);
+    assert.equal(bioAccent("#1F4034"), "#1F4034");
+});
+
+// A row nobody can read is worse than one in the wrong colour.
+test("the ink is the one you can read", () => {
+    assert.equal(inkOn("#17233B"), "#FFFFFF");
+    assert.equal(inkOn("#FF593F"), "#FFFFFF");
+    assert.equal(inkOn("#FFF8F0"), "#17233B");
 });

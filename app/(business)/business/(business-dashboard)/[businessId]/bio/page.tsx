@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 
 import { FormPageLoading } from "@/components/dashboard-skeletons";
-import { arrangement, noticeShowing } from "@/lib/bio-sections";
+import { arrangement, bioAccent, noticeShowing } from "@/lib/bio-sections";
 import { businessHasPro } from "@/lib/billing";
 import { openingLabel, type HoursRow } from "@/lib/business-hours";
 import { absoluteUrl } from "@/lib/site";
@@ -57,7 +57,7 @@ async function BioContent({ params }: PageProps) {
             .from("businesses")
             .select(
                 `name, phone, whatsapp, website_url, menu_url, booking_url, google_review_url,
-                 bio_notice, bio_notice_until,
+                 bio_notice, bio_notice_until, bio_accent,
                  instagram_url, facebook_url, x_url, youtube_url, linkedin_url, tiktok_url,
                  business_locations ( address_line_1, city, postal_code )`,
             )
@@ -228,6 +228,7 @@ async function BioContent({ params }: PageProps) {
                     notice={noticeNow ?? ""}
                     noticeUntil={business.bio_notice_until ?? ""}
                     whatsapp={business.whatsapp ?? ""}
+                    accent={bioAccent(business.bio_accent)}
                     taps={taps}
                 />
             </div>
