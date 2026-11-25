@@ -29,6 +29,7 @@ import { businessPath } from "@/lib/slugs";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CopyButton } from "@/components/copy-button";
 import { LetterCard } from "./letter-card";
+import { PreviewPhotoForm } from "./preview-photo-form";
 import { LocationFields } from "@/components/location-fields";
 import { getCityOptions } from "@/lib/locations";
 import { foundingPlacesLeft } from "@/lib/founding-places";
@@ -213,7 +214,9 @@ async function Lead({ params, searchParams }: PageProps) {
     const { data: previewBusiness } = lead.preview_business_id
         ? await supabase
               .from("businesses")
-              .select("slug, listed_at, approval_status, description, business_locations ( city )")
+              .select(
+                  "slug, listed_at, approval_status, description, cover_image_url, business_locations ( city )",
+              )
               .eq("id", lead.preview_business_id)
               .maybeSingle()
         : { data: null };
@@ -1137,6 +1140,15 @@ async function Lead({ params, searchParams }: PageProps) {
                                                 Save the examples
                                             </SubmitButton>
                                         </form>
+                                    )}
+
+                                    {/* Same rule as the examples: only
+                                        while it is still ours to change. */}
+                                    {!preview.claimed_at && lead.preview_business_id && (
+                                        <PreviewPhotoForm
+                                            businessId={lead.preview_business_id}
+                                            coverUrl={previewBusiness?.cover_image_url ?? null}
+                                        />
                                     )}
 
                                     {/* The RPC refuses a claimed preview, so this
