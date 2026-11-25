@@ -186,7 +186,7 @@ test("the opener carries no link at all", () => {
     const opener = outreachDm({ ...dmArgs, variant: "opener" });
 
     assert.ok(!opener.includes("http"), opener);
-    assert.match(opener, /Want me to send the link\?$/);
+    assert.match(opener, /Want me to send it\?$/);
     assert.ok(!opener.includes("\n"), "one paragraph, because a DM is read in a second");
 });
 
@@ -194,8 +194,13 @@ test("the full DM carries the link and the offer", () => {
     const dm = outreachDm(dmArgs);
 
     assert.match(dm, /business\/preview\//);
-    assert.match(dm, /A QR poster goes in your window/);
-    assert.match(dm, /the Bristol directory/);
+    // The bio link leads now: this goes to a business on Instagram,
+    // where the one link they are allowed is a problem they already
+    // have. The directory is what they get for claiming it.
+    assert.match(dm, /a free link for your Instagram bio/);
+    assert.match(dm, /stamp card/);
+    assert.match(dm, /It tells you what people tapped/);
+    assert.match(dm, /the Bristol directory too, with a QR poster/);
     assert.match(dm, new RegExp(`first ${FOUNDING_MEMBER_LIMIT} businesses get Pro free for ${freeFor(FOUNDING_TRIAL_DAYS)}`));
     assert.match(dm, /Not for you\? Just say and I'll delete it\./);
 });
@@ -214,7 +219,7 @@ test("the personal line reaches both DMs", () => {
     // In the opener it sits between two sentences, so it needs the stop.
     assert.match(
         outreachDm({ ...dmArgs, personalLine, variant: "opener" }),
-        /founder of Promotello\. Your sourdough is the best on the road\. I've built/,
+        /founder of Promotello\. Your sourdough is the best on the road\. I've made/,
     );
 
     // In the full one it is a paragraph of its own.
@@ -236,6 +241,8 @@ test("the DM names the town it is actually in", () => {
 
     assert.match(outreachDm({ ...dmArgs, preview: bath }), /the Bath directory/);
     assert.match(outreachDm({ ...dmArgs, preview: bath, variant: "opener" }), /our Bath directory/);
+    // The opener names it too: a directory with no town in it is a
+    // website, and the whole argument is that this one is local.
 });
 
 test("without a name it is the team, and it says thanks rather than cheers", () => {
