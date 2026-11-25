@@ -88,9 +88,19 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
     // are for the live preview card.
     const { data: business } = await supabase
         .from("businesses")
-        .select("name, logo_url, category_id")
+        .select("name, logo_url, category_id, categories ( slug, parent:parent_id ( slug ) )")
         .eq("id", businessId)
         .maybeSingle();
+
+    // The trade the offers to start from are picked for. A business
+    // filed under a subcategory is still a food and drink business, so
+    // the parent's slug is the one that matches: templatesFor() lists by
+    // the six top-level trades.
+    const filedUnder = Array.isArray(business?.categories)
+        ? business?.categories[0]
+        : business?.categories;
+    const parent = Array.isArray(filedUnder?.parent) ? filedUnder?.parent[0] : filedUnder?.parent;
+    const categorySlug = parent?.slug ?? filedUnder?.slug ?? null;
 
     // The Free plan includes one poster. If it is already spent, the
     // screen after this offer must not tell them to put it on a poster —
@@ -169,6 +179,7 @@ async function NewOfferPageContent({ params, searchParams }: PageProps) {
             businessName={business?.name ?? "Your business"}
             businessLogoUrl={business?.logo_url ?? null}
             defaultCategoryId={business?.category_id ?? null}
+            categorySlug={categorySlug}
             suggestedTitle={suggestedTitle}
             followers={followers ?? 0}
             spentPoster={spentPoster}

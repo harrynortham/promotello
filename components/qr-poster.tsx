@@ -4,12 +4,7 @@ import { FiCheck, FiCoffee, FiGift, FiHeart, FiScissors, FiShoppingBag, FiStar }
 
 import { LoyaltyCard } from "@/components/loyalty-card";
 import { storedImage } from "@/lib/images";
-import {
-    isLoyaltyLayout,
-    isReviewLayout,
-    posterLayout,
-    type PosterLayout,
-} from "@/lib/poster-layouts";
+import { isLoyaltyLayout, isReviewLayout, posterLayout } from "@/lib/poster-layouts";
 import {
     cardTheme,
     readableInk,

@@ -30,6 +30,8 @@ import { createClient } from "@/utils/supabase/client";
 import { FiArrowRight } from "react-icons/fi";
 
 import { announceNewOffer } from "./actions";
+import { OfferStarters } from "@/components/offer-starters";
+import { DEFAULT_TERMS, templatesFor, type OfferTemplate } from "@/lib/offer-templates";
 
 type NewOfferFormProps = {
     businessId: string;
@@ -42,6 +44,9 @@ type NewOfferFormProps = {
     // How many people follow this business. Nought for anybody who has
     // just signed up, which is most people seeing this screen.
     followers: number;
+    // The business's top-level category, for picking offers to start
+    // from. Null shows the ones that suit any trade.
+    categorySlug?: string | null;
     // Set only on Free, and only once the plan's one poster is spent:
     // which poster it is and what it currently opens. Telling somebody
     // here to put this offer on a poster would be telling them to do
@@ -59,6 +64,7 @@ export default function NewOfferForm({
     defaultCategoryId,
     suggestedTitle = null,
     followers,
+    categorySlug = null,
     spentPoster,
     canSchedule,
 }: NewOfferFormProps) {
@@ -101,6 +107,11 @@ export default function NewOfferForm({
         ? `/business/${businessId}/billing`
         : `/business/${businessId}/qr/new`;
     const [errorMessage, setErrorMessage] = useState("");
+
+    // Offers to start from, chosen for their trade. Worked out once:
+    // the list cannot change while the form is open.
+    const [starters] = useState(() => templatesFor(categorySlug));
+    const [startedFrom, setStartedFrom] = useState<OfferTemplate | null>(null);
 
     const {
         register,
@@ -243,6 +254,42 @@ export default function NewOfferForm({
         router.replace(`${pathname}?created=pending`, { scroll: false });
     }
 
+    // Pressing a starter fills every field the form asks for, including
+    // the ones a business forgets: an end date, and when it can be used.
+    // Nothing is saved — this is a draft to argue with.
+    function useStarter(template: OfferTemplate) {
+        const ends = new Date();
+        // Three months, which is long enough to be worth printing and
+        // short enough that a stale offer falls off the directory by
+        // itself.
+        ends.setMonth(ends.getMonth() + 3);
+
+        setValue("title", template.title, { shouldValidate: true });
+        setValue("kind", template.kind, { shouldValidate: true });
+        setValue("kindValue", template.value ? String(template.value) : "");
+        setValue("kindQuantity", template.quantity ? String(template.quantity) : "");
+        setValue("kindItem", template.item ?? "");
+        setValue("description", template.description, { shouldValidate: true });
+        setValue("terms", template.terms ?? DEFAULT_TERMS, { shouldValidate: true });
+        setValue("expiresAt", ends.toISOString().slice(0, 10), { shouldValidate: true });
+
+        // "Certain days and times" only where the timing is the offer.
+        const when = template.days?.length ? (template.from ? "times" : "days") : "any";
+
+        setValue("when", when);
+        setValue("availableDays", template.days ?? []);
+        setValue("availableFrom", template.from ?? "");
+        setValue("availableUntil", template.until ?? "");
+
+        setStartedFrom(template);
+        clearErrors();
+    }
+
+    function clearStarter() {
+        reset();
+        setStartedFrom(null);
+    }
+
     if (createdOffer) {
         return (
             <div className="flex items-center justify-center">
@@ -361,6 +408,13 @@ export default function NewOfferForm({
 
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-7">
+                            <OfferStarters
+                                templates={starters}
+                                chosen={startedFrom}
+                                onPick={useStarter}
+                                onClear={clearStarter}
+                            />
+
                             <OfferImageField
                                 disabled={isSubmitting}
                                 error={errors.root?.image?.message}
