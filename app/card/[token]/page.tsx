@@ -166,8 +166,12 @@ async function GuestCardView({ params, searchParams }: PageProps) {
                     place.
                 </p>
 
+                {/* The token, so signup can fill in the address this
+                    card was issued to. The match is on the email, and
+                    an account made with a different one leaves the
+                    stamps here with nothing to say so. */}
                 <Button
-                    render={<Link href="/signup?next=/dashboard/loyalty" />}
+                    render={<Link href={`/signup?next=/dashboard/loyalty&card=${token}`} />}
                     nativeButton={false}
                     className="mt-4"
                 >
