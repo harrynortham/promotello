@@ -78,21 +78,25 @@ test("with no name it greets them anyway", () => {
 test("the directory is named by its town, not by Bristol", () => {
     // Nothing in the product is Bristol-only (docs/MULTI-CITY.md), and a
     // hardcoded town is wrong the day a second one opens.
-    assert.match(email(), /the Bristol directory/);
+    assert.match(email(), /our Bristol directory/);
 
     const bath = {
         ...preview,
         businesses: { ...preview.businesses, business_locations: [{ city: "Bath", cities: { name: "Bath" } }] },
     } as typeof preview;
 
-    assert.match(outreachMessage({ preview: bath, placesLeft: 38, contactName: "Sam" }), /the Bath directory/);
+    assert.match(outreachMessage({ preview: bath, placesLeft: 38, contactName: "Sam" }), /our Bath directory/);
 });
 
-test("it says offers and loyalty card, in those words", () => {
+// One name per thing (VOICE.md), and the name is the one VOICE.md uses
+// in its own example: "a stamp card that never gets lost in a coat
+// pocket". The email used to insist on "loyalty card" while the DM said
+// "stamp card", which is the thing that rule exists to stop.
+test("the email and the DM call the card the same thing", () => {
     const body = email();
 
-    assert.match(body, /loyalty card/);
-    assert.doesNotMatch(body, /stamp card/i, "never a stamp card");
+    assert.match(body, /stamp card/);
+    assert.match(outreachDm(dmArgs), /stamp card/);
     assert.doesNotMatch(body, /phone offers/i, "never phone offers");
 });
 
@@ -307,8 +311,8 @@ test("the follow-up does not say nobody has joined", () => {
 test("it names their street, not just their city", () => {
     const body = email();
 
-    assert.match(body, /on the Gloucester Road page of the Bristol directory/);
-    assert.ok(!body.includes("listed in the Bristol directory"));
+    assert.match(body, /on the Gloucester Road page of our Bristol directory/);
+    assert.ok(!body.includes("in our Bristol directory too"));
 });
 
 // An area we could not resolve falls back rather than writing "the
@@ -324,7 +328,7 @@ test("a lead with no area still reads correctly", () => {
 
     const body = outreachMessage({ preview: nowhere, placesLeft: 38, contactName: "Sam" });
 
-    assert.match(body, /listed in the Bristol directory/);
+    assert.match(body, /in our Bristol directory/);
     assert.ok(!body.includes("undefined"));
     assert.ok(!body.includes("null"));
 });
@@ -396,7 +400,7 @@ test("it says nobody can find it yet, and never that it is live", () => {
 });
 
 test("claiming is still what gets them the directory", () => {
-    assert.match(builtEmail(), /Claim it and you're on the Gloucester Road page of the Bristol directory/);
+    assert.match(builtEmail(), /Claim it and you're on the Gloucester Road page of our Bristol directory/);
 });
 
 test("an unbuilt lead still gets the preview wording, every word of it", () => {
