@@ -687,17 +687,27 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             </div>
 
                             <div className="flex shrink-0 flex-wrap gap-2">
-                                {isUnclaimed ? (
-                                    <Button render={<Link href="#claim" />} nativeButton={false}>
-                                        Claim your free page
-                                    </Button>
-                                ) : (
+                                {/* Nothing to view on a page nobody has
+                                    claimed: no offers, no card. And
+                                    nothing to claim here either --
+                                    claiming is by the link we send, and
+                                    the button that used to be here
+                                    pointed at a #claim section that no
+                                    longer exists. */}
+                                {!isUnclaimed && (
                                     <Button render={<Link href="#offers" />} nativeButton={false}>
                                         View offers
                                     </Button>
                                 )}
 
-                                {!isPreview && !isUnclaimed && (
+                                {/* Worth asking even here. There is
+                                    nothing on this page yet, so wanting
+                                    to hear when there is, is the only
+                                    thing a customer can usefully do --
+                                    and people already waiting is the
+                                    most persuasive thing we can show a
+                                    business that has not said yes. */}
+                                {!isPreview && (
                                     <FollowButton
                                         businessId={business.id}
                                         initialFollowing={Boolean(follow)}
@@ -783,13 +793,19 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                             </section>
                         )}
 
-                        {/* Nothing here for an unclaimed page any more.
-                            Claiming is by the link we send and only by
-                            that: the token is what says this business
-                            was written to on purpose, and a form on a
-                            public page invites everybody else to ask
-                            about a shop that is not theirs. */}
-                        {!isUnclaimed && (
+                        {/* No claim form here any more -- claiming is by
+                            the link we send and only by that: the token
+                            is what says this business was written to on
+                            purpose, and a form on a public page invites
+                            everybody else to ask about a shop that is
+                            not theirs.
+                            
+                            The offers section itself stays on an
+                            unclaimed page. There are none and there
+                            cannot be any until somebody claims it, but
+                            hiding the whole thing left the column blank
+                            beside a map, which reads as broken rather
+                            than as new. It says so instead. */}
                         <section
                             id="offers"
                             aria-labelledby="offers-heading"
@@ -807,7 +823,9 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </h2>
 
                                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                    Explore what’s on offer at {business.name}.
+                                    {isUnclaimed
+                                        ? `What ${business.name} puts on will show up here.`
+                                        : `Explore what’s on offer at ${business.name}.`}
                                 </p>
                                 </div>
 
@@ -853,12 +871,15 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                         </span>
 
                                         <h3 className="mt-4 font-semibold">
-                                            Nothing on offer just yet
+                                            {isUnclaimed
+                                                ? "No offers yet"
+                                                : "Nothing on offer just yet"}
                                         </h3>
 
                                         <p className="mx-auto mt-2 max-w-sm text-sm leading-7 text-muted-foreground">
-                                            Check back for new offers
-                                            from this business.
+                                            {isUnclaimed
+                                                ? `Follow ${business.name} and we’ll email you when they post one.`
+                                                : "Check back for new offers from this business."}
                                         </p>
 
                                         <Button
@@ -876,7 +897,6 @@ async function BusinessContent({ params, searchParams }: BusinessPageProps) {
                                 </Card>
                             )}
                         </section>
-                        )}
 
                         {/* The room, the counter, what they make.
                             Below the offers, because the offers are
